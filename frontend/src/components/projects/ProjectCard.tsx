@@ -33,7 +33,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
     const statusMap: Record<string, { label: string; cls: string }> = {
         active:   { label: 'Activo',     cls: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' },
         on_hold:  { label: 'Pausado',    cls: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' },
-        archived: { label: 'Archivado',  cls: 'bg-slate-100 dark:bg-white/5 text-slate-500' },
+        archived: { label: 'Archivado',  cls: 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]' },
     };
     const statusCfg = statusMap[project.status ?? 'active'] ?? statusMap.active;
 
@@ -43,7 +43,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04, duration: 0.3 }}
             onClick={() => router.push(`/plataforma/projects/${project.id}`)}
-            className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]"
+            className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-black/10/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]"
             style={{ '--card-color': color } as React.CSSProperties}
         >
             {/* Color accent bar top */}
@@ -66,10 +66,10 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
 
                 {/* Title + description */}
                 <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug truncate">
+                    <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white leading-snug truncate">
                         {project.title}
                     </h3>
-                    <p className="text-[12px] text-slate-400 font-medium line-clamp-2 mt-1 min-h-[32px]">
+                    <p className="text-[12px] text-[hsl(var(--text-secondary))] font-medium line-clamp-2 mt-1 min-h-[32px]">
                         {project.description || 'Sin descripción.'}
                     </p>
                 </div>
@@ -87,17 +87,17 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
                                 {inProgress} en curso
                             </span>
                         )}
-                        <span className="text-slate-300 ml-auto">{tasks.length} tareas</span>
+                        <span className="text-[hsl(var(--text-secondary))] ml-auto">{tasks.length} tareas</span>
                     </div>
                 )}
 
                 {/* Progress bar */}
                 <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-[hsl(var(--text-secondary))]">
                         <span>Progreso</span>
                         <span style={{ color }}>{progress}%</span>
                     </div>
-                    <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                         <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${progress}%` }}
@@ -111,13 +111,13 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
                 {/* Footer: date + arrow */}
                 <div className="flex items-center justify-between pt-1">
                     {project.created_at && (
-                        <span className="text-[10px] text-slate-300 dark:text-slate-600">
+                        <span className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                             {new Date(project.created_at).toLocaleDateString('es-PE', { month: 'short', year: 'numeric' })}
                         </span>
                     )}
                     <ArrowUpRight
                         size={16}
-                        className="text-slate-300 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors ml-auto"
+                        className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-[hsl(var(--text-secondary))] transition-colors ml-auto"
                     />
                 </div>
             </div>

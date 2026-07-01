@@ -67,17 +67,17 @@ function MentorAssignmentDrawer({
             title={title}
             subtitle={`Para: ${personaName}`}
             actions={
-                <button onClick={onClose} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
+                <button onClick={onClose} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                     Cerrar
                 </button>
             }
         >
             <div className="mt-8 flex flex-col items-center justify-center gap-4 p-6 text-center">
-                <div className="size-14 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-                    <Users size={28} className="text-slate-400" />
+                <div className="size-14 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 flex items-center justify-center">
+                    <Users size={28} className="text-[hsl(var(--text-secondary))]" />
                 </div>
-                <p className="text-base font-bold text-slate-800 dark:text-white">Próximamente</p>
-                <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
+                <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Próximamente</p>
+                <p className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed max-w-xs">
                     La asignación de mentoría pastoral estará disponible en una próxima actualización.
                 </p>
             </div>
@@ -316,16 +316,16 @@ export default function PersonaDetailPage() {
             <div className="size-9 rounded-lg bg-blue-600/10 flex items-center justify-center">
                 <Activity size={24} className="text-[hsl(var(--primary))] animate-spin" />
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Accediendo al Expediente...</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Accediendo al Expediente...</p>
         </div>
     );
 
     if (!persona) return (
         <div className="h-full flex flex-col items-center justify-center gap-4 text-center p-4">
-            <AlertCircle size={48} className="text-slate-300" />
+            <AlertCircle size={48} className="text-[hsl(var(--text-secondary))]" />
             <div>
-                <p className="text-base font-bold text-slate-600 dark:text-slate-300">Persona no encontrada</p>
-                <p className="text-sm text-slate-400 mt-1">El expediente #{id} no existe o no tienes acceso.</p>
+                <p className="text-base font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Persona no encontrada</p>
+                <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">El expediente #{id} no existe o no tienes acceso.</p>
             </div>
             <button onClick={() => router.push('/plataforma/crm/personas')} className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-sm hover:bg-[hsl(var(--primary))] transition-all">
                 <ArrowLeft size={16} /> Volver a Personas
@@ -353,9 +353,9 @@ export default function PersonaDetailPage() {
             ]}
             rightActions={canEditCrm ? (
                 <div className="flex gap-2">
-                    <button title="Editar" onClick={() => setIsEditOpen(true)} className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Edit3 size={16} /></button>
-                    <button title="Compartir" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Share2 size={16} /></button>
-                    <button title="Más acciones" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><MoreHorizontal size={16} /></button>
+                    <button title="Editar" onClick={() => setIsEditOpen(true)} className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Edit3 size={16} /></button>
+                    <button title="Compartir" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Share2 size={16} /></button>
+                    <button title="Más acciones" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><MoreHorizontal size={16} /></button>
                 </div>
             ) : undefined}
         >
@@ -364,7 +364,7 @@ export default function PersonaDetailPage() {
             {/* ── 1. Profile Hero ── */}
             <motion.section
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                className="relative bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 p-3 lg:p-4 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden group"
+                className="relative bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-xl shadow-black/10/20 dark:shadow-none overflow-hidden group"
             >
                 <div className="absolute top-0 right-0 w-[500px] h-full bg-gradient-to-l from-blue-600/5 to-transparent pointer-events-none" />
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-3">
@@ -373,7 +373,7 @@ export default function PersonaDetailPage() {
                         <div className="size-10 lg:size-10 rounded-md bg-gradient-to-tr from-blue-600 to-sky-700 flex items-center justify-center text-white text-xl font-bold shadow-2xl shadow-blue-500/30 group-hover:scale-105 transition-transform duration-500">
                             {initials}
                         </div>
-                        <div className="absolute -bottom-3 -right-3 size-9 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg flex items-center justify-center shadow-xl border border-slate-50 dark:border-white/10">
+                        <div className="absolute -bottom-3 -right-3 size-9 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg flex items-center justify-center shadow-xl border border-[hsl(var(--border))] dark:border-white/10">
                             <ShieldCheck size={24} className="text-[hsl(var(--primary))]" />
                         </div>
                     </div>
@@ -382,15 +382,15 @@ export default function PersonaDetailPage() {
                     <div className="flex-1 space-y-2">
                         <div className="space-y-2">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 rounded-full text-[10px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide border border-blue-100 dark:border-blue-500/20">
-                                ID: #{persona.id} <span className="text-slate-300">•</span> {persona.status}
+                                ID: #{persona.id} <span className="text-[hsl(var(--text-secondary))]">•</span> {persona.status}
                             </div>
-                            <h1 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter">{fullName}</h1>
-                            <p className="text-sm text-slate-500 font-semibold">{persona.church_role}</p>
+                            <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">{fullName}</h1>
+                            <p className="text-sm text-[hsl(var(--text-secondary))] font-semibold">{persona.church_role}</p>
                         </div>
                         <div className="flex flex-wrap gap-3 items-center">
-                            {persona.email !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><Mail size={16} className="text-[hsl(var(--primary))]" /> {persona.email}</span>}
-                            {persona.phone !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><Phone size={16} className="text-emerald-500" /> {persona.phone}</span>}
-                            {persona.address !== '—' && <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm"><MapPin size={16} className="text-rose-500" /> {persona.address}</span>}
+                            {persona.email !== '—' && <span className="flex items-center gap-2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm"><Mail size={16} className="text-[hsl(var(--primary))]" /> {persona.email}</span>}
+                            {persona.phone !== '—' && <span className="flex items-center gap-2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm"><Phone size={16} className="text-emerald-500" /> {persona.phone}</span>}
+                            {persona.address !== '—' && <span className="flex items-center gap-2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm"><MapPin size={16} className="text-rose-500" /> {persona.address}</span>}
                         </div>
                     </div>
 
@@ -404,7 +404,7 @@ export default function PersonaDetailPage() {
             </motion.section>
 
             {/* ── 2. Tabs ── */}
-            <div className="flex border-b border-slate-200 dark:border-white/10 overflow-x-auto">
+            <div className="flex border-b border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto">
                 {TABS.map(({ id: tabId, label, icon: Icon }) => {
                     const active = activeTab === tabId;
                     return (
@@ -413,7 +413,7 @@ export default function PersonaDetailPage() {
                             onClick={() => setActiveTab(tabId)}
                             className={clsx(
                                 "flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all relative whitespace-nowrap shrink-0",
-                                active ? "text-[hsl(var(--primary))]" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                active ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]"
                             )}
                         >
                             <Icon size={14} />
@@ -438,8 +438,8 @@ export default function PersonaDetailPage() {
                     {activeTab === 'overview' && <>
                         <div className="lg:col-span-8 space-y-3">
                             {/* Perfil de Consolidación */}
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
-                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Perfil de Consolidación</h3>
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
+                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Perfil de Consolidación</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Ingreso', value: formatDate(persona.joinedAt), icon: Calendar },
                                     { label: 'Fecha de Nacimiento', value: formatDate(persona.birthday), icon: Calendar },
@@ -447,16 +447,16 @@ export default function PersonaDetailPage() {
                                     { label: 'Rol en Ministerio', value: persona.church_role, icon: ShieldCheck },
                                 ]} />
                                 {persona.pastoral_notes && (
-                                    <div className="p-4 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5">
-                                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">Notas Pastorales</p>
-                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed italic">&ldquo;{persona.pastoral_notes}&rdquo;</p>
+                                    <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5">
+                                        <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-2">Notas Pastorales</p>
+                                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed italic">&ldquo;{persona.pastoral_notes}&rdquo;</p>
                                     </div>
                                 )}
                             </div>
 
                             {/* Datos Personales */}
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
-                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Datos Personales</h3>
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
+                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Datos Personales</h3>
                                 <InfoGrid items={[
                                     { label: 'Tipo de ID', value: persona.id_type },
                                     { label: 'Número de ID', value: persona.id_number },
@@ -471,8 +471,8 @@ export default function PersonaDetailPage() {
 
                             {/* Contacto y Ubicación */}
                             {(persona.landline_phone || persona.address || persona.city) && (
-                                <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
-                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Contacto y Ubicación</h3>
+                                <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
+                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contacto y Ubicación</h3>
                                     <InfoGrid items={[
                                         { label: 'Teléfono Fijo', value: persona.landline_phone },
                                         { label: 'Celular', value: persona.mobile_phone },
@@ -487,8 +487,8 @@ export default function PersonaDetailPage() {
 
                             {/* Educación y Profesión */}
                             {(persona.profession || persona.education_level) && (
-                                <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
-                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Educación y Profesión</h3>
+                                <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
+                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Educación y Profesión</h3>
                                     <InfoGrid items={[
                                         { label: 'Nivel Educativo', value: persona.education_level },
                                         { label: 'Estado Educativo', value: persona.education_status },
@@ -500,8 +500,8 @@ export default function PersonaDetailPage() {
 
                             {/* Médico */}
                             {(persona.blood_type || persona.medical_notes) && (
-                                <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
-                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Información Médica</h3>
+                                <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
+                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Información Médica</h3>
                                     <InfoGrid items={[
                                         { label: 'Tipo de Sangre', value: persona.blood_type },
                                         { label: 'Notas Médicas', value: persona.medical_notes },
@@ -510,9 +510,9 @@ export default function PersonaDetailPage() {
                             )}
 
                             {/* Núcleo Familiar */}
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Núcleo Familiar</h3>
+                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Núcleo Familiar</h3>
                                     <button className="flex items-center gap-1.5 text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-all">
                                         <Plus size={12} /> Añadir
                                     </button>
@@ -520,25 +520,25 @@ export default function PersonaDetailPage() {
                                 {persona.family.length > 0 ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {persona.family.map((f: any) => (
-                                            <div key={f.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all cursor-pointer">
+                                            <div key={f.id} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all cursor-pointer">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="size-9 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] flex items-center justify-center shadow-sm border border-slate-100 dark:border-white/10">
-                                                        <User size={16} className="text-slate-400" />
+                                                    <div className="size-9 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] flex items-center justify-center shadow-sm border border-[hsl(var(--border))] dark:border-white/10">
+                                                        <User size={16} className="text-[hsl(var(--text-secondary))]" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-slate-800 dark:text-white">{f.name ?? f.first_name}</p>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{f.relation}</p>
+                                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{f.name ?? f.first_name}</p>
+                                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{f.relation}</p>
                                                     </div>
                                                 </div>
-                                                <ChevronRight size={16} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
+                                                <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:translate-x-1 transition-transform" />
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="py-2 text-center rounded-lg bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10">
-                                        <Users size={28} className="mx-auto text-slate-300 mb-3" />
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Sin núcleo familiar registrado</p>
-                                        <p className="text-xs text-slate-400 mt-1">Este persona aún no pertenece a una familia</p>
+                                    <div className="py-2 text-center rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-dashed border-[hsl(var(--border))] dark:border-white/10">
+                                        <Users size={28} className="mx-auto text-[hsl(var(--text-secondary))] mb-3" />
+                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sin núcleo familiar registrado</p>
+                                        <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">Este persona aún no pertenece a una familia</p>
                                     </div>
                                 )}
                             </div>
@@ -572,8 +572,8 @@ export default function PersonaDetailPage() {
                             </div>
 
                             {/* Indicadores de Salud */}
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-2">
-                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Indicadores de Salud</h3>
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-4 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-2">
+                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Indicadores de Salud</h3>
                                 <HealthIndicator label="Asistencia Mensual" value={85} color="bg-emerald-500" />
                                 <HealthIndicator label="Progreso Academia" value={65} color="bg-[hsl(var(--primary))]" />
                                 <HealthIndicator label="Compromiso Voluntario" value={92} color="bg-amber-500" />
@@ -584,8 +584,8 @@ export default function PersonaDetailPage() {
                     {/* ── VIDA ESPIRITUAL ── */}
                     {activeTab === 'spiritual' && <>
                         <div className="lg:col-span-8 space-y-3">
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
-                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Datos Espirituales</h3>
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
+                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Datos Espirituales</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Bautismo', value: formatDate(persona.baptism_date), icon: CheckCircle2 },
                                     { label: 'Grupo', value: persona.house, icon: Heart },
@@ -594,7 +594,7 @@ export default function PersonaDetailPage() {
                                 ]} />
                                 {persona.spiritual_gifts ? (
                                     <div className="space-y-3">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dones Espirituales</p>
+                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Dones Espirituales</p>
                                         <div className="flex flex-wrap gap-2">
                                             {persona.spiritual_gifts.split(',').map((gift: string, i: number) => (
                                                 <span key={i} className="px-3 py-1.5 bg-blue-50 dark:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] dark:text-blue-300 text-[11px] font-bold rounded-md border border-blue-100 dark:border-[hsl(var(--primary))]/20 uppercase tracking-wide">
@@ -604,14 +604,14 @@ export default function PersonaDetailPage() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-dashed border-slate-200 dark:border-white/10 text-center">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dones espirituales no registrados</p>
+                                    <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 text-center">
+                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Dones espirituales no registrados</p>
                                     </div>
                                 )}
                                 {persona.talents ? (
                                     <div className="space-y-3">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Talentos y Habilidades</p>
-                                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{persona.talents}</p>
+                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Talentos y Habilidades</p>
+                                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">{persona.talents}</p>
                                     </div>
                                 ) : null}
                             </div>
@@ -642,9 +642,9 @@ export default function PersonaDetailPage() {
                     {/* ── ACADEMIA ── */}
                     {activeTab === 'academy' && <>
                         <div className="lg:col-span-12">
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm">
                                 <div className="flex items-center justify-between mb-3">
-                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Progreso Académico</h3>
+                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso Académico</h3>
                                     <Link href="/plataforma/academy" className="flex items-center gap-1.5 text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-all">
                                         Ver Academia <ExternalLink size={12} />
                                     </Link>
@@ -673,32 +673,32 @@ export default function PersonaDetailPage() {
                                     { label: 'Total Ofrendas', value: donations.filter(d => d.donation_type === 'ofrenda').reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-[hsl(var(--primary))]', icon: DollarSign },
                                     { label: 'Total Registrado', value: donations.reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-[hsl(var(--primary))]', icon: Award },
                                 ].map((stat, i) => (
-                                    <div key={i} className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-4 border border-slate-100 dark:border-white/5 shadow-sm space-y-3">
+                                    <div key={i} className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-4 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
                                         <div className={clsx('size-8 rounded-md flex items-center justify-center text-white', stat.color)}>
                                             <stat.icon size={18} />
                                         </div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{stat.label}</p>
-                                        <p className="text-lg font-bold text-slate-800 dark:text-white">{formatCurrency(stat.value)}</p>
+                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{stat.label}</p>
+                                        <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{formatCurrency(stat.value)}</p>
                                     </div>
                                 ))}
                             </div>
 
                             {/* Transactions */}
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
-                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">Historial de Siembras</h3>
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm">
+                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Historial de Siembras</h3>
                                 {loadingDonations ? (
-                                    <div className="py-2 text-center text-slate-400 text-sm">Cargando...</div>
+                                    <div className="py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Cargando...</div>
                                 ) : donations.length > 0 ? (
                                     <div className="space-y-3">
                                         {donations.map((d: any, i: number) => (
-                                            <div key={i} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-lg">
+                                            <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg">
                                                 <div className="flex items-center gap-3">
                                                     <div className="size-9 rounded-md bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
                                                         <DollarSign size={16} className="text-emerald-600" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-slate-800 dark:text-white capitalize">{d.donation_type}</p>
-                                                        <p className="text-[10px] text-slate-400">{formatDate(d.created_at)}</p>
+                                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white capitalize">{d.donation_type}</p>
+                                                        <p className="text-[10px] text-[hsl(var(--text-secondary))]">{formatDate(d.created_at)}</p>
                                                     </div>
                                                 </div>
                                                 <p className="text-sm font-bold text-emerald-600">{formatCurrency(d.amount)}</p>
@@ -719,24 +719,24 @@ export default function PersonaDetailPage() {
                     {/* ── HISTORIAL ── */}
                     {activeTab === 'history' && <>
                         <div className="lg:col-span-12">
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-slate-100 dark:border-white/5 shadow-sm">
-                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-3">Línea de Tiempo Pastoral</h3>
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm">
+                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Línea de Tiempo Pastoral</h3>
                                 {loadingHistory ? (
-                                    <div className="py-2 text-center text-slate-400 text-sm">Cargando historial...</div>
+                                    <div className="py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Cargando historial...</div>
                                 ) : history.length > 0 ? (
                                     <div className="relative space-y-0">
-                                        <div className="absolute left-5 top-0 bottom-0 w-px bg-slate-100 dark:bg-white/5" />
+                                        <div className="absolute left-5 top-0 bottom-0 w-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                                         {history.map((event: any, i: number) => (
                                             <div key={i} className="flex gap-4 pl-12 pb-8 relative">
-                                                <div className="absolute left-0 top-1 size-8 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] border border-slate-100 dark:border-white/10 flex items-center justify-center shadow-sm z-10">
+                                                <div className="absolute left-0 top-1 size-8 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center shadow-sm z-10">
                                                     <MessageSquare size={16} className="text-[hsl(var(--primary))]" />
                                                 </div>
-                                                <div className="flex-1 bg-slate-50 dark:bg-white/5 rounded-lg p-3">
+                                                <div className="flex-1 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg p-3">
                                                     <div className="flex items-center justify-between mb-2">
-                                                        <p className="text-sm font-bold text-slate-800 dark:text-white">{event.event_type ?? event.type ?? 'Evento'}</p>
-                                                        <p className="text-[10px] text-slate-400">{formatDate(event.created_at)}</p>
+                                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{event.event_type ?? event.type ?? 'Evento'}</p>
+                                                        <p className="text-[10px] text-[hsl(var(--text-secondary))]">{formatDate(event.created_at)}</p>
                                                     </div>
-                                                    {event.notes && <p className="text-xs text-slate-500 leading-relaxed">{event.notes}</p>}
+                                                    {event.notes && <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed">{event.notes}</p>}
                                                 </div>
                                             </div>
                                         ))}
@@ -747,7 +747,7 @@ export default function PersonaDetailPage() {
                                         title="Sin historial registrado"
                                         description={`No se han registrado eventos pastorales para ${fullName} aún.`}
                                         action={
-                                            <button className="flex items-center gap-2 px-4 py-1.5 bg-slate-800 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-800 rounded-lg font-bold text-sm hover:opacity-90 transition-all mt-2">
+                                            <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-bold text-sm hover:opacity-90 transition-all mt-2">
                                                 <Plus size={16} /> Registrar Evento
                                             </button>
                                         }
@@ -778,7 +778,7 @@ export default function PersonaDetailPage() {
                 subtitle={`Actualizando perfil de ${fullName}`}
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700">Cancelar</button>
+                        <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">Cancelar</button>
                         <button type="button" onClick={handleSavePersona} disabled={isEditSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
                             {isEditSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Guardar
@@ -839,15 +839,15 @@ export default function PersonaDetailPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Departamento</label>
-                                <select value={editPersona.colombian_department_id ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Departamento</label>
+                                <select value={editPersona.colombian_department_id ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">Seleccionar departamento</option>
                                     {departments.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Ciudad</label>
-                                <select value={editPersona.city ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, city: e.target.value }))} disabled={!editPersona.colombian_department_id || loadingEditCities} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ciudad</label>
+                                <select value={editPersona.city ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, city: e.target.value }))} disabled={!editPersona.colombian_department_id || loadingEditCities} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">{loadingEditCities ? 'Cargando ciudades...' : 'Seleccionar ciudad'}</option>
                                     {editCities.map((c: any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                                 </select>

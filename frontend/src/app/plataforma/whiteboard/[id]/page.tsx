@@ -54,7 +54,7 @@ const COLOR_PRESETS = [
     "#f43f5e", // rose-500
     "#8b5cf6", // #8b5cf6
     "#f97316", // orange-500
-    "#64748b", // slate-500
+    "#64748b", // neutral-500
     "#ffffff", // white
 ];
 
@@ -500,7 +500,7 @@ export default function WhiteboardSessionPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5">
+                        <div className="flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5">
                             {saveStatus === "saving" ? (
                                 <Loader2 size={12} className="animate-spin text-[hsl(var(--primary))]" />
                             ) : (
@@ -508,10 +508,10 @@ export default function WhiteboardSessionPage() {
                             )}
                             {saveStatus === "saving" ? "Guardando" : saveStatus === "saved" ? "Guardado" : "Local"}
                         </div>
-                        <button onClick={copyShareLink} className="p-2 text-slate-400 transition-all hover:text-[hsl(var(--primary))]" title="Copiar enlace">
+                        <button onClick={copyShareLink} className="p-2 text-[hsl(var(--text-secondary))] transition-all hover:text-[hsl(var(--primary))]" title="Copiar enlace">
                             <Share2 size={18} />
                         </button>
-                        <button onClick={exportCanvas} className="p-2 text-slate-400 transition-all hover:text-[hsl(var(--primary))]" title="Exportar JSON">
+                        <button onClick={exportCanvas} className="p-2 text-[hsl(var(--text-secondary))] transition-all hover:text-[hsl(var(--primary))]" title="Exportar JSON">
                             <Download size={18} />
                         </button>
                         <button onClick={saveNow} className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
@@ -523,17 +523,17 @@ export default function WhiteboardSessionPage() {
 
             <div className="relative flex flex-1 overflow-hidden">
                 {/* ── Left toolbar ── */}
-                <div className="absolute left-6 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2 rounded-xl border border-slate-200 bg-white/90 p-2 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/90">
+                <div className="absolute left-6 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2 rounded-xl border border-[hsl(var(--border))] bg-white/90 p-2 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
                     <ToolbarButton icon={MousePointer2} active={tool === "select"} onClick={() => activateTool("select")} label="Seleccionar (V)" />
                     <ToolbarButton icon={Pencil} active={tool === "draw"} onClick={() => activateTool("draw")} label="Dibujo libre (P)" />
-                    <div className="mx-2 my-1 h-px bg-slate-100 dark:bg-white/5" />
+                    <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     <ToolbarButton icon={Square} active={false} onClick={addRect} label="Rectángulo (R)" />
                     <ToolbarButton icon={Circle} active={false} onClick={addCircle} label="Círculo (C)" />
                     <ToolbarButton icon={Type} active={false} onClick={addText} label="Texto (T)" />
-                    <div className="mx-2 my-1 h-px bg-slate-100 dark:bg-white/5" />
+                    <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     <ToolbarButton icon={Eraser} active={false} onClick={removeSelection} label="Borrar selección" />
                     <ToolbarButton icon={Trash2} active={false} onClick={clearCanvas} label="Limpiar lienzo" tone="danger" />
-                    <div className="mx-2 my-1 h-px bg-slate-100 dark:bg-white/5" />
+                    <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     {/* Grid style toggle */}
                     <div className="relative">
                         <ToolbarButton
@@ -543,8 +543,8 @@ export default function WhiteboardSessionPage() {
                             label={`Grilla: ${GRID_OPTIONS.find((g) => g.value === gridStyle)?.label}`}
                         />
                         {showGridMenu && (
-                            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-slate-200 bg-white p-2 shadow-2xl dark:border-white/10 dark:bg-slate-900 min-w-[140px]">
-                                <p className="px-2 pb-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">Estilo</p>
+                            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-2 shadow-2xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))] min-w-[140px]">
+                                <p className="px-2 pb-1 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estilo</p>
                                 {GRID_OPTIONS.map((opt) => (
                                     <button
                                         key={opt.value}
@@ -552,16 +552,16 @@ export default function WhiteboardSessionPage() {
                                         className={clsx(
                                             "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition-all",
                                             gridStyle === opt.value
-                                                ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10"
-                                                : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/5"
+                                                ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10"
+                                                : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
                                         )}
                                     >
                                         <opt.icon size={14} />
                                         {opt.label}
                                     </button>
                                 ))}
-                                <div className="my-1 h-px bg-slate-100 dark:bg-white/5" />
-                                <p className="px-2 pb-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">Tamaño</p>
+                                <div className="my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                                <p className="px-2 pb-1 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tamaño</p>
                                 {GRID_SIZES.map((opt) => (
                                     <button
                                         key={opt.value}
@@ -569,8 +569,8 @@ export default function WhiteboardSessionPage() {
                                         className={clsx(
                                             "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition-all",
                                             gridSize === opt.value
-                                                ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10"
-                                                : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/5"
+                                                ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10"
+                                                : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
                                         )}
                                     >
                                         {opt.label}
@@ -598,30 +598,30 @@ export default function WhiteboardSessionPage() {
                 </main>
 
                 {/* ── Right property panel ── */}
-                <aside className="w-80 shrink-0 overflow-y-auto border-l border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[#111418]">
+                <aside className="w-80 shrink-0 overflow-y-auto border-l border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[#111418]">
                     {/* Info section */}
                     <section className="space-y-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Objetivo</p>
-                        <h1 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h1>
-                        <p className="text-xs font-medium leading-5 text-slate-500">{description || "Sin objetivo documentado."}</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Objetivo</p>
+                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{title}</h1>
+                        <p className="text-xs font-medium leading-5 text-[hsl(var(--text-secondary))]">{description || "Sin objetivo documentado."}</p>
                     </section>
 
                     {/* ── Object properties ── */}
                     {isObjectSelected && (
-                        <section className="mt-5 space-y-4 rounded-lg border border-slate-100 bg-slate-50/50 p-3 dark:border-white/5 dark:bg-white/[0.03]">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                        <section className="mt-5 space-y-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/50 p-3 dark:border-white/5 dark:bg-white/[0.03]">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 Propiedades — {String(selectedObjectProps?.type || "objeto")}
                             </p>
 
                             {/* Fill color */}
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Relleno</label>
+                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Relleno</label>
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="color"
                                         value={fillColor}
                                         onChange={(e) => { setFillColor(e.target.value); applyProperty("fill", e.target.value); }}
-                                        className="size-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent p-0 dark:border-white/10"
+                                        className="size-8 cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-transparent p-0 dark:border-white/10"
                                     />
                                     <div className="flex gap-1">
                                         {COLOR_PRESETS.map((c) => (
@@ -630,7 +630,7 @@ export default function WhiteboardSessionPage() {
                                                 onClick={() => { setFillColor(c); applyProperty("fill", c); }}
                                                 className={clsx(
                                                     "size-5 rounded-full border transition-all hover:scale-125",
-                                                    fillColor === c ? "scale-125 ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-slate-900" : "border-slate-200 dark:border-white/10"
+                                                    fillColor === c ? "scale-125 ring-2 ring-blue-500 ring-offset-1 ring-offset-[hsl(var(--border))]" : "border-[hsl(var(--border))] dark:border-white/10"
                                                 )}
                                                 style={{ backgroundColor: c }}
                                             />
@@ -641,13 +641,13 @@ export default function WhiteboardSessionPage() {
 
                             {/* Stroke color */}
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Borde</label>
+                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Borde</label>
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="color"
                                         value={strokeColor}
                                         onChange={(e) => { setStrokeColor(e.target.value); applyProperty("stroke", e.target.value); }}
-                                        className="size-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent p-0 dark:border-white/10"
+                                        className="size-8 cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-transparent p-0 dark:border-white/10"
                                     />
                                     <div className="flex gap-1">
                                         {COLOR_PRESETS.map((c) => (
@@ -656,7 +656,7 @@ export default function WhiteboardSessionPage() {
                                                 onClick={() => { setStrokeColor(c); applyProperty("stroke", c); }}
                                                 className={clsx(
                                                     "size-5 rounded-full border transition-all hover:scale-125",
-                                                    strokeColor === c ? "scale-125 ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-slate-900" : "border-slate-200 dark:border-white/10"
+                                                    strokeColor === c ? "scale-125 ring-2 ring-blue-500 ring-offset-1 ring-offset-[hsl(var(--border))]" : "border-[hsl(var(--border))] dark:border-white/10"
                                                 )}
                                                 style={{ backgroundColor: c }}
                                             />
@@ -667,7 +667,7 @@ export default function WhiteboardSessionPage() {
 
                             {/* Stroke width slider */}
                             <div className="space-y-1.5">
-                                <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                                <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <span>Grosor de borde</span>
                                     <span className="font-mono text-[11px]">{strokeWidth}px</span>
                                 </label>
@@ -683,7 +683,7 @@ export default function WhiteboardSessionPage() {
 
                             {/* Opacity slider */}
                             <div className="space-y-1.5">
-                                <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                                <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <span>Opacidad</span>
                                     <span className="font-mono text-[11px]">{opacity}%</span>
                                 </label>
@@ -702,11 +702,11 @@ export default function WhiteboardSessionPage() {
                                 <>
                                     {/* Font family dropdown */}
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Fuente</label>
+                                        <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente</label>
                                         <select
                                             value={textFontFamily}
                                             onChange={(e) => { setTextFontFamily(e.target.value); applyProperty("fontFamily", e.target.value); }}
-                                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[12px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-[12px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
                                         >
                                             {FONT_FAMILIES.map((f) => (
                                                 <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
@@ -718,7 +718,7 @@ export default function WhiteboardSessionPage() {
 
                                     {/* Font size */}
                                     <div className="space-y-1.5">
-                                        <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                                        <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             <span>Tamaño</span>
                                             <span className="font-mono text-[11px]">{textFontSize}px</span>
                                         </label>
@@ -738,8 +738,8 @@ export default function WhiteboardSessionPage() {
                                                     className={clsx(
                                                         "rounded-md px-2 py-0.5 text-[10px] font-bold transition-all",
                                                         textFontSize === s
-                                                            ? "bg-blue-500 text-white"
-                                                            : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10"
+                                                            ? "bg-[hsl(var(--primary))] text-white"
+                                                            : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10"
                                                     )}
                                                 >
                                                     {s}
@@ -750,12 +750,12 @@ export default function WhiteboardSessionPage() {
 
                                     {/* Text color */}
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Color texto</label>
+                                        <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Color texto</label>
                                         <input
                                             type="color"
                                             value={textColor}
                                             onChange={(e) => { setTextColor(e.target.value); applyProperty("fill", e.target.value); }}
-                                            className="size-8 cursor-pointer rounded-lg border border-slate-200 bg-transparent p-0 dark:border-white/10"
+                                            className="size-8 cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-transparent p-0 dark:border-white/10"
                                         />
                                     </div>
 
@@ -765,7 +765,7 @@ export default function WhiteboardSessionPage() {
                                             onClick={() => { const v = textBold ? "normal" : "bold"; setTextBold(!textBold); applyProperty("fontWeight", v); }}
                                             className={clsx(
                                                 "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all",
-                                                textBold ? "bg-blue-500 text-white" : "bg-slate-100 text-slate-500 dark:bg-white/5"
+                                                textBold ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5"
                                             )}
                                         >
                                             <Bold size={14} /> Negrita
@@ -774,7 +774,7 @@ export default function WhiteboardSessionPage() {
                                             onClick={() => { const v = textItalic ? "" : "italic"; setTextItalic(!textItalic); applyProperty("fontStyle", v); }}
                                             className={clsx(
                                                 "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all",
-                                                textItalic ? "bg-blue-500 text-white" : "bg-slate-100 text-slate-500 dark:bg-white/5"
+                                                textItalic ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5"
                                             )}
                                         >
                                             <Italic size={14} /> Cursiva
@@ -786,52 +786,52 @@ export default function WhiteboardSessionPage() {
                             {/* Position & size */}
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500">X</label>
+                                    <label className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">X</label>
                                     <input
                                         type="number"
                                         value={objLeft}
                                         onChange={(e) => { const v = Number(e.target.value); setObjLeft(v); applyProperty("left", v); }}
-                                        className="w-full rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500">Y</label>
+                                    <label className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Y</label>
                                     <input
                                         type="number"
                                         value={objTop}
                                         onChange={(e) => { const v = Number(e.target.value); setObjTop(v); applyProperty("top", v); }}
-                                        className="w-full rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500">Ancho</label>
+                                    <label className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ancho</label>
                                     <input
                                         type="number"
                                         value={objWidth}
                                         onChange={(e) => { const v = Number(e.target.value); setObjWidth(v); applyProperty("width", v); }}
-                                        className="w-full rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-bold uppercase tracking-wide text-slate-500">Alto</label>
+                                    <label className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Alto</label>
                                     <input
                                         type="number"
                                         value={objHeight}
                                         onChange={(e) => { const v = Number(e.target.value); setObjHeight(v); applyProperty("height", v); }}
-                                        className="w-full rounded-md border border-slate-200 px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
                                     />
                                 </div>
                             </div>
 
                             {/* Order actions */}
                             <div className="flex gap-2">
-                                <button onClick={bringForward} className="flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1.5 text-[10px] font-bold text-slate-600 transition-all hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10">
+                                <button onClick={bringForward} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-[10px] font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10">
                                     <BringToFront size={12} /> Al frente
                                 </button>
-                                <button onClick={sendBackward} className="flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1.5 text-[10px] font-bold text-slate-600 transition-all hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10">
+                                <button onClick={sendBackward} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-[10px] font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10">
                                     <SendToBack size={12} /> Atrás
                                 </button>
-                                <button onClick={duplicateSelection} className="flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1.5 text-[10px] font-bold text-slate-600 transition-all hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10">
+                                <button onClick={duplicateSelection} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-[10px] font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10">
                                     <Copy size={12} /> Duplicar
                                 </button>
                             </div>
@@ -848,7 +848,7 @@ export default function WhiteboardSessionPage() {
 
                     {/* ── Layers ── */}
                     <section className={clsx("space-y-3", isObjectSelected ? "mt-5" : "mt-6")}>
-                        <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                        <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             <Layers size={12} /> Capas reales
                         </h3>
                         <div className="space-y-1.5">
@@ -856,7 +856,7 @@ export default function WhiteboardSessionPage() {
                                 <button
                                     key={`${layer.type}-${layer.index}`}
                                     onClick={() => focusLayer(layer.index)}
-                                    className="flex w-full items-center justify-between rounded-lg border border-slate-100 p-2.5 text-left text-[11px] font-medium text-slate-500 transition-all hover:border-blue-200 hover:bg-blue-50/40 dark:border-white/5 dark:hover:bg-blue-500/10"
+                                    className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] p-2.5 text-left text-[11px] font-medium text-[hsl(var(--text-secondary))] transition-all hover:border-blue-200 hover:bg-blue-50/40 dark:border-white/5 dark:hover:bg-blue-500/10"
                                 >
                                     <span className="flex items-center gap-2">
                                         <History size={12} /> {layer.label}
@@ -865,7 +865,7 @@ export default function WhiteboardSessionPage() {
                                 </button>
                             ))}
                             {layers.length === 0 && (
-                                <div className="rounded-lg border border-dashed border-slate-200 p-4 text-center text-[11px] font-semibold text-slate-400 dark:border-white/10">
+                                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:border-white/10">
                                     No hay objetos en el lienzo.
                                 </div>
                             )}
@@ -942,11 +942,11 @@ function ToolbarButton({
                     ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20"
                     : tone === "danger"
                         ? "text-rose-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
-                        : "text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5"
+                        : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
             )}
         >
             <Icon size={20} />
-            <span className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-lg bg-slate-900 px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-white opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-lg bg-[hsl(var(--bg-muted))] px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-white opacity-0 transition-opacity group-hover:opacity-100">
                 {label}
             </span>
         </button>

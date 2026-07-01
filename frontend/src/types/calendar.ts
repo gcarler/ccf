@@ -35,12 +35,12 @@ export const HOUR_HEIGHT = 60; // px per hour
 export const EVENT_TYPE_META: Record<CalEventType, { label: string; chip: string; color: string }> = {
   task: {
     label: 'Tarea',
-    chip: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
+    chip: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300',
     color: '#3b82f6',
   },
   agenda_event: {
     label: 'Agenda',
-    chip: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300',
+    chip: 'bg-red-50 text-[hsl(var(--destructive))] dark:bg-red-500/10 dark:text-red-300',
     color: '#ef4444',
   },
   evangelism_event: {
@@ -55,7 +55,7 @@ export const EVENT_TYPE_META: Record<CalEventType, { label: string; chip: string
   },
   evangelism_session: {
     label: 'Sesión grupo',
-    chip: 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300',
+    chip: 'bg-green-50 text-[hsl(var(--secondary))] dark:bg-green-500/10 dark:text-green-300',
     color: '#16a34a',
   },
   consolidation_case: {
@@ -70,7 +70,7 @@ export const EVENT_TYPE_META: Record<CalEventType, { label: string; chip: string
   },
   project_milestone: {
     label: 'Hito',
-    chip: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300',
+    chip: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300',
     color: '#3b82f6',
   },
   birthday: {
@@ -80,7 +80,7 @@ export const EVENT_TYPE_META: Record<CalEventType, { label: string; chip: string
   },
   reminder: {
     label: 'Recordatorio',
-    chip: 'bg-slate-50 text-slate-700 dark:bg-white/10 dark:text-slate-300',
+    chip: 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]',
     color: '#64748b',
   },
 };

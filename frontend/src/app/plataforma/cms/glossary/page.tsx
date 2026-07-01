@@ -42,7 +42,7 @@ export default function GlossaryPage() {
           <BookOpen size={24} className="text-[hsl(var(--primary))]" />
           <div>
             <h1 className="text-xl font-bold">Glosario Corporativo</h1>
-            <p className="text-sm text-slate-500">{terms.length} terminos definidos</p>
+            <p className="text-sm text-[hsl(var(--text-secondary))]">{terms.length} terminos definidos</p>
           </div>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-white">
@@ -51,12 +51,12 @@ export default function GlossaryPage() {
       </div>
 
       <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
         <input placeholder="Buscar termino..." value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 text-sm border rounded-xl" />
       </div>
 
       {showForm && (
-        <div className="p-4 border rounded-xl bg-slate-50 space-y-3">
+        <div className="p-4 border rounded-xl bg-[hsl(var(--surface-1))] space-y-3">
           <input placeholder="Termino" value={form.term} onChange={e => setForm(f => ({ ...f, term: e.target.value }))} className="w-full px-3 py-2 text-sm border rounded-lg" />
           <textarea placeholder="Definicion..." value={form.definition} onChange={e => setForm(f => ({ ...f, definition: e.target.value }))} className="w-full px-3 py-2 text-sm border rounded-lg h-24" />
           <div className="grid grid-cols-2 gap-3">
@@ -70,17 +70,17 @@ export default function GlossaryPage() {
         </div>
       )}
 
-      {loading ? <div className="py-12 text-center text-slate-400">Cargando...</div> : Object.entries(grouped).map(([cat, catTerms]) => (
+      {loading ? <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Cargando...</div> : Object.entries(grouped).map(([cat, catTerms]) => (
         <div key={cat}>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">{cat}</h3>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">{cat}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {catTerms.map(t => (
-              <div key={t.id} className="p-4 border rounded-xl bg-white hover:shadow-sm transition-shadow">
+              <div key={t.id} className="p-4 border rounded-xl bg-[hsl(var(--bg-primary))] hover:shadow-sm transition-shadow">
                 <div className="flex items-start justify-between">
                   <h4 className="font-bold text-sm">{t.term}</h4>
-                  {t.aliases.length > 0 && <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">{t.aliases.join(", ")}</span>}
+                  {t.aliases.length > 0 && <span className="text-[10px] bg-[hsl(var(--surface-2))] px-1.5 py-0.5 rounded">{t.aliases.join(", ")}</span>}
                 </div>
-                <p className="text-xs text-slate-500 mt-2 leading-relaxed">{t.definition}</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] mt-2 leading-relaxed">{t.definition}</p>
               </div>
             ))}
           </div>

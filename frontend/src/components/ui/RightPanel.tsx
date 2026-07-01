@@ -69,7 +69,7 @@ function RightPanel({
             transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
             style={{ width: `min(${width}px, 100vw)`, minWidth: 0, maxWidth: '100vw' }}
             className={clsx(
-                'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border-l border-slate-100 dark:border-white/5',
+                'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border-l border-[hsl(var(--border))] dark:border-white/5',
                 isControlled || rightMode === 'overlay'
                     ? 'fixed right-0 top-10 h-[calc(100vh-2.5rem)] z-[35] shadow-[-24px_0_60px_rgba(0,0,0,0.12)]'
                     : 'relative h-full z-[25] shadow-[-8px_0_24px_rgba(0,0,0,0.06)]'
@@ -79,15 +79,15 @@ function RightPanel({
             aria-label={title}
         >
             {/* Panel header */}
-            <div className="h-10 flex items-center justify-between px-4 border-b border-slate-100 dark:border-white/5 shrink-0">
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+            <div className="h-10 flex items-center justify-between px-4 border-b border-[hsl(var(--border))] dark:border-white/5 shrink-0">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                     {title}
                 </span>
                 <div className="flex items-center gap-1">
                     <button
                         onClick={handleClose}
                         aria-label="Cerrar panel"
-                        className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                        className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all"
                     >
                         <X size={14} />
                     </button>
@@ -116,7 +116,7 @@ function RightPanel({
                                 exit={{ opacity: 0 }}
                                 transition={{ duration: 0.2 }}
                                 className={clsx(
-                                    'z-[34] bg-slate-950/20 backdrop-blur-[1px]',
+                                    'z-[34] bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]',
                                     isControlled ? 'fixed inset-x-0 bottom-0 top-10' : 'absolute inset-0'
                                 )}
                                 onClick={handleClose}

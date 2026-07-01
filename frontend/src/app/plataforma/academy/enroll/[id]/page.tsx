@@ -104,7 +104,7 @@ export default function EnrollmentWizard() {
                                 {/* Course Hero Card */}
                                 <div className="relative group">
                                     <div className="absolute inset-0 bg-[hsl(var(--primary))] opacity-10 blur-2xl rounded-md group-hover:opacity-20 transition-opacity"></div>
-                                    <div className="relative p-4 rounded-md bg-slate-900 border border-white/10 overflow-hidden min-h-[220px] flex flex-col justify-end">
+                                    <div className="relative p-4 rounded-md bg-[hsl(var(--bg-muted))] border border-white/10 overflow-hidden min-h-[220px] flex flex-col justify-end">
                                         <div className="absolute top-0 right-0 p-4 text-white/5 opacity-20 transform translate-x-4 -translate-y-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
                                             <BookOpen size={160} strokeWidth={1} />
                                         </div>

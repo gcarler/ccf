@@ -97,7 +97,7 @@ export default function WebhooksPage() {
           <Webhook size={24} className="text-[hsl(var(--primary))]" />
           <div>
             <h1 className="text-xl font-bold">Webhooks</h1>
-            <p className="text-sm text-slate-500">Notificar a sistemas externos cuando ocurran eventos</p>
+            <p className="text-sm text-[hsl(var(--text-secondary))]">Notificar a sistemas externos cuando ocurran eventos</p>
           </div>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-white hover:opacity-90">
@@ -106,11 +106,11 @@ export default function WebhooksPage() {
       </div>
 
       {showForm && (
-        <div className="p-4 border rounded-xl bg-slate-50 space-y-3">
+        <div className="p-4 border rounded-xl bg-[hsl(var(--surface-1))] space-y-3">
           <input placeholder="Nombre" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="w-full px-3 py-2 text-sm border rounded-lg" />
           <input placeholder="URL (https://...)" value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} className="w-full px-3 py-2 text-sm border rounded-lg" />
           <div>
-            <p className="text-xs font-medium text-slate-500 mb-2">Eventos:</p>
+            <p className="text-xs font-medium text-[hsl(var(--text-secondary))] mb-2">Eventos:</p>
             <div className="flex flex-wrap gap-2">
               {AVAILABLE_EVENTS.map(ev => (
                 <button key={ev} onClick={() => toggleEvent(ev)} className={`px-2 py-1 text-xs rounded-lg border ${form.events.includes(ev) ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" : ""}`}>{ev}</button>
@@ -125,45 +125,45 @@ export default function WebhooksPage() {
       )}
 
       <div className="space-y-3">
-        {loading ? <div className="py-12 text-center text-slate-400">Cargando...</div> : webhooks.length === 0 ? (
-          <div className="py-12 text-center text-slate-400">Sin webhooks configurados</div>
+        {loading ? <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Cargando...</div> : webhooks.length === 0 ? (
+          <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Sin webhooks configurados</div>
         ) : webhooks.map(wh => (
           <div key={wh.id} className="border rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between p-4 bg-white">
+            <div className="flex items-center justify-between p-4 bg-[hsl(var(--bg-primary))]">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${wh.is_active ? "bg-green-500" : "bg-slate-300"}`} />
+                  <span className={`w-2 h-2 rounded-full ${wh.is_active ? "bg-[hsl(var(--secondary))]" : "bg-[hsl(var(--surface-2))]"}`} />
                   <span className="font-medium text-sm">{wh.name}</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-1 truncate font-mono">{wh.url}</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] mt-1 truncate font-mono">{wh.url}</p>
                 <div className="flex gap-1 mt-2 flex-wrap">
-                  {wh.events.map(ev => <span key={ev} className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">{ev}</span>)}
+                  {wh.events.map(ev => <span key={ev} className="text-[10px] bg-[hsl(var(--surface-2))] px-1.5 py-0.5 rounded">{ev}</span>)}
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0 ml-3">
-                <button onClick={() => loadDeliveries(wh.id)} className="p-1.5 rounded-lg hover:bg-slate-100" title="Entregas">
+                <button onClick={() => loadDeliveries(wh.id)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))]" title="Entregas">
                   {expandedId === wh.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 </button>
-                <button onClick={() => toggle(wh.id, wh.is_active)} className="p-1.5 rounded-lg hover:bg-slate-100" title={wh.is_active ? "Desactivar" : "Activar"}>
-                  {wh.is_active ? <PowerOff size={14} className="text-amber-500" /> : <Power size={14} className="text-green-500" />}
+                <button onClick={() => toggle(wh.id, wh.is_active)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))]" title={wh.is_active ? "Desactivar" : "Activar"}>
+                  {wh.is_active ? <PowerOff size={14} className="text-amber-500" /> : <Power size={14} className="text-[hsl(var(--secondary))]" />}
                 </button>
                 <button onClick={() => setPendingDelete(wh)} className="p-1.5 rounded-lg hover:bg-red-50" title="Eliminar">
-                  <Trash2 size={14} className="text-red-400" />
+                  <Trash2 size={14} className="text-[hsl(var(--destructive))]" />
                 </button>
               </div>
             </div>
             {expandedId === wh.id && (
-              <div className="border-t bg-slate-50 p-4">
-                <p className="text-xs font-medium text-slate-500 mb-2">Ultimas entregas:</p>
-                {deliveries.length === 0 ? <p className="text-xs text-slate-400">Sin entregas</p> : (
+              <div className="border-t bg-[hsl(var(--surface-1))] p-4">
+                <p className="text-xs font-medium text-[hsl(var(--text-secondary))] mb-2">Ultimas entregas:</p>
+                {deliveries.length === 0 ? <p className="text-xs text-[hsl(var(--text-secondary))]">Sin entregas</p> : (
                   <div className="space-y-1">
                     {deliveries.map(d => (
                       <div key={d.id} className="flex items-center gap-3 text-xs">
-                        <span className={`w-1.5 h-1.5 rounded-full ${d.success ? "bg-green-500" : "bg-red-500"}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${d.success ? "bg-[hsl(var(--secondary))]" : "bg-[hsl(var(--destructive))]"}`} />
                         <span className="font-mono">{d.event}</span>
-                        <span className="text-slate-400">{d.response_status || "?"}</span>
-                        <span className="text-slate-400">{d.duration_ms || "?"}ms</span>
-                        <span className="text-slate-400">{new Date(d.created_at).toLocaleString("es")}</span>
+                        <span className="text-[hsl(var(--text-secondary))]">{d.response_status || "?"}</span>
+                        <span className="text-[hsl(var(--text-secondary))]">{d.duration_ms || "?"}ms</span>
+                        <span className="text-[hsl(var(--text-secondary))]">{new Date(d.created_at).toLocaleString("es")}</span>
                       </div>
                     ))}
                   </div>
@@ -180,10 +180,10 @@ export default function WebhooksPage() {
         subtitle={pendingDelete?.name}
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">Esta accion eliminara el webhook seleccionado.</p>
+          <p className="text-sm text-[hsl(var(--text-secondary))]">Esta accion eliminara el webhook seleccionado.</p>
           <div className="flex gap-2">
             <button onClick={() => setPendingDelete(null)} className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium">Cancelar</button>
-            <button onClick={remove} className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700">Eliminar</button>
+            <button onClick={remove} className="flex-1 rounded-lg bg-[hsl(var(--destructive))] px-3 py-2 text-sm font-medium text-white hover:bg-[hsl(var(--destructive))]">Eliminar</button>
           </div>
         </div>
       </SidePanel>

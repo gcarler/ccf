@@ -13,11 +13,11 @@ interface HealthIndicatorProps {
 export default function HealthIndicator({ label, value, color }: HealthIndicatorProps) {
   return (
     <div className="space-y-2">
-      <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wide">
+      <div className="flex justify-between text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
         <span>{label}</span>
-        <span className="font-bold text-slate-800 dark:text-white">{value}%</span>
+        <span className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}%</span>
       </div>
-      <div className="h-1.5 w-full bg-slate-50 dark:bg-white/5 rounded-full overflow-hidden">
+      <div className="h-1.5 w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${value}%` }}

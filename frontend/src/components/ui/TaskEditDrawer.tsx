@@ -63,15 +63,15 @@ const PRIORITY_OPTIONS = [
     },
     {
         value: 'low', label: 'Baja',
-        color: 'text-slate-500', bg: 'bg-slate-50 dark:bg-slate-800/40',
-        border: 'border-slate-200 dark:border-slate-700/50',
-        dot: 'bg-slate-400', bar: 'bg-slate-400',
-        glow: 'shadow-slate-500/10',
+        color: 'text-[hsl(var(--text-secondary))]', bg: 'bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]/40',
+        border: 'border-[hsl(var(--border))] dark:border-[hsl(var(--border))]/50',
+        dot: 'bg-[hsl(var(--surface-2))]', bar: 'bg-[hsl(var(--surface-2))]',
+        glow: 'shadow-black/10',
     },
 ];
 
 const STATUS_OPTIONS = [
-    { value: 'todo',        label: 'Por hacer',   color: 'text-slate-600 dark:text-slate-400',   bg: 'bg-slate-100 dark:bg-slate-800/60',      icon: Circle },
+    { value: 'todo',        label: 'Por hacer',   color: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]/60',      icon: Circle },
     { value: 'in_progress', label: 'En progreso', color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',     bg: 'bg-blue-50 dark:bg-blue-500/10',          icon: Clock },
     { value: 'done',        label: 'Completada',  color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10',  icon: CheckCircle2 },
     { value: 'blocked',     label: 'Bloqueada',   color: 'text-rose-600 dark:text-rose-400',     bg: 'bg-rose-50 dark:bg-rose-500/10',          icon: AlertTriangle },
@@ -226,7 +226,7 @@ export default function TaskEditDrawer({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="fixed inset-x-0 bottom-0 top-10 z-[100] bg-slate-950/30 backdrop-blur-[3px]"
+                        className="fixed inset-x-0 bottom-0 top-10 z-[100] bg-[hsl(var(--bg-muted))]/30 backdrop-blur-[3px]"
                         onClick={onClose}
                         aria-hidden
                     />
@@ -245,7 +245,7 @@ export default function TaskEditDrawer({
                         <div className={clsx('h-[3px] w-full shrink-0', cp.bar)} />
 
                         {/* ── HEADER ── */}
-                        <header className="shrink-0 px-3 pt-3.5 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+                        <header className="shrink-0 px-3 pt-3.5 pb-3 border-b border-[hsl(var(--border))] dark:border-white/[0.06]">
                             <div className="flex items-center justify-between mb-3">
 
                                 {/* Left: status + xp */}
@@ -272,7 +272,7 @@ export default function TaskEditDrawer({
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                                     transition={{ duration: 0.13 }}
-                                                    className="absolute left-0 top-full mt-2 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#222326] border border-slate-200 dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
+                                                    className="absolute left-0 top-full mt-2 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#222326] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
                                                 >
                                                     {STATUS_OPTIONS.map(opt => (
                                                         <button key={opt.value}
@@ -281,7 +281,7 @@ export default function TaskEditDrawer({
                                                                 'w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-semibold transition-colors',
                                                                 form.status === opt.value
                                                                     ? `${opt.color} ${opt.bg}`
-                                                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                                                                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
                                                             )}
                                                         >
                                                             <opt.icon size={13} strokeWidth={2} />
@@ -321,11 +321,11 @@ export default function TaskEditDrawer({
                                             </motion.button>
                                         ) : null}
                                     </AnimatePresence>
-                                    <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-all ml-0.5">
+                                    <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all ml-0.5">
                                         <MoreHorizontal size={15} />
                                     </button>
                                     <button onClick={onClose} aria-label="Cerrar"
-                                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
+                                        className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all">
                                         <X size={15} />
                                     </button>
                                 </div>
@@ -338,7 +338,7 @@ export default function TaskEditDrawer({
                                 onChange={e => updateField('title', e.target.value)}
                                 rows={1}
                                 placeholder="Nombre de la tarea..."
-                                className="w-full text-[19px] font-bold text-slate-900 dark:text-white bg-transparent resize-none outline-none leading-snug placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:ring-0 -mx-0.5"
+                                className="w-full text-[19px] font-bold text-[hsl(var(--text-primary))] dark:text-white bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:ring-0 -mx-0.5"
                             />
                         </header>
 
@@ -346,7 +346,7 @@ export default function TaskEditDrawer({
                         <div className="flex-1 overflow-y-auto scrollbar-thin">
 
                             {/* ─ META FIELDS ─ */}
-                            <div className="px-3 py-1.5 space-y-3 border-b border-slate-100 dark:border-white/[0.05]">
+                            <div className="px-3 py-1.5 space-y-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
 
                                 {/* Priority row */}
                                 <MetaRow label="Prioridad">
@@ -369,7 +369,7 @@ export default function TaskEditDrawer({
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                                     transition={{ duration: 0.13 }}
-                                                    className="absolute left-0 top-full mt-2 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[#222326] border border-slate-200 dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
+                                                    className="absolute left-0 top-full mt-2 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[#222326] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
                                                 >
                                                     {PRIORITY_OPTIONS.map(opt => (
                                                         <button key={opt.value}
@@ -378,7 +378,7 @@ export default function TaskEditDrawer({
                                                                 'w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-semibold transition-colors',
                                                                 form.priority === opt.value
                                                                     ? `${opt.color} ${opt.bg}`
-                                                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                                                                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
                                                             )}
                                                         >
                                                             <span className={clsx('size-2 rounded-full shrink-0', opt.dot)} />
@@ -393,31 +393,31 @@ export default function TaskEditDrawer({
                                 </MetaRow>
 
                                 {/* Due date row */}
-                                <MetaRow label="Fecha límite" icon={<CalendarDays size={13} className="text-slate-400" />}>
+                                <MetaRow label="Fecha límite" icon={<CalendarDays size={13} className="text-[hsl(var(--text-secondary))]" />}>
                                     <div className="relative">
                                         <input
                                             type="date"
                                             value={form.due_date ? form.due_date.split('T')[0] : ''}
                                             onChange={e => updateField('due_date', e.target.value || null)}
-                                            className="h-8 px-3 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] text-[12px] font-semibold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+                                            className="h-8 px-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.08] text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
                                         />
                                     </div>
                                 </MetaRow>
 
                                 {/* Project row */}
-                                <MetaRow label="Proyecto" icon={<FolderOpen size={13} className="text-slate-400" />}>
-                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] max-w-[220px]">
-                                        <span className="text-[12px] font-semibold text-slate-600 dark:text-slate-300 truncate">
+                                <MetaRow label="Proyecto" icon={<FolderOpen size={13} className="text-[hsl(var(--text-secondary))]" />}>
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.08] max-w-[220px]">
+                                        <span className="text-[12px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate">
                                             {form.project_title || `Proyecto #${form.project_id}`}
                                         </span>
-                                        <ExternalLink size={11} className="ml-auto text-slate-300 dark:text-slate-600 shrink-0" />
+                                        <ExternalLink size={11} className="ml-auto text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] shrink-0" />
                                     </div>
                                 </MetaRow>
                             </div>
 
                             {/* ─ DESCRIPTION ─ */}
-                            <div className="px-3 py-1.5 border-b border-slate-100 dark:border-white/[0.05]">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                            <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1.5">
                                     <AlignLeft size={11} /> Descripción
                                 </p>
                                 <textarea
@@ -425,12 +425,12 @@ export default function TaskEditDrawer({
                                     onChange={e => updateField('description', e.target.value || null)}
                                     rows={3}
                                     placeholder="Añade contexto o detalles sobre esta tarea..."
-                                    className="w-full px-3 py-2.5 rounded-md bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.07] text-[13px] font-medium text-slate-700 dark:text-slate-300 placeholder:text-slate-300 dark:placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400/50 resize-none transition-all leading-relaxed"
+                                    className="w-full px-3 py-2.5 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/[0.07] text-[13px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400/50 resize-none transition-all leading-relaxed"
                                 />
                             </div>
 
                             {/* ─ MESH AI ─ */}
-                            <div className="px-3 py-1.5 border-b border-slate-100 dark:border-white/[0.05]">
+                            <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
                                 <div className="rounded-lg bg-gradient-to-br from-blue-50 via-sky-50/50 to-blue-50/30 dark:from-blue-900/15 dark:via-sky-900/10 dark:to-transparent border border-blue-200/60 dark:border-blue-500/20 overflow-hidden">
                                     {/* AI header */}
                                     <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200/40 dark:border-blue-500/15">
@@ -457,7 +457,7 @@ export default function TaskEditDrawer({
                                             {aiSuggestion ? (
                                                 <motion.p key="ai-text"
                                                     initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                                                    className="text-[13px] text-slate-700 dark:text-slate-300 leading-relaxed font-medium italic"
+                                                    className="text-[13px] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium italic"
                                                 >
                                                     &ldquo;{aiSuggestion}&rdquo;
                                                 </motion.p>
@@ -480,7 +480,7 @@ export default function TaskEditDrawer({
 
                             {/* ─ QUICK ACTIONS ─ */}
                             <div className="px-3 py-1.5">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3">Acciones</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">Acciones</p>
                                 <div className="grid grid-cols-2 gap-2">
                                     <QuickBtn icon={MessageSquare} label="Comentar" />
                                     <QuickBtn icon={Link2} label="Adjuntar" />
@@ -507,7 +507,7 @@ export default function TaskEditDrawer({
                                                         Sí, eliminar
                                                     </button>
                                                     <button onClick={() => setShowDeleteConfirm(false)}
-                                                        className="flex-1 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 rounded-md text-[11px] font-bold hover:bg-slate-50 dark:hover:bg-white/8 transition-all">
+                                                        className="flex-1 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[11px] font-bold hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/8 transition-all">
                                                         Cancelar
                                                     </button>
                                                 </div>
@@ -520,26 +520,26 @@ export default function TaskEditDrawer({
                         </div>
 
                         {/* ── FOOTER ── */}
-                        <footer className="shrink-0 px-3 py-3 border-t border-slate-100 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] flex items-center justify-between">
+                        <footer className="shrink-0 px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/[0.06] bg-[hsl(var(--surface-1))]/70 dark:bg-white/[0.02] flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className={clsx('size-2 rounded-full shrink-0', cp.dot)} />
-                                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                     {cp.label}
                                 </span>
-                                <span className="text-slate-200 dark:text-white/10">·</span>
-                                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                <span className="text-[hsl(var(--text-secondary))] dark:text-white/10">·</span>
+                                <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                     {cs.label}
                                 </span>
                                 {form.due_date && (
                                     <>
-                                        <span className="text-slate-200 dark:text-white/10">·</span>
-                                        <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                        <span className="text-[hsl(var(--text-secondary))] dark:text-white/10">·</span>
+                                        <span className="flex items-center gap-1 text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                             <CalendarDays size={10} />
                                             {new Date(form.due_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                                         </span>
                                     </>
                                 )}
-                                <span className="ml-1 flex items-center gap-0.5 text-[10px] text-slate-300 dark:text-slate-600 font-mono">
+                                <span className="ml-1 flex items-center gap-0.5 text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-mono">
                                     <Hash size={9} />
                                     {form.id}
                                 </span>
@@ -554,7 +554,7 @@ export default function TaskEditDrawer({
                                         ? 'bg-[hsl(var(--primary))] text-white shadow-sm shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95'
                                         : saved
                                         ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                                        : 'bg-transparent text-slate-300 dark:text-slate-600 cursor-default'
+                                        : 'bg-transparent text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] cursor-default'
                                 )}
                             >
                                 {saving ? <Loader2 size={11} className="animate-spin" /> : saved ? <CheckCheck size={11} /> : <Save size={11} />}
@@ -577,7 +577,7 @@ function MetaRow({ label, icon, children }: { label: string; icon?: React.ReactN
         <div className="flex items-center gap-0">
             <div className="w-[110px] shrink-0 flex items-center gap-1.5">
                 {icon}
-                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">{label}</span>
+                <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
             </div>
             {children}
         </div>
@@ -592,7 +592,7 @@ function QuickBtn({ icon: Icon, label, onClick, danger = false }: { icon: any; l
                 'flex items-center gap-2 px-3 py-2.5 rounded-md text-[11px] font-semibold border transition-all group hover:-translate-y-[1px] hover:shadow-sm active:scale-95',
                 danger
                     ? 'text-rose-500 dark:text-rose-400 bg-transparent border-rose-200 dark:border-rose-500/20 hover:bg-rose-50 dark:hover:bg-rose-500/10'
-                    : 'text-slate-500 dark:text-slate-400 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.07] hover:bg-slate-50 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border-[hsl(var(--border))] dark:border-white/[0.07] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.06] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]'
             )}
         >
             <Icon size={13} className="transition-transform group-hover:scale-110" />

@@ -115,16 +115,16 @@ function FilterBar({
 
     return (
         <div className="flex flex-wrap items-center gap-2 mb-4">
-            <Filter size={14} className="text-slate-400" />
+            <Filter size={14} className="text-[hsl(var(--text-secondary))]" />
             {filters.map((f) => (
                 <div key={f.key} className="flex items-center gap-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         {f.label}:
                     </label>
                     <select
                         value={activeFilters[f.key] ?? f.default ?? ''}
                         onChange={(e) => onFilterChange(f.key, e.target.value)}
-                        className="text-[11px] font-medium bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-md px-2 py-1 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
+                        className="text-[11px] font-medium bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-2 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                     >
                         {(f.options || []).map((opt) => (
                             <option key={opt.value} value={opt.value}>
@@ -153,15 +153,15 @@ function FunnelChart({ stages }: { stages: FunnelStage[] }) {
                 return (
                     <div key={s.stage} className="space-y-0.5">
                         <div className="flex items-center justify-between text-[11px]">
-                            <span className="font-medium text-slate-600 dark:text-slate-300">{s.stage}</span>
+                            <span className="font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{s.stage}</span>
                             <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-800 dark:text-white">{fmtNum(s.count)}</span>
+                                <span className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{fmtNum(s.count)}</span>
                                 {s.conversion_rate !== undefined && (
-                                    <span className="text-[10px] text-slate-400">({s.conversion_rate}%)</span>
+                                    <span className="text-[10px] text-[hsl(var(--text-secondary))]">({s.conversion_rate}%)</span>
                                 )}
                             </div>
                         </div>
-                        <div className="h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                             <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${pct}%` }}
@@ -178,7 +178,7 @@ function FunnelChart({ stages }: { stages: FunnelStage[] }) {
 
 function HeatMap({ data }: { data: HeatmapItem[] }) {
     if (!data?.length) {
-        return <p className="text-xs text-slate-400 italic">Sin datos de interacciones</p>;
+        return <p className="text-xs text-[hsl(var(--text-secondary))] italic">Sin datos de interacciones</p>;
     }
     const days = [...new Set(data.map((d) => d.y))];
     const types = [...new Set(data.map((d) => d.x))];
@@ -189,16 +189,16 @@ function HeatMap({ data }: { data: HeatmapItem[] }) {
             <table className="w-full text-[10px]">
                 <thead>
                     <tr>
-                        <th className="p-1 text-left text-slate-400 font-medium">Tipo \ Día</th>
+                        <th className="p-1 text-left text-[hsl(var(--text-secondary))] font-medium">Tipo \ Día</th>
                         {days.map((d) => (
-                            <th key={d} className="p-1 text-center text-slate-400 font-medium">{d.slice(0, 3)}</th>
+                            <th key={d} className="p-1 text-center text-[hsl(var(--text-secondary))] font-medium">{d.slice(0, 3)}</th>
                         ))}
                     </tr>
                 </thead>
                 <tbody>
                     {types.map((t) => (
                         <tr key={t}>
-                            <td className="p-1 text-slate-500 font-medium">{t}</td>
+                            <td className="p-1 text-[hsl(var(--text-secondary))] font-medium">{t}</td>
                             {days.map((d) => {
                                 const item = data.find((h) => h.x === t && h.y === d);
                                 const intensity = item ? (item.value / maxVal) * 100 : 0;
@@ -227,8 +227,8 @@ function HeatMap({ data }: { data: HeatmapItem[] }) {
 function GeoMap({ data }: { data: GeoBucket[] }) {
     if (!data?.length) {
         return (
-            <div className="flex items-center justify-center h-48 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5">
-                <p className="text-xs text-slate-400 italic">Sin datos geográficos</p>
+            <div className="flex items-center justify-center h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5">
+                <p className="text-xs text-[hsl(var(--text-secondary))] italic">Sin datos geográficos</p>
             </div>
         );
     }
@@ -238,17 +238,17 @@ function GeoMap({ data }: { data: GeoBucket[] }) {
             {data.map((g) => (
                 <div
                     key={g.label}
-                    className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                    className="flex items-center gap-3 p-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors"
                 >
                     <div className="size-8 rounded-full bg-blue-100 dark:bg-[hsl(var(--primary))]/20 flex items-center justify-center shrink-0">
-                        <MapPin size={14} className="text-[hsl(var(--primary))] dark:text-blue-400" />
+                        <MapPin size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 truncate">
+                        <p className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">
                             {g.label}
                         </p>
                         {g.lat && g.lng && (
-                            <p className="text-[9px] text-slate-400">
+                            <p className="text-[9px] text-[hsl(var(--text-secondary))]">
                                 {g.lat.toFixed(4)}, {g.lng.toFixed(4)}
                             </p>
                         )}
@@ -262,8 +262,8 @@ function GeoMap({ data }: { data: GeoBucket[] }) {
 function DataTable({ rows, title }: { rows: TableRow[]; title?: string }) {
     if (!rows?.length) {
         return (
-            <div className="flex items-center justify-center h-24 bg-slate-50 dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5">
-                <p className="text-xs text-slate-400 italic">Sin datos</p>
+            <div className="flex items-center justify-center h-24 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5">
+                <p className="text-xs text-[hsl(var(--text-secondary))] italic">Sin datos</p>
             </div>
         );
     }
@@ -273,13 +273,13 @@ function DataTable({ rows, title }: { rows: TableRow[]; title?: string }) {
     return (
         <div className="overflow-x-auto">
             {title && (
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-2">{title}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{title}</p>
             )}
             <table className="w-full text-[11px]">
                 <thead>
-                    <tr className="border-b border-slate-100 dark:border-white/5">
+                    <tr className="border-b border-[hsl(var(--border))] dark:border-white/5">
                         {columns.map((col) => (
-                            <th key={col} className="text-left py-2 px-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                            <th key={col} className="text-left py-2 px-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 {col}
                             </th>
                         ))}
@@ -289,11 +289,11 @@ function DataTable({ rows, title }: { rows: TableRow[]; title?: string }) {
                     {rows.map((row) => (
                         <tr
                             key={row.id}
-                            className="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                            className="border-b border-[hsl(var(--border))] dark:border-white/5 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors cursor-pointer"
                             onClick={() => row.link && (window.location.href = row.link)}
                         >
                             {columns.map((col) => (
-                                <td key={col} className="py-2 px-1.5 text-slate-700 dark:text-slate-300">
+                                <td key={col} className="py-2 px-1.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                     {String(row.columns[col] ?? '—')}
                                 </td>
                             ))}
@@ -373,7 +373,7 @@ export default function DashboardShell({
 
     // ── Render ──
     return (
-        <div className="flex flex-col h-full bg-slate-50 dark:bg-transparent p-4 font-sans">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] dark:bg-transparent p-4 font-sans">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -381,14 +381,14 @@ export default function DashboardShell({
                         'size-10 rounded-xl flex items-center justify-center',
                         'bg-blue-50 dark:bg-[hsl(var(--primary))]/10',
                     )}>
-                        <MetricIcon size={20} className="text-[hsl(var(--primary))] dark:text-blue-400" />
+                        <MetricIcon size={20} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" />
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">
+                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">
                             {title || config?.label || module}
                         </h1>
                         {data?.last_updated && (
-                            <p className="text-[10px] text-slate-400">
+                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">
                                 Actualizado: {new Date(data.last_updated).toLocaleString('es-CO')}
                             </p>
                         )}
@@ -397,7 +397,7 @@ export default function DashboardShell({
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                        className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 transition-colors"
+                        className="p-1.5 rounded-md hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] transition-colors"
                         title="Cambiar vista"
                     >
                         {viewMode === 'grid' ? <List size={16} /> : <LayoutDashboard size={16} />}
@@ -405,7 +405,7 @@ export default function DashboardShell({
                     <button
                         onClick={fetchDashboard}
                         disabled={loading}
-                        className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 transition-colors disabled:opacity-40"
+                        className="p-1.5 rounded-md hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] transition-colors disabled:opacity-40"
                         title="Actualizar"
                     >
                         <RefreshCw size={16} className={clsx(loading && 'animate-spin')} />
@@ -432,7 +432,7 @@ export default function DashboardShell({
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center space-y-2">
                         <AlertTriangle size={32} className="mx-auto text-amber-500" />
-                        <p className="text-sm text-slate-500">{error}</p>
+                        <p className="text-sm text-[hsl(var(--text-secondary))]">{error}</p>
                         <button
                             onClick={fetchDashboard}
                             className="text-[11px] font-semibold text-[hsl(var(--primary))] hover:underline"
@@ -845,12 +845,12 @@ export default function DashboardShell({
                                     {data.top_courses.map((c: any, i: number) => (
                                         <div
                                             key={i}
-                                            className="flex items-center justify-between py-1.5 px-2 rounded-md bg-slate-50 dark:bg-white/5"
+                                            className="flex items-center justify-between py-1.5 px-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5"
                                         >
-                                            <span className="text-[12px] font-medium text-slate-700 dark:text-slate-200">
+                                            <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                 {c.title}
                                             </span>
-                                            <span className="text-[11px] font-bold text-[hsl(var(--primary))] dark:text-blue-400">
+                                            <span className="text-[11px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">
                                                 {c.count} matriculados
                                             </span>
                                         </div>
@@ -872,13 +872,13 @@ export default function DashboardShell({
                                     {data.latest_donations.map((d: any, i: number) => (
                                         <div
                                             key={i}
-                                            className="flex items-center justify-between py-1.5 px-2 rounded-md bg-slate-50 dark:bg-white/5"
+                                            className="flex items-center justify-between py-1.5 px-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5"
                                         >
                                             <div>
-                                                <p className="text-[12px] font-medium text-slate-700 dark:text-slate-200">
+                                                <p className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                     {d.donor}
                                                 </p>
-                                                <p className="text-[10px] text-slate-400">{d.type}</p>
+                                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{d.type}</p>
                                             </div>
                                             <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">
                                                 ${Number(d.amount).toLocaleString()}
@@ -902,17 +902,17 @@ export default function DashboardShell({
                                     {data.eventos_proximos.map((e: any, i: number) => (
                                         <div
                                             key={i}
-                                            className="flex items-center justify-between py-1.5 px-2 rounded-md bg-slate-50 dark:bg-white/5"
+                                            className="flex items-center justify-between py-1.5 px-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5"
                                         >
                                             <div>
-                                                <p className="text-[12px] font-medium text-slate-700 dark:text-slate-200">
+                                                <p className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                     {e.titulo}
                                                 </p>
-                                                <p className="text-[10px] text-slate-400">
+                                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">
                                                     {e.ubicacion} · {e.participantes} participantes
                                                 </p>
                                             </div>
-                                            <span className="text-[11px] text-slate-500">
+                                            <span className="text-[11px] text-[hsl(var(--text-secondary))]">
                                                 {new Date(e.fecha).toLocaleDateString('es-CO', {
                                                     day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
                                                 })}

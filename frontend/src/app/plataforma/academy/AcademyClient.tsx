@@ -36,7 +36,7 @@ export default function AcademyClient() {
         loadData();
     }, [token]);
 
-    if (loading) return <div className="p-8 text-center text-slate-400 font-black animate-pulse uppercase tracking-wide">Cargando Dashboard Pro...</div>;
+    if (loading) return <div className="p-8 text-center text-[hsl(var(--text-secondary))] font-black animate-pulse uppercase tracking-wide">Cargando Dashboard Pro...</div>;
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
@@ -72,7 +72,7 @@ export default function AcademyClient() {
                         <DSCard>
                             <div className="flex items-center justify-between mb-3">
                                 <div>
-                                    <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Tendencia de Crecimiento</h3>
+                                    <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Tendencia de Crecimiento</h3>
                                     <p className="text-xl font-bold text-white italic">Inscripciones Mensuales</p>
                                 </div>
                                 <div className="size-10 rounded-md bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
@@ -86,15 +86,15 @@ export default function AcademyClient() {
                     {/* Top Cursos */}
                     <div className="space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Cursos Top Performance</h3>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Cursos Top Performance</h3>
                             <div className="space-y-4">
                                 {dashboard?.top_courses.map((course: any, idx: number) => (
                                     <div key={idx} className="flex items-center justify-between group">
                                         <div className="flex items-center gap-3">
                                             <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />
-                                            <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">{course.title}</span>
+                                            <span className="text-xs font-bold text-[hsl(var(--text-secondary))] group-hover:text-white transition-colors">{course.title}</span>
                                         </div>
-                                        <span className="font-semibold text-slate-500">{course.count} Est.</span>
+                                        <span className="font-semibold text-[hsl(var(--text-secondary))]">{course.count} Est.</span>
                                     </div>
                                 ))}
                             </div>

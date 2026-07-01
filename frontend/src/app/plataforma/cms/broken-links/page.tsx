@@ -34,35 +34,35 @@ export default function BrokenLinksPage() {
         <AlertTriangle size={24} className="text-[hsl(var(--primary))]" />
         <div>
           <h1 className="text-xl font-bold">Enlaces Rotos</h1>
-          <p className="text-sm text-slate-500">Escaneo periodico de links internos muertos</p>
+          <p className="text-sm text-[hsl(var(--text-secondary))]">Escaneo periodico de links internos muertos</p>
         </div>
       </div>
 
       <div className="flex gap-2">
-        <button onClick={() => setFilter("broken")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "broken" ? "bg-red-100 text-red-700" : "border hover:bg-slate-50"}`}>Rotos ({links.filter(l => l.is_broken && !l.resolved_at).length})</button>
-        <button onClick={() => setFilter("resolved")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "resolved" ? "bg-green-100 text-green-700" : "border hover:bg-slate-50"}`}>Resueltos</button>
-        <button onClick={() => setFilter("all")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "all" ? "bg-slate-100" : "border hover:bg-slate-50"}`}>Todos</button>
+        <button onClick={() => setFilter("broken")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "broken" ? "bg-red-100 text-[hsl(var(--destructive))]" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Rotos ({links.filter(l => l.is_broken && !l.resolved_at).length})</button>
+        <button onClick={() => setFilter("resolved")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "resolved" ? "bg-green-100 text-[hsl(var(--secondary))]" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Resueltos</button>
+        <button onClick={() => setFilter("all")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "all" ? "bg-[hsl(var(--surface-2))]" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Todos</button>
       </div>
 
       <div className="space-y-2">
-        {loading ? <div className="py-12 text-center text-slate-400">Cargando...</div> : links.length === 0 ? (
-          <div className="py-12 text-center text-slate-400">Sin enlaces {filter === "broken" ? "rotos" : ""}</div>
+        {loading ? <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Cargando...</div> : links.length === 0 ? (
+          <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Sin enlaces {filter === "broken" ? "rotos" : ""}</div>
         ) : links.map(l => (
-          <div key={l.id} className={`flex items-center gap-4 p-4 border rounded-xl ${l.resolved_at ? "bg-green-50/50 border-green-200" : "bg-white"}`}>
+          <div key={l.id} className={`flex items-center gap-4 p-4 border rounded-xl ${l.resolved_at ? "bg-green-50/50 border-green-200" : "bg-[hsl(var(--bg-primary))]"}`}>
             <div className="shrink-0">
-              {l.resolved_at ? <CheckCircle size={18} className="text-green-500" /> : <AlertTriangle size={18} className="text-red-400" />}
+              {l.resolved_at ? <CheckCircle size={18} className="text-[hsl(var(--secondary))]" /> : <AlertTriangle size={18} className="text-[hsl(var(--destructive))]" />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{l.target_url}</p>
-              <p className="text-xs text-slate-400 mt-0.5">Fuente: {l.source_url}</p>
-              {l.error_message && <p className="text-xs text-red-500 mt-1">{l.error_message}</p>}
+              <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">Fuente: {l.source_url}</p>
+              {l.error_message && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{l.error_message}</p>}
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {l.status_code && <span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded">{l.status_code}</span>}
+              {l.status_code && <span className="text-[10px] font-bold bg-[hsl(var(--surface-2))] px-2 py-0.5 rounded">{l.status_code}</span>}
               {!l.resolved_at && (
-                <button onClick={() => resolve(l.id)} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-100 text-green-700 hover:bg-green-200">Marcar resuelto</button>
+                <button onClick={() => resolve(l.id)} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-100 text-[hsl(var(--secondary))] hover:bg-green-200">Marcar resuelto</button>
               )}
-              <a href={l.target_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-slate-100"><ExternalLink size={12} className="text-slate-400" /></a>
+              <a href={l.target_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))]"><ExternalLink size={12} className="text-[hsl(var(--text-secondary))]" /></a>
             </div>
           </div>
         ))}

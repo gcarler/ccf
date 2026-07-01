@@ -45,11 +45,11 @@ export default function PrayerDetailPage() {
     }, [id, token]);
 
     if (loading) {
-        return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-slate-400">Accediendo al muro de intercesion...</div>;
+        return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Accediendo al muro de intercesion...</div>;
     }
 
     if (!prayer) {
-        return <div className="p-4 text-center font-bold uppercase tracking-wide text-slate-400">No se pudo cargar la peticion.</div>;
+        return <div className="p-4 text-center font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">No se pudo cargar la peticion.</div>;
     }
 
     return (
@@ -67,10 +67,10 @@ export default function PrayerDetailPage() {
                             <DSBadge tone="blue" label={(prayer.category || "General").toUpperCase()} />
                             <DSBadge tone={prayer.status === "answered" ? "emerald" : "amber"} label={prayer.status.toUpperCase()} />
                         </div>
-                        <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">
+                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase leading-none">
                             {prayer.requester_name}
                         </h1>
-                        <p className="flex items-center gap-2 text-sm font-bold text-slate-500">
+                        <p className="flex items-center gap-2 text-sm font-bold text-[hsl(var(--text-secondary))]">
                             <Calendar size={18} className="text-[hsl(var(--primary))]" /> Recibida el {prayer.created_at ? new Date(prayer.created_at).toLocaleDateString() : "Sin fecha"}
                         </p>
                     </div>
@@ -82,8 +82,8 @@ export default function PrayerDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Motivo de Oracion</h3>
-                            <p className="text-base font-medium text-slate-700 dark:text-slate-200 italic leading-relaxed">
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Motivo de Oracion</h3>
+                            <p className="text-base font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] italic leading-relaxed">
                                 &quot;{prayer.request_text}&quot;
                             </p>
                         </DSCard>

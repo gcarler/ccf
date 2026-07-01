@@ -199,7 +199,7 @@ export default function PastoralTeamPage() {
           <div className="relative flex-1 max-w-sm">
             <Search
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]"
             />
             <input
               type="text"
@@ -209,11 +209,11 @@ export default function PastoralTeamPage() {
                 setPage(0);
               }}
               placeholder="Buscar por nombre..."
-              className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-[hsl(var(--text-secondary))]">
               {filtered.length} líderes
             </span>
             <button
@@ -237,9 +237,9 @@ export default function PastoralTeamPage() {
           <div className="text-center py-20">
             <Heart
               size={40}
-              className="mx-auto text-slate-300 dark:text-slate-600 mb-4"
+              className="mx-auto text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4"
             />
-            <p className="text-slate-400">
+            <p className="text-[hsl(var(--text-secondary))]">
               {search
                 ? "No se encontraron líderes con ese nombre."
                 : "No hay líderes pastorales registrados. ¡Agrega el primero!"}
@@ -251,10 +251,10 @@ export default function PastoralTeamPage() {
               {paginated.map((profile) => (
                 <div
                   key={profile.id}
-                  className="group relative bg-white dark:bg-[#0f1117] rounded-xl border border-slate-200/70 dark:border-white/[0.06] p-4 flex items-start gap-4 hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                  className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] rounded-xl border border-[hsl(var(--border))]/70 dark:border-white/[0.06] p-4 flex items-start gap-4 hover:shadow-lg hover:-translate-y-0.5 transition-all"
                 >
                   {/* Avatar */}
-                  <div className="relative w-14 h-14 rounded-full overflow-hidden bg-slate-100 dark:bg-[#0a0c12] shrink-0 ring-2 ring-slate-200/50 dark:ring-white/[0.06]">
+                  <div className="relative w-14 h-14 rounded-full overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[#0a0c12] shrink-0 ring-2 ring-[hsl(var(--border))]/50 dark:ring-white/[0.06]">
                     {profile.photo_url ? (
                       <Image
                         src={profile.photo_url}
@@ -275,7 +275,7 @@ export default function PastoralTeamPage() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-sm text-slate-800 dark:text-white truncate">
+                      <h3 className="font-semibold text-sm text-[hsl(var(--text-primary))] dark:text-white truncate">
                         {profile.name}
                       </h3>
                       {profile.is_main_pastor && (
@@ -285,7 +285,7 @@ export default function PastoralTeamPage() {
                         />
                       )}
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">
                       {profile.role || "Pastor"}
                     </p>
                     {/* Social indicators */}
@@ -293,25 +293,25 @@ export default function PastoralTeamPage() {
                       {profile.social_instagram && (
                         <Instagram
                           size={12}
-                          className="text-slate-300 dark:text-slate-600"
+                          className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                         />
                       )}
                       {profile.social_facebook && (
                         <Facebook
                           size={12}
-                          className="text-slate-300 dark:text-slate-600"
+                          className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                         />
                       )}
                       {profile.social_twitter && (
                         <Twitter
                           size={12}
-                          className="text-slate-300 dark:text-slate-600"
+                          className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                         />
                       )}
                       {!profile.social_instagram &&
                         !profile.social_facebook &&
                         !profile.social_twitter && (
-                          <span className="text-[9px] text-slate-300 dark:text-slate-600">
+                          <span className="text-[9px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                             Sin redes
                           </span>
                         )}
@@ -321,7 +321,7 @@ export default function PastoralTeamPage() {
                   {/* Edit button */}
                   <button
                     onClick={() => openDrawer(profile)}
-                    className="absolute top-3 right-3 w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.1] opacity-0 group-hover:opacity-100 transition-all"
+                    className="absolute top-3 right-3 w-7 h-7 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.1] opacity-0 group-hover:opacity-100 transition-all"
                     aria-label="Editar"
                   >
                     <Pencil size={12} />
@@ -336,17 +336,17 @@ export default function PastoralTeamPage() {
                 <button
                   onClick={() => setPage(Math.max(0, page - 1))}
                   disabled={page === 0}
-                  className="w-9 h-9 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-white/10 transition-all"
+                  className="w-9 h-9 rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] disabled:opacity-30 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10 transition-all"
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="text-xs font-bold text-slate-400">
+                <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">
                   {page + 1} / {totalPages}
                 </span>
                 <button
                   onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                   disabled={page >= totalPages - 1}
-                  className="w-9 h-9 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-white/10 transition-all"
+                  className="w-9 h-9 rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] disabled:opacity-30 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10 transition-all"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -363,14 +363,14 @@ export default function PastoralTeamPage() {
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={closeDrawer}
           />
-          <div className="relative w-full max-w-lg bg-white dark:bg-[#0a0c12] border-l border-slate-200 dark:border-white/[0.06] shadow-2xl overflow-y-auto">
-            <div className="sticky top-0 bg-white dark:bg-[#0a0c12] border-b border-slate-200 dark:border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
+          <div className="relative w-full max-w-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0a0c12] border-l border-[hsl(var(--border))] dark:border-white/[0.06] shadow-2xl overflow-y-auto">
+            <div className="sticky top-0 bg-[hsl(var(--bg-primary))] dark:bg-[#0a0c12] border-b border-[hsl(var(--border))] dark:border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
               <h2 className="text-sm font-bold uppercase tracking-wider">
                 Editar perfil
               </h2>
               <button
                 onClick={closeDrawer}
-                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                className="w-8 h-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all"
               >
                 <X size={14} />
               </button>
@@ -378,7 +378,7 @@ export default function PastoralTeamPage() {
 
             <form onSubmit={handleSave} className="p-6 space-y-5">
               {error && (
-                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-xs text-red-600 dark:text-red-400">
+                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-xs text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">
                   {error}
                 </div>
               )}
@@ -391,47 +391,47 @@ export default function PastoralTeamPage() {
 
               {/* Nombre (readonly) */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
                   Nombre
                 </label>
-                <p className="text-sm font-medium text-slate-800 dark:text-white">
+                <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">
                   {editing.name}
                 </p>
               </div>
 
               {/* Rol (readonly) */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
                   Rol
                 </label>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-[hsl(var(--text-secondary))]">
                   {editing.role || "Pastor"}
                 </p>
               </div>
 
               {/* Photo URL */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
                   URL de foto
                 </label>
                 <div className="relative">
                   <ImageIcon
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]"
                   />
                   <input
                     name="photo_url"
                     type="url"
                     defaultValue={editing.photo_url || ""}
                     placeholder="https://ejemplo.com/foto.jpg"
-                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
+                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                   />
                 </div>
               </div>
 
               {/* Bio short */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
                   Biografía corta
                 </label>
                 <textarea
@@ -439,13 +439,13 @@ export default function PastoralTeamPage() {
                   defaultValue={editing.bio_short || ""}
                   rows={2}
                   placeholder="Breve descripción para la tarjeta..."
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] resize-none"
+                  className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] resize-none"
                 />
               </div>
 
               {/* Bio full */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
                   Historia completa (HTML)
                 </label>
                 <textarea
@@ -453,14 +453,14 @@ export default function PastoralTeamPage() {
                   defaultValue={editing.bio_full || ""}
                   rows={4}
                   placeholder="Historia completa del pastor (soporta HTML)..."
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] resize-none font-mono"
+                  className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] resize-none font-mono"
                 />
               </div>
 
               {/* Social */}
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 flex items-center gap-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5 flex items-center gap-1.5">
                     <Instagram size={12} /> Instagram URL
                   </label>
                   <input
@@ -468,11 +468,11 @@ export default function PastoralTeamPage() {
                     type="url"
                     defaultValue={editing.social_instagram || ""}
                     placeholder="https://instagram.com/..."
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
+                    className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 flex items-center gap-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5 flex items-center gap-1.5">
                     <Facebook size={12} /> Facebook URL
                   </label>
                   <input
@@ -480,11 +480,11 @@ export default function PastoralTeamPage() {
                     type="url"
                     defaultValue={editing.social_facebook || ""}
                     placeholder="https://facebook.com/..."
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
+                    className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 flex items-center gap-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5 flex items-center gap-1.5">
                     <Twitter size={12} /> X (Twitter) URL
                   </label>
                   <input
@@ -492,7 +492,7 @@ export default function PastoralTeamPage() {
                     type="url"
                     defaultValue={editing.social_twitter || ""}
                     placeholder="https://x.com/..."
-                    className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
+                    className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                   />
                 </div>
               </div>
@@ -503,24 +503,24 @@ export default function PastoralTeamPage() {
                   name="is_main_pastor"
                   type="checkbox"
                   defaultChecked={editing.is_main_pastor}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-white/20 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))/0.3]"
+                  className="w-4 h-4 rounded border-[hsl(var(--border))] dark:border-white/20 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))/0.3]"
                 />
                 <div>
-                  <span className="text-sm font-medium text-slate-800 dark:text-white">
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">
                     Pastor Principal
                   </span>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-[hsl(var(--text-secondary))]">
                     Aparece resaltado en la página pública
                   </p>
                 </div>
               </label>
 
               {/* Actions */}
-              <div className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-white/[0.06]">
+              <div className="flex items-center gap-3 pt-4 border-t border-[hsl(var(--border))] dark:border-white/[0.06]">
                 <button
                   type="button"
                   onClick={closeDrawer}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                  className="flex-1 py-2.5 rounded-xl bg-[hsl(var(--surface-2))] dark:bg-white/5 text-sm font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all"
                 >
                   Cancelar
                 </button>
@@ -544,14 +544,14 @@ export default function PastoralTeamPage() {
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={closeDrawer}
           />
-          <div className="relative w-full max-w-lg bg-white dark:bg-[#0a0c12] border-l border-slate-200 dark:border-white/[0.06] shadow-2xl overflow-y-auto">
-            <div className="sticky top-0 bg-white dark:bg-[#0a0c12] border-b border-slate-200 dark:border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
+          <div className="relative w-full max-w-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0a0c12] border-l border-[hsl(var(--border))] dark:border-white/[0.06] shadow-2xl overflow-y-auto">
+            <div className="sticky top-0 bg-[hsl(var(--bg-primary))] dark:bg-[#0a0c12] border-b border-[hsl(var(--border))] dark:border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
               <h2 className="text-sm font-bold uppercase tracking-wider">
                 Agregar líder pastoral
               </h2>
               <button
                 onClick={closeDrawer}
-                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                className="w-8 h-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all"
               >
                 <X size={14} />
               </button>
@@ -564,21 +564,21 @@ export default function PastoralTeamPage() {
                   {successMsg}
                 </div>
               )}
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[hsl(var(--text-secondary))]">
                 Busca una persona existente para agregarla como líder pastoral.
               </p>
 
               <div className="relative">
                 <Search
                   size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]"
                 />
                 <input
                   type="text"
                   value={addSearch}
                   onChange={(e) => searchPersonas(e.target.value)}
                   placeholder="Buscar por nombre (mín. 3 caracteres)..."
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                 />
               </div>
 
@@ -591,7 +591,7 @@ export default function PastoralTeamPage() {
               {!searchingAdd && addSearch.length >= 3 && (
                 <>
                   {addResults.length === 0 ? (
-                    <p className="text-center py-8 text-xs text-slate-400">
+                    <p className="text-center py-8 text-xs text-[hsl(var(--text-secondary))]">
                       {addSearch.trim()
                         ? "No se encontraron personas disponibles."
                         : "Escribe para buscar..."}
@@ -601,13 +601,13 @@ export default function PastoralTeamPage() {
                       {addResults.map((persona: any) => (
                         <div
                           key={persona.id}
-                          className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.04]"
+                          className="flex items-center justify-between p-3 rounded-xl bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/[0.04]"
                         >
                           <div>
-                            <p className="text-sm font-medium text-slate-800 dark:text-white">
+                            <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">
                               {persona.nombre_completo || persona.name}
                             </p>
-                            <p className="text-[10px] text-slate-400">
+                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">
                               {persona.church_role || "Persona"}
                             </p>
                           </div>
@@ -629,7 +629,7 @@ export default function PastoralTeamPage() {
                 <button
                   type="button"
                   onClick={closeDrawer}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                  className="flex-1 py-2.5 rounded-xl bg-[hsl(var(--surface-2))] dark:bg-white/5 text-sm font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all"
                 >
                   Cancelar
                 </button>

@@ -36,14 +36,14 @@ export default function ShareButtons({ title, className = '' }: ShareButtonsProp
 
     return (
         <div className={`flex items-center gap-2 ${className}`}>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mr-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mr-1">
                 Compartir
             </span>
 
             {/* Facebook */}
             <button
                 onClick={() => shareOn('facebook')}
-                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
+                className="w-8 h-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))]/50 dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:scale-110 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all shadow-sm"
                 aria-label="Compartir en Facebook"
             >
                 <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" className="shrink-0">
@@ -54,7 +54,7 @@ export default function ShareButtons({ title, className = '' }: ShareButtonsProp
             {/* X */}
             <button
                 onClick={() => shareOn('twitter')}
-                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
+                className="w-8 h-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))]/50 dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:scale-110 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all shadow-sm"
                 aria-label="Compartir en X"
             >
                 <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" className="shrink-0">
@@ -65,7 +65,7 @@ export default function ShareButtons({ title, className = '' }: ShareButtonsProp
             {/* WhatsApp */}
             <button
                 onClick={() => shareOn('whatsapp')}
-                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
+                className="w-8 h-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))]/50 dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:scale-110 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all shadow-sm"
                 aria-label="Compartir por WhatsApp"
             >
                 <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" className="shrink-0">
@@ -76,11 +76,11 @@ export default function ShareButtons({ title, className = '' }: ShareButtonsProp
             {/* Copiar enlace */}
             <button
                 onClick={copyLink}
-                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-110 hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm"
+                className="w-8 h-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))]/50 dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:scale-110 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all shadow-sm"
                 aria-label="Copiar enlace"
             >
                 {copied
-                    ? <Check size={13} className="text-slate-500 dark:text-slate-400" />
+                    ? <Check size={13} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
                     : <Link2 size={13} />
                 }
             </button>

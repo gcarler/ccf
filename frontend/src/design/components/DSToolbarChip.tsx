@@ -21,8 +21,8 @@ const baseStyle = 'inline-flex items-center justify-center font-semibold upperca
 
 const variantClasses: Record<Variant, string> = {
     solid: 'text-white border border-transparent shadow-sm',
-    soft: 'text-slate-600 border border-slate-200 bg-white/70 dark:bg-white/5 dark:text-white/70',
-    outline: 'text-slate-500 border border-white/20 bg-transparent',
+    soft: 'text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] bg-white/70 dark:bg-white/5 dark:text-white/70',
+    outline: 'text-[hsl(var(--text-secondary))] border border-white/20 bg-transparent',
 };
 
 const sizeClasses = {
@@ -43,7 +43,7 @@ export function DSToolbarChip({ label, active, variant = 'soft', size = 'md', ic
             }}
             {...props}
         >
-            {Icon && <Icon size={size === 'sm' ? 11 : 12} className={clsx('transition-colors', active ? 'text-white' : 'text-slate-400')} />}
+            {Icon && <Icon size={size === 'sm' ? 11 : 12} className={clsx('transition-colors', active ? 'text-white' : 'text-[hsl(var(--text-secondary))]')} />}
             <span>{label}</span>
         </button>
     );

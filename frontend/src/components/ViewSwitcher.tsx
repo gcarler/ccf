@@ -48,7 +48,7 @@ export default function ViewSwitcher({
     const options = ALL_VIEWS.filter((v) => availableViews.includes(v.id));
 
     return (
-        <div className="flex items-center gap-0.5 p-1 bg-slate-100 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10">
+        <div className="flex items-center gap-0.5 p-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10">
             {options.map(({ id, label, icon: Icon }) => (
                 <button
                     key={id}
@@ -57,8 +57,8 @@ export default function ViewSwitcher({
                     className={clsx(
                         "flex items-center justify-center w-7 h-7 rounded-md transition-all",
                         viewType === id
-                            ? "bg-[hsl(var(--bg-primary))] dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm"
-                            : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                            ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-white shadow-sm"
+                            : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]"
                     )}
                 >
                     <Icon size={14} />

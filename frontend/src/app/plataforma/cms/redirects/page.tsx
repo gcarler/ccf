@@ -47,7 +47,7 @@ export default function RedirectsPage() {
           <RotateCcw size={24} className="text-[hsl(var(--primary))]" />
           <div>
             <h1 className="text-xl font-bold">Redirecciones</h1>
-            <p className="text-sm text-slate-500">{redirects.length} redirecciones activas</p>
+            <p className="text-sm text-[hsl(var(--text-secondary))]">{redirects.length} redirecciones activas</p>
           </div>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-white">
@@ -56,7 +56,7 @@ export default function RedirectsPage() {
       </div>
 
       {showForm && (
-        <div className="p-4 border rounded-xl bg-slate-50 space-y-3">
+        <div className="p-4 border rounded-xl bg-[hsl(var(--surface-1))] space-y-3">
           <div className="grid grid-cols-3 gap-3">
             <input placeholder="/ruta-antigua" value={form.from_path} onChange={e => setForm(f => ({ ...f, from_path: e.target.value }))} className="px-3 py-2 text-sm border rounded-lg font-mono" />
             <input placeholder="/ruta-nueva" value={form.to_path} onChange={e => setForm(f => ({ ...f, to_path: e.target.value }))} className="px-3 py-2 text-sm border rounded-lg font-mono" />
@@ -74,28 +74,28 @@ export default function RedirectsPage() {
 
       <div className="overflow-x-auto border rounded-xl">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b">
+          <thead className="bg-[hsl(var(--surface-1))] border-b">
             <tr>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Desde</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Hacia</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Codigo</th>
-              <th className="px-4 py-3 text-left font-medium text-slate-600">Hits</th>
+              <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Desde</th>
+              <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Hacia</th>
+              <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Codigo</th>
+              <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Hits</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {loading ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">Cargando...</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-[hsl(var(--text-secondary))]">Cargando...</td></tr>
             ) : redirects.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">Sin redirecciones</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-[hsl(var(--text-secondary))]">Sin redirecciones</td></tr>
             ) : redirects.map(r => (
-              <tr key={r.id} className="hover:bg-slate-50/50">
+              <tr key={r.id} className="hover:bg-[hsl(var(--surface-1))]/50">
                 <td className="px-4 py-3 font-mono text-xs">{r.from_path}</td>
                 <td className="px-4 py-3 font-mono text-xs text-[hsl(var(--primary))]">{r.to_path}</td>
-                <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${r.status_code === 301 ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>{r.status_code}</span></td>
-                <td className="px-4 py-3 text-xs text-slate-400">{r.hit_count}</td>
+                <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${r.status_code === 301 ? "bg-green-100 text-[hsl(var(--secondary))]" : "bg-amber-100 text-amber-700"}`}>{r.status_code}</span></td>
+                <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))]">{r.hit_count}</td>
                 <td className="px-4 py-3">
-                  <button onClick={() => setPendingDelete(r)} className="p-1 rounded hover:bg-red-50"><Trash2 size={12} className="text-red-400" /></button>
+                  <button onClick={() => setPendingDelete(r)} className="p-1 rounded hover:bg-red-50"><Trash2 size={12} className="text-[hsl(var(--destructive))]" /></button>
                 </td>
               </tr>
             ))}
@@ -109,10 +109,10 @@ export default function RedirectsPage() {
         subtitle={pendingDelete?.from_path}
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">Esta accion eliminara la redireccion seleccionada.</p>
+          <p className="text-sm text-[hsl(var(--text-secondary))]">Esta accion eliminara la redireccion seleccionada.</p>
           <div className="flex gap-2">
             <button onClick={() => setPendingDelete(null)} className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium">Cancelar</button>
-            <button onClick={remove} className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700">Eliminar</button>
+            <button onClick={remove} className="flex-1 rounded-lg bg-[hsl(var(--destructive))] px-3 py-2 text-sm font-medium text-white hover:bg-[hsl(var(--destructive))]">Eliminar</button>
           </div>
         </div>
       </SidePanel>

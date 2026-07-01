@@ -106,7 +106,7 @@ export default function PastorRadarPage() {
                 <motion.h1 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-xl lg:text-xl font-bold tracking-tighter text-slate-900 dark:text-white uppercase leading-none"
+                    className="text-xl lg:text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none"
                 >
                     Radar <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-400">Pastoral</span>
                 </motion.h1>
@@ -114,7 +114,7 @@ export default function PastorRadarPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
-                    className="text-slate-500 dark:text-slate-400 text-lg font-medium max-w-2xl leading-relaxed"
+                    className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-lg font-medium max-w-2xl leading-relaxed"
                 >
                     Consola de mando ejecutiva. Análisis dinámico de participación, formación académica e impacto financiero consolidado.
                 </motion.p>
@@ -123,7 +123,7 @@ export default function PastorRadarPage() {
             {loading ? (
                 <div className="py-1.5 flex flex-col items-center justify-center gap-3">
                     <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={64} strokeWidth={1.5} />
-                    <p className="font-semibold text-slate-400 uppercase tracking-wide animate-pulse">Iniciando Red Neuronal...</p>
+                    <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide animate-pulse">Iniciando Red Neuronal...</p>
                 </div>
             ) : error ? (
                 <div className="p-4 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 rounded-lg text-rose-600 text-center space-y-4">
@@ -149,14 +149,14 @@ export default function PastorRadarPage() {
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="lg:col-span-7 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-xl space-y-3 group"
+                        className="lg:col-span-7 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg shadow-xl space-y-3 group"
                     >
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
-                                <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
+                                <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter uppercase flex items-center gap-3">
                                     <BarChart3 className="text-[hsl(var(--primary))]" /> Crecimiento Orgánico
                                 </h2>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Métricas consolidadas semestrales</p>
+                                <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Métricas consolidadas semestrales</p>
                             </div>
                             <span className="font-semibold text-[hsl(var(--primary))] bg-blue-50 px-4 py-1.5 rounded-full tracking-wide border border-blue-100 uppercase">Live BI</span>
                         </div>
@@ -167,15 +167,15 @@ export default function PastorRadarPage() {
                                     <div 
                                         className={clsx(
                                             "w-full rounded-t-2xl transition-all duration-700 relative shimmer-bar",
-                                            i === 5 ? "bg-gradient-to-t from-blue-600 to-sky-500 shadow-[0_0_30px_rgba(37,99,235,0.3)]" : "bg-slate-100 dark:bg-white/5 group-hover/bar:bg-slate-200"
+                                            i === 5 ? "bg-gradient-to-t from-blue-600 to-sky-500 shadow-[0_0_30px_rgba(37,99,235,0.3)]" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 group-hover/bar:bg-[hsl(var(--surface-3))]"
                                         )}
                                         style={{ height: `${h}%` }}
                                     >
-                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all transform scale-90 group-hover/bar:scale-100 bg-slate-900 text-white px-3 py-1.5 rounded-md font-semibold shadow-2xl">
+                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-all transform scale-90 group-hover/bar:scale-100 bg-[hsl(var(--bg-muted))] text-white px-3 py-1.5 rounded-md font-semibold shadow-2xl">
                                             {h}%
                                         </div>
                                     </div>
-                                    <span className="font-semibold text-slate-400 uppercase tracking-wide">M0{i+1}</span>
+                                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">M0{i+1}</span>
                                 </div>
                             ))}
                         </div>
@@ -189,7 +189,7 @@ export default function PastorRadarPage() {
                     >
                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:rotate-12 transition-transform duration-1000"><Sparkles size={120} /></div>
                         
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter uppercase flex items-center gap-3">
+                        <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter uppercase flex items-center gap-3">
                             <Target className="text-[hsl(var(--primary))]" /> Metas Trimestrales
                         </h2>
                         <div className="space-y-3">
@@ -202,8 +202,8 @@ export default function PastorRadarPage() {
                             <div className="flex items-center gap-4">
                                 <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-xl shadow-[hsl(var(--primary)/0.2)]"><Zap size={24} fill="currentColor" /></div>
                                 <div>
-                                    <p className="font-semibold text-slate-400 uppercase tracking-wide">Sugerencia IA</p>
-                                    <p className="text-[13px] font-bold text-slate-700 dark:text-slate-300 leading-tight">Potenciar el ministerio de Hospitalidad para el próximo servicio.</p>
+                                    <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sugerencia IA</p>
+                                    <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-tight">Potenciar el ministerio de Hospitalidad para el próximo servicio.</p>
                                 </div>
                             </div>
                         </div>
@@ -224,7 +224,7 @@ function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
     };
     return (
         <div 
-            className="radar-aura p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-100 dark:border-white/5 rounded-lg shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            className="radar-aura p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as any}
         >
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-125 transition-transform duration-700"><Icon size={64} /></div>
@@ -236,8 +236,8 @@ function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
                     <span className="px-3 py-1 bg-white/50 dark:bg-white/5 rounded-lg font-semibold text-emerald-500 border border-emerald-100 dark:border-emerald-900/30 uppercase">{trend}</span>
                 </div>
                 <div>
-                    <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-                    <h4 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter leading-none">{value}</h4>
+                    <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">{label}</p>
+                    <h4 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">{value}</h4>
                 </div>
             </div>
         </div>
@@ -249,10 +249,10 @@ function GoalItem({ label, target, current, color }: any) {
     return (
         <div className="space-y-3 group/goal">
             <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
-                <span className="text-slate-500 dark:text-slate-400 group-hover/goal:text-[hsl(var(--primary))] transition-colors">{label}</span>
-                <span className="text-slate-900 dark:text-white">{current} / {target}</span>
+                <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover/goal:text-[hsl(var(--primary))] transition-colors">{label}</span>
+                <span className="text-[hsl(var(--text-primary))] dark:text-white">{current} / {target}</span>
             </div>
-            <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
+            <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
                 <motion.div 
                     initial={{ width: 0 }} 
                     animate={{ width: `${pct}%` }} 

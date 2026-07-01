@@ -175,13 +175,13 @@ export default function AutomationsPage() {
                 {/* Stats bar */}
                 <div className="grid grid-cols-3 gap-3 mb-2">
                     {[
-                        { label: 'Total Reglas', val: rules.length, color: 'text-slate-800 dark:text-white' },
+                        { label: 'Total Reglas', val: rules.length, color: 'text-[hsl(var(--text-primary))] dark:text-white' },
                         { label: 'Activas', val: rules.filter(r => r.active).length, color: 'text-emerald-600' },
-                        { label: 'Inactivas', val: rules.filter(r => !r.active).length, color: 'text-slate-400' },
+                        { label: 'Inactivas', val: rules.filter(r => !r.active).length, color: 'text-[hsl(var(--text-secondary))]' },
                     ].map(s => (
-                        <div key={s.label} className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 text-center">
+                        <div key={s.label} className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 text-center">
                             <p className={`text-lg font-bold ${s.color}`}>{s.val}</p>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{s.label}</p>
+                            <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">{s.label}</p>
                         </div>
                     ))}
                 </div>
@@ -191,12 +191,12 @@ export default function AutomationsPage() {
                     [...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-md" />)
                 ) : rules.length === 0 ? (
                     <div className="py-1.5 flex flex-col items-center justify-center gap-4 text-center">
-                        <div className="size-10 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-300">
+                        <div className="size-10 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))]">
                             <Zap size={48} strokeWidth={1} />
                         </div>
                         <div>
-                            <h3 className="text-slate-800 dark:text-white font-bold text-base">Sin automatizaciones</h3>
-                            <p className="text-slate-400 text-sm mt-1">Crea reglas que disparen acciones pastorales automáticamente</p>
+                            <h3 className="text-[hsl(var(--text-primary))] dark:text-white font-bold text-base">Sin automatizaciones</h3>
+                            <p className="text-[hsl(var(--text-secondary))] text-sm mt-1">Crea reglas que disparen acciones pastorales automáticamente</p>
                         </div>
                         <button
                             onClick={openCreate}
@@ -222,23 +222,23 @@ export default function AutomationsPage() {
                                     className={clsx(
                                         "bg-[hsl(var(--surface-1))] dark:bg-white/5 border rounded-md p-3 transition-all",
                                         rule.active
-                                            ? "border-slate-200 dark:border-white/10 shadow-sm"
-                                            : "border-dashed border-slate-200 dark:border-white/5 opacity-60"
+                                            ? "border-[hsl(var(--border))] dark:border-white/10 shadow-sm"
+                                            : "border-dashed border-[hsl(var(--border))] dark:border-white/5 opacity-60"
                                     )}
                                 >
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-center gap-4 flex-1 min-w-0">
-                                            <div className={clsx("size-9 rounded-lg border flex items-center justify-center shrink-0", TRIGGER_COLORS[rule.trigger] || 'bg-slate-100 text-slate-400 border-slate-200')}>
+                                            <div className={clsx("size-9 rounded-lg border flex items-center justify-center shrink-0", TRIGGER_COLORS[rule.trigger] || 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]')}>
                                                 <TrigIcon size={20} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-slate-800 dark:text-white text-base tracking-tight truncate">{rule.name}</h3>
+                                                <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-base tracking-tight truncate">{rule.name}</h3>
                                                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                                    <span className={clsx("px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wide border", TRIGGER_COLORS[rule.trigger] || 'bg-slate-100 text-slate-400 border-slate-200')}>
+                                                    <span className={clsx("px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wide border", TRIGGER_COLORS[rule.trigger] || 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]')}>
                                                         {trig?.label || rule.trigger}
                                                     </span>
-                                                    <span className="text-slate-300 text-xs">→</span>
-                                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-[9px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                                                    <span className="text-[hsl(var(--text-secondary))] text-xs">→</span>
+                                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                                         <ActIcon size={10} />
                                                         {act?.label || rule.action}
                                                     </div>
@@ -253,19 +253,19 @@ export default function AutomationsPage() {
                                             >
                                                 {rule.active
                                                     ? <ToggleRight size={28} className="text-emerald-500" />
-                                                    : <ToggleLeft size={28} className="text-slate-300" />
+                                                    : <ToggleLeft size={28} className="text-[hsl(var(--text-secondary))]" />
                                                 }
                                             </button>
                                             <button
                                                 onClick={() => openEdit(rule)}
-                                                className="p-2 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                                                className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
                                             >
                                                 <Settings2 size={16} />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(rule.id)}
                                                 disabled={deletingId === rule.id}
-                                                className="p-2 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all disabled:opacity-50"
+                                                className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all disabled:opacity-50"
                                             >
                                                 {deletingId === rule.id
                                                     ? <Loader2 size={16} className="animate-spin" />
@@ -275,8 +275,8 @@ export default function AutomationsPage() {
                                         </div>
                                     </div>
                                     {rule.payload?.message && (
-                                        <div className="mt-3 ml-16 p-3 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5">
-                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">&quot;{rule.payload.message}&quot;</p>
+                                        <div className="mt-3 ml-16 p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5">
+                                            <p className="text-[11px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] italic">&quot;{rule.payload.message}&quot;</p>
                                         </div>
                                     )}
                                 </motion.div>
@@ -294,7 +294,7 @@ export default function AutomationsPage() {
                 subtitle="Dispara acciones pastorales de forma automática"
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700">
+                        <button type="button" onClick={() => setIsDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
                             Cancelar
                         </button>
                         <button
@@ -311,18 +311,18 @@ export default function AutomationsPage() {
             >
                 <form id="automation-form" onSubmit={handleSave} className="space-y-2">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre de la regla *</label>
+                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre de la regla *</label>
                         <input
                             required
                             value={form.name}
                             onChange={e => setForm({ ...form, name: e.target.value })}
                             placeholder="Ej: Bienvenida a nuevos personas"
-                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Disparador (Trigger)</label>
+                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Disparador (Trigger)</label>
                         <div className="grid grid-cols-1 gap-2">
                             {TRIGGERS.map(t => {
                                 const Icon = t.icon;
@@ -336,13 +336,13 @@ export default function AutomationsPage() {
                                             "flex items-center gap-3 px-4 py-1.5 rounded-lg border text-left transition-all",
                                             selected
                                                 ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                                : "border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:border-blue-300"
+                                                : "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:border-blue-300"
                                         )}
                                     >
-                                        <div className={clsx("size-8 rounded-md flex items-center justify-center", selected ? 'bg-[hsl(var(--primary))] text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400')}>
+                                        <div className={clsx("size-8 rounded-md flex items-center justify-center", selected ? 'bg-[hsl(var(--primary))] text-white' : 'bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))]')}>
                                             <Icon size={16} />
                                         </div>
-                                        <span className={clsx("text-[11px] font-bold uppercase tracking-wide", selected ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' : 'text-slate-600 dark:text-slate-300')}>
+                                        <span className={clsx("text-[11px] font-bold uppercase tracking-wide", selected ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]')}>
                                             {t.label}
                                         </span>
                                         {selected && <CheckCircle2 size={16} className="ml-auto text-[hsl(var(--primary))]" />}
@@ -353,11 +353,11 @@ export default function AutomationsPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Acción a ejecutar</label>
+                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Acción a ejecutar</label>
                         <select
                             value={form.action}
                             onChange={e => setForm({ ...form, action: e.target.value })}
-                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                         >
                             {ACTIONS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
                         </select>
@@ -365,17 +365,17 @@ export default function AutomationsPage() {
 
                     {form.action === 'create_task' ? (
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Título de la tarea pastoral</label>
+                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Título de la tarea pastoral</label>
                             <input
                                 value={form.taskTitle}
                                 onChange={e => setForm({ ...form, taskTitle: e.target.value })}
                                 placeholder="Ej: Visitar al nuevo persona"
-                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                             />
                         </div>
                     ) : (
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                 Mensaje a enviar <span className="normal-case font-bold">(usa {'{'+'nombre'+'}'} para personalizar)</span>
                             </label>
                             <textarea
@@ -383,7 +383,7 @@ export default function AutomationsPage() {
                                 onChange={e => setForm({ ...form, message: e.target.value })}
                                 placeholder="Hola {nombre}, bienvenido a CCF El Faro..."
                                 rows={4}
-                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
                             />
                         </div>
                     )}

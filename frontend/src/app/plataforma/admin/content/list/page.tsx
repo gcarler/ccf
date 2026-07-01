@@ -137,7 +137,7 @@ export default function AdminContentList() {
             />
 
             {/* Cinematic Tabs */}
-            <div className="flex px-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shrink-0 relative overflow-hidden">
+            <div className="flex px-4 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0 relative overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
                 <TabBtn label="Cursos Faro" active={activeTab === 'courses'} onClick={() => setActiveTab('courses')} icon={BookOpen} />
                 <TabBtn label="Prédicas HD" active={activeTab === 'sermons'} onClick={() => setActiveTab('sermons')} icon={Video} />
@@ -149,18 +149,18 @@ export default function AdminContentList() {
                     
                     {/* Search Bar Cinematic */}
                     <div className="relative group">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[hsl(var(--primary))] transition-colors" size={22} />
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] group-focus-within:text-[hsl(var(--primary))] transition-colors" size={22} />
                         <input 
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-16 pr-8 text-sm font-bold shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none"
+                            className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 pl-16 pr-8 text-sm font-bold shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none"
                             placeholder={`Buscar en la biblioteca de ${activeTab === 'courses' ? 'cursos' : 'contenidos'}...`}
                         />
                     </div>
 
                     <AnimatePresence mode="wait">
                         {loading ? (
-                            <div className="py-1.5 flex flex-col items-center justify-center gap-3 text-slate-400 font-semibold uppercase tracking-wide animate-pulse">
+                            <div className="py-1.5 flex flex-col items-center justify-center gap-3 text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide animate-pulse">
                                 <Loader2 className="animate-spin" size={48} strokeWidth={1.5} /> Sincronizando Biblioteca...
                             </div>
                         ) : filteredItems.length > 0 && viewType === 'grid' ? (
@@ -172,33 +172,33 @@ export default function AdminContentList() {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.04 }}
                                         onClick={() => openItem(item)}
-                                        className="text-left content-aura bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 p-7 rounded-lg shadow-sm hover:shadow-2xl transition-all"
+                                        className="text-left content-aura bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-7 rounded-lg shadow-sm hover:shadow-2xl transition-all"
                                     >
                                         <div className={clsx("size-8 rounded-lg flex items-center justify-center mb-3", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>
                                             <BookOpen size={30} strokeWidth={1.5} />
                                         </div>
-                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight line-clamp-2">{item.title}</h3>
-                                        <p className="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{item.code || activeTab} · {item.duration_hours || 0} horas</p>
+                                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight line-clamp-2">{item.title}</h3>
+                                        <p className="mt-3 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.code || activeTab} · {item.duration_hours || 0} horas</p>
                                         <span className={clsx("inline-flex mt-3 px-3 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{item.is_published ? 'Publicado' : 'Borrador'}</span>
                                     </motion.button>
                                 ))}
                             </motion.div>
                         ) : filteredItems.length > 0 && viewType === 'table' ? (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
                                 <table className="w-full text-left min-w-[480px]">
-                                    <thead className="bg-slate-50 dark:bg-white/5">
+                                    <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                                         <tr>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Contenido</th>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden md:table-cell">Código</th>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden lg:table-cell">Estado</th>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Editar</th>
+                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contenido</th>
+                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Código</th>
+                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
+                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Editar</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                                    <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                                         {filteredItems.map(item => (
-                                            <tr key={item.id} onClick={() => openItem(item)} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] cursor-pointer">
-                                                <td className="px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{item.title}</td>
-                                                <td className="px-3 py-1.5 hidden md:table-cell text-[11px] font-mono text-slate-400">{item.code || '—'}</td>
+                                            <tr key={item.id} onClick={() => openItem(item)} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] cursor-pointer">
+                                                <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.title}</td>
+                                                <td className="px-3 py-1.5 hidden md:table-cell text-[11px] font-mono text-[hsl(var(--text-secondary))]">{item.code || '—'}</td>
                                                 <td className="px-3 py-1.5 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{item.is_published ? 'Publicado' : 'Borrador'}</span></td>
                                                 <td className="px-3 py-1.5"><Edit3 size={16} className="text-[hsl(var(--primary))]" /></td>
                                             </tr>
@@ -209,16 +209,16 @@ export default function AdminContentList() {
                         ) : filteredItems.length > 0 && (viewType === 'board' || viewType === 'kanban') ? (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                                 {groupedItems.map(group => (
-                                    <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
+                                    <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                                         <div className="flex items-center justify-between mb-5">
-                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</span>
-                                            <span className="font-semibold text-slate-400">{group.items.length}</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                                            <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
                                         </div>
                                         <div className="space-y-4">
                                             {group.items.map(item => (
-                                                <button key={item.id} onClick={() => openItem(item)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-3 hover:border-blue-300 transition-all">
-                                                    <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{item.title}</p>
-                                                    <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{item.code || item.modality || activeTab}</p>
+                                                <button key={item.id} onClick={() => openItem(item)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 hover:border-blue-300 transition-all">
+                                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{item.title}</p>
+                                                    <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.code || item.modality || activeTab}</p>
                                                 </button>
                                             ))}
                                         </div>
@@ -256,7 +256,7 @@ export default function AdminContentList() {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.05 }}
-                                        className="content-aura group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col md:flex-row md:items-center justify-between gap-3"
+                                        className="content-aura group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col md:flex-row md:items-center justify-between gap-3"
                                         style={{ '--aura-color': item.is_published ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)' } as any}
                                     >
                                         <div className="flex items-center gap-3 flex-1">
@@ -268,10 +268,10 @@ export default function AdminContentList() {
                                             </div>
                                             <div className="flex-1 space-y-2">
                                                 <div className="flex items-center gap-3">
-                                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-none group-hover:text-[hsl(var(--primary))] transition-colors">{item.title}</h3>
-                                                    <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/10 rounded font-semibold text-slate-400 uppercase tracking-wide">{item.code}</span>
+                                                    <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-none group-hover:text-[hsl(var(--primary))] transition-colors">{item.title}</h3>
+                                                    <span className="px-2 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.code}</span>
                                                 </div>
-                                                <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                                                <div className="flex items-center gap-3 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                                     <span className="flex items-center gap-1.5"><Clock size={12} /> {item.duration_hours} Horas</span>
                                                     <span className="flex items-center gap-1.5"><Globe size={12} /> {item.modality}</span>
                                                     <span className="flex items-center gap-1.5 text-[hsl(var(--primary))]"><CheckCircle2 size={12} /> {item.certificate_type}</span>
@@ -288,7 +288,7 @@ export default function AdminContentList() {
                                             </div>
                                             <button 
                                                 onClick={() => router.push(`/admin/content/courses/${item.id}`)}
-                                                className="p-4 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg shadow-xl hover:scale-110 active:scale-95 transition-all"
+                                                className="p-4 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg shadow-xl hover:scale-110 active:scale-95 transition-all"
                                             >
                                                 <Edit3 size={20} />
                                             </button>
@@ -298,12 +298,12 @@ export default function AdminContentList() {
                             </motion.div>
                         ) : (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-1.5 text-center space-y-3">
-                                <div className="size-10 rounded-lg bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto text-slate-300">
+                                <div className="size-10 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))]">
                                     <Sparkles size={40} strokeWidth={1} />
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-xl font-bold text-slate-800 dark:text-white uppercase tracking-tight">Biblioteca en blanco</p>
-                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wide">Comienza a crear el currículo de tu iglesia hoy mismo.</p>
+                                    <p className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Biblioteca en blanco</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">Comienza a crear el currículo de tu iglesia hoy mismo.</p>
                                 </div>
                             </motion.div>
                         )}
@@ -320,10 +320,10 @@ function TabBtn({ label, active, onClick, icon: Icon }: any) {
             onClick={onClick}
             className={clsx(
                 "px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all relative flex items-center gap-3 shrink-0 border-b-2",
-                active ? "text-[hsl(var(--primary))] border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600"
+                active ? "text-[hsl(var(--primary))] border-blue-600" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]"
             )}
         >
-            <Icon size={14} className={clsx(active ? "text-[hsl(var(--primary))]" : "text-slate-300")} />
+            <Icon size={14} className={clsx(active ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]")} />
             {label}
             {active && <motion.div layoutId="content-tab-active" className="absolute bottom-[-2px] left-0 right-0 h-1 bg-[hsl(var(--primary))] rounded-t-full shadow-[0_0_15px_rgba(37,99,235,0.4)]" />}
         </button>

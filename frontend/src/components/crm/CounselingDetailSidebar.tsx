@@ -74,7 +74,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
         return (
             <div className="flex flex-col items-center justify-center h-full gap-4">
                 <Loader2 className="animate-spin text-sky-600" size={32} />
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Cargando expediente...</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cargando expediente...</p>
             </div>
         );
     }
@@ -82,7 +82,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113]">
             {/* Header Cinematic */}
-            <div className="p-4 border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
+            <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-[hsl(var(--surface-1))]/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
                 <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-sky-600 dark:text-white">
                     <Heart size={160} />
                 </div>
@@ -90,7 +90,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                 <div className="flex justify-between items-start mb-3 relative z-10">
                     <button 
                         onClick={onClose} 
-                        className="p-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/5 active:scale-95"
+                        className="p-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all shadow-sm border border-[hsl(var(--border))] dark:border-white/5 active:scale-95"
                     >
                         <CloseIcon size={20} />
                     </button>
@@ -113,31 +113,31 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                         <Heart size={28} />
                     </motion.div>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-[-0.04em] leading-[0.9] mb-2">
+                        <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-[-0.04em] leading-[0.9] mb-2">
                             {session.topic || 'Sin tema <br/> asignado'}
                         </h2>
-                        <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wide opacity-70">
+                        <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] flex items-center gap-1.5 uppercase tracking-wide opacity-70">
                             <span className="p-1.5 bg-sky-500/10 rounded-lg text-sky-600"><User size={12} /></span> {session.persona_name || 'Persona CCF'}
                         </p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mt-3 relative z-10">
-                    <div className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-md border border-slate-100 dark:border-white/[0.05] shadow-sm">
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Fecha de Sesión</p>
-                        <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">
+                    <div className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] shadow-sm">
+                        <p className="text-[8px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1.5">Fecha de Sesión</p>
+                        <p className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight">
                             {session.scheduled_at ? new Date(session.scheduled_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Pendiente'}
                         </p>
                     </div>
-                    <div className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-md border border-slate-100 dark:border-white/[0.05] shadow-sm">
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Duración Est.</p>
-                        <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight">{session.duration_minutes || 60} MINUTOS</p>
+                    <div className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] shadow-sm">
+                        <p className="text-[8px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1.5">Duración Est.</p>
+                        <p className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight">{session.duration_minutes || 60} MINUTOS</p>
                     </div>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex px-4 border-b border-slate-50 dark:border-white/[0.04] shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-transparent overflow-x-auto no-scrollbar sticky top-0 z-30">
+            <div className="flex px-4 border-b border-[hsl(var(--border))] dark:border-white/[0.04] shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-transparent overflow-x-auto no-scrollbar sticky top-0 z-30">
                 {[
                     { id: 'details', label: 'Expediente', icon: BookOpen },
                     { id: 'timeline', label: 'Historial', icon: History },
@@ -148,7 +148,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                         onClick={() => setActiveTab(tab.id as any)} 
                         className={clsx(
                             "px-3 py-2 text-[10px] font-bold uppercase tracking-wide border-b-2 transition-all flex items-center gap-2.5 shrink-0",
-                            activeTab === tab.id ? "border-sky-600 text-sky-600" : "border-transparent text-slate-400 hover:text-slate-800 dark:hover:text-white"
+                            activeTab === tab.id ? "border-sky-600 text-sky-600" : "border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white"
                         )}
                     >
                         <tab.icon size={12} className={activeTab === tab.id ? "animate-pulse" : ""} /> {tab.label}
@@ -162,17 +162,17 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                     {activeTab === 'details' && (
                         <motion.div key="details" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="space-y-3">
                             <section className="space-y-4">
-                                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-2">
+                                <h3 className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2">
                                     <BookOpen size={14} className="text-sky-600" /> Resumen
                                 </h3>
-                                <div className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-md text-sm text-slate-700 dark:text-slate-300 italic leading-relaxed">
+                                <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] italic leading-relaxed">
                                     &quot;{session.summary || 'No hay un resumen registrado para esta sesión.'}&quot;
                                 </div>
                             </section>
 
                             <section className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-2">
+                                    <h3 className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2">
                                         <Lock size={14} className="text-rose-500" /> Notas Confidenciales
                                     </h3>
                                     <button 
@@ -189,13 +189,13 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
                                                 exit={{ opacity: 0 }}
-                                                className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-md z-10 flex flex-col items-center justify-center gap-4 border-2 border-dashed border-slate-200 dark:border-white/10 cursor-pointer"
+                                                className="absolute inset-0 bg-[hsl(var(--bg-muted))]/10 dark:bg-black/40 backdrop-blur-md z-10 flex flex-col items-center justify-center gap-4 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 cursor-pointer"
                                                 onClick={() => setShowNotes(true)}
                                             >
-                                                <div className="size-9 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-slate-400 shadow-xl group-hover:scale-110 transition-transform">
+                                                <div className="size-9 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-xl group-hover:scale-110 transition-transform">
                                                     <Lock size={20} />
                                                 </div>
-                                                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Sesión Encriptada</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sesión Encriptada</p>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
@@ -203,11 +203,11 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                         "p-4 rounded-md border transition-all duration-700 min-h-[140px]",
                                         showNotes 
                                             ? "bg-rose-50 dark:bg-rose-500/[0.03] border-rose-100 dark:border-rose-500/20" 
-                                            : "bg-slate-50 dark:bg-white/[0.02] border-slate-100 dark:border-white/[0.05]"
+                                            : "bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border-[hsl(var(--border))] dark:border-white/[0.05]"
                                     )}>
                                         <p className={clsx(
                                             "text-sm font-medium leading-relaxed transition-all duration-700",
-                                            showNotes ? "text-slate-800 dark:text-rose-100 tracking-tight" : "text-transparent"
+                                            showNotes ? "text-[hsl(var(--text-primary))] dark:text-rose-100 tracking-tight" : "text-transparent"
                                         )}>
                                             {session.confidential_notes || 'Sin notas confidenciales registradas para este encuentro pastoral.'}
                                         </p>
@@ -233,7 +233,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                     </button>
                                     <button 
                                         onClick={() => handleUpdateStatus('Cancelada')}
-                                        className="py-2 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-lg text-[9px] font-bold uppercase tracking-wide border border-slate-200 dark:border-white/10 flex items-center justify-center gap-2"
+                                        className="py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-lg text-[9px] font-bold uppercase tracking-wide border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center gap-2"
                                     >
                                         <XCircle size={14} /> Cancelar
                                     </button>
@@ -244,21 +244,21 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
 
                     {activeTab === 'timeline' && (
                         <motion.div key="timeline" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="space-y-3">
-                            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Seguimiento Histórico</h3>
+                            <h3 className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Seguimiento Histórico</h3>
                             {session.history?.length > 0 ? (
-                                <div className="relative border-l-2 border-slate-100 dark:border-white/5 ml-2 space-y-3 pl-6">
+                                <div className="relative border-l-2 border-[hsl(var(--border))] dark:border-white/5 ml-2 space-y-3 pl-6">
                                     {session.history.map((h: any) => (
                                         <div key={h.id} className="relative">
                                             <div className="absolute -left-[31px] top-1 size-4 rounded-full border-4 border-white dark:border-[#1e1f21] bg-sky-600 shadow-sm" />
-                                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10">
-                                                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">{h.text}</p>
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{h.date}</p>
+                                            <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10">
+                                                <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] mb-1">{h.text}</p>
+                                                <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{h.date}</p>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="p-3 text-center border-2 border-dashed border-slate-100 dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-slate-300">
+                                <div className="p-3 text-center border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     Sin historial previo
                                 </div>
                             )}
@@ -272,13 +272,13 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                             </div>
                             <div className="space-y-2">
                                 <h4 className="text-sm font-bold dark:text-white uppercase tracking-tighter italic">Análisis Optimus</h4>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+                                <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] max-w-xs mx-auto leading-relaxed">
                                     IA analizando indicadores emocionales para salud espiritual de 360°.
                                 </p>
                             </div>
-                            <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-md border border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center gap-4">
+                            <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/10 flex flex-col items-center gap-4">
                                 <Loader2 size={24} className="animate-spin text-[hsl(var(--primary))]" />
-                                <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400 animate-pulse">Sincronizando Grafo...</span>
+                                <span className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] animate-pulse">Sincronizando Grafo...</span>
                             </div>
                         </motion.div>
                     )}

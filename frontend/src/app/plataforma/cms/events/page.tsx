@@ -86,7 +86,7 @@ export default function CmsEventsPage() {
     return (
       <div className="max-w-3xl mx-auto py-1.5 text-center space-y-3">
         <h1 className="text-xl font-semibold">Inicia sesion</h1>
-        <p className="text-slate-500">Necesitas una sesion valida para administrar eventos publicos.</p>
+        <p className="text-[hsl(var(--text-secondary))]">Necesitas una sesion valida para administrar eventos publicos.</p>
       </div>
     );
   }
@@ -102,25 +102,25 @@ export default function CmsEventsPage() {
         primaryAction={{ label: saving ? "Guardando..." : "Guardar agenda", icon: Save, onClick: save }}
       />
 
-      <section className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-3 space-y-5">
+      <section className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-3 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Eventos</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Eventos</p>
               <p className="text-xl font-semibold mt-1">{activeEvents.length}</p>
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Destacados</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Destacados</p>
               <p className="text-xl font-semibold mt-1">{featuredCount}</p>
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Archivados</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Archivados</p>
               <p className="text-xl font-semibold mt-1">{archivedCount}</p>
             </div>
           </div>
           <button
             onClick={() => setEvents((prev) => [...prev, { ...EMPTY_EVENT }])}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-slate-200 dark:border-white/10 text-xs font-semibold uppercase tracking-wide"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-xs font-semibold uppercase tracking-wide"
           >
             <Plus size={14} />
             Nuevo evento
@@ -128,11 +128,11 @@ export default function CmsEventsPage() {
         </div>
 
         {loading ? (
-          <p className="text-sm text-slate-500">Cargando agenda...</p>
+          <p className="text-sm text-[hsl(var(--text-secondary))]">Cargando agenda...</p>
         ) : events.length === 0 ? (
           <button
             onClick={() => setEvents([{ ...EMPTY_EVENT }])}
-            className="w-full rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-4 text-center text-sm text-slate-500"
+            className="w-full rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-sm text-[hsl(var(--text-secondary))]"
           >
             Crear primer evento
           </button>
@@ -141,7 +141,7 @@ export default function CmsEventsPage() {
             {events.map((event, index) => {
               const isArchived = event.status === "archived";
               return (
-              <div key={index} className={`rounded-lg border p-4 space-y-3 ${isArchived ? "border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-100 dark:border-white/10"}`}>
+              <div key={index} className={`rounded-lg border p-4 space-y-3 ${isArchived ? "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))] dark:border-white/10"}`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <input
                     value={event.title}
@@ -150,7 +150,7 @@ export default function CmsEventsPage() {
                       setEvents((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, title: next } : row)));
                     }}
                     placeholder="Titulo"
-                    className="rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
+                    className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
                   />
                   <input
                     value={event.category}
@@ -159,7 +159,7 @@ export default function CmsEventsPage() {
                       setEvents((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, category: next } : row)));
                     }}
                     placeholder="Categoria"
-                    className="rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
+                    className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
                   />
                   <input
                     value={event.date}
@@ -168,7 +168,7 @@ export default function CmsEventsPage() {
                       setEvents((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, date: next } : row)));
                     }}
                     placeholder="24 JUN 2026"
-                    className="rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
+                    className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
                   />
                   <input
                     value={event.location}
@@ -177,7 +177,7 @@ export default function CmsEventsPage() {
                       setEvents((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, location: next } : row)));
                     }}
                     placeholder="Auditorio Central"
-                    className="rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
+                    className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
                   />
                 </div>
                 <textarea
@@ -188,11 +188,11 @@ export default function CmsEventsPage() {
                     setEvents((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, excerpt: next } : row)));
                   }}
                   placeholder="Descripcion corta del evento"
-                  className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
+                  className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none focus:border-primary/40"
                 />
 
                 <div className="flex items-center justify-between">
-                  <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                     <input
                       type="checkbox"
                       checked={!!event.featured}
@@ -229,12 +229,12 @@ export default function CmsEventsPage() {
             <Save size={14} />
             {saving ? "Guardando" : "Guardar"}
           </button>
-          {message && <p className="text-sm text-slate-500">{message}</p>}
+          {message && <p className="text-sm text-[hsl(var(--text-secondary))]">{message}</p>}
         </div>
 
-        <div className="rounded-md border border-slate-200 dark:border-white/10 p-4 flex items-start gap-3">
+        <div className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-4 flex items-start gap-3">
           <CalendarRange className="w-4 h-4 mt-0.5 text-primary" />
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed">
             Este modulo persiste la agenda en el bloque <span className="font-mono">{SITE_EVENTS_BLOCK_KEY}</span> para ser consumida por la web publica.
           </p>
         </div>

@@ -92,7 +92,7 @@ export default function ProjectsTasksPage() {
             viewOptions={PROJECT_TASK_VIEWS}
         >
 
-            <div className="px-3 py-3 border-b border-slate-200 dark:border-white/10 flex flex-wrap gap-2">
+            <div className="px-3 py-3 border-b border-[hsl(var(--border))] dark:border-white/10 flex flex-wrap gap-2">
                 {['all', 'todo', 'in_progress', 'review', 'completed'].map((value) => (
                     <button
                         key={value}
@@ -101,7 +101,7 @@ export default function ProjectsTasksPage() {
                             'px-3 py-1 rounded-full text-[10px] uppercase tracking-wide font-black border',
                             status === value
                                 ? 'bg-[hsl(var(--primary))] text-white border-blue-600'
-                                : 'border-slate-200 dark:border-white/10 text-slate-500'
+                                : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]'
                         )}
                     >
                         {value}
@@ -113,23 +113,23 @@ export default function ProjectsTasksPage() {
                 {loading ? (
                     <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-lg" />)}</div>
                 ) : filtered.length === 0 ? (
-                    <div className="rounded-lg border border-slate-200 dark:border-white/10 p-4 text-center text-slate-500">No hay tareas para este filtro.</div>
+                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-[hsl(var(--text-secondary))]">No hay tareas para este filtro.</div>
                 ) : viewType === 'table' ? (
-                    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
+                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-50 dark:bg-white/5">
+                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                                 <tr>
-                                    <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">Tarea</th>
-                                    <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden md:table-cell">Estado</th>
-                                    <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 hidden lg:table-cell">Prioridad</th>
+                                    <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tarea</th>
+                                    <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Estado</th>
+                                    <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Prioridad</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                            <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                                 {filtered.map((task) => (
-                                    <tr key={task.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
-                                        <td className="px-3 py-2 text-sm font-medium text-slate-800 dark:text-white">{task.title}</td>
-                                        <td className="px-3 py-2 hidden md:table-cell text-[11px] text-slate-500">{task.status}</td>
-                                        <td className="px-3 py-2 hidden lg:table-cell text-[11px] text-slate-500">{task.priority}</td>
+                                    <tr key={task.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
+                                        <td className="px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">{task.title}</td>
+                                        <td className="px-3 py-2 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{task.status}</td>
+                                        <td className="px-3 py-2 hidden lg:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{task.priority}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -138,22 +138,22 @@ export default function ProjectsTasksPage() {
                 ) : viewType === 'grid' ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                         {filtered.map((task) => (
-                            <article key={task.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5">
-                                <h3 className="font-bold text-slate-800 dark:text-white">{task.title}</h3>
-                                <p className="text-xs text-slate-500 uppercase tracking-wide mt-1">{task.status} · {task.priority}</p>
+                            <article key={task.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+                                <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{task.title}</h3>
+                                <p className="text-xs text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">{task.status} · {task.priority}</p>
                             </article>
                         ))}
                     </div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
                         {groupedTasks.map((group) => (
-                            <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
+                            <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                                 <div className="flex items-center justify-between mb-3">
-                                    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{group.label}</span>
-                                    <span className="text-[10px] font-bold text-slate-400">{group.rows.length}</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{group.rows.length}</span>
                                 </div>
                                 <div className="space-y-2">
-                                    {group.rows.map((task) => <div key={task.id} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 p-2 text-sm font-medium">{task.title}</div>)}
+                                    {group.rows.map((task) => <div key={task.id} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-2 text-sm font-medium">{task.title}</div>)}
                                 </div>
                             </section>
                         ))}
@@ -167,11 +167,11 @@ export default function ProjectsTasksPage() {
                 ) : (
                     <div className="space-y-3">
                         {filtered.map((task) => (
-                            <article key={task.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+                            <article key={task.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-3">
                                     <div>
-                                        <h3 className="font-bold text-slate-800 dark:text-white">{task.title}</h3>
-                                        <p className="text-xs text-slate-500 uppercase tracking-wide mt-1">Estado: {task.status} · Prioridad: {task.priority}</p>
+                                        <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{task.title}</h3>
+                                        <p className="text-xs text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">Estado: {task.status} · Prioridad: {task.priority}</p>
                                     </div>
                                     <button
                                         onClick={() => moveForward(task)}

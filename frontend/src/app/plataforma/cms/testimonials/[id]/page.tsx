@@ -90,8 +90,8 @@ export default function CmsTestimonialDetailPage() {
         }
     };
 
-    if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-slate-400">Verificando Testimonio...</div>;
-    if (!testimonial) return <div className="p-4 text-center font-semibold uppercase tracking-wide text-slate-400">Testimonio no encontrado.</div>;
+    if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Verificando Testimonio...</div>;
+    if (!testimonial) return <div className="p-4 text-center font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio no encontrado.</div>;
 
     const mediaUrl = getTestimonialMediaUrl(testimonial);
 
@@ -113,14 +113,14 @@ export default function CmsTestimonialDetailPage() {
                                 <DSBadge tone="blue" label={testimonial.category.toUpperCase()} />
                                 <DSBadge tone={testimonial.status === 'approved' ? 'emerald' : testimonial.status === 'archived' ? 'slate' : 'amber'} label={testimonial.status.toUpperCase()} />
                             </div>
-                            <h1 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight leading-none uppercase">
+                            <h1 className="text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white tracking-tight leading-none uppercase">
                                 Moderación de Testimonio
                             </h1>
                         </div>
                         <div className="flex items-center gap-3">
                             <button 
                                 onClick={() => handleAction(testimonial.status === 'archived' ? 'pending' : 'archived')}
-                                className="px-3 py-2 border border-slate-200 dark:border-white/10 text-slate-500 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all flex items-center gap-2"
+                                className="px-3 py-2 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all flex items-center gap-2"
                             >
                                 {testimonial.status === 'archived' ? <RotateCcw size={14} /> : <Archive size={14} />}
                                 {testimonial.status === 'archived' ? 'Restaurar' : 'Archivar'}
@@ -141,11 +141,11 @@ export default function CmsTestimonialDetailPage() {
                                 <DSCard>
                                     <div className="mb-4 flex items-center gap-2">
                                         {testimonial.media_type === 'video' ? <PlayCircle size={16} className="text-rose-500" /> : testimonial.media_type === 'podcast' ? <Headphones size={16} className="text-amber-500" /> : <ImageIcon size={16} className="text-[hsl(var(--primary))]" />}
-                                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             Media asociada
                                         </h3>
                                     </div>
-                                    <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-950 dark:border-white/10">
+                                    <div className="overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] dark:border-white/10">
                                         {testimonial.media_type === 'image' ? (
                                             <OptimizedImage src={mediaUrl} alt="" fill sizes="(max-width: 768px) 100vw, 600px" className="max-h-[420px] w-full object-contain" />
                                         ) : testimonial.media_type === 'video' ? (
@@ -154,7 +154,7 @@ export default function CmsTestimonialDetailPage() {
                                             </video>
                                         ) : (
                                             <div className="space-y-4 bg-[hsl(var(--bg-primary))] p-3 dark:bg-white/5">
-                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Podcast / audio testimonial</p>
+                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Podcast / audio testimonial</p>
                                                 <audio controls src={mediaUrl} className="w-full" />
                                             </div>
                                         )}
@@ -167,23 +167,23 @@ export default function CmsTestimonialDetailPage() {
                                     <Quote size={48} className="absolute -top-4 -left-4 text-blue-500/10 -z-0" />
                                     <div className="flex items-center gap-1 mb-2">
                                         {[1, 2, 3, 4, 5].map(star => (
-                                            <Star key={star} size={16} className={clsx(star <= testimonial.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-200')} />
+                                            <Star key={star} size={16} className={clsx(star <= testimonial.rating ? 'text-amber-400 fill-amber-400' : 'text-[hsl(var(--text-secondary))]')} />
                                         ))}
                                     </div>
-                                    <p className="text-xl font-medium text-slate-700 dark:text-slate-200 italic leading-relaxed relative z-10">
+                                    <p className="text-xl font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] italic leading-relaxed relative z-10">
                                         &quot;{testimonial.content}&quot;
                                     </p>
                                 </div>
                             </DSCard>
 
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Información del Autor</h3>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Información del Autor</h3>
                                 <div className="flex items-center gap-3">
-                                    <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                                    <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
                                         <User size={32} />
                                     </div>
                                     <div>
-                                        <h4 className="text-lg font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{testimonial.author_name}</h4>
+                                        <h4 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{testimonial.author_name}</h4>
                                         <p className="text-xs font-bold text-[hsl(var(--primary))] uppercase tracking-wide">{testimonial.author_role}</p>
                                     </div>
                                 </div>
@@ -192,22 +192,22 @@ export default function CmsTestimonialDetailPage() {
 
                         <aside className="space-y-3">
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Detalles de Envío</h3>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Detalles de Envío</h3>
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fecha de Recepción</p>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha de Recepción</p>
                                         <p className="text-xs font-bold flex items-center gap-2">
                                             <Calendar size={14} /> {new Date(testimonial.created_at).toLocaleString()}
                                         </p>
                                     </div>
                                     <div className="space-y-1">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Origen</p>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Origen</p>
                                         <p className="text-xs font-bold flex items-center gap-2">
                                             <MessageSquare size={14} /> Formulario Comunidad
                                         </p>
                                     </div>
-                                    <div className="h-px bg-slate-100 dark:bg-white/5" />
-                                    <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
+                                    <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                                    <div className="flex items-center gap-2 text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                         <Shield size={12} /> ID: {testimonial.id}
                                     </div>
                                 </div>

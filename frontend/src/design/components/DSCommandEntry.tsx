@@ -25,13 +25,13 @@ export function DSCommandEntry({
         "flex items-center gap-2 rounded-md border px-2.5 py-1.5 transition-all",
         active
           ? "border-blue-500/40 bg-[hsl(var(--primary))] text-white shadow-sm"
-          : "border-slate-200 bg-[hsl(var(--bg-primary))] text-slate-700 hover:border-blue-300 hover:bg-blue-50",
+          : "border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] hover:border-blue-300 hover:bg-blue-50",
       )}
     >
       <div
         className={clsx(
           "flex h-6 w-6 shrink-0 items-center justify-center rounded-md",
-          active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500",
+          active ? "bg-white/20 text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]",
         )}
       >
         {Icon ? <Icon size={13} /> : <CornerDownLeft size={13} />}
@@ -39,7 +39,7 @@ export function DSCommandEntry({
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-semibold tracking-tight">{label}</p>
         {description ? (
-          <p className={clsx("truncate text-[10px]", active ? "text-white/80" : "text-slate-500")}>
+          <p className={clsx("truncate text-[10px]", active ? "text-white/80" : "text-[hsl(var(--text-secondary))]")}>
             {description}
           </p>
         ) : null}
@@ -48,7 +48,7 @@ export function DSCommandEntry({
         <span
           className={clsx(
             "rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
-            active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400",
+            active ? "bg-white/20 text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]",
           )}
         >
           {shortcut}

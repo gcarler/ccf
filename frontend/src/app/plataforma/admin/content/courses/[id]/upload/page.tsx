@@ -22,15 +22,15 @@ export default function UploadMaterials() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex flex-col h-full bg-slate-950/20 font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-muted))]/20 font-display">
             {/* Header Area */}
-            <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
+            <div className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
                 <div className="px-4 pt-10 pb-4 flex items-center justify-between">
-                    <button onClick={() => router.back()} className="p-3 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all">
+                    <button onClick={() => router.back()} className="p-3 rounded-lg bg-white/5 border border-white/10 text-[hsl(var(--text-secondary))] hover:text-white transition-all">
                         <ArrowLeft size={20} />
                     </button>
                     <h1 className="text-xl font-bold text-white tracking-tight uppercase tracking-tight">Cargar Materiales</h1>
-                    <button className="p-3 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all">
+                    <button className="p-3 rounded-lg bg-white/5 border border-white/10 text-[hsl(var(--text-secondary))] hover:text-white transition-all">
                         <HelpCircle size={20} />
                     </button>
                 </div>
@@ -42,11 +42,11 @@ export default function UploadMaterials() {
                 <section className="space-y-4">
                     <span className="text-[10px] font-semibold uppercase tracking-wide text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 shadow-lg shadow-primary/5">Gestión de Contenido</span>
                     <h2 className="text-lg font-bold text-white tracking-tight uppercase tracking-tight">Lección: Fundamentos de la Fe Cristiana</h2>
-                    <p className="text-sm font-medium text-slate-500 leading-relaxed">Seleccione los archivos multimedia para esta sesión de discipulado.</p>
+                    <p className="text-sm font-medium text-[hsl(var(--text-secondary))] leading-relaxed">Seleccione los archivos multimedia para esta sesión de discipulado.</p>
                 </section>
 
                 {/* Video Upload Card */}
-                <section className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl relative overflow-hidden group">
+                <section className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl relative overflow-hidden group">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="size-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-lg">
@@ -54,7 +54,7 @@ export default function UploadMaterials() {
                             </div>
                             <div>
                                 <p className="text-base font-bold text-white tracking-tight uppercase tracking-tight">Video de la Lección</p>
-                                <p className="font-semibold text-slate-500 uppercase tracking-wide mt-1">MP4 • Máx. 500MB</p>
+                                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">MP4 • Máx. 500MB</p>
                             </div>
                         </div>
                         <CloudUpload size={24} className="text-primary animate-pulse" />
@@ -63,25 +63,25 @@ export default function UploadMaterials() {
                     <div className="space-y-4">
                         <div className="flex justify-between items-end">
                             <div className="space-y-1">
-                                <span className="font-semibold text-slate-400 uppercase tracking-wide block">Subiendo...</span>
+                                <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide block">Subiendo...</span>
                                 <span className="text-xs font-semibold text-white">fundamentos_v1.mp4</span>
                             </div>
                             <span className="text-sm font-semibold text-primary">{uploadProgress}%</span>
                         </div>
-                        <div className="h-2.5 w-full rounded-full bg-slate-950 border border-white/5 p-0.5">
+                        <div className="h-2.5 w-full rounded-full bg-[hsl(var(--bg-muted))] border border-white/5 p-0.5">
                             <div
                                 className="h-full rounded-full bg-gradient-to-r from-primary-400 to-primary shadow-[0_0_8px_#259df4] transition-all duration-500"
                                 style={{ width: `${uploadProgress}%` }}
                             ></div>
                         </div>
-                        <p className="font-semibold text-slate-600 uppercase tracking-wide flex items-center gap-2">
+                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2">
                             324MB de 432MB • Quedan 2 min
                         </p>
                     </div>
                 </section>
 
                 {/* PDF Upload Card */}
-                <section className="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-lg p-4 space-y-3 shadow-2xl group hover:border-emerald-500/30 transition-all">
+                <section className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-4 space-y-3 shadow-2xl group hover:border-emerald-500/30 transition-all">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="size-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-lg">
@@ -89,20 +89,20 @@ export default function UploadMaterials() {
                             </div>
                             <div>
                                 <p className="text-base font-bold text-white tracking-tight uppercase tracking-tight">Guía del Alumno (PDF)</p>
-                                <p className="font-semibold text-slate-500 uppercase tracking-wide mt-1">PDF • Máx. 25MB</p>
+                                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">PDF • Máx. 25MB</p>
                             </div>
                         </div>
-                        <button className="size-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-500 hover:text-white transition-all">
+                        <button className="size-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-white transition-all">
                             <Plus size={20} />
                         </button>
                     </div>
                     <div className="flex items-center justify-center border-2 border-dashed border-white/5 rounded-lg py-1.5 cursor-pointer hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group/box">
-                        <p className="font-semibold text-slate-600 uppercase tracking-wide group-hover/box:text-emerald-500 transition-colors">Toca para seleccionar archivo PDF</p>
+                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide group-hover/box:text-emerald-500 transition-colors">Toca para seleccionar archivo PDF</p>
                     </div>
                 </section>
 
                 {/* Audio Upload Card */}
-                <section className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl">
+                <section className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="size-7 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500 shadow-lg">
@@ -110,7 +110,7 @@ export default function UploadMaterials() {
                             </div>
                             <div>
                                 <p className="text-base font-bold text-white tracking-tight uppercase tracking-tight">Audio (MP3)</p>
-                                <p className="font-semibold text-slate-500 uppercase tracking-wide mt-1">MP3 • Máx. 100MB</p>
+                                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">MP3 • Máx. 100MB</p>
                             </div>
                         </div>
                         <CheckCircle2 size={24} className="text-emerald-500" />
@@ -123,7 +123,7 @@ export default function UploadMaterials() {
                         <div className="h-2 w-full rounded-full bg-emerald-500/20">
                             <div className="h-full rounded-full bg-emerald-500 w-full shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
                         </div>
-                        <p className="text-[9px] font-semibold text-slate-600 italic">podcast_leccion_01.mp3 • 45.2 MB</p>
+                        <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] italic">podcast_leccion_01.mp3 • 45.2 MB</p>
                     </div>
                 </section>
 
@@ -132,7 +132,7 @@ export default function UploadMaterials() {
                     <button className="w-full h-8 bg-primary hover:bg-primary-600 text-white font-black rounded-lg shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all text-sm uppercase tracking-wide border border-primary-400/20">
                         Finalizar y Publicar
                     </button>
-                    <p className="text-center font-semibold text-slate-700 uppercase tracking-wide leading-loose max-w-xs mx-auto">
+                    <p className="text-center font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide leading-loose max-w-xs mx-auto">
                         Los materiales estarán disponibles para todos los personas registrados una vez finalizado.
                     </p>
                 </section>

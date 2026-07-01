@@ -93,25 +93,25 @@ export default function NewAnnouncementPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 pb-4">
                 {/* Editor Content */}
                 <div className="lg:col-span-8 space-y-3">
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
                         <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-blue-600/5 rounded-full blur-3xl" />
                         
                         <div className="relative z-10 space-y-3">
                             <div className="space-y-2">
-                                <label className="font-semibold text-slate-400 uppercase tracking-wide px-4">Encabezado de la Noticia</label>
+                                <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Encabezado de la Noticia</label>
                                 <input 
                                     value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
                                     placeholder="Ej: Gran Vigilia de Oración - Próximo Viernes"
-                                    className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-lg py-2 px-4 text-lg font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-2 px-4 text-lg font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <label className="font-semibold text-slate-400 uppercase tracking-wide px-4">Cuerpo del Mensaje</label>
+                                <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Cuerpo del Mensaje</label>
                                 <textarea 
                                     value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})}
                                     placeholder="Escribe los detalles aquí..."
-                                    className="w-full h-48 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-lg p-4 text-[16px] font-medium leading-relaxed outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none"
+                                    className="w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 text-[16px] font-medium leading-relaxed outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none"
                                 />
                             </div>
                         </div>
@@ -122,7 +122,7 @@ export default function NewAnnouncementPage() {
                         <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20 transition-transform group-hover:scale-110"><Bot size={24} className="text-white" /></div>
                         <div className="space-y-2">
                             <h4 className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide flex items-center gap-2"><Sparkles size={14} /> Optimus Copy Helper</h4>
-                            <p className="text-sm text-slate-600 dark:text-slate-300 font-medium italic leading-relaxed">
+                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium italic leading-relaxed">
                                 &ldquo;Tu anuncio tiene un tono formal excelente. Sugiero añadir una invitación a la acción (Call to Action) al final para aumentar la participación en un 20%.&rdquo;
                             </p>
                         </div>
@@ -131,15 +131,15 @@ export default function NewAnnouncementPage() {
 
                 {/* Settings Sidebar */}
                 <aside className="lg:col-span-4 space-y-3">
-                    <section className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl space-y-3">
-                        <h3 className="font-semibold text-slate-400 uppercase tracking-wide">Ajustes de Publicación</h3>
+                    <section className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-xl space-y-3">
+                        <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Ajustes de Publicación</h3>
                         
                         <div className="space-y-3">
                             <div className="space-y-2">
-                                <label className="font-semibold text-slate-400 uppercase tracking-wide px-2">Categoría</label>
+                                <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-2">Categoría</label>
                                 <select 
                                     value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}
-                                    className="w-full bg-slate-50 dark:bg-black/10 border-none rounded-md py-3 px-4 text-xs font-bold outline-none"
+                                    className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/10 border-none rounded-md py-3 px-4 text-xs font-bold outline-none"
                                 >
                                     <option>General</option>
                                     <option>Eventos</option>
@@ -148,10 +148,10 @@ export default function NewAnnouncementPage() {
                                 </select>
                             </div>
 
-                            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-black/10 rounded-lg">
+                            <div className="flex items-center justify-between p-4 bg-[hsl(var(--surface-1))] dark:bg-black/10 rounded-lg">
                                 <div className="flex items-center gap-3">
-                                    <Users size={18} className="text-slate-400" />
-                                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase">Alcance Global</span>
+                                    <Users size={18} className="text-[hsl(var(--text-secondary))]" />
+                                    <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase">Alcance Global</span>
                                 </div>
                                 <div className="size-5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
                             </div>
@@ -162,21 +162,21 @@ export default function NewAnnouncementPage() {
                                 className={`w-full flex items-center justify-between p-4 rounded-lg transition-all ${
                                     formData.is_featured
                                         ? 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300'
-                                        : 'bg-slate-50 dark:bg-black/10 text-slate-500 dark:text-slate-300'
+                                        : 'bg-[hsl(var(--surface-1))] dark:bg-black/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
                                 }`}
                             >
                                 <span className="text-[11px] font-bold uppercase">Destacar anuncio</span>
-                                <span className={`size-5 rounded-full ${formData.is_featured ? 'bg-[hsl(var(--primary))]' : 'bg-slate-300 dark:bg-white/20'}`} />
+                                <span className={`size-5 rounded-full ${formData.is_featured ? 'bg-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-2))] dark:bg-white/20'}`} />
                             </button>
 
-                            <button className="w-full py-1.5 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] transition-all flex flex-col items-center gap-2">
+                            <button className="w-full py-1.5 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all flex flex-col items-center gap-2">
                                 <ImageIcon size={24} />
                                 <span className="text-[9px] font-semibold uppercase">Añadir Imagen de Portada</span>
                             </button>
                         </div>
                     </section>
 
-                    <section className="p-4 bg-slate-900 rounded-lg text-white shadow-2xl space-y-3 relative overflow-hidden group">
+                    <section className="p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white shadow-2xl space-y-3 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-blue-600/20 rounded-full blur-3xl" />
                         <div className="relative z-10 flex flex-col gap-3">
                             <div className="flex items-center gap-3">

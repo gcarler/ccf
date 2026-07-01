@@ -92,7 +92,7 @@ function SelectRenderer({ value, colDef }: any) {
   const opts = colDef.cellEditorParams?.values as { label: string; value: string; color?: string }[] | undefined;
   const opt = opts?.find((o) => o.value === value);
   const color = opt?.color ? (CELL_COLORS[opt.color] ?? opt.color) : undefined;
-  if (!opt) return <span className="text-slate-300 text-xs">—</span>;
+  if (!opt) return <span className="text-[hsl(var(--text-secondary))] text-xs">—</span>;
   return (
     <span className="inline-flex items-center gap-1.5 text-xs font-medium">
       {color && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />}
@@ -119,7 +119,7 @@ function RatingRenderer({ value }: any) {
   return (
     <span className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} className={clsx("text-sm", i <= n ? "text-yellow-400" : "text-slate-200 dark:text-slate-700")}>★</span>
+        <span key={i} className={clsx("text-sm", i <= n ? "text-yellow-400" : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-primary))]")}>★</span>
       ))}
     </span>
   );
@@ -129,10 +129,10 @@ function ProgressRenderer({ value }: any) {
   const pct = Math.min(100, Math.max(0, Number(value) || 0));
   return (
     <div className="flex items-center gap-2 w-full">
-      <div className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-[hsl(var(--surface-3))] dark:bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
         <div className="h-full bg-[hsl(var(--primary))] rounded-full" style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-xs font-mono text-slate-500 w-8 text-right">{pct}%</span>
+      <span className="text-xs font-mono text-[hsl(var(--text-secondary))] w-8 text-right">{pct}%</span>
     </div>
   );
 }
@@ -385,7 +385,7 @@ export default function TableView<T extends Record<string, any>>({
       <div className="flex min-w-0 items-center gap-2 flex-wrap">
         {enableFilters && (
           <div className="relative flex-1 min-w-[min(100%,180px)] max-w-xs">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
             <input
               value={quickFilter}
               onChange={(e) => {
@@ -402,14 +402,14 @@ export default function TableView<T extends Record<string, any>>({
                 }
               }}
               placeholder="Buscar…"
-              className="w-full pl-7 pr-7 py-1.5 text-xs border border-slate-200 dark:border-white/10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none focus:ring-1 focus:ring-sky-400"
+              className="w-full pl-7 pr-7 py-1.5 text-xs border border-[hsl(var(--border))] dark:border-white/10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-1 focus:ring-sky-400"
             />
             {quickFilter && (
               <button onClick={() => {
                 setQuickFilter("");
                 if (serverSide) { searchRef.current = ""; gridRef.current?.api?.setGridOption("datasource", datasource!); }
                 else { gridRef.current?.api?.setGridOption("quickFilterText", ""); }
-              }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              }} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]">
                 <X size={11} />
               </button>
             )}
@@ -419,7 +419,7 @@ export default function TableView<T extends Record<string, any>>({
         <div className="flex min-w-0 items-center gap-1 ml-0 sm:ml-auto overflow-x-auto">
           {selectedIds.length > 0 && (
             <>
-              <span className="text-xs text-slate-500 dark:text-slate-400 mr-1">{selectedIds.length} seleccionados</span>
+              <span className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mr-1">{selectedIds.length} seleccionados</span>
               {actions?.map((a, i) => (
                 <button key={i} onClick={() => a.onClick(selectedIds as any)} className={clsx("flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors", a.danger ? "bg-red-50 dark:bg-red-900/20 text-[hsl(var(--destructive))] hover:bg-red-100" : "bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] hover:bg-blue-100")}>
                   {a.icon}{a.label}
@@ -432,7 +432,7 @@ export default function TableView<T extends Record<string, any>>({
               )}
             </>
           )}
-          <button onClick={handleExport} title="Exportar CSV" className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+          <button onClick={handleExport} title="Exportar CSV" className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors">
             <Download size={14} />
           </button>
           {onAddRow && (
@@ -444,9 +444,9 @@ export default function TableView<T extends Record<string, any>>({
       </div>
 
       {/* Grid */}
-      <div className="flex-1 min-w-0 min-h-[300px] rounded-xl overflow-hidden border border-slate-200 dark:border-white/10">
+      <div className="flex-1 min-w-0 min-h-[300px] rounded-xl overflow-hidden border border-[hsl(var(--border))] dark:border-white/10">
         {!serverSide && data.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-sm text-slate-400 dark:text-slate-500 bg-[hsl(var(--bg-primary))] dark:bg-slate-900">
+          <div className="flex items-center justify-center h-full text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))]">
             {emptyMessage}
           </div>
         ) : serverSide ? (

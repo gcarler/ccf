@@ -126,16 +126,16 @@ export default function CourseViewPage() {
                 <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-transparent">
                     <div className="p-4 space-y-4">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-slate-400 uppercase tracking-wide">Tu Avance</h3>
+                            <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Tu Avance</h3>
                             <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{completionRate}%</span>
                         </div>
-                        <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                             <motion.div initial={{ width: 0 }} animate={{ width: `${completionRate}%` }} className="h-full bg-[hsl(var(--primary))] shadow-sm" />
                         </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-2 pb-10 space-y-1">
-                        <p className="font-semibold text-slate-300 uppercase tracking-wide px-4 mb-2">Contenido del Curso</p>
+                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4 mb-2">Contenido del Curso</p>
                         {course.lessons
                             .slice()
                             .sort((a, b) => a.order_index - b.order_index)
@@ -151,7 +151,7 @@ export default function CourseViewPage() {
                                             "w-full text-left px-4 py-1.5 rounded-lg transition-all group flex items-start gap-3.5",
                                             isActive
                                                 ? "bg-blue-600/10 dark:bg-blue-500/10 border border-blue-100/50 dark:border-white/5"
-                                                : "hover:bg-slate-50 dark:hover:bg-white/5 text-slate-500 border border-transparent"
+                                                : "hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] border border-transparent"
                                         )}
                                     >
                                         <div
@@ -161,14 +161,14 @@ export default function CourseViewPage() {
                                                     ? "bg-emerald-500 border-emerald-500 text-white"
                                                     : isActive
                                                         ? "bg-[hsl(var(--primary))] border-blue-600 text-white"
-                                                        : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5 text-slate-400"
+                                                        : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))]"
                                             )}
                                         >
                                             {isCompleted ? <CheckCircle2 size={16} /> : (isActive ? <PlayCircle size={16} /> : <span className="font-semibold">{idx + 1}</span>)}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className={clsx("font-semibold leading-tight mb-1", isActive ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400")}>{lesson.title}</p>
-                                            <div className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                                            <p className={clsx("font-semibold leading-tight mb-1", isActive ? "text-[hsl(var(--text-primary))] dark:text-white" : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]")}>{lesson.title}</p>
+                                            <div className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                 <Clock size={10} /> {lesson.duration_minutes} min
                                             </div>
                                         </div>
@@ -186,14 +186,14 @@ export default function CourseViewPage() {
             <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden">
                 <WorkspaceToolbar breadcrumbs={[{ label: 'Cargando curso...', icon: GraduationCap }]} />
                 <div className="flex-1 flex">
-                    <aside className="w-80 lg:w-96 border-r border-slate-100 dark:border-white/5 p-4 space-y-4"><Skeleton className="h-4 w-1/2" /><Skeleton className="h-8 w-full rounded-lg" /><Skeleton className="h-8 w-full rounded-lg" /></aside>
+                    <aside className="w-80 lg:w-96 border-r border-[hsl(var(--border))] dark:border-white/5 p-4 space-y-4"><Skeleton className="h-4 w-1/2" /><Skeleton className="h-8 w-full rounded-lg" /><Skeleton className="h-8 w-full rounded-lg" /></aside>
                     <main className="flex-1 p-4 space-y-3"><Skeleton className="aspect-video w-full rounded-lg" /><Skeleton className="h-10 w-1/2" /><Skeleton className="h-32 w-full rounded-lg" /></main>
                 </div>
             </div>
         );
     }
 
-    if (!course) return <div className="p-3 text-center font-semibold uppercase text-slate-400 tracking-wide">Curso no encontrado.</div>;
+    if (!course) return <div className="p-3 text-center font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide">Curso no encontrado.</div>;
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden font-display no-scrollbar">
@@ -204,10 +204,10 @@ export default function CourseViewPage() {
                 availableViews={['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
                 rightActions={
                     <div className="flex items-center gap-2">
-                        <Tooltip content="Compartir curso"><button className="p-2 text-slate-400 hover:text-[hsl(var(--primary))] transition-colors"><Share2 size={18} /></button></Tooltip>
-                        <Tooltip content="Ayuda"><button className="p-2 text-slate-400 hover:text-[hsl(var(--primary))] transition-colors"><HelpCircle size={18} /></button></Tooltip>
-                        <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-2" />
-                        <button onClick={() => router.push('/plataforma/academy')} className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 rounded-md text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 transition-all active:scale-95">Salir</button>
+                        <Tooltip content="Compartir curso"><button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><Share2 size={18} /></button></Tooltip>
+                        <Tooltip content="Ayuda"><button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><HelpCircle size={18} /></button></Tooltip>
+                        <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-2" />
+                        <button onClick={() => router.push('/plataforma/academy')} className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] rounded-md text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all active:scale-95">Salir</button>
                     </div>
                 }
             />
@@ -218,13 +218,13 @@ export default function CourseViewPage() {
                 {viewType === 'list' && (
  <section className="w-full p-4 lg:p-4 space-y-4">
                         {course.lessons.map((lesson) => (
-                            <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-md border border-slate-200 dark:border-white/10 p-4 text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:border-blue-300 transition-all">
+                            <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-4 text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:border-blue-300 transition-all">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Lección {lesson.order_index}</p>
-                                        <h3 className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">{lesson.title}</h3>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Lección {lesson.order_index}</p>
+                                        <h3 className="mt-2 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{lesson.title}</h3>
                                     </div>
-                                    <span className="text-xs font-bold text-slate-500">{lesson.duration_minutes} min</span>
+                                    <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">{lesson.duration_minutes} min</span>
                                 </div>
                             </button>
                         ))}
@@ -233,9 +233,9 @@ export default function CourseViewPage() {
 
                 {viewType === 'table' && (
  <section className="w-full p-4 lg:p-4">
-                        <div className="overflow-x-auto rounded-md border border-slate-200 dark:border-white/10">
+                        <div className="overflow-x-auto rounded-md border border-[hsl(var(--border))] dark:border-white/10">
                             <table className="w-full text-left min-w-[480px]">
-                                <thead className="bg-slate-50 dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <tr>
                                         <th className="px-4 py-2">Orden</th>
                                         <th className="px-4 py-2">Lección</th>
@@ -246,12 +246,12 @@ export default function CourseViewPage() {
                                 </thead>
                                 <tbody>
                                     {course.lessons.map((lesson) => (
-                                        <tr key={lesson.id} className="border-t border-slate-100 dark:border-white/5">
-                                            <td className="px-4 py-2 font-bold text-slate-400">{lesson.order_index}</td>
-                                            <td className="px-4 py-2 font-bold text-slate-900 dark:text-white">{lesson.title}</td>
-                                            <td className="px-4 py-2 text-slate-500">{lesson.content_type || 'video'}</td>
-                                            <td className="px-4 py-2 text-slate-500">{lesson.duration_minutes} min</td>
-                                            <td className="px-4 py-2 text-slate-500">{lesson.is_completed ? 'Completada' : 'Pendiente'}</td>
+                                        <tr key={lesson.id} className="border-t border-[hsl(var(--border))] dark:border-white/5">
+                                            <td className="px-4 py-2 font-bold text-[hsl(var(--text-secondary))]">{lesson.order_index}</td>
+                                            <td className="px-4 py-2 font-bold text-[hsl(var(--text-primary))] dark:text-white">{lesson.title}</td>
+                                            <td className="px-4 py-2 text-[hsl(var(--text-secondary))]">{lesson.content_type || 'video'}</td>
+                                            <td className="px-4 py-2 text-[hsl(var(--text-secondary))]">{lesson.duration_minutes} min</td>
+                                            <td className="px-4 py-2 text-[hsl(var(--text-secondary))]">{lesson.is_completed ? 'Completada' : 'Pendiente'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -267,13 +267,13 @@ export default function CourseViewPage() {
                                 status === 'Completada' ? lesson.is_completed : status === 'En curso' ? lesson.id === activeLesson?.id && !lesson.is_completed : !lesson.is_completed && lesson.id !== activeLesson?.id
                             ));
                             return (
-                                <div key={status} className="rounded-md border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 p-3">
-                                    <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-500">{status}</h3>
+                                <div key={status} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))]/70 dark:bg-white/5 p-3">
+                                    <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{status}</h3>
                                     <div className="space-y-3">
                                         {lessons.map((lesson) => (
                                             <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-black/20 p-4 text-left shadow-sm">
-                                                <p className="text-sm font-semibold text-slate-900 dark:text-white">{lesson.title}</p>
-                                                <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">{lesson.duration_minutes} min</p>
+                                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{lesson.title}</p>
+                                                <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{lesson.duration_minutes} min</p>
                                             </button>
                                         ))}
                                     </div>
@@ -333,7 +333,7 @@ export default function CourseViewPage() {
                         exit={{ opacity: 0, y: -10 }}
  className="w-full p-4 lg:p-4 lg:pt-8 space-y-3 pb-4"
                     >
-                        <div className="relative group/player rounded-lg overflow-hidden shadow-[var(--shadow-floating)] border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-black aspect-video flex items-center justify-center">
+                        <div className="relative group/player rounded-lg overflow-hidden shadow-[var(--shadow-floating)] border border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-2))] dark:bg-black aspect-video flex items-center justify-center">
                             {(!activeLesson?.content_type || activeLesson.content_type === 'video') && (
                                 <>
                                     <VideoPlayer
@@ -349,11 +349,11 @@ export default function CourseViewPage() {
                                 </>
                             )}
                             {activeLesson?.content_type === 'pdf' && (
-                                <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-slate-50 dark:bg-black space-y-3">
+                                <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[hsl(var(--surface-1))] dark:bg-black space-y-3">
                                     <FileText size={64} className="text-[hsl(var(--destructive))]" />
                                     <div>
-                                        <h3 className="text-base font-bold text-slate-800 dark:text-white">Documento PDF Adjunto</h3>
-                                        <p className="text-slate-500 text-sm mt-2">Lee el documento para completar esta lección.</p>
+                                        <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Documento PDF Adjunto</h3>
+                                        <p className="text-[hsl(var(--text-secondary))] text-sm mt-2">Lee el documento para completar esta lección.</p>
                                     </div>
                                     <a href={activeLesson.media_url || "#"} target="_blank" rel="noreferrer" className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md font-bold uppercase tracking-wide text-xs hover:bg-[hsl(var(--primary))] transition-colors">
                                         Abrir Documento
@@ -361,11 +361,11 @@ export default function CourseViewPage() {
                                 </div>
                             )}
                             {activeLesson?.content_type === 'quiz' && (
-                                <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-slate-50 dark:bg-black space-y-3">
+                                <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[hsl(var(--surface-1))] dark:bg-black space-y-3">
                                     <HelpCircle size={64} className="text-[hsl(var(--primary))]" />
                                     <div>
-                                        <h3 className="text-base font-bold text-slate-800 dark:text-white">Evaluación de Conocimiento</h3>
-                                        <p className="text-slate-500 text-sm mt-2">Responde las preguntas para avanzar a la siguiente etapa.</p>
+                                        <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Evaluación de Conocimiento</h3>
+                                        <p className="text-[hsl(var(--text-secondary))] text-sm mt-2">Responde las preguntas para avanzar a la siguiente etapa.</p>
                                     </div>
                                     <button onClick={handleLessonComplete} className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md font-bold uppercase tracking-wide text-xs hover:bg-[hsl(var(--primary)/0.85)] transition-colors shadow-lg shadow-[hsl(var(--primary)/0.3)]">
                                         Comenzar Cuestionario
@@ -379,15 +379,15 @@ export default function CourseViewPage() {
                                 <div className="space-y-3 max-w-2xl">
                                     <div className="flex items-center gap-3">
                                         <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-lg uppercase tracking-wide">Lección {activeLesson?.order_index}</span>
-                                        <div className="size-1 rounded-full bg-slate-300" />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{activeLesson?.duration_minutes} Minutos de contenido</span>
+                                        <div className="size-1 rounded-full bg-[hsl(var(--surface-2))]" />
+                                        <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{activeLesson?.duration_minutes} Minutos de contenido</span>
                                     </div>
-                                    <h2 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white tracking-tighter leading-none">
+                                    <h2 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
                                         {activeLesson?.title}
                                     </h2>
                                 </div>
                                 <div className="flex items-center gap-3 shrink-0">
-                                    <button className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] transition-all border border-slate-100 dark:border-white/5"><MoreHorizontal size={20} /></button>
+                                    <button className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all border border-[hsl(var(--border))] dark:border-white/5"><MoreHorizontal size={20} /></button>
                                     <button
                                         onClick={handleLessonComplete}
                                         disabled={activeLesson?.is_completed}
@@ -404,26 +404,26 @@ export default function CourseViewPage() {
                             </div>
 
                             <div className="prose prose-slate dark:prose-invert max-w-none">
-                                <div className="p-3 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-100 dark:border-white/5 text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                                <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
                                     {activeLesson?.content.split('\n').map((paragraph, index) => (
                                         <p key={index} className="mb-3 last:mb-0">{paragraph}</p>
                                     ))}
                                 </div>
                             </div>
 
-                            <section className="p-4 rounded-lg bg-gradient-to-br from-slate-900 to-[#1e1f21] border border-white/5 text-white flex flex-col md:flex-row items-center justify-between gap-4 group">
+                            <section className="p-4 rounded-lg bg-gradient-to-br from-[hsl(var(--bg-muted))] to-[#1e1f21] border border-white/5 text-white flex flex-col md:flex-row items-center justify-between gap-4 group">
                                 <div className="flex items-center gap-4">
                                     <div className="size-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-[hsl(var(--primary))] shadow-2xl group-hover:scale-110 transition-transform">
                                         <Award size={32} />
                                     </div>
                                     <div>
                                         <h4 className="text-base font-bold tracking-tight">Hito de Conocimiento</h4>
-                                        <p className="text-slate-400 text-sm font-medium">Al completar esta lección, recibirás +10 XP para tu perfil pastoral.</p>
+                                        <p className="text-[hsl(var(--text-secondary))] text-sm font-medium">Al completar esta lección, recibirás +10 XP para tu perfil pastoral.</p>
                                     </div>
                                 </div>
                                 <div className="flex -space-x-3">
-                                    {[1, 2, 3].map((item) => <div key={item} className="size-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">JD</div>)}
-                                    <div className="size-8 rounded-full border-2 border-slate-900 bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white">+12</div>
+                                    {[1, 2, 3].map((item) => <div key={item} className="size-8 rounded-full border-2 border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-center justify-center text-[10px] font-bold text-[hsl(var(--text-secondary))]">JD</div>)}
+                                    <div className="size-8 rounded-full border-2 border-[hsl(var(--border))] bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white">+12</div>
                                 </div>
                             </section>
                         </div>

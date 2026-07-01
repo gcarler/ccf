@@ -54,7 +54,7 @@ export default function TaskDetailPage() {
         loadTask();
     }, [id, token]);
 
-    if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-slate-400">Sincronizando con el servidor...</div>;
+    if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sincronizando con el servidor...</div>;
 
     const sidebarSections = [
         {
@@ -76,7 +76,7 @@ export default function TaskDetailPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
-                        <button className="p-2 text-slate-400 hover:text-[hsl(var(--primary))] transition-all">
+                        <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
                             <MoreVertical size={20} />
                         </button>
                         <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
@@ -94,23 +94,23 @@ export default function TaskDetailPage() {
                                 <DSBadge tone={task.priority === 'high' ? 'blue' : 'amber'} label={task.priority.toUpperCase()} />
                                 <DSBadge tone="blue" label={task.status.toUpperCase()} />
                             </div>
-                            <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight uppercase">
+                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight leading-tight uppercase">
                                 {task.title}
                             </h1>
                         </header>
 
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">Descripción</h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Descripción</h3>
+                            <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm leading-relaxed">
                                 {task.description}
                             </p>
                         </DSCard>
 
                         <section className="space-y-4">
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Actividad y Comentarios</h3>
-                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-center py-1.5">
-                                <MessageSquare size={32} className="mx-auto text-slate-200 mb-4" />
-                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">No hay comentarios aún</p>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Actividad y Comentarios</h3>
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3 text-center py-1.5">
+                                <MessageSquare size={32} className="mx-auto text-[hsl(var(--text-secondary))] mb-4" />
+                                <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">No hay comentarios aún</p>
                             </div>
                         </section>
                     </div>
@@ -119,25 +119,25 @@ export default function TaskDetailPage() {
                         <DSCard>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Responsable</span>
+                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Responsable</span>
                                     <div className="flex items-center gap-2">
                                         <div className="size-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white">
                                             {task.assignee?.charAt(0)}
                                         </div>
-                                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{task.assignee}</span>
+                                        <span className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{task.assignee}</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fecha Límite</span>
+                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha Límite</span>
                                     <div className="flex items-center gap-2 text-xs font-bold text-rose-500">
                                         <Calendar size={14} /> {new Date(task.due_date).toLocaleDateString()}
                                     </div>
                                 </div>
-                                <div className="h-px bg-slate-100 dark:bg-white/5" />
+                                <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                                 <div className="space-y-4">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Seguimiento de Tiempo</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Seguimiento de Tiempo</p>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">00:45:12</span>
+                                        <span className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white font-mono">00:45:12</span>
                                         <button 
                                             onClick={() => setIsTimerRunning(!isTimerRunning)}
                                             className={clsx(

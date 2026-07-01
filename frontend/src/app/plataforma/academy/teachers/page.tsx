@@ -77,19 +77,19 @@ export default function AcademyTeachersPage() {
                     <Metric icon={Users} label="Estudiantes activos" value={teachers.reduce((sum, row) => sum + (row.active_students ?? 0), 0)} />
                 </section>
 
-                <section className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] shadow-sm dark:border-white/10 dark:bg-white/5">
-                    <header className="flex flex-col gap-4 border-b border-slate-100 p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+                <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-sm dark:border-white/10 dark:bg-white/5">
+                    <header className="flex flex-col gap-4 border-b border-[hsl(var(--border))] p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Equipo academico</p>
-                            <h1 className="text-lg font-bold text-slate-900 dark:text-white">Facilitadores</h1>
+                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Facilitadores</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={17} />
                             <input
                                 value={query}
                                 onChange={(event) => setQuery(event.target.value)}
                                 placeholder="Buscar facilitador..."
-                                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-11 pr-4 text-sm font-semibold outline-none focus:border-blue-400 dark:border-white/10 dark:bg-black/20"
+                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] py-1.5 pl-11 pr-4 text-sm font-semibold outline-none focus:border-blue-400 dark:border-white/10 dark:bg-black/20"
                             />
                         </div>
                     </header>
@@ -98,7 +98,7 @@ export default function AcademyTeachersPage() {
                         {filtered.map((teacher) => (
                             <article
                                 key={teacher.id}
-                                className="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 p-3 transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
+                                className="cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
                                 onClick={() => router.push(`/academy/teacher?teacher=${teacher.id}`)}
                             >
                                 <div className="mb-3 flex items-center gap-3">
@@ -106,24 +106,24 @@ export default function AcademyTeachersPage() {
                                         {(teacher.full_name || teacher.name || "F").slice(0, 2).toUpperCase()}
                                     </div>
                                     <div>
-                                        <h2 className="font-bold text-slate-900 dark:text-white">{teacher.full_name || teacher.name || "Facilitador"}</h2>
-                                        <p className="text-xs font-semibold text-slate-400">{teacher.email || "Sin correo"}</p>
+                                        <h2 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{teacher.full_name || teacher.name || "Facilitador"}</h2>
+                                        <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">{teacher.email || "Sin correo"}</p>
                                     </div>
                                 </div>
-                                <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{teacher.specialty || "Formacion ministerial"}</p>
+                                <p className="text-sm font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{teacher.specialty || "Formacion ministerial"}</p>
                                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                                    <span className="font-semibold text-slate-500 dark:bg-black/20">{teacher.course_count ?? 0} cursos</span>
-                                    <span className="font-semibold text-slate-500 dark:bg-black/20">{teacher.active_students ?? 0} participantes</span>
+                                    <span className="font-semibold text-[hsl(var(--text-secondary))] dark:bg-black/20">{teacher.course_count ?? 0} cursos</span>
+                                    <span className="font-semibold text-[hsl(var(--text-secondary))] dark:bg-black/20">{teacher.active_students ?? 0} participantes</span>
                                 </div>
                             </article>
                         ))}
                         {!loading && filtered.length === 0 && (
-                            <div className="col-span-full py-1.5 text-center text-sm font-semibold text-slate-400">
+                            <div className="col-span-full py-1.5 text-center text-sm font-semibold text-[hsl(var(--text-secondary))]">
                                 No hay facilitadores registrados para mostrar.
                             </div>
                         )}
                         {loading && (
-                            <div className="col-span-full py-1.5 text-center text-sm font-semibold text-slate-400">
+                            <div className="col-span-full py-1.5 text-center text-sm font-semibold text-[hsl(var(--text-secondary))]">
                                 Cargando facilitadores...
                             </div>
                         )}
@@ -136,12 +136,12 @@ export default function AcademyTeachersPage() {
 
 function Metric({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) {
     return (
-        <div className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
             <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10">
                 <Icon size={20} />
             </div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
-            <p className="text-lg font-bold text-slate-900 dark:text-white">{value}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
+            <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</p>
         </div>
     );
 }

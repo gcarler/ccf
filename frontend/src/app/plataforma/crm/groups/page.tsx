@@ -224,12 +224,12 @@ export default function CrmGroupsPage() {
                         { label: 'Casas Activas', value: stats.active, icon: Activity, bg: 'bg-[hsl(var(--primary))]' },
                         { label: 'Ocup. Promedio', value: `${stats.avgCapacity}%`, icon: TrendingUp, bg: 'bg-amber-500' },
                     ].map(s => (
-                        <div key={s.label} className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg transition-all duration-300">
+                        <div key={s.label} className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg transition-all duration-300">
                             <div className={`inline-flex size-8 rounded-md ${s.bg} items-center justify-center text-white mb-3 shadow-md`}>
                                 <s.icon size={18} />
                             </div>
-                            <div className="text-xl font-bold text-slate-900 dark:text-white">{loading ? '—' : s.value}</div>
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mt-1">{s.label}</p>
+                            <div className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{loading ? '—' : s.value}</div>
+                            <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">{s.label}</p>
                         </div>
                     ))}
                 </div>
@@ -237,12 +237,12 @@ export default function CrmGroupsPage() {
                 <div className="px-3 space-y-3 pb-12">
                     {/* Search */}
                     <div className="relative max-w-md">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={16} />
                         <input
                             value={query}
                             onChange={e => setQuery(e.target.value)}
                             placeholder="Buscar por nombre, zona o líder..."
-                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all placeholder:text-slate-400"
+                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all placeholder:text-[hsl(var(--text-secondary))]"
                         />
                     </div>
 
@@ -250,18 +250,18 @@ export default function CrmGroupsPage() {
                     {/* Loading */}
                     {loading && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {[...Array(6)].map((_, i) => <div key={i} className="bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse h-52" />)}
+                            {[...Array(6)].map((_, i) => <div key={i} className="bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg animate-pulse h-52" />)}
                         </div>
                     )}
 
                     {/* Empty */}
                     {!loading && filtered.length === 0 && (
                         <div className="py-1.5 text-center">
-                            <div className="size-10 rounded-md bg-slate-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
-                                <Home size={36} className="text-slate-300 dark:text-slate-600" />
+                            <div className="size-10 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
+                                <Home size={36} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
                             </div>
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-2">Sin casas registradas</h3>
-                            <p className="text-sm text-slate-400 font-medium mb-3">
+                            <h3 className="text-sm font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-2">Sin casas registradas</h3>
+                            <p className="text-sm text-[hsl(var(--text-secondary))] font-medium mb-3">
                                 {query ? `No se encontraron casas con "${query}"` : 'Registra la primera Casa de Bendición de la red.'}
                             </p>
 
@@ -281,7 +281,7 @@ export default function CrmGroupsPage() {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.04 }}
                                         onClick={() => router.push(`/plataforma/crm/groups/${group.id}`)}
-                                        className="group bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-slate-200/70 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-slate-200/60 dark:hover:shadow-black/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                                        className="group bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-black/10/60 dark:hover:shadow-black/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                                     >
                                         {/* Card top accent */}
                                         <div className={`h-[3px] bg-gradient-to-r ${getZoneColor(group.id)}`} />
@@ -292,40 +292,40 @@ export default function CrmGroupsPage() {
                                                     <Home size={22} />
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide ${isActive ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide ${isActive ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]'}`}>
                                                         {isActive ? 'Activo' : group.status}
                                                     </span>
-                                                    <button onClick={e => { e.stopPropagation(); }} className="p-1.5 text-slate-300 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">
+                                                    <button onClick={e => { e.stopPropagation(); }} className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors">
                                                         <MoreHorizontal size={16} />
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                            <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                                                 {group.name}
                                             </h3>
 
                                             <div className="space-y-1.5 mt-3 mb-4">
                                                 {group.address && (
-                                                    <div className="flex items-center gap-2 text-slate-400">
+                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
                                                         <MapPin size={11} className="shrink-0" />
                                                         <span className="text-[11px] font-medium truncate">{group.address}</span>
                                                     </div>
                                                 )}
                                                 {group.zone && (
-                                                    <div className="flex items-center gap-2 text-slate-400">
+                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
                                                         <Star size={11} className="shrink-0" />
                                                         <span className="text-[11px] font-medium">Zona: {group.zone}</span>
                                                     </div>
                                                 )}
                                                 {group.leader_name && (
-                                                    <div className="flex items-center gap-2 text-slate-400">
+                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
                                                         <Shield size={11} className="shrink-0" />
                                                         <span className="text-[11px] font-medium">Líder: {group.leader_name}</span>
                                                     </div>
                                                 )}
                                                 {group.schedule && (
-                                                    <div className="flex items-center gap-2 text-slate-400">
+                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
                                                         <Calendar size={11} className="shrink-0" />
                                                         <span className="text-[11px] font-medium">{group.schedule}</span>
                                                     </div>
@@ -335,12 +335,12 @@ export default function CrmGroupsPage() {
                                             {/* Occupancy bar */}
                                             <div className="space-y-1.5">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Ocupación</span>
-                                                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ocupación</span>
+                                                    <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                                         {group.personas_count || 0}/{group.capacity || '—'}
                                                     </span>
                                                 </div>
-                                                <div className="h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                                <div className="h-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                                                     <motion.div
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${Math.min(occupancy, 100)}%` }}
@@ -350,16 +350,16 @@ export default function CrmGroupsPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
-                                                <div className="flex items-center gap-1.5 text-slate-400">
+                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-[hsl(var(--border))] dark:border-white/5">
+                                                <div className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))]">
                                                     <Users size={13} />
                                                     <span className="text-[11px] font-bold">{group.personas_count || 0} integrantes</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-md transition-colors">
+                                                    <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-[hsl(var(--text-secondary))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-md transition-colors">
                                                         <UserPlus size={14} />
                                                     </button>
-                                                    <ChevronRight size={16} className="text-slate-200 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+                                                    <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
                                                 </div>
                                             </div>
                                         </div>
@@ -381,20 +381,20 @@ export default function CrmGroupsPage() {
             >
                 <div className="space-y-2">
                     <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={16} />
                         <input
                             value={personaQuery}
                             onChange={event => setPersonaQuery(event.target.value)}
                             placeholder="Buscar persona..."
-                            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-11 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] py-1.5 pl-11 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                         />
                     </div>
                     <div className="space-y-2">
                         {filteredPersonas.map(persona => (
-                            <div key={persona.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-4 dark:border-white/10">
+                            <div key={persona.id} className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] p-4 dark:border-white/10">
                                 <div>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}</p>
-                                    <p className="text-[11px] text-slate-400">{persona.church_role || 'Persona'}</p>
+                                    <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}</p>
+                                    <p className="text-[11px] text-[hsl(var(--text-secondary))]">{persona.church_role || 'Persona'}</p>
                                 </div>
                                 <button
                                     onClick={() => handleInvitePersona(persona.id)}
@@ -407,7 +407,7 @@ export default function CrmGroupsPage() {
                             </div>
                         ))}
                         {filteredPersonas.length === 0 && (
-                            <div className="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400 dark:border-white/10">
+                            <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
                                 No se encontraron personas.
                             </div>
                         )}

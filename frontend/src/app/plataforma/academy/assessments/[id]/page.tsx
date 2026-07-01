@@ -107,7 +107,7 @@ export default function AssessmentPage() {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="max-w-md w-full text-center space-y-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/5 shadow-xl"
+                        className="max-w-md w-full text-center space-y-3 p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl"
                     >
                         <div className={clsx(
                             "size-10 rounded-full mx-auto flex items-center justify-center shadow-lg",
@@ -117,10 +117,10 @@ export default function AssessmentPage() {
                         </div>
                         <div>
                             <h2 className="text-xl font-bold mb-2">{result.passed ? '¡Felicitaciones!' : 'Sigue intentando'}</h2>
-                            <p className="text-slate-500 dark:text-slate-400 font-medium">Has completado la evaluacion de {assessment.title}</p>
+                            <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">Has completado la evaluacion de {assessment.title}</p>
                         </div>
-                        <div className="py-1.5 border-y border-slate-200 dark:border-white/5">
-                            <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">Tu Puntaje</p>
+                        <div className="py-1.5 border-y border-[hsl(var(--border))] dark:border-white/5">
+                            <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Tu Puntaje</p>
                             <span className="text-xl font-bold tracking-tighter">{Math.round(result.submitted_score)}%</span>
                         </div>
                         <div className="space-y-3">
@@ -133,7 +133,7 @@ export default function AssessmentPage() {
                             {!result.passed && (
                                 <button
                                     onClick={() => window.location.reload()}
-                                    className="w-full py-1.5 text-slate-500 font-bold text-sm uppercase tracking-wide hover:text-slate-700 transition-colors"
+                                    className="w-full py-1.5 text-[hsl(var(--text-secondary))] font-bold text-sm uppercase tracking-wide hover:text-[hsl(var(--text-primary))] transition-colors"
                                 >
                                     Reintentar Evaluacion
                                 </button>
@@ -160,7 +160,7 @@ export default function AssessmentPage() {
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table']}
                 rightActions={
-                    <div className="flex items-center gap-3 px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-full text-[11px] font-bold text-slate-500">
+                    <div className="flex items-center gap-3 px-3 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full text-[11px] font-bold text-[hsl(var(--text-secondary))]">
                         <Clock size={14} /> 45:00
                     </div>
                 }
@@ -177,19 +177,19 @@ export default function AssessmentPage() {
                                     "w-full rounded-lg border p-4 text-left transition-all",
                                     currentStep === index
                                         ? "border-blue-500 bg-blue-50/70 dark:bg-blue-500/10"
-                                        : "border-slate-200 bg-[hsl(var(--bg-primary))] hover:border-blue-200 dark:border-white/10 dark:bg-white/5"
+                                        : "border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] hover:border-blue-200 dark:border-white/10 dark:bg-white/5"
                                 )}
                             >
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Pregunta {index + 1}</p>
-                                        <h3 className="mt-2 text-base font-bold text-slate-900 dark:text-white">{question.question_text}</h3>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pregunta {index + 1}</p>
+                                        <h3 className="mt-2 text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">{question.question_text}</h3>
                                     </div>
                                     <span className={clsx(
                                         "rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide",
                                         answeredQuestionIds.has(question.id)
                                             ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
-                                            : "bg-slate-100 text-slate-500 dark:bg-white/10"
+                                            : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/10"
                                     )}>
                                         {answeredQuestionIds.has(question.id) ? 'Respondida' : 'Pendiente'}
                                     </span>
@@ -200,9 +200,9 @@ export default function AssessmentPage() {
                 )}
 
                 {viewType === 'table' && (
- <div className="w-full overflow-x-auto rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+ <div className="w-full overflow-x-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full min-w-[480px] text-left">
-                            <thead className="bg-slate-50 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:bg-white/5">
+                            <thead className="bg-[hsl(var(--surface-1))] text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/5">
                                 <tr>
                                     <th className="px-4 py-1.5">#</th>
                                     <th className="px-4 py-1.5">Pregunta</th>
@@ -212,10 +212,10 @@ export default function AssessmentPage() {
                             </thead>
                             <tbody>
                                 {assessment.questions.map((question: any, index: number) => (
-                                    <tr key={question.id} className="border-t border-slate-100 dark:border-white/5">
-                                        <td className="px-4 py-1.5 font-bold text-slate-400">{index + 1}</td>
-                                        <td className="px-4 py-1.5 font-bold text-slate-800 dark:text-white">{question.question_text}</td>
-                                        <td className="px-4 py-1.5 text-slate-500">{question.options.length}</td>
+                                    <tr key={question.id} className="border-t border-[hsl(var(--border))] dark:border-white/5">
+                                        <td className="px-4 py-1.5 font-bold text-[hsl(var(--text-secondary))]">{index + 1}</td>
+                                        <td className="px-4 py-1.5 font-bold text-[hsl(var(--text-primary))] dark:text-white">{question.question_text}</td>
+                                        <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{question.options.length}</td>
                                         <td className="px-4 py-1.5">
                                             <button
                                                 onClick={() => setCurrentStep(index)}
@@ -238,13 +238,13 @@ export default function AssessmentPage() {
                         <div className="flex justify-between items-end">
                             <div>
                                 <p className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide mb-1">Pregunta {currentStep + 1} de {assessment.questions.length}</p>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight leading-tight">
+                                <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight leading-tight">
                                     {currentQuestion.question_text}
                                 </h3>
                             </div>
-                            <span className="font-semibold text-slate-400 shrink-0">{Math.round(((currentStep + 1) / assessment.questions.length) * 100)}%</span>
+                            <span className="font-semibold text-[hsl(var(--text-secondary))] shrink-0">{Math.round(((currentStep + 1) / assessment.questions.length) * 100)}%</span>
                         </div>
-                        <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                             <motion.div
                                 className="h-full bg-[hsl(var(--primary))]"
                                 initial={{ width: 0 }}
@@ -272,7 +272,7 @@ export default function AssessmentPage() {
                                                 "w-full p-3 text-left rounded-lg border-2 transition-all group relative overflow-hidden",
                                                 answers.find(a => a.selected_option_id === option.id)
                                                     ? "border-blue-600 bg-[hsl(var(--primary))] text-white shadow-xl shadow-blue-500/20"
-                                                    : "border-slate-100 dark:border-white/5 hover:border-blue-200 dark:hover:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5"
+                                                    : "border-[hsl(var(--border))] dark:border-white/5 hover:border-blue-200 dark:hover:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5"
                                             )}
                                         >
                                             <div className="flex items-center gap-4 relative z-10">
@@ -280,7 +280,7 @@ export default function AssessmentPage() {
                                                     "size-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
                                                     answers.find(a => a.selected_option_id === option.id)
                                                         ? "border-white bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))]"
-                                                        : "border-slate-200 dark:border-white/10"
+                                                        : "border-[hsl(var(--border))] dark:border-white/10"
                                                 )}>
                                                     {answers.find(a => a.selected_option_id === option.id) && <CheckCircle2 size={16} />}
                                                 </div>
@@ -293,7 +293,7 @@ export default function AssessmentPage() {
                                         value={answers.find(a => a.question_id === currentQuestion.id)?.text_response || ''}
                                         onChange={(e) => handleAnswer(currentQuestion.id, { text_response: e.target.value })}
                                         placeholder="Escribe tu respuesta aqui..."
-                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-2 border-slate-100 dark:border-white/5 rounded-lg p-3 text-base font-medium outline-none focus:border-blue-500 transition-all min-h-[200px]"
+                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-2 border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 text-base font-medium outline-none focus:border-blue-500 transition-all min-h-[200px]"
                                     />
                                 )}
                             </motion.div>
@@ -301,11 +301,11 @@ export default function AssessmentPage() {
                     </div>
 
                     {/* Navigation Actions */}
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/5">
+                    <div className="flex items-center justify-between pt-4 border-t border-[hsl(var(--border))] dark:border-white/5">
                         <button
                             disabled={currentStep === 0}
                             onClick={() => setCurrentStep(prev => prev - 1)}
-                            className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hover:text-slate-600 disabled:opacity-0 transition-all"
+                            className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] disabled:opacity-0 transition-all"
                         >
                             <ArrowLeft size={16} /> Anterior
                         </button>
@@ -322,7 +322,7 @@ export default function AssessmentPage() {
                             <button
                                 onClick={() => setCurrentStep(prev => prev + 1)}
                                 disabled={!answers.find(a => a.question_id === currentQuestion.id)}
-                                className="px-3 py-1.5 bg-slate-900 text-white rounded-lg font-black text-[10px] uppercase tracking-wide shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+                                className="px-3 py-1.5 bg-[hsl(var(--bg-muted))] text-white rounded-lg font-black text-[10px] uppercase tracking-wide shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
                             >
                                 Siguiente <ArrowRight size={16} />
                             </button>

@@ -41,7 +41,7 @@ const LABEL_COLORS = [
     { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-[hsl(var(--primary))] dark:text-blue-300',   border: 'border-blue-300/50 dark:border-blue-500/30',   dot: 'bg-[hsl(var(--primary))]' },
     { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-[hsl(var(--primary))] dark:text-blue-300', border: 'border-blue-300/50 dark:border-blue-500/30', dot: 'bg-[hsl(var(--primary))]' },
     { bg: 'bg-pink-100 dark:bg-pink-900/30',   text: 'text-pink-700 dark:text-pink-300',   border: 'border-pink-300/50 dark:border-pink-500/30',   dot: 'bg-pink-500' },
-    { bg: 'bg-slate-100 dark:bg-slate-800/60', text: 'text-slate-600 dark:text-slate-300', border: 'border-slate-300/50 dark:border-slate-600/30', dot: 'bg-slate-400' },
+    { bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]/60', text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]', border: 'border-[hsl(var(--border))]/50 dark:border-[hsl(var(--border))]/30', dot: 'bg-[hsl(var(--surface-2))]' },
 ];
 
 function getLabelColor(label: string) {
@@ -83,7 +83,7 @@ interface TaskDetailPanelProps {
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-    todo:        { label: 'Pendiente',   color: 'text-slate-600',   bg: 'bg-slate-100 dark:bg-slate-800/60',      icon: Circle },
+    todo:        { label: 'Pendiente',   color: 'text-[hsl(var(--text-secondary))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]/60',      icon: Circle },
     in_progress: { label: 'En Progreso', color: 'text-[hsl(var(--primary))]',    bg: 'bg-blue-50 dark:bg-blue-500/10',         icon: Loader2 },
     done:        { label: 'Completada',  color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10',   icon: CheckCircle2 },
     blocked:     { label: 'Bloqueada',   color: 'text-rose-600',    bg: 'bg-rose-50 dark:bg-rose-500/10',         icon: X },
@@ -93,7 +93,7 @@ const PRIORITY_MAP: Record<string, { label: string; color: string; dot: string }
     urgent: { label: 'Urgente', color: 'text-rose-600',   dot: 'bg-rose-500' },
     high:   { label: 'Alta',    color: 'text-orange-600', dot: 'bg-orange-500' },
     normal: { label: 'Normal',  color: 'text-[hsl(var(--primary))]',   dot: 'bg-[hsl(var(--primary))]' },
-    low:    { label: 'Baja',    color: 'text-slate-400',  dot: 'bg-slate-400' },
+    low:    { label: 'Baja',    color: 'text-[hsl(var(--text-secondary))]',  dot: 'bg-[hsl(var(--surface-2))]' },
 };
 
 const MIN_WIDTH = 400;
@@ -133,14 +133,14 @@ function ActivityItem({
         <div>
             <div
                 className={clsx(
-                    'group flex items-center gap-1.5 py-1.5 px-2 rounded-lg transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04] relative',
+                    'group flex items-center gap-1.5 py-1.5 px-2 rounded-lg transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.04] relative',
                 )}
                 style={{ paddingLeft: depth * 20 + 8 }}
             >
                 {/* Indent guide lines */}
                 {depth > 0 && (
                     <div
-                        className="absolute left-0 top-0 bottom-0 w-px bg-slate-200 dark:bg-white/[0.08]"
+                        className="absolute left-0 top-0 bottom-0 w-px bg-[hsl(var(--surface-3))] dark:bg-white/[0.08]"
                         style={{ left: depth * 20 - 4 }}
                     />
                 )}
@@ -149,7 +149,7 @@ function ActivityItem({
                 <button
                     onClick={() => setExpanded(v => !v)}
                     className={clsx(
-                        'size-4 flex items-center justify-center text-slate-300 hover:text-slate-500 transition-colors shrink-0',
+                        'size-4 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors shrink-0',
                         !hasChildren && 'opacity-0 pointer-events-none'
                     )}
                 >
@@ -166,7 +166,7 @@ function ActivityItem({
                         'size-4 rounded border-2 flex items-center justify-center shrink-0 transition-all',
                         activity.completed
                             ? 'bg-emerald-500 border-emerald-500 text-white'
-                            : 'border-slate-300 dark:border-slate-600 hover:border-blue-400'
+                            : 'border-[hsl(var(--border))] dark:border-[hsl(var(--border))] hover:border-blue-400'
                     )}
                 >
                     {activity.completed && <Check size={9} strokeWidth={3} />}
@@ -186,7 +186,7 @@ function ActivityItem({
                             if (e.key === 'Enter') { onUpdateTitle(activity.id, titleVal); setEditing(false); }
                             if (e.key === 'Escape') { setTitleVal(activity.title); setEditing(false); }
                         }}
-                        className="flex-1 text-[12px] bg-transparent outline-none border-b border-blue-400 text-slate-800 dark:text-white"
+                        className="flex-1 text-[12px] bg-transparent outline-none border-b border-blue-400 text-[hsl(var(--text-primary))] dark:text-white"
                     />
                 ) : (
                     <span
@@ -194,8 +194,8 @@ function ActivityItem({
                         className={clsx(
                             'flex-1 text-[12px] font-medium cursor-default select-none truncate',
                             activity.completed
-                                ? 'line-through text-slate-400 dark:text-slate-500'
-                                : 'text-slate-700 dark:text-slate-200'
+                                ? 'line-through text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
+                                : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]'
                         )}
                     >
                         {activity.title}
@@ -216,7 +216,7 @@ function ActivityItem({
                 {/* Add child button */}
                 <button
                     onClick={() => { onAddChild(activity.id); setExpanded(true); }}
-                    className="size-4 rounded flex items-center justify-center text-slate-300 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-all"
                     title="Añadir sub-actividad"
                 >
                     <Plus size={10} strokeWidth={2.5} />
@@ -225,7 +225,7 @@ function ActivityItem({
                 {/* Delete button */}
                 <button
                     onClick={() => onDelete(activity.id)}
-                    className="size-4 rounded flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all"
                     title="Eliminar actividad"
                 >
                     <X size={10} strokeWidth={2.5} />
@@ -710,7 +710,7 @@ export default function TaskDetailPanel({
                 exit={{ x: width, opacity: 0 }}
                 transition={{ type: 'spring', damping: 32, stiffness: 300 }}
                 style={{ width, minWidth: MIN_WIDTH }}
-                className="relative h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#18191c] border-l border-slate-100 dark:border-white/[0.07] shadow-[-16px_0_48px_rgba(0,0,0,0.08)] dark:shadow-[-16px_0_48px_rgba(0,0,0,0.35)] overflow-hidden"
+                className="relative h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#18191c] border-l border-[hsl(var(--border))] dark:border-white/[0.07] shadow-[-16px_0_48px_rgba(0,0,0,0.08)] dark:shadow-[-16px_0_48px_rgba(0,0,0,0.35)] overflow-hidden"
             >
                 {/* ── RESIZE HANDLE ──────────────────────────────── */}
                 <div
@@ -718,23 +718,23 @@ export default function TaskDetailPanel({
                     className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize z-10 group flex items-center justify-center"
                     title="Arrastrar para redimensionar"
                 >
-                    <div className="w-[3px] h-8 rounded-full bg-slate-200 dark:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="w-[3px] h-8 rounded-full bg-[hsl(var(--surface-3))] dark:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
 
                 {/* ── HEADER ─────────────────────────────────────── */}
-                <header className="shrink-0 px-4 pt-3 pb-0 border-b border-slate-100 dark:border-white/[0.06]">
+                <header className="shrink-0 px-4 pt-3 pb-0 border-b border-[hsl(var(--border))] dark:border-white/[0.06]">
                     {/* Row 1: breadcrumbs + tools */}
                     <div className="flex items-center justify-between mb-2">
                         {/* Breadcrumbs */}
-                        <div className="flex items-center gap-1 text-[11px] text-slate-400 min-w-0">
+                        <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--text-secondary))] min-w-0">
                             <Home size={11} className="shrink-0" />
-                            <ChevronRight size={10} className="text-slate-300 shrink-0" />
+                            <ChevronRight size={10} className="text-[hsl(var(--text-secondary))] shrink-0" />
                             <FolderOpen size={11} className="shrink-0" />
-                            <span className="truncate max-w-[100px] hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer transition-colors">
+                            <span className="truncate max-w-[100px] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] cursor-pointer transition-colors">
                                 {projectTitle}
                             </span>
-                            <ChevronRight size={10} className="text-slate-300 shrink-0" />
-                            <span className="font-semibold text-slate-600 dark:text-slate-300 truncate max-w-[120px]">
+                            <ChevronRight size={10} className="text-[hsl(var(--text-secondary))] shrink-0" />
+                            <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate max-w-[120px]">
                                 {task.title}
                             </span>
                         </div>
@@ -756,7 +756,7 @@ export default function TaskDetailPanel({
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={uploading}
                                 title={uploading ? "Subiendo archivo" : "Adjuntar archivo"}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-all disabled:cursor-wait disabled:opacity-60"
+                                className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all disabled:cursor-wait disabled:opacity-60"
                             >
                                 {uploading ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />}
                             </button>
@@ -770,7 +770,7 @@ export default function TaskDetailPanel({
                                     'p-1.5 rounded-lg transition-all',
                                     starred
                                         ? 'text-amber-500 bg-amber-50 dark:bg-amber-500/10'
-                                        : 'text-slate-400 hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                                        : 'text-[hsl(var(--text-secondary))] hover:text-amber-400 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5'
                                 )}
                             >
                                 <Star size={14} fill={starred ? 'currentColor' : 'none'} />
@@ -779,7 +779,7 @@ export default function TaskDetailPanel({
                             {/* Expand (fullscreen placeholder) */}
                             <button
                                 title="Expandir a pantalla completa"
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                                className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all"
                                 onClick={() => {
                                     const maxW = Math.floor(window.innerWidth * MAX_RATIO);
                                     setWidth(prev => prev < maxW - 50 ? maxW : DEFAULT_WIDTH);
@@ -792,7 +792,7 @@ export default function TaskDetailPanel({
                             <button
                                 onClick={handleDeleteTask}
                                 title="Eliminar tarea"
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
+                                className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
                             >
                                 <Trash2 size={14} />
                             </button>
@@ -801,7 +801,7 @@ export default function TaskDetailPanel({
                             <button
                                 onClick={onClose}
                                 title="Cerrar panel"
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-all ml-0.5"
+                                className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all ml-0.5"
                             >
                                 <X size={14} />
                             </button>
@@ -829,7 +829,7 @@ export default function TaskDetailPanel({
                         onChange={e => setTitle(e.target.value)}
                         onBlur={handleSave}
                         rows={1}
-                        className="w-full text-sm font-bold text-slate-900 dark:text-white bg-transparent resize-none outline-none leading-snug placeholder:text-slate-300 dark:placeholder:text-slate-600 pb-3"
+                        className="w-full text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] pb-3"
                         placeholder="Nombre de la tarea..."
                         style={{ minHeight: 28 }}
                         onInput={e => {
@@ -849,9 +849,9 @@ export default function TaskDetailPanel({
                 <div className="flex-1 overflow-y-auto scrollbar-thin">
 
                     {/* ─ META FIELDS ─ */}
-                    <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05] space-y-2">
+                    <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05] space-y-2">
 
-                        <MetaRow icon={<UserRound size={13} className="text-slate-400" />} label="Persona asignada">
+                        <MetaRow icon={<UserRound size={13} className="text-[hsl(var(--text-secondary))]" />} label="Persona asignada">
                             <PersonaSelect
                                 value={task.assignee_id ?? null}
                                 onChange={handleAssigneeChange}
@@ -860,8 +860,8 @@ export default function TaskDetailPanel({
                             />
                         </MetaRow>
 
-                        <MetaRow icon={<CalendarDays size={13} className="text-slate-400" />} label="Fecha límite">
-                            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-transparent hover:border-slate-200 dark:hover:border-white/[0.08] transition-all">
+                        <MetaRow icon={<CalendarDays size={13} className="text-[hsl(var(--text-secondary))]" />} label="Fecha límite">
+                            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.04] border border-transparent hover:border-[hsl(var(--border))] dark:hover:border-white/[0.08] transition-all">
                                 {task.due_date
                                     ? new Date(task.due_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
                                     : 'Sin fecha límite'
@@ -869,17 +869,17 @@ export default function TaskDetailPanel({
                             </button>
                         </MetaRow>
 
-                        <MetaRow icon={<Flag size={13} className="text-slate-400" />} label="Prioridad">
+                        <MetaRow icon={<Flag size={13} className="text-[hsl(var(--text-secondary))]" />} label="Prioridad">
                             <button
                                 onClick={handlePriorityCycle}
                                 title="Click para cambiar prioridad"
-                                className={clsx('flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-bold border border-transparent hover:border-slate-200 dark:hover:border-white/[0.08] transition-all cursor-pointer', priority.color)}>
+                                className={clsx('flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-bold border border-transparent hover:border-[hsl(var(--border))] dark:hover:border-white/[0.08] transition-all cursor-pointer', priority.color)}>
                                 <span className={clsx('size-2 rounded-full', priority.dot)} />
                                 {priority.label}
                             </button>
                         </MetaRow>
 
-                        <MetaRow icon={<Tag size={13} className="text-slate-400" />} label="Etiquetas">
+                        <MetaRow icon={<Tag size={13} className="text-[hsl(var(--text-secondary))]" />} label="Etiquetas">
                             <div className="flex flex-wrap items-center gap-1.5 relative">
                                 {/* Chips de etiquetas activas */}
                                 {labels.map(label => {
@@ -906,7 +906,7 @@ export default function TaskDetailPanel({
                                 <div className="relative">
                                     <button
                                         onClick={() => { setLabelPopoverOpen(v => !v); setTimeout(() => labelInputRef.current?.focus(), 50); }}
-                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] border border-dashed border-slate-300 dark:border-white/[0.1] transition-all"
+                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.04] border border-dashed border-[hsl(var(--border))] dark:border-white/[0.1] transition-all"
                                     >
                                         <Plus size={10} /> Añadir etiqueta
                                     </button>
@@ -918,9 +918,9 @@ export default function TaskDetailPanel({
                                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                                 exit={{ opacity: 0, scale: 0.95, y: -4 }}
                                                 transition={{ duration: 0.12 }}
-                                                className="absolute top-full left-0 mt-1.5 z-50 w-56 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-2xl p-3 space-y-2"
+                                                className="absolute top-full left-0 mt-1.5 z-50 w-56 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-2xl p-3 space-y-2"
                                             >
-                                                <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Nueva etiqueta</p>
+                                                <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Nueva etiqueta</p>
                                                 <div className="flex gap-1.5">
                                                     <input
                                                         ref={labelInputRef}
@@ -932,7 +932,7 @@ export default function TaskDetailPanel({
                                                             if (e.key === 'Escape') { setLabelPopoverOpen(false); setNewLabelInput(''); }
                                                         }}
                                                         placeholder="Ej: Alabanza, Urgente..."
-                                                        className="flex-1 text-[12px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                                                        className="flex-1 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
                                                     />
                                                     <button
                                                         onClick={handleAddLabel}
@@ -943,7 +943,7 @@ export default function TaskDetailPanel({
                                                     </button>
                                                 </div>
                                                 {/* Sugerencias predefinidas */}
-                                                <div className="flex flex-wrap gap-1 pt-1 border-t border-slate-100 dark:border-white/5">
+                                                <div className="flex flex-wrap gap-1 pt-1 border-t border-[hsl(var(--border))] dark:border-white/5">
                                                     {['Alabanza', 'Urgente', 'Reunión', 'Pastoral', 'Admin', 'Diseño'].filter(s => !labels.includes(s)).map(s => (
                                                         <button
                                                             key={s}
@@ -968,8 +968,8 @@ export default function TaskDetailPanel({
                     </section>
 
                     {/* ─ DESCRIPTION ─ */}
-                    <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                    <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1.5">
                             <AlignLeft size={11} /> Descripción
                         </p>
                         <textarea
@@ -978,23 +978,23 @@ export default function TaskDetailPanel({
                             onBlur={handleSave}
                             rows={3}
                             placeholder="Añade una descripción..."
-                            className="w-full text-[13px] font-medium text-slate-700 dark:text-slate-300 bg-transparent resize-none outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600 leading-relaxed focus:ring-0"
+                            className="w-full text-[13px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent resize-none outline-none placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] leading-relaxed focus:ring-0"
                         />
                     </section>
 
                     {/* ─ ARCHIVOS ─ */}
-                    <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05]">
+                    <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
                         <div className="mb-3 flex items-center justify-between">
-                            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                                 <Paperclip size={11} /> Archivos
-                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+                                <span className="rounded bg-[hsl(var(--surface-2))] px-1.5 py-0.5 text-[9px] font-bold text-[hsl(var(--text-secondary))] dark:bg-white/[0.06] dark:text-[hsl(var(--text-secondary))]">
                                     {attachments.length}
                                 </span>
                             </p>
                         </div>
 
                         {attachments.length === 0 ? (
-                            <p className="text-[11px] italic text-slate-300 dark:text-slate-600">
+                            <p className="text-[11px] italic text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                 Sin archivos adjuntos aun.
                             </p>
                         ) : (
@@ -1005,13 +1005,13 @@ export default function TaskDetailPanel({
                                         href={attachment.file_url}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="flex items-center justify-between gap-3 rounded-md border border-slate-100 bg-slate-50 px-3 py-2 text-left transition hover:border-blue-200 hover:bg-blue-50/60 dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10"
+                                        className="flex items-center justify-between gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-left transition hover:border-blue-200 hover:bg-blue-50/60 dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10"
                                     >
                                         <div className="min-w-0">
-                                            <p className="truncate text-[12px] font-bold text-slate-700 dark:text-slate-200">
+                                            <p className="truncate text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                 {attachment.filename}
                                             </p>
-                                            <p className="text-[10px] text-slate-400">
+                                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">
                                                 {attachment.file_size ? `${Math.max(1, Math.round(attachment.file_size / 1024))} KB` : 'Archivo adjunto'}
                                             </p>
                                         </div>
@@ -1025,11 +1025,11 @@ export default function TaskDetailPanel({
                     </section>
 
                     {/* ─ ACTIVIDADES ─ */}
-                    <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05]">
+                    <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
                         <div className="mb-3 flex items-center justify-between">
-                            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                                 <Boxes size={11} /> Insumos
-                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+                                <span className="rounded bg-[hsl(var(--surface-2))] px-1.5 py-0.5 text-[9px] font-bold text-[hsl(var(--text-secondary))] dark:bg-white/[0.06] dark:text-[hsl(var(--text-secondary))]">
                                     {supplies.length}
                                 </span>
                             </p>
@@ -1037,7 +1037,7 @@ export default function TaskDetailPanel({
 
                         <div className="space-y-2">
                             {supplies.length === 0 && (
-                                <p className="text-[11px] italic text-slate-300 dark:text-slate-600">
+                                <p className="text-[11px] italic text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                     Sin insumos registrados.
                                 </p>
                             )}
@@ -1045,7 +1045,7 @@ export default function TaskDetailPanel({
                             {supplies.map((supply) => (
                                 <div
                                     key={supply.id}
-                                    className="grid grid-cols-[minmax(0,1fr)_72px_110px] items-center gap-2 rounded-md border border-slate-100 bg-slate-50 px-3 py-2 dark:border-white/[0.06] dark:bg-white/[0.03]"
+                                    className="grid grid-cols-[minmax(0,1fr)_72px_110px] items-center gap-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 dark:border-white/[0.06] dark:bg-white/[0.03]"
                                 >
                                     <input
                                         value={supply.item_name}
@@ -1059,7 +1059,7 @@ export default function TaskDetailPanel({
                                                 handleUpdateSupply(supply, { item_name: value });
                                             }
                                         }}
-                                        className="min-w-0 bg-transparent text-[12px] font-bold text-slate-700 outline-none dark:text-slate-200"
+                                        className="min-w-0 bg-transparent text-[12px] font-bold text-[hsl(var(--text-primary))] outline-none dark:text-[hsl(var(--text-secondary))]"
                                     />
                                     <input
                                         type="number"
@@ -1078,13 +1078,13 @@ export default function TaskDetailPanel({
                                                 handleUpdateSupply(supply, { quantity });
                                             }
                                         }}
-                                        className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-[11px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                                        className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-[11px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
                                     />
                                     <select
                                         value={supply.status}
                                         disabled={savingSupplyId === supply.id}
                                         onChange={(event) => handleUpdateSupply(supply, { status: event.target.value })}
-                                        className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-[11px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                                        className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-[11px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
                                     >
                                         <option value="pending">Pendiente</option>
                                         <option value="ready">Listo</option>
@@ -1100,14 +1100,14 @@ export default function TaskDetailPanel({
                                 onChange={(event) => setNewSupplyName(event.target.value)}
                                 onKeyDown={(event) => event.key === 'Enter' && handleAddSupply()}
                                 placeholder="Nuevo insumo"
-                                className="min-w-0 rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-[12px] font-medium outline-none dark:border-white/10 dark:bg-white/5"
+                                className="min-w-0 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-[12px] font-medium outline-none dark:border-white/10 dark:bg-white/5"
                             />
                             <input
                                 type="number"
                                 min={1}
                                 value={newSupplyQuantity}
                                 onChange={(event) => setNewSupplyQuantity(Math.max(1, Number(event.target.value) || 1))}
-                                className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-2 py-2 text-[12px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                                className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-2 text-[12px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
                             />
                             <button
                                 onClick={handleAddSupply}
@@ -1119,11 +1119,11 @@ export default function TaskDetailPanel({
                         </div>
                     </section>
 
-                    <section className="px-4 py-3 border-b border-slate-100 dark:border-white/[0.05]">
+                    <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
                         <div className="flex items-center justify-between mb-3">
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
                                 <Check size={11} /> Actividades
-                                <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-white/[0.06] rounded text-slate-500 dark:text-slate-400 font-bold text-[9px]">
+                                <span className="px-1.5 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/[0.06] rounded text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold text-[9px]">
                                     {activities.length}
                                 </span>
                             </p>
@@ -1146,14 +1146,14 @@ export default function TaskDetailPanel({
 
                         {/* Add new activity */}
                         <div className="flex items-center gap-2 mt-2 pl-2">
-                            <Plus size={13} className="text-slate-300 shrink-0" />
+                            <Plus size={13} className="text-[hsl(var(--text-secondary))] shrink-0" />
                             <input
                                 type="text"
                                 value={newActivityTitle}
                                 onChange={e => setNewActivityTitle(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && handleAddTopLevel()}
                                 placeholder="Añadir actividad..."
-                                className="flex-1 text-[12px] bg-transparent outline-none text-slate-600 dark:text-slate-300 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                                className="flex-1 text-[12px] bg-transparent outline-none text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))]"
                             />
                             {newActivityTitle.trim() && (
                                 <button
@@ -1168,19 +1168,19 @@ export default function TaskDetailPanel({
 
                     {/* ─ COMENTARIOS ─ */}
                     <section className="px-4 py-3">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-1.5">
                             <MessageSquare size={11} /> Actividad
                         </p>
 
                         {/* Comment list */}
                         <div className="space-y-3 mb-4">
                             {loadingComments && (
-                                <p className="text-[11px] text-slate-300 dark:text-slate-600 italic text-center py-2">
+                                <p className="text-[11px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] italic text-center py-2">
                                     Cargando actividad...
                                 </p>
                             )}
                             {!loadingComments && comments.length === 0 && (
-                                <p className="text-[11px] text-slate-300 dark:text-slate-600 italic text-center py-2">
+                                <p className="text-[11px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] italic text-center py-2">
                                     Sin comentarios aún. Menciona a alguien con @
                                 </p>
                             )}
@@ -1194,12 +1194,12 @@ export default function TaskDetailPanel({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-baseline gap-2 mb-1">
-                                            <span className="text-[12px] font-bold text-slate-700 dark:text-slate-200">{c.author}</span>
-                                            <span className="text-[10px] text-slate-400">
+                                            <span className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{c.author}</span>
+                                            <span className="text-[10px] text-[hsl(var(--text-secondary))]">
                                                 {c.timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
-                                        <p className="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed">{c.text}</p>
+                                        <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">{c.text}</p>
                                     </div>
                                 </div>
                             ))}
@@ -1210,14 +1210,14 @@ export default function TaskDetailPanel({
                             <div className="size-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white shrink-0">
                                 T
                             </div>
-                            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-md bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.07] focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400/40 transition-all">
+                            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.07] focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400/40 transition-all">
                                 <input
                                     type="text"
                                     value={commentInput}
                                     onChange={e => setCommentInput(e.target.value)}
                                     onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSendComment()}
                                     placeholder="Menciona @Dzin para crear, encontrar y preguntar..."
-                                    className="flex-1 text-[12px] bg-transparent outline-none text-slate-700 dark:text-slate-300 placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                                    className="flex-1 text-[12px] bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))]"
                                 />
                                 {commentInput.trim() && (
                                     <button
@@ -1256,7 +1256,7 @@ export default function TaskDetailPanel({
 function MetaRow({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
     return (
         <div className="flex items-center gap-0">
-            <div className="w-[140px] shrink-0 flex items-center gap-2 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+            <div className="w-[140px] shrink-0 flex items-center gap-2 text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                 {icon}
                 {label}
             </div>

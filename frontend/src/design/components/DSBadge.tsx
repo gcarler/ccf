@@ -7,7 +7,7 @@ import { radii, typography } from '../tokens';
 type Tone = 'slate' | 'blue' | 'emerald' | 'amber';
 
 const toneStyles: Record<Tone, string> = {
-    slate: 'bg-slate-900/70 text-slate-100',
+    slate: 'bg-[hsl(var(--bg-muted))]/70 text-[hsl(var(--text-secondary))]',
     blue: 'bg-blue-500/15 text-[hsl(var(--primary))]',
     emerald: 'bg-emerald-500/15 text-emerald-400',
     amber: 'bg-amber-500/15 text-amber-400',

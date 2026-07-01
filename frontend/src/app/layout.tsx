@@ -61,7 +61,7 @@ export default function RootLayout({
                     }}
                 />
             </head>
-            <body className="font-display antialiased text-slate-900 dark:text-slate-100 bg-background-light dark:bg-background-dark min-h-screen">
+            <body className="font-display antialiased text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-background-light dark:bg-background-dark min-h-screen">
                 <AuthProvider>
                     <ConfigProvider>
                         <ToastProvider>

@@ -127,9 +127,9 @@ export default function AdminSettingsSessionsPage() {
     };
 
     return (
-        <div className="min-h-full bg-slate-950/20 font-display">
+        <div className="min-h-full bg-[hsl(var(--bg-muted))]/20 font-display">
             {/* Header */}
-            <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
+            <div className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
                 <div className="px-4 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-blue-500/10 text-[hsl(var(--primary))]">
@@ -137,13 +137,13 @@ export default function AdminSettingsSessionsPage() {
                         </div>
                         <div>
                             <h1 className="text-sm font-bold text-white">Sesiones Activas</h1>
-                            <p className="text-[11px] text-slate-400">Dispositivos conectados a tu cuenta</p>
+                            <p className="text-[11px] text-[hsl(var(--text-secondary))]">Dispositivos conectados a tu cuenta</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={fetchSessions}
-                            className="p-2 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                            className="p-2 rounded-lg bg-white/5 border border-white/10 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10 transition-colors"
                             title="Actualizar"
                         >
                             <RefreshCw size={14} />
@@ -165,13 +165,13 @@ export default function AdminSettingsSessionsPage() {
             <div className="p-4 max-w-3xl mx-auto space-y-3">
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
-                        <RefreshCw size={24} className="animate-spin text-slate-500" />
+                        <RefreshCw size={24} className="animate-spin text-[hsl(var(--text-secondary))]" />
                     </div>
                 ) : sessions.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center bg-white/5 border border-white/10 rounded-lg">
-                        <AlertCircle size={32} className="text-slate-500 mb-2" />
-                        <p className="text-sm font-medium text-slate-400">Sin sesiones activas</p>
-                        <p className="text-xs text-slate-500">Inicia sesión para ver tus dispositivos</p>
+                        <AlertCircle size={32} className="text-[hsl(var(--text-secondary))] mb-2" />
+                        <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">Sin sesiones activas</p>
+                        <p className="text-xs text-[hsl(var(--text-secondary))]">Inicia sesión para ver tus dispositivos</p>
                     </div>
                 ) : (
                     sessions.map((session, i) => {
@@ -197,13 +197,13 @@ export default function AdminSettingsSessionsPage() {
                                         <div className={`p-2 rounded-lg ${
                                             session.is_current
                                                 ? 'bg-blue-500/10 text-[hsl(var(--primary))]'
-                                                : 'bg-slate-100 dark:bg-white/5 text-slate-400'
+                                                : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]'
                                         }`}>
                                             <DeviceIcon size={18} />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-sm font-semibold text-slate-800 dark:text-white">
+                                                <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">
                                                     {browser}
                                                 </span>
                                                 {session.is_current && (
@@ -212,10 +212,10 @@ export default function AdminSettingsSessionsPage() {
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-xs text-slate-400 mt-0.5">
+                                            <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">
                                                 {os} · {device.label}
                                             </p>
-                                            <div className="flex items-center gap-4 mt-2 text-[11px] text-slate-500">
+                                            <div className="flex items-center gap-4 mt-2 text-[11px] text-[hsl(var(--text-secondary))]">
                                                 {session.ip_address && (
                                                     <span className="flex items-center gap-1">
                                                         <MapPin size={11} />
@@ -234,7 +234,7 @@ export default function AdminSettingsSessionsPage() {
                                         <button
                                             onClick={() => handleRevoke(session.id)}
                                             disabled={revoking === session.id}
-                                            className="p-2 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-50"
+                                            className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-50"
                                             title="Revocar sesión"
                                         >
                                             {revoking === session.id ? (

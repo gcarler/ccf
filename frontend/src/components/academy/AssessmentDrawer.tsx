@@ -123,12 +123,12 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                         <Loader2 className="w-10 h-10 animate-spin text-[hsl(var(--primary))]" />
                     </div>
                 ) : !assessment ? (
-                    <div className="flex-1 flex items-center justify-center text-slate-500">No se pudo cargar la evaluación</div>
+                    <div className="flex-1 flex items-center justify-center text-[hsl(var(--text-secondary))]">No se pudo cargar la evaluación</div>
                 ) : (
                     <>
                         {/* Progress Bar (if not welcome/result) */}
                         {!isWelcome && !isResult && (
-                            <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 shrink-0">
+                            <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 shrink-0">
                                 <motion.div 
                                     initial={{ width: 0 }} animate={{ width: `${(currentStep / questions.length) * 100}%` }}
                                     className="h-full bg-[hsl(var(--primary))] shadow-[0_0_10px_rgba(37,99,235,0.5)]" 
@@ -148,16 +148,16 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                             {result.passed ? <Trophy size={64} /> : <AlertCircle size={64} />}
                                             <motion.div 
                                                 animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}
-                                                className="absolute -top-4 -right-4 size-7 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg flex items-center justify-center text-slate-800 dark:text-white shadow-xl border border-slate-50 dark:border-white/10"
+                                                className="absolute -top-4 -right-4 size-7 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg flex items-center justify-center text-[hsl(var(--text-primary))] dark:text-white shadow-xl border border-[hsl(var(--border))] dark:border-white/10"
                                             >
                                                 <span className="text-sm font-semibold">{result.score}%</span>
                                             </motion.div>
                                         </div>
                                         <div className="space-y-3">
-                                            <h3 className="text-lg font-bold text-slate-800 dark:text-white tracking-tighter">
+                                            <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">
                                                 {result.passed ? '¡Felicidades, Siervo!' : 'Sigue Intentándolo'}
                                             </h3>
-                                            <p className="text-slate-500 dark:text-slate-400 font-medium max-w-md mx-auto text-lg leading-relaxed">
+                                            <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium max-w-md mx-auto text-lg leading-relaxed">
                                                 {result.passed 
                                                     ? `Has aprobado el examen con un puntaje de ${result.score}%. Tu certificado ministerial ha sido generado y está disponible en tu panel.`
                                                     : `Tu puntaje de ${result.score}% no alcanzó el mínimo de ${assessment.min_score}%. Revisa el material de estudio y vuelve a intentarlo.`}
@@ -168,7 +168,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                                 <button onClick={onClose} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-blue-600/20 active:scale-95 transition-all">Continuar a mi Panel</button>
                                             ) : (
                                                 <>
-                                                    <button onClick={onClose} className="px-4 py-2 border-2 border-slate-200 dark:border-white/10 rounded-lg text-slate-500 font-semibold uppercase tracking-wide hover:bg-slate-50 transition-all">Cerrar</button>
+                                                    <button onClick={onClose} className="px-4 py-2 border-2 border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-1))] transition-all">Cerrar</button>
                                                     <button onClick={() => { setResult(null); setCurrentStep(0); setAnswers({}); }} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-blue-600/20 active:scale-95 transition-all">Reintentar</button>
                                                 </>
                                             )}
@@ -180,8 +180,8 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                             <ShieldCheck size={48} />
                                         </div>
                                         <div className="space-y-3">
-                                            <h3 className="text-xl font-bold text-slate-800 dark:text-white tracking-tight uppercase">Instrucciones de Evaluación</h3>
-                                            <p className="text-slate-500 dark:text-slate-400 font-medium max-w-lg mx-auto text-base">
+                                            <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase">Instrucciones de Evaluación</h3>
+                                            <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium max-w-lg mx-auto text-base">
                                                 Este examen consta de <span className="font-semibold text-[hsl(var(--primary))]">{questions.length} preguntas</span>. 
                                                 Para aprobar, necesitas una nota mínima de <span className="font-semibold text-[hsl(var(--primary))]">{assessment.min_score}%</span>. 
                                                 Asegúrate de estar en un lugar tranquilo antes de iniciar.
@@ -198,7 +198,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                     >
                                         <div className="space-y-4">
                                             <span className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide bg-blue-50 dark:bg-blue-500/10 px-3 py-1 rounded-lg">Pregunta {currentStep} de {questions.length}</span>
-                                            <h3 className="text-lg lg:text-xl font-bold text-slate-800 dark:text-white leading-tight">
+                                            <h3 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">
                                                 {questions[currentStep - 1].question_text}
                                             </h3>
                                         </div>
@@ -212,14 +212,14 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                                         "w-full text-left p-3 rounded-lg border-2 transition-all group flex items-center gap-3",
                                                         answers[questions[currentStep - 1].id] === option.id 
                                                             ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-xl shadow-blue-600/20" 
-                                                            : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:border-blue-500/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 shadow-sm"
+                                                            : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:border-blue-500/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 shadow-sm"
                                                     )}
                                                 >
                                                     <div className={clsx(
                                                         "size-8 rounded-md flex items-center justify-center shrink-0 shadow-inner border transition-colors",
                                                         answers[questions[currentStep - 1].id] === option.id 
                                                             ? "bg-white/20 border-white/30 text-white" 
-                                                            : "bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border-slate-200 dark:border-white/10 text-slate-400 group-hover:border-blue-500/50"
+                                                            : "bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] group-hover:border-blue-500/50"
                                                     )}>
                                                         {answers[questions[currentStep - 1].id] === option.id ? <CheckCircle2 size={18} /> : <HelpCircle size={18} />}
                                                     </div>
@@ -234,8 +234,8 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
 
                         {/* Footer Actions (Quiz Navigation) */}
                         {!isWelcome && !isResult && (
-                            <div className="p-4 border-t border-slate-50 dark:border-white/5 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-black/20">
-                                <button onClick={prevStep} className="flex items-center gap-2 px-3 py-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all font-semibold uppercase text-[10px] tracking-wide">
+                            <div className="p-4 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between shrink-0 bg-[hsl(var(--surface-1))]/50 dark:bg-black/20">
+                                <button onClick={prevStep} className="flex items-center gap-2 px-3 py-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-all font-semibold uppercase text-[10px] tracking-wide">
                                     <ArrowLeft size={16} /> Anterior
                                 </button>
                                 
@@ -251,7 +251,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                     <button 
                                         onClick={nextStep}
                                         disabled={!answers[questions[currentStep - 1].id]}
-                                        className="px-4 py-1.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 rounded-lg font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3 group"
+                                        className="px-4 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3 group"
                                     >
                                         Siguiente <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                                     </button>

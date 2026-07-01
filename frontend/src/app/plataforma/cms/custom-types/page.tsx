@@ -62,9 +62,9 @@ export default function CustomTypesPage() {
   };
 
   const statusColors: Record<string, string> = {
-    draft: "bg-slate-100 text-slate-600", in_review: "bg-amber-100 text-amber-700",
-    approved: "bg-blue-100 text-blue-700", published: "bg-green-100 text-green-700",
-    archived: "bg-red-100 text-red-600", obsolete: "bg-slate-200 text-slate-500",
+    draft: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]", in_review: "bg-amber-100 text-amber-700",
+    approved: "bg-blue-100 text-[hsl(var(--primary))]", published: "bg-green-100 text-[hsl(var(--secondary))]",
+    archived: "bg-red-100 text-[hsl(var(--destructive))]", obsolete: "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]",
   };
 
   return (
@@ -74,7 +74,7 @@ export default function CustomTypesPage() {
           <Puzzle size={24} className="text-[hsl(var(--primary))]" />
           <div>
             <h1 className="text-xl font-bold">Tipos de Contenido Custom</h1>
-            <p className="text-sm text-slate-500">Politicas, Wiki, Glosario, Noticias, Activos y mas</p>
+            <p className="text-sm text-[hsl(var(--text-secondary))]">Politicas, Wiki, Glosario, Noticias, Activos y mas</p>
           </div>
         </div>
         <button onClick={() => setShowTypeForm(!showTypeForm)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-white">
@@ -83,7 +83,7 @@ export default function CustomTypesPage() {
       </div>
 
       {showTypeForm && (
-        <div className="p-4 border rounded-xl bg-slate-50 space-y-3">
+        <div className="p-4 border rounded-xl bg-[hsl(var(--surface-1))] space-y-3">
           <div className="grid grid-cols-3 gap-3">
             <input placeholder="type_key (ej: policy)" value={typeForm.type_key} onChange={e => setTypeForm(f => ({ ...f, type_key: e.target.value }))} className="px-3 py-2 text-sm border rounded-lg" />
             <input placeholder="Label (ej: Politica)" value={typeForm.label} onChange={e => setTypeForm(f => ({ ...f, label: e.target.value }))} className="px-3 py-2 text-sm border rounded-lg" />
@@ -98,9 +98,9 @@ export default function CustomTypesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="md:col-span-1 border rounded-xl p-4 space-y-2">
-          <p className="text-xs font-medium text-slate-500 mb-3">TIPOS</p>
-          {loading ? <p className="text-xs text-slate-400">Cargando...</p> : types.map(t => (
-            <button key={t.id} onClick={() => loadEntries(t.type_key)} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center justify-between ${selectedType === t.type_key ? "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] font-medium" : "hover:bg-slate-50"}`}>
+          <p className="text-xs font-medium text-[hsl(var(--text-secondary))] mb-3">TIPOS</p>
+          {loading ? <p className="text-xs text-[hsl(var(--text-secondary))]">Cargando...</p> : types.map(t => (
+            <button key={t.id} onClick={() => loadEntries(t.type_key)} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center justify-between ${selectedType === t.type_key ? "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] font-medium" : "hover:bg-[hsl(var(--surface-1))]"}`}>
               <span>{t.label}</span>
               <ChevronRight size={12} />
             </button>
@@ -118,7 +118,7 @@ export default function CustomTypesPage() {
               </div>
 
               {showEntryForm && (
-                <div className="p-4 border rounded-xl bg-slate-50 space-y-3">
+                <div className="p-4 border rounded-xl bg-[hsl(var(--surface-1))] space-y-3">
                   <input placeholder="slug" value={entryForm.slug} onChange={e => setEntryForm(f => ({ ...f, slug: e.target.value }))} className="w-full px-3 py-2 text-sm border rounded-lg" />
                   <input placeholder="Titulo" value={entryForm.title} onChange={e => setEntryForm(f => ({ ...f, title: e.target.value }))} className="w-full px-3 py-2 text-sm border rounded-lg" />
                   <textarea placeholder="Contenido HTML..." value={entryForm.content_html} onChange={e => setEntryForm(f => ({ ...f, content_html: e.target.value }))} className="w-full px-3 py-2 text-sm border rounded-lg h-32" />
@@ -131,28 +131,28 @@ export default function CustomTypesPage() {
 
               <div className="overflow-x-auto border rounded-xl">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50 border-b">
+                  <thead className="bg-[hsl(var(--surface-1))] border-b">
                     <tr>
-                      <th className="px-4 py-3 text-left font-medium text-slate-600">Titulo</th>
-                      <th className="px-4 py-3 text-left font-medium text-slate-600">Slug</th>
-                      <th className="px-4 py-3 text-left font-medium text-slate-600">Estado</th>
-                      <th className="px-4 py-3 text-left font-medium text-slate-600">v</th>
-                      <th className="px-4 py-3 text-left font-medium text-slate-600">Visitas</th>
+                      <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Titulo</th>
+                      <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Slug</th>
+                      <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Estado</th>
+                      <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">v</th>
+                      <th className="px-4 py-3 text-left font-medium text-[hsl(var(--text-secondary))]">Visitas</th>
                       <th className="px-4 py-3"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {entries.length === 0 ? (
-                      <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Sin entradas</td></tr>
+                      <tr><td colSpan={6} className="px-4 py-8 text-center text-[hsl(var(--text-secondary))]">Sin entradas</td></tr>
                     ) : entries.map(e => (
-                      <tr key={e.id} className="hover:bg-slate-50/50">
+                      <tr key={e.id} className="hover:bg-[hsl(var(--surface-1))]/50">
                         <td className="px-4 py-3 font-medium">{e.title}</td>
-                        <td className="px-4 py-3 text-xs text-slate-400 font-mono">{e.slug}</td>
+                        <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))] font-mono">{e.slug}</td>
                         <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColors[e.status] || ""}`}>{e.status}</span></td>
-                        <td className="px-4 py-3 text-xs text-slate-400">v{e.version}</td>
-                        <td className="px-4 py-3 text-xs text-slate-400">{e.view_count}</td>
+                        <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))]">v{e.version}</td>
+                        <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))]">{e.view_count}</td>
                         <td className="px-4 py-3">
-                          <button onClick={() => setPendingArchiveEntry(e)} className="p-1 rounded hover:bg-red-50"><Trash2 size={12} className="text-red-400" /></button>
+                          <button onClick={() => setPendingArchiveEntry(e)} className="p-1 rounded hover:bg-red-50"><Trash2 size={12} className="text-[hsl(var(--destructive))]" /></button>
                         </td>
                       </tr>
                     ))}
@@ -161,7 +161,7 @@ export default function CustomTypesPage() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-64 text-slate-400 text-sm">Selecciona un tipo para ver sus entradas</div>
+            <div className="flex items-center justify-center h-64 text-[hsl(var(--text-secondary))] text-sm">Selecciona un tipo para ver sus entradas</div>
           )}
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function CustomTypesPage() {
         subtitle={pendingArchiveEntry?.title}
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">La entrada quedara archivada dentro del tipo seleccionado.</p>
+          <p className="text-sm text-[hsl(var(--text-secondary))]">La entrada quedara archivada dentro del tipo seleccionado.</p>
           <div className="flex gap-2">
             <button onClick={() => setPendingArchiveEntry(null)} className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium">Cancelar</button>
             <button onClick={deleteEntry} className="flex-1 rounded-lg bg-amber-500 px-3 py-2 text-sm font-medium text-white hover:bg-amber-600">Archivar</button>

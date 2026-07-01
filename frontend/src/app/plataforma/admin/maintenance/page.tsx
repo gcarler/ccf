@@ -87,39 +87,39 @@ export default function AdminMaintenancePage() {
     const renderList = () => (
         <div className="space-y-4">
             {visibleTasks.map((row, index) => (
-                <div key={row.id || index} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div key={row.id || index} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
                         <div className={clsx("size-7 rounded-lg flex items-center justify-center", row.priority === 'Alta' ? "bg-rose-50 text-rose-500" : "bg-amber-50 text-amber-500")}>
                             <AlertCircle size={24} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">{row.item}</h3>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{row.task}</p>
+                            <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{row.item}</h3>
+                            <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{row.task}</p>
                         </div>
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{new Date(row.date).toLocaleDateString('es-ES')}</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{new Date(row.date).toLocaleDateString('es-ES')}</span>
                 </div>
             ))}
         </div>
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
             <table className="w-full min-w-[480px] text-left">
-                <thead className="bg-slate-50 dark:bg-white/5">
+                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                     <tr>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Activo</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden md:table-cell">Tarea</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden lg:table-cell">Fecha</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Prioridad</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Activo</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Tarea</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Fecha</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Prioridad</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                     {visibleTasks.map((row, index) => (
-                        <tr key={row.id || index} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
-                            <td className="px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{row.item}</td>
-                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-slate-500">{row.task}</td>
-                            <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-slate-400">{new Date(row.date).toLocaleDateString('es-ES')}</td>
+                        <tr key={row.id || index} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
+                            <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{row.item}</td>
+                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{row.task}</td>
+                            <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{new Date(row.date).toLocaleDateString('es-ES')}</td>
                             <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", row.priority === 'Alta' ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600")}>{row.priority}</span></td>
                         </tr>
                     ))}
@@ -131,16 +131,16 @@ export default function AdminMaintenancePage() {
     const renderBoard = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedTasks.map((group) => (
-                <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
+                <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Prioridad {group.label}</span>
-                        <span className="font-semibold text-slate-400">{group.items.length}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Prioridad {group.label}</span>
+                        <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
                     </div>
                     <div className="space-y-4">
                         {group.items.map((row, index) => (
-                            <div key={row.id || index} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-3">
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{row.item}</p>
-                                <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{row.task}</p>
+                            <div key={row.id || index} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3">
+                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{row.item}</p>
+                                <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{row.task}</p>
                             </div>
                         ))}
                     </div>
@@ -199,10 +199,10 @@ export default function AdminMaintenancePage() {
                             >
                                 <Zap size={12} className="animate-pulse" /> Protocolo de Salud Activa
                             </motion.div>
-                            <h1 className="text-xl lg:text-xl font-bold tracking-tighter text-slate-900 dark:text-white uppercase leading-none italic">
+                            <h1 className="text-xl lg:text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none italic">
                                 Agenda de <span className="text-amber-500">Mantenimiento</span>
                             </h1>
-                            <p className="text-slate-500 dark:text-slate-400 text-lg font-medium max-w-xl leading-relaxed">
+                            <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-lg font-medium max-w-xl leading-relaxed">
                                 Supervisión técnica en tiempo real. Asegura la disponibilidad del 100% de la infraestructura ministerial.
                             </p>
                         </div>
@@ -231,18 +231,18 @@ export default function AdminMaintenancePage() {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                         {/* Task List Cinematic */}
                         <div className="lg:col-span-8 space-y-3">
-                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg overflow-hidden shadow-sm shadow-slate-200/50">
-                                <div className="p-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 flex items-center justify-between">
-                                    <h3 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
+                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg overflow-hidden shadow-sm shadow-black/10/50">
+                                <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 flex items-center justify-between">
+                                    <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                                         <History size={16} className="text-amber-500" /> Tareas de Seguimiento Técnico
                                     </h3>
                                     <span className="px-4 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-600 font-semibold rounded-full border border-rose-100 dark:border-rose-800 uppercase tracking-wide">Estado Crítico: {stats. review}</span>
                                 </div>
-                                <div className="divide-y divide-slate-50 dark:divide-white/5">
+                                <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                                     {loading ? (
                                         <div className="p-4 flex flex-col items-center gap-4">
                                             <Loader2 className="animate-spin text-amber-500" size={32} />
-                                            <p className="font-semibold text-slate-400 uppercase tracking-wide">Sincronizando con Servidor...</p>
+                                            <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizando con Servidor...</p>
                                         </div>
                                     ) : tasks.length > 0 ? tasks.map((row, i) => (
                                         <motion.div 
@@ -250,7 +250,7 @@ export default function AdminMaintenancePage() {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: i * 0.05 }}
                                             key={i} 
-                                            className="p-4 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all flex items-center justify-between group cursor-pointer"
+                                            className="p-4 hover:bg-[hsl(var(--surface-1))]/50 dark:hover:bg-white/5 transition-all flex items-center justify-between group cursor-pointer"
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className={clsx(
@@ -260,26 +260,26 @@ export default function AdminMaintenancePage() {
                                                     <AlertCircle size={28} />
                                                 </div>
                                                 <div>
-                                                    <div className="text-lg font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tight group-hover:text-amber-600 transition-colors leading-none mb-2">{row.item}</div>
-                                                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{row.task}</div>
+                                                    <div className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight group-hover:text-amber-600 transition-colors leading-none mb-2">{row.item}</div>
+                                                    <div className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{row.task}</div>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <div className="text-right">
-                                                    <div className="font-semibold text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-2 justify-end mb-1">
-                                                        <Clock size={12} className="text-slate-400" /> {new Date(row.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
+                                                    <div className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-2 justify-end mb-1">
+                                                        <Clock size={12} className="text-[hsl(var(--text-secondary))]" /> {new Date(row.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
                                                     </div>
-                                                    <div className={clsx("text-[9px] font-semibold uppercase tracking-wide", row.priority === 'Alta' ? 'text-rose-500' : 'text-slate-400')}>Prioridad {row.priority}</div>
+                                                    <div className={clsx("text-[9px] font-semibold uppercase tracking-wide", row.priority === 'Alta' ? 'text-rose-500' : 'text-[hsl(var(--text-secondary))]')}>Prioridad {row.priority}</div>
                                                 </div>
-                                                <button className="size-7 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg flex items-center justify-center text-slate-300 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/20 transition-all duration-500">
+                                                <button className="size-7 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/20 transition-all duration-500">
                                                     <CheckCircle2 size={20} />
                                                 </button>
                                             </div>
                                         </motion.div>
                                     )) : (
                                         <div className="p-4 text-center space-y-4">
-                                            <div className="size-8 bg-slate-50 dark:bg-white/5 rounded-lg flex items-center justify-center mx-auto text-slate-200"><Wrench size={40} strokeWidth={1} /></div>
-                                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">No hay revisiones programadas</p>
+                                            <div className="size-8 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))]"><Wrench size={40} strokeWidth={1} /></div>
+                                            <p className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">No hay revisiones programadas</p>
                                         </div>
                                     )}
                                 </div>
@@ -290,16 +290,16 @@ export default function AdminMaintenancePage() {
                         <div className="lg:col-span-4 space-y-3">
                             <motion.div 
                                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-sm space-y-3 aura-tech"
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg shadow-sm space-y-3 aura-tech"
                             >
-                                <h3 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
+                                <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                                     <ShieldCheck size={16} className="text-amber-500" /> Salud de Activos
                                 </h3>
                                 <div className="flex flex-col items-center justify-center py-2 gap-3">
-                                    <div className="relative size-10 p-4 rounded-full border-2 border-slate-50 dark:border-white/5 flex items-center justify-center shadow-inner">
+                                    <div className="relative size-10 p-4 rounded-full border-2 border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-center shadow-inner">
                                         <div className="size-full rounded-full bg-gradient-to-tr from-amber-500/5 to-amber-500/20 animate-pulse" />
                                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span className="text-xl font-bold text-slate-900 dark:text-white italic tracking-tighter">{stats.operative}%</span>
+                                            <span className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white italic tracking-tighter">{stats.operative}%</span>
                                             <span className="font-semibold text-emerald-500 uppercase tracking-wide mt-1">Óptimo</span>
                                         </div>
                                         {/* Circular Progress Simulated */}
@@ -316,10 +316,10 @@ export default function AdminMaintenancePage() {
                                 </div>
                             </motion.div>
 
-                            <div className="bg-slate-900 p-4 rounded-lg text-white space-y-3 relative overflow-hidden group shadow-2xl">
+                            <div className="bg-[hsl(var(--bg-muted))] p-4 rounded-lg text-white space-y-3 relative overflow-hidden group shadow-2xl">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-1000"><Database size={80} /></div>
                                 <h3 className="text-xs font-semibold uppercase tracking-wide relative z-10">Data Integrity</h3>
-                                <p className="text-[13px] text-slate-400 font-medium leading-relaxed relative z-10 italic">
+                                <p className="text-[13px] text-[hsl(var(--text-secondary))] font-medium leading-relaxed relative z-10 italic">
                                     &quot;El mantenimiento preventivo ahorra un 40% en costos de reposición anual.&quot;
                                 </p>
                                 <button className="w-full py-1.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all border border-white/10 relative z-10">
@@ -342,8 +342,8 @@ function HealthRow({ label, value, color }: { label: string, value: number, colo
         rose: 'text-rose-500 bg-rose-50 dark:bg-rose-900/20'
     };
     return (
-        <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5">
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</span>
+        <div className="flex justify-between items-center p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
             <span className={clsx("px-3 py-1 rounded-lg text-xs font-semibold", tones[color])}>{value}</span>
         </div>
     );

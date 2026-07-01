@@ -50,12 +50,12 @@ export default function OptimizedImage({
   if (!src || error) {
     return (
       <div
-        className={className || "flex items-center justify-center bg-slate-100 dark:bg-slate-800"}
+        className={className || "flex items-center justify-center bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]"}
         style={fill ? { position: "relative", width: "100%", height: "100%" } : { width, height }}
         aria-label={alt || "Imagen no disponible"}
       >
         <svg
-          className="w-8 h-8 text-slate-300 dark:text-slate-600"
+          className="w-8 h-8 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

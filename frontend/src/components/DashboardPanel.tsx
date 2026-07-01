@@ -23,7 +23,7 @@ export default function DashboardPanel({
     module, title, refreshInterval = 30, className = '',
 }: DashboardPanelProps) {
     return (
-        <div className={`bg-[hsl(var(--bg-primary))] dark:bg-[#16171a] border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden ${className}`}>
+        <div className={`bg-[hsl(var(--bg-primary))] dark:bg-[#16171a] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg overflow-hidden ${className}`}>
             <EmbeddedDashboard
                 module={module}
                 title={title}

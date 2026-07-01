@@ -11,7 +11,7 @@ export default function DatePicker({ currentDate, onSelect }: { currentDate?: Da
                 onChange={(e) => {
                     if (e.target.value) onSelect(new Date(e.target.value));
                 }}
-                className="bg-transparent border-none text-[11px] font-bold text-slate-500 w-24 outline-none cursor-pointer"
+                className="bg-transparent border-none text-[11px] font-bold text-[hsl(var(--text-secondary))] w-24 outline-none cursor-pointer"
             />
         </label>
     );

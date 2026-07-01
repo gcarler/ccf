@@ -298,7 +298,7 @@ export default function EmbeddedDashboard({
     });
 
     const containerClass = compact
-        ? 'bg-[hsl(var(--bg-primary))] dark:bg-[#16171a] border border-slate-200 dark:border-white/5 rounded-lg p-3'
+        ? 'bg-[hsl(var(--bg-primary))] dark:bg-[#16171a] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3'
         : 'space-y-4';
 
     // ── Render ──
@@ -308,26 +308,26 @@ export default function EmbeddedDashboard({
             <div className="flex items-center justify-between mb-2 no-print">
                 <div className="flex items-center gap-2">
                     {title && (
-                        <h3 className="text-[13px] font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <h3 className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
                             <BarChart3 size={14} className="text-[hsl(var(--primary))]" /> {title}
                         </h3>
                     )}
                     {hasAlerts && <AlertBadge rules={alertRules} metrics={metrics} />}
                     {refreshInterval > 0 && (
-                        <span className="text-[9px] text-slate-400 animate-pulse">● vivo</span>
+                        <span className="text-[9px] text-[hsl(var(--text-secondary))] animate-pulse">● vivo</span>
                     )}
                 </div>
                 <div className="flex items-center gap-1">
                     {filterDefs.length > 0 && (
                         <button onClick={() => setShowFilters(!showFilters)}
-                            className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 transition-colors"
+                            className="p-1.5 rounded-md hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] transition-colors"
                             title="Filtros">
                             {showFilters ? <EyeOff size={14} /> : <Eye size={14} />}
                         </button>
                     )}
                     {showAlerts && (
                         <button onClick={() => setAlertConfigOpen(true)}
-                            className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 transition-colors relative"
+                            className="p-1.5 rounded-md hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] transition-colors relative"
                             title="Configurar alertas">
                             <Bell size={14} />
                             {alertRules.length > 0 && (
@@ -337,13 +337,13 @@ export default function EmbeddedDashboard({
                     )}
                     {showExport && (
                         <button onClick={() => exportToPdf(module, exportRef.current)}
-                            className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 transition-colors"
+                            className="p-1.5 rounded-md hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] transition-colors"
                             title="Exportar PDF">
                             <Download size={14} />
                         </button>
                     )}
                     <button onClick={fetchData} disabled={loading}
-                        className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 transition-colors disabled:opacity-40">
+                        className="p-1.5 rounded-md hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] transition-colors disabled:opacity-40">
                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                     </button>
                 </div>
@@ -351,13 +351,13 @@ export default function EmbeddedDashboard({
 
             {/* Filters */}
             {showFilters && filterDefs.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 mb-3 p-2 bg-slate-50 dark:bg-white/5 rounded-md">
+                <div className="flex flex-wrap items-center gap-2 mb-3 p-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md">
                     {filterDefs.map((f: any) => (
                         <div key={f.key} className="flex items-center gap-1.5">
-                            <label className="text-[9px] font-semibold uppercase text-slate-400">{f.label}:</label>
+                            <label className="text-[9px] font-semibold uppercase text-[hsl(var(--text-secondary))]">{f.label}:</label>
                             <select value={filters[f.key] ?? f.default ?? ''}
                                 onChange={e => setFilters(prev => ({...prev, [f.key]: e.target.value}))}
-                                className="text-[10px] font-medium bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-md px-1.5 py-0.5 text-slate-700 dark:text-slate-200">
+                                className="text-[10px] font-medium bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-1.5 py-0.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                 {(f.options || []).map((o: any) => (
                                     <option key={o.value} value={o.value}>{o.label}</option>
                                 ))}
@@ -379,7 +379,7 @@ export default function EmbeddedDashboard({
                     <div className="flex items-center justify-center py-8">
                         <div className="text-center space-y-1">
                             <AlertTriangle size={20} className="mx-auto text-amber-500" />
-                            <p className="text-[11px] text-slate-500">{error}</p>
+                            <p className="text-[11px] text-[hsl(var(--text-secondary))]">{error}</p>
                             <button onClick={fetchData} className="text-[10px] font-semibold text-[hsl(var(--primary))] hover:underline">Reintentar</button>
                         </div>
                     </div>
@@ -401,17 +401,17 @@ export default function EmbeddedDashboard({
                         {!compact && (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                                 {data.pipeline_funnel && (
-                                    <DSCard padding="sm"><div className="text-[10px] font-bold text-slate-400 uppercase mb-2">Pipeline</div>
+                                    <DSCard padding="sm"><div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-2">Pipeline</div>
                                         {data.pipeline_funnel.map((s: FunnelStage) => {
                                             const max = Math.max(...data.pipeline_funnel.map((x: FunnelStage) => x.count), 1);
                                             return (
                                                 <div key={s.stage} className="flex items-center gap-2 py-0.5">
-                                                    <span className="text-[10px] text-slate-500 w-20 truncate">{s.stage}</span>
-                                                    <div className="flex-1 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                                    <span className="text-[10px] text-[hsl(var(--text-secondary))] w-20 truncate">{s.stage}</span>
+                                                    <div className="flex-1 h-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                                                         <div className="h-full rounded-full bg-[hsl(var(--primary))] transition-all duration-500"
                                                             style={{ width: `${(s.count / max) * 100}%` }} />
                                                     </div>
-                                                    <span className="text-[10px] font-bold text-slate-600 w-8 text-right">{s.count}</span>
+                                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] w-8 text-right">{s.count}</span>
                                                 </div>
                                             );
                                         })}
@@ -419,55 +419,55 @@ export default function EmbeddedDashboard({
                                 )}
                                 {data.growth_chart && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Crecimiento</div>
+                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Crecimiento</div>
                                         <DSChart type="area" data={data.growth_chart} height={140} color="#6366f1" />
                                     </DSCard>
                                 )}
                                 {data.asistencia_por_sesion && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Asistencia x Sesión</div>
+                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Asistencia x Sesión</div>
                                         <DSChart type="bar" data={data.asistencia_por_sesion} height={140} color="#10b981" />
                                     </DSCard>
                                 )}
                                 {data.income_by_category && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Ingresos x Categoría</div>
+                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Ingresos x Categoría</div>
                                         <DSChart type="bar" data={data.income_by_category} height={140} color="#3b82f6" />
                                     </DSCard>
                                 )}
                                 {data.monthly_series && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Tendencia Mensual</div>
+                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Tendencia Mensual</div>
                                         <DSChart type="area" data={data.monthly_series} height={140} color="#10b981" />
                                     </DSCard>
                                 )}
                                 {data.enrollment_trends && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Matrículas</div>
+                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Matrículas</div>
                                         <DSChart type="bar" data={data.enrollment_trends} height={140} color="#10b981" />
                                     </DSCard>
                                 )}
                                 {data.status_distribution && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Tareas x Estado</div>
+                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Tareas x Estado</div>
                                         <DSChart type="bar" data={data.status_distribution} height={140} color="#6366f1" />
                                     </DSCard>
                                 )}
                                 {data.usuarios_por_rol && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Usuarios x Rol</div>
+                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Usuarios x Rol</div>
                                         <DSChart type="bar" data={data.usuarios_por_rol} height={140} color="#64748b" />
                                     </DSCard>
                                 )}
                                 {data.grupos_por_ubicacion && data.grupos_por_ubicacion.length > 0 && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Grupos x Ubicación</div>
+                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Grupos x Ubicación</div>
                                         <div className="space-y-1">
                                             {data.grupos_por_ubicacion.map((g: any) => (
                                                 <div key={g.label} className="flex items-center gap-2 text-[11px]">
                                                     <div className="size-1.5 rounded-full bg-[hsl(var(--primary))]" />
-                                                    <span className="text-slate-600 dark:text-slate-300">{g.label}</span>
-                                                    {g.lat && <span className="text-[9px] text-slate-400 ml-auto">({g.lat.toFixed(3)}, {g.lng.toFixed(3)})</span>}
+                                                    <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{g.label}</span>
+                                                    {g.lat && <span className="text-[9px] text-[hsl(var(--text-secondary))] ml-auto">({g.lat.toFixed(3)}, {g.lng.toFixed(3)})</span>}
                                                 </div>
                                             ))}
                                         </div>
@@ -479,16 +479,16 @@ export default function EmbeddedDashboard({
                         {/* Ausentes/Asistentes tables */}
                         {data.ausentes_detalle?.length > 0 && (
                             <DSCard padding="sm">
-                                <div className="text-[10px] font-bold text-slate-400 uppercase mb-1 flex items-center gap-1">
+                                <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1 flex items-center gap-1">
                                     <AlertTriangle size={10} className="text-amber-500" /> Ausentes - {data.ausentes_detalle.length} registros
                                 </div>
                                 <div className="max-h-32 overflow-y-auto text-[10px]">
                                     {// eslint-disable-next-line @typescript-eslint/no-unused-vars
 data.ausentes_detalle.slice(0, 10).map((r: TableRow) => (
-                                        <div key={r.id} className="flex items-center gap-2 py-0.5 border-b border-slate-50 dark:border-white/5">
-                                            <span className="font-medium text-slate-600 w-28 truncate">{r.columns.persona || ''}</span>
-                                            <span className="text-slate-400 w-20 truncate">{r.columns.grupo || ''}</span>
-                                            <span className="text-slate-400 w-16">{r.columns.fecha || ''}</span>
+                                        <div key={r.id} className="flex items-center gap-2 py-0.5 border-b border-[hsl(var(--border))] dark:border-white/5">
+                                            <span className="font-medium text-[hsl(var(--text-secondary))] w-28 truncate">{r.columns.persona || ''}</span>
+                                            <span className="text-[hsl(var(--text-secondary))] w-20 truncate">{r.columns.grupo || ''}</span>
+                                            <span className="text-[hsl(var(--text-secondary))] w-16">{r.columns.fecha || ''}</span>
                                             <span className="text-[hsl(var(--destructive))] ml-auto text-[9px]">{r.columns.excusa || ''}</span>
                                         </div>
                                     ))}

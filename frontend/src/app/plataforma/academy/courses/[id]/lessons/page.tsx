@@ -14,8 +14,8 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const INPUT = "w-full bg-slate-50 dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all text-slate-900 dark:text-white";
-const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-slate-400";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all text-[hsl(var(--text-primary))] dark:text-white";
+const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]";
 
 const CONTENT_TYPE_META: Record<string, { label: string; icon: any; color: string; bg: string }> = {
     video:    { label: 'Video',    icon: Video,     color: 'text-rose-600',   bg: 'bg-rose-50 dark:bg-rose-500/10' },
@@ -139,8 +139,8 @@ export default function LessonsPage() {
                 setViewType={setViewType}
                 availableViews={['table', 'list']}
                 leftActions={
-                    <button onClick={() => router.back()} className="p-2.5 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-md transition-all border border-transparent hover:border-slate-200 dark:hover:border-white/10">
-                        <ArrowLeft size={18} className="text-slate-500" />
+                    <button onClick={() => router.back()} className="p-2.5 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-md transition-all border border-transparent hover:border-[hsl(var(--border))] dark:hover:border-white/10">
+                        <ArrowLeft size={18} className="text-[hsl(var(--text-secondary))]" />
                     </button>
                 }
                 rightActions={
@@ -159,12 +159,12 @@ export default function LessonsPage() {
                 ) : sorted.length === 0 ? (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                         className="flex flex-col items-center justify-center h-48 gap-4 text-center">
-                        <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
                             <BookOpen size={36} />
                         </div>
                         <div>
-                            <h3 className="text-base font-bold text-slate-800 dark:text-white">Sin lecciones aún</h3>
-                            <p className="text-sm text-slate-400 mt-1">Crea la primera lección de este curso.</p>
+                            <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Sin lecciones aún</h3>
+                            <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">Crea la primera lección de este curso.</p>
                         </div>
                         <button onClick={openCreate}
                             className="flex items-center gap-2 px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
@@ -172,13 +172,13 @@ export default function LessonsPage() {
                         </button>
                     </motion.div>
                 ) : viewType === 'table' ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left min-w-[640px]">
-                                <thead className="bg-slate-50 dark:bg-black/20">
+                                <thead className="bg-[hsl(var(--surface-1))] dark:bg-black/20">
                                     <tr>
                                         {['#', 'Título', 'Tipo', 'Recurso', 'Acciones'].map(h => (
-                                            <th key={h} className="py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-slate-400 border-b border-slate-100 dark:border-white/5">
+                                            <th key={h} className="py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] border-b border-[hsl(var(--border))] dark:border-white/5">
                                                 {h}
                                             </th>
                                         ))}
@@ -192,17 +192,17 @@ export default function LessonsPage() {
                                             <motion.tr key={lesson.id}
                                                 initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: idx * 0.04 }}
-                                                className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors border-b border-slate-100 dark:border-white/5 last:border-0 group">
+                                                className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] transition-colors border-b border-[hsl(var(--border))] dark:border-white/5 last:border-0 group">
                                                 <td className="py-3 px-4">
                                                     <div className="flex items-center gap-2">
-                                                        <GripVertical size={14} className="text-slate-300 dark:text-white/20" />
-                                                        <span className="font-semibold text-slate-400">{lesson.order_index}</span>
+                                                        <GripVertical size={14} className="text-[hsl(var(--text-secondary))] dark:text-white/20" />
+                                                        <span className="font-semibold text-[hsl(var(--text-secondary))]">{lesson.order_index}</span>
                                                     </div>
                                                 </td>
                                                 <td className="py-3 px-4">
-                                                    <p className="text-xs font-semibold text-slate-800 dark:text-white">{lesson.title}</p>
+                                                    <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{lesson.title}</p>
                                                     {lesson.content && (
-                                                        <p className="text-[10px] text-slate-400 mt-0.5 max-w-xs truncate">{lesson.content}</p>
+                                                        <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 max-w-xs truncate">{lesson.content}</p>
                                                     )}
                                                 </td>
                                                 <td className="py-3 px-4">
@@ -217,13 +217,13 @@ export default function LessonsPage() {
                                                             <LinkIcon size={11} /> Ver recurso
                                                         </a>
                                                     ) : (
-                                                        <span className="text-[10px] text-slate-300 dark:text-white/20 font-bold">—</span>
+                                                        <span className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-white/20 font-bold">—</span>
                                                     )}
                                                 </td>
                                                 <td className="py-3 px-4">
                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button onClick={() => openEdit(lesson)}
-                                                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-all">
+                                                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
                                                             <Pencil size={14} />
                                                         </button>
                                                         {deleteId === lesson.id ? (
@@ -233,13 +233,13 @@ export default function LessonsPage() {
                                                                     Confirmar
                                                                 </button>
                                                                 <button onClick={() => setDeleteId(null)}
-                                                                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400">
+                                                                    className="p-1.5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))]">
                                                                     <X size={12} />
                                                                 </button>
                                                             </div>
                                                         ) : (
                                                             <button onClick={() => setDeleteId(lesson.id)}
-                                                                className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md text-slate-400 hover:text-rose-600 transition-all">
+                                                                className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-600 transition-all">
                                                                 <Trash2 size={14} />
                                                             </button>
                                                         )}
@@ -261,25 +261,25 @@ export default function LessonsPage() {
                                 <motion.div key={lesson.id}
                                     initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: idx * 0.05 }}
-                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-md border border-slate-200 dark:border-white/5 p-4 flex items-center gap-4 group hover:border-blue-500/20 transition-all shadow-sm">
+                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-md border border-[hsl(var(--border))] dark:border-white/5 p-4 flex items-center gap-4 group hover:border-blue-500/20 transition-all shadow-sm">
                                     <div className={clsx("size-10 rounded-md flex items-center justify-center flex-shrink-0", meta.bg, meta.color)}>
                                         <Icon size={18} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-slate-800 dark:text-white">{lesson.title}</p>
-                                        <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">{meta.label} · Lección {lesson.order_index}</p>
+                                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{lesson.title}</p>
+                                        <p className="text-[10px] text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">{meta.label} · Lección {lesson.order_index}</p>
                                     </div>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => openEdit(lesson)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-all">
+                                        <button onClick={() => openEdit(lesson)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
                                             <Pencil size={14} />
                                         </button>
                                         {deleteId === lesson.id ? (
                                             <div className="flex items-center gap-1">
                                                 <button onClick={() => handleDelete(lesson.id)} className="px-2 py-1 rounded-lg font-semibold bg-rose-100 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white transition-all">Confirmar</button>
-                                                <button onClick={() => setDeleteId(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400"><X size={12} /></button>
+                                                <button onClick={() => setDeleteId(null)} className="p-1.5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))]"><X size={12} /></button>
                                             </div>
                                         ) : (
-                                            <button onClick={() => setDeleteId(lesson.id)} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md text-slate-400 hover:text-rose-600 transition-all">
+                                            <button onClick={() => setDeleteId(lesson.id)} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-600 transition-all">
                                                 <Trash2 size={14} />
                                             </button>
                                         )}
@@ -302,25 +302,25 @@ export default function LessonsPage() {
                             initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                             exit={{ x: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col">
+                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-[hsl(var(--border))] dark:border-white/10 flex flex-col">
 
                             {/* Header drawer */}
-                            <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100 dark:border-white/5 flex-shrink-0">
+                            <div className="flex items-center justify-between px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 flex-shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="size-8 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                         <BookOpen size={16} />
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                                        <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             {editing ? 'Editar' : 'Nueva'} Lección
                                         </p>
-                                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-[200px]">
+                                        <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate max-w-[200px]">
                                             {editing ? editing.title : 'Sin título'}
                                         </h3>
                                     </div>
                                 </div>
                                 <button onClick={() => setDrawerOpen(false)}
-                                    className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all">
+                                    className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] transition-all">
                                     <X size={18} />
                                 </button>
                             </div>
@@ -344,7 +344,7 @@ export default function LessonsPage() {
                                                         "flex items-center gap-2 px-3 py-3 rounded-md border text-[11px] font-semibold uppercase tracking-wide transition-all",
                                                         form.content_type === key
                                                             ? `${meta.bg} ${meta.color} border-transparent shadow-sm`
-                                                            : "bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/5 text-slate-400 hover:border-slate-300"
+                                                            : "bg-[hsl(var(--surface-1))] dark:bg-black/20 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]"
                                                     )}>
                                                     <Icon size={14} /> {meta.label}
                                                 </button>
@@ -371,9 +371,9 @@ export default function LessonsPage() {
                             </form>
 
                             {/* Footer */}
-                            <div className="flex items-center gap-3 px-3 py-1.5 border-t border-slate-100 dark:border-white/5 flex-shrink-0">
+                            <div className="flex items-center gap-3 px-3 py-1.5 border-t border-[hsl(var(--border))] dark:border-white/5 flex-shrink-0">
                                 <button type="button" onClick={() => setDrawerOpen(false)}
-                                    className="flex-1 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all">
+                                    className="flex-1 py-3 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all">
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}

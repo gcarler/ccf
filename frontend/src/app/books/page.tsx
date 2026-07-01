@@ -12,7 +12,7 @@ const BOOKS = [
     { id: 3, title: 'La Oración que Mueve a Dios', author: 'E.M. Bounds', category: 'Oración', rating: 4.7, free: true, cover: 'from-sky-600 to-blue-700', desc: 'Las enseñanzas más profundas sobre el poder transformador de la oración.' },
     { id: 4, title: 'Gracia Divina para el Matrimonio', author: 'Tim Keller', category: 'Familia', rating: 4.8, free: false, cover: 'from-rose-500 to-pink-600', desc: 'Una perspectiva bíblica profunda sobre el matrimonio como reflejo del evangelio.' },
     { id: 5, title: 'Finanzas con Fe', author: 'Equipo CCF', category: 'Mayordomía', rating: 4.6, free: true, cover: 'from-amber-500 to-orange-600', desc: 'Manual práctico para manejar las finanzas con principios del Reino de Dios.' },
-    { id: 6, title: 'Sanidad Interior', author: 'Leanne Payne', category: 'Consejería', rating: 4.7, free: false, cover: 'from-slate-500 to-gray-700', desc: 'Un camino bíblico hacia la restauración emocional y espiritual profunda.' },
+    { id: 6, title: 'Sanidad Interior', author: 'Leanne Payne', category: 'Consejería', rating: 4.7, free: false, cover: 'from-[hsl(var(--surface-3))] to-gray-700', desc: 'Un camino bíblico hacia la restauración emocional y espiritual profunda.' },
 ];
 
 const CATEGORIES = ['Todos', 'Discipulado', 'Liderazgo', 'Familia', 'Oración', 'Mayordomía', 'Consejería'];
@@ -29,7 +29,7 @@ export default function BooksPage() {
     );
 
     return (
-        <main className="min-h-screen bg-slate-950">
+        <main className="min-h-screen bg-[hsl(var(--bg-muted))]">
             <Navbar />
             <div className="pt-28" />
 
@@ -43,31 +43,31 @@ export default function BooksPage() {
                     <h1 className="text-xl font-bold text-white mb-3 tracking-tight">
                         Libros que<br /><span className="text-sky-400">Transforman Mentes</span>
                     </h1>
-                    <p className="text-slate-400 text-lg mb-3 max-w-xl mx-auto">
+                    <p className="text-[hsl(var(--text-secondary))] text-lg mb-3 max-w-xl mx-auto">
                         Colección cuidadosamente seleccionada de los mejores recursos para tu crecimiento espiritual e intelectual.
                     </p>
                     <div className="max-w-lg mx-auto relative">
-                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                         <input value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar libro o autor..."
-                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm outline-none focus:ring-2 focus:ring-sky-500/30 backdrop-blur" />
+                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-[hsl(var(--text-secondary))] text-sm outline-none focus:ring-2 focus:ring-sky-500/30 backdrop-blur" />
                     </div>
                 </div>
             </section>
 
             {/* Filters */}
             <div className="max-w-6xl mx-auto px-3 flex items-center gap-3 flex-wrap mb-3">
-                <Filter size={12} className="text-slate-600" />
+                <Filter size={12} className="text-[hsl(var(--text-secondary))]" />
                 {CATEGORIES.map(c => (
                     <button key={c} onClick={() => setCat(c)}
-                        className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-sky-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}>
+                        className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-sky-600 text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
                         {c}
                     </button>
                 ))}
                 <div className="ml-auto">
                     <button onClick={() => setFreeOnly(!freeOnly)}
                         className={clsx("flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border",
-                            freeOnly ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-white/5 text-slate-400 border-white/10 hover:text-white")}>
+                            freeOnly ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-white/5 text-[hsl(var(--text-secondary))] border-white/10 hover:text-white")}>
                         <Download size={11} /> Solo Gratuitos
                     </button>
                 </div>
@@ -100,8 +100,8 @@ export default function BooksPage() {
                             {/* Info */}
                             <div className="p-3">
                                 <p className="text-sm font-bold text-white leading-snug group-hover:text-sky-400 transition-colors">{book.title}</p>
-                                <p className="text-[11px] text-slate-500 mt-1 font-medium">{book.author}</p>
-                                <p className="text-[11px] text-slate-400 mt-2 leading-relaxed line-clamp-2">{book.desc}</p>
+                                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-1 font-medium">{book.author}</p>
+                                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-2 leading-relaxed line-clamp-2">{book.desc}</p>
                                 <button className={clsx("mt-4 w-full py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-2",
                                     book.free
                                         ? "bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white"

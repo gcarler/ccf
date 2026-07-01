@@ -99,9 +99,9 @@ export default function AgendaEventDetailPage() {
                 { label: event?.title || "Detalle", icon: Clock },
             ]}
         >
-            <div className="h-full overflow-y-auto bg-slate-50 dark:bg-[#141517]">
+            <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[#141517]">
                 <div className="mx-auto max-w-4xl space-y-3 p-3 p-4">
-                    <section className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
+                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
                         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <div>
                                 <button
@@ -111,15 +111,15 @@ export default function AgendaEventDetailPage() {
                                     <ArrowLeft size={16} />
                                     Volver a agenda
                                 </button>
-                                <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">
                                     {loading ? "Cargando..." : event?.title || "Evento de agenda"}
                                 </h1>
-                                <p className="mt-2 text-sm font-medium text-slate-500">
+                                <p className="mt-2 text-sm font-medium text-[hsl(var(--text-secondary))]">
                                     Reunión o evento general sin asistencia ni flujo de evangelismo.
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
                                     {saving ? "Guardando" : "Edición activa"}
                                 </span>
                                 <span
@@ -159,60 +159,60 @@ export default function AgendaEventDetailPage() {
                         </div>
                     </section>
 
-                    <section className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
+                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
                         {loading || !event ? (
-                            <div className="h-48 animate-pulse rounded-lg bg-slate-100 dark:bg-white/5" />
+                            <div className="h-48 animate-pulse rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                         ) : (
                             <div className="space-y-5">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Título</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Título</label>
                                     <input
                                         value={event.title}
                                         onChange={(e) => setEvent({ ...event, title: e.target.value })}
-                                        className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                     />
                                 </div>
 
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Inicio</label>
+                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Inicio</label>
                                         <input
                                             type="datetime-local"
                                             value={event.start_at.slice(0, 16)}
                                             onChange={(e) => setEvent({ ...event, start_at: new Date(e.target.value).toISOString() })}
-                                            className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fin</label>
+                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fin</label>
                                         <input
                                             type="datetime-local"
                                             value={(event.end_at || event.start_at).slice(0, 16)}
                                             onChange={(e) => setEvent({ ...event, end_at: new Date(e.target.value).toISOString() })}
-                                            className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ubicación</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</label>
                                     <div className="relative">
-                                        <MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                                         <input
                                             value={event.location || ""}
                                             onChange={(e) => setEvent({ ...event, location: e.target.value })}
-                                            className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] py-3 pl-10 pr-4 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] py-3 pl-10 pr-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Descripción</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Descripción</label>
                                     <textarea
                                         rows={5}
                                         value={event.description || ""}
                                         onChange={(e) => setEvent({ ...event, description: e.target.value })}
-                                        className="w-full resize-none rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                     />
                                 </div>
                             </div>

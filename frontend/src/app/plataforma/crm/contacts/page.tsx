@@ -32,7 +32,7 @@ function getStatusStyles(stage: string) {
         case 'visit':        return 'bg-sky-500/10 text-sky-600 border-sky-500/20';
         case 'discipleship': return 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20';
         case 'consolidated': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
-        default:             return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+        default:             return 'bg-[hsl(var(--surface-2))]/10 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]/20';
     }
 }
 function getStatusDot(stage: string) {
@@ -42,7 +42,7 @@ function getStatusDot(stage: string) {
         case 'visit':        return 'bg-sky-500';
         case 'discipleship': return 'bg-[hsl(var(--primary))]';
         case 'consolidated': return 'bg-emerald-500';
-        default:             return 'bg-slate-400';
+        default:             return 'bg-[hsl(var(--surface-2))]';
     }
 }
 
@@ -160,13 +160,13 @@ export default function ContactsPage() {
         >
             <div className="flex flex-col h-full overflow-hidden">
                 {/* Toolbar */}
-                <div className="px-4 py-2 border-b border-slate-100 dark:border-white/5 space-y-3">
+                <div className="px-4 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 space-y-3">
                     <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={16} />
                         <input
                             type="text"
                             placeholder="Buscar por nombre o fuente..."
-                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 outline-none dark:text-white transition-all"
+                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 outline-none dark:text-white transition-all"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
@@ -174,7 +174,7 @@ export default function ContactsPage() {
                     <div className="flex gap-2 overflow-x-auto pb-1">
                         <button
                             onClick={() => setActiveFilter('all')}
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-[hsl(var(--primary))] text-white border-blue-600' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-[hsl(var(--primary))] text-white border-blue-600' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-white/10'}`}
                         >
                             Todos ({leads.length})
                         </button>
@@ -182,7 +182,7 @@ export default function ContactsPage() {
                             <button
                                 key={s}
                                 onClick={() => setActiveFilter(s)}
-                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-[hsl(var(--primary))] text-white border-blue-600' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}
+                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-[hsl(var(--primary))] text-white border-blue-600' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-white/10'}`}
                             >
                                 {STAGE_LABELS[s]} ({leads.filter(l => l.stage === s).length})
                             </button>
@@ -196,11 +196,11 @@ export default function ContactsPage() {
                         [...Array(5)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-md" />)
                     ) : filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-1.5 text-center space-y-4">
-                            <div className="size-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300 border border-slate-200 dark:border-white/10">
+                            <div className="size-10 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10">
                                 <Search size={40} />
                             </div>
-                            <h4 className="text-slate-800 dark:text-white font-bold text-sm">No hay contactos</h4>
-                            <p className="text-slate-400 text-sm max-w-[200px]">Agrega un nuevo contacto o ajusta los filtros.</p>
+                            <h4 className="text-[hsl(var(--text-primary))] dark:text-white font-bold text-sm">No hay contactos</h4>
+                            <p className="text-[hsl(var(--text-secondary))] text-sm max-w-[200px]">Agrega un nuevo contacto o ajusta los filtros.</p>
                             {canEditCrm && (
                                 <button
                                     onClick={() => setIsCreateOpen(true)}
@@ -214,21 +214,21 @@ export default function ContactsPage() {
                         <div
                             key={lead.id}
                             onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)}
-                            className="bg-[hsl(var(--surface-1))] dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-md p-3 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-xl"
+                            className="bg-[hsl(var(--surface-1))] dark:bg-white/5 backdrop-blur-xl border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-3 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-xl"
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex gap-4">
                                     <div className="relative">
-                                        <div className="size-8 rounded-lg bg-blue-500/10 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-[hsl(var(--primary))] dark:text-white font-bold text-sm uppercase group-hover:border-blue-400 transition-colors">
+                                        <div className="size-8 rounded-lg bg-blue-500/10 dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--primary))] dark:text-white font-bold text-sm uppercase group-hover:border-blue-400 transition-colors">
                                             {lead.nombre_completo?.charAt(0) || ''}{(lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0]) || ''}
                                         </div>
                                         <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white dark:border-[#1e1f21] ${getStatusDot(lead.stage)}`} />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-slate-800 dark:text-white text-base tracking-tight group-hover:text-[hsl(var(--primary))] transition-colors">
+                                        <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-base tracking-tight group-hover:text-[hsl(var(--primary))] transition-colors">
                                             {lead.nombre_completo || ''}
                                         </h3>
-                                        <p className="text-[11px] text-slate-400 font-medium">
+                                        <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">
                                             {lead.source || 'Sin fuente'} · {(lead.telefono ?? lead.phone) || 'Sin teléfono'}
                                         </p>
                                     </div>
@@ -237,7 +237,7 @@ export default function ContactsPage() {
                                     {STAGE_LABELS[lead.stage] || lead.stage}
                                 </span>
                             </div>
-                            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/5">
+                            <div className="flex items-center justify-between pt-4 border-t border-[hsl(var(--border))] dark:border-white/5">
                                 <button
                                     onClick={e => { e.stopPropagation(); router.push('/plataforma/crm/pipeline'); }}
                                     className="text-[hsl(var(--primary))] text-[10px] font-bold uppercase tracking-wide flex items-center gap-2 hover:text-[hsl(var(--primary))] transition-colors"
@@ -269,20 +269,20 @@ export default function ContactsPage() {
                     )) : ['board', 'kanban'].includes(viewType) ? (
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                             {PIPELINE_STAGES.map(stage => (
-                                <div key={stage} className="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.03] p-3">
+                                <div key={stage} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))]/60 dark:bg-white/[0.03] p-3">
                                     <div className="mb-3 flex items-center justify-between">
-                                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{STAGE_LABELS[stage]}</span>
-                                        <span className="text-[10px] font-bold text-slate-400">{groupedByStage[stage]?.length ?? 0}</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{STAGE_LABELS[stage]}</span>
+                                        <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{groupedByStage[stage]?.length ?? 0}</span>
                                     </div>
                                     <div className="space-y-2">
                                         {(groupedByStage[stage] ?? []).map(lead => (
-                                            <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
-                                                <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{lead.nombre_completo || ''}</p>
-                                                <p className="text-[10px] text-slate-400">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
+                                            <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                                <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
+                                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
                                             </button>
                                         ))}
                                         {(groupedByStage[stage] ?? []).length === 0 && (
-                                            <div className="py-2 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">Vacío</div>
+                                            <div className="py-2 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vacío</div>
                                         )}
                                     </div>
                                 </div>
@@ -291,18 +291,18 @@ export default function ContactsPage() {
                     ) : viewType === 'calendar' ? (
                         <div className="space-y-4">
                             {groupedByDate.length === 0 ? (
-                                <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-3 text-center text-slate-400">
+                                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-3 text-center text-[hsl(var(--text-secondary))]">
                                     <Calendar size={24} className="mx-auto mb-2" />
                                     Sin actividad para mostrar
                                 </div>
                             ) : groupedByDate.map(([dateKey, payload]) => (
-                                <div key={dateKey} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
-                                    <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{payload.label}</p>
+                                <div key={dateKey} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
+                                    <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{payload.label}</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {payload.items.map(lead => (
-                                            <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
-                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{lead.nombre_completo || ''}</p>
-                                                <p className="text-[10px] text-slate-400">{STAGE_LABELS[lead.stage] || lead.stage}</p>
+                                            <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                                <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
+                                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{STAGE_LABELS[lead.stage] || lead.stage}</p>
                                             </button>
                                         ))}
                                     </div>
@@ -310,52 +310,52 @@ export default function ContactsPage() {
                             ))}
                         </div>
                     ) : viewType === 'gantt' ? (
-                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-500"><BarChart3 size={12} /> Progreso por contacto</div>
+                        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]"><BarChart3 size={12} /> Progreso por contacto</div>
                             {filtered.map(lead => (
                                 <div key={lead.id} className="space-y-1">
                                     <div className="flex items-center justify-between text-[11px]">
-                                        <span className="font-bold text-slate-700 dark:text-slate-300">{lead.nombre_completo || ''}</span>
-                                        <span className="font-bold text-slate-400">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
+                                        <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</span>
+                                        <span className="font-bold text-[hsl(var(--text-secondary))]">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
                                     </div>
-                                    <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                                    <div className="h-2 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 overflow-hidden">
                                         <div className="h-full bg-[hsl(var(--primary))]" style={{ width: `${STAGE_PROGRESS[lead.stage] ?? 0}%` }} />
                                     </div>
                                 </div>
                             ))}
-                            {filtered.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">Sin datos</div>}
+                            {filtered.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin datos</div>}
                         </div>
                     ) : viewType === 'table' ? (
-                        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto">
+                        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto">
                             <table className="w-full text-left min-w-[520px]">
-                                <thead className="bg-slate-50 dark:bg-white/5">
+                                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                                     <tr>
-                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Nombre</th>
-                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Fuente</th>
-                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Telefono</th>
-                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Etapa</th>
+                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre</th>
+                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente</th>
+                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Telefono</th>
+                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Etapa</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filtered.map(lead => (
-                                        <tr key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="cursor-pointer border-t border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
-                                            <td className="px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{lead.nombre_completo || ''}</td>
-                                            <td className="px-4 py-1.5 text-xs text-slate-500">{lead.source || 'Sin fuente'}</td>
-                                            <td className="px-4 py-1.5 text-xs text-slate-500">{(lead.telefono ?? lead.phone) || 'Sin telefono'}</td>
-                                            <td className="px-4 py-1.5 text-xs text-slate-500">{STAGE_LABELS[lead.stage] || lead.stage}</td>
+                                        <tr key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="cursor-pointer border-t border-[hsl(var(--border))] dark:border-white/5 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02]">
+                                            <td className="px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</td>
+                                            <td className="px-4 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{lead.source || 'Sin fuente'}</td>
+                                            <td className="px-4 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{(lead.telefono ?? lead.phone) || 'Sin telefono'}</td>
+                                            <td className="px-4 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{STAGE_LABELS[lead.stage] || lead.stage}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
                     ) : viewType === 'wiki' ? (
-                        <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-500"><BookOpen size={12} /> Wiki de contactos</div>
+                        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
+                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]"><BookOpen size={12} /> Wiki de contactos</div>
                             <textarea
                                 value={wikiNotes}
                                 onChange={(e) => setWikiNotes(e.target.value)}
                                 placeholder="Documenta políticas de seguimiento, guiones de llamada y estándares de consolidación..."
-                                className="w-full min-h-[360px] rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 p-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20"
+                                className="w-full min-h-[360px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20"
                             />
                         </div>
                     ) : (
@@ -372,7 +372,7 @@ export default function ContactsPage() {
                 subtitle="Registrar prospecto en el pipeline pastoral"
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700">
+                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
                             Cancelar
                         </button>
                         <button
@@ -390,64 +390,64 @@ export default function ContactsPage() {
                 <form id="create-contact-form" onSubmit={handleCreate} className="space-y-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Nombre *</label>
+                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre *</label>
                             <input
                                 required
                                 value={newLead.first_name}
                                 onChange={e => setNewLead({ ...newLead, first_name: e.target.value })}
                                 placeholder="Juan"
-                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Apellido</label>
+                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Apellido</label>
                             <input
                                 value={newLead.last_name}
                                 onChange={e => setNewLead({ ...newLead, last_name: e.target.value })}
                                 placeholder="Pérez"
-                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                             />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Teléfono</label>
+                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Teléfono</label>
                         <input
                             value={newLead.phone}
                             onChange={e => setNewLead({ ...newLead, phone: e.target.value })}
                             placeholder="+57 300 123 4567"
-                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
                         />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Fuente</label>
+                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Fuente</label>
                             <select
                                 value={newLead.source}
                                 onChange={e => setNewLead({ ...newLead, source: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                             >
                                 {SOURCE_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Etapa inicial</label>
+                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Etapa inicial</label>
                             <select
                                 value={newLead.stage}
                                 onChange={e => setNewLead({ ...newLead, stage: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
                             >
                                 {PIPELINE_STAGES.map(s => <option key={s} value={s}>{STAGE_LABELS[s]}</option>)}
                             </select>
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Notas</label>
+                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Notas</label>
                         <textarea
                             value={newLead.notes}
                             onChange={e => setNewLead({ ...newLead, notes: e.target.value })}
                             placeholder="Contexto del contacto inicial..."
                             rows={3}
-                            className="w-full px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
                         />
                     </div>
                 </form>

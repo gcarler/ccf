@@ -50,7 +50,7 @@ export default function LeadDetailPage() {
         loadLead();
     }, [id, token]);
 
-    if (loading) return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-slate-400">Recuperando expediente ministerial...</div>;
+    if (loading) return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Recuperando expediente ministerial...</div>;
 
     const STAGE_LABELS: any = {
         'new': 'NUEVO',
@@ -80,41 +80,41 @@ export default function LeadDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 lg:p-4">
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Información de Contacto</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Información de Contacto</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex items-center gap-3 text-sm">
-                                    <Phone size={16} className="text-slate-400" />
+                                    <Phone size={16} className="text-[hsl(var(--text-secondary))]" />
                                     <span>{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</span>
                                 </div>
                                 <div className="flex items-center gap-3 text-sm">
-                                    <Mail size={16} className="text-slate-400" />
+                                    <Mail size={16} className="text-[hsl(var(--text-secondary))]" />
                                     <span>{lead.email || 'Sin correo'}</span>
                                 </div>
                             </div>
                         </DSCard>
 
                         <DSCard>
-                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-4">Notas de Seguimiento</h3>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic">
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Notas de Seguimiento</h3>
+                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed italic">
                                 &quot;{lead.notes || 'Sin notas adicionales.'}&quot;
                             </p>
                         </DSCard>
 
                         <section className="space-y-4">
-                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Historial de Interacciones</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Historial de Interacciones</h3>
                             <div className="space-y-3">
                                 {history.map(item => (
-                                    <div key={item.id} className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                    <div key={item.id} className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
                                         <div className="flex items-center gap-4">
                                             <div className="size-8 rounded-full bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--primary))]">
                                                 <Clock size={14} />
                                             </div>
                                             <div>
                                                 <p className="text-xs font-bold">{item.action}</p>
-                                                <p className="text-[10px] text-slate-400 uppercase font-bold">{item.actor}</p>
+                                                <p className="text-[10px] text-[hsl(var(--text-secondary))] uppercase font-bold">{item.actor}</p>
                                             </div>
                                         </div>
-                                        <span className="text-[10px] font-bold text-slate-400">{item.date}</span>
+                                        <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{item.date}</span>
                                     </div>
                                 ))}
                             </div>
@@ -123,14 +123,14 @@ export default function LeadDetailPage() {
 
                     <div className="space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Estado de Consolidación</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Consolidación</h3>
                             <div className="space-y-3">
                                 <div className="space-y-2">
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Etapa Actual</p>
+                                    <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Etapa Actual</p>
                                     <DSBadge tone={lead.stage === 'consolidated' || lead.stage === 'integrated' ? 'emerald' : 'blue'} label={STAGE_LABELS[lead.stage] || lead.stage.toUpperCase()} />
                                 </div>
                                 
-                                <div className="h-px bg-slate-100 dark:bg-white/5" />
+                                <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                                 
                                 <button className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
                                     Mover a Siguiente Etapa

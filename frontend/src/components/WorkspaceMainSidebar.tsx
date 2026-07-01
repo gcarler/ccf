@@ -61,19 +61,19 @@ function SidebarSection({
                     onClick={() => setOpen(v => !v)}
                     className="flex items-center justify-between px-2.5 py-0.5 cursor-pointer group/hdr"
                 >
-                    <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 group-hover/hdr:text-slate-600 dark:group-hover/hdr:text-slate-300 transition-colors select-none">
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] group-hover/hdr:text-[hsl(var(--text-secondary))] dark:group-hover/hdr:text-[hsl(var(--text-secondary))] transition-colors select-none">
                         {title}
                     </span>
                     <div className="flex items-center gap-0.5 opacity-0 group-hover/hdr:opacity-100 transition-opacity">
                         {canAdd && (
                             <button
                                 onClick={e => { e.stopPropagation(); }}
-                                className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                className="p-0.5 rounded hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]"
                             >
                                 <Plus size={10} />
                             </button>
                         )}
-                        <ChevronDown size={10} className={clsx('text-slate-300 transition-transform', !open && '-rotate-90')} />
+                        <ChevronDown size={10} className={clsx('text-[hsl(var(--text-secondary))] transition-transform', !open && '-rotate-90')} />
                     </div>
                 </div>
             )}
@@ -119,7 +119,7 @@ function NavRow({
                 'relative flex items-center gap-1.5 px-2 py-1.5 mx-1.5 rounded-md transition-all duration-150 group cursor-pointer',
                 isActive
                     ? 'bg-blue-600/10 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] hover:text-slate-900 dark:hover:text-white'
+                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]/80 dark:hover:bg-white/[0.04] hover:text-[hsl(var(--text-primary))] dark:hover:text-white'
             )}>
                 {/* Active indicator bar */}
                 {isActive && (
@@ -135,7 +135,7 @@ function NavRow({
                 ) : (
                     <Icon size={14} className={clsx(
                         'shrink-0 transition-colors',
-                        isActive ? 'text-[hsl(var(--primary))]' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+                        isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-[hsl(var(--text-secondary))]'
                     )} />
                 )}
                 {!isMini && (
@@ -149,14 +149,14 @@ function NavRow({
                                 'px-1 py-px rounded text-[9px] font-bold leading-none shrink-0',
                                 isActive
                                     ? 'bg-blue-200 dark:bg-blue-500/20 text-[hsl(var(--primary))] dark:text-blue-300'
-                                    : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
+                                    : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
                             )}>
                                 {item.count}
                             </span>
                         )}
                         <ChevronRight size={10} className={clsx(
                             'shrink-0 transition-all duration-150',
-                            isActive ? 'opacity-80 text-[hsl(var(--primary))]' : 'opacity-0 group-hover:opacity-100 text-slate-400 translate-x-1 group-hover:translate-x-0'
+                            isActive ? 'opacity-80 text-[hsl(var(--primary))]' : 'opacity-0 group-hover:opacity-100 text-[hsl(var(--text-secondary))] translate-x-1 group-hover:translate-x-0'
                         )} />
                     </>
                 )}
@@ -216,7 +216,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
 
     return (
         <aside className="h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113] transition-colors duration-500 ease-in-out relative overflow-hidden">
-            <div className="shrink-0 border-b border-slate-100 dark:border-white/[0.04] relative z-20 bg-white/80 dark:bg-[#0f1113]/80 backdrop-blur-xl">
+            <div className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.04] relative z-20 bg-white/80 dark:bg-[#0f1113]/80 backdrop-blur-xl">
                 {/* 1. Breadcrumbs (Opcional pero recomendado para contexto) */}
                 {!isMini && (
                     <div className="px-3 pt-2 pb-0.5 flex items-center gap-1.5 overflow-hidden min-h-[18px]">
@@ -224,17 +224,17 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                             onClick={() => resetSidebarStack()}
                             className={clsx(
                                 "text-[9px] font-semibold uppercase tracking-wide transition-all cursor-pointer",
-                                isDrillDown ? "text-slate-400 hover:text-[hsl(var(--primary))]" : "text-[hsl(var(--primary))]"
+                                isDrillDown ? "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]" : "text-[hsl(var(--primary))]"
                             )}
                         >
                             {title}
                         </span>
                         {isDrillDown && sidebarStack.map((level, i) => (
                             <React.Fragment key={level.id}>
-                                <div className="size-[3px] rounded-full bg-slate-300 dark:bg-white/10 shrink-0" />
+                                <div className="size-[3px] rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 shrink-0" />
                                 <span className={clsx(
                                     "text-[9px] font-semibold uppercase tracking-wide truncate transition-all",
-                                    i === sidebarStack.length - 1 ? "text-slate-900 dark:text-white" : "text-slate-400"
+                                    i === sidebarStack.length - 1 ? "text-[hsl(var(--text-primary))] dark:text-white" : "text-[hsl(var(--text-secondary))]"
                                 )}>
                                     {level.title}
                                 </span>
@@ -256,13 +256,13 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                                         if (currentPanel?.onBack) currentPanel.onBack();
                                         popSidebarPanel();
                                     }}
-                                    className="p-1 -ml-1 rounded-md bg-slate-50 dark:bg-white/5 text-slate-500 hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 transition-all flex items-center justify-center shrink-0 border border-slate-100 dark:border-white/5 active:scale-90"
+                                    className="p-1 -ml-1 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 transition-all flex items-center justify-center shrink-0 border border-[hsl(var(--border))] dark:border-white/5 active:scale-90"
                                 >
                                     <ChevronLeft size={14} strokeWidth={2.5} />
                                 </motion.button>
                             )}
                             <h2 className={clsx(
-                                "text-sm font-bold text-slate-900 dark:text-white truncate tracking-tight flex-1",
+                                "text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate tracking-tight flex-1",
                                 isDrillDown && "italic"
                             )}>
                                 {displayTitle}
@@ -273,7 +273,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
             </div>
 
             {/* 3. Body: Contenido con animación de Slide Direccional */}
-            <div className="flex-1 relative overflow-hidden bg-slate-50/30 dark:bg-black/5">
+            <div className="flex-1 relative overflow-hidden bg-[hsl(var(--surface-1))]/30 dark:bg-black/5">
                 <AnimatePresence mode="popLayout" custom={stackDirection} initial={false}>
                     <motion.div
                         key={isDrillDown && currentPanel ? currentPanel.id : 'base'}
@@ -326,8 +326,8 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                                 {/* Fallback content */}
                                 {!sections?.length && !isMini && (
                                     <div className="px-3 py-1.5 text-center space-y-3 opacity-40">
-                                        <Circle size={40} className="mx-auto text-slate-200" />
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Sin contenido</p>
+                                        <Circle size={40} className="mx-auto text-[hsl(var(--text-secondary))]" />
+                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin contenido</p>
                                     </div>
                                 )}
                             </>
@@ -338,7 +338,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
 
             {/* ── Footer S2: Expand/Collapse toggle ── */}
             <div className={clsx(
-                "shrink-0 border-t border-slate-100 dark:border-white/5 p-2 flex items-center",
+                "shrink-0 border-t border-[hsl(var(--border))] dark:border-white/5 p-2 flex items-center",
                 isMini ? "flex-col gap-2 justify-center" : "justify-end"
             )}>
                 {/* Collapse / Expand toggle */}
@@ -346,7 +346,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                     <Tooltip content={isCollapsed ? 'Expandir panel' : 'Contraer panel'} side="right">
                         <button
                             onClick={onToggle}
-                            className="p-2 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all duration-200 shrink-0"
+                            className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all duration-200 shrink-0"
                             aria-label={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
                         >
                             {isCollapsed

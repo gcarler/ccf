@@ -24,20 +24,20 @@ export default function DashboardEmbed({
     const displayLabel = label || moduleLabels[module] || module;
 
     return (
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#16171a] border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#16171a] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg overflow-hidden">
             <button
                 onClick={() => setOpen(!open)}
-                className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] transition-colors"
             >
                 {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 <BarChart3 size={14} className="text-[hsl(var(--primary))]" />
                 📊 Dashboard {displayLabel}
-                <span className="ml-auto text-[9px] text-slate-400">
+                <span className="ml-auto text-[9px] text-[hsl(var(--text-secondary))]">
                     {open ? 'ocultar' : 'mostrar métricas'}
                 </span>
             </button>
             {open && (
-                <div className="border-t border-slate-100 dark:border-white/5">
+                <div className="border-t border-[hsl(var(--border))] dark:border-white/5">
                     <EmbeddedDashboard
                         module={module}
                         title={displayLabel}

@@ -151,10 +151,10 @@ export default function DonationConfig() {
     const renderList = () => (
         <div className="space-y-4">
             {categories.map((cat) => (
-                <div key={cat.id} className="config-aura p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between gap-3" style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}>
+                <div key={cat.id} className="config-aura p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between gap-3" style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}>
                     <div>
-                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{cat.name}</h3>
-                        <p className="mt-1 text-[10px] text-slate-400 font-bold uppercase tracking-wide">{cat.description || 'Fondo ministerial'}</p>
+                        <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{cat.name}</h3>
+                        <p className="mt-1 text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{cat.description || 'Fondo ministerial'}</p>
                     </div>
                     <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", cat.active ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{cat.active ? 'Activo' : 'Inactivo'}</span>
                 </div>
@@ -163,20 +163,20 @@ export default function DonationConfig() {
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
             <table className="w-full min-w-[480px] text-left">
-                <thead className="bg-slate-50 dark:bg-white/5">
+                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                     <tr>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fondo</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden md:table-cell">Descripción</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Estado</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fondo</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Descripción</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                     {categories.map((cat) => (
-                        <tr key={cat.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
-                            <td className="px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{cat.name}</td>
-                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-slate-500">{cat.description || '—'}</td>
+                        <tr key={cat.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
+                            <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{cat.name}</td>
+                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{cat.description || '—'}</td>
                             <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", cat.active ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{cat.active ? 'Activo' : 'Inactivo'}</span></td>
                         </tr>
                     ))}
@@ -188,16 +188,16 @@ export default function DonationConfig() {
     const renderBoard = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedCategories.map((group) => (
-                <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
+                <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</span>
-                        <span className="font-semibold text-slate-400">{group.rows.length}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                        <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.rows.length}</span>
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((cat) => (
-                            <div key={cat.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-4">
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{cat.name}</p>
-                                <p className="mt-2 text-[10px] font-bold text-slate-400">{cat.description || 'Fondo ministerial'}</p>
+                            <div key={cat.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4">
+                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{cat.name}</p>
+                                <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))]">{cat.description || 'Fondo ministerial'}</p>
                             </div>
                         ))}
                     </div>
@@ -296,13 +296,13 @@ export default function DonationConfig() {
 
                         </motion.div>
 
-                        <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
+                        <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
 
                             Estructura de <br/> <span className="text-[hsl(var(--primary))] italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-400">Recaudación Pro.</span>
 
                         </h1>
 
-                        <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-2xl leading-relaxed">
+                        <p className="text-lg text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium max-w-2xl leading-relaxed">
 
                             Define el flujo de bendición. Configura canales de pago, fondos específicos y automatización de certificados tributarios.
 
@@ -333,7 +333,7 @@ export default function DonationConfig() {
 
                         animate={{ opacity: 1, y: 0 }}
 
-                        className="p-4 bg-slate-900 rounded-lg text-white shadow-2xl relative overflow-hidden group border border-white/5 flex flex-col md:flex-row items-center justify-between gap-3"
+                        className="p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white shadow-2xl relative overflow-hidden group border border-white/5 flex flex-col md:flex-row items-center justify-between gap-3"
 
                     >
 
@@ -343,7 +343,7 @@ export default function DonationConfig() {
 
                             <h3 className="text-lg font-bold tracking-tight uppercase">Pasarela de Diezmo Digital</h3>
 
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide leading-loose">Habilitar transacciones en línea seguras para toda la congregación.</p>
+                            <p className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-loose">Habilitar transacciones en línea seguras para toda la congregación.</p>
 
                         </div>
 
@@ -355,7 +355,7 @@ export default function DonationConfig() {
 
                                 "relative w-20 h-10 rounded-full transition-all duration-500 z-10 shrink-0",
 
-                                titheEnabled ? 'bg-[hsl(var(--primary))] shadow-[0_0_30px_rgba(37,99,235,0.6)]' : 'bg-slate-800 border border-white/10'
+                                titheEnabled ? 'bg-[hsl(var(--primary))] shadow-[0_0_30px_rgba(37,99,235,0.6)]' : 'bg-[hsl(var(--surface-2))] border border-white/10'
 
                             )}
 
@@ -369,7 +369,7 @@ export default function DonationConfig() {
 
                             >
 
-                                {titheEnabled ? <Check size={14} strokeWidth={4} /> : <div className="size-1 bg-slate-300 rounded-full" />}
+                                {titheEnabled ? <Check size={14} strokeWidth={4} /> : <div className="size-1 bg-[hsl(var(--surface-2))] rounded-full" />}
 
                             </motion.div>
 
@@ -389,11 +389,11 @@ export default function DonationConfig() {
 
                                 <CreditCard size={18} className="text-[hsl(var(--primary))]" />
 
-                                <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 leading-none">Canales Autorizados</h2>
+                                <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] leading-none">Canales Autorizados</h2>
 
                             </div>
 
-                            <div className="bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 divide-y divide-slate-100 dark:divide-white/10 overflow-hidden shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 divide-y divide-[hsl(var(--border))] dark:divide-white/10 overflow-hidden shadow-sm">
 
                                 <PaymentMethodItem icon={CreditCard} label="Tarjeta Global" active />
 
@@ -417,7 +417,7 @@ export default function DonationConfig() {
 
                                     <Layout size={18} className="text-[hsl(var(--primary))]" />
 
-                                    <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Fondos y Destinos</h2>
+                                    <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fondos y Destinos</h2>
 
                                 </div>
 
@@ -443,7 +443,7 @@ export default function DonationConfig() {
 
                                             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
 
-                                            className="config-aura group p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-2xl transition-all duration-500"
+                                            className="config-aura group p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-2xl transition-all duration-500"
 
                                             style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}
 
@@ -463,9 +463,9 @@ export default function DonationConfig() {
 
                                                 <div>
 
-                                                    <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-1">{cat.name}</p>
+                                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-none mb-1">{cat.name}</p>
 
-                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{cat.description || 'Fondo para actividades ministeriales'}</p>
+                                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{cat.description || 'Fondo para actividades ministeriales'}</p>
 
                                                 </div>
 
@@ -473,7 +473,7 @@ export default function DonationConfig() {
 
                                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
 
-                                                <button className="p-3 bg-slate-50 dark:bg-white/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-all shadow-sm"><Edit3 size={16} /></button>
+                                                <button className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><Edit3 size={16} /></button>
 
                                             </div>
 
@@ -481,9 +481,9 @@ export default function DonationConfig() {
 
                                     )) : (
 
-                                        <div className="py-1.5 text-center bg-slate-50 dark:bg-white/5 rounded-lg border-2 border-dashed border-slate-200 dark:border-white/10">
+                                        <div className="py-1.5 text-center bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10">
 
-                                            <p className="font-semibold text-slate-400 uppercase tracking-wide">Sin categorías configuradas</p>
+                                            <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sin categorías configuradas</p>
 
                                         </div>
 
@@ -508,7 +508,7 @@ export default function DonationConfig() {
 
                         transition={{ delay: 0.3 }}
 
-                        className="p-4 lg:p-4 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 space-y-3 relative overflow-hidden group shadow-inner"
+                        className="p-4 lg:p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 space-y-3 relative overflow-hidden group shadow-inner"
 
                     >
 
@@ -520,15 +520,15 @@ export default function DonationConfig() {
 
                             <div className="space-y-3 text-center lg:text-left">
 
-                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-slate-500 shadow-sm">
+                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] shadow-sm">
 
                                     <Zap size={14} className="text-amber-500" fill="currentColor" /> Automatización de Flujo
 
                                 </div>
 
-                                <h3 className="text-xl lg:text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tighter leading-none">Certificación de <br/> <span className="text-[hsl(var(--primary))] italic">Generosidad.</span></h3>
+                                <h3 className="text-xl lg:text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tighter leading-none">Certificación de <br/> <span className="text-[hsl(var(--primary))] italic">Generosidad.</span></h3>
 
-                                <p className="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-md leading-relaxed">
+                                <p className="text-lg text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium max-w-md leading-relaxed">
 
                                     Emite automáticamente reportes de donación en PDF con firma digital institucional tras cada validación de tesorería.
 
@@ -538,9 +538,9 @@ export default function DonationConfig() {
 
                             <div className="flex flex-col sm:flex-row gap-4 shrink-0 w-full lg:w-auto">
 
-                                <button className="flex-1 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:bg-slate-50 transition-all active:scale-95 flex items-center justify-center gap-3"><Palette size={18} /> Estilo Documental</button>
+                                <button className="flex-1 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-primary))] dark:text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:bg-[hsl(var(--surface-1))] transition-all active:scale-95 flex items-center justify-center gap-3"><Palette size={18} /> Estilo Documental</button>
 
-                                <button className="flex-1 px-4 py-2 bg-slate-900 dark:bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-blue-500/20"><Mail size={18} /> Validar Email</button>
+                                <button className="flex-1 px-4 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-blue-500/20"><Mail size={18} /> Validar Email</button>
 
                             </div>
 
@@ -573,7 +573,7 @@ function PaymentMethodItem({ icon: Icon, label, active }: any) {
 
                     "size-7 rounded-lg flex items-center justify-center transition-all shadow-inner",
 
-                    active ? "bg-[hsl(var(--primary))] text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]" : "bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-300 dark:text-slate-600 border border-slate-100 dark:border-white/10"
+                    active ? "bg-[hsl(var(--primary))] text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]" : "bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10"
 
                 )}>
 
@@ -583,9 +583,9 @@ function PaymentMethodItem({ icon: Icon, label, active }: any) {
 
                 <div>
 
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight leading-none mb-1">{label}</p>
+                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-none mb-1">{label}</p>
 
-                    <p className={clsx("text-[10px] font-bold uppercase tracking-wide", active ? "text-emerald-500" : "text-slate-400")}>{active ? 'Servicio Activo' : 'Offline'}</p>
+                    <p className={clsx("text-[10px] font-bold uppercase tracking-wide", active ? "text-emerald-500" : "text-[hsl(var(--text-secondary))]")}>{active ? 'Servicio Activo' : 'Offline'}</p>
 
                 </div>
 
@@ -595,7 +595,7 @@ function PaymentMethodItem({ icon: Icon, label, active }: any) {
 
                 "size-2.5 rounded-full transition-all duration-500",
 
-                active ? "bg-emerald-500 shadow-[0_0_12px_#10b981]" : "bg-slate-200 dark:bg-white/10"
+                active ? "bg-emerald-500 shadow-[0_0_12px_#10b981]" : "bg-[hsl(var(--surface-3))] dark:bg-white/10"
 
             )} />
 

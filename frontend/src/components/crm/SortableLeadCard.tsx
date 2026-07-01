@@ -61,7 +61,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             onClick={onClick}
             className={clsx(
                 "group relative p-4 mb-3 rounded-lg transition-all cursor-grab active:cursor-grabbing",
-                "bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200/50 dark:border-white/5",
+                "bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))]/50 dark:border-white/5",
                 "hover:border-blue-500/30 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]",
                 "hover:-translate-y-1 active:scale-[0.98]",
                 isDragging && "opacity-0",
@@ -86,7 +86,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                             fill="transparent"
                             stroke="currentColor"
                             strokeWidth="2.5"
-                            className="text-slate-100 dark:text-white/5"
+                            className="text-[hsl(var(--text-secondary))] dark:text-white/5"
                         />
                         <circle
                             cx="22" cy="22" r={radius}
@@ -117,12 +117,12 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                 
                 <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex items-center justify-between gap-2">
-                        <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors">
+                        <h4 className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-sm leading-tight truncate group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors">
                             {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                         </h4>
-                        <ChevronRight size={14} className="text-slate-300 group-hover:text-[hsl(var(--primary))] group-hover:translate-x-1 transition-all" />
+                        <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] group-hover:translate-x-1 transition-all" />
                     </div>
-                    <p className="text-[11px] text-slate-400 font-bold flex items-center gap-1 mt-1">
+                    <p className="text-[11px] text-[hsl(var(--text-secondary))] font-bold flex items-center gap-1 mt-1">
                         <Phone size={10} strokeWidth={3} />
                         {lead.phone}
                     </p>
@@ -146,12 +146,12 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             </div>
 
             {/* Divider */}
-            <div className="h-px w-full bg-slate-100 dark:bg-white/5 mb-3.5" />
+            <div className="h-px w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 mb-3.5" />
 
             {/* Footer Metadata */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <div className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/5 text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
+                    <div className="px-2 py-0.5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[9px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1.5">
                         <span className="text-[12px]">{SOURCES[lead.source] ?? '📌'}</span>
                         {lead.source}
                     </div>
@@ -163,7 +163,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                             "flex items-center gap-1 text-[10px] font-bold",
                             daysSince > 14 ? 'text-rose-500' :
                             daysSince > 7 ? 'text-amber-500' :
-                            'text-slate-400'
+                            'text-[hsl(var(--text-secondary))]'
                         )}>
                             <Clock size={11} strokeWidth={3} />
                             {daysSince === 0 ? 'HOY' : `${daysSince}d`}

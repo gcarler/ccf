@@ -156,18 +156,18 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
     if (!editor) return null;
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg border border-slate-200 dark:border-white/10 shadow-xl overflow-hidden font-display relative">
-            <div className="flex flex-wrap items-center gap-1 p-2 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-black/20">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 shadow-xl overflow-hidden font-display relative">
+            <div className="flex flex-wrap items-center gap-1 p-2 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-black/20">
                 <MenuButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} icon={Bold} />
                 <MenuButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} icon={Italic} />
-                <div className="w-[1px] h-5 bg-slate-200 dark:bg-white/10 mx-1" />
+                <div className="w-[1px] h-5 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
                 <MenuButton onClick={() => editor.chain().focus().toggleTaskList().run()} isActive={editor.isActive('taskList')} icon={CheckSquare} />
                 <div className="ml-auto flex items-center gap-3 px-2">
                     <div className="flex items-center gap-1.5">
                         {saveStatus === 'saving' && <><Loader2 size={12} className="animate-spin text-[hsl(var(--primary))]" /> <span className="text-[10px] font-bold uppercase text-[hsl(var(--primary))]">Guardando</span></>}
                         {saveStatus === 'saved' && <><Cloud size={12} className="text-emerald-500" /> <span className="text-[10px] font-bold uppercase text-emerald-500">Sincronizado</span></>}
                     </div>
-                    <div className="flex items-center gap-0.5 border-l border-slate-200 dark:border-white/10 pl-2">
+                    <div className="flex items-center gap-0.5 border-l border-[hsl(var(--border))] dark:border-white/10 pl-2">
                         <MenuButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} icon={Undo} />
                         <MenuButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} icon={Redo} />
                     </div>
@@ -188,6 +188,6 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
 
 function MenuButton({ onClick, isActive, disabled, icon: Icon }: any) {
     return (
-        <button onClick={onClick} disabled={disabled} className={`p-2 rounded-md transition-all ${isActive ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-sm ring-1 ring-slate-200 dark:ring-white/10' : 'text-slate-500 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'} ${disabled ? 'opacity-20' : ''}`}><Icon size={16} /></button>
+        <button onClick={onClick} disabled={disabled} className={`p-2 rounded-md transition-all ${isActive ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-sm ring-1 ring-[hsl(var(--border))] dark:ring-white/10' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-white'} ${disabled ? 'opacity-20' : ''}`}><Icon size={16} /></button>
     );
 }

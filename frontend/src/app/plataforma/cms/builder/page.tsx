@@ -741,9 +741,9 @@ export default function CmsBuilderPage() {
 
   return (
     <div className="space-y-3 p-3">
-      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-3 flex items-center justify-between">
+      <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-3 flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">CMS V2 Builder</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">CMS V2 Builder</p>
           <h1 className="mt-2 text-lg font-semibold">Constructor visual multisitio</h1>
         </div>
         <div className="rounded-md bg-primary/10 px-3 py-2 text-primary text-xs font-semibold uppercase tracking-wide inline-flex items-center gap-2">
@@ -752,47 +752,47 @@ export default function CmsBuilderPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-        <aside className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
-          <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sitio</label>
-          <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm">
+        <aside className="lg:col-span-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
+          <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sitio</label>
+          <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm">
             {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
             {sites.map((site) => (
               <option key={site.site_key} value={site.site_key}>{site.name} ({site.site_key})</option>
             ))}
           </select>
 
-          <div className="rounded-md border border-slate-200 dark:border-white/10 p-3 space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nueva página</p>
-            <input value={newPageTitle} onChange={(e) => setNewPageTitle(e.target.value)} placeholder="Ej: Página de bienvenida" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canEdit} />
+          <div className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-3 space-y-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nueva página</p>
+            <input value={newPageTitle} onChange={(e) => setNewPageTitle(e.target.value)} placeholder="Ej: Página de bienvenida" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm" disabled={!canEdit} />
             <button onClick={createPage} disabled={!canEdit} className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"><Plus size={12} /> Crear vacía</button>
-            <select value={pageTemplateKey} onChange={(e) => setPageTemplateKey(e.target.value)} className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs">
+            <select value={pageTemplateKey} onChange={(e) => setPageTemplateKey(e.target.value)} className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs">
               {PAGE_TEMPLATES.map((template) => (
                 <option key={template.key} value={template.key}>{template.label}</option>
               ))}
             </select>
-            <button onClick={createPageFromTemplate} disabled={!canEdit} className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50">
+            <button onClick={createPageFromTemplate} disabled={!canEdit} className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50">
               <Plus size={12} /> Crear con plantilla
             </button>
           </div>
 
           <div className="space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Páginas</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Páginas</p>
             {pages.map((page) => (
-              <button key={page.id} onClick={() => setActiveSlug(page.slug)} className={`w-full text-left rounded-lg border px-3 py-2 text-sm ${activeSlug === page.slug ? "border-primary/40 bg-primary/5" : "border-slate-200 dark:border-white/10"}`}>
+              <button key={page.id} onClick={() => setActiveSlug(page.slug)} className={`w-full text-left rounded-lg border px-3 py-2 text-sm ${activeSlug === page.slug ? "border-primary/40 bg-primary/5" : "border-[hsl(var(--border))] dark:border-white/10"}`}>
                 <p className="font-bold">{page.title}</p>
-                <p className="text-[10px] uppercase tracking-wide text-slate-400">/{page.slug} · {page.status}</p>
+                <p className="text-[10px] uppercase tracking-wide text-[hsl(var(--text-secondary))]">/{page.slug} · {page.status}</p>
               </button>
             ))}
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/10">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Plantillas rápidas</p>
+          <div className="space-y-2 pt-2 border-t border-[hsl(var(--border))] dark:border-white/10">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Plantillas rápidas</p>
             {SECTION_TEMPLATES.map((template) => (
               <button
                 key={template.label}
                 onClick={() => addTemplateSection(template)}
                 disabled={!activeSlug || !canEdit}
-                className="w-full text-left rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-xs font-bold hover:border-primary/40 transition-all disabled:opacity-50"
+                className="w-full text-left rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-xs font-bold hover:border-primary/40 transition-all disabled:opacity-50"
               >
                 {template.label}
               </button>
@@ -800,12 +800,12 @@ export default function CmsBuilderPage() {
           </div>
         </aside>
 
-        <section className="lg:col-span-6 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-4">
+        <section className="lg:col-span-6 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">Canvas · {activeSlug ? `/${activeSlug}` : "Selecciona página"}</h2>
             <div className="flex items-center gap-2">
               {/* Canvas mode toggle */}
-              <div className="inline-flex rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
+              <div className="inline-flex rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
                 <button
                   onClick={() => setCanvasMode("esquema")}
                   className={`px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center gap-1 ${canvasMode === "esquema" ? "bg-primary text-white" : "bg-transparent"}`}
@@ -822,7 +822,7 @@ export default function CmsBuilderPage() {
                 </button>
               </div>
               {/* Device toggle */}
-              <div className="inline-flex rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
+              <div className="inline-flex rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
                 <button
                   onClick={() => setPreviewDevice("desktop")}
                   className={`px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center gap-1 ${previewDevice === "desktop" ? "bg-primary text-white" : "bg-transparent"}`}
@@ -836,10 +836,10 @@ export default function CmsBuilderPage() {
                   <Smartphone size={11} /> Mobile
                 </button>
               </div>
-              <select value={newSectionType} onChange={(e) => setNewSectionType(e.target.value)} className="rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm">
+              <select value={newSectionType} onChange={(e) => setNewSectionType(e.target.value)} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm">
                 {SECTION_TYPES.map((type) => <option key={type} value={type}>{SECTION_TYPE_LABEL[type] ?? type}</option>)}
               </select>
-              <button onClick={addSection} disabled={!activeSlug || !canEdit} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50">
+              <button onClick={addSection} disabled={!activeSlug || !canEdit} className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50">
                 <Plus size={12} /> Añadir
               </button>
             </div>
@@ -859,18 +859,18 @@ export default function CmsBuilderPage() {
                   setDraggedSectionId(null);
                 }}
                 onDragEnd={() => setDraggedSectionId(null)}
-                className={`rounded-md border p-3 cursor-grab active:cursor-grabbing ${section.status === "archived" ? "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5" : section.id === activeSectionId ? "border-primary/40 bg-primary/5" : "border-slate-200 dark:border-white/10"}`}
+                className={`rounded-md border p-3 cursor-grab active:cursor-grabbing ${section.status === "archived" ? "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5" : section.id === activeSectionId ? "border-primary/40 bg-primary/5" : "border-[hsl(var(--border))] dark:border-white/10"}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <button onClick={() => setActiveSectionId(section.id)} className="text-left">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                       {section.type} {section.status === "archived" ? "· archivada" : ""}
                     </p>
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{safeString(section.props_json?.title) || "Sección"}</p>
+                    <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{safeString(section.props_json?.title) || "Sección"}</p>
                   </button>
                   <div className="flex items-center gap-1">
-                    <button onClick={() => moveSection(section.id, "up")} disabled={!canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 p-1.5 disabled:opacity-50"><ArrowUp size={12} /></button>
-                    <button onClick={() => moveSection(section.id, "down")} disabled={!canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 p-1.5 disabled:opacity-50"><ArrowDown size={12} /></button>
+                    <button onClick={() => moveSection(section.id, "up")} disabled={!canEdit} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-1.5 disabled:opacity-50"><ArrowUp size={12} /></button>
+                    <button onClick={() => moveSection(section.id, "down")} disabled={!canEdit} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-1.5 disabled:opacity-50"><ArrowDown size={12} /></button>
                   </div>
                 </div>
                 <div className="relative mt-3">
@@ -908,7 +908,7 @@ export default function CmsBuilderPage() {
                 </div>
               </div>
             ))}
-            {sections.length === 0 && <p className="text-sm text-slate-500">No hay secciones en esta página.</p>}
+            {sections.length === 0 && <p className="text-sm text-[hsl(var(--text-secondary))]">No hay secciones en esta página.</p>}
             {sections.length > 0 && (
               <div
                 onDragOver={(event) => event.preventDefault()}
@@ -922,7 +922,7 @@ export default function CmsBuilderPage() {
                   setDraggedSectionId(null);
                   await loadSectionsAndVersions(activeSlug);
                 }}
-                className="rounded-md border border-dashed border-slate-300 dark:border-white/20 p-3 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400"
+                className="rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/20 p-3 text-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
               >
                 Soltar aquí para mover al final
               </div>
@@ -930,30 +930,30 @@ export default function CmsBuilderPage() {
           </div>
         </section>
 
-        <aside className="lg:col-span-3 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-4 max-h-[90vh] overflow-y-auto">
+        <aside className="lg:col-span-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-4 max-h-[90vh] overflow-y-auto">
           {/* Tab Selection Header */}
-          <div className="flex border-b border-slate-200 dark:border-white/10 pb-2 gap-1 overflow-x-auto">
+          <div className="flex border-b border-[hsl(var(--border))] dark:border-white/10 pb-2 gap-1 overflow-x-auto">
             <button
               onClick={() => setActiveRightTab("config")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "config" ? "bg-[hsl(var(--primary))] text-white" : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "config" ? "bg-[hsl(var(--primary))] text-white" : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"}`}
             >
               <Settings size={12} /> Config
             </button>
             <button
               onClick={() => setActiveRightTab("seo")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "seo" ? "bg-[hsl(var(--primary))] text-white" : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "seo" ? "bg-[hsl(var(--primary))] text-white" : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"}`}
             >
               <Sparkles size={12} /> SEO
             </button>
             <button
               onClick={() => setActiveRightTab("ai")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "ai" ? "bg-[hsl(var(--primary))] text-white" : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "ai" ? "bg-[hsl(var(--primary))] text-white" : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"}`}
             >
               <Wand2 size={12} /> FaroGPT
             </button>
             <button
               onClick={() => setActiveRightTab("analytics")}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "analytics" ? "bg-[hsl(var(--primary))] text-white" : "text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "analytics" ? "bg-[hsl(var(--primary))] text-white" : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"}`}
             >
               <BarChart3 size={12} /> Métricas
             </button>
@@ -963,41 +963,41 @@ export default function CmsBuilderPage() {
           {activeRightTab === "config" && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Estado página</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado página</p>
                 <p className="text-sm font-bold">{activePage?.title || "Sin página"}</p>
-                <p className="text-[10px] uppercase tracking-wide text-slate-400">{activePage?.status || "-"}</p>
+                <p className="text-[10px] uppercase tracking-wide text-[hsl(var(--text-secondary))]">{activePage?.status || "-"}</p>
                 <input
                   value={pageTitleDraft}
                   onChange={(e) => setPageTitleDraft(e.target.value)}
                   placeholder="Título de página"
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                 />
                 <input
                   value={pageSlugDraft}
                   onChange={(e) => setPageSlugDraft(e.target.value)}
                   placeholder="slug-de-pagina"
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                 />
-                <div className="rounded-md border border-slate-200 dark:border-white/10 p-3 space-y-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">SEO Básico</p>
+                <div className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-3 space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">SEO Básico</p>
                   <input
                     value={seoTitleDraft}
                     onChange={(e) => setSeoTitleDraft(e.target.value)}
                     placeholder="Titulo SEO"
-                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                   />
                   <textarea
                     value={seoDescriptionDraft}
                     onChange={(e) => setSeoDescriptionDraft(e.target.value)}
                     placeholder="Descripcion para buscadores y redes"
-                    className="w-full min-h-[72px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    className="w-full min-h-[72px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                   />
                   {seoImageDraft ? (
-                    <div className="overflow-hidden rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                    <div className="overflow-hidden rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5">
                       <OptimizedImage src={seoImageDraft} alt="Imagen SEO" width={200} height={96} className="h-24 w-full object-cover" />
                     </div>
                   ) : (
-                    <div className="rounded-md border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-3 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                    <div className="rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/20 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                       Sin imagen social
                     </div>
                   )}
@@ -1016,23 +1016,23 @@ export default function CmsBuilderPage() {
                     value={seoImageDraft}
                     onChange={(e) => setSeoImageDraft(e.target.value)}
                     placeholder="URL de imagen social"
-                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                   />
                 </div>
                 <button
                   onClick={savePageMetadata}
                   disabled={!activePage || !canEdit}
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
                 >
                   Guardar pagina/SEO
                 </button>
-                <textarea value={note} onChange={(e) => setNote(e.target.value)} disabled={!canEdit && !canPublish} placeholder="Nota para workflow..." className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs disabled:opacity-60" />
+                <textarea value={note} onChange={(e) => setNote(e.target.value)} disabled={!canEdit && !canPublish} placeholder="Nota para workflow..." className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs disabled:opacity-60" />
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => runWorkflow("submit_review")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Send size={11} /> Review</button>
-                  <button onClick={() => runWorkflow("approve")} disabled={!activeSlug || !canPublish} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Save size={11} /> Aprobar</button>
+                  <button onClick={() => runWorkflow("submit_review")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Send size={11} /> Review</button>
+                  <button onClick={() => runWorkflow("approve")} disabled={!activeSlug || !canPublish} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Save size={11} /> Aprobar</button>
                   <button onClick={() => runWorkflow("publish")} disabled={!activeSlug || !canPublish} className="rounded-lg bg-primary text-white px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Upload size={11} /> Publicar</button>
-                  <button onClick={() => runWorkflow("revert_draft")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Undo2 size={11} /> Draft</button>
-                  <button onClick={() => runWorkflow("archive")} disabled={!activeSlug || !canPublish} className="col-span-2 rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50">Archivar</button>
+                  <button onClick={() => runWorkflow("revert_draft")} disabled={!activeSlug || !canEdit} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"><Undo2 size={11} /> Draft</button>
+                  <button onClick={() => runWorkflow("archive")} disabled={!activeSlug || !canPublish} className="col-span-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50">Archivar</button>
                 </div>
                 <button
                   onClick={() => {
@@ -1052,7 +1052,7 @@ export default function CmsBuilderPage() {
                     window.open(`${normalized}/${activeSlug}`, "_blank");
                   }}
                   disabled={!activeSlug}
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
                 >
                   <ExternalLink size={11} /> Ver página pública
                 </button>
@@ -1065,36 +1065,36 @@ export default function CmsBuilderPage() {
                 </button>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/10">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Versiones</p>
+              <div className="space-y-2 pt-2 border-t border-[hsl(var(--border))] dark:border-white/10">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Versiones</p>
                 <div className="max-h-40 overflow-auto space-y-2 pr-1">
                   {versions.map((version) => (
-                    <button key={version.id} onClick={() => rollback(version.id)} disabled={!canPublish} className="w-full rounded-lg border border-slate-200 dark:border-white/10 p-2 text-left text-xs hover:border-primary/40 transition-all disabled:opacity-50 bg-slate-50/50 dark:bg-white/[0.02]">
+                    <button key={version.id} onClick={() => rollback(version.id)} disabled={!canPublish} className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-2 text-left text-xs hover:border-primary/40 transition-all disabled:opacity-50 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                       <p className="font-semibold">v{version.version_number}</p>
-                      <p className="text-[10px] text-slate-400">{new Date(version.created_at).toLocaleString()}</p>
+                      <p className="text-[10px] text-[hsl(var(--text-secondary))]">{new Date(version.created_at).toLocaleString()}</p>
                     </button>
                   ))}
-                  {versions.length === 0 && <p className="text-xs text-slate-500">Aún sin versiones publicadas.</p>}
+                  {versions.length === 0 && <p className="text-xs text-[hsl(var(--text-secondary))]">Aún sin versiones publicadas.</p>}
                 </div>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/10">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Historial de Cambios</p>
+              <div className="space-y-2 pt-2 border-t border-[hsl(var(--border))] dark:border-white/10">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Historial de Cambios</p>
                 <div className="max-h-40 overflow-auto space-y-2 pr-1">
                   {publishLogs.map((entry) => {
                     const notes = typeof entry.metadata_json?.notes === "string" ? entry.metadata_json.notes : "";
                     return (
-                      <div key={entry.id} className="rounded-lg border border-slate-200 dark:border-white/10 p-2 text-xs bg-slate-50/50 dark:bg-white/[0.02]">
+                      <div key={entry.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-2 text-xs bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-semibold uppercase tracking-wide text-[9px]">{entry.action}</p>
-                          <p className="text-[9px] text-slate-400">{new Date(entry.created_at).toLocaleTimeString()}</p>
+                          <p className="text-[9px] text-[hsl(var(--text-secondary))]">{new Date(entry.created_at).toLocaleTimeString()}</p>
                         </div>
-                        <p className="mt-0.5 text-[9px] text-slate-500">{entry.from_status || "sin estado"} &rarr; {entry.to_status || "sin estado"}</p>
-                        {notes && <p className="mt-1 text-[9px] text-slate-400 line-clamp-2">{notes}</p>}
+                        <p className="mt-0.5 text-[9px] text-[hsl(var(--text-secondary))]">{entry.from_status || "sin estado"} &rarr; {entry.to_status || "sin estado"}</p>
+                        {notes && <p className="mt-1 text-[9px] text-[hsl(var(--text-secondary))] line-clamp-2">{notes}</p>}
                       </div>
                     );
                   })}
-                  {publishLogs.length === 0 && <p className="text-xs text-slate-500">Aun sin eventos de workflow.</p>}
+                  {publishLogs.length === 0 && <p className="text-xs text-[hsl(var(--text-secondary))]">Aun sin eventos de workflow.</p>}
                 </div>
               </div>
             </div>
@@ -1103,31 +1103,31 @@ export default function CmsBuilderPage() {
           {/* TAB 2: SEO ANALYZER */}
           {activeRightTab === "seo" && (
             <div className="space-y-4 animate-fade-in">
-              <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Palabra Clave Objetivo</p>
+              <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Palabra Clave Objetivo</p>
                 <input
                   value={seoKeyword}
                   onChange={(e) => setSeoKeyword(e.target.value)}
                   placeholder="Ej: jóvenes, adoración, testimonios"
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                 />
-                <p className="text-[9px] text-slate-400">Palabra clave principal para medir el SEO on-page.</p>
+                <p className="text-[9px] text-[hsl(var(--text-secondary))]">Palabra clave principal para medir el SEO on-page.</p>
               </div>
 
-              <div className="space-y-3 rounded-lg border border-slate-200 dark:border-white/10 p-4 bg-slate-50/50 dark:bg-white/[0.02]">
+              <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Puntaje SEO</p>
-                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold text-white ${seoAnalysis.score >= 80 ? "bg-emerald-600" : seoAnalysis.score >= 50 ? "bg-amber-500" : "bg-red-500"}`}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Puntaje SEO</p>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold text-white ${seoAnalysis.score >= 80 ? "bg-emerald-600" : seoAnalysis.score >= 50 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]"}`}>
                     {seoAnalysis.score}%
                   </span>
                 </div>
-                <div className="w-full bg-slate-200 dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
+                <div className="w-full bg-[hsl(var(--surface-3))] dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
                   <div
-                    className={`h-full transition-all duration-500 ${seoAnalysis.score >= 80 ? "bg-emerald-500" : seoAnalysis.score >= 50 ? "bg-amber-500" : "bg-red-500"}`}
+                    className={`h-full transition-all duration-500 ${seoAnalysis.score >= 80 ? "bg-emerald-500" : seoAnalysis.score >= 50 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]"}`}
                     style={{ width: `${seoAnalysis.score}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                <p className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                   {seoAnalysis.score >= 80
                     ? "¡Excelente! Tu página cumple con los estándares óptimos de SEO on-page."
                     : seoAnalysis.score >= 50
@@ -1137,40 +1137,40 @@ export default function CmsBuilderPage() {
               </div>
 
               {/* READABILITY SCORE */}
-              <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                   <span>Legibilidad de Lectura</span>
                   <span className="text-emerald-500 font-bold">{readabilityScore.score}/100</span>
                 </div>
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{readabilityScore.label}</p>
-                <p className="text-[9px] text-slate-400">Medido utilizando la densidad silábica y longitud de oraciones de las secciones activas.</p>
+                <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{readabilityScore.label}</p>
+                <p className="text-[9px] text-[hsl(var(--text-secondary))]">Medido utilizando la densidad silábica y longitud de oraciones de las secciones activas.</p>
               </div>
 
               {/* SERP PREVIEW */}
-              <div className="space-y-3 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
+              <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Simulador SERP Google</p>
-                  <div className="inline-flex rounded border border-slate-200 dark:border-white/10 overflow-hidden">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Simulador SERP Google</p>
+                  <div className="inline-flex rounded border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
                     <button
                       onClick={() => setSerpPreviewDevice("desktop")}
-                      className={`px-1.5 py-0.5 text-[8px] font-bold uppercase transition-all ${serpPreviewDevice === "desktop" ? "bg-primary text-white" : "bg-transparent text-slate-400"}`}
+                      className={`px-1.5 py-0.5 text-[8px] font-bold uppercase transition-all ${serpPreviewDevice === "desktop" ? "bg-primary text-white" : "bg-transparent text-[hsl(var(--text-secondary))]"}`}
                     >
                       PC
                     </button>
                     <button
                       onClick={() => setSerpPreviewDevice("mobile")}
-                      className={`px-1.5 py-0.5 text-[8px] font-bold uppercase transition-all ${serpPreviewDevice === "mobile" ? "bg-primary text-white" : "bg-transparent text-slate-400"}`}
+                      className={`px-1.5 py-0.5 text-[8px] font-bold uppercase transition-all ${serpPreviewDevice === "mobile" ? "bg-primary text-white" : "bg-transparent text-[hsl(var(--text-secondary))]"}`}
                     >
                       Móvil
                     </button>
                   </div>
                 </div>
 
-                <div className={`rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-white text-black font-sans ${serpPreviewDevice === "mobile" ? "max-w-[280px]" : "w-full"}`}>
+                <div className={`rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] font-sans ${serpPreviewDevice === "mobile" ? "max-w-[280px]" : "w-full"}`}>
                   {serpPreviewDevice === "mobile" ? (
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-xs text-[#202124]">
-                        <span className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center text-[8px] font-bold">⛪</span>
+                        <span className="w-4 h-4 rounded-full bg-[hsl(var(--surface-3))] flex items-center justify-center text-[8px] font-bold">⛪</span>
                         <div className="truncate text-left">{SITE_URL || siteKey} &rsaquo; {activeSlug || "slug"}</div>
                       </div>
                       <div className="text-base text-[#15c] hover:underline cursor-pointer font-medium leading-tight line-clamp-2 text-left">
@@ -1197,16 +1197,16 @@ export default function CmsBuilderPage() {
               </div>
 
               <div className="space-y-2">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Recomendaciones SEO</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Recomendaciones SEO</p>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
                   {seoAnalysis.checks.map((check) => (
-                    <div key={check.id} className="flex gap-2.5 items-start p-2 rounded-lg border border-slate-100 dark:border-white/5 bg-slate-50/30 dark:bg-white/[0.01]">
+                    <div key={check.id} className="flex gap-2.5 items-start p-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/30 dark:bg-white/[0.01]">
                       {check.type === "success" && <CheckCircle2 className="text-emerald-500 mt-0.5 shrink-0" size={14} />}
                       {check.type === "warning" && <AlertTriangle className="text-amber-500 mt-0.5 shrink-0" size={14} />}
-                      {check.type === "error" && <XCircle className="text-red-500 mt-0.5 shrink-0" size={14} />}
+                      {check.type === "error" && <XCircle className="text-[hsl(var(--destructive))] mt-0.5 shrink-0" size={14} />}
                       <div>
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{check.label}</p>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{check.tip}</p>
+                        <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{check.label}</p>
+                        <p className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5">{check.tip}</p>
                       </div>
                     </div>
                   ))}
@@ -1218,16 +1218,16 @@ export default function CmsBuilderPage() {
           {/* TAB 3: AI ASSISTANT (FAROGPT) */}
           {activeRightTab === "ai" && (
             <div className="space-y-4 animate-fade-in">
-              <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">FaroGPT Asistente Editorial</p>
+              <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">FaroGPT Asistente Editorial</p>
                 
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[9px] uppercase tracking-wide font-bold text-slate-400 block mb-1">Plantilla IA</label>
+                    <label className="text-[9px] uppercase tracking-wide font-bold text-[hsl(var(--text-secondary))] block mb-1">Plantilla IA</label>
                     <select
                       value={aiTemplate}
                       onChange={(e) => setAiTemplate(e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     >
                       <option value="aida">Fórmula AIDA (Atención-Interés-Deseo-Acción)</option>
                       <option value="pas">Fórmula PAS (Problema-Agitación-Solución)</option>
@@ -1237,11 +1237,11 @@ export default function CmsBuilderPage() {
                   </div>
 
                   <div>
-                    <label className="text-[9px] uppercase tracking-wide font-bold text-slate-400 block mb-1">Tono de Voz</label>
+                    <label className="text-[9px] uppercase tracking-wide font-bold text-[hsl(var(--text-secondary))] block mb-1">Tono de Voz</label>
                     <select
                       value={aiTone}
                       onChange={(e) => setAiTone(e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     >
                       <option value="warm">Cálido y Cercano (Comunidad)</option>
                       <option value="inspiration">Inspiracional y Profundo (Fe)</option>
@@ -1251,12 +1251,12 @@ export default function CmsBuilderPage() {
                   </div>
 
                   <div>
-                    <label className="text-[9px] uppercase tracking-wide font-bold text-slate-400 block mb-1">Temática / Contexto</label>
+                    <label className="text-[9px] uppercase tracking-wide font-bold text-[hsl(var(--text-secondary))] block mb-1">Temática / Contexto</label>
                     <textarea
                       value={aiPrompt}
                       onChange={(e) => setAiPrompt(e.target.value)}
                       placeholder="Ej: Queremos invitar a las familias al pícnic de este domingo..."
-                      className="w-full min-h-[64px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full min-h-[64px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 </div>
@@ -1280,8 +1280,8 @@ export default function CmsBuilderPage() {
 
               {aiOutput && (
                 <div className="space-y-3 mt-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Resultado Generado</p>
-                  <div className="p-3 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 text-[11px] font-mono max-h-[180px] overflow-y-auto whitespace-pre-wrap animate-fade-in">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Resultado Generado</p>
+                  <div className="p-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[11px] font-mono max-h-[180px] overflow-y-auto whitespace-pre-wrap animate-fade-in">
                     {aiOutput}
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -1294,7 +1294,7 @@ export default function CmsBuilderPage() {
                     <button
                       onClick={handleReplaceActiveSectionWithAi}
                       disabled={!activeSectionId}
-                      className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[9px] font-semibold uppercase tracking-wide hover:bg-slate-100 dark:hover:bg-white/5 transition-all inline-flex items-center justify-center gap-1 disabled:opacity-40"
+                      className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-[9px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all inline-flex items-center justify-center gap-1 disabled:opacity-40"
                     >
                       Reemplazar activa
                     </button>
@@ -1303,18 +1303,18 @@ export default function CmsBuilderPage() {
               )}
 
               {/* MOCK AI IMAGE GENERATOR */}
-              <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02] mt-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Generador de Imágenes IA</p>
+              <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02] mt-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Generador de Imágenes IA</p>
                 <input
                   value={aiImagePrompt}
                   onChange={(e) => setAiImagePrompt(e.target.value)}
                   placeholder="Ej: Jóvenes cantando, picnic de iglesia, Biblia..."
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs mb-2"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs mb-2"
                 />
                 <button
                   onClick={handleAiImageGenerate}
                   disabled={aiImageGenerating || !aiImagePrompt.trim()}
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {aiImageGenerating ? (
                     <>
@@ -1329,7 +1329,7 @@ export default function CmsBuilderPage() {
 
                 {aiImageResult && (
                   <div className="space-y-2 mt-2 animate-fade-in">
-                    <OptimizedImage src={aiImageResult} alt="Resultado IA" width={200} height={112} className="h-28 w-full object-cover rounded-lg border border-slate-200 dark:border-white/10" />
+                    <OptimizedImage src={aiImageResult} alt="Resultado IA" width={200} height={112} className="h-28 w-full object-cover rounded-lg border border-[hsl(var(--border))] dark:border-white/10" />
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => {
@@ -1349,7 +1349,7 @@ export default function CmsBuilderPage() {
                           setSeoImageDraft(aiImageResult);
                           setAiImageResult("");
                         }}
-                        className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1 text-[9px] font-semibold uppercase tracking-wide hover:bg-slate-100 dark:hover:bg-white/5"
+                        className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[9px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
                       >
                         Usar en SEO
                       </button>
@@ -1364,22 +1364,22 @@ export default function CmsBuilderPage() {
           {activeRightTab === "analytics" && (
             <div className="space-y-4 animate-fade-in">
               {/* TIMEFRAME SELECTOR */}
-              <div className="flex border border-slate-200 dark:border-white/10 rounded-lg overflow-hidden text-[9px] font-semibold uppercase tracking-wide">
+              <div className="flex border border-[hsl(var(--border))] dark:border-white/10 rounded-lg overflow-hidden text-[9px] font-semibold uppercase tracking-wide">
                 <button
                   onClick={() => setTimeframe("7d")}
-                  className={`flex-1 py-1.5 text-center transition-all ${timeframe === "7d" ? "bg-primary text-white" : "bg-transparent text-slate-400"}`}
+                  className={`flex-1 py-1.5 text-center transition-all ${timeframe === "7d" ? "bg-primary text-white" : "bg-transparent text-[hsl(var(--text-secondary))]"}`}
                 >
                   7 días
                 </button>
                 <button
                   onClick={() => setTimeframe("30d")}
-                  className={`flex-1 py-1.5 text-center transition-all border-x border-slate-200 dark:border-white/10 ${timeframe === "30d" ? "bg-primary text-white" : "bg-transparent text-slate-400"}`}
+                  className={`flex-1 py-1.5 text-center transition-all border-x border-[hsl(var(--border))] dark:border-white/10 ${timeframe === "30d" ? "bg-primary text-white" : "bg-transparent text-[hsl(var(--text-secondary))]"}`}
                 >
                   30 días
                 </button>
                 <button
                   onClick={() => setTimeframe("all")}
-                  className={`flex-1 py-1.5 text-center transition-all ${timeframe === "all" ? "bg-primary text-white" : "bg-transparent text-slate-400"}`}
+                  className={`flex-1 py-1.5 text-center transition-all ${timeframe === "all" ? "bg-primary text-white" : "bg-transparent text-[hsl(var(--text-secondary))]"}`}
                 >
                   Histórico
                 </button>
@@ -1387,34 +1387,34 @@ export default function CmsBuilderPage() {
 
               {/* DYNAMIC METRIC CARDS */}
               <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                  <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-400">Visitas Totales</p>
-                  <p className="text-lg font-bold text-slate-800 dark:text-white mt-1">
+                <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Visitas Totales</p>
+                  <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">
                     {timeframe === "7d" ? "12,450" : timeframe === "30d" ? "54,230" : "423,910"}
                   </p>
                   <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">
                     {timeframe === "7d" ? "▲ +12.4%" : timeframe === "30d" ? "▲ +18.7%" : "▲ +22.4%"}
                   </span>
                 </div>
-                <div className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                  <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-400">Visitantes Únicos</p>
-                  <p className="text-lg font-bold text-slate-800 dark:text-white mt-1">
+                <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Visitantes Únicos</p>
+                  <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">
                     {timeframe === "7d" ? "4,820" : timeframe === "30d" ? "21,150" : "168,490"}
                   </p>
                   <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">
                     {timeframe === "7d" ? "▲ +8.2%" : timeframe === "30d" ? "▲ +14.1%" : "▲ +19.6%"}
                   </span>
                 </div>
-                <div className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                  <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-400">Tiempo Promedio</p>
-                  <p className="text-lg font-bold text-slate-800 dark:text-white mt-1">
+                <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tiempo Promedio</p>
+                  <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">
                     {timeframe === "7d" ? "2m 45s" : timeframe === "30d" ? "3m 12s" : "2m 58s"}
                   </p>
                   <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">▲ Óptimo</span>
                 </div>
-                <div className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                  <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-400">Porcentaje Rebote</p>
-                  <p className="text-lg font-bold text-slate-800 dark:text-white mt-1">
+                <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Porcentaje Rebote</p>
+                  <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">
                     {timeframe === "7d" ? "42.1%" : timeframe === "30d" ? "39.8%" : "41.2%"}
                   </p>
                   <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">● Saludable</span>
@@ -1422,12 +1422,12 @@ export default function CmsBuilderPage() {
               </div>
 
               {/* AB TESTING SIMULATOR */}
-              <div className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02] space-y-3">
+              <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02] space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 font-bold text-primary">Test A/B Integrado</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] font-bold text-primary">Test A/B Integrado</p>
                   <button
                     onClick={() => setAbTestingActive(!abTestingActive)}
-                    className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase transition-all ${abTestingActive ? "bg-emerald-600 text-white animate-pulse" : "bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-300"}`}
+                    className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase transition-all ${abTestingActive ? "bg-emerald-600 text-white animate-pulse" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"}`}
                   >
                     {abTestingActive ? "Activo" : "Inactivo"}
                   </button>
@@ -1436,11 +1436,11 @@ export default function CmsBuilderPage() {
                 {abTestingActive ? (
                   <div className="space-y-2.5 animate-fade-in text-[10px]">
                     <div className="space-y-1">
-                      <div className="flex justify-between text-slate-400">
+                      <div className="flex justify-between text-[hsl(var(--text-secondary))]">
                         <span>Tráfico Variante A (Original)</span>
                         <span className="font-bold">{100 - abTrafficSplit}%</span>
                       </div>
-                      <div className="flex justify-between text-slate-400">
+                      <div className="flex justify-between text-[hsl(var(--text-secondary))]">
                         <span>Tráfico Variante B (Alternativa)</span>
                         <span className="font-bold">{abTrafficSplit}%</span>
                       </div>
@@ -1450,12 +1450,12 @@ export default function CmsBuilderPage() {
                         max="90"
                         value={abTrafficSplit}
                         onChange={(e) => setAbTrafficSplit(Number(e.target.value))}
-                        className="w-full accent-primary h-1 bg-slate-200 dark:bg-white/10 rounded-lg cursor-pointer"
+                        className="w-full accent-primary h-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-lg cursor-pointer"
                       />
                     </div>
 
-                    <div className="rounded border p-2 bg-slate-100/40 dark:bg-white/[0.01] space-y-1">
-                      <p className="font-bold uppercase tracking-wider text-[8px] text-slate-400">Simulación de Conversión</p>
+                    <div className="rounded border p-2 bg-[hsl(var(--surface-2))]/40 dark:bg-white/[0.01] space-y-1">
+                      <p className="font-bold uppercase tracking-wider text-[8px] text-[hsl(var(--text-secondary))]">Simulación de Conversión</p>
                       <div className="flex justify-between">
                         <span>Conversión Variante A:</span>
                         <span className="font-mono">3.2%</span>
@@ -1464,21 +1464,21 @@ export default function CmsBuilderPage() {
                         <span>Conversión Variante B:</span>
                         <span className="font-mono">4.9% (▲ +53%)</span>
                       </div>
-                      <p className="text-[8px] text-slate-400 mt-1">Confianza estadística: <strong className="text-emerald-500 font-bold">97.4%</strong> (Resultado Significativo)</p>
+                      <p className="text-[8px] text-[hsl(var(--text-secondary))] mt-1">Confianza estadística: <strong className="text-emerald-500 font-bold">97.4%</strong> (Resultado Significativo)</p>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-[9px] text-slate-400">WordPress requiere plugins complejos para test A/B. Activa esta opción para diseñar variantes y dividir el tráfico automáticamente.</p>
+                  <p className="text-[9px] text-[hsl(var(--text-secondary))]">WordPress requiere plugins complejos para test A/B. Activa esta opción para diseñar variantes y dividir el tráfico automáticamente.</p>
                 )}
               </div>
 
               {/* HEATMAP / LIVE CLICK MAP */}
-              <div className="rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02] space-y-3">
+              <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02] space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 font-bold">Mapa de Calor (Live)</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] font-bold">Mapa de Calor (Live)</p>
                   <button
                     onClick={() => setShowHeatmap(!showHeatmap)}
-                    className={`px-3 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide transition-all ${showHeatmap ? "bg-red-500 text-white animate-pulse" : "bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300"}`}
+                    className={`px-3 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide transition-all ${showHeatmap ? "bg-[hsl(var(--destructive))] text-white animate-pulse" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"}`}
                   >
                     {showHeatmap ? "Ver Activo" : "Activar"}
                   </button>
@@ -1486,23 +1486,23 @@ export default function CmsBuilderPage() {
 
                 {showHeatmap && (
                   <div className="space-y-2 animate-fade-in">
-                    <label className="text-[9px] uppercase tracking-wide font-bold text-slate-400 block mb-1">Tipo de Visualización</label>
-                    <div className="flex rounded border border-slate-200 dark:border-white/10 overflow-hidden text-[9px] font-bold text-center">
+                    <label className="text-[9px] uppercase tracking-wide font-bold text-[hsl(var(--text-secondary))] block mb-1">Tipo de Visualización</label>
+                    <div className="flex rounded border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden text-[9px] font-bold text-center">
                       <button
                         onClick={() => setHeatmapType("clicks")}
-                        className={`flex-1 py-1 transition-all ${heatmapType === "clicks" ? "bg-primary text-white" : "bg-transparent text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+                        className={`flex-1 py-1 transition-all ${heatmapType === "clicks" ? "bg-primary text-white" : "bg-transparent text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"}`}
                       >
                         Clics
                       </button>
                       <button
                         onClick={() => setHeatmapType("scroll")}
-                        className={`flex-1 py-1 transition-all border-x border-slate-200 dark:border-white/10 ${heatmapType === "scroll" ? "bg-primary text-white" : "bg-transparent text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+                        className={`flex-1 py-1 transition-all border-x border-[hsl(var(--border))] dark:border-white/10 ${heatmapType === "scroll" ? "bg-primary text-white" : "bg-transparent text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"}`}
                       >
                         Scroll
                       </button>
                       <button
                         onClick={() => setHeatmapType("attention")}
-                        className={`flex-1 py-1 transition-all ${heatmapType === "attention" ? "bg-primary text-white" : "bg-transparent text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+                        className={`flex-1 py-1 transition-all ${heatmapType === "attention" ? "bg-primary text-white" : "bg-transparent text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"}`}
                       >
                         Atención
                       </button>
@@ -1510,59 +1510,59 @@ export default function CmsBuilderPage() {
                   </div>
                 )}
                 
-                <p className="text-[9px] text-slate-400">Representación visual interactiva en tiempo real sobre el canvas del comportamiento del usuario.</p>
+                <p className="text-[9px] text-[hsl(var(--text-secondary))]">Representación visual interactiva en tiempo real sobre el canvas del comportamiento del usuario.</p>
               </div>
             </div>
           )}
 
           {/* Section Inspector (renders below tabs if activeSection is set) */}
-          <div className="space-y-2 pt-4 border-t border-slate-200 dark:border-white/10">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 font-bold">Inspector sección</p>
+          <div className="space-y-2 pt-4 border-t border-[hsl(var(--border))] dark:border-white/10">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] font-bold">Inspector sección</p>
             {!activeSection ? (
-              <p className="text-xs text-slate-500">Selecciona una sección del canvas.</p>
+              <p className="text-xs text-[hsl(var(--text-secondary))]">Selecciona una sección del canvas.</p>
             ) : (
               <fieldset disabled={!canEdit} className="space-y-2.5 disabled:opacity-60">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{activeSection.type}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{activeSection.type}</p>
                 <input
                   value={safeString(activeSection.props_json?.title)}
                   onChange={(e) => setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: { ...(s.props_json || {}), title: e.target.value } } : s))}
                   onBlur={(e) => saveSectionField("title", e.target.value)}
                   placeholder="Título"
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                 />
                 <textarea
                   value={safeString(activeSection.props_json?.body)}
                   onChange={(e) => setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: { ...(s.props_json || {}), body: e.target.value } } : s))}
                   onBlur={(e) => saveSectionField("body", e.target.value)}
                   placeholder="Contenido"
-                  className="w-full min-h-[90px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                  className="w-full min-h-[90px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                 />
                 <input
                   value={safeString(activeSection.props_json?.cta_label)}
                   onChange={(e) => setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: { ...(s.props_json || {}), cta_label: e.target.value } } : s))}
                   onBlur={(e) => saveSectionField("cta_label", e.target.value)}
                   placeholder="Texto CTA"
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                 />
                 <input
                   value={safeString(activeSection.props_json?.cta_href)}
                   onChange={(e) => setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: { ...(s.props_json || {}), cta_href: e.target.value } } : s))}
                   onBlur={(e) => saveSectionField("cta_href", e.target.value)}
                   placeholder="URL CTA"
-                  className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                 />
 
                 {(activeSection.type === "hero" || activeSection.type === "gallery") && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                       {activeSection.type === "hero" ? "Imagen hero" : "Imagen de galeria"}
                     </p>
                     {safeString(activeSection.props_json?.image_url) ? (
-                      <div className="overflow-hidden rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                      <div className="overflow-hidden rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5">
                         <OptimizedImage src={safeString(activeSection.props_json?.image_url)} alt={safeString(activeSection.props_json?.image_alt) || "Imagen seleccionada"} width={200} height={112} className="h-28 w-full object-cover" />
                       </div>
                     ) : (
-                      <div className="rounded-md border border-dashed border-slate-300 dark:border-white/20 bg-slate-50 dark:bg-white/5 p-4 text-center text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                      <div className="rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/20 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         Sin imagen seleccionada
                       </div>
                     )}
@@ -1584,7 +1584,7 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("image_url", e.target.value)}
                       placeholder="URL manual de imagen"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                     <input
                       value={safeString(activeSection.props_json?.image_alt)}
@@ -1594,7 +1594,7 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("image_alt", e.target.value)}
                       placeholder="Texto alternativo"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
@@ -1608,18 +1608,18 @@ export default function CmsBuilderPage() {
                     }}
                     onBlur={(e) => saveSectionField("embed_url", e.target.value)}
                     placeholder="URL embed (YouTube, Vimeo, etc.)"
-                    className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                   />
                 )}
 
                 {activeSection.type === "cards" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Items de tarjetas</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Items de tarjetas</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
-                      <div key={`card-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                      <div key={`card-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
                         {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
                         <input
                           value={safeString(itemObject.title)}
@@ -1631,7 +1631,7 @@ export default function CmsBuilderPage() {
                             if (nextProps) saveSectionProps(nextProps);
                           }}
                           placeholder="Título tarjeta"
-                          className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                          className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
                         />
                         <textarea
                           value={safeString(itemObject.body)}
@@ -1643,21 +1643,21 @@ export default function CmsBuilderPage() {
                             if (nextProps) saveSectionProps(nextProps);
                           }}
                           placeholder="Descripción tarjeta"
-                          className="w-full min-h-[64px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                          className="w-full min-h-[64px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
                         />
                         <input
                           value={safeString(itemObject.icon)}
                           onChange={(e) => upsertArrayItem("items", index, { icon: e.target.value })}
                           onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { icon: e.target.value }); if (nextProps) saveSectionProps(nextProps); }}
                           placeholder="Icono emoji (ej: 🎯)"
-                          className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                          className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
                         />
                         <input
                           value={safeString(itemObject.href)}
                           onChange={(e) => upsertArrayItem("items", index, { href: e.target.value })}
                           onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { href: e.target.value }); if (nextProps) saveSectionProps(nextProps); }}
                           placeholder="URL (opcional, hace la tarjeta clicable)"
-                          className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                          className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
                         />
                         <button
                           onClick={() => {
@@ -1677,7 +1677,7 @@ export default function CmsBuilderPage() {
                         const nextProps = addArrayItem("items", { title: "Nueva tarjeta", body: "Descripción", status: "published" });
                         if (nextProps) saveSectionProps(nextProps);
                       }}
-                      className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+                      className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
                     >
                       + Añadir tarjeta
                     </button>
@@ -1685,13 +1685,13 @@ export default function CmsBuilderPage() {
                 )}
 
                 {activeSection.type === "faq" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Preguntas</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Preguntas</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
-                      <div key={`faq-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                      <div key={`faq-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
                         {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
                         <input
                           value={safeString(itemObject.q)}
@@ -1703,7 +1703,7 @@ export default function CmsBuilderPage() {
                             if (nextProps) saveSectionProps(nextProps);
                           }}
                           placeholder="Pregunta"
-                          className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                          className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
                         />
                         <textarea
                           value={safeString(itemObject.a)}
@@ -1715,7 +1715,7 @@ export default function CmsBuilderPage() {
                             if (nextProps) saveSectionProps(nextProps);
                           }}
                           placeholder="Respuesta"
-                          className="w-full min-h-[64px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                          className="w-full min-h-[64px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
                         />
                         <button
                           onClick={() => {
@@ -1735,7 +1735,7 @@ export default function CmsBuilderPage() {
                         const nextProps = addArrayItem("items", { q: "Nueva pregunta", a: "Respuesta", status: "published" });
                         if (nextProps) saveSectionProps(nextProps);
                       }}
-                      className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+                      className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
                     >
                       + Añadir pregunta
                     </button>
@@ -1743,8 +1743,8 @@ export default function CmsBuilderPage() {
                 )}
 
                 {activeSection.type === "video_hero" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Video de fondo</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Video de fondo</p>
                     <input
                       value={safeString(activeSection.props_json?.video_url)}
                       onChange={(e) => {
@@ -1753,14 +1753,14 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("video_url", e.target.value)}
                       placeholder="URL del video"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
 
                 {activeSection.type === "rich_text_columns" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Segunda columna</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Segunda columna</p>
                     <textarea
                       value={safeString(activeSection.props_json?.body_2)}
                       onChange={(e) => {
@@ -1769,14 +1769,14 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("body_2", e.target.value)}
                       placeholder="Contenido de la segunda columna"
-                      className="w-full min-h-12 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full min-h-12 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
 
                 {activeSection.type === "countdown" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fecha objetivo</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha objetivo</p>
                     <input
                       type="datetime-local"
                       value={safeString(activeSection.props_json?.target_date).slice(0, 16)}
@@ -1785,14 +1785,14 @@ export default function CmsBuilderPage() {
                         updateSectionPropsLocal(nextProps);
                       }}
                       onBlur={(e) => saveSectionField("target_date", e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
 
                 {activeSection.type === "popup_banner" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Pop-up</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pop-up</p>
                     <input
                       type="number"
                       value={safeString(activeSection.props_json?.delay_ms) || "2000"}
@@ -1802,7 +1802,7 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("delay_ms", e.target.value)}
                       placeholder="Retraso en milisegundos"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                     <input
                       type="datetime-local"
@@ -1812,7 +1812,7 @@ export default function CmsBuilderPage() {
                         updateSectionPropsLocal(nextProps);
                       }}
                       onBlur={(e) => saveSectionField("start_at", e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                     <input
                       type="datetime-local"
@@ -1822,7 +1822,7 @@ export default function CmsBuilderPage() {
                         updateSectionPropsLocal(nextProps);
                       }}
                       onBlur={(e) => saveSectionField("end_at", e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                     <textarea
                       value={Array.isArray(activeSection.props_json?.show_on_paths) ? activeSection.props_json.show_on_paths.join("\n") : safeString(activeSection.props_json?.show_on_paths)}
@@ -1832,7 +1832,7 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionProps({ ...asObject(activeSection.props_json), show_on_paths: e.target.value.split(/\n|,/).map((item) => item.trim()).filter(Boolean) })}
                       placeholder="/\n/nosotros\n/cursos"
-                      className="w-full min-h-16 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full min-h-16 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                     <textarea
                       value={Array.isArray(activeSection.props_json?.hide_on_paths) ? activeSection.props_json.hide_on_paths.join("\n") : safeString(activeSection.props_json?.hide_on_paths)}
@@ -1842,7 +1842,7 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionProps({ ...asObject(activeSection.props_json), hide_on_paths: e.target.value.split(/\n|,/).map((item) => item.trim()).filter(Boolean) })}
                       placeholder="/login\n/checkout"
-                      className="w-full min-h-16 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full min-h-16 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                     <select
                       value={safeString(activeSection.props_json?.dismiss_mode) || "local"}
@@ -1851,7 +1851,7 @@ export default function CmsBuilderPage() {
                         updateSectionPropsLocal(nextProps);
                         saveSectionField("dismiss_mode", e.target.value);
                       }}
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     >
                       <option value="local">Persistente (localStorage)</option>
                       <option value="session">Solo sesión</option>
@@ -1866,7 +1866,7 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("dismiss_days", e.target.value)}
                       placeholder="Duración del cierre en días"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                     <input
                       value={safeString(activeSection.props_json?.dismiss_key)}
@@ -1876,22 +1876,22 @@ export default function CmsBuilderPage() {
                       }}
                       onBlur={(e) => saveSectionField("dismiss_key", e.target.value)}
                       placeholder="Clave de cierre personalizada (opcional)"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
 
                 {activeSection.type === "stats" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Metricas</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Metricas</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
-                        <div key={`stat-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                        <div key={`stat-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
                           {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
-                          <input value={safeString(itemObject.value)} onChange={(e) => upsertArrayItem("items", index, { value: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { value: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Valor: 10K+" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <input value={safeString(itemObject.label)} onChange={(e) => upsertArrayItem("items", index, { label: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Etiqueta" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.value)} onChange={(e) => upsertArrayItem("items", index, { value: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { value: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Valor: 10K+" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.label)} onChange={(e) => upsertArrayItem("items", index, { label: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Etiqueta" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar" : "Archivar"}
@@ -1899,24 +1899,24 @@ export default function CmsBuilderPage() {
                         </div>
                       );
                     })}
-                    <button onClick={() => { const nextProps = addArrayItem("items", { value: "0", label: "Nueva metrica", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                    <button onClick={() => { const nextProps = addArrayItem("items", { value: "0", label: "Nueva metrica", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
                       + Añadir metrica
                     </button>
                   </div>
                 )}
 
                 {activeSection.type === "team" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Equipo</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Equipo</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
-                        <div key={`team-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                        <div key={`team-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
                           {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
-                          <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <input value={safeString(itemObject.role)} onChange={(e) => upsertArrayItem("items", index, { role: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { role: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Rol" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <input value={safeString(itemObject.image)} onChange={(e) => upsertArrayItem("items", index, { image: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { image: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL imagen" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.role)} onChange={(e) => upsertArrayItem("items", index, { role: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { role: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Rol" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.image)} onChange={(e) => upsertArrayItem("items", index, { image: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { image: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL imagen" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar persona" : "Archivar persona"}
@@ -1924,27 +1924,27 @@ export default function CmsBuilderPage() {
                         </div>
                       );
                     })}
-                    <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nombre", role: "Rol", image: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                    <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nombre", role: "Rol", image: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
                       + Añadir persona
                     </button>
                   </div>
                 )}
 
                 {activeSection.type === "pricing" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Planes / donaciones</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Planes / donaciones</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
-                        <div key={`pricing-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                        <div key={`pricing-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
                           {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
-                          <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre del plan" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <input value={safeString(itemObject.price)} onChange={(e) => upsertArrayItem("items", index, { price: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { price: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Precio" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <textarea value={safeString(itemObject.features)} onChange={(e) => upsertArrayItem("items", index, { features: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { features: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Beneficios, uno por linea" className="w-full min-h-[64px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <input value={safeString(itemObject.btn)} onChange={(e) => upsertArrayItem("items", index, { btn: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { btn: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Texto del boton" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <input value={safeString(itemObject.btn_href)} onChange={(e) => upsertArrayItem("items", index, { btn_href: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { btn_href: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL del boton (opcional)" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                          <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre del plan" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.price)} onChange={(e) => upsertArrayItem("items", index, { price: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { price: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Precio" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <textarea value={safeString(itemObject.features)} onChange={(e) => upsertArrayItem("items", index, { features: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { features: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Beneficios, uno por linea" className="w-full min-h-[64px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.btn)} onChange={(e) => upsertArrayItem("items", index, { btn: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { btn: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Texto del boton" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.btn_href)} onChange={(e) => upsertArrayItem("items", index, { btn_href: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { btn_href: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL del boton (opcional)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             <input type="checkbox" checked={safeString(itemObject.featured) === "true"} onChange={(e) => { const nextProps = upsertArrayItem("items", index, { featured: String(e.target.checked) }); if (nextProps) saveSectionProps(nextProps); }} />
                             Destacado (featured)
                           </label>
@@ -1955,26 +1955,26 @@ export default function CmsBuilderPage() {
                         </div>
                       );
                     })}
-                    <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nuevo plan", price: "$0", features: "Beneficio", btn: "Seleccionar", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                    <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nuevo plan", price: "$0", features: "Beneficio", btn: "Seleccionar", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
                       + Añadir plan
                     </button>
                   </div>
                 )}
 
                 {activeSection.type === "gallery" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Imágenes de galería (items)</p>
-                    <p className="text-[9px] text-slate-400">Si agregas items aquí se usa galería múltiple; si no, se usa la imagen hero de arriba.</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Imágenes de galería (items)</p>
+                    <p className="text-[9px] text-[hsl(var(--text-secondary))]">Si agregas items aquí se usa galería múltiple; si no, se usa la imagen hero de arriba.</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
-                        <div key={`gallery-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                        <div key={`gallery-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
                           {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
                           {safeString(itemObject.url) && <OptimizedImage src={safeString(itemObject.url)} alt={safeString(itemObject.alt)} width={200} height={80} className="w-full h-20 object-cover rounded-md" />}
-                          <input value={safeString(itemObject.url)} onChange={(e) => upsertArrayItem("items", index, { url: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { url: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL de imagen" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <input value={safeString(itemObject.alt)} onChange={(e) => upsertArrayItem("items", index, { alt: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { alt: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Alt text" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <input value={safeString(itemObject.caption)} onChange={(e) => upsertArrayItem("items", index, { caption: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { caption: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Leyenda (opcional)" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.url)} onChange={(e) => upsertArrayItem("items", index, { url: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { url: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL de imagen" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.alt)} onChange={(e) => upsertArrayItem("items", index, { alt: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { alt: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Alt text" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.caption)} onChange={(e) => upsertArrayItem("items", index, { caption: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { caption: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Leyenda (opcional)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar" : "Archivar"}
@@ -1982,27 +1982,27 @@ export default function CmsBuilderPage() {
                         </div>
                       );
                     })}
-                    <button onClick={() => { const nextProps = addArrayItem("items", { url: "", alt: "", caption: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                    <button onClick={() => { const nextProps = addArrayItem("items", { url: "", alt: "", caption: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
                       + Añadir imagen
                     </button>
                   </div>
                 )}
 
                 {activeSection.type === "image_text" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Imagen + Texto</p>
-                    <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Imagen</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Imagen + Texto</p>
+                    <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Imagen</p>
                       {safeString(activeSection.props_json?.image_url) && (
                         <OptimizedImage src={safeString(activeSection.props_json?.image_url)} alt="" width={200} height={96} className="w-full h-24 object-cover rounded-md" />
                       )}
                       <button type="button" onClick={() => { setMediaPickerTarget("section"); setMediaPickerOpen(true); }} className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white inline-flex items-center justify-center gap-2">
                         <ImageIcon size={13} /> Elegir imagen
                       </button>
-                      <input value={safeString(activeSection.props_json?.image_url)} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), image_url: e.target.value }; updateSectionPropsLocal(nextProps); }} onBlur={(e) => saveSectionField("image_url", e.target.value)} placeholder="URL manual" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs" />
-                      <input value={safeString(activeSection.props_json?.image_alt)} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), image_alt: e.target.value }; updateSectionPropsLocal(nextProps); }} onBlur={(e) => saveSectionField("image_alt", e.target.value)} placeholder="Alt text" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs" />
+                      <input value={safeString(activeSection.props_json?.image_url)} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), image_url: e.target.value }; updateSectionPropsLocal(nextProps); }} onBlur={(e) => saveSectionField("image_url", e.target.value)} placeholder="URL manual" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs" />
+                      <input value={safeString(activeSection.props_json?.image_alt)} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), image_alt: e.target.value }; updateSectionPropsLocal(nextProps); }} onBlur={(e) => saveSectionField("image_alt", e.target.value)} placeholder="Alt text" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs" />
                     </div>
-                    <select value={safeString(activeSection.props_json?.image_side) || "right"} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), image_side: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionField("image_side", e.target.value); }} className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs">
+                    <select value={safeString(activeSection.props_json?.image_side) || "right"} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), image_side: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionField("image_side", e.target.value); }} className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs">
                       <option value="right">Imagen a la derecha</option>
                       <option value="left">Imagen a la izquierda</option>
                     </select>
@@ -2010,17 +2010,17 @@ export default function CmsBuilderPage() {
                 )}
 
                 {activeSection.type === "timeline" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Hitos de línea de tiempo</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hitos de línea de tiempo</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
-                        <div key={`timeline-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                        <div key={`timeline-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
                           {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
-                          <input value={safeString(itemObject.year)} onChange={(e) => upsertArrayItem("items", index, { year: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { year: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Año o etiqueta (ej: 2020)" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <input value={safeString(itemObject.title)} onChange={(e) => upsertArrayItem("items", index, { title: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { title: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Título del hito" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <textarea value={safeString(itemObject.body)} onChange={(e) => upsertArrayItem("items", index, { body: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { body: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Descripción" className="w-full min-h-[48px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.year)} onChange={(e) => upsertArrayItem("items", index, { year: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { year: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Año o etiqueta (ej: 2020)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.title)} onChange={(e) => upsertArrayItem("items", index, { title: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { title: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Título del hito" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <textarea value={safeString(itemObject.body)} onChange={(e) => upsertArrayItem("items", index, { body: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { body: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Descripción" className="w-full min-h-[48px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar hito" : "Archivar hito"}
@@ -2028,24 +2028,24 @@ export default function CmsBuilderPage() {
                         </div>
                       );
                     })}
-                    <button onClick={() => { const nextProps = addArrayItem("items", { year: "2024", title: "Nuevo hito", body: "Descripción", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                    <button onClick={() => { const nextProps = addArrayItem("items", { year: "2024", title: "Nuevo hito", body: "Descripción", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
                       + Añadir hito
                     </button>
                   </div>
                 )}
 
                 {activeSection.type === "icon_grid" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Items del grid</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Items del grid</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
-                        <div key={`icon-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                        <div key={`icon-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
                           {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
-                          <input value={safeString(itemObject.icon)} onChange={(e) => upsertArrayItem("items", index, { icon: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { icon: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Emoji icono (ej: 🎯)" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <input value={safeString(itemObject.title)} onChange={(e) => upsertArrayItem("items", index, { title: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { title: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Título" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <textarea value={safeString(itemObject.body)} onChange={(e) => upsertArrayItem("items", index, { body: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { body: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Descripción breve" className="w-full min-h-[48px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.icon)} onChange={(e) => upsertArrayItem("items", index, { icon: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { icon: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Emoji icono (ej: 🎯)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.title)} onChange={(e) => upsertArrayItem("items", index, { title: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { title: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Título" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <textarea value={safeString(itemObject.body)} onChange={(e) => upsertArrayItem("items", index, { body: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { body: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Descripción breve" className="w-full min-h-[48px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar" : "Archivar"}
@@ -2053,58 +2053,58 @@ export default function CmsBuilderPage() {
                         </div>
                       );
                     })}
-                    <button onClick={() => { const nextProps = addArrayItem("items", { icon: "✨", title: "Nuevo item", body: "Descripción", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                    <button onClick={() => { const nextProps = addArrayItem("items", { icon: "✨", title: "Nuevo item", body: "Descripción", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
                       + Añadir item
                     </button>
                   </div>
                 )}
 
                 {activeSection.type === "newsletter" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Suscripción Email</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Suscripción Email</p>
                     <input
                       value={safeString(activeSection.props_json?.action_url)}
                       onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), action_url: e.target.value }; updateSectionPropsLocal(nextProps); }}
                       onBlur={(e) => saveSectionField("action_url", e.target.value)}
                       placeholder="URL de acción (POST con {name, email})"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
 
                 {activeSection.type === "cta_banner" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Segundo botón (opcional)</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Segundo botón (opcional)</p>
                     <input
                       value={safeString(activeSection.props_json?.cta_label_2)}
                       onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), cta_label_2: e.target.value }; updateSectionPropsLocal(nextProps); }}
                       onBlur={(e) => saveSectionField("cta_label_2", e.target.value)}
                       placeholder="Texto segundo botón"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                     <input
                       value={safeString(activeSection.props_json?.cta_href_2)}
                       onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), cta_href_2: e.target.value }; updateSectionPropsLocal(nextProps); }}
                       onBlur={(e) => saveSectionField("cta_href_2", e.target.value)}
                       placeholder="URL segundo botón"
-                      className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                   </div>
                 )}
 
                 {activeSection.type === "testimonials" && (
-                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-white/10 p-3 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Testimonios manuales de esta seccion</p>
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonios manuales de esta seccion</p>
                     {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
                       const itemObject = asObject(item);
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
-                        <div key={`manual-testimonial-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/[0.03]" : "border-slate-200/70 dark:border-white/10"}`}>
+                        <div key={`manual-testimonial-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
                           {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
-                          <input value={safeString(itemObject.author)} onChange={(e) => upsertArrayItem("items", index, { author: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { author: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Autor" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <input value={safeString(itemObject.role)} onChange={(e) => upsertArrayItem("items", index, { role: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { role: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Rol" className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <textarea value={safeString(itemObject.content)} onChange={(e) => upsertArrayItem("items", index, { content: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { content: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Contenido" className="w-full min-h-[64px] rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <select value={safeString(itemObject.stars) || "5"} onChange={(e) => { const nextProps = upsertArrayItem("items", index, { stars: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-transparent px-2 py-1.5 text-xs">
+                          <input value={safeString(itemObject.author)} onChange={(e) => upsertArrayItem("items", index, { author: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { author: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Autor" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.role)} onChange={(e) => upsertArrayItem("items", index, { role: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { role: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Rol" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <textarea value={safeString(itemObject.content)} onChange={(e) => upsertArrayItem("items", index, { content: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { content: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Contenido" className="w-full min-h-[64px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <select value={safeString(itemObject.stars) || "5"} onChange={(e) => { const nextProps = upsertArrayItem("items", index, { stars: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs">
                             <option value="5">★★★★★ 5 estrellas</option>
                             <option value="4">★★★★☆ 4 estrellas</option>
                             <option value="3">★★★☆☆ 3 estrellas</option>
@@ -2116,17 +2116,17 @@ export default function CmsBuilderPage() {
                         </div>
                       );
                     })}
-                    <button onClick={() => { const nextProps = addArrayItem("items", { author: "Autor", role: "Rol", content: "Testimonio", stars: "5", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                    <button onClick={() => { const nextProps = addArrayItem("items", { author: "Autor", role: "Rol", content: "Testimonio", stars: "5", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
                       + Añadir testimonio
                     </button>
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => setSectionVisibility(!activeSection.is_visible)} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1">
+                  <button onClick={() => setSectionVisibility(!activeSection.is_visible)} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1">
                     {activeSection.is_visible ? <EyeOff size={11} /> : <Eye size={11} />} {activeSection.is_visible ? "Ocultar" : "Mostrar"}
                   </button>
-                  <button onClick={duplicateSection} className="rounded-lg border border-slate-200 dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1">
+                  <button onClick={duplicateSection} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1">
                     <Copy size={11} /> Duplicar
                   </button>
                   <button onClick={toggleSectionArchive} className={`col-span-2 rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 ${activeSection.status === "archived" ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
@@ -2134,7 +2134,7 @@ export default function CmsBuilderPage() {
                     {activeSection.status === "archived" ? "Restaurar seccion" : "Archivar seccion"}
                   </button>
                 </div>
-                <p className="text-[10px] text-slate-400">{saving ? "Guardando..." : "Cambios guardados al salir del campo"}</p>
+                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{saving ? "Guardando..." : "Cambios guardados al salir del campo"}</p>
               </fieldset>
             )}
           </div>

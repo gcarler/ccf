@@ -52,26 +52,26 @@ function InitPasswordContent() {
 
     if (success) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#0f1116] dark:to-[#1a1b1e]">
+            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[hsl(var(--surface-1))] to-[hsl(var(--surface-2))] dark:from-[#0f1116] dark:to-[#1a1b1e]">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl p-8 max-w-md text-center"
+                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-[hsl(var(--border))] dark:border-white/10 rounded-2xl shadow-xl p-8 max-w-md text-center"
                 >
                     <CheckCircle2 className="mx-auto mb-4 text-emerald-500" size={48} />
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">¡Contraseña Configurada!</h2>
-                    <p className="text-slate-500 text-sm">Redirigiendo al inicio de sesión...</p>
+                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¡Contraseña Configurada!</h2>
+                    <p className="text-[hsl(var(--text-secondary))] text-sm">Redirigiendo al inicio de sesión...</p>
                 </motion.div>
             </div>
         );
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#0f1116] dark:to-[#1a1b1e] p-4">
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[hsl(var(--surface-1))] to-[hsl(var(--surface-2))] dark:from-[#0f1116] dark:to-[#1a1b1e] p-4">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+                className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-[hsl(var(--border))] dark:border-white/10 rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
             >
                 {/* Header */}
                 <div className="bg-gradient-to-r from-blue-600 to-sky-600 px-6 py-5">
@@ -88,7 +88,7 @@ function InitPasswordContent() {
                     )}
 
                     <div>
-                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5 block">
+                        <label className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5 block">
                             Nueva Contraseña
                         </label>
                         <div className="relative">
@@ -97,14 +97,14 @@ function InitPasswordContent() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Mínimo 8 caracteres"
-                                className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-slate-200 dark:border-white/10 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
+                                className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                                 required
                                 minLength={8}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPwd(!showPwd)}
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                             >
                                 {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
@@ -112,7 +112,7 @@ function InitPasswordContent() {
                     </div>
 
                     <div>
-                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5 block">
+                        <label className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5 block">
                             Confirmar Contraseña
                         </label>
                         <input
@@ -120,7 +120,7 @@ function InitPasswordContent() {
                             value={confirm}
                             onChange={(e) => setConfirm(e.target.value)}
                             placeholder="Repite la contraseña"
-                            className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-slate-200 dark:border-white/10 rounded-lg text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
+                            className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                             required
                         />
                     </div>
@@ -142,7 +142,7 @@ function InitPasswordContent() {
 export default function InitPasswordPage() {
     return (
         <Suspense fallback={
-            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#0f1116] dark:to-[#1a1b1e]">
+            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[hsl(var(--surface-1))] to-[hsl(var(--surface-2))] dark:from-[#0f1116] dark:to-[#1a1b1e]">
                 <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={32} />
             </div>
         }>

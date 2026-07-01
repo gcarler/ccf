@@ -111,26 +111,26 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
                     {items.map((phase, i) => (
                         <div
                             key={phase.slug}
-                            className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-md border border-slate-100 dark:border-white/10 group"
+                            className="flex items-center gap-3 p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 group"
                         >
                             {/* Reorder buttons */}
                             <div className="flex flex-col gap-0.5 shrink-0">
-                                <button onClick={() => handleMoveUp(i)} disabled={i === 0} className="size-4 flex items-center justify-center text-slate-300 hover:text-slate-600 disabled:opacity-20 disabled:cursor-not-allowed">
+                                <button onClick={() => handleMoveUp(i)} disabled={i === 0} className="size-4 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] disabled:opacity-20 disabled:cursor-not-allowed">
                                     <span className="font-semibold leading-none">▲</span>
                                 </button>
-                                <button onClick={() => handleMoveDown(i)} disabled={i === items.length - 1} className="size-4 flex items-center justify-center text-slate-300 hover:text-slate-600 disabled:opacity-20 disabled:cursor-not-allowed">
+                                <button onClick={() => handleMoveDown(i)} disabled={i === items.length - 1} className="size-4 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] disabled:opacity-20 disabled:cursor-not-allowed">
                                     <span className="font-semibold leading-none">▼</span>
                                 </button>
                             </div>
 
                             {/* Drag handle */}
-                            <div className="opacity-0 group-hover:opacity-40 cursor-grab text-slate-400 shrink-0">
+                            <div className="opacity-0 group-hover:opacity-40 cursor-grab text-[hsl(var(--text-secondary))] shrink-0">
                                 <GripVertical size={14} />
                             </div>
 
                             {/* Color picker trigger */}
                             <div className="relative shrink-0">
-                                <div className="size-7 rounded-lg border border-slate-200 dark:border-white/10" style={{ backgroundColor: phase.color }} />
+                                <div className="size-7 rounded-lg border border-[hsl(var(--border))] dark:border-white/10" style={{ backgroundColor: phase.color }} />
                                 <select
                                     value={phase.color}
                                     onChange={e => handleChangeColor(i, e.target.value)}
@@ -148,13 +148,13 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
                                 type="text"
                                 value={phase.name}
                                 onChange={e => handleRename(i, e.target.value)}
-                                className="flex-1 text-[13px] font-bold bg-transparent outline-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 border-b border-transparent focus:border-blue-500 transition-all"
+                                className="flex-1 text-[13px] font-bold bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] border-b border-transparent focus:border-blue-500 transition-all"
                             />
 
                             {/* Delete */}
                             <button
                                 onClick={() => handleRemove(i)}
-                                className="size-7 rounded-lg flex items-center justify-center text-slate-300 hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                                className="size-7 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all shrink-0"
                             >
                                 <Trash2 size={12} />
                             </button>
@@ -164,17 +164,17 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
                     {/* Add phase */}
                     <button
                         onClick={handleAdd}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-md border-2 border-dashed border-slate-200 dark:border-white/10 text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all text-[11px] font-semibold uppercase tracking-wide"
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-md border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all text-[11px] font-semibold uppercase tracking-wide"
                     >
                         <Plus size={14} /> Agregar Fase
                     </button>
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-end gap-2 px-4 py-2.5 border-t border-slate-100 dark:border-white/5 shrink-0">
+                <div className="flex items-center justify-end gap-2 px-4 py-2.5 border-t border-[hsl(var(--border))] dark:border-white/5 shrink-0">
                     <button
                         onClick={onClose}
-                        className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-all"
+                        className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md transition-all"
                     >
                         Cancelar
                     </button>

@@ -19,7 +19,7 @@ const ACCESS_LABEL: Record<AccessLevel, string> = {
 };
 const ACCESS_COLOR: Record<AccessLevel, string> = {
   open: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  persona: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  persona: "bg-blue-500/10 text-[hsl(var(--primary))] border-blue-500/20",
   advanced: "bg-amber-500/10 text-amber-400 border-amber-500/20",
 };
 
@@ -141,19 +141,19 @@ export default function CourseCatalog({
         <div className="flex gap-3 flex-1">
         <button
           onClick={() => setFilterModality("all")}
-          className={`px-3 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filterModality === "all" ? "bg-primary text-white shadow-lg shadow-primary/20" : "glass text-slate-500"}`}
+          className={`px-3 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filterModality === "all" ? "bg-primary text-white shadow-lg shadow-primary/20" : "glass text-[hsl(var(--text-secondary))]"}`}
         >
           Todos
         </button>
         <button
           onClick={() => setFilterModality("formal")}
-          className={`px-3 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filterModality === "formal" ? "bg-primary text-white shadow-lg shadow-primary/20" : "glass text-slate-500"}`}
+          className={`px-3 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filterModality === "formal" ? "bg-primary text-white shadow-lg shadow-primary/20" : "glass text-[hsl(var(--text-secondary))]"}`}
         >
           Teología
         </button>
         <button
           onClick={() => setFilterModality("no_formal")}
-          className={`px-3 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filterModality === "no_formal" ? "bg-primary text-white shadow-lg shadow-primary/20" : "glass text-slate-500"}`}
+          className={`px-3 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all ${filterModality === "no_formal" ? "bg-primary text-white shadow-lg shadow-primary/20" : "glass text-[hsl(var(--text-secondary))]"}`}
         >
           Liderazgo
         </button>
@@ -197,17 +197,17 @@ export default function CourseCatalog({
                         <span className="text-[9px] font-bold text-primary px-2 py-0.5 rounded bg-primary/10 uppercase tracking-wider">{course.code}</span>
                       </div>
                     </div>
-                    <p className="text-slate-400 text-xs line-clamp-2 pr-2 leading-relaxed">{course.description}</p>
+                    <p className="text-[hsl(var(--text-secondary))] text-xs line-clamp-2 pr-2 leading-relaxed">{course.description}</p>
                   </div>
               </div>
               <div className="flex items-center gap-4 py-3 border-t border-b border-white/5">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1 flex items-center gap-1"><Clock size={10} /> Tiempo</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 flex items-center gap-1"><Clock size={10} /> Tiempo</span>
                   <span className="text-xs font-bold text-white">{course.total_minutes > 0 ? `${course.total_minutes}m` : `${course.duration_hours}h`}</span>
                 </div>
                 <div className="w-px h-6 bg-white/10"></div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1 flex items-center gap-1"><School size={10} /> Lecciones</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 flex items-center gap-1"><School size={10} /> Lecciones</span>
                   <span className="text-xs font-bold text-white">{course.lesson_count} módulos</span>
                 </div>
               </div>
@@ -220,8 +220,8 @@ export default function CourseCatalog({
             </div>
           ))}
           {courses.length === 0 && (
-            <div className="rounded-lg border border-dashed border-white/10 bg-slate-900/30 p-4 text-center">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">No hay cursos publicados.</p>
+            <div className="rounded-lg border border-dashed border-white/10 bg-[hsl(var(--bg-muted))]/30 p-4 text-center">
+              <p className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">No hay cursos publicados.</p>
             </div>
           )}
         </div>
@@ -237,7 +237,7 @@ export default function CourseCatalog({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-white text-sm truncate">{course.title}</p>
-                <p className="text-xs text-slate-400 truncate">{course.code} · {course.duration_hours}h · {course.is_self_paced ? 'Autoguiado' : 'Cohorte'}</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{course.code} · {course.duration_hours}h · {course.is_self_paced ? 'Autoguiado' : 'Cohorte'}</p>
               </div>
               <button
                 onClick={() => handleEnrollClick(course.id)}
@@ -256,11 +256,11 @@ export default function CourseCatalog({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/10">
-                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Curso</th>
-                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Código</th>
-                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Duración</th>
-                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Tipo</th>
-                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500 text-right">Acción</th>
+                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Curso</th>
+                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Código</th>
+                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Duración</th>
+                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tipo</th>
+                <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] text-right">Acción</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -268,13 +268,13 @@ export default function CourseCatalog({
                 <tr key={course.id} className="hover:bg-white/5 transition-colors">
                   <td className="py-1.5 pr-4">
                     <p className="font-bold text-white text-sm">{course.title}</p>
-                    <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{course.description}</p>
+                    <p className="text-xs text-[hsl(var(--text-secondary))] line-clamp-1 mt-0.5">{course.description}</p>
                   </td>
                   <td className="py-1.5 pr-4">
                     <span className="text-[10px] font-bold text-primary px-2 py-0.5 rounded bg-primary/10 uppercase">{course.code}</span>
                   </td>
-                  <td className="py-1.5 pr-4 text-sm text-slate-300 font-bold">{course.duration_hours}h</td>
-                  <td className="py-1.5 pr-4 text-xs text-slate-400">{course.is_self_paced ? 'Autoguiado' : 'Cohorte'}</td>
+                  <td className="py-1.5 pr-4 text-sm text-[hsl(var(--text-secondary))] font-bold">{course.duration_hours}h</td>
+                  <td className="py-1.5 pr-4 text-xs text-[hsl(var(--text-secondary))]">{course.is_self_paced ? 'Autoguiado' : 'Cohorte'}</td>
                   <td className="py-1.5 text-right">
                     <button
                       onClick={() => handleEnrollClick(course.id)}
@@ -288,8 +288,8 @@ export default function CourseCatalog({
             </tbody>
           </table>
           {courses.length === 0 && (
-            <div className="rounded-lg border border-dashed border-white/10 bg-slate-900/30 p-4 text-center mt-4">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">No hay cursos publicados.</p>
+            <div className="rounded-lg border border-dashed border-white/10 bg-[hsl(var(--bg-muted))]/30 p-4 text-center mt-4">
+              <p className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">No hay cursos publicados.</p>
             </div>
           )}
         </div>
@@ -298,10 +298,10 @@ export default function CourseCatalog({
         {(resolvedViewType === 'board' || resolvedViewType === 'kanban') && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 px-4">
           {boardColumns.map((column) => (
-            <div key={column.key} className="rounded-lg border border-white/10 bg-slate-900/30 p-3">
+            <div key={column.key} className="rounded-lg border border-white/10 bg-[hsl(var(--bg-muted))]/30 p-3">
               <div className="mb-3 flex items-center justify-between">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{column.label}</p>
-                <span className="font-semibold text-slate-500">{column.items.length}</span>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.label}</p>
+                <span className="font-semibold text-[hsl(var(--text-secondary))]">{column.items.length}</span>
               </div>
               <div className="space-y-2">
                 {column.items.map((course) => (
@@ -311,10 +311,10 @@ export default function CourseCatalog({
                     className="w-full text-left rounded-md border border-white/10 bg-white/5 p-3 hover:border-primary/40 transition-all"
                   >
                     <p className="text-xs font-semibold text-white">{course.title}</p>
-                    <p className="text-[10px] text-slate-400">{course.code} · {course.duration_hours}h</p>
+                    <p className="text-[10px] text-[hsl(var(--text-secondary))]">{course.code} · {course.duration_hours}h</p>
                   </button>
                 ))}
-                {column.items.length === 0 && <div className="py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-500">Vacío</div>}
+                {column.items.length === 0 && <div className="py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vacío</div>}
               </div>
             </div>
           ))}
@@ -324,33 +324,33 @@ export default function CourseCatalog({
         {resolvedViewType === 'calendar' && (
         <div className="space-y-4 px-4">
           {calendarBuckets.map(([bucket, items]) => (
-            <div key={bucket} className="rounded-lg border border-white/10 bg-slate-900/30 p-4">
-              <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{bucket}</p>
+            <div key={bucket} className="rounded-lg border border-white/10 bg-[hsl(var(--bg-muted))]/30 p-4">
+              <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{bucket}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {items.map((course) => (
                   <button key={course.id} onClick={() => handleEnrollClick(course.id)} className="rounded-md border border-white/10 bg-white/5 p-3 text-left hover:border-primary/40 transition-all">
                     <p className="text-sm font-semibold text-white">{course.title}</p>
-                    <p className="text-[10px] text-slate-400">{course.code} · {course.is_self_paced ? 'Autoguiado' : 'Cohorte'}</p>
+                    <p className="text-[10px] text-[hsl(var(--text-secondary))]">{course.code} · {course.is_self_paced ? 'Autoguiado' : 'Cohorte'}</p>
                   </button>
                 ))}
               </div>
             </div>
           ))}
-          {calendarBuckets.length === 0 && <div className="py-8 text-center text-slate-500 text-sm">Sin cursos en calendario</div>}
+          {calendarBuckets.length === 0 && <div className="py-8 text-center text-[hsl(var(--text-secondary))] text-sm">Sin cursos en calendario</div>}
         </div>
         )}
 
         {resolvedViewType === 'gantt' && (
         <div className="px-4">
-          <div className="rounded-lg border border-white/10 bg-slate-900/30 p-4 space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Progreso sugerido por curso</p>
+          <div className="rounded-lg border border-white/10 bg-[hsl(var(--bg-muted))]/30 p-4 space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso sugerido por curso</p>
             {courses.map((course) => {
               const progress = Math.min(100, Math.max(15, Math.round((course.lesson_count / 12) * 100)));
               return (
                 <div key={course.id} className="space-y-1">
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-bold text-slate-200">{course.title}</span>
-                    <span className="font-semibold text-slate-400">{progress}%</span>
+                    <span className="font-bold text-[hsl(var(--text-secondary))]">{course.title}</span>
+                    <span className="font-semibold text-[hsl(var(--text-secondary))]">{progress}%</span>
                   </div>
                   <div className="h-2 rounded-full bg-white/10 overflow-hidden">
                     <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
@@ -358,20 +358,20 @@ export default function CourseCatalog({
                 </div>
               );
             })}
-            {courses.length === 0 && <div className="py-8 text-center text-slate-500 text-sm">Sin datos para timeline</div>}
+            {courses.length === 0 && <div className="py-8 text-center text-[hsl(var(--text-secondary))] text-sm">Sin datos para timeline</div>}
           </div>
         </div>
         )}
 
         {resolvedViewType === 'wiki' && (
         <div className="px-4">
-          <div className="rounded-lg border border-white/10 bg-slate-900/30 p-4 space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Wiki del catálogo</p>
+          <div className="rounded-lg border border-white/10 bg-[hsl(var(--bg-muted))]/30 p-4 space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki del catálogo</p>
             <textarea
               value={wikiNotes}
               onChange={(e) => setWikiNotes(e.target.value)}
               placeholder="Documenta rutas de cursos, prerequisitos, recomendaciones y lineamientos para participantes..."
-              className="w-full min-h-[320px] rounded-lg border border-white/10 bg-black/20 p-4 text-sm font-medium text-slate-200 outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full min-h-[320px] rounded-lg border border-white/10 bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>

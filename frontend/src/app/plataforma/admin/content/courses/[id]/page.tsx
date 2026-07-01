@@ -47,7 +47,7 @@ export default function AdminCourseContentPage() {
         loadData();
     }, [id, token]);
 
-    if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-slate-400">Preparando Editor de Contenidos...</div>;
+    if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Preparando Editor de Contenidos...</div>;
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
@@ -58,7 +58,7 @@ export default function AdminCourseContentPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
-                        <button className="px-4 py-2 text-slate-500 text-[10px] font-semibold uppercase tracking-wide hover:text-slate-700 transition-all">
+                        <button className="px-4 py-2 text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide hover:text-[hsl(var(--text-primary))] transition-all">
                             Vista Previa
                         </button>
                         <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
@@ -76,39 +76,39 @@ export default function AdminCourseContentPage() {
                                 <DSBadge tone="blue" label="PROGRAMA ACADÉMICO" />
                                 <DSBadge tone="emerald" label="PUBLICADO" />
                             </div>
-                            <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-tight uppercase">
+                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight leading-tight uppercase">
                                 {course?.title}
                             </h1>
                         </header>
 
                         <section className="space-y-3">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Lecciones y Módulos ({lessons.length})</h3>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all">
+                                <h3 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Lecciones y Módulos ({lessons.length})</h3>
+                                <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all">
                                     <Plus size={14} /> Nueva Lección
                                 </button>
                             </div>
 
                             <div className="space-y-3">
                                 {lessons.map((lesson, idx) => (
-                                    <div key={lesson.id} className="group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer">
+                                    <div key={lesson.id} className="group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer">
                                         <div className="flex items-center gap-4">
-                                            <span className="text-xs font-semibold text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors">
+                                            <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors">
                                                 {String(idx + 1).padStart(2, '0')}
                                             </span>
                                             <div>
-                                                <h4 className="text-sm font-bold text-slate-800 dark:text-white">{lesson.title}</h4>
+                                                <h4 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{lesson.title}</h4>
                                                 <p className="font-semibold">{lesson.modality || 'Video + PDF'}</p>
                                             </div>
                                         </div>
-                                        <ChevronRight size={16} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-all" />
+                                        <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-all" />
                                     </div>
                                 ))}
 
                                 {lessons.length === 0 && (
-                                    <div className="py-1.5 text-center border-2 border-dashed border-slate-100 dark:border-white/5 rounded-lg">
-                                        <BookOpen size={48} className="mx-auto text-slate-100 mb-4" />
-                                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">El curso no tiene contenido todavía</p>
+                                    <div className="py-1.5 text-center border-2 border-dashed border-[hsl(var(--border))] dark:border-white/5 rounded-lg">
+                                        <BookOpen size={48} className="mx-auto text-[hsl(var(--text-secondary))] mb-4" />
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">El curso no tiene contenido todavía</p>
                                     </div>
                                 )}
                             </div>
@@ -117,24 +117,24 @@ export default function AdminCourseContentPage() {
 
                     <aside className="space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">Configuración de Obra</h3>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Configuración de Obra</h3>
                             <div className="space-y-4">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Código de Referencia</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Código de Referencia</p>
                                     <p className="text-sm font-bold">{course?.code}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sede Principal</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sede Principal</p>
                                     <p className="text-sm font-bold">Campus Virtual / Central</p>
                                 </div>
-                                <div className="h-px bg-slate-100 dark:bg-white/5" />
-                                <button className="w-full flex items-center justify-center gap-2 py-3 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-slate-50 transition-all">
+                                <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                                <button className="w-full flex items-center justify-center gap-2 py-3 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-1))] transition-all">
                                     <Settings size={14} /> Ajustes Técnicos
                                 </button>
                             </div>
                         </DSCard>
 
-                        <div className="bg-slate-900 rounded-lg p-4 text-white space-y-4">
+                        <div className="bg-[hsl(var(--bg-muted))] rounded-lg p-4 text-white space-y-4">
                             <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                                 <History size={14} /> Control de Versiones
                             </div>

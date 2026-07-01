@@ -20,24 +20,24 @@ function SortablePersonaCard({ persona, onClick }: PersonaCardProps) {
         <div
             ref={setNodeRef} style={style} {...attributes} {...listeners}
             onClick={() => onClick(persona)}
-            className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-grab active:cursor-grabbing group"
+            className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-grab active:cursor-grabbing group"
         >
             <div className="flex items-start gap-3">
                 <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20">
                     {persona.name.substring(0, 1)}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate tracking-tight">{persona.name}</h4>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{persona.group}</p>
+                    <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate tracking-tight">{persona.name}</h4>
+                    <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{persona.group}</p>
                 </div>
             </div>
             
-            <div className="mt-4 pt-3 border-t border-slate-50 dark:border-white/5 flex items-center justify-between">
+            <div className="mt-4 pt-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <div className="size-5 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                    <div className="size-5 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
                         <MessageSquare size={12} />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400">2</span>
+                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">2</span>
                 </div>
                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-md text-[9px] font-bold uppercase">
                     <Star size={10} /> VIP
@@ -55,10 +55,10 @@ export function PersonaPipelineColumn({ id, title, color, personas, onOpenPerson
             <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-2">
                     <div className={clsx("size-2 rounded-full", color)} />
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{title}</span>
-                    <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full text-slate-400">{personas.length}</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{title}</span>
+                    <span className="text-[10px] font-bold bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full text-[hsl(var(--text-secondary))]">{personas.length}</span>
                 </div>
-                <MoreHorizontal size={14} className="text-slate-300 cursor-pointer" />
+                <MoreHorizontal size={14} className="text-[hsl(var(--text-secondary))] cursor-pointer" />
             </div>
 
             <div ref={setNodeRef} className="flex flex-col gap-3 min-h-48">

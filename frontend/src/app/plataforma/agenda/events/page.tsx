@@ -189,19 +189,19 @@ export default function AgendaEventsPage() {
                 { label: "Agenda simple", icon: FileText },
             ]}
         >
-            <div className="h-full overflow-y-auto bg-slate-50 dark:bg-[#141517]">
+            <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[#141517]">
                 <div className="mx-auto max-w-6xl space-y-3 p-3 p-4">
-                    <section className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
+                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
                         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                             <div>
-                                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Agenda de iglesia</p>
-                                <h1 className="mt-2 text-xl font-bold tracking-tight text-slate-900 dark:text-white">Eventos sin seguimiento de asistencia</h1>
-                                <p className="mt-2 max-w-2xl text-sm font-medium text-slate-500">
+                                <p className="text-[11px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Agenda de iglesia</p>
+                                <h1 className="mt-2 text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">Eventos sin seguimiento de asistencia</h1>
+                                <p className="mt-2 max-w-2xl text-sm font-medium text-[hsl(var(--text-secondary))]">
                                     Usa esta agenda para reuniones, avisos y actividades internas que deben aparecer en el calendario general, sin QR ni analítica ministerial.
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+                                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
                                     {isAgendaEditing ? "Edición rápida" : "Agenda completa"}
                                 </span>
                                 <span
@@ -218,67 +218,67 @@ export default function AgendaEventsPage() {
                     </section>
 
                     <section className="grid gap-3 lg:grid-cols-[380px,1fr]">
-                        <form onSubmit={handleCreate} className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
+                        <form onSubmit={handleCreate} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
                             <div className="mb-5 flex items-center gap-3">
                                 <div className="flex size-6 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]">
                                     <Plus size={18} />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-900 dark:text-white">Nuevo evento de agenda</h2>
-                                    <p className="text-xs font-medium text-slate-500">Sólo calendario general</p>
+                                    <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Nuevo evento de agenda</h2>
+                                    <p className="text-xs font-medium text-[hsl(var(--text-secondary))]">Sólo calendario general</p>
                                 </div>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Título</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Título</label>
                                     <input
                                         value={form.title}
                                         onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                                         placeholder="Ej: Reunión de liderazgo"
-                                        className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Inicio</label>
+                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Inicio</label>
                                         <input
                                             type="date"
                                             value={form.start_at}
                                             onChange={(e) => setForm((prev) => ({ ...prev, start_at: e.target.value }))}
-                                            className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fin</label>
+                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fin</label>
                                         <input
                                             type="date"
                                             value={form.end_at}
                                             onChange={(e) => setForm((prev) => ({ ...prev, end_at: e.target.value }))}
-                                            className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ubicación</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</label>
                                     <input
                                         value={form.location}
                                         onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
                                         placeholder="Ej: Salón principal"
-                                        className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                     />
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Descripción</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Descripción</label>
                                     <textarea
                                         rows={4}
                                         value={form.description}
                                         onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                                         placeholder="Notas de la reunión o contexto para la agenda"
-                                        className="w-full resize-none rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                     />
                                 </div>
                             </div>
@@ -293,13 +293,13 @@ export default function AgendaEventsPage() {
                             </button>
                         </form>
 
-                        <section className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
+                        <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
                             <div className="mb-5 flex items-center justify-between gap-3">
                                 <div>
-                                    <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-900 dark:text-white">Próximos eventos</h2>
-                                    <p className="text-xs font-medium text-slate-500">Se reflejan también en el calendario general</p>
+                                    <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Próximos eventos</h2>
+                                    <p className="text-xs font-medium text-[hsl(var(--text-secondary))]">Se reflejan también en el calendario general</p>
                                 </div>
-                                <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-white/5 dark:text-slate-300">
+                                <span className="rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
                                     {sortedEvents.length} registrados
                                 </span>
                             </div>
@@ -307,20 +307,20 @@ export default function AgendaEventsPage() {
                             {loading ? (
                                 <div className="grid gap-4">
                                     {Array.from({ length: 4 }).map((_, index) => (
-                                        <div key={index} className="h-28 animate-pulse rounded-lg bg-slate-100 dark:bg-white/5" />
+                                        <div key={index} className="h-28 animate-pulse rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                                     ))}
                                 </div>
                             ) : sortedEvents.length === 0 ? (
-                                <div className="rounded-lg border border-dashed border-slate-200 px-3 py-1.5 text-center dark:border-white/10">
-                                    <p className="text-sm font-bold text-slate-500">No hay eventos de agenda todavía.</p>
-                                    <p className="mt-1 text-xs font-medium text-slate-400">Crea reuniones simples aquí; evangelismo queda aparte.</p>
+                                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] px-3 py-1.5 text-center dark:border-white/10">
+                                    <p className="text-sm font-bold text-[hsl(var(--text-secondary))]">No hay eventos de agenda todavía.</p>
+                                    <p className="mt-1 text-xs font-medium text-[hsl(var(--text-secondary))]">Crea reuniones simples aquí; evangelismo queda aparte.</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
                                     {sortedEvents.map((event) => (
                                         <article
                                             key={event.id}
-                                            className="rounded-lg border border-slate-200 p-3 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/30"
+                                            className="rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/30"
                                         >
                                             {editingEventId === event.id ? (
                                                 <div className="space-y-4">
@@ -339,7 +339,7 @@ export default function AgendaEventsPage() {
                                                             </button>
                                                             <button
                                                                 onClick={() => setEditingEventId(null)}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 transition-all hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
                                                             >
                                                                 <X size={12} />
                                                                 Cancelar
@@ -357,46 +357,46 @@ export default function AgendaEventsPage() {
 
                                                     <div className="grid gap-4 md:grid-cols-2">
                                                         <div className="space-y-1.5 md:col-span-2">
-                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Título</label>
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Título</label>
                                                             <input
                                                                 value={editForm.title}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
-                                                                className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5">
-                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Inicio</label>
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Inicio</label>
                                                             <input
                                                                 type="date"
                                                                 value={editForm.start_at}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, start_at: e.target.value }))}
-                                                                className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5">
-                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fin</label>
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fin</label>
                                                             <input
                                                                 type="date"
                                                                 value={editForm.end_at}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, end_at: e.target.value }))}
-                                                                className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5 md:col-span-2">
-                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Ubicación</label>
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</label>
                                                             <input
                                                                 value={editForm.location}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, location: e.target.value }))}
-                                                                className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5 md:col-span-2">
-                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Descripción</label>
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Descripción</label>
                                                             <textarea
                                                                 rows={3}
                                                                 value={editForm.description}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                                                                className="w-full resize-none rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-slate-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
                                                             />
                                                         </div>
                                                     </div>
@@ -409,10 +409,10 @@ export default function AgendaEventsPage() {
                                                                 onClick={() => router.push(`/agenda/events/${event.id}`)}
                                                                 className="text-left"
                                                             >
-                                                                <h3 className="text-lg font-bold text-slate-900 transition-colors hover:text-[hsl(var(--primary))] dark:text-white dark:hover:text-[hsl(var(--primary))]">{event.title}</h3>
+                                                                <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] transition-colors hover:text-[hsl(var(--primary))] dark:text-white dark:hover:text-[hsl(var(--primary))]">{event.title}</h3>
                                                             </button>
                                                             {event.description ? (
-                                                                <p className="max-w-2xl text-sm font-medium text-slate-500">{event.description}</p>
+                                                                <p className="max-w-2xl text-sm font-medium text-[hsl(var(--text-secondary))]">{event.description}</p>
                                                             ) : null}
                                                         </div>
                                                         <div className="flex items-center gap-2">
@@ -429,7 +429,7 @@ export default function AgendaEventsPage() {
                                                             </button>
                                                             <button
                                                                 onClick={() => startInlineEdit(event)}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 transition-all hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
                                                             >
                                                                 <Pencil size={12} />
                                                                 Editar
@@ -437,13 +437,13 @@ export default function AgendaEventsPage() {
                                                         </div>
                                                     </div>
 
-                                                    <div className="mt-4 flex flex-col gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
+                                                    <div className="mt-4 flex flex-col gap-2 text-sm font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                                         <div className="flex items-center gap-2">
-                                                            <Clock size={14} className="text-slate-400" />
+                                                            <Clock size={14} className="text-[hsl(var(--text-secondary))]" />
                                                             <span>{formatEventWindow(event)}</span>
                                                         </div>
                                                         <div className="flex items-center gap-2">
-                                                            <MapPin size={14} className="text-slate-400" />
+                                                            <MapPin size={14} className="text-[hsl(var(--text-secondary))]" />
                                                             <span>{event.location || "Sin ubicación definida"}</span>
                                                         </div>
                                                     </div>

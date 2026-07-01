@@ -66,7 +66,7 @@ export default function GroupsMapPage() {
                 rightActions={
                     <Link
                         href="/groups"
-                        className="rounded-md border border-slate-200 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200"
+                        className="rounded-md border border-[hsl(var(--border))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
                     >
                         Ver dashboard
                     </Link>
@@ -75,22 +75,22 @@ export default function GroupsMapPage() {
 
             <main className="flex-1 space-y-3 overflow-y-auto p-4 lg:p-4">
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Total casas</p>
-                        <p className="mt-2 text-xl font-bold text-slate-800 dark:text-slate-100">{groups.length}</p>
+                    <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Total casas</p>
+                        <p className="mt-2 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{groups.length}</p>
                     </article>
-                    <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Con coordenadas</p>
+                    <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Con coordenadas</p>
                         <p className="mt-2 text-xl font-bold text-emerald-600">{geolocated.length}</p>
                     </article>
-                    <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sin coordenadas</p>
+                    <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin coordenadas</p>
                         <p className="mt-2 text-xl font-bold text-amber-500">{Math.max(0, groups.length - geolocated.length)}</p>
                     </article>
                 </section>
 
                 {loading && (
-                    <div className="rounded-md border border-dashed border-slate-300 bg-[hsl(var(--bg-primary))] p-4 text-center text-sm font-bold text-slate-500 dark:border-white/10 dark:bg-white/[0.02] dark:text-slate-300">
+                    <div className="rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-center text-sm font-bold text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.02] dark:text-[hsl(var(--text-secondary))]">
                         Cargando ubicaciones...
                     </div>
                 )}
@@ -109,9 +109,9 @@ export default function GroupsMapPage() {
                 )}
 
                 {!loading && !error && geolocated.length === 0 && (
-                    <div className="rounded-md border-2 border-dashed border-slate-200 bg-[hsl(var(--bg-primary))] p-4 text-center dark:border-white/10 dark:bg-white/[0.02]">
-                        <MapPin size={40} className="mx-auto text-slate-300" />
-                        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    <div className="rounded-md border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-center dark:border-white/10 dark:bg-white/[0.02]">
+                        <MapPin size={40} className="mx-auto text-[hsl(var(--text-secondary))]" />
+                        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             No hay casas con coordenadas registradas
                         </p>
                     </div>
@@ -124,14 +124,14 @@ export default function GroupsMapPage() {
                             return (
                                 <article
                                     key={group.id}
-                                    className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]"
+                                    className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]"
                                 >
                                     <div className="flex items-start justify-between gap-4">
                                         <div>
-                                            <h2 className="text-sm font-semibold uppercase tracking-tight text-slate-800 dark:text-slate-100">
+                                            <h2 className="text-sm font-semibold uppercase tracking-tight text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                 {group.name}
                                             </h2>
-                                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{group.address || "Direccion pendiente"}</p>
+                                            <p className="mt-1 text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{group.address || "Direccion pendiente"}</p>
                                         </div>
                                         <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-blue-500/15 dark:text-blue-300">
                                             {group.zone || "Zona sin definir"}
@@ -139,25 +139,25 @@ export default function GroupsMapPage() {
                                     </div>
 
                                     <div className="mt-5 grid grid-cols-2 gap-3 text-[11px]">
-                                        <div className="rounded-md border border-slate-200 px-3 py-2 dark:border-white/10">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Latitud</p>
-                                            <p className="mt-1 font-bold text-slate-700 dark:text-slate-200">{group.latitude}</p>
+                                        <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2 dark:border-white/10">
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Latitud</p>
+                                            <p className="mt-1 font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{group.latitude}</p>
                                         </div>
-                                        <div className="rounded-md border border-slate-200 px-3 py-2 dark:border-white/10">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Longitud</p>
-                                            <p className="mt-1 font-bold text-slate-700 dark:text-slate-200">{group.longitude}</p>
+                                        <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2 dark:border-white/10">
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Longitud</p>
+                                            <p className="mt-1 font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{group.longitude}</p>
                                         </div>
                                     </div>
 
                                     <div className="mt-5 flex items-center justify-between">
-                                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                            Lider: <span className="font-bold text-slate-700 dark:text-slate-200">{group.leader_name || "No asignado"}</span>
+                                        <p className="text-[11px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                            Lider: <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{group.leader_name || "No asignado"}</span>
                                         </p>
                                         <a
                                             href={mapUrl}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200"
+                                            className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
                                         >
                                             <Navigation size={12} /> Abrir mapa
                                         </a>

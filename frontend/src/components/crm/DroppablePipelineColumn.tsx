@@ -58,14 +58,14 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
             {/* Column Header */}
             <div className="flex items-center justify-between px-4 py-1.5 mb-2 group/header">
                 <div className="flex items-center gap-3">
-                    <div className={clsx("size-5 rounded-full flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-black/20 shadow-sm border border-slate-200 dark:border-white/10")}>
+                    <div className={clsx("size-5 rounded-full flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-black/20 shadow-sm border border-[hsl(var(--border))] dark:border-white/10")}>
                         <div className={clsx("size-1.5 rounded-full animate-pulse", stage.dot || stage.color)} />
                     </div>
                     <div className="flex flex-col">
-                        <h3 className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide leading-tight">
+                        <h3 className="text-[10px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-tight">
                             {stage.label}
                         </h3>
-                        <span className="text-[9px] font-bold text-slate-300 dark:text-slate-600 uppercase">
+                        <span className="text-[9px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase">
                             {leads.length} {leads.length === 1 ? 'Prospecto' : 'Prospectos'}
                         </span>
                     </div>
@@ -75,12 +75,12 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                     {allowEditing && (
                         <button
                             onClick={onNewLead}
-                            className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:shadow-lg transition-all"
+                            className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:shadow-lg transition-all"
                         >
                             <UserPlus size={12} />
                         </button>
                     )}
-                    <button className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all">
+                    <button className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-all">
                         <MoreHorizontal size={12} />
                     </button>
                 </div>
@@ -91,7 +91,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                 ref={setNodeRef}
                 className={clsx(
                     "flex-1 flex flex-col p-3 rounded-md transition-all duration-300",
-                    isOver ? "bg-white/40 dark:bg-white/5 backdrop-blur-md ring-2 ring-blue-500/20" : "bg-slate-50/50 dark:bg-white/[0.02]"
+                    isOver ? "bg-white/40 dark:bg-white/5 backdrop-blur-md ring-2 ring-blue-500/20" : "bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]"
                 )}
             >
                 <motion.div 
@@ -128,13 +128,13 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                             "flex flex-col items-center justify-center gap-3 py-1.5 px-4 rounded-lg border-2 border-dashed transition-all duration-500",
                             isOver 
                                 ? "border-blue-500/50 bg-blue-500/5 scale-[0.98]" 
-                                : "border-slate-200 dark:border-white/5"
+                                : "border-[hsl(var(--border))] dark:border-white/5"
                         )}>
-                            <div className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-sm border border-slate-100 dark:border-white/5">
-                                {stage.emptyIcon ? <stage.emptyIcon size={24} className="text-slate-300" /> : <UserPlus size={24} className="text-slate-300" />}
+                            <div className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-sm border border-[hsl(var(--border))] dark:border-white/5">
+                                {stage.emptyIcon ? <stage.emptyIcon size={24} className="text-[hsl(var(--text-secondary))]" /> : <UserPlus size={24} className="text-[hsl(var(--text-secondary))]" />}
                             </div>
                             <div className="text-center">
-                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide leading-normal">
+                                <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-normal">
                                     {isOver ? '¡Suelta para asignar!' : `Sin ${stage.label.toLowerCase()}`}
                                 </p>
                                 {allowEditing && !isOver && (
@@ -154,9 +154,9 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                 {allowEditing && (
                     <button
                         onClick={onNewLead}
-                        className="w-full mt-auto py-1.5 rounded-lg border border-dashed border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-400 hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
+                        className="w-full mt-auto py-1.5 rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
                     >
-                        <div className="size-5 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                        <div className="size-5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
                             <UserPlus size={10} />
                         </div>
                         AGREGAR PROSPECTO

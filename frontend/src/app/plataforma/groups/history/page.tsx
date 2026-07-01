@@ -79,22 +79,22 @@ export default function GroupsHistoryPage() {
 
             <main className="flex-1 space-y-3 overflow-y-auto p-4 lg:p-4">
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Total registros</p>
-                        <p className="mt-2 text-xl font-bold text-slate-800 dark:text-slate-100">{groups.length}</p>
+                    <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Total registros</p>
+                        <p className="mt-2 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{groups.length}</p>
                     </article>
-                    <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Meses con actividad</p>
+                    <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Meses con actividad</p>
                         <p className="mt-2 text-xl font-bold text-[hsl(var(--primary))]">{timeline.length}</p>
                     </article>
-                    <article className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Con lider asignado</p>
+                    <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Con lider asignado</p>
                         <p className="mt-2 text-xl font-bold text-emerald-600">{groups.filter((item) => !!item.leader_name).length}</p>
                     </article>
                 </section>
 
                 {loading && (
-                    <div className="rounded-md border border-dashed border-slate-300 bg-[hsl(var(--bg-primary))] p-4 text-center text-sm font-bold text-slate-500 dark:border-white/10 dark:bg-white/[0.02] dark:text-slate-300">
+                    <div className="rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-center text-sm font-bold text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.02] dark:text-[hsl(var(--text-secondary))]">
                         Cargando historial...
                     </div>
                 )}
@@ -113,28 +113,28 @@ export default function GroupsHistoryPage() {
                 )}
 
                 {!loading && !error && timeline.length === 0 && (
-                    <div className="rounded-md border-2 border-dashed border-slate-200 bg-[hsl(var(--bg-primary))] p-4 text-center dark:border-white/10 dark:bg-white/[0.02]">
-                        <CalendarClock size={40} className="mx-auto text-slate-300" />
-                        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">No hay eventos historicos disponibles</p>
+                    <div className="rounded-md border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-center dark:border-white/10 dark:bg-white/[0.02]">
+                        <CalendarClock size={40} className="mx-auto text-[hsl(var(--text-secondary))]" />
+                        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">No hay eventos historicos disponibles</p>
                     </div>
                 )}
 
                 {!loading && !error && timeline.length > 0 && (
                     <section className="space-y-3">
                         {timeline.map((month) => (
-                            <article key={month.key} className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{month.monthLabel}</h2>
+                            <article key={month.key} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                                <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{month.monthLabel}</h2>
                                 <div className="mt-3 space-y-4">
                                     {month.items.map((item) => (
-                                        <div key={item.id} className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 p-4 dark:border-white/10 md:grid-cols-[180px_1fr_auto] md:items-center">
-                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{item.date ? dayFormatter.format(item.date) : "Sin fecha"}</p>
+                                        <div key={item.id} className="grid grid-cols-1 gap-3 rounded-lg border border-[hsl(var(--border))] p-4 dark:border-white/10 md:grid-cols-[180px_1fr_auto] md:items-center">
+                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.date ? dayFormatter.format(item.date) : "Sin fecha"}</p>
                                             <div>
-                                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{item.name}</p>
-                                                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</p>
+                                                <p className="text-[11px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                                     Zona: {item.zone || "Sin zona"} · Lider: {item.leader_name || "No asignado"}
                                                 </p>
                                             </div>
-                                            <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-white/10 dark:text-slate-200">
+                                            <span className="w-fit rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]">
                                                 {item.status || "Estado no definido"}
                                             </span>
                                         </div>

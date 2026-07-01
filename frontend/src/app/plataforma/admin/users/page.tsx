@@ -139,16 +139,16 @@ export default function AdminUsersPage() {
                 >
                     {/* Header */}
                     <motion.div variants={itemVariants} className="space-y-2">
-                        <h1 className="text-lg font-bold text-slate-800 dark:text-white tracking-tighter">Usuarios <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-600">Ministeriales.</span></h1>
-                        <p className="text-slate-500 dark:text-slate-400 font-medium">Control total sobre roles, permisos y estados de cuenta del staff y la congregación.</p>
+                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">Usuarios <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-600">Ministeriales.</span></h1>
+                        <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">Control total sobre roles, permisos y estados de cuenta del staff y la congregación.</p>
                     </motion.div>
 
                     {/* Users Table */}
-                    <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/20 dark:shadow-none overflow-hidden relative">
+                    <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none overflow-hidden relative">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-slate-50/50 dark:bg-black/20 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                    <tr className="bg-[hsl(var(--surface-1))]/50 dark:bg-black/20 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         <th className="px-4 py-2">Identidad</th>
                                         <th className="px-4 py-2">Rol Ministerial</th>
                                         <th className="px-4 py-2">Reputación (XP)</th>
@@ -156,15 +156,15 @@ export default function AdminUsersPage() {
                                         <th className="px-4 py-2 text-right">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                                <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                                     {loading ? (
                                         [...Array(6)].map((_, i) => (
-                                            <tr key={i}><td colSpan={5} className="px-4 py-2"><div className="h-8 w-full bg-slate-100 dark:bg-white/5 rounded-lg animate-pulse" /></td></tr>
+                                            <tr key={i}><td colSpan={5} className="px-4 py-2"><div className="h-8 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg animate-pulse" /></td></tr>
                                         ))
                                     ) : filteredUsers.map((user) => (
                                         <tr 
                                             key={user.id} 
-                                            className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer" 
+                                            className="group hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all cursor-pointer" 
                                             onClick={() => { setSelectedUser(user); setIsDrawerOpen(true); }}
                                         >
                                             <td className="px-4 py-2">
@@ -173,8 +173,8 @@ export default function AdminUsersPage() {
                                                         {user.username.substring(0, 2).toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-slate-800 dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">{user.username}</p>
-                                                        <p className="text-[11px] font-medium text-slate-400">{user.email}</p>
+                                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">{user.username}</p>
+                                                        <p className="text-[11px] font-medium text-[hsl(var(--text-secondary))]">{user.email}</p>
                                                     </div>
                                                 </div>
                                             </td>
@@ -183,7 +183,7 @@ export default function AdminUsersPage() {
                                                     "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-semibold uppercase tracking-wide",
                                                     user.role === 'admin' ? "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400" :
                                                     user.role === 'pastor' ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]" :
-                                                    "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400"
+                                                    "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]"
                                                 )}>
                                                     <Shield size={10} /> {user.role}
                                                 </span>
@@ -191,21 +191,21 @@ export default function AdminUsersPage() {
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-2">
                                                     <Star size={14} className="text-amber-400 fill-amber-400" />
-                                                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{user.xp || 0} XP</span>
+                                                    <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{user.xp || 0} XP</span>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-2">
-                                                    <div className={clsx("size-2 rounded-full", user.is_active ? "bg-emerald-500 animate-pulse" : "bg-slate-300")} />
-                                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{user.is_active ? 'Activo' : 'Suspendido'}</span>
+                                                    <div className={clsx("size-2 rounded-full", user.is_active ? "bg-emerald-500 animate-pulse" : "bg-[hsl(var(--surface-2))]")} />
+                                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{user.is_active ? 'Activo' : 'Suspendido'}</span>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-2 text-right">
                                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={(e) => { e.stopPropagation(); handleUpdateUser(user.id, { is_active: !user.is_active }); }} className="p-2 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 rounded-md transition-all text-slate-400">
+                                                    <button onClick={(e) => { e.stopPropagation(); handleUpdateUser(user.id, { is_active: !user.is_active }); }} className="p-2 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 rounded-md transition-all text-[hsl(var(--text-secondary))]">
                                                         {user.is_active ? <XCircle size={18} /> : <CheckCircle2 size={18} />}
                                                     </button>
-                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id); }} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md transition-all text-slate-400 hover:text-rose-500">
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id); }} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md transition-all text-[hsl(var(--text-secondary))] hover:text-rose-500">
                                                         <Trash2 size={18} />
                                                     </button>
                                                 </div>
@@ -228,7 +228,7 @@ export default function AdminUsersPage() {
                     <div className="flex items-center gap-2">
                         {selectedUser && (
                             <button
-                                className="px-3 py-2.5 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                                className="px-3 py-2.5 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors"
                                 onClick={() => {
                                     router.push(`/plataforma/admin/users/${selectedUser.id}`);
                                     setIsDrawerOpen(false);
@@ -237,14 +237,14 @@ export default function AdminUsersPage() {
                                 Ver detalle
                             </button>
                         )}
-                        <button className="px-3 py-2.5 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors" onClick={() => setIsDrawerOpen(false)}>Cancelar</button>
+                        <button className="px-3 py-2.5 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors" onClick={() => setIsDrawerOpen(false)}>Cancelar</button>
                     </div>
                 }
             >
                 {selectedUser && (
                     <div className="space-y-3 p-2 animate-fade-in">
                         <section className="space-y-4">
-                            <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2"><Shield size={14} className="text-[hsl(var(--primary))]" /> Cambio de Rango Ministerial</h4>
+                            <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2"><Shield size={14} className="text-[hsl(var(--primary))]" /> Cambio de Rango Ministerial</h4>
                             <div className="grid grid-cols-1 gap-2">
                                 {['admin', 'pastor', 'docente', 'lider', 'estudiante'].map((role) => (
                                     <button 
@@ -254,7 +254,7 @@ export default function AdminUsersPage() {
                                             "flex items-center justify-between p-3 rounded-lg border-2 transition-all group",
                                             selectedUser.role === role 
                                                 ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-xl shadow-blue-500/20" 
-                                                : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5 text-slate-600 dark:text-slate-400 hover:border-blue-500/30"
+                                                : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:border-blue-500/30"
                                         )}
                                     >
                                         <span className="text-[12px] font-semibold uppercase tracking-wide">{role}</span>
@@ -265,8 +265,8 @@ export default function AdminUsersPage() {
                         </section>
 
                         <section className="space-y-4">
-                            <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2"><Key size={14} className="text-[hsl(var(--primary))]" /> Seguridad de Cuenta</h4>
-                            <button className="w-full p-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition-all flex items-center justify-center gap-3">
+                            <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2"><Key size={14} className="text-[hsl(var(--primary))]" /> Seguridad de Cuenta</h4>
+                            <button className="w-full p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all flex items-center justify-center gap-3">
                                 <Zap size={16} className="text-amber-500" /> Resetear Contraseña (Forzar)
                             </button>
                         </section>

@@ -63,26 +63,26 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                 </button>
 
                 {/* Sidebar - Control Panel */}
-                <div className="w-full md:w-80 bg-slate-50 dark:bg-[#15171c] p-4 border-r border-slate-100 dark:border-white/5 print:hidden flex flex-col shrink-0">
+                <div className="w-full md:w-80 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-4 border-r border-[hsl(var(--border))] dark:border-white/5 print:hidden flex flex-col shrink-0">
                     <div className="mb-3">
                         <div className="size-8 bg-[hsl(var(--primary))] text-white rounded-lg flex items-center justify-center mb-3 shadow-xl shadow-blue-600/20">
                             <Award size={36} />
                         </div>
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter leading-tight">Certificado Oficial</h2>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 font-medium leading-relaxed">
+                        <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-tight">Certificado Oficial</h2>
+                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-3 font-medium leading-relaxed">
                             Este documento avala tu formación teológica y ministerial en {SITE_NAME}.
                         </p>
                     </div>
 
                     <div className="space-y-3 mb-auto">
-                        <div className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-black/20 rounded-lg border border-slate-100 dark:border-white/5 space-y-4 shadow-sm">
+                        <div className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 space-y-4 shadow-sm">
                             <div className="flex items-start gap-3">
                                 <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-md text-[hsl(var(--primary))]">
                                     <ShieldCheck size={18} />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="font-semibold text-slate-400 uppercase tracking-wide">Validación</p>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{certificate.certificate_code}</p>
+                                    <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Validación</p>
+                                    <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{certificate.certificate_code}</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
@@ -90,8 +90,8 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                                     <Calendar size={18} />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="font-semibold text-slate-400 uppercase tracking-wide">Emisión</p>
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                                    <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Emisión</p>
+                                    <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">
                                         {new Date(certificate.issued_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
                                     </p>
                                 </div>
@@ -115,7 +115,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                         </button>
                         <button 
                             onClick={handleDownloadImage}
-                            className="w-full py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:bg-slate-50 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-3"
+                            className="w-full py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10 transition-all flex items-center justify-center gap-3"
                         >
                             <Download size={18} /> Guardar Imagen
                         </button>
@@ -141,34 +141,34 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
 
                         {/* Header */}
                         <div className="mb-3 flex flex-col items-center relative z-10">
-                            <div className="size-8 bg-slate-900 text-white rounded-full flex items-center justify-center mb-3 shadow-2xl">
+                            <div className="size-8 bg-[hsl(var(--bg-muted))] text-white rounded-full flex items-center justify-center mb-3 shadow-2xl">
                                 <Award size={44} />
                             </div>
-                            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">{SITE_NAME}</h3>
+                            <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">{SITE_NAME}</h3>
                             <div className="h-0.5 w-12 bg-amber-400 rounded-full"></div>
                         </div>
 
-                        <h1 className="text-xl md:text-xl font-serif italic text-slate-900 mb-3 relative z-10">Diploma de Reconocimiento</h1>
+                        <h1 className="text-xl md:text-xl font-serif italic text-[hsl(var(--text-primary))] mb-3 relative z-10">Diploma de Reconocimiento</h1>
                         
-                        <p className="text-slate-500 font-bold italic mb-3 uppercase tracking-wide text-[10px] relative z-10">Se otorga con distinción a:</p>
+                        <p className="text-[hsl(var(--text-secondary))] font-bold italic mb-3 uppercase tracking-wide text-[10px] relative z-10">Se otorga con distinción a:</p>
                         <div className="relative mb-3 px-4 z-10">
-                            <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">
+                            <h2 className="text-lg md:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">
                                 {userName}
                             </h2>
-                            <div className="absolute -bottom-4 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent"></div>
+                            <div className="absolute -bottom-4 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[hsl(var(--surface-2))] to-transparent"></div>
                         </div>
 
-                        <p className="text-slate-600 max-w-xl leading-relaxed mb-3 text-xl font-medium relative z-10">
+                        <p className="text-[hsl(var(--text-secondary))] max-w-xl leading-relaxed mb-3 text-xl font-medium relative z-10">
                             Por haber culminado con excelencia académica todos los módulos, evaluaciones y requisitos prácticos del curso:
                             <br />
-                            <span className="font-semibold text-lg text-slate-900 mt-4 block tracking-tight uppercase">&quot;{enrollment.course.title}&quot;</span>
+                            <span className="font-semibold text-lg text-[hsl(var(--text-primary))] mt-4 block tracking-tight uppercase">&quot;{enrollment.course.title}&quot;</span>
                         </p>
 
                         {/* Signatures & Seal Area */}
                         <div className="mt-auto w-full grid grid-cols-3 items-end pt-12 relative z-10">
                             <div className="flex flex-col items-center">
-                                <div className="w-full max-w-[180px] border-t-2 border-slate-900 pt-3">
-                                    <p className="font-semibold text-slate-900 uppercase tracking-wide">Coordinación Faro</p>
+                                <div className="w-full max-w-[180px] border-t-2 border-[hsl(var(--border))] pt-3">
+                                    <p className="font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide">Coordinación Faro</p>
                                 </div>
                             </div>
 
@@ -189,26 +189,26 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                             </div>
 
                             <div className="flex flex-col items-center">
-                                <div className="w-full max-w-[180px] border-t-2 border-slate-900 pt-3">
-                                    <p className="font-semibold text-slate-900 uppercase tracking-wide">Dirección General</p>
+                                <div className="w-full max-w-[180px] border-t-2 border-[hsl(var(--border))] pt-3">
+                                    <p className="font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide">Dirección General</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Footer Info / QR Placeholder */}
                         <div className="absolute bottom-6 left-10 flex items-center gap-3">
-                             <div className="size-7 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center text-slate-300">
+                             <div className="size-7 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))]">
                                 <QrCode size={32} strokeWidth={1.5} />
                              </div>
                              <div className="text-left">
-                                <p className="font-semibold text-slate-400 uppercase tracking-wide leading-none">Validación Digital</p>
-                                <p className="text-[9px] font-bold text-slate-900 leading-tight mt-1">{certificate.certificate_code}</p>
+                                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-none">Validación Digital</p>
+                                <p className="text-[9px] font-bold text-[hsl(var(--text-primary))] leading-tight mt-1">{certificate.certificate_code}</p>
                              </div>
                         </div>
 
                         <div className="absolute bottom-6 right-10 text-right">
-                             <p className="font-semibold text-slate-400 uppercase tracking-wide leading-none">Fecha de Emisión</p>
-                             <p className="text-[9px] font-bold text-slate-900 leading-tight mt-1">{new Date(certificate.issued_at).toLocaleDateString()}</p>
+                             <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-none">Fecha de Emisión</p>
+                             <p className="text-[9px] font-bold text-[hsl(var(--text-primary))] leading-tight mt-1">{new Date(certificate.issued_at).toLocaleDateString()}</p>
                         </div>
                     </div>
                 </div>

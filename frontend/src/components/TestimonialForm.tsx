@@ -134,7 +134,7 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
             required
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="h-32 w-full resize-none rounded-md border border-slate-200 bg-white/70 p-4 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
+            className="h-32 w-full resize-none rounded-md border border-[hsl(var(--border))] bg-white/70 p-4 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
             placeholder="Como ha sido tu proceso en la plataforma?..."
           />
         </div>
@@ -150,7 +150,7 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
                 className={`rounded-full border px-4 py-2 transition-all ${
                   emotion === emo
                     ? "border-primary bg-primary text-white"
-                    : "border-slate-300 bg-white/70 hover:bg-slate-100"
+                    : "border-[hsl(var(--border))] bg-white/70 hover:bg-[hsl(var(--surface-2))]"
                 }`}
               >
                 {emo}
@@ -175,7 +175,7 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
                 className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-all ${
                   mediaType === option.id
                     ? "border-primary bg-primary text-white"
-                    : "border-slate-300 bg-white/70 text-slate-600 hover:bg-slate-100"
+                    : "border-[hsl(var(--border))] bg-white/70 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
                 }`}
               >
                 <option.icon size={14} /> {option.label}
@@ -185,7 +185,7 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
           {mediaType !== "text" && (
             <div className="space-y-3">
               <label className="block space-y-2">
-                <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                   <LinkIcon size={13} /> URL de {mediaType === "image" ? "imagen" : mediaType === "video" ? "video" : "podcast"}
                 </span>
                 <input
@@ -193,13 +193,13 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
                   value={activeMediaUrl}
                   onChange={(event) => setActiveMediaUrl(event.target.value)}
                   placeholder="Pega una URL o elige desde la biblioteca"
-                  className="w-full rounded-md border border-slate-200 bg-white/70 px-4 py-3 text-sm outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-md border border-[hsl(var(--border))] bg-white/70 px-4 py-3 text-sm outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-primary"
                 />
               </label>
 
-              <div className="rounded-lg border border-slate-200 bg-white/70 p-3">
+              <div className="rounded-lg border border-[hsl(var(--border))] bg-white/70 p-3">
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Biblioteca CMS</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Biblioteca CMS</span>
                   <Link href="/cms/media" className="text-[10px] font-semibold uppercase tracking-wide text-primary hover:underline">
                     Subir media
                   </Link>
@@ -208,10 +208,10 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
                   value={mediaSearch}
                   onChange={(event) => setMediaSearch(event.target.value)}
                   placeholder="Buscar archivo..."
-                  className="mb-3 w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20"
+                  className="mb-3 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-primary/20"
                 />
                 {compatibleMedia.length === 0 ? (
-                  <p className="rounded-md bg-slate-50 px-3 py-3 text-xs font-medium text-slate-500">
+                  <p className="rounded-md bg-[hsl(var(--surface-1))] px-3 py-3 text-xs font-medium text-[hsl(var(--text-secondary))]">
                     No hay archivos compatibles. Sube primero imagenes, videos o audios en la biblioteca.
                   </p>
                 ) : (
@@ -224,7 +224,7 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
                         className={`flex items-center gap-2 rounded-md border px-3 py-2 text-left transition-all ${
                           activeMediaUrl === item.url
                             ? "border-primary bg-primary/10 text-primary"
-                            : "border-slate-200 bg-[hsl(var(--bg-primary))] text-slate-600 hover:border-primary/40"
+                            : "border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] hover:border-primary/40"
                         }`}
                       >
                         {mediaType === "image" ? <ImageIcon size={14} /> : mediaType === "video" ? <PlayCircle size={14} /> : <Headphones size={14} />}

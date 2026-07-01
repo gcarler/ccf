@@ -72,7 +72,7 @@ export default function AdvancedBIReports() {
             />
 
             {/* Sub-navigation Tabs */}
-            <div className="flex flex-wrap items-center gap-4 mb-3 bg-slate-100/50 dark:bg-white/5 p-2 rounded-lg w-fit border border-slate-200 dark:border-white/10">
+            <div className="flex flex-wrap items-center gap-4 mb-3 bg-[hsl(var(--surface-2))]/50 dark:bg-white/5 p-2 rounded-lg w-fit border border-[hsl(var(--border))] dark:border-white/10">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
@@ -81,7 +81,7 @@ export default function AdvancedBIReports() {
                             "flex items-center gap-3 px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all active:scale-95",
                             activeTab === tab.id 
                                 ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-xl shadow-blue-500/10" 
-                                : "text-slate-500 hover:bg-white/50 dark:hover:bg-white/5"
+                                : "text-[hsl(var(--text-secondary))] hover:bg-white/50 dark:hover:bg-white/5"
                         )}
                     >
                         <tab.icon size={16} />
@@ -93,7 +93,7 @@ export default function AdvancedBIReports() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                 {/* Main Insight Card */}
                 <div className="lg:col-span-8 space-y-3">
-                    <section className="relative overflow-hidden rounded-lg bg-slate-900 border border-white/5 p-4 text-white shadow-2xl group min-h-[400px] flex flex-col justify-between">
+                    <section className="relative overflow-hidden rounded-lg bg-[hsl(var(--bg-muted))] border border-white/5 p-4 text-white shadow-2xl group min-h-[400px] flex flex-col justify-between">
                         <div className="absolute top-0 right-0 -mr-24 -mt-24 size-96 bg-blue-600/20 rounded-full blur-[100px] group-hover:bg-blue-600/30 transition-all duration-1000" />
                         
                         <div className="relative z-10 flex justify-between items-start">
@@ -102,10 +102,10 @@ export default function AdvancedBIReports() {
                                     <div className="px-3 py-1 bg-blue-500/20 text-[hsl(var(--primary))] border border-blue-500/30 rounded-full text-[9px] font-semibold uppercase tracking-wide flex items-center gap-2">
                                         <Layers size={12} /> Perspectiva de {activeTab}
                                     </div>
-                                    <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wide">Actulizado hace 2 min</span>
+                                    <span className="text-[hsl(var(--text-secondary))] text-[10px] font-bold uppercase tracking-wide">Actulizado hace 2 min</span>
                                 </div>
                                 <h3 className="text-lg font-bold tracking-tighter leading-none mb-2">Indicador de Eficacia</h3>
-                                <p className="text-slate-400 text-sm font-medium max-w-md">Análisis predictivo basado en el comportamiento del último trimestre.</p>
+                                <p className="text-[hsl(var(--text-secondary))] text-sm font-medium max-w-md">Análisis predictivo basado en el comportamiento del último trimestre.</p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
                                 <span className="text-xl font-bold text-white tracking-tighter">84.2%</span>
@@ -126,9 +126,9 @@ export default function AdvancedBIReports() {
                                             i === 8 ? "bg-[hsl(var(--primary))] shadow-[0_0_30px_rgba(59,130,246,0.5)]" : "bg-white/10 opacity-30 group-hover/bar:opacity-60"
                                         )}
                                     >
-                                        {i === 8 && <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[hsl(var(--bg-primary))] text-slate-900 px-3 py-1.5 rounded-lg font-semibold shadow-xl whitespace-nowrap">Pico de Actividad</div>}
+                                        {i === 8 && <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] px-3 py-1.5 rounded-lg font-semibold shadow-xl whitespace-nowrap">Pico de Actividad</div>}
                                     </div>
-                                    <span className="font-semibold text-slate-500 uppercase">{['E','F','M','A','M','J','J','A','S','O','N','D'][i]}</span>
+                                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase">{['E','F','M','A','M','J','J','A','S','O','N','D'][i]}</span>
                                 </div>
                             ))}
                         </div>
@@ -136,44 +136,44 @@ export default function AdvancedBIReports() {
 
                     {/* Secondary Metrics Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
+                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
                             <div className="flex justify-between items-center">
                                 <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center">
                                     <Users size={24} />
                                 </div>
-                                <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors"><ChevronDown size={18} /></button>
+                                <button className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"><ChevronDown size={18} /></button>
                             </div>
                             <div>
-                                <p className="font-semibold text-slate-500 uppercase tracking-wide mb-1">Retención de Cohortes</p>
+                                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Retención de Cohortes</p>
                                 <h4 className="text-lg font-bold tracking-tight">76% Finalización</h4>
                             </div>
                             <div className="space-y-3">
-                                <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <span>Formal</span>
                                     <span>92%</span>
                                 </div>
-                                <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full bg-[hsl(var(--primary))] w-[92%]" />
                                 </div>
-                                <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <span>No Formal</span>
                                     <span>64%</span>
                                 </div>
-                                <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-slate-400 w-[64%]" />
+                                <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-full bg-[hsl(var(--surface-2))] w-[64%]" />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
+                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
                             <div className="flex justify-between items-center">
                                 <div className="size-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
                                     <Target size={24} />
                                 </div>
-                                <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors"><Filter size={18} /></button>
+                                <button className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"><Filter size={18} /></button>
                             </div>
                             <div>
-                                <p className="font-semibold text-slate-500 uppercase tracking-wide mb-1">Costo por Estudiante</p>
+                                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Costo por Estudiante</p>
                                 <h4 className="text-lg font-bold tracking-tight">$12.50 / mes</h4>
                             </div>
                             <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
@@ -187,44 +187,44 @@ export default function AdvancedBIReports() {
 
                 {/* Sidebar BI Tools */}
                 <aside className="lg:col-span-4 space-y-3">
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-2xl space-y-3">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-2xl space-y-3">
                         <div className="flex items-center gap-3">
                             <BrainCircuit size={20} className="text-[hsl(var(--primary))]" />
                             <h4 className="text-lg font-semibold uppercase tracking-wide tracking-tighter">Acciones BI</h4>
                         </div>
                         
                         <div className="space-y-4">
-                            <button className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-transparent hover:border-blue-500/30 transition-all group">
+                            <button className="w-full flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-transparent hover:border-blue-500/30 transition-all group">
                                 <div className="flex items-center gap-4 text-left">
-                                    <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-slate-500 shadow-sm group-hover:scale-110 transition-transform">
+                                    <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-sm group-hover:scale-110 transition-transform">
                                         <Calendar size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-800 dark:text-white">Filtro Temporal</p>
-                                        <p className="text-[10px] font-bold text-slate-500">Últimos 6 meses</p>
+                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Filtro Temporal</p>
+                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">Últimos 6 meses</p>
                                     </div>
                                 </div>
-                                <ArrowUpRight size={16} className="text-slate-400" />
+                                <ArrowUpRight size={16} className="text-[hsl(var(--text-secondary))]" />
                             </button>
 
-                            <button className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-transparent hover:border-blue-500/30 transition-all group">
+                            <button className="w-full flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-transparent hover:border-blue-500/30 transition-all group">
                                 <div className="flex items-center gap-4 text-left">
-                                    <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-slate-500 shadow-sm group-hover:scale-110 transition-transform">
+                                    <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-sm group-hover:scale-110 transition-transform">
                                         <BookOpen size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-800 dark:text-white">Segmento</p>
-                                        <p className="text-[10px] font-bold text-slate-500">Modalidad Formal</p>
+                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Segmento</p>
+                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">Modalidad Formal</p>
                                     </div>
                                 </div>
-                                <ArrowUpRight size={16} className="text-slate-400" />
+                                <ArrowUpRight size={16} className="text-[hsl(var(--text-secondary))]" />
                             </button>
                         </div>
 
-                        <div className="pt-8 border-t border-slate-100 dark:border-white/5">
+                        <div className="pt-8 border-t border-[hsl(var(--border))] dark:border-white/5">
                             <div className="flex items-center justify-between mb-3">
-                                <h5 className="font-semibold text-slate-400 uppercase tracking-wide">Distribución de Ingresos</h5>
-                                <PieChart size={14} className="text-slate-400" />
+                                <h5 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Distribución de Ingresos</h5>
+                                <PieChart size={14} className="text-[hsl(var(--text-secondary))]" />
                             </div>
                             <div className="relative size-10 mx-auto mb-3">
                                 <svg className="size-full -rotate-90 drop-shadow-2xl" viewBox="0 0 36 36">
@@ -233,24 +233,24 @@ export default function AdvancedBIReports() {
                                     <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#1e293b" strokeWidth="4" strokeDasharray="35 100" strokeDashoffset="-65" />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter">$45K</span>
-                                    <span className="font-semibold text-slate-500 uppercase tracking-wide">Total USD</span>
+                                    <span className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">$45K</span>
+                                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Total USD</span>
                                 </div>
                             </div>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />
-                                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Educativo</span>
+                                        <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Educativo</span>
                                     </div>
-                                    <span className="font-semibold text-slate-900 dark:text-white">65%</span>
+                                    <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white">65%</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <div className="size-2 rounded-full bg-slate-800" />
-                                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Donaciones</span>
+                                        <div className="size-2 rounded-full bg-[hsl(var(--surface-2))]" />
+                                        <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Donaciones</span>
                                     </div>
-                                    <span className="font-semibold text-slate-900 dark:text-white">35%</span>
+                                    <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white">35%</span>
                                 </div>
                             </div>
                         </div>

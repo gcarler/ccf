@@ -53,7 +53,7 @@ export default function CounselingDetailPage() {
 
     if (loading) {
         return (
-            <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-slate-400">
+            <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 Recuperando bitacora espiritual...
             </div>
         );
@@ -61,7 +61,7 @@ export default function CounselingDetailPage() {
 
     if (!session) {
         return (
-            <div className="p-4 text-center font-bold uppercase tracking-wide text-slate-400">
+            <div className="p-4 text-center font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 No se pudo cargar la sesion.
             </div>
         );
@@ -83,10 +83,10 @@ export default function CounselingDetailPage() {
                                 <DSBadge tone={session.priority_level === "HIGH" ? "amber" : "emerald"} label={session.priority_level} />
                                 <DSBadge tone={session.status === "open" ? "blue" : "slate"} label={session.status.toUpperCase()} />
                             </div>
-                            <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">
+                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase leading-none">
                                 {session.topic}
                             </h1>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                 Persona: {session.persona_name}
                             </p>
                         </div>
@@ -98,15 +98,15 @@ export default function CounselingDetailPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         <div className="lg:col-span-2 space-y-3">
                             <DSCard>
-                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Resumen de la Sesion</h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Resumen de la Sesion</h3>
+                                <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
                                     {session.summary || session.notes || "Sin resumen registrado."}
                                 </p>
                             </DSCard>
 
                             <DSCard>
-                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Notas confidenciales</h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Notas confidenciales</h3>
+                                <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
                                     {session.confidential_notes || "Sin notas confidenciales registradas."}
                                 </p>
                             </DSCard>
@@ -114,14 +114,14 @@ export default function CounselingDetailPage() {
 
                         <aside className="space-y-3">
                             <DSCard>
-                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Participantes</h3>
+                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Participantes</h3>
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3">
                                         <div className="size-8 rounded-lg bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--primary))]">
                                             <User size={16} />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase">Persona</p>
+                                            <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase">Persona</p>
                                             <p className="text-xs font-bold">{session.persona_name}</p>
                                         </div>
                                     </div>
@@ -130,7 +130,7 @@ export default function CounselingDetailPage() {
                                             <Shield size={16} />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase">Pastor ID</p>
+                                            <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase">Pastor ID</p>
                                             <p className="text-xs font-bold">{session.pastor_id ?? "Sin asignar"}</p>
                                         </div>
                                     </div>
@@ -139,7 +139,7 @@ export default function CounselingDetailPage() {
                                             <MessageSquare size={16} />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase">Duracion</p>
+                                            <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase">Duracion</p>
                                             <p className="text-xs font-bold">{session.duration_minutes} minutos</p>
                                         </div>
                                     </div>
@@ -147,15 +147,15 @@ export default function CounselingDetailPage() {
                             </DSCard>
 
                             <DSCard>
-                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Historial</h3>
+                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Historial</h3>
                                 <div className="space-y-3">
                                     {session.history.length > 0 ? session.history.map((item) => (
-                                        <div key={item.id} className="rounded-lg border border-slate-100 dark:border-white/5 p-3">
-                                            <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{item.text}</p>
-                                            <p className="text-[10px] text-slate-400">{item.date ? new Date(item.date).toLocaleDateString("es-CO") : "Sin fecha"}</p>
+                                        <div key={item.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3">
+                                            <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.text}</p>
+                                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">{item.date ? new Date(item.date).toLocaleDateString("es-CO") : "Sin fecha"}</p>
                                         </div>
                                     )) : (
-                                        <p className="text-sm text-slate-500">Sin historial relacionado.</p>
+                                        <p className="text-sm text-[hsl(var(--text-secondary))]">Sin historial relacionado.</p>
                                     )}
                                 </div>
                             </DSCard>

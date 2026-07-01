@@ -60,7 +60,7 @@ const FLOW_CLASS: Record<FlowType, string> = {
   publish: "bg-blue-50 text-[hsl(var(--primary))] border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20",
   capture: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20",
   sync: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20",
-  system: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-white/5 dark:text-slate-300 dark:border-white/10",
+  system: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border-[hsl(var(--border))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))] dark:border-white/10",
 };
 
 const READINESS_LABEL = {
@@ -347,19 +347,19 @@ export default function CmsResourcesPage() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50 dark:bg-[#111213]">
+    <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[#111213]">
       <div className="mx-auto max-w-7xl space-y-4 p-4">
-        <section className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#141517]">
+        <section className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#141517]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
               <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:border-blue-500/20 dark:bg-blue-500/10">
                 <PackageOpen size={13} />
                 Biblioteca CMS
               </div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              <h1 className="text-2xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">
                 Recursos para publicar, sincronizar y capturar informacion
               </h1>
-              <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+              <p className="mt-2 text-sm leading-relaxed text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                 Este catalogo documenta los recursos disponibles para construir paginas publicas sin tocar el contenido actual:
                 bloques visuales, recursos multimedia, datos que vienen de la plataforma y formularios que entran al CRM.
               </p>
@@ -371,10 +371,10 @@ export default function CmsResourcesPage() {
                 ["capture", MousePointerClick],
                 ["system", ShieldCheck],
               ] as Array<[FlowType, LucideIcon]>).map(([flow, Icon]) => (
-                <div key={flow} className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                  <Icon size={16} className="text-slate-400" />
-                  <p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">{flowCounts[flow]}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{FLOW_LABEL[flow]}</p>
+                <div key={flow} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                  <Icon size={16} className="text-[hsl(var(--text-secondary))]" />
+                  <p className="mt-2 text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{flowCounts[flow]}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{FLOW_LABEL[flow]}</p>
                 </div>
               ))}
             </div>
@@ -382,14 +382,14 @@ export default function CmsResourcesPage() {
         </section>
 
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(220px,280px)_1fr]">
-          <aside className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[#141517]">
+          <aside className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[#141517]">
             <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Buscar recurso..."
-                className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm outline-none transition-all focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                className="h-9 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] pl-9 pr-3 text-sm outline-none transition-all focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
               />
             </div>
 
@@ -402,11 +402,11 @@ export default function CmsResourcesPage() {
                     "flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-xs font-bold transition-colors",
                     category === item
                       ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white",
+                      : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] hover:text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5 dark:hover:text-white",
                   )}
                 >
                   {item}
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[10px] text-[hsl(var(--text-secondary))]">
                     {item === "Todos" ? RESOURCES.length : RESOURCES.filter((resource) => resource.category === item).length}
                   </span>
                 </button>
@@ -429,58 +429,58 @@ export default function CmsResourcesPage() {
               {filteredResources.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <article key={item.id} className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#141517]">
+                  <article key={item.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#141517]">
                     <div className="flex items-start gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[hsl(var(--primary))] dark:bg-white/5">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))] dark:bg-white/5">
                         <Icon size={18} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="text-base font-bold text-slate-900 dark:text-white">{item.title}</h2>
+                          <h2 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">{item.title}</h2>
                           <span className={clsx("rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide", FLOW_CLASS[item.flow])}>
                             {FLOW_LABEL[item.flow]}
                           </span>
-                          <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-400 dark:border-white/10">
+                          <span className="rounded-full border border-[hsl(var(--border))] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
                             {READINESS_LABEL[item.readiness]}
                           </span>
                         </div>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">{item.description}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.description}</p>
                       </div>
                     </div>
 
                     <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                      <div className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Superficie publica</p>
-                        <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">{item.publicSurface}</p>
+                      <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Superficie publica</p>
+                        <p className="mt-1 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.publicSurface}</p>
                       </div>
-                      <div className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Fuente / destino</p>
-                        <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">{item.platformSource}</p>
+                      <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente / destino</p>
+                        <p className="mt-1 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.platformSource}</p>
                       </div>
                     </div>
 
                     <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                       <div>
-                        <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                        <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                           <FileText size={13} />
                           Campos esperados
                         </p>
                         <div className="flex flex-wrap gap-1.5">
                           {item.fields.map((field) => (
-                            <span key={field} className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600 dark:bg-white/5 dark:text-slate-300">
+                            <span key={field} className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1 text-[10px] font-semibold text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
                               {field}
                             </span>
                           ))}
                         </div>
                       </div>
                       <div>
-                        <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                        <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                           <ShieldCheck size={13} />
                           Guardrails
                         </p>
                         <ul className="space-y-1.5">
                           {item.safeguards.map((guardrail) => (
-                            <li key={guardrail} className="flex gap-2 text-xs text-slate-500 dark:text-slate-400">
+                            <li key={guardrail} className="flex gap-2 text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                               <CheckCircle2 size={12} className="mt-0.5 shrink-0 text-emerald-500" />
                               {guardrail}
                             </li>
@@ -489,9 +489,9 @@ export default function CmsResourcesPage() {
                       </div>
                     </div>
 
-                    <div className="mt-4 rounded-md border border-slate-200 bg-slate-950 p-3 dark:border-white/10">
+                    <div className="mt-4 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] p-3 dark:border-white/10">
                       <div className="mb-2 flex items-center justify-between gap-2">
-                        <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                        <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                           <Layers3 size={13} />
                           Ejemplo de configuracion
                         </p>
@@ -503,7 +503,7 @@ export default function CmsResourcesPage() {
                           {copiedId === item.id ? "Copiado" : "Copiar"}
                         </button>
                       </div>
-                      <pre className="max-h-44 overflow-auto whitespace-pre-wrap text-[11px] leading-relaxed text-slate-200">
+                      <pre className="max-h-44 overflow-auto whitespace-pre-wrap text-[11px] leading-relaxed text-[hsl(var(--text-secondary))]">
                         {prettyJson(item.example)}
                       </pre>
                     </div>
@@ -513,10 +513,10 @@ export default function CmsResourcesPage() {
             </section>
 
             {filteredResources.length === 0 && (
-              <div className="rounded-md border border-dashed border-slate-300 bg-[hsl(var(--bg-primary))] p-8 text-center dark:border-white/10 dark:bg-[#141517]">
-                <PackageOpen size={34} className="mx-auto text-slate-300" />
-                <p className="mt-3 text-sm font-bold text-slate-700 dark:text-slate-200">No hay recursos con ese filtro</p>
-                <p className="mt-1 text-xs text-slate-400">Prueba otra categoria o termino de busqueda.</p>
+              <div className="rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-8 text-center dark:border-white/10 dark:bg-[#141517]">
+                <PackageOpen size={34} className="mx-auto text-[hsl(var(--text-secondary))]" />
+                <p className="mt-3 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">No hay recursos con ese filtro</p>
+                <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">Prueba otra categoria o termino de busqueda.</p>
               </div>
             )}
           </div>
@@ -540,10 +540,10 @@ export default function CmsResourcesPage() {
               body: "Cursos, eventos y testimonios aprobados nacen en sus modulos y el CMS decide si aparecen en la web.",
             },
           ].map((item) => (
-            <div key={item.title} className="rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#141517]">
+            <div key={item.title} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#141517]">
               <item.icon size={18} className="text-[hsl(var(--primary))]" />
-              <h3 className="mt-3 text-sm font-bold text-slate-900 dark:text-white">{item.title}</h3>
-              <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{item.body}</p>
+              <h3 className="mt-3 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{item.title}</h3>
+              <p className="mt-2 text-xs leading-relaxed text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.body}</p>
             </div>
           ))}
         </section>

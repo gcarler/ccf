@@ -183,7 +183,7 @@ export default function IntelligenceConsole() {
                     </section>
 
                     {/* Ask Optimus Interface */}
-                    <section className="bg-slate-900 rounded-lg p-4 text-white shadow-2xl relative overflow-hidden group">
+                    <section className="bg-[hsl(var(--bg-muted))] rounded-lg p-4 text-white shadow-2xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 -mr-20 -mt-20 size-10 bg-blue-600/20 rounded-full blur-[80px] group-hover:bg-blue-600/30 transition-all duration-1000" />
                         
                         <div className="relative z-10 space-y-3">
@@ -199,7 +199,7 @@ export default function IntelligenceConsole() {
                                 <input 
                                     value={query} onChange={(e) => setQuery(e.target.value)}
                                     placeholder="¿Cuál es la tendencia de crecimiento en el curso de liderazgo?"
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-4 pr-16 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-slate-500"
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-4 pr-16 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-[hsl(var(--text-secondary))]"
                                 />
                                 <button 
                                     onClick={handleAskOptimus} disabled={isAsking}
@@ -216,10 +216,10 @@ export default function IntelligenceConsole() {
                                         className="p-4 bg-white/5 border border-white/10 rounded-lg space-y-4"
                                     >
                                         <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-emerald-400"><ShieldCheck size={14} /> Respuesta Certificada</div>
-                                        <p className="text-slate-300 leading-relaxed text-sm font-medium">{aiResponse.answer}</p>
+                                        <p className="text-[hsl(var(--text-secondary))] leading-relaxed text-sm font-medium">{aiResponse.answer}</p>
                                         <div className="pt-4 border-t border-white/5 flex gap-3 flex-wrap">
                                             {aiResponse.sources?.map((s: string, i: number) => (
-                                                <span key={i} className="px-3 py-1 bg-white/5 rounded-full font-semibold text-slate-500 uppercase">{s}</span>
+                                                <span key={i} className="px-3 py-1 bg-white/5 rounded-full font-semibold text-[hsl(var(--text-secondary))] uppercase">{s}</span>
                                             ))}
                                         </div>
                                     </motion.div>
@@ -247,16 +247,16 @@ export default function IntelligenceConsole() {
                         )}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {insights.map((insight) => (
-                                <div key={insight.id} className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                                <div key={insight.id} className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
                                     <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity"><Zap size={48} className="text-[hsl(var(--primary))]" /></div>
                                     <div className="relative z-10 space-y-4">
                                         <div className="flex justify-between items-start">
-                                            <div className="size-10 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center text-[hsl(var(--primary))]"><BrainCircuit size={20} /></div>
+                                            <div className="size-10 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--primary))]"><BrainCircuit size={20} /></div>
                                             {!insight.acknowledged && <div className="px-2 py-0.5 bg-blue-100 text-[hsl(var(--primary))] rounded text-[8px] font-semibold uppercase tracking-wide">NUEVO</div>}
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 uppercase tracking-tight">{insight.title}</h4>
-                                            <p className="text-[12px] font-medium text-slate-500 leading-tight">{insight.payload}</p>
+                                            <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white mb-1 uppercase tracking-tight">{insight.title}</h4>
+                                            <p className="text-[12px] font-medium text-[hsl(var(--text-secondary))] leading-tight">{insight.payload}</p>
                                         </div>
                                         {!insight.acknowledged ? (
                                             <button
@@ -274,7 +274,7 @@ export default function IntelligenceConsole() {
                             ))}
                         </div>
                         {!loading && insights.length === 0 && (
-                            <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4 text-sm font-semibold text-slate-500">
+                            <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4 text-sm font-semibold text-[hsl(var(--text-secondary))]">
                                 No hay insights disponibles.
                             </div>
                         )}
@@ -283,36 +283,36 @@ export default function IntelligenceConsole() {
 
                 {/* Sidebar: Agents Status & Tasks */}
                 <aside className="lg:col-span-4 space-y-3">
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div>
                             <div className="flex items-center justify-between mb-3">
-                                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Estado de la Red</h4>
-                                <BarChart3 size={18} className="text-slate-300" />
+                                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado de la Red</h4>
+                                <BarChart3 size={18} className="text-[hsl(var(--text-secondary))]" />
                             </div>
                             <div className="space-y-3">
                                 <AgentState label="Optimus Analysis" load={65} status="Online" color="bg-[hsl(var(--primary))]" />
-                                <AgentState label="Crawler Doctrinal" load={12} status="Idle" color="bg-slate-400" />
+                                <AgentState label="Crawler Doctrinal" load={12} status="Idle" color="bg-[hsl(var(--surface-2))]" />
                                 <AgentState label="Messenger Bot" load={94} status="Busy" color="bg-amber-500" />
                             </div>
                         </div>
 
-                        <div className="pt-10 border-t border-slate-100 dark:border-white/5">
-                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Cola de Procesos</h4>
+                        <div className="pt-10 border-t border-[hsl(var(--border))] dark:border-white/5">
+                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Cola de Procesos</h4>
                             <div className="space-y-4">
                                 {tasks.map((task) => (
-                                    <div key={task.id} className="p-3 bg-slate-50 dark:bg-white/5 rounded-lg flex items-center justify-between group">
+                                    <div key={task.id} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
-                                            <div className={clsx("size-3 rounded-full animate-pulse", task.status === 'running' ? 'bg-[hsl(var(--primary))]' : 'bg-slate-300')} />
+                                            <div className={clsx("size-3 rounded-full animate-pulse", task.status === 'running' ? 'bg-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-2))]')} />
                                             <div>
-                                                <p className="font-semibold text-slate-800 dark:text-white uppercase leading-none mb-1">{task.title}</p>
-                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{task.status}</p>
+                                                <p className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none mb-1">{task.title}</p>
+                                                <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{task.status}</p>
                                             </div>
                                         </div>
-                                        <button className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity"><MoreHorizontal size={16} /></button>
+                                        <button className="text-[hsl(var(--text-secondary))] opacity-0 group-hover:opacity-100 transition-opacity"><MoreHorizontal size={16} /></button>
                                     </div>
                                 ))}
                                 {!loading && tasks.length === 0 && (
-                                    <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                                    <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-3 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         Sin tareas en cola
                                     </div>
                                 )}
@@ -320,17 +320,17 @@ export default function IntelligenceConsole() {
                         </div>
 
                         {showTaskComposer ? (
-                            <div className="space-y-3 rounded-lg border border-slate-200 dark:border-white/10 p-4">
+                            <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4">
                                 <input
                                     value={newTaskTitle}
                                     onChange={(event) => setNewTaskTitle(event.target.value)}
                                     placeholder="Título de la tarea"
-                                    className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
+                                    className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
                                 />
                                 <select
                                     value={newTaskPriority}
                                     onChange={(event) => setNewTaskPriority(event.target.value)}
-                                    className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
+                                    className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm outline-none"
                                 >
                                     <option value="low">Baja</option>
                                     <option value="medium">Media</option>
@@ -346,7 +346,7 @@ export default function IntelligenceConsole() {
                                     </button>
                                     <button
                                         onClick={() => setShowTaskComposer(false)}
-                                        className="rounded-md border border-slate-200 dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500"
+                                        className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
                                     >
                                         Cancelar
                                     </button>
@@ -355,7 +355,7 @@ export default function IntelligenceConsole() {
                         ) : (
                             <button
                                 onClick={() => setShowTaskComposer(true)}
-                                className="w-full py-2 bg-slate-900 dark:bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl transition-all active:scale-95"
+                                className="w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl transition-all active:scale-95"
                             >
                                 Asignar Tarea Manual
                             </button>
@@ -388,7 +388,7 @@ function StatusCard({ label, value, status, icon: Icon, color }: any) {
         ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600'
         : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600';
     return (
-        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all relative overflow-hidden">
+        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all relative overflow-hidden">
             <div className="flex justify-between items-start">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colors[color])}>
                     <Icon size={28} />
@@ -399,8 +399,8 @@ function StatusCard({ label, value, status, icon: Icon, color }: any) {
                 </div>
             </div>
             <div>
-                <p className="font-semibold text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-                <h4 className="text-xl font-bold text-slate-900 dark:text-white tracking-tighter uppercase">{value}</h4>
+                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">{label}</p>
+                <h4 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter uppercase">{value}</h4>
             </div>
         </div>
     );
@@ -410,10 +410,10 @@ function AgentState({ label, load, status, color }: any) {
     return (
         <div className="space-y-3">
             <div className="flex justify-between items-end">
-                <p className="font-semibold text-slate-800 dark:text-white uppercase leading-none">{label}</p>
-                <span className="text-[9px] font-bold text-slate-400 uppercase">{status}</span>
+                <p className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none">{label}</p>
+                <span className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase">{status}</span>
             </div>
-            <div className="h-1.5 w-full bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+            <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded-full overflow-hidden">
                 <div className={clsx("h-full transition-all duration-1000", color)} style={{ width: `${load}%` }} />
             </div>
         </div>

@@ -91,12 +91,12 @@ export default function SpiritualMilestones() {
             {milestones.map((m) => {
                 const Icon = iconMap[m.icon?.toLowerCase()] || Award;
                 return (
-                    <div key={m.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex items-center justify-between gap-3">
+                    <div key={m.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                             <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] flex items-center justify-center"><Icon size={24} /></div>
                             <div>
-                                <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{m.name}</h3>
-                                <p className="mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{m.description || 'Hito ministerial'}</p>
+                                <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{m.name}</h3>
+                                <p className="mt-1 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{m.description || 'Hito ministerial'}</p>
                             </div>
                         </div>
                         <span className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide">{m.count} personas</span>
@@ -107,23 +107,23 @@ export default function SpiritualMilestones() {
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
             <table className="w-full text-left min-w-[400px]">
-                <thead className="bg-slate-50 dark:bg-white/5">
+                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                     <tr>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Hito</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden md:table-cell">Descripción</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden lg:table-cell">XP</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Alcance</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hito</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Descripción</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">XP</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Alcance</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                     {milestones.map((m) => (
-                        <tr key={m.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
-                            <td className="px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{m.name}</td>
-                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-slate-500">{m.description || '—'}</td>
+                        <tr key={m.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
+                            <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{m.name}</td>
+                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{m.description || '—'}</td>
                             <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-[hsl(var(--primary))] font-bold">{m.xp || 0}</td>
-                            <td className="px-3 py-1.5 font-semibold text-slate-500">{m.count || 0}</td>
+                            <td className="px-3 py-1.5 font-semibold text-[hsl(var(--text-secondary))]">{m.count || 0}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -134,16 +134,16 @@ export default function SpiritualMilestones() {
     const renderBoard = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedMilestones.map((group) => (
-                <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
+                <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</span>
-                        <span className="font-semibold text-slate-400">{group.rows.length}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                        <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.rows.length}</span>
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((m) => (
-                            <div key={m.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-4">
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{m.name}</p>
-                                <p className="mt-2 text-[10px] font-bold text-slate-400">{m.count || 0} personas · {m.xp || 0} XP</p>
+                            <div key={m.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4">
+                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{m.name}</p>
+                                <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))]">{m.count || 0} personas · {m.xp || 0} XP</p>
                             </div>
                         ))}
                     </div>
@@ -198,14 +198,14 @@ export default function SpiritualMilestones() {
                         >
                             <Sparkles size={12} className="animate-pulse" /> Reconocimiento del Crecimiento
                         </motion.div>
-                        <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
+                        <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
                             Consola de <br/> <span className="text-[hsl(var(--primary))] italic">Hitos de Fe.</span>
                         </h1>
                     </header>
 
                     <AnimatePresence mode="wait">
                         {loading ? (
-                            <div className="py-1.5 flex flex-col items-center justify-center gap-3 text-slate-400 font-semibold uppercase tracking-wide animate-pulse">
+                            <div className="py-1.5 flex flex-col items-center justify-center gap-3 text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide animate-pulse">
                                 <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={48} strokeWidth={1.5} /> Sincronizando Conquistas...
                             </div>
                         ) : viewType === 'list' ? (
@@ -232,7 +232,7 @@ export default function SpiritualMilestones() {
                                                 initial={{ opacity: 0, scale: 0.95 }}
                                                 animate={{ opacity: 1, scale: 1 }}
                                                 transition={{ delay: i * 0.05 }}
-                                                className="milestone-aura group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 p-4 rounded-lg shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden"
+                                                className="milestone-aura group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden"
                                                 style={{ '--aura-color': 'rgba(59, 130, 246, 0.15)' } as any}
                                             >
                                                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-125 transition-transform duration-1000">
@@ -244,12 +244,12 @@ export default function SpiritualMilestones() {
                                                         <Icon size={32} strokeWidth={1.5} />
                                                     </div>
                                                     <div>
-                                                        <p className="font-semibold text-slate-400 uppercase tracking-wide mb-2">{m.description || 'Hito Ministerial'}</p>
-                                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white uppercase tracking-tighter leading-none mb-1">{m.name}</h3>
+                                                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-2">{m.description || 'Hito Ministerial'}</p>
+                                                        <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tighter leading-none mb-1">{m.name}</h3>
                                                         <p className="text-[11px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide">{m.count} Personas Alcanzadas</p>
                                                     </div>
-                                                    <div className="pt-6 border-t border-slate-50 dark:border-white/5 flex items-center justify-between">
-                                                        <span className="font-semibold text-slate-400 uppercase tracking-wide">+ {m.xp} XP Recompensa</span>
+                                                    <div className="pt-6 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
+                                                        <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">+ {m.xp} XP Recompensa</span>
                                                         <button className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide flex items-center gap-2 hover:scale-105 transition-transform">
                                                             Gestionar <ChevronRight size={14} />
                                                         </button>
@@ -261,7 +261,7 @@ export default function SpiritualMilestones() {
                                 </section>
 
                                 {/* Bulk Action Area Cinematic */}
-                                <section className="bg-slate-900 p-4 lg:p-4 rounded-lg text-white relative overflow-hidden group shadow-2xl">
+                                <section className="bg-[hsl(var(--bg-muted))] p-4 lg:p-4 rounded-lg text-white relative overflow-hidden group shadow-2xl">
                                     <div className="absolute top-0 right-0 -mr-20 -mt-20 size-96 bg-blue-600/20 rounded-full blur-[120px] group-hover:bg-blue-600/30 transition-all duration-1000" />
                                     
                                     <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-3 items-center">
@@ -272,11 +272,11 @@ export default function SpiritualMilestones() {
                                                 </div>
                                                 <h2 className="text-lg lg:text-xl font-bold tracking-tighter leading-none uppercase">Registro Masivo <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-sky-400 italic">de Conquistas.</span></h2>
                                             </div>
-                                            <p className="text-lg text-slate-400 font-medium leading-relaxed max-w-xl italic">
+                                            <p className="text-lg text-[hsl(var(--text-secondary))] font-medium leading-relaxed max-w-xl italic">
                                                 &ldquo;Sube la nómina de vencedores y Optimus Brain se encargará de estampar los certificados digitales y actualizar las Hojas de Vida instantáneamente.&rdquo;
                                             </p>
                                             <div className="flex flex-wrap gap-4">
-                                                <button className="px-4 py-2 bg-[hsl(var(--bg-primary))] text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] active:scale-95 transition-all">Iniciar Protocolo</button>
+                                                <button className="px-4 py-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] active:scale-95 transition-all">Iniciar Protocolo</button>
                                                 <button className="px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 text-white rounded-lg font-black text-xs uppercase tracking-wide hover:bg-white/10 transition-all">Ver Plantillas</button>
                                             </div>
                                         </div>
@@ -286,7 +286,7 @@ export default function SpiritualMilestones() {
                                                     <Check size={80} strokeWidth={3} className="text-white" />
                                                 </div>
                                             </div>
-                                            <div className="absolute -bottom-6 -right-6 p-3 bg-[hsl(var(--bg-primary))] rounded-lg shadow-2xl text-slate-900">
+                                            <div className="absolute -bottom-6 -right-6 p-3 bg-[hsl(var(--bg-primary))] rounded-lg shadow-2xl text-[hsl(var(--text-primary))]">
                                                 <Award size={40} className="text-[hsl(var(--primary))]" />
                                             </div>
                                         </div>

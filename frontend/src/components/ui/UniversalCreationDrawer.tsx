@@ -32,31 +32,31 @@ const TABS: { id: CreationType; label: string; icon: React.ElementType; color?: 
     { id: 'task',       label: 'Tarea',        icon: CheckSquare,    color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' },
     { id: 'event',      label: 'Evento',       icon: Calendar,       color: 'text-emerald-500', activeColor: 'text-emerald-600 dark:text-emerald-400' },
     { id: 'project',    label: 'Proyecto',     icon: Layers,         color: 'text-amber-500', activeColor: 'text-amber-600 dark:text-amber-400' },
-    { id: 'doc',        label: 'Documento',    icon: FileText,       color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-blue-400' },
+    { id: 'doc',        label: 'Documento',    icon: FileText,       color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' },
     { id: 'reminder',   label: 'Recordatorio', icon: Bell,           color: 'text-rose-500', activeColor: 'text-rose-600 dark:text-rose-400' },
-    { id: 'whiteboard', label: 'Pizarra',      icon: LayoutDashboard,color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-blue-400' },
+    { id: 'whiteboard', label: 'Pizarra',      icon: LayoutDashboard,color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' },
     { id: 'panel',      label: 'Panel',        icon: Layers,         color: 'text-sky-500', activeColor: 'text-sky-600 dark:text-sky-400' },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
-    'PENDIENTE':   'bg-slate-200 text-slate-600',
+    'PENDIENTE':   'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]',
     'EN CURSO':    'bg-[hsl(var(--primary))] text-white',
     'COMPLETADO':  'bg-emerald-100 text-emerald-700',
 };
 
 const DocAddBtn = ({ icon: Icon, label }: { icon: any; label: string }) => (
-    <button className="flex items-center gap-2 w-full px-2 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-white/5 text-[12px] text-slate-600 dark:text-slate-300 transition-colors">
-        <Icon size={13} className="text-slate-400" />
+    <button className="flex items-center gap-2 w-full px-2 py-1.5 rounded hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-colors">
+        <Icon size={13} className="text-[hsl(var(--text-secondary))]" />
         {label}
     </button>
 );
 
 const ReminderChip = ({ icon: Icon, label, avatar }: { icon?: any; label: string; avatar?: boolean }) => (
-    <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-white/10 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+    <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
         {avatar ? (
-            <div className="size-3.5 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center text-[8px] font-bold">U</div>
+            <div className="size-3.5 rounded-full bg-[hsl(var(--surface-3))] dark:bg-white/10 flex items-center justify-center text-[8px] font-bold">U</div>
         ) : Icon ? (
-            <Icon size={12} className="text-slate-400" />
+            <Icon size={12} className="text-[hsl(var(--text-secondary))]" />
         ) : null}
         {label}
     </button>
@@ -319,7 +319,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
         <RightPanel open={isOpen} onClose={onClose} title="Crear nuevo" width={550}>
             <div className="flex flex-col h-full">
                 {/* ── TAB BAR ─────────────────────────────── */}
-                <div className="flex items-center border-b border-slate-100 dark:border-white/5 px-2 justify-between">
+                <div className="flex items-center border-b border-[hsl(var(--border))] dark:border-white/5 px-2 justify-between">
                     <div className="flex items-center overflow-x-auto hide-scrollbar flex-1 mr-2 scroll-smooth">
                                         {TABS.map(tab => (
                             <button
@@ -328,11 +328,11 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                 className={clsx(
                                     'flex items-center gap-1.5 px-3 py-3 text-[12px] font-semibold transition-all relative whitespace-nowrap shrink-0 border-b-2 border-transparent',
                                     type === tab.id
-                                        ? (tab.activeColor ?? 'text-slate-900 dark:text-white')
-                                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                                        ? (tab.activeColor ?? 'text-[hsl(var(--text-primary))] dark:text-white')
+                                        : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]'
                                 )}
                             >
-                                <tab.icon size={13} className={type === tab.id ? (tab.color ?? 'text-slate-700') : 'text-slate-400'} />
+                                <tab.icon size={13} className={type === tab.id ? (tab.color ?? 'text-[hsl(var(--text-primary))]') : 'text-[hsl(var(--text-secondary))]'} />
                                 {tab.label}
                                 {type === tab.id && (
                                     <motion.div
@@ -343,7 +343,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             tab.id === 'event' && "bg-emerald-500",
                                             tab.id === 'doc' && "bg-[hsl(var(--primary))]",
                                             tab.id === 'reminder' && "bg-rose-500",
-                                            tab.id === 'whiteboard' && "bg-blue-500",
+                                            tab.id === 'whiteboard' && "bg-[hsl(var(--primary))]",
                                             tab.id === 'panel' && "bg-sky-500"
                                         )}
                                     />
@@ -351,13 +351,13 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                             </button>
                         ))}
                     </div>
-                    <div className="flex items-center shrink-0 border-l border-slate-100 dark:border-white/5 pl-2 py-2">
-                        <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
+                    <div className="flex items-center shrink-0 border-l border-[hsl(var(--border))] dark:border-white/5 pl-2 py-2">
+                        <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all">
                             <Minus size={15} />
                         </button>
                         <button 
                             onClick={onClose}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-all ml-0.5"
+                            className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all ml-0.5"
                         >
                             <X size={15} />
                         </button>
@@ -379,19 +379,19 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                             {type === 'task' && (
                                 <div className="flex flex-col">
                                     {/* Breadcrumb path */}
-                                    <div className="flex items-center gap-1 px-3 pt-3 pb-1 text-[11px] text-slate-400">
-                                        <span className="hover:text-slate-600 cursor-pointer">Espacio del equipo</span>
+                                    <div className="flex items-center gap-1 px-3 pt-3 pb-1 text-[11px] text-[hsl(var(--text-secondary))]">
+                                        <span className="hover:text-[hsl(var(--text-secondary))] cursor-pointer">Espacio del equipo</span>
                                         <ChevronRight size={11} />
-                                        <span className="hover:text-slate-600 cursor-pointer">Proyectos</span>
+                                        <span className="hover:text-[hsl(var(--text-secondary))] cursor-pointer">Proyectos</span>
                                         <ChevronRight size={11} />
-                                        <span className="font-medium text-slate-600 dark:text-slate-300">General</span>
+                                        <span className="font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">General</span>
                                     </div>
                                     {/* Project + type selectors */}
                                     <div className="flex items-center gap-2 px-3 pt-2 pb-2 relative z-[95]">
                                         <div className="relative">
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); setShowProjectDropdown(!showProjectDropdown); }}
-                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[12px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
                                             >
                                                 <span className="size-3 rounded-sm inline-block"
                                                     style={{ backgroundColor: selectedProject?.color || '#2563eb' }} />
@@ -399,7 +399,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 <ChevronDown size={11} />
                                             </button>
                                             {showProjectDropdown && (
-                                                <div className="absolute top-full left-0 mt-1 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1 max-h-48 overflow-y-auto scrollbar-thin">
+                                                <div className="absolute top-full left-0 mt-1 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-lg z-[9999] py-1 max-h-48 overflow-y-auto scrollbar-thin">
                                                     {projects.map(p => (
                                                         <button
                                                             key={p.id}
@@ -407,7 +407,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                                 setSelectedProjectId(p.id);
                                                                 setShowProjectDropdown(false);
                                                             }}
-                                                            className="flex items-center gap-2 px-3 py-2 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
+                                                            className="flex items-center gap-2 px-3 py-2 w-full text-left text-[12px] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                                                         >
                                                             <span className="size-2 rounded-full inline-block" style={{ backgroundColor: p.color || '#2563eb' }} />
                                                             <span className="truncate">{p.title}</span>
@@ -416,7 +416,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 </div>
                                             )}
                                         </div>
-                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[12px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
                                             <CheckSquare size={12} />
                                             Tarea
                                             <ChevronDown size={11} />
@@ -430,7 +430,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         onChange={e => setTitle(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
                                         placeholder="Escribe el nombre de Tarea o pulsa «/» para ver comandos"
-                                        className="px-3 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
+                                        className="px-3 py-2 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none w-full"
                                     />
 
                                     {/* Description section */}
@@ -441,7 +441,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                     value={description}
                                                     onChange={e => setDescription(e.target.value)}
                                                     placeholder="Añade la descripción o notas de esta tarea..."
-                                                    className="w-full min-h-[70px] text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                                    className="w-full min-h-[70px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
                                                 />
                                                 <div className="flex justify-end">
                                                     <button
@@ -457,7 +457,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             <div className="flex items-center gap-4">
                                                 <button 
                                                     onClick={() => setShowDescription(true)}
-                                                    className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                                    className="flex items-center gap-2 text-[12px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors"
                                                 >
                                                     <FileText size={13} />
                                                     Añadir descripción
@@ -467,7 +467,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                         setShowDescription(true);
                                                         await handleAiWrite();
                                                     }}
-                                                    className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] transition-colors"
+                                                    className="flex items-center gap-2 text-[12px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] transition-colors"
                                                 >
                                                     {isGeneratingAi
                                                         ? <Loader2 size={13} className="animate-spin" />
@@ -480,14 +480,14 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                     </div>
 
                                     {/* Properties bar */}
-                                    <div className="flex items-center gap-2 px-3 py-3 border-t border-slate-100 dark:border-white/5 flex-wrap">
+                                    <div className="flex items-center gap-2 px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex-wrap">
                                         {/* Status */}
                                         <button 
                                             onClick={cycleStatus}
                                             title="Clic para cambiar estado"
                                             className={clsx(
                                                 'px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide cursor-pointer hover:opacity-85 transition-all active:scale-95',
-                                                STATUS_COLORS[status] ?? 'bg-slate-100 text-slate-600'
+                                                STATUS_COLORS[status] ?? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]'
                                             )}
                                         >
                                             {status}
@@ -513,7 +513,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                     e.stopPropagation();
                                                     setAssignedToMe(true);
                                                 }}
-                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-200 dark:border-white/10 text-[11px] font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors"
                                             >
                                                 <User size={12} />
                                                 Asignar a mí
@@ -530,9 +530,9 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             />
                                             <button className={clsx(
                                                 "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors pointer-events-none",
-                                                dueDate ? "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5"
+                                                dueDate ? "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                                             )}>
-                                                <Calendar size={12} className={dueDate ? "text-emerald-500" : "text-slate-400"} />
+                                                <Calendar size={12} className={dueDate ? "text-emerald-500" : "text-[hsl(var(--text-secondary))]"} />
                                                 {dueDate ? `Fecha límite: ${dueDate}` : 'Fecha límite'}
                                             </button>
                                         </div>
@@ -545,17 +545,17 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             }}
                                             className={clsx(
                                                 "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-bold transition-all active:scale-95",
-                                                priority === 'normal' && "border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5",
+                                                priority === 'normal' && "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5",
                                                 priority === 'alta' && "border-amber-200 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
                                                 priority === 'urgente' && "border-rose-200 dark:border-rose-500/30 bg-rose-50/50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400",
-                                                priority === 'baja' && "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-slate-500"
+                                                priority === 'baja' && "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                                             )}
                                         >
                                             <Flag size={12} className={clsx(
-                                                priority === 'normal' && "text-slate-400",
+                                                priority === 'normal' && "text-[hsl(var(--text-secondary))]",
                                                 priority === 'alta' && "text-amber-500",
                                                 priority === 'urgente' && "text-rose-500",
-                                                priority === 'baja' && "text-slate-300"
+                                                priority === 'baja' && "text-[hsl(var(--text-secondary))]"
                                             )} />
                                             Prioridad: {priority === 'normal' ? 'Normal' : priority === 'alta' ? 'Alta' : priority === 'urgente' ? 'Urgente' : 'Baja'}
                                         </button>
@@ -568,17 +568,17 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                     setShowTagsDropdown(!showTagsDropdown);
                                                 }}
                                                 className={clsx(
-                                                    "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors hover:bg-slate-50 dark:hover:bg-white/5",
-                                                    tags.length > 0 ? "border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-400" : "border-slate-200 dark:border-white/10 text-slate-500"
+                                                    "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5",
+                                                    tags.length > 0 ? "border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]"
                                                 )}
                                             >
-                                                <Tag size={12} className={tags.length > 0 ? "text-[hsl(var(--primary))]" : "text-slate-400"} />
+                                                <Tag size={12} className={tags.length > 0 ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]"} />
                                                 {tags.length > 0 ? `Etiquetas: ${tags.join(', ')}` : 'Etiquetas'}
                                             </button>
                                             {showTagsDropdown && (
                                                 <div 
                                                     onClick={e => e.stopPropagation()}
-                                                    className="absolute bottom-full left-0 mb-1 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1"
+                                                    className="absolute bottom-full left-0 mb-1 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-lg z-[9999] py-1"
                                                 >
                                                     {['Ministerio', 'Comunidad', 'Servicio', 'Planeación', 'Logística'].map(t => {
                                                         const isSelected = tags.includes(t);
@@ -592,10 +592,10 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                                         setTags([...tags, t]);
                                                                     }
                                                                 }}
-                                                                className="flex items-center justify-between px-3 py-1.5 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
+                                                                className="flex items-center justify-between px-3 py-1.5 w-full text-left text-[12px] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                                                             >
                                                                 <span>{t}</span>
-                                                                {isSelected && <span className="size-1.5 rounded-full bg-blue-500" />}
+                                                                {isSelected && <span className="size-1.5 rounded-full bg-[hsl(var(--primary))]" />}
                                                             </button>
                                                         );
                                                     })}
@@ -605,9 +605,9 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                     </div>
 
                                     {/* Custom fields section */}
-                                    <div className="px-3 py-3 border-t border-slate-100 dark:border-white/5">
-                                        <p className="text-[11px] font-bold text-slate-400 mb-2">Campos</p>
-                                        <button className="flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-slate-200 dark:border-white/10 rounded-lg text-[11px] font-medium text-slate-400 hover:border-slate-300 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                    <div className="px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/5">
+                                        <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] mb-2">Campos</p>
+                                        <button className="flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[11px] font-medium text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
                                             <Plus size={12} />
                                             Crear un campo
                                         </button>
@@ -619,19 +619,19 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                             {type === 'event' && (
                                 <div className="flex flex-col">
                                     {/* Top options */}
-                                    <div className="flex items-center gap-2 px-3 pt-3 pb-2 text-[12px] text-slate-500 relative z-[95]">
+                                    <div className="flex items-center gap-2 px-3 pt-3 pb-2 text-[12px] text-[hsl(var(--text-secondary))] relative z-[95]">
                                         {/* Event Type dropdown */}
                                         <div className="relative">
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); setShowEventTypeDropdown(!showEventTypeDropdown); }}
-                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
                                             >
                                                 <Calendar size={12} />
                                                 {eventType}
                                                 <ChevronDown size={11} />
                                             </button>
                                             {showEventTypeDropdown && (
-                                                <div className="absolute top-full left-0 mt-1 w-32 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1">
+                                                <div className="absolute top-full left-0 mt-1 w-32 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-lg z-[9999] py-1">
                                                     {['Reunión', 'Cita', 'Celebración', 'Taller'].map(opt => (
                                                         <button
                                                             key={opt}
@@ -639,7 +639,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                                 setEventType(opt);
                                                                 setShowEventTypeDropdown(false);
                                                             }}
-                                                            className="px-3 py-1.5 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
+                                                            className="px-3 py-1.5 w-full text-left text-[12px] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                                                         >
                                                             {opt}
                                                         </button>
@@ -652,7 +652,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         <div className="relative">
                                             <button 
                                                 onClick={() => setShowProjectDropdown(!showProjectDropdown)}
-                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
                                             >
                                                 {selectedProject ? (
                                                     <>
@@ -663,15 +663,15 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 <ChevronDown size={11} />
                                             </button>
                                             {showProjectDropdown && (
-                                                <div className="absolute top-full left-0 mt-1 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1 max-h-48 overflow-y-auto scrollbar-thin">
+                                                <div className="absolute top-full left-0 mt-1 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-lg z-[9999] py-1 max-h-48 overflow-y-auto scrollbar-thin">
                                                     <button
                                                         onClick={() => {
                                                             setSelectedProjectId(null);
                                                             setShowProjectDropdown(false);
                                                         }}
-                                                        className="flex items-center gap-2 px-3 py-2 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
+                                                        className="flex items-center gap-2 px-3 py-2 w-full text-left text-[12px] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                                                     >
-                                                        <span className="size-2 rounded-full inline-block bg-slate-400" />
+                                                        <span className="size-2 rounded-full inline-block bg-[hsl(var(--surface-2))]" />
                                                         <span className="truncate">Global (Sin módulo)</span>
                                                     </button>
                                                     {projects.map(p => (
@@ -681,7 +681,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                                 setSelectedProjectId(p.id);
                                                                 setShowProjectDropdown(false);
                                                             }}
-                                                            className="flex items-center gap-2 px-3 py-2 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-slate-700 dark:text-slate-300"
+                                                            className="flex items-center gap-2 px-3 py-2 w-full text-left text-[12px] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                                                         >
                                                             <span className="size-2 rounded-full inline-block" style={{ backgroundColor: p.color || '#2563eb' }} />
                                                             <span className="truncate">{p.title}</span>
@@ -699,44 +699,44 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         onChange={e => setTitle(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
                                         placeholder="Añade un título a la reunión o cita..."
-                                        className="px-3 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                        className="px-3 py-2 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none"
                                     />
 
                                     {/* Event details */}
                                     <div className="px-3 py-3 space-y-2">
                                         <div className="flex items-center gap-3 flex-wrap">
-                                            <Calendar size={14} className="text-slate-400 font-semibold" />
+                                            <Calendar size={14} className="text-[hsl(var(--text-secondary))] font-semibold" />
                                             <input 
                                                 type="date"
                                                 value={eventDate}
                                                 onChange={e => setEventDate(e.target.value)}
-                                                className="text-[13px] font-semibold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer" 
+                                                className="text-[13px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2.5 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer" 
                                             />
-                                            <span className="text-slate-400 text-[11px] font-semibold">hasta</span>
+                                            <span className="text-[hsl(var(--text-secondary))] text-[11px] font-semibold">hasta</span>
                                             <input 
                                                 type="date"
                                                 value={eventEndDate}
                                                 onChange={e => setEventEndDate(e.target.value)}
-                                                className="text-[13px] font-semibold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer" 
+                                                className="text-[13px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2.5 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer" 
                                             />
                                         </div>
                                         <div className="flex items-center gap-3 pt-2">
-                                            <Users size={14} className="text-slate-400" />
+                                            <Users size={14} className="text-[hsl(var(--text-secondary))]" />
                                             <input 
                                                 type="text" 
                                                 value={eventLocation}
                                                 onChange={e => setEventLocation(e.target.value)}
                                                 placeholder="Añadir invitados (correo o nombre)" 
-                                                className="text-[12px] flex-1 bg-transparent border-b border-slate-200 dark:border-white/10 pb-1 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 placeholder:text-slate-400"
+                                                className="text-[12px] flex-1 bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 pb-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:border-blue-500 placeholder:text-[hsl(var(--text-secondary))]"
                                             />
                                         </div>
                                         <div className="flex items-start gap-3 pt-3">
-                                            <FileText size={14} className="text-slate-400 mt-1" />
+                                            <FileText size={14} className="text-[hsl(var(--text-secondary))] mt-1" />
                                             <textarea 
                                                 value={description}
                                                 onChange={e => setDescription(e.target.value)}
                                                 placeholder="Añadir descripción o enlace de la reunión" 
-                                                className="text-[12px] flex-1 min-h-[60px] bg-transparent border border-slate-200 dark:border-white/10 rounded p-2 text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 placeholder:text-slate-400 resize-none"
+                                                className="text-[12px] flex-1 min-h-[60px] bg-transparent border border-[hsl(var(--border))] dark:border-white/10 rounded p-2 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:border-blue-500 placeholder:text-[hsl(var(--text-secondary))] resize-none"
                                             />
                                         </div>
                                     </div>
@@ -747,7 +747,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                             {type === 'project' && (
                                 <div className="flex flex-col py-2">
                                     <div className="flex items-center gap-2 px-3 pt-2 pb-3">
-                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300">
+                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[12px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                             <Layers size={12} />
                                             Proyecto
                                             <ChevronDown size={11} />
@@ -758,25 +758,25 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
                                         placeholder="Nombre del proyecto..."
-                                        className="px-3 py-1.5 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                        className="px-3 py-1.5 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none"
                                     />
-                                    <div className="px-3 py-3 space-y-3 border-t border-slate-100 dark:border-white/5">
+                                    <div className="px-3 py-3 space-y-3 border-t border-[hsl(var(--border))] dark:border-white/5">
                                         <div className="flex items-center gap-3">
-                                            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Color</span>
+                                            <span className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Color</span>
                                             <input
                                                 type="color"
                                                 value={projectColor}
                                                 onChange={(e) => setProjectColor(e.target.value)}
-                                                className="size-9 rounded-md border border-slate-200 dark:border-white/10 bg-transparent p-0"
+                                                className="size-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent p-0"
                                             />
                                         </div>
                                         <textarea
                                             value={description}
                                             onChange={e => setDescription(e.target.value)}
                                             placeholder="Describe el propósito del proyecto..."
-                                            className="w-full min-h-[90px] text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                            className="w-full min-h-[90px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
                                         />
-                                        <p className="text-[11px] text-slate-400 leading-snug">
+                                        <p className="text-[11px] text-[hsl(var(--text-secondary))] leading-snug">
                                             Si no seleccionas un proyecto al crear una actividad, se usará el proyecto general.
                                         </p>
                                     </div>
@@ -787,7 +787,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                             {type === 'doc' && (
                                 <div className="flex flex-col py-2">
                                     <div className="flex items-center gap-2 px-3 pt-2 pb-3">
-                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[12px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
                                             <List size={12} />
                                             Mis documentos
                                             <ChevronDown size={11} />
@@ -798,21 +798,21 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
                                         placeholder="Ponle un nombre a este documento..."
-                                        className="px-3 py-2 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                        className="px-3 py-2 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none"
                                     />
-                                    <div className="px-3 py-3 border-t border-slate-100 dark:border-white/5 mt-3">
+                                    <div className="px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/5 mt-3">
                                         {showDescription ? (
                                             <textarea
                                                 value={description}
                                                 onChange={e => setDescription(e.target.value)}
                                                 placeholder="Comienza a redactar el contenido de tu documento..."
-                                                className="w-full min-h-[90px] text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                                className="w-full min-h-[90px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
                                             />
                                         ) : (
                                             <div className="space-y-2">
                                                 <button 
                                                     onClick={() => setShowDescription(true)}
-                                                    className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors w-full text-left"
+                                                    className="flex items-center gap-2 text-[12px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors w-full text-left"
                                                 >
                                                     <FileText size={13} />
                                                     Empezar a escribir contenido
@@ -822,7 +822,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                         setShowDescription(true);
                                                         await handleAiWrite();
                                                     }}
-                                                    className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] transition-colors w-full text-left"
+                                                    className="flex items-center gap-2 text-[12px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] transition-colors w-full text-left"
                                                 >
                                                     <Sparkles size={13} />
                                                     Generar plantilla con IA
@@ -830,7 +830,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             </div>
                                         )}
                                         <div className="pt-4">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Añadir nuevo elemento</p>
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Añadir nuevo elemento</p>
                                             <div className="space-y-1">
                                                 <DocAddBtn icon={Table2} label="Tabla" />
                                                 <DocAddBtn icon={Columns} label="Columna" />
@@ -849,7 +849,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
                                         placeholder="Escribe el nombre del recordatorio o pulsa «/» para ver comandos"
-                                        className="px-3 py-1.5 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none w-full"
+                                        className="px-3 py-1.5 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none w-full"
                                     />
                                     <div className="px-3 pb-3">
                                         {showDescription ? (
@@ -857,19 +857,19 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 value={description}
                                                 onChange={e => setDescription(e.target.value)}
                                                 placeholder="Añade detalles o notas a este recordatorio..."
-                                                className="w-full min-h-[60px] text-[13px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                                className="w-full min-h-[60px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
                                             />
                                         ) : (
                                             <button 
                                                 onClick={() => setShowDescription(true)}
-                                                className="flex items-center gap-2 text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                                className="flex items-center gap-2 text-[12px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors"
                                             >
                                                 <FileText size={13} />
                                                 Añadir descripción
                                             </button>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2 px-3 py-3 border-t border-slate-100 dark:border-white/5">
+                                    <div className="flex items-center gap-2 px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/5">
                                         <ReminderChip icon={Calendar} label="Hoy" />
                                         <ReminderChip label="Para mí" avatar />
                                         <ReminderChip icon={Bell} label="Notificarme" />
@@ -881,7 +881,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                             {type === 'whiteboard' && (
                                 <div className="flex flex-col py-2">
                                     <div className="flex items-center gap-2 px-3 pt-2 pb-3">
-                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/10 text-[12px] font-medium text-slate-600 dark:text-slate-300">
+                                        <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[12px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                             <List size={12} />
                                             Mis pizarras
                                             <ChevronDown size={11} />
@@ -892,12 +892,12 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
                                         placeholder="Ponle un nombre a esta pizarra..."
-                                        className="px-3 py-1.5 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                        className="px-3 py-1.5 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none"
                                     />
                                     
                                     {/* Background option styling */}
-                                    <div className="px-3 py-3 border-t border-slate-100 dark:border-white/5 space-y-2">
-                                        <p className="text-[11px] font-bold text-slate-400">Diseño de Pizarra</p>
+                                    <div className="px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/5 space-y-2">
+                                        <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))]">Diseño de Pizarra</p>
                                         <div className="flex gap-2">
                                             {['grid', 'dots', 'blank'].map(bg => (
                                                 <button
@@ -906,8 +906,8 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                     className={clsx(
                                                         "px-3 py-1.5 rounded-lg border text-[12px] font-medium capitalize transition-all",
                                                         whiteboardBg === bg
-                                                            ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-400 font-semibold"
-                                                            : "border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5"
+                                                            ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-semibold"
+                                                            : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                                                     )}
                                                 >
                                                     {bg === 'grid' ? 'Cuadrícula' : bg === 'dots' ? 'Puntos' : 'Blanco'}
@@ -927,12 +927,12 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
                                         placeholder="Nombre del panel..."
-                                        className="px-3 py-1.5 text-[16px] font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 bg-transparent outline-none"
+                                        className="px-3 py-1.5 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none"
                                     />
                                     
                                     {/* Layout style option */}
-                                    <div className="px-3 py-3 border-t border-slate-100 dark:border-white/5 space-y-2">
-                                        <p className="text-[11px] font-bold text-slate-400">Vista predeterminada del Panel</p>
+                                    <div className="px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/5 space-y-2">
+                                        <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))]">Vista predeterminada del Panel</p>
                                         <div className="flex gap-2 flex-wrap">
                                             {[
                                                 { id: 'board', label: 'Tablero', icon: Columns },
@@ -946,7 +946,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                         "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-all",
                                                         panelLayout === layout.id
                                                             ? "border-sky-500 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 font-semibold"
-                                                            : "border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5"
+                                                            : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                                                     )}
                                                 >
                                                     <layout.icon size={12} />
@@ -963,17 +963,17 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                 </div>
 
                 {/* ── FOOTER ──────────────────────────────── */}
-                <div className="flex items-center justify-between px-3 py-3 border-t border-slate-100 dark:border-white/5">
+                <div className="flex items-center justify-between px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/5">
                     {/* Left actions */}
                     <div className="flex items-center gap-2">
                         {(type === 'doc' || type === 'whiteboard') && (
                             <button
                                 onClick={() => setIsPrivate(v => !v)}
-                                className="flex items-center gap-1.5 text-[12px] font-medium text-slate-500"
+                                className="flex items-center gap-1.5 text-[12px] font-medium text-[hsl(var(--text-secondary))]"
                             >
                                 <div className={clsx(
                                     'relative w-8 h-4 rounded-full transition-colors',
-                                    isPrivate ? 'bg-[hsl(var(--primary))]' : 'bg-slate-200 dark:bg-white/10'
+                                    isPrivate ? 'bg-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-3))] dark:bg-white/10'
                                 )}>
                                     <span className={clsx(
                                         'absolute top-0.5 size-3 bg-[hsl(var(--bg-primary))] rounded-full shadow transition-transform',
@@ -985,14 +985,14 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                         )}
                         {type === 'task' && (
                             <>
-                                <button className="flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                <button className="flex items-center gap-1 text-[11px] font-medium text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
                                     <Sparkles size={13} />
                                     Plantillas
                                 </button>
-                                <button className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                <button className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
                                     <Paperclip size={14} />
                                 </button>
-                                <button className="flex items-center gap-1 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                <button className="flex items-center gap-1 p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
                                     <MessageSquare size={14} />
                                     <span className="text-[11px]">1</span>
                                 </button>
@@ -1005,7 +1005,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                         <button
                             onClick={handleSubmit}
                             disabled={loading || !title.trim()}
-                            className="flex items-center gap-1.5 px-4 py-1.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 text-[12px] font-bold rounded-l-lg hover:bg-slate-700 dark:hover:bg-slate-100 disabled:opacity-40 transition-colors"
+                            className="flex items-center gap-1.5 px-4 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] text-[12px] font-bold rounded-l-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] disabled:opacity-40 transition-colors"
                         >
                             {loading ? <Loader2 size={12} className="animate-spin" /> : null}
                             {submitOption === 'create_and_new' ? 'Crear y nuevo' : 'Crear'}
@@ -1015,20 +1015,20 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                 e.stopPropagation();
                                 setShowSubmitDropdown(!showSubmitDropdown);
                             }}
-                            className="flex items-center px-2 py-1.5 bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 text-[12px] font-bold rounded-r-lg border-l border-white/20 dark:border-slate-900/20 hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors"
+                            className="flex items-center px-2 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] text-[12px] font-bold rounded-r-lg border-l border-white/20 dark:border-[hsl(var(--border))]/20 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] transition-colors"
                         >
                             <ChevronDown size={13} />
                         </button>
                         {showSubmitDropdown && (
-                            <div className="absolute bottom-full right-0 mb-1 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-slate-200 dark:border-white/10 rounded-md shadow-lg z-[9999] py-1">
+                            <div className="absolute bottom-full right-0 mb-1 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-lg z-[9999] py-1">
                                 <button
                                     onClick={() => {
                                         setSubmitOption('create');
                                         setShowSubmitDropdown(false);
                                     }}
                                     className={clsx(
-                                        "px-3 py-2 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors font-medium text-slate-700 dark:text-slate-300",
-                                        submitOption === 'create' && "bg-slate-50 dark:bg-white/5 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]"
+                                        "px-3 py-2 w-full text-left text-[12px] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]",
+                                        submitOption === 'create' && "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]"
                                     )}
                                 >
                                     Crear
@@ -1039,8 +1039,8 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         setShowSubmitDropdown(false);
                                     }}
                                     className={clsx(
-                                        "px-3 py-2 w-full text-left text-[12px] hover:bg-slate-50 dark:hover:bg-white/5 transition-colors font-medium text-slate-700 dark:text-slate-300",
-                                        submitOption === 'create_and_new' && "bg-slate-50 dark:bg-white/5 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]"
+                                        "px-3 py-2 w-full text-left text-[12px] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]",
+                                        submitOption === 'create_and_new' && "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]"
                                     )}
                                 >
                                     Crear y nuevo

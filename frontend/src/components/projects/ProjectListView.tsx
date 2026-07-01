@@ -39,8 +39,8 @@ function formatRelative(date: Date): string {
 
 // ─── Status Config ────────────────────────────────────────────────────────────
 const STATUS_OPTIONS = [
-    { value: 'todo',        label: 'Pendiente',   dot: 'bg-slate-400',   bg: 'bg-slate-100 dark:bg-white/5',           text: 'text-slate-600 dark:text-slate-300',    border: 'border-slate-200 dark:border-white/10' },
-    { value: 'pending',     label: 'Pendiente',   dot: 'bg-slate-400',   bg: 'bg-slate-100 dark:bg-white/5',           text: 'text-slate-600 dark:text-slate-300',    border: 'border-slate-200 dark:border-white/10' },
+    { value: 'todo',        label: 'Pendiente',   dot: 'bg-[hsl(var(--surface-2))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',           text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',    border: 'border-[hsl(var(--border))] dark:border-white/10' },
+    { value: 'pending',     label: 'Pendiente',   dot: 'bg-[hsl(var(--surface-2))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',           text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',    border: 'border-[hsl(var(--border))] dark:border-white/10' },
     { value: 'in_progress', label: 'En Progreso', dot: 'bg-[hsl(var(--primary))]',  bg: 'bg-blue-100 dark:bg-blue-500/20',    text: 'text-[hsl(var(--primary))] dark:text-blue-300',  border: 'border-blue-200 dark:border-blue-500/30' },
     { value: 'blocked',     label: 'Bloqueado',   dot: 'bg-rose-500',    bg: 'bg-rose-100 dark:bg-rose-500/20',        text: 'text-rose-700 dark:text-rose-300',      border: 'border-rose-200 dark:border-rose-500/30' },
     { value: 'completed',        label: 'Completado',  dot: 'bg-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-500/20',  text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-500/30' },
@@ -51,7 +51,7 @@ function getStatus(val: string) {
 
 // ─── Priority Config ──────────────────────────────────────────────────────────
 const PRIORITY_OPTIONS = [
-    { value: 'low',    label: 'Baja',    color: 'text-slate-400',   fill: '#94a3b8' },
+    { value: 'low',    label: 'Baja',    color: 'text-[hsl(var(--text-secondary))]',   fill: '#94a3b8' },
     { value: 'normal', label: 'Media',   color: 'text-[hsl(var(--primary))]',    fill: '#3b82f6' },
     { value: 'high',   label: 'Alta',    color: 'text-orange-500',  fill: '#f97316' },
     { value: 'urgent', label: 'Urgente', color: 'text-rose-500',    fill: '#ef4444' },
@@ -63,8 +63,8 @@ function getPriority(val: string) {
 // ─── Group header pill styles ─────────────────────────────────────────────────
 const GROUP_PILL: Record<string, string> = {
     in_progress: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-500/20 dark:text-blue-300',
-    pending:     'bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-300',
-    todo:        'bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-300',
+    pending:     'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]',
+    todo:        'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]',
     done:        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
     blocked:     'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
 };
@@ -137,7 +137,7 @@ function InlineUserPicker({
                 <button
                     className={clsx(
                         'group flex items-center justify-center min-w-[40px] min-h-[40px] rounded-lg transition-all',
-                        'hover:bg-slate-100 dark:hover:bg-white/5',
+                        'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
                         open && 'bg-blue-50 dark:bg-blue-500/10 ring-1 ring-blue-300 dark:ring-blue-500/40'
                     )}
                     title={currentUser ? `Asignado a ${currentUser.username}` : 'Asignar persona'}
@@ -148,7 +148,7 @@ function InlineUserPicker({
                             {initials}
                         </div>
                     ) : (
-                        <div className="size-6 rounded-full bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 group-hover:bg-blue-100 dark:group-hover:bg-blue-500/20 group-hover:text-[hsl(var(--primary))] transition-colors">
+                        <div className="size-6 rounded-full bg-[hsl(var(--surface-3))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:bg-blue-100 dark:group-hover:bg-blue-500/20 group-hover:text-[hsl(var(--primary))] transition-colors">
                             <User size={12} />
                         </div>
                     )}
@@ -157,21 +157,21 @@ function InlineUserPicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden"
+                    className="z-[500] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden"
                     sideOffset={6}
                     align="start"
                     onOpenAutoFocus={e => e.preventDefault()}
                 >
                     {/* Search */}
-                    <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 dark:border-white/5">
-                        <Search size={13} className="text-slate-400 shrink-0" />
+                    <div className="flex items-center gap-2 px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5">
+                        <Search size={13} className="text-[hsl(var(--text-secondary))] shrink-0" />
                         <input
                             autoFocus
                             type="text"
                             placeholder="Buscar usuario..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="flex-1 text-[12px] bg-transparent outline-none text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
+                            className="flex-1 text-[12px] bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
                         />
                     </div>
 
@@ -182,7 +182,7 @@ function InlineUserPicker({
                                 <Loader2 size={16} className="animate-spin text-[hsl(var(--primary))]" />
                             </div>
                         ) : filtered.length === 0 ? (
-                            <p className="text-center text-[11px] text-slate-400 py-1.5">
+                            <p className="text-center text-[11px] text-[hsl(var(--text-secondary))] py-1.5">
                                 {search ? 'Sin resultados' : 'No hay usuarios disponibles'}
                             </p>
                         ) : filtered.map(user => (
@@ -193,15 +193,15 @@ function InlineUserPicker({
                                     'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] font-medium transition-colors text-left',
                                     currentUser?.id === user.id
                                         ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300'
-                                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                                        : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
                                 )}
                             >
-                                <div className="size-6 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center font-semibold text-white shrink-0">
+                                <div className="size-6 rounded-full bg-gradient-to-br from-[hsl(var(--surface-3))] to-[hsl(var(--bg-muted))] flex items-center justify-center font-semibold text-white shrink-0">
                                     {user.username.slice(0, 2).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="truncate font-semibold">{user.username}</p>
-                                    <p className="truncate text-[10px] text-slate-400">{user.email}</p>
+                                    <p className="truncate text-[10px] text-[hsl(var(--text-secondary))]">{user.email}</p>
                                 </div>
                                 {currentUser?.id === user.id && <Check size={13} className="text-[hsl(var(--primary))] shrink-0" />}
                             </button>
@@ -252,38 +252,38 @@ function InlineDatePicker({
                 <button
                     className={clsx(
                         'group flex items-center gap-1.5 px-2 min-h-[40px] rounded-lg transition-all text-[12px] font-medium whitespace-nowrap',
-                        'hover:bg-slate-100 dark:hover:bg-white/5',
-                        open && 'bg-slate-50 dark:bg-white/5 ring-1 ring-slate-200 dark:ring-white/10',
+                        'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
+                        open && 'bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10',
                         isOverdue ? 'text-rose-500 dark:text-rose-400'
                             : isToday2 ? 'text-amber-500 dark:text-amber-400'
-                            : parsed ? 'text-slate-700 dark:text-slate-300'
-                            : 'text-slate-300 dark:text-white/20'
+                            : parsed ? 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]'
+                            : 'text-[hsl(var(--text-secondary))] dark:text-white/20'
                     )}
                     aria-label="Seleccionar fecha límite"
                 >
                     {isOverdue
                         ? <AlertCircle size={13} className="shrink-0" />
-                        : <Calendar size={13} className={clsx('shrink-0 transition-colors', !parsed && 'group-hover:text-slate-400')} />}
+                        : <Calendar size={13} className={clsx('shrink-0 transition-colors', !parsed && 'group-hover:text-[hsl(var(--text-secondary))]')} />}
                     {label && <span>{label}</span>}
                 </button>
             </Popover.Trigger>
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg shadow-2xl border border-slate-200/80 dark:border-white/10 p-3 select-none"
+                    className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-3 select-none"
                     sideOffset={6}
                     align="start"
                     onOpenAutoFocus={e => e.preventDefault()}
                 >
                     {/* Month navigator */}
                     <div className="flex items-center justify-between mb-3">
-                        <button onClick={() => { let m = viewMonth-1; let y = viewYear; if(m<0){m=11;y--;} setViewMonth(m); setViewYear(y); }} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                        <button onClick={() => { let m = viewMonth-1; let y = viewYear; if(m<0){m=11;y--;} setViewMonth(m); setViewYear(y); }} className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
                             <ChevronLeft size={14}/>
                         </button>
-                        <span className="text-[12px] font-bold text-slate-700 dark:text-slate-200">
+                        <span className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                             {MONTHS_ES[viewMonth]} {viewYear}
                         </span>
-                        <button onClick={() => { let m = viewMonth+1; let y = viewYear; if(m>11){m=0;y++;} setViewMonth(m); setViewYear(y); }} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                        <button onClick={() => { let m = viewMonth+1; let y = viewYear; if(m>11){m=0;y++;} setViewMonth(m); setViewYear(y); }} className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
                             <ChevronDown size={14}/>
                         </button>
                     </div>
@@ -291,7 +291,7 @@ function InlineDatePicker({
                     {/* Day names */}
                     <div className="grid grid-cols-7 mb-1">
                         {DAYS_ES.map(d => (
-                            <div key={d} className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-center py-0.5">{d}</div>
+                            <div key={d} className="text-[9px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center py-0.5">{d}</div>
                         ))}
                     </div>
 
@@ -314,8 +314,8 @@ function InlineDatePicker({
                                             : isTodayCell
                                             ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold ring-1 ring-blue-200 dark:ring-blue-500/30'
                                             : isPast
-                                            ? 'text-slate-300 dark:text-white/20 hover:bg-slate-50 dark:hover:bg-white/5'
-                                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                                            ? 'text-[hsl(var(--text-secondary))] dark:text-white/20 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
+                                            : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5'
                                     )}
                                 >
                                     {day}
@@ -325,7 +325,7 @@ function InlineDatePicker({
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100 dark:border-white/5">
+                    <div className="flex items-center gap-2 mt-3 pt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
                         <button
                             onClick={() => selectDay(today.getDate())}
                             className="flex-1 text-[11px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
@@ -364,8 +364,8 @@ function InlinePriorityPicker({
                 <button
                     className={clsx(
                         'group flex items-center justify-center min-w-[40px] min-h-[40px] rounded-lg transition-all',
-                        'hover:bg-slate-100 dark:hover:bg-white/5',
-                        open && 'bg-slate-50 dark:bg-white/5 ring-1 ring-slate-200 dark:ring-white/10'
+                        'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
+                        open && 'bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10'
                     )}
                     title={`Prioridad: ${prio.label}`}
                     aria-label="Selector de prioridad"
@@ -380,11 +380,11 @@ function InlinePriorityPicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-44 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 p-1"
+                    className="z-[500] w-44 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 p-1"
                     sideOffset={6}
                     align="start"
                 >
-                    <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-3 py-1.5">Prioridad</p>
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-3 py-1.5">Prioridad</p>
                     {PRIORITY_OPTIONS.map(opt => (
                         <button
                             key={opt.value}
@@ -392,8 +392,8 @@ function InlinePriorityPicker({
                             className={clsx(
                                 'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-semibold transition-colors',
                                 currentPriority === opt.value
-                                    ? 'bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                                    ? 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white'
+                                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
                             )}
                         >
                             <svg width="12" height="12" viewBox="0 0 24 24" fill={opt.fill} strokeWidth="0">
@@ -443,11 +443,11 @@ function InlineStatusPicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 p-1"
+                    className="z-[500] w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 p-1"
                     sideOffset={6}
                     align="start"
                 >
-                    <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400 px-3 py-1.5">Estado</p>
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-3 py-1.5">Estado</p>
                     {STATUS_OPTIONS.filter((s, i, arr) => arr.findIndex(x => x.label === s.label) === i).map(opt => (
                         <button
                             key={opt.value}
@@ -455,8 +455,8 @@ function InlineStatusPicker({
                             className={clsx(
                                 'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-semibold transition-colors',
                                 currentStatus === opt.value
-                                    ? 'bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                                    ? 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white'
+                                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
                             )}
                         >
                             <span className={clsx('size-2 rounded-full shrink-0', opt.dot)} />
@@ -474,11 +474,11 @@ function InlineStatusPicker({
 function CommentPopover({ onClose }: { onClose: () => void }) {
     const [text, setText] = useState('');
     return (
-        <div className="absolute right-0 top-full mt-1 w-80 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg shadow-2xl border border-slate-200/80 dark:border-white/10 z-[500] overflow-hidden">
+        <div className="absolute right-0 top-full mt-1 w-80 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 z-[500] overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-white/5">
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Comentario rápido</span>
-                <button onClick={onClose} className="p-0.5 rounded text-slate-300 hover:text-slate-500 dark:hover:text-slate-200 transition-colors">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comentario rápido</span>
+                <button onClick={onClose} className="p-0.5 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
                     <X size={13}/>
                 </button>
             </div>
@@ -489,7 +489,7 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
                     value={text}
                     onChange={e => setText(e.target.value)}
                     placeholder="Escribe un comentario... @Brain para IA"
-                    className="w-full resize-none text-[12px] text-slate-600 dark:text-slate-300 placeholder:text-slate-400 px-3 pt-3 pb-2 bg-transparent outline-none min-h-[68px] leading-relaxed"
+                    className="w-full resize-none text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] px-3 pt-3 pb-2 bg-transparent outline-none min-h-[68px] leading-relaxed"
                     onKeyDown={e => {
                         if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && text.trim()) onClose();
                         if (e.key === 'Escape') onClose();
@@ -498,24 +498,24 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
             </div>
             {/* Toolbar */}
             <div className="flex items-center gap-1 px-3 pb-3">
-                <button className="p-1.5 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Adjuntar">
+                <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Adjuntar">
                     <Paperclip size={13} />
                 </button>
-                <button className="p-1.5 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Mencionar">
+                <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Mencionar">
                     <AtSign size={13} />
                 </button>
-                <button className="p-1.5 rounded-lg text-slate-400 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Emoji">
+                <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Emoji">
                     <Smile size={13} />
                 </button>
                 <div className="flex-1" />
-                <span className="text-[9px] text-slate-400 mr-2 hidden sm:block">⌘↵ enviar</span>
+                <span className="text-[9px] text-[hsl(var(--text-secondary))] mr-2 hidden sm:block">⌘↵ enviar</span>
                 <button
                     onClick={onClose}
                     className={clsx(
                         'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold transition-all',
                         text.trim()
                             ? 'bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))] shadow-md shadow-blue-500/20 active:scale-95'
-                            : 'bg-slate-100 dark:bg-white/5 text-slate-400 cursor-not-allowed'
+                            : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] cursor-not-allowed'
                     )}
                     disabled={!text.trim()}
                 >
@@ -571,7 +571,7 @@ function TaskRow({
         <motion.div
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center group border-b border-slate-100 dark:border-white/[0.04] hover:bg-slate-50/70 dark:hover:bg-white/[0.02] transition-colors relative min-h-[40px]"
+            className="flex items-center group border-b border-[hsl(var(--border))] dark:border-white/[0.04] hover:bg-[hsl(var(--surface-1))]/70 dark:hover:bg-white/[0.02] transition-colors relative min-h-[40px]"
         >
             {/* Checkbox */}
             <div className="w-8 flex-shrink-0 flex items-center justify-center pl-2">
@@ -581,7 +581,7 @@ function TaskRow({
                         'size-4 rounded-full border-2 flex items-center justify-center text-[9px] transition-all active:scale-95',
                         status === 'completed'
                             ? 'bg-emerald-500 border-emerald-500 text-white'
-                            : 'border-slate-300 dark:border-white/20 text-transparent hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10'
+                            : 'border-[hsl(var(--border))] dark:border-white/20 text-transparent hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10'
                     )}
                     aria-label={status === 'completed' ? 'Desmarcar tarea' : 'Completar tarea'}
                 >
@@ -597,8 +597,8 @@ function TaskRow({
                 <span className={clsx(
                     'text-[13px] font-medium truncate transition-colors',
                     status === 'completed'
-                        ? 'line-through text-slate-400 dark:text-slate-600'
-                        : 'text-slate-800 dark:text-slate-200 group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))]'
+                        ? 'line-through text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
+                        : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))]'
                 )}>
                     {task.title}
                 </span>
@@ -644,7 +644,7 @@ function TaskRow({
                         'flex items-center justify-center size-8 rounded-lg border transition-all min-h-[40px] min-w-[32px]',
                         commentOpen
                             ? 'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]'
-                            : 'border-slate-200 dark:border-white/10 text-slate-300 dark:text-slate-600 hover:border-blue-200 dark:hover:border-blue-500/30 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10'
+                            : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:border-blue-200 dark:hover:border-blue-500/30 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10'
                     )}
                     aria-label="Ver comentarios y actividad"
                 >
@@ -667,7 +667,7 @@ function TaskRow({
 
             {/* More */}
             <div className="w-8 flex-shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="size-6 rounded flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                <button className="size-6 rounded flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors">
                     <MoreHorizontal size={13} />
                 </button>
             </div>
@@ -724,7 +724,7 @@ function StatusGroup({
             <div className={clsx('flex items-center gap-3 px-4 py-3', !isFirst && 'mt-3')}>
                 <button
                     onClick={() => setCollapsed(v => !v)}
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors"
                     aria-expanded={!collapsed}
                 >
                     {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
@@ -732,7 +732,7 @@ function StatusGroup({
                 <span className={clsx('px-3 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide', pillCls)}>
                     {cfg.label}
                 </span>
-                <span className="text-[12px] font-bold text-slate-400">{tasks.length}</span>
+                <span className="text-[12px] font-bold text-[hsl(var(--text-secondary))]">{tasks.length}</span>
             </div>
 
             <AnimatePresence initial={false}>
@@ -745,14 +745,14 @@ function StatusGroup({
                         className="overflow-hidden"
                     >
                         {/* Column Headers */}
-                        <div className="flex items-center border-b border-slate-100 dark:border-white/[0.04] bg-slate-50/50 dark:bg-white/[0.01]">
+                        <div className="flex items-center border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.01]">
                             <div className="w-8 flex-shrink-0" />
-                            <div className="flex-1 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Nombre</div>
-                            <div className="w-28 flex-shrink-0 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 text-center whitespace-nowrap">Asignado</div>
-                            <div className="w-32 flex-shrink-0 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 whitespace-nowrap">Fecha L&iacute;mite</div>
-                            <div className="w-20 flex-shrink-0 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 text-center whitespace-nowrap">Prior.</div>
-                            <div className="w-36 flex-shrink-0 px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 whitespace-nowrap">Estado</div>
-                            <div className="w-24 flex-shrink-0 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 text-center whitespace-nowrap">Coment.</div>
+                            <div className="flex-1 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Nombre</div>
+                            <div className="w-28 flex-shrink-0 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center whitespace-nowrap">Asignado</div>
+                            <div className="w-32 flex-shrink-0 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] whitespace-nowrap">Fecha L&iacute;mite</div>
+                            <div className="w-20 flex-shrink-0 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center whitespace-nowrap">Prior.</div>
+                            <div className="w-36 flex-shrink-0 px-2 py-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] whitespace-nowrap">Estado</div>
+                            <div className="w-24 flex-shrink-0 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center whitespace-nowrap">Coment.</div>
                             <div className="w-8 flex-shrink-0" />
                         </div>
 
@@ -768,7 +768,7 @@ function StatusGroup({
 
                         {/* Quick-add row */}
                         {isAddingHere ? (
-                            <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-100 dark:border-white/[0.04] bg-blue-50/30 dark:bg-blue-500/5 min-h-[40px]">
+                            <div className="flex items-center gap-2 px-4 py-2 border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-blue-50/30 dark:bg-blue-500/5 min-h-[40px]">
                                 <div className="w-8 flex-shrink-0 flex items-center justify-center">
                                     <div className="size-4 rounded-full border-2 border-blue-400 dark:border-blue-500" />
                                 </div>
@@ -783,7 +783,7 @@ function StatusGroup({
                                         if (e.key === 'Escape') onQuickAddCancel?.();
                                     }}
                                     placeholder="Nombre de la tarea..."
-                                    className="flex-1 text-[13px] font-medium bg-transparent outline-none text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
+                                    className="flex-1 text-[13px] font-medium bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
                                 />
                                 <button
                                     onClick={onQuickAddConfirm}
@@ -793,7 +793,7 @@ function StatusGroup({
                                 </button>
                                 <button
                                     onClick={onQuickAddCancel}
-                                    className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                                    className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors"
                                 >
                                     <X size={14} />
                                 </button>
@@ -801,7 +801,7 @@ function StatusGroup({
                         ) : (
                             <button
                                 onClick={() => onAddTask(status)}
-                                className="flex items-center gap-2 px-4 py-2.5 text-[12px] font-medium text-slate-400 hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] hover:bg-slate-50 dark:hover:bg-white/[0.02] w-full transition-colors border-b border-slate-100 dark:border-white/[0.04] min-h-[40px]"
+                                className="flex items-center gap-2 px-4 py-2.5 text-[12px] font-medium text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] w-full transition-colors border-b border-[hsl(var(--border))] dark:border-white/[0.04] min-h-[40px]"
                             >
                                 <Plus size={13} />
                                 Nuevo
@@ -920,12 +920,12 @@ export default function ProjectListView({
 
             {propTasks.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-1.5 gap-4">
-                    <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-                        <CheckCircle2 size={28} className="text-slate-300 dark:text-slate-600" />
+                    <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">
+                        <CheckCircle2 size={28} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
                     </div>
                     <div className="text-center">
-                        <p className="text-sm font-bold text-slate-500">Sin tareas en este proyecto</p>
-                        <p className="text-xs text-slate-400 mt-1">Haz clic en &quot;+ Nuevo&quot; para empezar</p>
+                        <p className="text-sm font-bold text-[hsl(var(--text-secondary))]">Sin tareas en este proyecto</p>
+                        <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">Haz clic en &quot;+ Nuevo&quot; para empezar</p>
                     </div>
                 </div>
             )}
@@ -961,7 +961,7 @@ function QuickAddBar({
                     if (e.key === 'Escape') onQuickAddCancel?.();
                 }}
                 placeholder="Nombre de la tarea... (Enter para guardar, Esc para cancelar)"
-                className="flex-1 text-[13px] font-medium bg-transparent outline-none text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
+                className="flex-1 text-[13px] font-medium bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
             />
             <button
                 onClick={onQuickAddConfirm}
@@ -971,7 +971,7 @@ function QuickAddBar({
             </button>
             <button
                 onClick={onQuickAddCancel}
-                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors"
             >
                 <X size={14} />
             </button>

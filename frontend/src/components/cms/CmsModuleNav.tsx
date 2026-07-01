@@ -71,12 +71,12 @@ export function CmsModuleNav() {
     }) ?? availableTabs[0];
 
   return (
-    <nav className="shrink-0 border-b border-slate-100 bg-[hsl(var(--bg-primary))] dark:border-white/[0.05] dark:bg-[#141517]">
+    <nav className="shrink-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/[0.05] dark:bg-[#141517]">
       <div className="flex items-center gap-1.5 px-4 pt-2.5">
-        <Globe size={8} className="text-slate-400" />
-        <span className="text-[11px] text-slate-400">Sitio web</span>
-        <ChevronRight size={8} className="text-slate-300" />
-        <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-200">
+        <Globe size={8} className="text-[hsl(var(--text-secondary))]" />
+        <span className="text-[11px] text-[hsl(var(--text-secondary))]">Sitio web</span>
+        <ChevronRight size={8} className="text-[hsl(var(--text-secondary))]" />
+        <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
           {activeTab?.label ?? "CMS"}
         </span>
       </div>
@@ -95,7 +95,7 @@ export function CmsModuleNav() {
                   "flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[12px] font-medium transition-colors whitespace-nowrap",
                   isActive
                     ? "border-blue-500 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]"
-                    : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100",
+                    : "border-transparent text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))] hover:text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]",
                 )}
               >
                 <Icon size={8} />

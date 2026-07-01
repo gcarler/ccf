@@ -277,7 +277,7 @@ export default function ProjectDetailPage() {
         setEditingProject(true);
     };
 
-    if (loading) return <div className="p-4 text-center animate-pulse font-bold text-slate-400">Recuperando ecosistema de trabajo...</div>;
+    if (loading) return <div className="p-4 text-center animate-pulse font-bold text-[hsl(var(--text-secondary))]">Recuperando ecosistema de trabajo...</div>;
 
     const doneCount = tasks.filter(t => t.status === 'completed').length;
     const progressPercent = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0;
@@ -313,7 +313,7 @@ export default function ProjectDetailPage() {
                         <button onClick={() => setShowTaskModal(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
                             <Plus size={14} /> Nueva Tarea
                         </button>
-                        <button onClick={() => setWhiteboardOpen(true)} className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2 dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900">
+                        <button onClick={() => setWhiteboardOpen(true)} className="px-3 py-1.5 bg-[hsl(var(--bg-muted))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2 dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))]">
                             <PencilRuler size={14} /> Pizarra
                         </button>
                         <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2">
@@ -332,11 +332,11 @@ export default function ProjectDetailPage() {
             <div className="flex min-h-0 flex-1 overflow-hidden">
             <main className={(viewType === 'board' || viewType === 'kanban') ? "flex-1 overflow-hidden" : "flex-1 overflow-y-auto p-4 space-y-3"}>
                 {editingProject ? (
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-3 border border-slate-200 dark:border-white/10 space-y-3">
-                        <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600">Editar Proyecto</h3>
-                        <input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="w-full p-2 rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm font-medium" placeholder="Título del proyecto" />
-                        <textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} className="w-full p-2 rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm" placeholder="Descripción" />
-                        <select value={editStatus} onChange={e => setEditStatus(e.target.value)} className="w-full p-2 rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm font-medium">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-3 border border-[hsl(var(--border))] dark:border-white/10 space-y-3">
+                        <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Editar Proyecto</h3>
+                        <input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-sm font-medium" placeholder="Título del proyecto" />
+                        <textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-sm" placeholder="Descripción" />
+                        <select value={editStatus} onChange={e => setEditStatus(e.target.value)} className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-sm font-medium">
                             <option value="planning">Planificación</option>
                             <option value="active">En Marcha</option>
                             <option value="on_hold">En Pausa</option>
@@ -350,7 +350,7 @@ export default function ProjectDetailPage() {
                         />
                         <div className="flex gap-2">
                             <button onClick={handleUpdateProject} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all">Guardar Cambios</button>
-                            <button onClick={() => setEditingProject(false)} className="px-3 py-1.5 bg-slate-200 dark:bg-white/10 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all">Cancelar</button>
+                            <button onClick={() => setEditingProject(false)} className="px-3 py-1.5 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all">Cancelar</button>
                         </div>
                     </div>
                 ) : (
@@ -360,13 +360,13 @@ export default function ProjectDetailPage() {
                                 <header className="space-y-2">
                                     <div className="flex items-center gap-3">
                                         <DSBadge tone={project?.status === 'active' ? 'blue' : project?.status === 'completed' ? 'emerald' : 'amber'} label={project?.status?.toUpperCase() || 'PROYECTO'} />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{progressPercent}% completado</span>
+                                        <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{progressPercent}% completado</span>
                                     </div>
-                                    <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase">
+                                    <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase">
                                         {project?.title}
                                     </h1>
                                     {project?.description && (
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-2xl">{project.description}</p>
+                                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] max-w-2xl">{project.description}</p>
                                     )}
                                 </header>
 
@@ -380,23 +380,23 @@ export default function ProjectDetailPage() {
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                     <aside className="space-y-3 lg:col-span-1">
                                         <DSCard>
-                                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-2">Hitos</h3>
+                                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Hitos</h3>
                                             <div className="space-y-2">
                                                 {project?.milestones?.map((m: ProjectMilestoneRecord) => (
-                                                    <div key={m.id} className="rounded-md bg-slate-50 p-2 dark:bg-white/5">
+                                                    <div key={m.id} className="rounded-md bg-[hsl(var(--surface-1))] p-2 dark:bg-white/5">
                                                         {editingMilestoneId === m.id ? (
                                                             <div className="space-y-2">
                                                                 <input
                                                                     value={milestoneDraftTitle}
                                                                     onChange={(event) => setMilestoneDraftTitle(event.target.value)}
-                                                                    className="w-full rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-xs font-bold dark:border-white/10 dark:bg-white/5"
+                                                                    className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-xs font-bold dark:border-white/10 dark:bg-white/5"
                                                                 />
                                                                 <div className="flex gap-2">
                                                                     <input
                                                                         type="date"
                                                                         value={milestoneDraftDate}
                                                                         onChange={(event) => setMilestoneDraftDate(event.target.value)}
-                                                                        className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-xs font-bold dark:border-white/10 dark:bg-white/5"
+                                                                        className="min-w-0 flex-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-xs font-bold dark:border-white/10 dark:bg-white/5"
                                                                     />
                                                                     <button
                                                                         onClick={() => handleUpdateMilestone(m.id)}
@@ -407,7 +407,7 @@ export default function ProjectDetailPage() {
                                                                     </button>
                                                                     <button
                                                                         onClick={() => setEditingMilestoneId(null)}
-                                                                        className="rounded-lg border border-slate-200 px-2 py-1.5 text-[10px] font-semibold uppercase text-slate-500 dark:border-white/10"
+                                                                        className="rounded-lg border border-[hsl(var(--border))] px-2 py-1.5 text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))] dark:border-white/10"
                                                                     >
                                                                         Cancelar
                                                                     </button>
@@ -428,14 +428,14 @@ export default function ProjectDetailPage() {
                                                                     {m.is_completed && <CheckCircle2 size={12} />}
                                                                 </button>
                                                                 <div className="min-w-0 flex-1">
-                                                                    <p className={`truncate text-xs font-bold ${m.is_completed ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-white'}`}>
+                                                                    <p className={`truncate text-xs font-bold ${m.is_completed ? 'text-[hsl(var(--text-secondary))] line-through' : 'text-[hsl(var(--text-primary))] dark:text-white'}`}>
                                                                         {m.title}
                                                                     </p>
-                                                                    {m.target_date && <p className="text-[10px] text-slate-400">{new Date(m.target_date).toLocaleDateString()}</p>}
+                                                                    {m.target_date && <p className="text-[10px] text-[hsl(var(--text-secondary))]">{new Date(m.target_date).toLocaleDateString()}</p>}
                                                                 </div>
                                                                 <button
                                                                     onClick={() => startEditingMilestone(m)}
-                                                                    className="rounded-lg border border-slate-200 px-2 py-1 text-[10px] font-semibold uppercase text-slate-500 dark:border-white/10"
+                                                                    className="rounded-lg border border-[hsl(var(--border))] px-2 py-1 text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))] dark:border-white/10"
                                                                 >
                                                                     Editar
                                                                 </button>
@@ -444,22 +444,22 @@ export default function ProjectDetailPage() {
                                                     </div>
                                                 ))}
                                                 {!project?.milestones?.length && (
-                                                    <p className="text-[11px] text-slate-400">Sin hitos creados.</p>
+                                                    <p className="text-[11px] text-[hsl(var(--text-secondary))]">Sin hitos creados.</p>
                                                 )}
                                             </div>
-                                            <div className="mt-4 space-y-2 border-t border-slate-100 pt-4 dark:border-white/10">
+                                            <div className="mt-4 space-y-2 border-t border-[hsl(var(--border))] pt-4 dark:border-white/10">
                                                 <input
                                                     value={milestoneTitle}
                                                     onChange={(event) => setMilestoneTitle(event.target.value)}
                                                     placeholder="Nuevo hito"
-                                                    className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
+                                                    className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
                                                 />
                                                 <div className="flex gap-2">
                                                     <input
                                                         type="date"
                                                         value={milestoneDate}
                                                         onChange={(event) => setMilestoneDate(event.target.value)}
-                                                        className="min-w-0 flex-1 rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] px-3 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
+                                                        className="min-w-0 flex-1 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-xs font-bold dark:border-white/10 dark:bg-white/5"
                                                     />
                                                     <button
                                                         onClick={handleCreateMilestone}
@@ -472,7 +472,7 @@ export default function ProjectDetailPage() {
                                             </div>
                                         </DSCard>
                                     </aside>
-                                    <div className="min-h-[420px] lg:col-span-2 overflow-hidden rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+                                    <div className="min-h-[420px] lg:col-span-2 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                                         <ProjectActivityFeed activities={activities} />
                                     </div>
                                 </div>
@@ -480,7 +480,7 @@ export default function ProjectDetailPage() {
                         )}
 
                         {viewType === 'table' && (
-                            <div className="h-[calc(100vh-8rem)] border border-slate-200 dark:border-white/5 rounded-lg overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[#252528] shadow-sm">
+                            <div className="h-[calc(100vh-8rem)] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[#252528] shadow-sm">
                                 <TaskTableView
                                     projectId={project?.id}
                                     tasks={tasks}
@@ -494,10 +494,10 @@ export default function ProjectDetailPage() {
                         {viewType === 'list' && (
                             <div className="w-full">
                                 <DSCard>
-                                    <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Plan de Acción</h3>
+                                    <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Plan de Acción</h3>
                                     <div className="space-y-2">
                                         {tasks.map(task => (
-                                            <div key={task.id} onClick={() => handleOpenTask(task)} className="p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 transition-all duration-300 active:scale-[0.99] cursor-pointer">
+                                            <div key={task.id} onClick={() => handleOpenTask(task)} className="p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 transition-all duration-300 active:scale-[0.99] cursor-pointer">
                                                 <div className="flex items-center gap-4 flex-1">
                                                     <button
                                                         onClick={(event) => {
@@ -513,29 +513,29 @@ export default function ProjectDetailPage() {
                                                         ) : task.status === 'in_progress' ? (
                                                             <AlertTriangle size={18} className="text-[hsl(var(--primary))]" />
                                                         ) : (
-                                                            <Circle size={18} className="text-slate-400" />
+                                                            <Circle size={18} className="text-[hsl(var(--text-secondary))]" />
                                                         )}
                                                     </button>
                                                     <div className="flex-1">
-                                                        <p className="text-sm font-bold text-slate-800 dark:text-white">{task.title}</p>
+                                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{task.title}</p>
                                                         <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-slate-600 dark:border-white/10">
+                                                            <span className="text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10">
                                                                 {phases.find(p => p.slug === task.status)?.name || task.status}
                                                             </span>
                                                             <span className="font-semibold">{task.priority}</span>
-                                                            {task.due_date && <span className="text-[10px] text-slate-400">{new Date(task.due_date).toLocaleDateString()}</span>}
+                                                            {task.due_date && <span className="text-[10px] text-[hsl(var(--text-secondary))]">{new Date(task.due_date).toLocaleDateString()}</span>}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={(event) => { event.stopPropagation(); handleDeleteTask(task.id); }} className="p-2 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 transition-colors" title="Eliminar tarea">
+                                                    <button onClick={(event) => { event.stopPropagation(); handleDeleteTask(task.id); }} className="p-2 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/10 text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors" title="Eliminar tarea">
                                                         <Trash2 size={16} />
                                                     </button>
-                                                    <ChevronRight size={16} className="text-slate-300" />
+                                                    <ChevronRight size={16} className="text-[hsl(var(--text-secondary))]" />
                                                 </div>
                                             </div>
                                         ))}
-                                        {tasks.length === 0 && <p className="text-xs text-slate-400 text-center py-1.5">No hay tareas — crea la primera con el botón &quot;Nueva Tarea&quot;</p>}
+                                        {tasks.length === 0 && <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-1.5">No hay tareas — crea la primera con el botón &quot;Nueva Tarea&quot;</p>}
                                     </div>
                                 </DSCard>
                             </div>

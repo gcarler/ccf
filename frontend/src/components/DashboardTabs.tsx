@@ -33,7 +33,7 @@ export default function DashboardTabs({
     return (
         <div className="flex flex-col h-full">
             {/* Tabs */}
-            <div className="flex items-center gap-1 px-4 pt-2 pb-0 border-b border-slate-200 dark:border-white/5 no-print">
+            <div className="flex items-center gap-1 px-4 pt-2 pb-0 border-b border-[hsl(var(--border))] dark:border-white/5 no-print">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
@@ -41,8 +41,8 @@ export default function DashboardTabs({
                         className={clsx(
                             'flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold rounded-t-lg transition-all border-b-2 -mb-[1px]',
                             activeTab === tab.id
-                                ? 'text-[hsl(var(--primary))] dark:text-blue-400 border-[hsl(var(--primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#16171a]'
-                                : 'text-slate-400 border-transparent hover:text-slate-600 dark:hover:text-slate-300 hover:border-slate-300'
+                                ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border-[hsl(var(--primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#16171a]'
+                                : 'text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]'
                         )}
                     >
                         <tab.icon size={14} />

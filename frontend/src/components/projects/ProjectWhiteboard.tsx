@@ -267,12 +267,12 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             aria-hidden={!isOpen}
         >
             {/* Top Bar */}
-            <header className="h-11 px-4 shrink-0 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white dark:bg-[#1e1f21] shadow-sm">
+            <header className="h-11 px-4 shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-sm">
                 <div className="flex items-center gap-3">
                     <div className="size-7 rounded-md bg-orange-500 flex items-center justify-center text-white">
                         <PencilRuler size={14} />
                     </div>
-                    <span className="text-[11px] font-bold text-slate-700 dark:text-white uppercase tracking-wide">
+                    <span className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide">
                         Pizarra del Proyecto
                     </span>
                     <div className="flex items-center gap-1.5 ml-2">
@@ -297,10 +297,10 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                         {isAiDrawing ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
                         Diagramar con IA
                     </button>
-                    <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
+                    <div className="w-px h-5 bg-[hsl(var(--surface-3))] dark:bg-white/10" />
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
+                        className="p-1.5 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
                         title="Cerrar (Esc)"
                     >
                         <X size={16} />
@@ -311,14 +311,14 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             {/* Drawing Area */}
             <div ref={drawingAreaRef} className="flex-1 relative overflow-hidden bg-[#f8fafc] dark:bg-[#0f1115]">
                 {/* Vertical toolbar */}
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-1 p-1.5 bg-white/95 dark:bg-[#1e1f21]/95 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-1 p-1.5 bg-white/95 dark:bg-[#1e1f21]/95 backdrop-blur-xl border border-[hsl(var(--border))] dark:border-white/10 rounded-xl shadow-2xl">
                     <ToolBtn active={tool === 'select'} onClick={() => setActiveTool('select')} icon={MousePointer2} label="Seleccionar (V)" />
                     <ToolBtn active={tool === 'pencil'} onClick={() => setActiveTool('pencil')} icon={Pencil} label="Dibujar libre (P)" />
-                    <div className="h-px w-7 bg-slate-100 dark:bg-white/10 mx-auto my-0.5" />
+                    <div className="h-px w-7 bg-[hsl(var(--surface-2))] dark:bg-white/10 mx-auto my-0.5" />
                     <ToolBtn active={tool === 'rect'} onClick={() => setActiveTool('rect')}  icon={Square} label="Rectángulo (R)" />
                     <ToolBtn active={tool === 'circle'} onClick={() => setActiveTool('circle')} icon={Circle} label="Círculo (C)" />
                     <ToolBtn active={tool === 'text'} onClick={() => setActiveTool('text')}   icon={Type}   label="Texto (T)" />
-                    <div className="h-px w-7 bg-slate-100 dark:bg-white/10 mx-auto my-0.5" />
+                    <div className="h-px w-7 bg-[hsl(var(--surface-2))] dark:bg-white/10 mx-auto my-0.5" />
                     <ToolBtn active={false} onClick={deleteSelected} icon={Trash2} label="Eliminar (Del)" color="text-rose-500" />
                 </div>
 
@@ -326,12 +326,12 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                 <canvas ref={canvasRef} />
 
                 {/* Zoom controls */}
-                <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 dark:bg-[#1e1f21]/90 backdrop-blur-xl px-3 py-2 rounded-full border border-slate-200 dark:border-white/10 shadow-lg">
-                    <button onClick={() => handleZoom(-25)} className="text-slate-400 hover:text-[hsl(var(--primary))] transition-colors"><ZoomOut size={16} /></button>
-                    <span className="text-[11px] font-bold w-10 text-center text-slate-600 dark:text-slate-200 tabular-nums">{zoom}%</span>
-                    <button onClick={() => handleZoom(+25)} className="text-slate-400 hover:text-[hsl(var(--primary))] transition-colors"><ZoomIn size={16} /></button>
-                    <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
-                    <button className="text-slate-400 hover:text-[hsl(var(--primary))] transition-colors" title="Capas">
+                <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 dark:bg-[#1e1f21]/90 backdrop-blur-xl px-3 py-2 rounded-full border border-[hsl(var(--border))] dark:border-white/10 shadow-lg">
+                    <button onClick={() => handleZoom(-25)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><ZoomOut size={16} /></button>
+                    <span className="text-[11px] font-bold w-10 text-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] tabular-nums">{zoom}%</span>
+                    <button onClick={() => handleZoom(+25)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><ZoomIn size={16} /></button>
+                    <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
+                    <button className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors" title="Capas">
                         <Layers size={16} />
                     </button>
                 </div>
@@ -342,7 +342,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
     return createPortal(whiteboard, document.body);
 }
 
-function ToolBtn({ active, onClick, icon: Icon, label, color = 'text-slate-500' }: {
+function ToolBtn({ active, onClick, icon: Icon, label, color = 'text-[hsl(var(--text-secondary))]' }: {
     active: boolean; onClick: () => void; icon: React.ElementType; label: string; color?: string;
 }) {
     return (
@@ -351,11 +351,11 @@ function ToolBtn({ active, onClick, icon: Icon, label, color = 'text-slate-500' 
             title={label}
             className={clsx(
                 'p-2 rounded-lg transition-all relative group',
-                active ? 'bg-[hsl(var(--primary))] text-white shadow-md' : `hover:bg-slate-50 dark:hover:bg-white/5 ${color}`
+                active ? 'bg-[hsl(var(--primary))] text-white shadow-md' : `hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 ${color}`
             )}
         >
             <Icon size={18} />
-            <span className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-800 text-white text-[9px] font-semibold rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[100]">
+            <span className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 px-2 py-1 bg-[hsl(var(--surface-2))] text-white text-[9px] font-semibold rounded whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[100]">
                 {label}
             </span>
         </button>

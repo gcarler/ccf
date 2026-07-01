@@ -16,8 +16,8 @@ export default function CmsUiKitPage() {
     <div className="flex flex-col h-full bg-[#f8f9fc] dark:bg-[#0d0e11] overflow-y-auto custom-scrollbar">
  <div className="p-4 space-y-3 w-full">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight">UI Kit & Design System</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Catálogo de componentes base (&quot;Clean Productivity&quot;) utilizados en la plataforma administrativa.</p>
+          <h1 className="text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">UI Kit & Design System</h1>
+          <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-2 font-medium">Catálogo de componentes base (&quot;Clean Productivity&quot;) utilizados en la plataforma administrativa.</p>
         </div>
 
         {/* --- Buttons --- */}
@@ -25,7 +25,7 @@ export default function CmsUiKitPage() {
           <DSSectionHeader title="Botones (DSButton)" description="Acciones primarias, secundarias y de variante." />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <DSCard className="p-3 space-y-3">
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Variantes</h3>
+              <h3 className="text-sm font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Variantes</h3>
               <div className="flex flex-wrap gap-4">
                 <DSButton variant="primary">Primary</DSButton>
                 <DSButton variant="secondary">Secondary</DSButton>
@@ -33,7 +33,7 @@ export default function CmsUiKitPage() {
               </div>
             </DSCard>
             <DSCard className="p-3 space-y-3">
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Estados adicionales</h3>
+              <h3 className="text-sm font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Estados adicionales</h3>
               <div className="flex flex-wrap items-center gap-4">
                 <DSButton variant="primary" loading>Cargando</DSButton>
                 <DSButton variant="secondary" disabled>Deshabilitado</DSButton>
@@ -61,21 +61,21 @@ export default function CmsUiKitPage() {
           <DSSectionHeader title="Tarjetas (DSCard)" description="Contenedores estructurados con hover effects opcionales." />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <DSCard className="p-3">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Tarjeta Básica</h3>
-              <p className="text-sm text-slate-500 mt-2">Contenedor simple con padding y bordes adaptativos.</p>
+              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Tarjeta Básica</h3>
+              <p className="text-sm text-[hsl(var(--text-secondary))] mt-2">Contenedor simple con padding y bordes adaptativos.</p>
             </DSCard>
             <DSCard className="p-3 transition-all hover:shadow-xl hover:-translate-y-1">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Hoverable</h3>
-              <p className="text-sm text-slate-500 mt-2">Se eleva y cambia de borde al hacer hover. Usado en listas clickeables.</p>
+              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Hoverable</h3>
+              <p className="text-sm text-[hsl(var(--text-secondary))] mt-2">Se eleva y cambia de borde al hacer hover. Usado en listas clickeables.</p>
             </DSCard>
             <DSCard>
-              <div className="p-3 border-b border-slate-100 dark:border-white/5">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wide">Con Header/Footer</h3>
+              <div className="p-3 border-b border-[hsl(var(--border))] dark:border-white/5">
+                <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide">Con Header/Footer</h3>
               </div>
               <div className="p-3">
-                <p className="text-sm text-slate-500">Cuerpo de la tarjeta sin padding extra.</p>
+                <p className="text-sm text-[hsl(var(--text-secondary))]">Cuerpo de la tarjeta sin padding extra.</p>
               </div>
-              <div className="p-4 bg-slate-50 dark:bg-white/5 border-t border-slate-100 dark:border-white/5 rounded-b-2xl flex justify-end">
+              <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 border-t border-[hsl(var(--border))] dark:border-white/5 rounded-b-2xl flex justify-end">
                 <DSButton variant="secondary">Acción</DSButton>
               </div>
             </DSCard>
@@ -118,13 +118,13 @@ export default function CmsUiKitPage() {
           <DSSectionHeader title="Skeletons (DSSkeleton)" description="Estados de carga para evitar saltos visuales." />
           <DSCard className="p-3 space-y-3">
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Líneas</h3>
+              <h3 className="text-sm font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Líneas</h3>
               <DSSkeleton rounded="pill" className="h-4 w-3/4" />
               <DSSkeleton rounded="pill" className="h-4 w-1/2" />
               <DSSkeleton rounded="pill" className="h-4 w-full" />
             </div>
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Perfil</h3>
+              <h3 className="text-sm font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Perfil</h3>
               <div className="flex items-center gap-4">
                 <DSSkeleton rounded="pill" className="size-7" />
                 <div className="flex-1 space-y-2">
@@ -134,7 +134,7 @@ export default function CmsUiKitPage() {
               </div>
             </div>
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Tarjeta/Imagen</h3>
+              <h3 className="text-sm font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Tarjeta/Imagen</h3>
               <DSSkeleton rounded="xl" className="h-32 w-full" />
             </div>
           </DSCard>

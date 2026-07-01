@@ -45,15 +45,15 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
     };
 
     return (
-        <div className="flex h-[700px] bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] rounded-lg border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm">
-            <aside className="w-80 border-r border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02] flex flex-col">
-                <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center gap-4">
+        <div className="flex h-[700px] bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm">
+            <aside className="w-80 border-r border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] flex flex-col">
+                <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center gap-4">
                     <div className="size-10 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-lg shadow-[hsl(var(--primary)/0.2)]">
                         <BookOpen size={20} />
                     </div>
                     <div>
-                        <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-900 dark:text-white">Wiki Pro</h4>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{moduleName}</p>
+                        <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Wiki Pro</h4>
+                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{moduleName}</p>
                     </div>
                 </div>
 
@@ -63,38 +63,38 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                             <FileText size={16} />
                             <span className="text-[11px] font-semibold uppercase tracking-wide">General</span>
                         </div>
-                        <p className="text-[10px] text-slate-400 font-medium">Protocolos y estandares del modulo {moduleName}.</p>
+                        <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">Protocolos y estandares del modulo {moduleName}.</p>
                     </div>
 
                     {[1, 2, 3].map((index) => (
-                        <div key={index} className="p-4 flex items-center justify-between group hover:bg-slate-200/50 dark:hover:bg-white/5 rounded-lg transition-all cursor-pointer">
+                        <div key={index} className="p-4 flex items-center justify-between group hover:bg-[hsl(var(--surface-3))]/50 dark:hover:bg-white/5 rounded-lg transition-all cursor-pointer">
                             <div className="flex items-center gap-3">
-                                <FileText size={16} className="text-slate-300 group-hover:text-[hsl(var(--primary))]" />
-                                <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">Capitulo {index}</span>
+                                <FileText size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
+                                <span className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] dark:group-hover:text-white">Capitulo {index}</span>
                             </div>
-                            <ChevronRight size={14} className="text-slate-200 group-hover:text-[hsl(var(--primary))]" />
+                            <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
                         </div>
                     ))}
                 </div>
 
-                <div className="p-3 border-t border-slate-100 dark:border-white/5 bg-slate-100/50 dark:bg-black/20">
-                    <button className="w-full py-1.5 bg-slate-900 dark:bg-white/5 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:opacity-80 transition-all">
+                <div className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-2))]/50 dark:bg-black/20">
+                    <button className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-white/5 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:opacity-80 transition-all">
                         <Link2 size={14} /> Vincular Recursos
                     </button>
                 </div>
             </aside>
 
             <main className="flex-1 flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11]">
-                <header className="px-4 py-2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                <header className="px-4 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <ShieldCheck size={18} className="text-[hsl(var(--primary))]" />
-                        <h2 className="text-xl font-bold italic tracking-tighter text-slate-900 dark:text-white uppercase leading-none">Protocolo de Operacion</h2>
+                        <h2 className="text-xl font-bold italic tracking-tighter text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none">Protocolo de Operacion</h2>
                     </div>
                     <div className="flex items-center gap-3">
                         {lastSaved && (
                             <div className="flex items-center gap-2">
                                 <div className="size-1.5 rounded-full bg-emerald-500" />
-                                <span className="font-semibold text-slate-400 uppercase tracking-wide italic">Guardado a las {lastSaved.toLocaleTimeString()}</span>
+                                <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide italic">Guardado a las {lastSaved.toLocaleTimeString()}</span>
                             </div>
                         )}
                         <button
@@ -113,7 +113,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                         <Zap size={200} fill="currentColor" className="text-[hsl(var(--primary))]" />
                     </div>
                     {isLoading ? (
-                        <div className="flex h-full items-center justify-center gap-2 text-sm font-bold text-slate-400">
+                        <div className="flex h-full items-center justify-center gap-2 text-sm font-bold text-[hsl(var(--text-secondary))]">
                             <Loader2 size={16} className="animate-spin" />
                             Cargando wiki compartida...
                         </div>
@@ -122,7 +122,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                             value={content}
                             onChange={(event) => setContent(event.target.value)}
                             placeholder="Comienza a redactar la documentacion oficial para este espacio de trabajo..."
-                            className="w-full h-full bg-transparent resize-none border-none outline-none text-lg font-medium text-slate-700 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-white/10 leading-relaxed scrollbar-thin"
+                            className="w-full h-full bg-transparent resize-none border-none outline-none text-lg font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-white/10 leading-relaxed scrollbar-thin"
                         />
                     )}
                     {error && (
@@ -132,16 +132,16 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                     )}
                 </div>
 
-                <footer className="p-3 border-t border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-transparent flex items-center justify-between">
+                <footer className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-transparent flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
-                            <Clock size={14} className="text-slate-400" />
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Persistencia compartida</span>
+                            <Clock size={14} className="text-[hsl(var(--text-secondary))]" />
+                            <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Persistencia compartida</span>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button className="p-3 text-slate-300 hover:text-rose-500 transition-colors"><Trash2 size={18} /></button>
-                        <button className="p-3 text-slate-300 hover:text-[hsl(var(--primary))] transition-colors"><MoreHorizontal size={18} /></button>
+                        <button className="p-3 text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors"><Trash2 size={18} /></button>
+                        <button className="p-3 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><MoreHorizontal size={18} /></button>
                     </div>
                 </footer>
             </main>

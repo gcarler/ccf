@@ -53,7 +53,7 @@ export default function MessagingDetailPage() {
 
     if (loading) {
         return (
-            <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-slate-400">
+            <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 Analizando metricas de comunicacion...
             </div>
         );
@@ -61,7 +61,7 @@ export default function MessagingDetailPage() {
 
     if (!campaign) {
         return (
-            <div className="p-4 text-center font-bold uppercase tracking-wide text-slate-400">
+            <div className="p-4 text-center font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 No se pudo cargar la campana.
             </div>
         );
@@ -86,10 +86,10 @@ export default function MessagingDetailPage() {
                             tone={campaign.status === "sent" ? "emerald" : "blue"}
                             label={String(campaign.status || "sent").toUpperCase()}
                         />
-                        <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase leading-none">
+                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase leading-none">
                             {title}
                         </h1>
-                        <div className="flex items-center gap-4 text-sm font-bold text-slate-500">
+                        <div className="flex items-center gap-4 text-sm font-bold text-[hsl(var(--text-secondary))]">
                             <span className="flex items-center gap-2">
                                 <Clock size={18} />
                                 Enviado el {sentAtLabel}
@@ -120,9 +120,9 @@ export default function MessagingDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Contenido del Mensaje</h3>
-                            <div className="p-4 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Contenido del Mensaje</h3>
+                            <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5">
+                                <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">
                                     {campaign.content}
                                 </p>
                             </div>
@@ -131,13 +131,13 @@ export default function MessagingDetailPage() {
 
                     <aside className="space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-3">Estado de Entrega</h3>
+                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Entrega</h3>
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between text-xs font-bold">
-                                    <span className="text-slate-500">Completado</span>
+                                    <span className="text-[hsl(var(--text-secondary))]">Completado</span>
                                     <span className="text-emerald-500">{deliveryRate}%</span>
                                 </div>
-                                <div className="h-2 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${deliveryRate}%` }} />
                                 </div>
                             </div>

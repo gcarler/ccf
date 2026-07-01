@@ -32,7 +32,7 @@ export function DataTable({ data, columns, onRowClick }: DataTableProps) {
     return (
         <div className="flex-1 min-w-0 overflow-auto bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
             <table className="w-full text-left border-collapse min-w-[620px] md:min-w-[800px]">
-                <thead className="sticky top-0 bg-slate-50 dark:bg-black/20 z-10 shadow-sm">
+                <thead className="sticky top-0 bg-[hsl(var(--surface-1))] dark:bg-black/20 z-10 shadow-sm">
                     {table.getHeaderGroups().map((headerGroup) => (
                         <tr key={headerGroup.id}>
                             {headerGroup.headers.map((header) => {
@@ -43,15 +43,15 @@ export function DataTable({ data, columns, onRowClick }: DataTableProps) {
                                         key={header.id}
                                         onClick={header.column.getToggleSortingHandler()}
                                         className={clsx(
-                                            "py-1.5 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-black/20",
-                                            canSort && "cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 select-none transition-colors"
+                                            "py-1.5 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-black/20",
+                                            canSort && "cursor-pointer hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 select-none transition-colors"
                                         )}
                                         style={{ width: header.getSize() !== 150 ? header.getSize() : 'auto' }}
                                     >
                                                 <div className="flex min-w-0 items-center gap-1">
                                             {flexRender(header.column.columnDef.header, header.getContext())}
                                             {canSort && (
-                                                <div className="flex-shrink-0 text-slate-300">
+                                                <div className="flex-shrink-0 text-[hsl(var(--text-secondary))]">
                                                     {{
                                                         asc: <ArrowUp size={11} className="text-[hsl(var(--primary))]" />,
                                                         desc: <ArrowDown size={11} className="text-[hsl(var(--primary))]" />,
@@ -65,12 +65,12 @@ export function DataTable({ data, columns, onRowClick }: DataTableProps) {
                         </tr>
                     ))}
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                     {table.getRowModel().rows.map((row) => (
                         <tr
                             key={row.id}
                             onClick={() => onRowClick?.(row.original)}
-                            className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer group"
+                            className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors cursor-pointer group"
                         >
                             {row.getVisibleCells().map((cell) => (
                                 <td key={cell.id} className="py-1.5 px-3 align-middle">
@@ -81,7 +81,7 @@ export function DataTable({ data, columns, onRowClick }: DataTableProps) {
                     ))}
                     {table.getRowModel().rows.length === 0 && (
                         <tr>
-                            <td colSpan={columns.length} className="h-8 text-center text-slate-400 font-medium text-xs">
+                            <td colSpan={columns.length} className="h-8 text-center text-[hsl(var(--text-secondary))] font-medium text-xs">
                                 No se encontraron resultados.
                             </td>
                         </tr>

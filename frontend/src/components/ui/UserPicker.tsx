@@ -62,21 +62,21 @@ export default function UserPicker({
             <Popover.Trigger asChild>
                 <button
                     className={clsx(
-                        "flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors group text-left max-w-[150px]",
+                        "flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors group text-left max-w-[150px]",
                         className
                     )}
                 >
                     {currentUserId ? (
                         <div className="flex items-center gap-2 truncate">
-                            <div className="size-5 rounded-full bg-slate-900 dark:bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white shrink-0">
+                            <div className="size-5 rounded-full bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white shrink-0">
                                 {currentUser?.username?.substring(0, 2).toUpperCase() || 'U'}
                             </div>
-                            <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">
+                            <span className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">
                                 {currentUser?.username || `ID: ${currentUserId}`}
                             </span>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-2 text-slate-400 group-hover:text-slate-600">
+                        <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))]">
                             <UserCircle size={16} />
                             <span className="text-[11px] font-medium">{placeholder}</span>
                         </div>
@@ -86,16 +86,16 @@ export default function UserPicker({
 
             <Popover.Portal>
                 <Popover.Content 
-                    className="z-[1000] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+                    className="z-[1000] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
                     sideOffset={5}
                     align="start"
                 >
                     <Command className="flex flex-col">
-                        <div className="flex items-center border-b border-slate-100 dark:border-white/5 px-3">
-                            <Search className="mr-2 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                        <div className="flex items-center border-b border-[hsl(var(--border))] dark:border-white/5 px-3">
+                            <Search className="mr-2 h-3.5 w-3.5 shrink-0 text-[hsl(var(--text-secondary))]" />
                             <Command.Input 
                                 placeholder="Buscar usuario..." 
-                                className="flex h-9 w-full bg-transparent py-3 text-[12px] outline-none placeholder:text-slate-400"
+                                className="flex h-9 w-full bg-transparent py-3 text-[12px] outline-none placeholder:text-[hsl(var(--text-secondary))]"
                             />
                         </div>
                         <Command.List className="max-h-60 overflow-y-auto p-1 scrollbar-thin">
@@ -105,7 +105,7 @@ export default function UserPicker({
                                 </div>
                             ) : (
                                 <>
-                                    <Command.Empty className="py-1.5 text-center text-[11px] text-slate-500">No se encontraron usuarios.</Command.Empty>
+                                    <Command.Empty className="py-1.5 text-center text-[11px] text-[hsl(var(--text-secondary))]">No se encontraron usuarios.</Command.Empty>
                                     <Command.Group>
                                         {users.map((user) => (
                                             <Command.Item
@@ -114,9 +114,9 @@ export default function UserPicker({
                                                     onSelect(user.id);
                                                     setOpen(false);
                                                 }}
-                                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] font-bold text-slate-700 dark:text-slate-200 cursor-pointer data-[selected='true']:bg-[hsl(var(--primary))] data-[selected='true']:text-white transition-colors"
+                                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] cursor-pointer data-[selected='true']:bg-[hsl(var(--primary))] data-[selected='true']:text-white transition-colors"
                                             >
-                                                <div className="size-6 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center font-semibold group-data-[selected='true']:bg-white/20">
+                                                <div className="size-6 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 flex items-center justify-center font-semibold group-data-[selected='true']:bg-white/20">
                                                     {user.username.substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div className="flex-1 truncate">

@@ -286,7 +286,7 @@ const featureCards = [
         description: 'Encuentra tu círculo y mantente conectado entre semana.',
         icon: Users,
         href: '/plataforma/community/grupos',
-        tone: 'from-slate-200/40 to-slate-50/30'
+        tone: 'from-[hsl(var(--surface-2))]/40 to-[hsl(var(--surface-1))]/30'
     },
     {
         title: 'Descubrir',
@@ -300,10 +300,10 @@ const featureCards = [
 const priorityTone: Record<'Alta' | 'Media' | 'Baja', string> = {
     Alta: 'bg-rose-100 text-rose-600 border-rose-200',
     Media: 'bg-amber-100 text-amber-600 border-amber-200',
-    Baja: 'bg-slate-100 text-slate-500 border-slate-200'
+    Baja: 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]'
 };
 
-const statusTone = 'bg-slate-100 text-slate-600 border-slate-200';
+const statusTone = 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]';
 
 const mapApiCardToBoardItem = (card: CommunityApiCard): BoardItem => ({
     id: `community-card-${card.id}`,
@@ -605,7 +605,7 @@ export default function CommunityHubPage() {
                         const Icon = columnIcons[column.id];
                         return (
                             <div key={column.id} className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
-                                <div className="bg-[hsl(var(--bg-primary))] dark:bg-slate-900/80 border border-[hsl(var(--border))] rounded-md p-4 shadow-xl flex flex-col h-full transition-transform duration-300 hover:-translate-y-1">
+                                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))]/80 border border-[hsl(var(--border))] rounded-md p-4 shadow-xl flex flex-col h-full transition-transform duration-300 hover:-translate-y-1">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-center gap-3">
                                             <div className={`size-9 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center ${column.accent}`}>
@@ -863,7 +863,7 @@ export default function CommunityHubPage() {
                     <button className="p-1.5 rounded-full border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"><Filter size={10} /></button>
                     <button className="p-1.5 rounded-full border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"><Columns3 size={10} /></button>
                     <button className="p-1.5 rounded-full border border-[hsl(var(--text-primary))] text-[hsl(var(--text-primary))]"><SlidersHorizontal size={10} /></button>
-                    <button className="px-3 h-8 rounded-full bg-slate-900 text-white text-[9px] font-semibold uppercase tracking-wide">+ Nuevo</button>
+                    <button className="px-3 h-8 rounded-full bg-[hsl(var(--bg-muted))] text-white text-[9px] font-semibold uppercase tracking-wide">+ Nuevo</button>
                 </div>
             </div>
             <header className="rounded-lg border border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--surface-1))] p-4 md:p-3 space-y-3">
@@ -915,7 +915,7 @@ export default function CommunityHubPage() {
                                 <Share2 size={14} /> Compartir acceso
                             </button>
                             {shareOpen && (
-                                <div className="absolute right-0 z-10 mt-3 w-72 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:bg-slate-900/90 shadow-xl p-4 space-y-4">
+                                <div className="absolute right-0 z-10 mt-3 w-72 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))]/90 shadow-xl p-4 space-y-4">
                                     <div className="flex items-center justify-between text-[11px] font-semibold text-[hsl(var(--text-primary))]">
                                         <span>Compartir tablero</span>
                                         <button type="button" onClick={() => setShareOpen(false)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]">
@@ -1170,7 +1170,7 @@ export default function CommunityHubPage() {
                             <CommunityToolbarChip key={label} label={label} icon={icon} size="sm" />
                         ))}
                         <CommunityToolbarChip label="Personalizar" icon={SlidersHorizontal} size="sm" />
-                        <CommunityToolbarChip label="Add tarea" icon={Plus} variant="solid" className="bg-slate-900 text-white border-slate-900" />
+                        <CommunityToolbarChip label="Add tarea" icon={Plus} variant="solid" className="bg-[hsl(var(--bg-muted))] text-white border-[hsl(var(--border))]" />
                     </div>
                 </div>
                     <p className="text-[11px] text-[hsl(var(--text-secondary))] flex items-center gap-3">
@@ -1240,7 +1240,7 @@ export default function CommunityHubPage() {
                     role="status"
                     aria-live="polite"
                     className={`fixed bottom-6 right-6 z-20 rounded-lg px-3 py-1.5 text-sm font-medium text-white shadow-lg ${
-                        toast.type === 'success' ? 'bg-emerald-500' : 'bg-slate-600'
+                        toast.type === 'success' ? 'bg-emerald-500' : 'bg-[hsl(var(--surface-2))]'
                     }`}
                 >
                     {toast.message}

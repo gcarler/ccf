@@ -133,7 +133,7 @@ export default function CrmAnalyticsPage() {
             onViewChange={setViewType}
             rightActions={
                 <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-all">
+                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
                         <Download size={13} /> Exportar PDF
                     </button>
                     <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
@@ -179,17 +179,17 @@ export default function CrmAnalyticsPage() {
                         </motion.section>
 
                         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
-                            <motion.section variants={itemVariants} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-3 shadow-sm">
+                            <motion.section variants={itemVariants} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-3 shadow-sm">
                                 <div className="mb-4 flex items-center justify-between gap-4">
                                     <div>
-                                        <h1 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
+                                        <h1 className="text-sm font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">
                                             Resumen operativo
                                         </h1>
-                                        <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                        <p className="text-[11px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                             Datos agregados reales del modulo de consolidacion.
                                         </p>
                                     </div>
-                                    <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:bg-white/5 dark:text-slate-300">
+                                    <span className="rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
                                         Actual
                                     </span>
                                 </div>
@@ -212,12 +212,12 @@ export default function CrmAnalyticsPage() {
                                     />
                                 </div>
 
-                                <div className="mt-4 rounded-lg bg-slate-50 p-4 dark:bg-white/[0.03]">
-                                    <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                <div className="mt-4 rounded-lg bg-[hsl(var(--surface-1))] p-4 dark:bg-white/[0.03]">
+                                    <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         <span>Activacion de personas</span>
                                         <span>{activeRate}%</span>
                                     </div>
-                                    <div className="h-2 overflow-hidden rounded-full bg-slate-200/70 dark:bg-white/10">
+                                    <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--surface-3))]/70 dark:bg-white/10">
                                         <div
                                             className="h-full rounded-full bg-[hsl(var(--primary))] transition-all"
                                             style={{ width: `${Math.min(activeRate, 100)}%` }}
@@ -226,16 +226,16 @@ export default function CrmAnalyticsPage() {
                                 </div>
                             </motion.section>
 
-                            <motion.aside variants={itemVariants} className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-3 shadow-sm">
+                            <motion.aside variants={itemVariants} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-3 shadow-sm">
                                 <div className="mb-4 flex items-center gap-2">
                                     <Activity size={15} className="text-[hsl(var(--primary))]" />
-                                    <h2 className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                                    <h2 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         Pipeline
                                     </h2>
                                 </div>
 
                                 {funnelRows.length === 0 ? (
-                                    <p className="rounded-md bg-slate-50 px-3 py-2 text-sm font-medium text-slate-400 dark:bg-white/[0.03]">
+                                    <p className="rounded-md bg-[hsl(var(--surface-1))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-secondary))] dark:bg-white/[0.03]">
                                         No hay leads registrados.
                                     </p>
                                 ) : (
@@ -258,10 +258,10 @@ function ListView({ rows }: { rows: KpiRow[] }) {
     return (
         <div className="space-y-2">
             {rows.map((row) => (
-                <div key={row.label} className="flex items-center justify-between rounded-lg border border-slate-200 bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
+                <div key={row.label} className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
                     <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{row.label}</p>
-                        <p className="text-base font-bold text-slate-800 dark:text-slate-100">{row.value}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{row.label}</p>
+                        <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{row.value}</p>
                     </div>
                     <Badge tone={row.tone}>{row.context}</Badge>
                 </div>
@@ -272,20 +272,20 @@ function ListView({ rows }: { rows: KpiRow[] }) {
 
 function TableView({ rows }: { rows: KpiRow[] }) {
     return (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-white/5">
+        <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-white/5">
             <table className="w-full min-w-[480px] text-left">
-                <thead className="bg-slate-50 dark:bg-white/5">
+                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                     <tr>
-                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Metrica</th>
-                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Valor</th>
-                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">Contexto</th>
+                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Metrica</th>
+                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Valor</th>
+                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contexto</th>
                     </tr>
                 </thead>
                 <tbody>
                     {rows.map((row) => (
-                        <tr key={row.label} className="border-t border-slate-100 dark:border-white/5">
-                            <td className="px-4 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{row.label}</td>
-                            <td className="px-4 py-1.5 text-xs text-slate-500">{row.value}</td>
+                        <tr key={row.label} className="border-t border-[hsl(var(--border))] dark:border-white/5">
+                            <td className="px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{row.label}</td>
+                            <td className="px-4 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{row.value}</td>
                             <td className="px-4 py-1.5"><Badge tone={row.tone}>{row.context}</Badge></td>
                         </tr>
                     ))}
@@ -305,13 +305,13 @@ function BoardView({ rows }: { rows: KpiRow[] }) {
     return (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             {columns.map((column) => (
-                <div key={column.title} className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                    <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-500">{column.title}</p>
+                <div key={column.title} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                    <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.title}</p>
                     <div className="space-y-2">
                         {column.items.map((item) => (
-                            <div key={item.label} className="rounded-md border border-slate-200 bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/5">
-                                <p className="text-xs font-bold text-slate-800 dark:text-slate-100">{item.label}</p>
-                                <p className="mt-1 text-[10px] text-slate-400">{item.value}</p>
+                            <div key={item.label} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/5">
+                                <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.label}</p>
+                                <p className="mt-1 text-[10px] text-[hsl(var(--text-secondary))]">{item.value}</p>
                                 <div className="mt-2"><Badge tone={item.tone}>{item.context}</Badge></div>
                             </div>
                         ))}
@@ -341,17 +341,17 @@ function CalendarView({ analytics }: { analytics: CrmAnalyticsSummary | null }) 
 
 function GanttView({ rows }: { rows: FunnelRow[] }) {
     return (
-        <div className="space-y-3 rounded-lg border border-slate-200 bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Distribucion del pipeline</p>
+        <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Distribucion del pipeline</p>
             {rows.length === 0 ? (
-                <p className="text-sm font-medium text-slate-400">No hay datos disponibles.</p>
+                <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">No hay datos disponibles.</p>
             ) : rows.map((row) => (
                 <div key={row.stage} className="space-y-1">
                     <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-bold text-slate-700 dark:text-slate-300">{row.label}</span>
-                        <span className="font-bold text-slate-400">{row.value}</span>
+                        <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{row.label}</span>
+                        <span className="font-bold text-[hsl(var(--text-secondary))]">{row.value}</span>
                     </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+                    <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10">
                         <div className="h-full rounded-full bg-[hsl(var(--primary))]" style={{ width: `${row.percent}%` }} />
                     </div>
                 </div>
@@ -368,13 +368,13 @@ function WikiView({
     onChange: (value: string) => void;
 }) {
     return (
-        <div className="space-y-3 rounded-lg border border-slate-200 bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Wiki analitica CRM</p>
+        <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki analitica CRM</p>
             <textarea
                 value={wikiNotes}
                 onChange={(event) => onChange(event.target.value)}
                 placeholder="Documenta definiciones de metricas, fuentes de datos, supuestos y acuerdos de interpretacion para liderazgo pastoral..."
-                className="min-h-[320px] w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-slate-200"
+                className="min-h-[320px] w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-[hsl(var(--text-secondary))]"
             />
         </div>
     );
@@ -384,13 +384,13 @@ function AnalyticsKpi({ row }: { row: KpiRow }) {
     return (
         <motion.div
             variants={{ hidden: { opacity: 0, scale: 0.98 }, show: { opacity: 1, scale: 1 } }}
-            className="rounded-lg border border-slate-200 bg-[hsl(var(--surface-1))] p-4 shadow-sm dark:border-white/10 dark:bg-[#15171c]"
+            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm dark:border-white/10 dark:bg-[#15171c]"
         >
             <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{row.label}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{row.label}</p>
                 <Badge tone={row.tone}>{row.context}</Badge>
             </div>
-            <p className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{row.value}</p>
+            <p className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">{row.value}</p>
         </motion.div>
     );
 }
@@ -405,12 +405,12 @@ function SummaryTile({
     value: string;
 }) {
     return (
-        <div className="rounded-lg border border-slate-200 bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
+        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
             <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10">
                 <Icon size={16} />
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
-            <p className="text-lg font-bold text-slate-900 dark:text-white">{value}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
+            <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</p>
         </div>
     );
 }
@@ -418,11 +418,11 @@ function SummaryTile({
 function FunnelStep({ row }: { row: FunnelRow }) {
     return (
         <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-slate-500">
+            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 <span>{row.label}</span>
                 <span>{row.value}</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+            <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10">
                 <div className="h-full rounded-full bg-[hsl(var(--primary))]" style={{ width: `${row.percent}%` }} />
             </div>
         </div>
@@ -442,7 +442,7 @@ function Badge({
                 'inline-flex rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide',
                 tone === 'positive' && 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300',
                 tone === 'warning' && 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
-                tone === 'neutral' && 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-300',
+                tone === 'neutral' && 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]',
             )}
         >
             {children}
@@ -461,7 +461,7 @@ function StatusBanner({
         <div
             className={clsx(
                 'rounded-lg border px-4 py-1.5 text-sm font-medium',
-                tone === 'neutral' && 'border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-300',
+                tone === 'neutral' && 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]',
                 tone === 'warning' && 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200',
             )}
         >

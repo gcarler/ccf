@@ -36,17 +36,17 @@ export default function DashboardOverviewClient() {
     });
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 dark:bg-transparent overflow-y-auto p-4 font-sans">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] dark:bg-transparent overflow-y-auto p-4 font-sans">
             <div className="mb-6">
                 <div className="flex items-center gap-3 mb-1">
                     <div className="size-10 rounded-xl bg-blue-50 dark:bg-[hsl(var(--primary))]/10 flex items-center justify-center">
-                        <LayoutDashboard size={20} className="text-[hsl(var(--primary))] dark:text-blue-400" />
+                        <LayoutDashboard size={20} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" />
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">
+                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">
                             Centro de Dashboards
                         </h1>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-[hsl(var(--text-secondary))]">
                             Métricas en vivo para cada módulo de la plataforma
                         </p>
                     </div>
@@ -81,14 +81,14 @@ export default function DashboardOverviewClient() {
                                             />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="text-[13px] font-bold text-slate-800 dark:text-white group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors">
+                                            <h3 className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors">
                                                 {cfg?.label || mod.key}
                                             </h3>
-                                            <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
+                                            <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-2">
                                                 {mod.desc}
                                             </p>
                                         </div>
-                                        <ArrowRight size={14} className="text-slate-300 group-hover:text-[hsl(var(--primary))] transition-colors shrink-0 mt-1" />
+                                        <ArrowRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors shrink-0 mt-1" />
                                     </div>
                                 </DSCard>
                             </Link>

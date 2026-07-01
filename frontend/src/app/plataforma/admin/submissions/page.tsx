@@ -75,17 +75,17 @@ export default function SubmissionsPage() {
  <div className="space-y-3 animate-in fade-in duration-500 w-full">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
                 <div>
-                    <h1 className="flex items-center gap-3 text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+                    <h1 className="flex items-center gap-3 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">
                         <FileText className="text-primary" size={32} /> Calificar Trabajos
                     </h1>
-                    <p className="text-slate-500 font-medium mt-1">Revisa y califica las evidencias enviadas por los participantes.</p>
+                    <p className="text-[hsl(var(--text-secondary))] font-medium mt-1">Revisa y califica las evidencias enviadas por los participantes.</p>
                 </div>
             </header>
 
             <div className="grid grid-cols-1 gap-3">
                 {submissions.length > 0 ? (
                     submissions.map(sub => (
-                        <div key={sub.id} className="glass dark:bg-slate-800/40 rounded-lg p-3 shadow-sm flex flex-col md:flex-row justify-between gap-3 border border-slate-200 dark:border-white/5 transition-transform hover:shadow-md">
+                        <div key={sub.id} className="glass dark:bg-[hsl(var(--surface-2))]/40 rounded-lg p-3 shadow-sm flex flex-col md:flex-row justify-between gap-3 border border-[hsl(var(--border))] dark:border-white/5 transition-transform hover:shadow-md">
                             <div className="flex flex-col md:flex-row justify-between gap-3 w-full">
                                 <div className="flex-1 space-y-4">
                                     <div className="flex items-center gap-4">
@@ -93,8 +93,8 @@ export default function SubmissionsPage() {
                                             <User size={24} />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-slate-900 dark:text-white text-base leading-none mb-1">{sub.student_name}</p>
-                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1">
+                                            <p className="font-semibold text-[hsl(var(--text-primary))] dark:text-white text-base leading-none mb-1">{sub.student_name}</p>
+                                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1">
                                                 <Clock size={10} /> {new Date(sub.submitted_at).toLocaleString()}
                                             </p>
                                         </div>
@@ -105,7 +105,7 @@ export default function SubmissionsPage() {
                                             <BookOpen size={14} /> {sub.lesson_title}
                                         </p>
                                         {sub.comment && (
-                                            <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg italic font-medium border border-slate-100 dark:border-white/5">
+                                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 p-4 rounded-lg italic font-medium border border-[hsl(var(--border))] dark:border-white/5">
                                                 &quot;{sub.comment}&quot;
                                             </p>
                                         )}
@@ -121,25 +121,25 @@ export default function SubmissionsPage() {
                                     </a>
                                 </div>
 
-                                <div className="w-full md:w-80 bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-100 dark:border-white/5 flex flex-col justify-center">
+                                <div className="w-full md:w-80 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 rounded-lg p-3 border border-[hsl(var(--border))] dark:border-white/5 flex flex-col justify-center">
                                     {gradingId === sub.id ? (
                                         <div className="space-y-4 animate-in zoom-in-95 duration-200">
                                             <div>
-                                                <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-2 block">Nota (0-100)</label>
+                                                <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Nota (0-100)</label>
                                                 <input 
                                                     type="number" 
                                                     value={grade}
                                                     onChange={(e) => setGrade(Number(e.target.value))}
-                                                    className="w-full px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-primary/50 outline-none font-bold text-slate-900 dark:text-white transition-all shadow-sm"
+                                                    className="w-full px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-primary/50 outline-none font-bold text-[hsl(var(--text-primary))] dark:text-white transition-all shadow-sm"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-2 block">Retroalimentación</label>
+                                                <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Retroalimentación</label>
                                                 <textarea 
                                                     value={feedback}
                                                     onChange={(e) => setFeedback(e.target.value)}
                                                     placeholder="Buen trabajo..."
-                                                    className="w-full px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-primary/50 outline-none text-sm h-24 resize-none text-slate-900 dark:text-white transition-all shadow-sm"
+                                                    className="w-full px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-primary/50 outline-none text-sm h-24 resize-none text-[hsl(var(--text-primary))] dark:text-white transition-all shadow-sm"
                                                 />
                                             </div>
                                             <div className="flex gap-2 pt-2">
@@ -151,7 +151,7 @@ export default function SubmissionsPage() {
                                                 </button>
                                                 <button 
                                                     onClick={() => setGradingId(null)}
-                                                    className="px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-500 rounded-md text-xs font-bold hover:text-slate-700 dark:hover:text-white transition-all active:scale-95 shadow-sm"
+                                                    className="px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] rounded-md text-xs font-bold hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all active:scale-95 shadow-sm"
                                                 >
                                                     <X size={16} />
                                                 </button>
@@ -166,7 +166,7 @@ export default function SubmissionsPage() {
                                                         <p className="text-lg font-bold leading-none">{sub.grade}</p>
                                                     </div>
                                                     {sub.teacher_feedback && (
-                                                        <p className="text-xs text-slate-500 font-medium italic px-2 bg-white/50 dark:bg-white/5 p-3 rounded-md border border-slate-200 dark:border-white/5 w-full">&ldquo;{sub.teacher_feedback}&rdquo;</p>
+                                                        <p className="text-xs text-[hsl(var(--text-secondary))] font-medium italic px-2 bg-white/50 dark:bg-white/5 p-3 rounded-md border border-[hsl(var(--border))] dark:border-white/5 w-full">&ldquo;{sub.teacher_feedback}&rdquo;</p>
                                                     )}
                                                     <button 
                                                         onClick={() => {
@@ -184,7 +184,7 @@ export default function SubmissionsPage() {
                                                     <div className="p-4 bg-amber-500/10 text-amber-500 rounded-full border border-amber-500/20 shadow-sm">
                                                         <AlertCircle size={32} />
                                                     </div>
-                                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Pendiente de Revisión</p>
+                                                    <p className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Pendiente de Revisión</p>
                                                     <button 
                                                         onClick={() => {
                                                             setGradingId(sub.id);
@@ -204,12 +204,12 @@ export default function SubmissionsPage() {
                         </div>
                     ))
                 ) : (
-                    <div className="bg-slate-50 dark:bg-slate-900/30 border border-dashed border-slate-200 dark:border-white/10 rounded-lg py-1.5 text-center flex flex-col items-center">
-                        <div className="size-8 bg-[hsl(var(--bg-primary))] dark:bg-slate-800 rounded-full shadow-sm flex items-center justify-center text-slate-300 mb-3 border border-slate-100 dark:border-white/5">
+                    <div className="bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/30 border border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 text-center flex flex-col items-center">
+                        <div className="size-8 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-full shadow-sm flex items-center justify-center text-[hsl(var(--text-secondary))] mb-3 border border-[hsl(var(--border))] dark:border-white/5">
                             <FileText size={40} />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200 mb-2">Todo al día</h3>
-                        <p className="text-sm text-slate-500 font-medium">No hay entregas pendientes por revisar en este momento.</p>
+                        <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] mb-2">Todo al día</h3>
+                        <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">No hay entregas pendientes por revisar en este momento.</p>
                     </div>
                 )}
             </div>

@@ -372,10 +372,10 @@ export default function CmsMenusManagement() {
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
             {/* TOOLBAR */}
-            <header className="min-h-8 border-b border-slate-100 dark:border-white/5 flex flex-wrap items-center px-3 py-3 gap-3 shrink-0">
+            <header className="min-h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex flex-wrap items-center px-3 py-3 gap-3 shrink-0">
                 <div className="flex items-center gap-2 flex-1">
                     <Link2 size={16} className="text-[hsl(var(--primary))]" />
-                    <h2 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         NAVEGACION CMS
                     </h2>
                 </div>
@@ -384,7 +384,7 @@ export default function CmsMenusManagement() {
                     <select
                         value={siteKey}
                         onChange={(event) => setSiteKey(event.target.value)}
-                        className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] px-3 py-1.5 text-[11px] font-bold"
+                        className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] px-3 py-1.5 text-[11px] font-bold"
                     >
                         {sites.length === 0 && <option value={siteKey}>{siteKey}</option>}
                         {sites.map((site) => (
@@ -395,7 +395,7 @@ export default function CmsMenusManagement() {
                         value={menuKey}
                         onChange={(event) => setMenuKey(event.target.value)}
                         disabled={menus.length === 0 || menuLoading}
-                        className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] px-3 py-1.5 text-[11px] font-bold disabled:opacity-50"
+                        className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] px-3 py-1.5 text-[11px] font-bold disabled:opacity-50"
                     >
                         {menus.length === 0 && <option value="">Sin menus</option>}
                         {menus.map((menu) => (
@@ -408,7 +408,7 @@ export default function CmsMenusManagement() {
                         <button
                             onClick={handleToggleMenuActive}
                             disabled={!canEdit}
-                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
+                            className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
                             title={selectedMenu.is_active ? "Desactivar menu publico" : "Activar menu publico"}
                         >
                             {selectedMenu.is_active ? <Archive size={14} /> : <RotateCcw size={14} />}
@@ -428,9 +428,9 @@ export default function CmsMenusManagement() {
 
             <form
                 onSubmit={handleCreateMenu}
-                className="border-b border-slate-100 dark:border-white/5 px-3 py-3 flex flex-wrap items-center gap-3 bg-slate-50/60 dark:bg-white/[0.02]"
+                className="border-b border-[hsl(var(--border))] dark:border-white/5 px-3 py-3 flex flex-wrap items-center gap-3 bg-[hsl(var(--surface-1))]/60 dark:bg-white/[0.02]"
             >
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nuevo menu</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nuevo menu</p>
                 <input
                     value={newMenuName}
                     onChange={(event) => {
@@ -439,14 +439,14 @@ export default function CmsMenusManagement() {
                     }}
                     placeholder="Nombre del menu"
                     disabled={!canEdit}
-                    className="min-w-48 flex-1 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] px-3 py-2 text-xs disabled:opacity-50"
+                    className="min-w-48 flex-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] px-3 py-2 text-xs disabled:opacity-50"
                 />
                 <input
                     value={newMenuKey}
                     onChange={(event) => setNewMenuKey(sanitizeKey(event.target.value))}
                     placeholder="menu_key"
                     disabled={!canEdit}
-                    className="w-40 rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] px-3 py-2 text-xs disabled:opacity-50"
+                    className="w-40 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] px-3 py-2 text-xs disabled:opacity-50"
                 />
                 <button
                     type="submit"
@@ -516,27 +516,27 @@ export default function CmsMenusManagement() {
                 {loading ? (
                     <div className="space-y-4">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="h-8 bg-slate-50 dark:bg-white/5 rounded-lg animate-pulse" />
+                            <div key={i} className="h-8 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />
                         ))}
                     </div>
                 ) : !menuKey ? (
                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-60">
-                        <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
                             <Link2 size={32} />
                         </div>
                         <div>
-                            <p className="font-bold text-slate-900 dark:text-white">Sin menu seleccionado</p>
-                            <p className="text-sm text-slate-500">Crea un menu para este sitio y luego agrega enlaces.</p>
+                            <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white">Sin menu seleccionado</p>
+                            <p className="text-sm text-[hsl(var(--text-secondary))]">Crea un menu para este sitio y luego agrega enlaces.</p>
                         </div>
                     </div>
                 ) : navConfig.items.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-                        <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
                             <Link2 size={32} />
                         </div>
                         <div>
-                            <p className="font-bold text-slate-900 dark:text-white">Menú vacío</p>
-                            <p className="text-sm text-slate-500">Comienza a construir la navegación de tu sitio.</p>
+                            <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white">Menú vacío</p>
+                            <p className="text-sm text-[hsl(var(--text-secondary))]">Comienza a construir la navegación de tu sitio.</p>
                         </div>
                     </div>
                 ) : (
@@ -548,7 +548,7 @@ export default function CmsMenusManagement() {
                                 await moveToRoot(draggedId);
                                 setDraggedId(null);
                             }}
-                            className="rounded-md border border-dashed border-slate-300 dark:border-white/20 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400"
+                            className="rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/20 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
                         >
                             Soltar aquí para mover a nivel raíz
                         </div>
@@ -585,26 +585,26 @@ export default function CmsMenusManagement() {
                                     className={clsx(
                                         "group rounded-lg border p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center gap-4",
                                         item.visibility === "hidden"
-                                            ? "bg-slate-50 dark:bg-white/[0.03] border-dashed border-slate-200 dark:border-white/10 opacity-75"
-                                            : "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border-slate-200/70 dark:border-white/5"
+                                            ? "bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border-dashed border-[hsl(var(--border))] dark:border-white/10 opacity-75"
+                                            : "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border-[hsl(var(--border))]/70 dark:border-white/5"
                                     )}
                                     style={{ marginLeft: `${depth * 16}px` }}
                                 >
-                                    <div className="p-2 text-slate-300 group-hover:text-slate-500 transition-colors">
+                                    <div className="p-2 text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] transition-colors">
                                         <GripVertical size={16} />
                                     </div>
                                     
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="text-[13px] font-bold text-slate-900 dark:text-white">
+                                        <h3 className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white">
                                             {item.label}
                                         </h3>
-                                        <p className="text-[11px] text-slate-400 font-medium">
+                                        <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">
                                             {item.href}
                                         </p>
                                     </div>
 
                                     {item.is_external && (
-                                        <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-slate-100 dark:bg-white/5 text-slate-500 uppercase tracking-wide">
+                                        <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                             EXTERNO
                                         </span>
                                     )}
@@ -622,7 +622,7 @@ export default function CmsMenusManagement() {
                                                 moveItem(sourceIndex, 'up');
                                             }}
                                             disabled={!canEdit}
-                                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-md text-slate-400 hover:text-slate-600 transition-all"
+                                            className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-all"
                                             title="Subir"
                                         >
                                             <ChevronRight size={14} className="-rotate-90" />
@@ -634,7 +634,7 @@ export default function CmsMenusManagement() {
                                                 moveItem(sourceIndex, 'down');
                                             }}
                                             disabled={!canEdit}
-                                            className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-md text-slate-400 hover:text-slate-600 transition-all"
+                                            className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-all"
                                             title="Bajar"
                                         >
                                             <ChevronRight size={14} className="rotate-90" />
@@ -647,12 +647,12 @@ export default function CmsMenusManagement() {
                                             }}
                                             disabled={!canEdit}
                                             title={item.visibility === "hidden" ? "Restaurar enlace" : "Ocultar enlace"}
-                                            className="p-2 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-md text-slate-400 hover:text-amber-700 transition-all"
+                                            className="p-2 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-amber-700 transition-all"
                                         >
                                             {item.visibility === "hidden" ? <RotateCcw size={16} /> : <Archive size={16} />}
                                         </button>
                                     </div>
-                                    <ChevronRight size={16} className="text-slate-300" />
+                                    <ChevronRight size={16} className="text-[hsl(var(--text-secondary))]" />
                                 </motion.div>
                                 <div
                                     onDragOver={(e) => e.preventDefault()}
@@ -684,7 +684,7 @@ export default function CmsMenusManagement() {
                     <div className="space-y-3">
                         <section className="space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                                <label className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                                     TEXTO DEL ENLACE
                                 </label>
                                 <input 
@@ -692,12 +692,12 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.label}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, label: e.target.value })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all font-bold"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all font-bold"
                                 />
                             </div>
                             
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                                <label className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                                     DESTINO (URL)
                                 </label>
                                 <input 
@@ -705,12 +705,12 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.href}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, href: e.target.value })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"
                                 />
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                                <label className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                                     PADRE (SUBMENÚ)
                                 </label>
                                 <select
@@ -720,7 +720,7 @@ export default function CmsMenusManagement() {
                                         parent_id: e.target.value || null,
                                     })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-slate-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"
                                 >
                                     <option value="">Sin padre (nivel raíz)</option>
                                     {navConfig.items
@@ -732,8 +732,8 @@ export default function CmsMenusManagement() {
                             </div>
                         </section>
 
-                        <section className="pt-6 border-t border-slate-100 dark:border-white/5 space-y-3">
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        <section className="pt-6 border-t border-[hsl(var(--border))] dark:border-white/5 space-y-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                                 VISIBILIDAD
                             </p>
                             <div className="grid grid-cols-2 gap-2">
@@ -745,7 +745,7 @@ export default function CmsMenusManagement() {
                                         "rounded-md border px-3 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all",
                                         selectedItem.visibility !== "hidden"
                                             ? "border-blue-200 bg-blue-50 text-[hsl(var(--primary))] dark:border-blue-500/30 dark:bg-blue-500/10"
-                                            : "border-slate-200 text-slate-500 dark:border-white/10"
+                                            : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] dark:border-white/10"
                                     )}
                                 >
                                     Publico
@@ -758,7 +758,7 @@ export default function CmsMenusManagement() {
                                         "rounded-md border px-3 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all",
                                         selectedItem.visibility === "hidden"
                                             ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10"
-                                            : "border-slate-200 text-slate-500 dark:border-white/10"
+                                            : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] dark:border-white/10"
                                     )}
                                 >
                                     Oculto
@@ -766,7 +766,7 @@ export default function CmsMenusManagement() {
                             </div>
                         </section>
 
-                        <section className="pt-6 border-t border-slate-100 dark:border-white/5">
+                        <section className="pt-6 border-t border-[hsl(var(--border))] dark:border-white/5">
                             <button 
                                 onClick={() => handleUpdateItem(selectedIndex, { ...selectedItem, is_external: !selectedItem.is_external })}
                                 disabled={!canEdit}
@@ -774,24 +774,24 @@ export default function CmsMenusManagement() {
                                     "w-full flex items-center justify-between p-4 rounded-lg border transition-all",
                                     selectedItem.is_external 
                                         ? "bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/30" 
-                                        : "bg-slate-50 dark:bg-white/5 border-transparent"
+                                        : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-transparent"
                                 )}
                             >
                                 <div className="flex items-center gap-3 text-left">
                                     <div className={clsx(
                                         "size-10 rounded-md flex items-center justify-center transition-all",
-                                        selectedItem.is_external ? "bg-[hsl(var(--primary))] text-white" : "bg-slate-200 dark:bg-white/10 text-slate-400"
+                                        selectedItem.is_external ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))]"
                                     )}>
                                         <ExternalLink size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-[13px] font-bold text-slate-900 dark:text-white">Abrir en nueva pestaña</p>
-                                        <p className="text-[11px] text-slate-500">Marcar como enlace externo</p>
+                                        <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white">Abrir en nueva pestaña</p>
+                                        <p className="text-[11px] text-[hsl(var(--text-secondary))]">Marcar como enlace externo</p>
                                     </div>
                                 </div>
                                 <div className={clsx(
                                     "size-6 rounded-full border-2 flex items-center justify-center transition-all",
-                                    selectedItem.is_external ? "border-blue-600" : "border-slate-300 dark:border-white/10"
+                                    selectedItem.is_external ? "border-blue-600" : "border-[hsl(var(--border))] dark:border-white/10"
                                 )}>
                                     {selectedItem.is_external && <div className="size-3 bg-[hsl(var(--primary))] rounded-full" />}
                                 </div>
@@ -804,7 +804,7 @@ export default function CmsMenusManagement() {
                                     setSelectedItem(null);
                                     setSelectedIndex(null);
                                 }}
-                                className="w-full bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                className="w-full bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
                                 <Save size={14} />
                                 CERRAR Y LISTO

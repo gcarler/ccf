@@ -258,14 +258,14 @@ export default function CmsHomePage() {
       <div className="h-full overflow-y-auto">
         <div className="mx-auto max-w-3xl px-4 py-1.5 text-center">
           <h1 className="text-xl font-semibold">Inicia sesion</h1>
-          <p className="mt-3 text-slate-500">Necesitas una sesion valida para administrar el CMS.</p>
+          <p className="mt-3 text-[hsl(var(--text-secondary))]">Necesitas una sesion valida para administrar el CMS.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-slate-50/60 dark:bg-[#141517]">
+    <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]/60 dark:bg-[#141517]">
       <div className="space-y-3 px-4 py-2 lg:px-3">
         <AdminHero
           eyebrow="CMS"
@@ -288,12 +288,12 @@ export default function CmsHomePage() {
           {metricCards.map((metric) => {
             const Icon = metric.icon;
             return (
-              <div key={metric.label} className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+              <div key={metric.label} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[#111418]">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{metric.label}</p>
-                  <Icon size={15} className="text-slate-400" />
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric.label}</p>
+                  <Icon size={15} className="text-[hsl(var(--text-secondary))]" />
                 </div>
-                <p className="mt-3 text-lg font-semibold text-slate-900 dark:text-white">
+                <p className="mt-3 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">
                   {metricValue(metric.value, loading)}
                 </p>
               </div>
@@ -302,17 +302,17 @@ export default function CmsHomePage() {
         </section>
 
         <section className="grid grid-cols-1 gap-3 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
-            <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+            <div className="flex flex-col gap-3 border-b border-[hsl(var(--border))] pb-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Control de calidad</p>
-                <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">Prioridades editoriales</h2>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Control de calidad</p>
+                <h2 className="mt-1 text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white">Prioridades editoriales</h2>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-14 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                <div className="flex h-8 w-14 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm font-semibold text-[hsl(var(--text-primary))] dark:border-white/10 dark:bg-white/5 dark:text-white">
                   {qualityScore === null ? "..." : `${qualityScore}%`}
                 </div>
-                <p className="max-w-44 text-xs leading-relaxed text-slate-500">
+                <p className="max-w-44 text-xs leading-relaxed text-[hsl(var(--text-secondary))]">
                   Puntaje calculado desde colas pendientes, publicacion y metadata de media.
                 </p>
               </div>
@@ -326,7 +326,7 @@ export default function CmsHomePage() {
                   <Link
                     key={check.label}
                     href={canEdit ? check.href : "/cms"}
-                    className="group rounded-lg border border-slate-200 p-4 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/50"
+                    className="group rounded-lg border border-[hsl(var(--border))] p-4 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/50"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -334,8 +334,8 @@ export default function CmsHomePage() {
                           <Icon size={16} />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">{check.label}</p>
-                          <p className="mt-1 text-xs text-slate-500">{check.description}</p>
+                          <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{check.label}</p>
+                          <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">{check.description}</p>
                         </div>
                       </div>
                       <span className={isWarning ? "text-lg font-semibold text-amber-700 dark:text-amber-300" : "text-lg font-semibold text-emerald-700 dark:text-emerald-300"}>
@@ -348,15 +348,15 @@ export default function CmsHomePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Acceso</p>
-                <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">Rol editorial</h2>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acceso</p>
+                <h2 className="mt-1 text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white">Rol editorial</h2>
               </div>
               <ShieldCheck className="h-5 w-5 text-[hsl(var(--primary))]" />
             </div>
-            <p className="mt-3 text-sm leading-relaxed text-slate-500">
+            <p className="mt-3 text-sm leading-relaxed text-[hsl(var(--text-secondary))]">
               {canManage
                 ? "Puedes administrar sitios, contenido, temas y publicacion."
                 : canEdit
@@ -366,16 +366,16 @@ export default function CmsHomePage() {
 
             <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {quickLinks.map(({ label, href, description, icon: Icon }) => (
-                <Link key={href} href={href} className="rounded-lg border border-slate-200 p-3 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/50">
+                <Link key={href} href={href} className="rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/50">
                   <div className="flex items-center gap-2">
                     <Icon size={15} className="text-[hsl(var(--primary))]" />
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{label}</p>
+                    <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{label}</p>
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">{description}</p>
+                  <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">{description}</p>
                 </Link>
               ))}
               {quickLinks.length === 0 && (
-                <div className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500 dark:border-white/10">
+                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
                   No hay modulos de edicion disponibles para tu rol actual.
                 </div>
               )}
@@ -384,14 +384,14 @@ export default function CmsHomePage() {
         </section>
 
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          <div className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Testimonios recientes</h2>
-                <p className="mt-1 text-sm text-slate-500">Ultimas historias recibidas para revision y publicacion.</p>
+                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Testimonios recientes</h2>
+                <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Ultimas historias recibidas para revision y publicacion.</p>
               </div>
               {canEdit && (
-                <Link href="/cms/testimonials" className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 hover:border-blue-300 hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-slate-300">
+                <Link href="/cms/testimonials" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-blue-300 hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
                   Ver todo
                 </Link>
               )}
@@ -399,33 +399,33 @@ export default function CmsHomePage() {
 
             <div className="mt-4 space-y-3">
               {loading ? (
-                <p className="text-sm text-slate-500">Cargando historias...</p>
+                <p className="text-sm text-[hsl(var(--text-secondary))]">Cargando historias...</p>
               ) : recentTestimonials.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500 dark:border-white/10">
+                <p className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
                   Sin testimonios en la cola.
                 </p>
               ) : (
                 recentTestimonials.map((testimony) => (
-                  <div key={testimony.id} className="rounded-lg border border-slate-200 p-4 dark:border-white/10">
+                  <div key={testimony.id} className="rounded-lg border border-[hsl(var(--border))] p-4 dark:border-white/10">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{testimony.emotion || "Sin categoria"}</p>
                       <span className={testimony.is_approved ? "rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "rounded-full bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}>
                         {testimony.is_approved ? "Aprobado" : "Pendiente"}
                       </span>
                     </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-slate-600 dark:text-slate-200">{testimony.content}</p>
-                    <p className="mt-3 text-[11px] text-slate-400">{formatDate(testimony.created_at)}</p>
+                    <p className="mt-2 line-clamp-2 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{testimony.content}</p>
+                    <p className="mt-3 text-[11px] text-[hsl(var(--text-secondary))]">{formatDate(testimony.created_at)}</p>
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Ruta de gestion</h2>
-                <p className="mt-1 text-sm text-slate-500">Secuencia recomendada para publicar cambios del sitio.</p>
+                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Ruta de gestion</h2>
+                <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Secuencia recomendada para publicar cambios del sitio.</p>
               </div>
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
             </div>
@@ -439,14 +439,14 @@ export default function CmsHomePage() {
                 <Link
                   key={step.label}
                   href={step.href}
-                  className="flex items-start gap-3 rounded-lg border border-slate-200 p-3 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/50"
+                  className="flex items-start gap-3 rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/50"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-xs font-semibold text-white dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--bg-muted))] text-xs font-semibold text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))]">
                     {index + 1}
                   </span>
                   <span>
-                    <span className="block text-sm font-bold text-slate-900 dark:text-white">{step.label}</span>
-                    <span className="mt-1 block text-xs text-slate-500">{step.detail}</span>
+                    <span className="block text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{step.label}</span>
+                    <span className="mt-1 block text-xs text-[hsl(var(--text-secondary))]">{step.detail}</span>
                   </span>
                 </Link>
               ))}

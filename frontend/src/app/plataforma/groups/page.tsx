@@ -62,13 +62,13 @@ export default function GroupsPage() {
                                         <Home size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase">{group.name}</h3>
-                                        <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                                        <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase">{group.name}</h3>
+                                        <p className="text-xs font-medium text-[hsl(var(--text-secondary))] flex items-center gap-1">
                                             <MapPin size={12} /> {group.address || 'Ubicación pendiente'}
                                         </p>
                                     </div>
                                 </div>
-                                <button className="p-2 text-slate-400 hover:bg-slate-50 rounded-lg">
+                                <button className="p-2 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] rounded-lg">
                                     <MoreHorizontal size={18} />
                                 </button>
                             </div>
@@ -76,9 +76,9 @@ export default function GroupsPage() {
                     ))}
                     
                     {groups.length === 0 && (
-                        <div className="col-span-full py-1.5 text-center border-2 border-dashed border-slate-100 rounded-md">
-                            <Home size={48} className="mx-auto text-slate-100 mb-4" />
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">No hay casas registradas aún</p>
+                        <div className="col-span-full py-1.5 text-center border-2 border-dashed border-[hsl(var(--border))] rounded-md">
+                            <Home size={48} className="mx-auto text-[hsl(var(--text-secondary))] mb-4" />
+                            <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">No hay casas registradas aún</p>
                         </div>
                     )}
                 </div>

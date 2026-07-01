@@ -57,7 +57,7 @@ const EMOTION_CONFIG: Record<string, { color: string; bg: string; border: string
   "Restauración":  { color: "text-[hsl(var(--primary))]",    bg: "bg-blue-50 dark:bg-blue-900/20",    border: "border-blue-200 dark:border-blue-700/30",    emoji: "✨" },
   "Fe":            { color: "text-[hsl(var(--primary))]",  bg: "bg-blue-50 dark:bg-blue-900/20", border: "border-blue-200 dark:border-blue-700/30", emoji: "🙏" },
 };
-const defaultEmotion = { color: "text-slate-500", bg: "bg-slate-50 dark:bg-white/5", border: "border-slate-200 dark:border-white/10", emoji: "💬" };
+const defaultEmotion = { color: "text-[hsl(var(--text-secondary))]", bg: "bg-[hsl(var(--surface-1))] dark:bg-white/5", border: "border-[hsl(var(--border))] dark:border-white/10", emoji: "💬" };
 
 const EMOTION_FILTERS = ["Todos", "Sanidad", "Provisión", "Restauración", "Fe"];
 const TESTIMONIAL_VIEWS: ViewType[] = ["grid", "list", "table", "board", "kanban", "calendar", "gantt", "wiki"];
@@ -310,16 +310,16 @@ export default function CmsTestimonialsPage() {
       {filtered.map(t => {
         const cfg = EMOTION_CONFIG[t.emotion] ?? defaultEmotion;
         return (
-          <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-lg p-4 hover:border-rose-300 transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
+          <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 hover:border-rose-300 transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
             <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-[11px] font-semibold shrink-0", getAvatarColor(identityKey(t)))}>{getInitials(identityKey(t))}</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className={clsx("text-[10px] font-semibold uppercase tracking-wide", cfg.color)}>{cfg.emoji} {t.emotion || "Testimonio"}</span>
-                <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", t.status === "archived" ? "bg-slate-100 text-slate-500" : t.published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span>
+                <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span>
               </div>
-              <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-1 mt-1">{t.content}</p>
+              <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] line-clamp-1 mt-1">{t.content}</p>
             </div>
-            <span className="text-[10px] font-bold text-slate-400">{new Date(t.created_at).toLocaleDateString("es-CO")}</span>
+            <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{new Date(t.created_at).toLocaleDateString("es-CO")}</span>
           </button>
         );
       })}
@@ -327,24 +327,24 @@ export default function CmsTestimonialsPage() {
   );
 
   const renderTestimonialTable = () => (
-    <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto">
+    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto">
       <table className="w-full min-w-[480px] text-left">
-        <thead className="bg-slate-50 dark:bg-white/5">
+        <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
           <tr>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Testimonio</th>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden md:table-cell">Emoción</th>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden lg:table-cell">Estado</th>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden xl:table-cell">Fecha</th>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Acción</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Emoción</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Fecha</th>
+            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acción</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+        <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
           {filtered.map(t => (
-            <tr key={t.id} onClick={() => setSelected(t)} className={clsx("hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
-              <td className="px-4 py-3 text-sm text-slate-700 dark:text-slate-200 line-clamp-1 max-w-[420px]">{t.content}</td>
-              <td className="px-4 py-3 hidden md:table-cell text-[11px] font-bold text-slate-500">{t.emotion || "—"}</td>
-              <td className="px-4 py-3 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", t.status === "archived" ? "bg-slate-100 text-slate-500" : t.published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span></td>
-              <td className="px-4 py-3 hidden xl:table-cell text-[11px] text-slate-400">{new Date(t.created_at).toLocaleDateString("es-CO")}</td>
+            <tr key={t.id} onClick={() => setSelected(t)} className={clsx("hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] cursor-pointer", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
+              <td className="px-4 py-3 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-1 max-w-[420px]">{t.content}</td>
+              <td className="px-4 py-3 hidden md:table-cell text-[11px] font-bold text-[hsl(var(--text-secondary))]">{t.emotion || "—"}</td>
+              <td className="px-4 py-3 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span></td>
+              <td className="px-4 py-3 hidden xl:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{new Date(t.created_at).toLocaleDateString("es-CO")}</td>
               <td className="px-4 py-3">
                 <button onClick={e => { e.stopPropagation(); toggleArchive(t); }} disabled={processing === t.id} className="text-[9px] font-semibold uppercase tracking-wide text-amber-600 disabled:opacity-50">{t.status === "archived" ? "Restaurar" : "Archivar"}</button>
               </td>
@@ -358,16 +358,16 @@ export default function CmsTestimonialsPage() {
   const renderTestimonialBoard = () => (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-full">
       {testimonialGroups.map(group => (
-        <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-4">
+        <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-4">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</span>
-            <span className="text-[10px] font-semibold text-slate-400">{group.items.length}</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+            <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
           </div>
           <div className="space-y-3">
             {group.items.map(t => (
-              <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.04] border border-slate-200 dark:border-white/5 rounded-lg p-4 hover:border-rose-300 transition-all", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">{authorLabel(t)} · {t.emotion || "Testimonio"}</p>
-                <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-3">{t.content}</p>
+              <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-rose-300 transition-all", t.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{authorLabel(t)} · {t.emotion || "Testimonio"}</p>
+                <p className="text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-3">{t.content}</p>
               </button>
             ))}
           </div>
@@ -379,20 +379,20 @@ export default function CmsTestimonialsPage() {
   return (
     <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0d0e11] overflow-hidden">
       {/* ── Header toolbar ── */}
-      <header className="shrink-0 border-b border-slate-100 dark:border-white/5 px-3 py-1.5 flex items-center gap-4">
+      <header className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 px-3 py-1.5 flex items-center gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <MessageCircle size={18} className="text-rose-500 shrink-0" />
-          <h1 className="text-[13px] font-semibold uppercase tracking-wide text-slate-800 dark:text-white">
+          <h1 className="text-[13px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">
             Testimonios
           </h1>
         </div>
         <div className="relative">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar..."
-            className="pl-8 pr-4 py-2 rounded-md border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm outline-none w-48 focus:ring-2 focus:ring-rose-500/20"
+            className="pl-8 pr-4 py-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm outline-none w-48 focus:ring-2 focus:ring-rose-500/20"
           />
         </div>
         <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={TESTIMONIAL_VIEWS} />
@@ -405,13 +405,13 @@ export default function CmsTestimonialsPage() {
       </header>
 
       {/* ── Stats bar ── */}
-      <div className="shrink-0 border-b border-slate-100 dark:border-white/5 px-3 py-3 flex items-center gap-3">
+      <div className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 px-3 py-3 flex items-center gap-3">
         <div className="flex items-center gap-3">
           {[
-            { label: "Total", value: stats.total, icon: Users, color: "text-slate-600" },
+            { label: "Total", value: stats.total, icon: Users, color: "text-[hsl(var(--text-secondary))]" },
             { label: "Aprobados", value: stats.approved, icon: CheckCircle2, color: "text-emerald-600" },
             { label: "Pendientes", value: stats.pending, icon: Clock, color: "text-amber-500" },
-            { label: "Archivados", value: testimonials.filter(t => t.status === "archived").length, icon: Archive, color: "text-slate-500" },
+            { label: "Archivados", value: testimonials.filter(t => t.status === "archived").length, icon: Archive, color: "text-[hsl(var(--text-secondary))]" },
           ].map(s => (
             <button
               key={s.label}
@@ -426,7 +426,7 @@ export default function CmsTestimonialsPage() {
               )}
             >
               <s.icon size={14} className={s.color} />
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{s.label}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{s.label}</span>
               <span className={clsx("text-xl font-semibold tabular-nums leading-none", s.color)}>{s.value}</span>
             </button>
           ))}
@@ -434,7 +434,7 @@ export default function CmsTestimonialsPage() {
       </div>
 
       {/* ── Filter pills ── */}
-      <div className="shrink-0 px-3 py-3 flex items-center gap-2 border-b border-slate-100 dark:border-white/5">
+      <div className="shrink-0 px-3 py-3 flex items-center gap-2 border-b border-[hsl(var(--border))] dark:border-white/5">
         {EMOTION_FILTERS.map(f => {
           const cfg = EMOTION_CONFIG[f] ?? defaultEmotion;
           const count = f === "Todos" ? stats.total : stats.byEmotion.find(e => e.label === f)?.count ?? 0;
@@ -446,12 +446,12 @@ export default function CmsTestimonialsPage() {
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-all",
                 filter === f
                   ? `${cfg.bg} ${cfg.border} ${cfg.color}`
-                  : "bg-slate-100 dark:bg-white/5 border-transparent text-slate-500 hover:text-slate-700"
+                  : "bg-[hsl(var(--surface-2))] dark:bg-white/5 border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
               )}
             >
               {f !== "Todos" && <span>{cfg.emoji}</span>}
               {f}
-              <span className={clsx("ml-0.5 font-semibold", filter === f ? cfg.color : "text-slate-400")}>{count}</span>
+              <span className={clsx("ml-0.5 font-semibold", filter === f ? cfg.color : "text-[hsl(var(--text-secondary))]")}>{count}</span>
             </button>
           );
         })}
@@ -464,17 +464,17 @@ export default function CmsTestimonialsPage() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-48 rounded-lg bg-slate-100 dark:bg-white/5 animate-pulse" />
+                <div key={i} className="h-48 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 animate-pulse" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-1.5">
-              <div className="size-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center">
-                <MessageCircle size={36} strokeWidth={1} className="text-slate-300" />
+              <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center">
+                <MessageCircle size={36} strokeWidth={1} className="text-[hsl(var(--text-secondary))]" />
               </div>
               <div className="space-y-1">
-                <p className="font-semibold text-slate-700 dark:text-white uppercase tracking-tight">Sin testimonios</p>
-                <p className="text-sm text-slate-400">Ajusta los filtros o agrega uno nuevo</p>
+                <p className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Sin testimonios</p>
+                <p className="text-sm text-[hsl(var(--text-secondary))]">Ajusta los filtros o agrega uno nuevo</p>
               </div>
             </div>
           ) : viewType === "list" ? (
@@ -519,7 +519,7 @@ export default function CmsTestimonialsPage() {
                       "group relative rounded-lg border p-3 flex flex-col gap-4 cursor-pointer transition-all",
                       isSelected
                         ? `${cfg.bg} ${cfg.border} ring-2 ring-current`
-                        : "bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:shadow-lg"
+                        : "bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--border))] dark:hover:border-white/20 hover:shadow-lg"
                     )}
                   >
                     {/* Status badge */}
@@ -540,13 +540,13 @@ export default function CmsTestimonialsPage() {
                         {getInitials(identityKey(t))}
                       </div>
                       <div>
-                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">{authorLabel(t)}</p>
+                        <p className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{authorLabel(t)}</p>
                         <div className={clsx("flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide", cfg.color)}>
                           <span>{cfg.emoji}</span>
                           <span>{t.emotion || "Testimonio"}</span>
                         </div>
                         {getTestimonialMediaUrl(t) && (
-                          <div className="mt-1 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                          <div className="mt-1 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             {t.media_type === "video" ? <PlayCircle size={10} /> : t.media_type === "podcast" ? <Headphones size={10} /> : <ImageIcon size={10} />}
                             {getMediaLabel(t)}
                           </div>
@@ -555,13 +555,13 @@ export default function CmsTestimonialsPage() {
                     </div>
 
                     {/* Content */}
-                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-3 flex-1">
+                    <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed line-clamp-3 flex-1">
                       &ldquo;{t.content}&rdquo;
                     </p>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-white/5">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase">
+                    <div className="flex items-center justify-between pt-1 border-t border-[hsl(var(--border))] dark:border-white/5">
+                      <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase">
                         {new Date(t.created_at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
                       </p>
                       <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -591,7 +591,7 @@ export default function CmsTestimonialsPage() {
                         </button>
                         <button
                           onClick={e => { e.stopPropagation(); setSelected(isSelected ? null : t); }}
-                          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/10 transition-all"
+                          className="p-1 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all"
                         >
                           <ChevronRight size={14} />
                         </button>
@@ -613,15 +613,15 @@ export default function CmsTestimonialsPage() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 380, opacity: 0 }}
               transition={{ type: "spring", damping: 28, stiffness: 280 }}
-              className="w-96 shrink-0 border-l border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-[#111418] flex flex-col overflow-y-auto"
+              className="w-96 shrink-0 border-l border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-[#111418] flex flex-col overflow-y-auto"
             >
               {/* Panel header */}
-              <div className="p-3 flex items-center justify-between border-b border-slate-200 dark:border-white/5 shrink-0">
+              <div className="p-3 flex items-center justify-between border-b border-[hsl(var(--border))] dark:border-white/5 shrink-0">
                 <div className="flex items-center gap-2">
                   <MessageCircle size={14} className="text-rose-500" />
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Testimonio #{selected.id}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio #{selected.id}</p>
                 </div>
-                <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 transition-all">
+                <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 text-[hsl(var(--text-secondary))] transition-all">
                   <X size={14} />
                 </button>
               </div>
@@ -630,12 +630,12 @@ export default function CmsTestimonialsPage() {
               {(() => {
                 const cfg = EMOTION_CONFIG[selected.emotion] ?? defaultEmotion;
                 return (
-                  <div className={clsx("p-3 flex items-center gap-4 border-b border-slate-200 dark:border-white/5", cfg.bg)}>
+                  <div className={clsx("p-3 flex items-center gap-4 border-b border-[hsl(var(--border))] dark:border-white/5", cfg.bg)}>
                     <div className={clsx("size-7 rounded-lg flex items-center justify-center text-white text-base font-semibold shrink-0", getAvatarColor(identityKey(selected)))}>
                       {getInitials(identityKey(selected))}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white">{authorLabel(selected)}</p>
+                      <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{authorLabel(selected)}</p>
                       <div className={clsx("flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide mt-0.5", cfg.color)}>
                         <span>{cfg.emoji}</span>
                         <span>{selected.emotion || "Sin categoría"}</span>
@@ -643,7 +643,7 @@ export default function CmsTestimonialsPage() {
                     </div>
                     <span className={clsx(
                       "px-2 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide border",
-                      selected.status === "archived" ? "bg-slate-100 text-slate-500 border-slate-200" : selected.published ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-amber-50 text-amber-600 border-amber-200"
+                      selected.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]" : selected.published ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-amber-50 text-amber-600 border-amber-200"
                     )}>
                       {selected.status === "archived" ? "Archivado" : selected.published ? "✓ Publicado" : "⏳ Pendiente"}
                     </span>
@@ -654,12 +654,12 @@ export default function CmsTestimonialsPage() {
               {/* Full content */}
               <div className="p-3 flex-1 space-y-4">
                 <div className="space-y-2">
-                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Contenido completo</p>
+                  <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Contenido completo</p>
                   <textarea
                     value={selected.content}
                     onChange={event => setSelected(prev => prev ? { ...prev, content: event.target.value } : prev)}
                     rows={5}
-                    className="w-full resize-none text-sm text-slate-700 dark:text-slate-200 leading-relaxed bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-4 border border-slate-200 dark:border-white/10 outline-none focus:ring-2 focus:ring-rose-500/20"
+                    className="w-full resize-none text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-4 border border-[hsl(var(--border))] dark:border-white/10 outline-none focus:ring-2 focus:ring-rose-500/20"
                   />
                 </div>
 
@@ -677,7 +677,7 @@ export default function CmsTestimonialsPage() {
                         "flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-[9px] font-semibold uppercase tracking-wide transition-all",
                         (selected.media_type || "text") === option.id
                           ? "border-rose-300 bg-rose-50 text-rose-600"
-                          : "border-slate-200 dark:border-white/10 text-slate-400 hover:text-slate-700"
+                          : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                       )}
                     >
                       <option.icon size={12} /> {option.label}
@@ -687,9 +687,9 @@ export default function CmsTestimonialsPage() {
 
                 {(selected.media_type || "text") !== "text" && (
                   <div className="space-y-2">
-                    <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
+                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
                       <div className="mb-2 flex items-center justify-between gap-3">
-                        <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Seleccionar desde media</p>
+                        <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Seleccionar desde media</p>
                         <Link href="/cms/media" className="text-[9px] font-semibold uppercase tracking-wide text-rose-500 hover:underline">
                           Subir archivo
                         </Link>
@@ -698,12 +698,12 @@ export default function CmsTestimonialsPage() {
                         value={mediaSearch}
                         onChange={event => setMediaSearch(event.target.value)}
                         placeholder="Buscar imagen, video o audio..."
-                        className="mb-3 w-full text-xs bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
+                        className="mb-3 w-full text-xs bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
                       />
                       {mediaLoading ? (
-                        <p className="rounded-md bg-slate-50 dark:bg-white/5 px-3 py-3 text-xs font-bold text-slate-400">Cargando biblioteca...</p>
+                        <p className="rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-3 text-xs font-bold text-[hsl(var(--text-secondary))]">Cargando biblioteca...</p>
                       ) : compatibleMedia.length === 0 ? (
-                        <p className="rounded-md bg-slate-50 dark:bg-white/5 px-3 py-3 text-xs font-medium text-slate-500">
+                        <p className="rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-3 text-xs font-medium text-[hsl(var(--text-secondary))]">
                           No hay archivos compatibles para este tipo. Sube o restaura media desde la biblioteca.
                         </p>
                       ) : (
@@ -720,7 +720,7 @@ export default function CmsTestimonialsPage() {
                                   "flex items-center gap-2 rounded-md border px-3 py-2 text-left transition-all",
                                   active
                                     ? "border-rose-300 bg-rose-50 text-rose-600"
-                                    : "border-slate-200 dark:border-white/10 text-slate-500 hover:border-rose-300"
+                                    : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:border-rose-300"
                                 )}
                               >
                                 {mediaKind === "image" ? <ImageIcon size={13} /> : mediaKind === "video" ? <PlayCircle size={13} /> : <Headphones size={13} />}
@@ -732,7 +732,7 @@ export default function CmsTestimonialsPage() {
                       )}
                     </div>
 
-                    <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">URL multimedia</p>
+                    <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">URL multimedia</p>
                     <input
                       value={getTestimonialMediaUrl(selected)}
                       onChange={event => {
@@ -746,10 +746,10 @@ export default function CmsTestimonialsPage() {
                         });
                       }}
                       placeholder="Pega URL desde /cms/media"
-                      className="w-full text-xs bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
+                      className="w-full text-xs bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
                     />
                     {getTestimonialMediaUrl(selected) && (
-                      <div className="rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 overflow-hidden">
+                      <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 overflow-hidden">
                         {selected.media_type === "image" ? (
                           <OptimizedImage src={getTestimonialMediaUrl(selected)} alt="" fill sizes="400px" className="w-full max-h-48 object-cover" />
                         ) : selected.media_type === "video" ? (
@@ -766,8 +766,8 @@ export default function CmsTestimonialsPage() {
                   </div>
                 )}
 
-                <label className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Mostrar en inicio</span>
+                <label className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Mostrar en inicio</span>
                   <input
                     type="checkbox"
                     checked={!!selected.show_on_home}
@@ -777,15 +777,15 @@ export default function CmsTestimonialsPage() {
                 </label>
 
                 <div className="space-y-2">
-                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">Categoria / emocion</p>
+                  <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Categoria / emocion</p>
                   <input
                     value={selected.emotion || ""}
                     onChange={event => setSelected(prev => prev ? { ...prev, emotion: event.target.value } : prev)}
-                    className="w-full text-xs bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
+                    className="w-full text-xs bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-rose-500/20"
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-[10px] font-bold text-slate-400">
+                <div className="flex items-center justify-between text-[10px] font-bold text-[hsl(var(--text-secondary))]">
                   <span className="flex items-center gap-1">
                     <Clock size={11} />
                     {new Date(selected.created_at).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}
@@ -798,11 +798,11 @@ export default function CmsTestimonialsPage() {
               </div>
 
               {/* Actions */}
-              <div className="p-3 border-t border-slate-200 dark:border-white/5 space-y-3 shrink-0">
+              <div className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 space-y-3 shrink-0">
                 <button
                   onClick={saveSelected}
                   disabled={processing === selected.id}
-                  className="flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-slate-900 text-white dark:bg-[hsl(var(--bg-primary))] dark:text-slate-900 transition-all active:scale-95 disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-[hsl(var(--bg-muted))] text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))] transition-all active:scale-95 disabled:opacity-60"
                 >
                   <Save size={16} /> Guardar cambios
                 </button>

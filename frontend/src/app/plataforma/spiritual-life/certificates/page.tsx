@@ -34,7 +34,7 @@ export default function DigitalCertificatesPage() {
     }, [token, user]);
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 dark:bg-[#0f1012] overflow-y-auto font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] dark:bg-[#0f1012] overflow-y-auto font-display">
             <div className="max-w-5xl mx-auto w-full p-3 space-y-3 pb-4">
 
                 {/* Sub-header */}
@@ -46,10 +46,10 @@ export default function DigitalCertificatesPage() {
                             </div>
                             <span className="text-[10px] font-semibold uppercase tracking-wide text-cyan-600">Certificación Oficial</span>
                         </div>
-                        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">
+                        <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
                             Mis Certificados
                         </h1>
-                        <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                        <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
                             Descarga tus actas y diplomas con validez digital dentro del ecosistema CCF.
                         </p>
                     </div>
@@ -78,7 +78,7 @@ export default function DigitalCertificatesPage() {
                                     initial={{ opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.07 }}
-                                    className="group bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg p-3 hover:border-cyan-300 dark:hover:border-cyan-500/30 hover:shadow-lg transition-all relative overflow-hidden"
+                                    className="group bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-lg p-3 hover:border-cyan-300 dark:hover:border-cyan-500/30 hover:shadow-lg transition-all relative overflow-hidden"
                                 >
                                     {/* Decorative watermark */}
                                     <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.07] transition-all duration-700">
@@ -101,23 +101,23 @@ export default function DigitalCertificatesPage() {
                                         </div>
 
                                         <div>
-                                            <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                                            <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">
                                                 {cert.course_title ?? cert.certificate_type ?? 'Certificado'}
                                             </h3>
-                                            <p className="font-semibold text-slate-400 uppercase tracking-wide mt-1">
+                                            <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">
                                                 {new Date(cert.issued_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
                                             </p>
                                         </div>
 
-                                        <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-                                            <code className="text-[9px] font-mono text-slate-400 dark:text-slate-500">
+                                        <div className="pt-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
+                                            <code className="text-[9px] font-mono text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                                 {cert.certificate_code}
                                             </code>
                                             <div className="flex items-center gap-2">
                                                 <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg active:scale-95 transition-all shadow-sm shadow-blue-500/20">
                                                     <Download size={12} /> PDF
                                                 </button>
-                                                <button className="p-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 rounded-lg transition-all">
+                                                <button className="p-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-lg transition-all">
                                                     <ExternalLink size={14} />
                                                 </button>
                                             </div>
@@ -130,17 +130,17 @@ export default function DigitalCertificatesPage() {
                 )}
 
                 {/* Verification Banner */}
-                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-slate-200 dark:border-white/[0.06] rounded-lg p-3 flex flex-col md:flex-row items-center gap-4 shadow-sm">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-lg p-3 flex flex-col md:flex-row items-center gap-4 shadow-sm">
                     <div className="size-10 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 shrink-0">
                         <ShieldCheck size={20} />
                     </div>
                     <div className="flex-1 text-center md:text-left">
-                        <p className="text-[13px] font-bold text-slate-800 dark:text-white">Verificación de Autenticidad</p>
-                        <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white">Verificación de Autenticidad</p>
+                        <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5">
                             Cada certificado contiene un código único y token QR para validar su veracidad ante autoridades eclesiásticas.
                         </p>
                     </div>
-                    <button className="shrink-0 px-4 py-1.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-all active:scale-95">
+                    <button className="shrink-0 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-all active:scale-95">
                         Validar Código
                     </button>
                 </div>

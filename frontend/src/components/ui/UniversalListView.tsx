@@ -42,8 +42,8 @@ interface UniversalListViewProps {
 // ─── Priority Colors ──────────────────────────────────────────────────────────
 
 const PRIORITY_STYLES: Record<string, string> = {
-    low: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
-    medium: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    low: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-[hsl(var(--surface-2))] dark:text-[hsl(var(--text-secondary))]",
+    medium: "bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-[hsl(var(--primary))]",
     high: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
     urgent: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
 };

@@ -252,7 +252,7 @@ export default function AccessManagementPage() {
                     <div className="size-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[hsl(var(--primary))] shadow-sm">
                         <Shield size={16} />
                     </div>
-                    <span className="font-semibold text-slate-800 dark:text-white uppercase tracking-tight">{info.getValue() as string}</span>
+                    <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{info.getValue() as string}</span>
                 </div>
             ) 
         },
@@ -263,17 +263,17 @@ export default function AccessManagementPage() {
                 <div className="flex items-center gap-2">
                     <div className="flex -space-x-2">
                         {[1,2,3].slice(0, info.getValue() as number).map(i => (
-                            <div key={i} className="size-6 rounded-full border-2 border-white dark:border-slate-800 bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-400 uppercase">U</div>
+                            <div key={i} className="size-6 rounded-full border-2 border-white dark:border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-center justify-center text-[8px] font-bold text-[hsl(var(--text-secondary))] uppercase">U</div>
                         ))}
                     </div>
-                    <span className="text-[11px] font-bold text-slate-500 ml-2">{info.getValue() as number} vinculados</span>
+                    <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] ml-2">{info.getValue() as number} vinculados</span>
                 </div>
             ) 
         },
         { 
             id: 'actions', 
             header: '', 
-            cell: () => <button className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 opacity-0 group-hover:opacity-100 transition-all"><ChevronRight size={18} /></button> 
+            cell: () => <button className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] opacity-0 group-hover:opacity-100 transition-all"><ChevronRight size={18} /></button> 
         }
     ], []);
 
@@ -283,17 +283,17 @@ export default function AccessManagementPage() {
             header: 'Usuario', 
             cell: info => (
                 <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 border border-slate-200 dark:border-white/10 shadow-inner">
+                    <div className="size-8 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 shadow-inner">
                         <UserCircle size={18} />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-[13px] font-bold text-slate-800 dark:text-slate-100">{info.getValue() as string}</span>
-                        <span className="text-[10px] text-slate-400 font-medium">#{info.row.original.id}</span>
+                        <span className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{info.getValue() as string}</span>
+                        <span className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">#{info.row.original.id}</span>
                     </div>
                 </div>
             ) 
         },
-        { accessorKey: 'email', header: 'Email', cell: info => <span className="text-[12px] text-slate-500">{info.getValue() as string}</span> },
+        { accessorKey: 'email', header: 'Email', cell: info => <span className="text-[12px] text-[hsl(var(--text-secondary))]">{info.getValue() as string}</span> },
         { 
             accessorKey: 'role', 
             header: 'Rol Asignado', 
@@ -308,8 +308,8 @@ export default function AccessManagementPage() {
             header: 'Estado', 
             cell: info => (
                 <div className="flex items-center gap-2">
-                    <div className={clsx("size-2 rounded-full", info.getValue() ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-slate-300")} />
-                    <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wide">{info.getValue() ? 'Activo' : 'Inactivo'}</span>
+                    <div className={clsx("size-2 rounded-full", info.getValue() ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-[hsl(var(--surface-2))]")} />
+                    <span className="text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide">{info.getValue() ? 'Activo' : 'Inactivo'}</span>
                 </div>
             ) 
         }
@@ -399,7 +399,7 @@ export default function AccessManagementPage() {
                         key={row.id || title}
                         onClick={() => handleOpenEntity(row)}
                         className={clsx(
-                            'text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 hover:border-blue-300 hover:shadow-xl transition-all',
+                            'text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 hover:border-blue-300 hover:shadow-xl transition-all',
                             mode === 'list' && 'flex items-center justify-between gap-4'
                         )}
                     >
@@ -408,11 +408,11 @@ export default function AccessManagementPage() {
                                 {activeTab === 'roles' ? <Shield size={22} /> : <UserCircle size={22} />}
                             </div>
                             <div>
-                                <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{title}</h3>
-                                <p className="mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{subtitle}</p>
+                                <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{title}</h3>
+                                <p className="mt-1 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{subtitle}</p>
                             </div>
                         </div>
-                        {mode === 'list' && <ChevronRight size={18} className="text-slate-300" />}
+                        {mode === 'list' && <ChevronRight size={18} className="text-[hsl(var(--text-secondary))]" />}
                     </button>
                 );
             })}
@@ -422,16 +422,16 @@ export default function AccessManagementPage() {
     const renderAccessBoard = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedRows.map((group) => (
-                <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
+                <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</span>
-                        <span className="font-semibold text-slate-400">{group.rows.length}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                        <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.rows.length}</span>
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((row) => (
-                            <button key={row.id || row.name || row.username} onClick={() => handleOpenEntity(row)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-4 hover:border-blue-300 transition-all">
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{activeTab === 'roles' ? row.name : row.username || row.email}</p>
-                                <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide">{activeTab === 'roles' ? `${row.users_count || 0} usuarios` : row.role}</p>
+                            <button key={row.id || row.name || row.username} onClick={() => handleOpenEntity(row)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-blue-300 transition-all">
+                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{activeTab === 'roles' ? row.name : row.username || row.email}</p>
+                                <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{activeTab === 'roles' ? `${row.users_count || 0} usuarios` : row.role}</p>
                             </button>
                         ))}
                     </div>
@@ -466,10 +466,10 @@ export default function AccessManagementPage() {
             />
 
             {/* Cinematic Tab Navigation */}
-            <div className="flex px-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 shrink-0 relative overflow-hidden">
+            <div className="flex px-4 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0 relative overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
-                <button onClick={() => setActiveTab('roles')} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10", activeTab === 'roles' ? "text-[hsl(var(--primary))] border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-white/50")}>Roles Ministeriales</button>
-                <button onClick={() => setActiveTab('users')} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10", activeTab === 'users' ? "text-[hsl(var(--primary))] border-blue-600" : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-white/50")}>Auditoría de Usuarios</button>
+                <button onClick={() => setActiveTab('roles')} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10", activeTab === 'roles' ? "text-[hsl(var(--primary))] border-blue-600" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-white/50")}>Roles Ministeriales</button>
+                <button onClick={() => setActiveTab('users')} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10", activeTab === 'users' ? "text-[hsl(var(--primary))] border-blue-600" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-white/50")}>Auditoría de Usuarios</button>
             </div>
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4">
@@ -480,13 +480,13 @@ export default function AccessManagementPage() {
                         </div>
                     ) : currentRows.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-1.5 text-center">
-                            <div className="size-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center mb-3 border border-slate-200 dark:border-white/10">
-                                <Shield size={32} className="text-slate-300" />
+                            <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center mb-3 border border-[hsl(var(--border))] dark:border-white/10">
+                                <Shield size={32} className="text-[hsl(var(--text-secondary))]" />
                             </div>
-                            <h3 className="text-lg font-bold text-slate-400 uppercase tracking-wide mb-2">
+                            <h3 className="text-lg font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-2">
                                 {activeTab === 'roles' ? 'Sin roles ministeriales' : 'Sin usuarios'}
                             </h3>
-                            <p className="text-xs text-slate-400 font-medium max-w-md">
+                            <p className="text-xs text-[hsl(var(--text-secondary))] font-medium max-w-md">
                                 {activeTab === 'roles'
                                     ? 'Crea un nuevo rol ministerial para comenzar a gestionar permisos.'
                                     : 'No hay usuarios registrados en la plataforma.'}
@@ -522,7 +522,7 @@ export default function AccessManagementPage() {
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm"
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm"
                         >
                             <DataTable
                                 data={currentRows}
@@ -540,7 +540,7 @@ export default function AccessManagementPage() {
                 subtitle={activeTab === 'roles' ? 'Matriz de Privilegios por Módulo' : 'Control de Identidad Individual'}
                 actions={
                     <div className="flex gap-3">
-                        <button className="px-3 py-2.5 bg-slate-100 dark:bg-white/5 text-slate-500 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-slate-200 transition-all" onClick={() => setIsDrawerOpen(false)}>Cerrar</button>
+                        <button className="px-3 py-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] transition-all" onClick={() => setIsDrawerOpen(false)}>Cerrar</button>
                         <button 
                             disabled={isSaving}
                             className="px-4 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center gap-2 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all" 
@@ -555,7 +555,7 @@ export default function AccessManagementPage() {
                     {/* Module Permission Matrix */}
                     <section className="space-y-3">
                         <div className="flex items-center justify-between px-2">
-                            <h4 className="font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-3">
+                            <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                                 <Layout size={16} className="text-[hsl(var(--primary))]" /> Matriz de Operaciones
                             </h4>
                             <div className="flex items-center gap-2 px-3 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
@@ -580,13 +580,13 @@ export default function AccessManagementPage() {
                     </section>
 
                     {/* Industrial Disclaimer */}
-                    <section className="p-4 bg-slate-900 rounded-lg text-white relative overflow-hidden group shadow-2xl">
+                    <section className="p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white relative overflow-hidden group shadow-2xl">
                         <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:rotate-12 transition-transform duration-1000"><Lock size={80} /></div>
                         <div className="relative z-10 space-y-4">
                             <div className="flex items-center gap-3 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[10px]">
                                 <AlertCircle size={14} /> Protocolo de Seguridad
                             </div>
-                            <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                            <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
                                 {activeTab === 'roles'
                                     ? 'Los cambios realizados en esta matriz afectarán inmediatamente el acceso de todos los usuarios vinculados a este rol. Asegúrese de validar el impacto antes de confirmar la misión.'
                                     : 'Los permisos asignados aquí sobrescriben los del rol del usuario. Los niveles jerárquicos implican permisos inferiores (gestor incluye editor y lector).'
@@ -606,17 +606,17 @@ const LEVEL_LABELS: Record<string, string> = {
 
 function PermissionRow({ moduleId, label, icon: Icon, color, level, onChange }: any) {
     return (
-        <div className="permission-card p-3 bg-slate-50 dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10 flex items-center justify-between group">
+        <div className="permission-card p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-between group">
             <div className="flex items-center gap-3">
-                <div className={clsx("size-7 rounded-[1.25rem] flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-black/40 shadow-sm border border-slate-100 dark:border-white/5 transition-all group-hover:scale-110 group-hover:rotate-3", color)}>
+                <div className={clsx("size-7 rounded-[1.25rem] flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-black/40 shadow-sm border border-[hsl(var(--border))] dark:border-white/5 transition-all group-hover:scale-110 group-hover:rotate-3", color)}>
                     <Icon size={24} strokeWidth={1.5} />
                 </div>
                 <div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-none mb-1">{label}</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Estado: <span className="text-[hsl(var(--primary))]">{LEVEL_LABELS[level] || level}</span></p>
+                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight leading-none mb-1">{label}</p>
+                    <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">Estado: <span className="text-[hsl(var(--primary))]">{LEVEL_LABELS[level] || level}</span></p>
                 </div>
             </div>
-            <div className="flex bg-[hsl(var(--bg-primary))] dark:bg-black/40 p-1.5 rounded-lg border border-slate-200 dark:border-white/10 shadow-inner">
+            <div className="flex bg-[hsl(var(--bg-primary))] dark:bg-black/40 p-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 shadow-inner">
                 <LevelBtn active={level === 'none'} icon={XCircle} tooltip="Sin Acceso" onClick={() => onChange('none')} />
                 <LevelBtn active={level === 'read'} icon={Eye} tooltip="Solo Lectura" onClick={() => onChange('read')} />
                 {moduleId === 'academy' && <LevelBtn active={level === 'study'} icon={BookOpen} tooltip="Estudiante" onClick={() => onChange('study')} />}
@@ -634,7 +634,7 @@ function LevelBtn({ active, icon: Icon, tooltip, onClick }: any) {
             onClick={onClick}
             className={clsx(
                 "p-2 rounded-md transition-all duration-300 relative group/btn",
-                active ? "bg-slate-900 dark:bg-[hsl(var(--bg-primary))] text-white dark:text-slate-900 shadow-xl scale-110" : "text-slate-300 hover:text-slate-600 dark:hover:text-slate-200"
+                active ? "bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] shadow-xl scale-110" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]"
             )}
         >
             <Icon size={16} />

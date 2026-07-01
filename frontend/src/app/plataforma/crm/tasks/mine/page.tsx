@@ -18,11 +18,11 @@ const priorityTone: Record<string, string> = {
     'urgent': 'bg-rose-100 text-rose-600 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800',
     'high': 'bg-orange-100 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800',
     'normal': 'bg-blue-100 text-[hsl(var(--primary))] border-blue-200 dark:bg-blue-900/20 dark:border-blue-800',
-    'low': 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:border-slate-700'
+    'low': 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:bg-[hsl(var(--surface-2))] dark:border-[hsl(var(--border))]'
 };
 
 const statusTone: Record<string, string> = {
-    'todo': 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800',
+    'todo': 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:bg-[hsl(var(--surface-2))]',
     'done': 'bg-emerald-100 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
 };
 
@@ -142,22 +142,22 @@ export default function MyTasks() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="flex-1 min-w-[240px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-md p-4 shadow-sm relative overflow-hidden group task-aura"
+                    className="flex-1 min-w-[240px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-md p-4 shadow-sm relative overflow-hidden group task-aura"
                     style={{ '--aura-color': 'rgba(244, 63, 94, 0.15)' } as any}
                 >
                     <div className="flex items-center gap-3 mb-3">
                         <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-md text-rose-500 border border-rose-100 dark:border-rose-800"><AlertCircle size={18} /></div>
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Vencidas</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vencidas</span>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 tracking-tighter">{stats.overdue}</h3>
+                    <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2 tracking-tighter">{stats.overdue}</h3>
                     <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wide">Requiere atención</p>
                 </motion.div>
             </section>
 
             {/* List View Cinematic */}
-            <section className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] rounded-lg p-4 shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-50 dark:border-white/5">
+            <section className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] rounded-lg p-4 shadow-2xl shadow-black/10/50 dark:shadow-none border border-[hsl(var(--border))] dark:border-white/5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-lg">
+                    <div className="flex p-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg">
                         {[
                             { id: 'pending', label: 'Pendientes' },
                             { id: 'completed', label: 'Completadas' }
@@ -167,7 +167,7 @@ export default function MyTasks() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={clsx(
                                     "px-4 py-2 rounded-md text-[11px] font-bold uppercase tracking-wide transition-all",
-                                    activeTab === tab.id ? "bg-[hsl(var(--surface-1))] dark:bg-slate-700 text-[hsl(var(--primary))] shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                    activeTab === tab.id ? "bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                                 )}
                             >
                                 {tab.label}
@@ -175,8 +175,8 @@ export default function MyTasks() {
                         ))}
                     </div>
                     <div className="relative w-full md:w-64">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                        <input className="w-full pl-11 pr-4 py-2.5 rounded-md border border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-white/5 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-xs font-bold" placeholder="Buscar en mi agenda..." />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={16} />
+                        <input className="w-full pl-11 pr-4 py-2.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-xs font-bold" placeholder="Buscar en mi agenda..." />
                     </div>
                 </div>
 
@@ -185,25 +185,25 @@ export default function MyTasks() {
                     description="Las notas se vinculan automáticamente a la Hoja de Vida del persona."
                 />
 
-                <div className="rounded-md border border-slate-100 dark:border-white/5 overflow-hidden bg-slate-50/30 dark:bg-transparent">
+                <div className="rounded-md border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden bg-[hsl(var(--surface-1))]/30 dark:bg-transparent">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-1.5 gap-4">
                             <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={32} />
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Sincronizando tareas pastorales...</p>
+                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizando tareas pastorales...</p>
                         </div>
                     ) : filteredTasks.length > 0 ? (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
-                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-wide">Actividad</th>
-                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-wide">Contacto Vinc.</th>
-                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-wide">Límite</th>
-                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-wide">Prioridad</th>
-                                        <th className="px-3 py-2 text-[9px] font-bold text-slate-400 uppercase tracking-wide text-right">Estado</th>
+                                    <tr className="bg-[hsl(var(--surface-1))]/80 dark:bg-white/5 border-b border-[hsl(var(--border))] dark:border-white/5">
+                                        <th className="px-3 py-2 text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Actividad</th>
+                                        <th className="px-3 py-2 text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Contacto Vinc.</th>
+                                        <th className="px-3 py-2 text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Límite</th>
+                                        <th className="px-3 py-2 text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Prioridad</th>
+                                        <th className="px-3 py-2 text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-right">Estado</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-white/5 bg-[hsl(var(--surface-1))] dark:bg-transparent">
+                                <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5 bg-[hsl(var(--surface-1))] dark:bg-transparent">
                                     <AnimatePresence mode="popLayout">
                                         {filteredTasks.map((task, idx) => (
                                             <motion.tr 
@@ -212,27 +212,27 @@ export default function MyTasks() {
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: idx * 0.05 }}
                                                 key={task.id} 
-                                                className="group hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all cursor-pointer"
+                                                className="group hover:bg-[hsl(var(--surface-1))]/50 dark:hover:bg-white/5 transition-all cursor-pointer"
                                             >
                                                 <td className="px-3 py-2">
                                                     <div className="flex items-center gap-4">
                                                         <div className="size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
                                                         <div>
-                                                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight uppercase">{task.title}</p>
-                                                            <p className="text-[10px] text-slate-400 font-bold line-clamp-1">{task.description || 'Sin descripción adicional'}</p>
+                                                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] tracking-tight uppercase">{task.title}</p>
+                                                            <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold line-clamp-1">{task.description || 'Sin descripción adicional'}</p>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-3 py-2">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="size-7 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-500">
+                                                        <div className="size-7 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-500">
                                                             <Users size={14} />
                                                         </div>
-                                                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-tight">{task.contact_name}</span>
+                                                        <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight">{task.contact_name}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-3 py-2">
-                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{task.due_date ? formatDueLabel(task.due_date) : 'Abierto'}</span>
+                                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{task.due_date ? formatDueLabel(task.due_date) : 'Abierto'}</span>
                                                 </td>
                                                 <td className="px-3 py-2">
                                                     <span className={clsx("px-3 py-1 rounded-lg text-[8px] font-bold uppercase tracking-wide border", priorityTone[task.priority.toLowerCase()] || priorityTone.normal)}>
@@ -244,7 +244,7 @@ export default function MyTasks() {
                                                         <span className={clsx("px-3 py-1 rounded-lg text-[8px] font-bold uppercase tracking-wide", statusTone[task.status] || statusTone.todo)}>
                                                             {task.status === 'done' ? 'Completada' : 'Pendiente'}
                                                         </span>
-                                                        <button className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-md text-slate-300 transition-all"><MoreHorizontal size={16} /></button>
+                                                        <button className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] transition-all"><MoreHorizontal size={16} /></button>
                                                     </div>
                                                 </td>
                                             </motion.tr>
@@ -255,10 +255,10 @@ export default function MyTasks() {
                         </div>
                     ) : (
                         <div className="py-1.5 flex flex-col items-center justify-center text-center space-y-4">
-                            <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300"><CheckCircle2 size={32} strokeWidth={1} /></div>
+                            <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]"><CheckCircle2 size={32} strokeWidth={1} /></div>
                             <div className="space-y-1">
-                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-tight">Todo al día</p>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide leading-loose">No tienes tareas pendientes en esta categoría.</p>
+                                <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight">Todo al día</p>
+                                <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-loose">No tienes tareas pendientes en esta categoría.</p>
                             </div>
                         </div>
                     )}

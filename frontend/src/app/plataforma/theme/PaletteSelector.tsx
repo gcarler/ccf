@@ -26,12 +26,12 @@ export default function PaletteSelector() {
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Temas Día / Noche</h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Personaliza el ambiente visual de la plataforma.</p>
+                    <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Temas Día / Noche</h2>
+                    <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Personaliza el ambiente visual de la plataforma.</p>
                 </div>
                 <button
                     onClick={toggleTheme}
-                    className="text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition"
+                    className="text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition"
                 >
                     Alternar
                 </button>
@@ -46,14 +46,14 @@ export default function PaletteSelector() {
                             onClick={() => setTheme(id)}
                             className={`text-left p-4 rounded-lg border transition-all duration-300 ${
                                 isActive
-                                    ? 'border-blue-500 shadow-lg shadow-blue-500/10 bg-white/90 dark:bg-slate-900'
-                                    : 'border-slate-200 dark:border-white/10 bg-white/60 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                                    ? 'border-blue-500 shadow-lg shadow-blue-500/10 bg-white/90 dark:bg-[hsl(var(--bg-muted))]'
+                                    : 'border-[hsl(var(--border))] dark:border-white/10 bg-white/60 dark:bg-white/5 hover:border-[hsl(var(--border))] dark:hover:border-white/20'
                             }`}
                         >
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{label}</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
+                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{label}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{description}</p>
                                 </div>
                                 <div className="flex -space-x-1">
                                     {swatches.map((hex) => (

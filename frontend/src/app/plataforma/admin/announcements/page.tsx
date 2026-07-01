@@ -134,18 +134,18 @@ export default function AnnouncementsAdmin() {
     const renderList = () => (
         <div className="space-y-4">
             {announcements.map((ann) => (
-                <div key={ann.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div key={ann.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-[hsl(var(--primary))] text-[10px] font-semibold uppercase tracking-wide">{ann.category}</span>
                             {ann.featured && <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase">Destacado</span>}
                             <span className={clsx(
                                 "px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase",
-                                ann.status === 'published' ? "bg-emerald-50 text-emerald-600" : ann.status === 'draft' ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-slate-500"
+                                ann.status === 'published' ? "bg-emerald-50 text-emerald-600" : ann.status === 'draft' ? "bg-amber-50 text-amber-600" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
                             )}>{STATUS_LABELS[ann.status]}</span>
                         </div>
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white uppercase tracking-tight">{ann.title}</h3>
-                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{ann.content}</p>
+                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{ann.title}</h3>
+                        <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] line-clamp-2">{ann.content}</p>
                     </div>
                     <div className="self-start md:self-center flex items-center gap-2">
                         {ann.status !== 'published' && (
@@ -154,11 +154,11 @@ export default function AnnouncementsAdmin() {
                             </button>
                         )}
                         {ann.status !== 'archived' && (
-                            <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-rose-600 rounded-md transition-all" title="Archivar">
+                            <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-rose-600 rounded-md transition-all" title="Archivar">
                                 <Archive size={16} />
                             </button>
                         )}
-                        <button className="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-[hsl(var(--primary))] rounded-md transition-all"><Edit3 size={16} /></button>
+                        <button className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-md transition-all"><Edit3 size={16} /></button>
                     </div>
                 </div>
             ))}
@@ -166,26 +166,26 @@ export default function AnnouncementsAdmin() {
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
             <table className="w-full min-w-[480px] text-left">
-                <thead className="bg-slate-50 dark:bg-white/5">
+                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                     <tr>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Comunicado</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden md:table-cell">Categoría</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 hidden lg:table-cell">Fecha</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Estado</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comunicado</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Categoría</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Fecha</th>
+                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                     {announcements.map((ann) => (
-                        <tr key={ann.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03]">
-                            <td className="px-3 py-1.5 text-sm font-bold text-slate-800 dark:text-slate-100">{ann.title}</td>
-                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-slate-500">{ann.category}</td>
-                            <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-slate-400">{new Date(ann.date).toLocaleDateString('es-ES')}</td>
+                        <tr key={ann.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
+                            <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{ann.title}</td>
+                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{ann.category}</td>
+                            <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{new Date(ann.date).toLocaleDateString('es-ES')}</td>
                             <td className="px-3 py-1.5">
                                 <span className={clsx(
                                     "px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase",
-                                    ann.status === 'published' ? "bg-emerald-50 text-emerald-600" : ann.status === 'draft' ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-slate-500"
+                                    ann.status === 'published' ? "bg-emerald-50 text-emerald-600" : ann.status === 'draft' ? "bg-amber-50 text-amber-600" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
                                 )}>
                                     {STATUS_LABELS[ann.status]}
                                 </span>
@@ -200,17 +200,17 @@ export default function AnnouncementsAdmin() {
     const renderBoard = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedAnnouncements.map((group) => (
-                <section key={group.id} className="rounded-lg bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-3">
+                <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</span>
-                        <span className="font-semibold text-slate-400">{group.items.length}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                        <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
                     </div>
                     <div className="space-y-4">
                         {group.items.map((ann) => (
-                            <div key={ann.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-slate-100 dark:border-white/5 rounded-lg p-3">
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-tight">{ann.title}</p>
+                            <div key={ann.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3">
+                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{ann.title}</p>
                                 <p className="mt-2 text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide">{ann.category} · {STATUS_LABELS[ann.status]}</p>
-                                <p className="mt-4 text-xs text-slate-500 line-clamp-3">{ann.content}</p>
+                                <p className="mt-4 text-xs text-[hsl(var(--text-secondary))] line-clamp-3">{ann.content}</p>
                             </div>
                         ))}
                     </div>
@@ -270,13 +270,13 @@ export default function AnnouncementsAdmin() {
                         >
                             <Sparkles size={12} className="animate-pulse" /> Difusión de Visión CCF
                         </motion.div>
-                        <h1 className="text-xl lg:text-xl font-bold text-slate-900 dark:text-white tracking-tighter leading-none">
+                        <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
                             El latido de la <br/> <span className="text-[hsl(var(--primary))] italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-400">Comunidad.</span>
                         </h1>
                     </header>
 
                     {loading ? (
-                        <div className="py-1.5 flex flex-col items-center justify-center gap-3 text-slate-400 font-semibold uppercase tracking-wide animate-pulse">
+                        <div className="py-1.5 flex flex-col items-center justify-center gap-3 text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide animate-pulse">
                             <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={48} strokeWidth={1.5} /> Sincronizando Noticias...
                         </div>
                     ) : viewType === 'list' ? (
@@ -318,8 +318,8 @@ export default function AnnouncementsAdmin() {
                                             <span className="px-3 py-2 bg-white/10 backdrop-blur-xl text-white text-[10px] font-semibold uppercase tracking-wide rounded-full border border-white/10">{featuredAnn.category}</span>
                                         </div>
                                         <h2 className="text-white text-lg lg:text-xl font-bold leading-tight tracking-tighter uppercase max-w-4xl">{featuredAnn.title}</h2>
-                                        <p className="text-slate-300 text-lg font-medium line-clamp-2 max-w-2xl leading-relaxed italic">&ldquo;{featuredAnn.content.substring(0, 150)}...&rdquo;</p>
-                                        <button className="mt-4 px-4 py-2 bg-[hsl(var(--bg-primary))] text-slate-900 rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] active:scale-95 transition-all flex items-center gap-3 group/btn">
+                                        <p className="text-[hsl(var(--text-secondary))] text-lg font-medium line-clamp-2 max-w-2xl leading-relaxed italic">&ldquo;{featuredAnn.content.substring(0, 150)}...&rdquo;</p>
+                                        <button className="mt-4 px-4 py-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] active:scale-95 transition-all flex items-center gap-3 group/btn">
                                             Editar Reporte <Edit3 size={18} className="group-hover/btn:rotate-12 transition-transform" />
                                         </button>
                                     </div>
@@ -329,10 +329,10 @@ export default function AnnouncementsAdmin() {
                             {/* Feed Grid */}
                             <section className="space-y-3">
                                 <div className="flex items-center justify-between px-4">
-                                    <h3 className="text-slate-900 dark:text-white text-xl font-bold tracking-wide uppercase flex items-center gap-3">
+                                    <h3 className="text-[hsl(var(--text-primary))] dark:text-white text-xl font-bold tracking-wide uppercase flex items-center gap-3">
                                         <Megaphone size={20} className="text-[hsl(var(--primary))]" /> Últimas Actualizaciones
                                     </h3>
-                                    <span className="font-semibold text-slate-400 uppercase tracking-wide">{announcements.filter((ann) => ann.status === 'published').length} Comunicados Publicados</span>
+                                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{announcements.filter((ann) => ann.status === 'published').length} Comunicados Publicados</span>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -343,25 +343,25 @@ export default function AnnouncementsAdmin() {
                                                 initial={{ opacity: 0, y: 30 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: i * 0.05 }}
-                                                className="ann-aura group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-slate-100 dark:border-white/5 p-4 rounded-lg flex flex-col gap-3 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden"
+                                                className="ann-aura group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg flex flex-col gap-3 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden"
                                                 style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}
                                             >
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex flex-col gap-2">
                                                         <span className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-[10px] font-semibold uppercase tracking-wide">{ann.category}</span>
-                                                        <h4 className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter uppercase leading-none group-hover:text-[hsl(var(--primary))] transition-colors">{ann.title}</h4>
+                                                        <h4 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter uppercase leading-none group-hover:text-[hsl(var(--primary))] transition-colors">{ann.title}</h4>
                                                     </div>
-                                                    <div className="size-7 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-[hsl(var(--primary))] transition-all">
+                                                    <div className="size-7 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-all">
                                                         <Megaphone size={20} />
                                                     </div>
                                                 </div>
                                                 
-                                                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed line-clamp-3 italic">
+                                                <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm font-medium leading-relaxed line-clamp-3 italic">
                                                     {ann.content}
                                                 </p>
 
-                                                <div className="flex items-center justify-between pt-8 border-t border-slate-50 dark:border-white/5">
-                                                    <div className="flex items-center gap-2 text-slate-400">
+                                                <div className="flex items-center justify-between pt-8 border-t border-[hsl(var(--border))] dark:border-white/5">
+                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
                                                         <Calendar size={14} />
                                                         <span className="text-[10px] font-semibold uppercase tracking-wide">{new Date(ann.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}</span>
                                                     </div>
@@ -371,8 +371,8 @@ export default function AnnouncementsAdmin() {
                                                                 <CheckCircle2 size={16} />
                                                             </button>
                                                         )}
-                                                        <button className="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-[hsl(var(--primary))] rounded-md transition-all"><Edit3 size={16} /></button>
-                                                        <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-rose-600 rounded-md transition-all" title="Archivar"><X size={16} /></button>
+                                                        <button className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-md transition-all"><Edit3 size={16} /></button>
+                                                        <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-rose-600 rounded-md transition-all" title="Archivar"><X size={16} /></button>
                                                     </div>
                                                 </div>
                                             </motion.div>
@@ -382,14 +382,14 @@ export default function AnnouncementsAdmin() {
                                     {/* Empty State / Add Card */}
                                     <div 
                                         onClick={() => router.push('/plataforma/admin/announcements/new')}
-                                        className="bg-slate-50/50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center space-y-3 hover:border-blue-500/50 hover:bg-blue-50/50 transition-all cursor-pointer group"
+                                        className="bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center space-y-3 hover:border-blue-500/50 hover:bg-blue-50/50 transition-all cursor-pointer group"
                                     >
-                                        <div className="size-8 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] shadow-xl flex items-center justify-center text-slate-300 group-hover:text-[hsl(var(--primary))] group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">
+                                        <div className="size-8 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] shadow-xl flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">
                                             <Plus size={40} strokeWidth={1.5} />
                                         </div>
                                         <div>
-                                            <p className="text-xl font-bold text-slate-800 dark:text-white uppercase tracking-tight">Nuevo Mensaje</p>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-1">Impactar a toda la congregación</p>
+                                            <p className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Nuevo Mensaje</p>
+                                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">Impactar a toda la congregación</p>
                                         </div>
                                     </div>
                                 </div>

@@ -125,8 +125,8 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                             {project.title.slice(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{project.title}</p>
-                            <p className="text-[11px] text-slate-400 truncate">{project.description || 'Sin descripción'}</p>
+                            <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{project.title}</p>
+                            <p className="text-[11px] text-[hsl(var(--text-secondary))] truncate">{project.description || 'Sin descripción'}</p>
                         </div>
                     </div>
                 );
@@ -138,7 +138,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             cell: ({ getValue }) => {
                 const status = String(getValue() || '').toUpperCase();
                 return (
-                    <span className="px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-slate-200 dark:border-white/10 text-slate-500">
+                    <span className="px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]">
                         {status || 'SIN ESTADO'}
                     </span>
                 );
@@ -149,13 +149,13 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             header: 'Tareas',
             cell: ({ row }) => {
                 const tasks = row.original.tasks?.length || 0;
-                return <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{tasks}</span>;
+                return <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{tasks}</span>;
             },
         },
         {
             accessorKey: 'created_at',
             header: 'Creado',
-            cell: ({ getValue }) => <span className="text-sm text-slate-500">{formatDate(getValue() as string)}</span>,
+            cell: ({ getValue }) => <span className="text-sm text-[hsl(var(--text-secondary))]">{formatDate(getValue() as string)}</span>,
         },
     ], []);
 
@@ -203,7 +203,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                     onClick={() => setShowCreateForm(!showCreateForm)}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all hover:scale-105 ${
                         showCreateForm
-                            ? 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300'
+                            ? 'bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
                             : 'bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20'
                     }`}
                 >
@@ -213,12 +213,12 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             }
         >
                 {showCreateForm && (
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-4 border border-slate-200 dark:border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600">Nuevo Proyecto</h3>
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-4 border border-[hsl(var(--border))] dark:border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nuevo Proyecto</h3>
                         <input
                             value={newProjectTitle}
                             onChange={(e) => setNewProjectTitle(e.target.value)}
-                            className="w-full p-2 rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm font-medium"
+                            className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-sm font-medium"
                             placeholder="Título del proyecto"
                         />
                         <PersonaSelect
@@ -236,7 +236,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                             </button>
                             <button
                                 onClick={() => { setShowCreateForm(false); setNewProjectTitle(''); setNewProjectOwner(null); }}
-                                className="px-3 py-1.5 bg-slate-200 dark:bg-white/10 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all"
+                                className="px-3 py-1.5 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all"
                             >
                                 Cancelar
                             </button>
@@ -261,22 +261,22 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                     <div className="lg:col-span-2">
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Carga de Trabajo del Equipo</h3>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Carga de Trabajo del Equipo</h3>
                             <DSChart type="bar" data={dashboard?.workload_distribution} color="#f59e0b" height={220} />
                         </DSCard>
                     </div>
                     <div>
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-3">Estado de Tareas</h3>
+                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Tareas</h3>
                             <div className="space-y-4 pt-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-slate-400">Tareas Atrasadas</span>
+                                    <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">Tareas Atrasadas</span>
                                     <span className="text-sm font-semibold text-rose-500">{dashboard?.delayed_tasks_count || 0}</span>
                                 </div>
                                 <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full bg-rose-500" style={{ width: '15%' }} />
                                 </div>
-                                <p className="text-[10px] text-slate-500 italic">
+                                <p className="text-[10px] text-[hsl(var(--text-secondary))] italic">
                                     Se recomienda revisar los hitos críticos para evitar cuellos de botella.
                                 </p>
                             </div>
@@ -290,9 +290,9 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                     <AnimatePresence mode="wait">
                         {filtered.length === 0 ? (
                             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-16 text-center">
-                                <Folder size={48} className="text-slate-300 dark:text-slate-600 mb-4" />
-                                <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">No hay proyectos</h3>
-                                <p className="text-sm text-slate-500 mt-1 mb-4 max-w-md">{search ? 'Ningún proyecto coincide con tu búsqueda.' : 'Crea tu primer proyecto para empezar.'}</p>
+                                <Folder size={48} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4" />
+                                <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">No hay proyectos</h3>
+                                <p className="text-sm text-[hsl(var(--text-secondary))] mt-1 mb-4 max-w-md">{search ? 'Ningún proyecto coincide con tu búsqueda.' : 'Crea tu primer proyecto para empezar.'}</p>
                                 {!search && (
                                     <button onClick={() => setShowCreateForm(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide shadow-lg">
                                         <Plus size={16} /> Crear proyecto
@@ -310,13 +310,13 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                         ) : viewType === 'list' ? (
                             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2 pb-4">
                                 {filtered.map((project) => (
-                                    <button key={project.id} onClick={() => router.push(`/plataforma/projects/${project.id}`)} className="w-full rounded-md border border-slate-200 bg-[hsl(var(--bg-primary))] p-4 text-left transition-all duration-300 hover:border-blue-300 active:scale-[0.99] dark:border-white/10 dark:bg-[#252528] hover:dark:bg-[#2A2B2E]">
+                                    <button key={project.id} onClick={() => router.push(`/plataforma/projects/${project.id}`)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition-all duration-300 hover:border-blue-300 active:scale-[0.99] dark:border-white/10 dark:bg-[#252528] hover:dark:bg-[#2A2B2E]">
                                         <div className="flex items-center justify-between gap-4">
                                             <div className="min-w-0">
-                                                <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{project.title}</p>
-                                                <p className="truncate text-xs font-medium text-slate-400">{project.description || 'Sin descripcion'}</p>
+                                                <p className="truncate text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{project.title}</p>
+                                                <p className="truncate text-xs font-medium text-[hsl(var(--text-secondary))]">{project.description || 'Sin descripcion'}</p>
                                             </div>
-                                            <span className="shrink-0 rounded-full border border-slate-200 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10">{project.status || 'active'}</span>
+                                            <span className="shrink-0 rounded-full border border-[hsl(var(--border))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">{project.status || 'active'}</span>
                                         </div>
                                     </button>
                                 ))}
@@ -324,14 +324,14 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                         ) : viewType === 'board' || viewType === 'kanban' ? (
                             <motion.div key="board" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-4 overflow-x-auto pb-4">
                                 {groupedByStatus.map((column) => (
-                                    <section key={column.status} className="w-80 shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-[#252528]">
+                                    <section key={column.status} className="w-80 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-[#252528]">
                                         <div className="mb-3 flex items-center justify-between px-1">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{column.status}</p>
-                                            <span className="font-semibold text-slate-400">{column.projects.length}</span>
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.status}</p>
+                                            <span className="font-semibold text-[hsl(var(--text-secondary))]">{column.projects.length}</span>
                                         </div>
                                         <div className="space-y-2">
                                             {column.projects.map((project, index) => <ProjectCard key={project.id} project={project} index={index} />)}
-                                            {column.projects.length === 0 && <div className="rounded-md border border-dashed border-slate-200 py-8 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:border-white/10">Vacio</div>}
+                                            {column.projects.length === 0 && <div className="rounded-md border border-dashed border-[hsl(var(--border))] py-8 text-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">Vacio</div>}
                                         </div>
                                     </section>
                                 ))}

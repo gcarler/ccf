@@ -13,8 +13,8 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const INPUT = "w-full bg-slate-50 dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-white/20";
-const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-slate-400";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-white/20";
+const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]";
 
 interface Family {
     id: number;
@@ -163,13 +163,13 @@ export default function FamiliasPage() {
                         const Icon = stat.icon;
                         return (
                             <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm flex items-center gap-4">
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm flex items-center gap-4">
                                 <div className={clsx("size-6 rounded-md flex items-center justify-center flex-shrink-0", stat.bg, stat.color)}>
                                     <Icon size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-lg font-bold text-slate-900 dark:text-white tracking-tighter">{stat.value}</p>
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{stat.label}</p>
+                                    <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">{stat.value}</p>
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{stat.label}</p>
                                 </div>
                             </motion.div>
                         );
@@ -183,14 +183,14 @@ export default function FamiliasPage() {
                 ) : filtered.length === 0 ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                         className="flex flex-col items-center justify-center h-48 gap-4 text-center">
-                        <div className="size-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400">
+                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
                             <Home size={36} />
                         </div>
                         <div>
-                            <h3 className="text-base font-bold text-slate-800 dark:text-white">
+                            <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">
                                 {search ? 'Sin resultados' : 'Sin familias registradas'}
                             </h3>
-                            <p className="text-sm text-slate-400 mt-1">
+                            <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">
                                 {search ? `No se encontró "${search}"` : 'Registra la primera familia de la comunidad.'}
                             </p>
                         </div>
@@ -202,13 +202,13 @@ export default function FamiliasPage() {
                         )}
                     </motion.div>
                 ) : viewType === 'table' ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left min-w-[700px]">
-                                <thead className="bg-slate-50 dark:bg-black/20">
+                                <thead className="bg-[hsl(var(--surface-1))] dark:bg-black/20">
                                     <tr>
                                         {['Familia', 'Teléfono', 'Dirección', 'Primer Contacto', 'Integrantes', 'Acciones'].map(h => (
-                                            <th key={h} className="py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-slate-400 border-b border-slate-100 dark:border-white/5">{h}</th>
+                                            <th key={h} className="py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] border-b border-[hsl(var(--border))] dark:border-white/5">{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
@@ -217,45 +217,45 @@ export default function FamiliasPage() {
                                         <motion.tr key={fam.id}
                                             initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: idx * 0.04 }}
-                                            className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors border-b border-slate-100 dark:border-white/5 last:border-0 group">
+                                            className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] transition-colors border-b border-[hsl(var(--border))] dark:border-white/5 last:border-0 group">
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="size-8 rounded-md bg-gradient-to-br from-blue-500 to-sky-600 text-white flex items-center justify-center font-black text-sm flex-shrink-0">
                                                         {fam.name.charAt(0).toUpperCase()}
                                                     </div>
-                                                    <p className="text-xs font-semibold text-slate-800 dark:text-white">Familia {fam.name}</p>
+                                                    <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Familia {fam.name}</p>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4">
                                                 {fam.phone ? (
-                                                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                                                        <Phone size={11} className="text-slate-300" /> {fam.phone}
+                                                    <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--text-secondary))]">
+                                                        <Phone size={11} className="text-[hsl(var(--text-secondary))]" /> {fam.phone}
                                                     </div>
-                                                ) : <span className="text-[10px] text-slate-300 dark:text-white/20 font-bold">—</span>}
+                                                ) : <span className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-white/20 font-bold">—</span>}
                                             </td>
                                             <td className="py-3 px-4">
                                                 {fam.address ? (
-                                                    <div className="flex items-center gap-1.5 text-xs text-slate-500 max-w-[180px] truncate">
-                                                        <MapPin size={11} className="text-slate-300 flex-shrink-0" /> {fam.address}
+                                                    <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--text-secondary))] max-w-[180px] truncate">
+                                                        <MapPin size={11} className="text-[hsl(var(--text-secondary))] flex-shrink-0" /> {fam.address}
                                                     </div>
-                                                ) : <span className="text-[10px] text-slate-300 dark:text-white/20 font-bold">—</span>}
+                                                ) : <span className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-white/20 font-bold">—</span>}
                                             </td>
                                             <td className="py-3 px-4">
-                                                <span className="text-xs font-bold text-slate-500">{formatDate(fam.first_contact_date)}</span>
+                                                <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">{formatDate(fam.first_contact_date)}</span>
                                             </td>
                                             <td className="py-3 px-4">
-                                                <span className="text-xs font-semibold text-slate-500">{fam.personas_count ?? 0}</span>
+                                                <span className="text-xs font-semibold text-[hsl(var(--text-secondary))]">{fam.personas_count ?? 0}</span>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={() => openEdit(fam)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-all"><Pencil size={14} /></button>
+                                                    <button onClick={() => openEdit(fam)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all"><Pencil size={14} /></button>
                                                     {deleteId === fam.id ? (
                                                         <div className="flex items-center gap-1">
                                                             <button onClick={() => handleDelete(fam.id)} className="px-2 py-1 rounded-lg font-semibold bg-rose-100 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white transition-all">Confirmar</button>
-                                                            <button onClick={() => setDeleteId(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg text-slate-400"><X size={12} /></button>
+                                                            <button onClick={() => setDeleteId(null)} className="p-1.5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))]"><X size={12} /></button>
                                                         </div>
                                                     ) : (
-                                                        <button onClick={() => setDeleteId(fam.id)} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md text-slate-400 hover:text-rose-600 transition-all"><Trash2 size={14} /></button>
+                                                        <button onClick={() => setDeleteId(fam.id)} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-600 transition-all"><Trash2 size={14} /></button>
                                                     )}
                                                 </div>
                                             </td>
@@ -271,35 +271,35 @@ export default function FamiliasPage() {
                             <motion.div key={fam.id}
                                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.06 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm hover:border-blue-500/20 transition-all group">
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm hover:border-blue-500/20 transition-all group">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="size-7 rounded-md bg-gradient-to-br from-blue-500 to-sky-600 text-white flex items-center justify-center font-black text-xl">
                                         {fam.name.charAt(0).toUpperCase()}
                                     </div>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => openEdit(fam)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-all"><Pencil size={14} /></button>
-                                        <button onClick={() => setDeleteId(fam.id)} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md text-slate-400 hover:text-rose-600 transition-all"><Trash2 size={14} /></button>
+                                        <button onClick={() => openEdit(fam)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all"><Pencil size={14} /></button>
+                                        <button onClick={() => setDeleteId(fam.id)} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-600 transition-all"><Trash2 size={14} /></button>
                                     </div>
                                 </div>
-                                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Familia {fam.name}</h3>
+                                <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Familia {fam.name}</h3>
                                 <div className="space-y-2 mt-3">
                                     {fam.phone && (
-                                        <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                                        <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--text-secondary))]">
                                             <Phone size={12} /> {fam.phone}
                                         </div>
                                     )}
                                     {fam.address && (
-                                        <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                                        <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--text-secondary))]">
                                             <MapPin size={12} /> <span className="truncate">{fam.address}</span>
                                         </div>
                                     )}
                                     {fam.first_contact_date && (
-                                        <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                                        <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--text-secondary))]">
                                             <Calendar size={12} /> {formatDate(fam.first_contact_date)}
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-1.5 mt-4 pt-4 border-t border-slate-100 dark:border-white/5 font-semibold text-slate-400 uppercase tracking-wider">
+                                <div className="flex items-center gap-1.5 mt-4 pt-4 border-t border-[hsl(var(--border))] dark:border-white/5 font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
                                     <Users size={12} /> {fam.personas_count ?? 0} integrantes
                                 </div>
                             </motion.div>
@@ -311,17 +311,17 @@ export default function FamiliasPage() {
                             <motion.div key={fam.id}
                                 initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: idx * 0.04 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-md border border-slate-200 dark:border-white/5 p-4 flex items-center gap-4 group hover:border-blue-500/20 transition-all">
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-md border border-[hsl(var(--border))] dark:border-white/5 p-4 flex items-center gap-4 group hover:border-blue-500/20 transition-all">
                                 <div className="size-10 rounded-md bg-gradient-to-br from-blue-500 to-sky-600 text-white flex items-center justify-center font-black text-base flex-shrink-0">
                                     {fam.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Familia {fam.name}</p>
-                                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">{fam.address ?? fam.phone ?? 'Sin datos de contacto'}</p>
+                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Familia {fam.name}</p>
+                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">{fam.address ?? fam.phone ?? 'Sin datos de contacto'}</p>
                                 </div>
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => openEdit(fam)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-slate-400 hover:text-[hsl(var(--primary))] transition-all"><Pencil size={14} /></button>
-                                    <button onClick={() => setDeleteId(fam.id)} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md text-slate-400 hover:text-rose-600 transition-all"><Trash2 size={14} /></button>
+                                    <button onClick={() => openEdit(fam)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all"><Pencil size={14} /></button>
+                                    <button onClick={() => setDeleteId(fam.id)} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-600 transition-all"><Trash2 size={14} /></button>
                                 </div>
                             </motion.div>
                         ))}
@@ -340,17 +340,17 @@ export default function FamiliasPage() {
                             initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                             exit={{ x: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-slate-200 dark:border-white/10 flex flex-col">
+                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-[hsl(var(--border))] dark:border-white/10 flex flex-col">
 
-                            <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100 dark:border-white/5 flex-shrink-0">
+                            <div className="flex items-center justify-between px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 flex-shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="size-8 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]"><Home size={16} /></div>
                                     <div>
-                                        <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{editing ? 'Editar' : 'Nueva'} Familia</p>
-                                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{editing ? `Familia ${editing.name}` : 'Sin nombre'}</h3>
+                                        <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{editing ? 'Editar' : 'Nueva'} Familia</p>
+                                        <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{editing ? `Familia ${editing.name}` : 'Sin nombre'}</h3>
                                     </div>
                                 </div>
-                                <button onClick={() => setDrawerOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md text-slate-400 transition-all"><X size={18} /></button>
+                                <button onClick={() => setDrawerOpen(false)} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] transition-all"><X size={18} /></button>
                             </div>
 
                             <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-3 space-y-5">
@@ -372,9 +372,9 @@ export default function FamiliasPage() {
                                 </div>
                             </form>
 
-                            <div className="flex items-center gap-3 px-3 py-1.5 border-t border-slate-100 dark:border-white/5 flex-shrink-0">
+                            <div className="flex items-center gap-3 px-3 py-1.5 border-t border-[hsl(var(--border))] dark:border-white/5 flex-shrink-0">
                                 <button type="button" onClick={() => setDrawerOpen(false)}
-                                    className="flex-1 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all">
+                                    className="flex-1 py-3 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all">
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}
@@ -393,12 +393,12 @@ export default function FamiliasPage() {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
                         <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] rounded-lg border border-slate-200 dark:border-white/10 p-3 shadow-2xl max-w-sm w-full">
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 shadow-2xl max-w-sm w-full">
                             <div className="size-7 bg-rose-50 dark:bg-rose-500/10 rounded-md flex items-center justify-center text-rose-600 mb-4"><Trash2 size={20} /></div>
-                            <h3 className="text-base font-bold text-slate-900 dark:text-white">¿Eliminar familia?</h3>
-                            <p className="text-sm text-slate-400 mt-1 mb-5">Esta acción eliminará el registro permanentemente.</p>
+                            <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">¿Eliminar familia?</h3>
+                            <p className="text-sm text-[hsl(var(--text-secondary))] mt-1 mb-5">Esta acción eliminará el registro permanentemente.</p>
                             <div className="flex gap-3">
-                                <button onClick={() => setDeleteId(null)} className="flex-1 py-3 rounded-md border border-slate-200 dark:border-white/10 text-[11px] font-semibold uppercase tracking-wide text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">Cancelar</button>
+                                <button onClick={() => setDeleteId(null)} className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all">Cancelar</button>
                                 <button onClick={() => handleDelete(deleteId!)} className="flex-1 py-3 rounded-md bg-rose-600 text-white text-[11px] font-semibold uppercase tracking-wide hover:bg-rose-700 active:scale-95 transition-all shadow-lg shadow-rose-500/20">Eliminar</button>
                             </div>
                         </motion.div>
