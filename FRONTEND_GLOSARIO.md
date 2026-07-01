@@ -20,7 +20,30 @@
 - **Carga por pestañas** en perfiles (nunca full-profile)
 - **apiFetch** para llamadas API (nunca fetch directo)
 - **Rutas** siempre bajo `/plataforma/{modulo}`
-- **DS Components** del design system (DSButton, DSCard, etc.)
+- **DS Components** del design system (ver tabla abajo)
+
+## DS Components - Design System
+
+Importar desde `@/design`:
+
+| Componente | Uso principal | Variantes |
+|---|---|---|
+| `DSButton` | Acciones | primary, secondary, ghost |
+| `DSBadge` | Estados | slate, blue, emerald, amber |
+| `DSCard` | Contenedores | light, dark, glass |
+| `DSMetric` | KPIs | blue, emerald, amber |
+| `DSChart` | Gráficos | line, area, bar |
+| `DSInput` | Formularios | con label, error, icon |
+| `DSSelect` | Formularios | con label, placeholder |
+| `DSModal` | Diálogos | sm, md, lg |
+| `DSTable` | Listas | con sorting |
+| `DSTabs` | Navegación | con icons |
+| `DSTooltip` | Info hover | top, right, bottom, left |
+| `DSToast` | Notificaciones | success, error, warning, info |
+| `DSSkeleton` | Loading | sm, md, lg, xl, pill |
+| `DSSectionHeader` | Títulos | left, center |
+| `DSToolbarChip` | Filtros | soft, solid, outline |
+| `DSCommandEntry` | Command palette | active, inactive |
 
 ## Regla de oro
 
