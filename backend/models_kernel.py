@@ -72,10 +72,9 @@ class PersonaMinistry(Base):
     )
     ministry = Column(SAEnum(MinistryOffice), nullable=False, index=True)
     is_primary = Column(Boolean, default=False)
-    recognized_at = Column(DateTime(timezone=True), default=_utcnow)
+    recognized_at = Column(DateTime(timezone=True), default=_utcnow, name="recognition_date")
     recognized_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     notes = Column(Text, nullable=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     persona = relationship("Persona", foreign_keys=[persona_id], back_populates="ministerios_kernel")
     recognized_by_persona = relationship("Persona", foreign_keys=[recognized_by_persona_id])
@@ -131,10 +130,10 @@ class PersonaRoleHistory(Base):
         nullable=False,
         index=True,
     )
-    from_role = Column(SAEnum(ChurchRole), nullable=True)
-    to_role = Column(SAEnum(ChurchRole), nullable=False)
-    reason = Column(String(200), nullable=True)
-    changed_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    from_role = Column(SAEnum(ChurchRole), nullable=True, name="church_role_old")
+    to_role = Column(SAEnum(ChurchRole), nullable=False, name="church_role_new")
+    reason = Column(String(200), nullable=True, name="notes")
+    changed_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, name="changed_by")
     changed_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     persona = relationship("Persona", foreign_keys=[persona_id])

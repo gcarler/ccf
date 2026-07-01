@@ -198,7 +198,7 @@ class TestAuthV3:
 class TestCRM:
     def test_list_casos(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/crm/consolidation/cases", headers=headers)
+        resp = client.get("/api/crm/casos", headers=headers)
         assert resp.status_code == 200
 
     def test_list_pipelines(self, client_auth):

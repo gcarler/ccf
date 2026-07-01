@@ -24,7 +24,7 @@ def client_auth(client, db_session, admin_data):
 class TestPastoralFixed:
     def test_list_cases(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/crm/consolidation/cases", headers=headers)
+        resp = client.get("/api/crm/casos", headers=headers)
         assert resp.status_code == 200
 
     def test_list_tasks(self, client_auth):
@@ -74,7 +74,7 @@ class TestPastoralFixed:
 
     def test_consolidation_calls(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/crm/consolidation/cases", headers=headers)
+        resp = client.get("/api/crm/casos", headers=headers)
         assert resp.status_code == 200
 
     def test_create_task(self, client_auth):

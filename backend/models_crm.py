@@ -121,6 +121,7 @@ class EventAssignment(Base):
     )
     role = Column(String(50), nullable=False, index=True)  # e.g. MC, PREACHER, OFFERING
     created_at = Column(DateTime(timezone=True), default=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     event = relationship("CrmEvent", back_populates="assignments")
     persona = relationship("Persona")
@@ -434,6 +435,17 @@ class Persona(Base):
             val = self.rol_iglesia.church_role
             return val.value if hasattr(val, 'value') else str(val)
         return self.church_role or "Miembro"
+
+    @church_role_effective.setter
+    def church_role_effective(self, value: str) -> None:
+        """Establece el rol efectivo delegando a ``church_role``.
+
+        Mantiene simetría con el getter (que retorna ``church_role`` cuando
+        no hay ``rol_iglesia``). Tests y callers pueden usar el setter para
+        inyectar el rol esperado sin necesidad de cablear
+        ``PersonaRoleAssignment`` (``rol_iglesia``).
+        """
+        self.church_role = value
 
     family = relationship("Family", overlaps="family,personas,personas")
     colombian_department = relationship("ColombianDepartment", foreign_keys=[colombian_department_id])

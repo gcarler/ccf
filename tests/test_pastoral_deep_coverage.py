@@ -80,12 +80,12 @@ def deep(client, db_session):
 class TestConsolidationCasesDeep:
     def test_list_with_filters(self, deep):
         c, h = deep["c"], deep["h"]
-        assert _ok(c.get("/api/crm/consolidation/cases?source=EVANGELISMO", headers=h).status_code)
-        assert _ok(c.get("/api/crm/consolidation/cases?page=2&page_size=5", headers=h).status_code)
+        assert _ok(c.get("/api/crm/casos?source=EVANGELISMO", headers=h).status_code)
+        assert _ok(c.get("/api/crm/casos?page=2&page_size=5", headers=h).status_code)
 
     def test_create_with_persona_id(self, deep):
         c, h, personas = deep["c"], deep["h"], deep["personas"]
-        resp = c.post("/api/crm/consolidation/cases", json={
+        resp = c.post("/api/crm/casos", json={
             "persona_id": str(personas[0].id),
             "titulo": "New Case",
         }, headers=h)
@@ -93,7 +93,7 @@ class TestConsolidationCasesDeep:
 
     def test_create_without_persona(self, deep):
         c, h = deep["c"], deep["h"]
-        resp = c.post("/api/crm/consolidation/cases", json={
+        resp = c.post("/api/crm/casos", json={
             "titulo": "No Persona Case",
             "email": f"np_{uuid.uuid4().hex[:6]}@test.com",
         }, headers=h)
@@ -101,19 +101,19 @@ class TestConsolidationCasesDeep:
 
     def test_update_case(self, deep):
         c, h, cases = deep["c"], deep["h"], deep["cases"]
-        resp = c.patch(f"/api/crm/consolidation/cases/{cases[0].id}", json={
+        resp = c.patch(f"/api/crm/casos/{cases[0].id}", json={
             "titulo": "Updated Case",
         }, headers=h)
         assert _ok(resp.status_code)
 
     def test_delete_case(self, deep):
         c, h, cases = deep["c"], deep["h"], deep["cases"]
-        resp = c.delete(f"/api/crm/consolidation/cases/{cases[0].id}", headers=h)
+        resp = c.delete(f"/api/crm/casos/{cases[0].id}", headers=h)
         assert _ok(resp.status_code)
 
     def test_get_case(self, deep):
         c, h, cases = deep["c"], deep["h"], deep["cases"]
-        resp = c.get(f"/api/crm/consolidation/cases/{cases[0].id}", headers=h)
+        resp = c.get(f"/api/crm/casos/{cases[0].id}", headers=h)
         assert _ok(resp.status_code)
 
 
@@ -124,7 +124,7 @@ class TestConsolidationCasesDeep:
 class TestConsolidationSubResourcesDeep:
     def test_create_assignment(self, deep):
         c, h, cases = deep["c"], deep["h"], deep["cases"]
-        resp = c.post(f"/api/crm/consolidation/cases/{cases[0].id}/assignments", json={
+        resp = c.post(f"/api/crm/casos/{cases[0].id}/assignments", json={
             "assigned_to_id": str(deep["personas"][0].id),
             "notas": "Test assignment",
         }, headers=h)
@@ -132,7 +132,7 @@ class TestConsolidationSubResourcesDeep:
 
     def test_create_interaction(self, deep):
         c, h, cases = deep["c"], deep["h"], deep["cases"]
-        resp = c.post(f"/api/crm/consolidation/cases/{cases[0].id}/interactions", json={
+        resp = c.post(f"/api/crm/casos/{cases[0].id}/interactions", json={
             "notes": "Test interaction",
             "interaction_type": "call",
         }, headers=h)
@@ -140,7 +140,7 @@ class TestConsolidationSubResourcesDeep:
 
     def test_create_task(self, deep):
         c, h, cases = deep["c"], deep["h"], deep["cases"]
-        resp = c.post(f"/api/crm/consolidation/cases/{cases[0].id}/tasks", json={
+        resp = c.post(f"/api/crm/casos/{cases[0].id}/tasks", json={
             "title": "New Task",
             "status": "pending",
         }, headers=h)
@@ -148,19 +148,19 @@ class TestConsolidationSubResourcesDeep:
 
     def test_list_tasks(self, deep):
         c, h, cases = deep["c"], deep["h"], deep["cases"]
-        assert _ok(c.get(f"/api/crm/consolidation/cases/{cases[0].id}/tasks", headers=h).status_code)
+        assert _ok(c.get(f"/api/crm/casos/{cases[0].id}/tasks", headers=h).status_code)
 
     def test_list_interactions(self, deep):
         c, h, cases = deep["c"], deep["h"], deep["cases"]
-        assert _ok(c.get(f"/api/crm/consolidation/cases/{cases[0].id}/interactions", headers=h).status_code)
+        assert _ok(c.get(f"/api/crm/casos/{cases[0].id}/interactions", headers=h).status_code)
 
     def test_list_calls(self, deep):
         c, h, cases = deep["c"], deep["h"], deep["cases"]
-        assert _ok(c.get(f"/api/crm/consolidation/cases/{cases[0].id}/calls", headers=h).status_code)
+        assert _ok(c.get(f"/api/crm/casos/{cases[0].id}/calls", headers=h).status_code)
 
     def test_create_call(self, deep):
         c, h, cases = deep["c"], deep["h"], deep["cases"]
-        resp = c.post(f"/api/crm/consolidation/cases/{cases[0].id}/calls", json={
+        resp = c.post(f"/api/crm/casos/{cases[0].id}/calls", json={
             "notas": "Test call",
             "resultado": "contacted",
         }, headers=h)
@@ -412,7 +412,7 @@ class TestMessagingDeep:
 class TestAllOtherEndpoints:
     def test_consolidation_cases_list(self, deep):
         c, h = deep["c"], deep["h"]
-        assert _ok(c.get("/api/crm/consolidation/cases", headers=h).status_code)
+        assert _ok(c.get("/api/crm/casos", headers=h).status_code)
 
     def test_consolidation_interactions_list(self, deep):
         c, h = deep["c"], deep["h"]

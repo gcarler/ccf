@@ -345,7 +345,7 @@ def google_callback(
         if persona and persona.sede_id:
             sede_id = str(persona.sede_id)
     except Exception:
-        pass
+        db.rollback()
 
     # 8. Generate tokens with sede_id
     access_token = _create_access_token(str(user.id), platform_role_name, sede_id)

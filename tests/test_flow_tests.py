@@ -136,35 +136,35 @@ class TestCRMFlow:
         c, h, p = full["c"], full["h"], full["personas"][0]
         pid = str(p.id)
         # Get persona
-        resp = c.get(f"/api/crm/consolidation/cases/{full['cases'][0].id}", headers=h)
+        resp = c.get(f"/api/crm/casos/{full['cases'][0].id}", headers=h)
         assert _ok(resp.status_code)
         # Update case case fields
         now = datetime.now(timezone.utc).isoformat()
         for field in ["titulo", "estado", "prioridad", "notas", "last_contact_at", "next_contact_at"]:
             val = now if "at" in field else "Updated"
-            c.patch(f"/api/crm/consolidation/cases/{full['cases'][0].id}",
+            c.patch(f"/api/crm/casos/{full['cases'][0].id}",
                 json={field: val}, headers=h)
         # List cases with all filters
         for f in ["source=EVANGELISMO", "status=active", f"persona_id={pid}",
                    "page=1&page_size=5"]:
-            c.get(f"/api/crm/consolidation/cases?{f}", headers=h)
+            c.get(f"/api/crm/casos?{f}", headers=h)
         # Create case interaction
-        c.post(f"/api/crm/consolidation/cases/{full['cases'][0].id}/interactions",
+        c.post(f"/api/crm/casos/{full['cases'][0].id}/interactions",
             json={"tipo": "Llamada", "notas": "Called"}, headers=h)
         # List interactions
-        c.get(f"/api/crm/consolidation/cases/{full['cases'][0].id}/interactions", headers=h)
+        c.get(f"/api/crm/casos/{full['cases'][0].id}/interactions", headers=h)
         # Create case task
-        resp = c.post(f"/api/crm/consolidation/cases/{full['cases'][0].id}/tasks",
+        resp = c.post(f"/api/crm/casos/{full['cases'][0].id}/tasks",
             json={"titulo": "Follow up"}, headers=h)
         # List case tasks with status filter
         for sf in ["pending", "completed", "all"]:
-            c.get(f"/api/crm/consolidation/cases/{full['cases'][0].id}/tasks?status_filter={sf}", headers=h)
+            c.get(f"/api/crm/casos/{full['cases'][0].id}/tasks?status_filter={sf}", headers=h)
 
     def test_case_call_log(self, full):
         c, h = full["c"], full["h"]
-        c.post(f"/api/crm/consolidation/cases/{full['cases'][0].id}/calls",
+        c.post(f"/api/crm/casos/{full['cases'][0].id}/calls",
             json={"outcome": "completed", "notes": "Talked", "duration_seconds": 300}, headers=h)
-        c.get(f"/api/crm/consolidation/cases/{full['cases'][0].id}/calls", headers=h)
+        c.get(f"/api/crm/casos/{full['cases'][0].id}/calls", headers=h)
 
     def test_counseling_flow(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]

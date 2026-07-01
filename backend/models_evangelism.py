@@ -519,6 +519,8 @@ class RegistroSeguimiento(Base):
     asistencia_id = Column(UUID(as_uuid=True), ForeignKey("asistencias.id", ondelete="CASCADE"), nullable=False)
     responsable_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     fecha_seguimiento = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    fecha_creacion = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)
+    created_at = synonym("fecha_creacion")
     tipo = Column(String(30), nullable=False)
     observaciones = Column(Text, nullable=True)
     estado_completado = Column(Boolean, default=True)

@@ -141,7 +141,7 @@ class TestPastoralHelpers:
 class TestConsolidationCases:
     def test_list_cases(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/crm/consolidation/cases", headers=headers)
+        resp = client.get("/api/crm/casos", headers=headers)
         assert resp.status_code == 200
         data = resp.json()
         assert "cases" in data
@@ -149,22 +149,22 @@ class TestConsolidationCases:
 
     def test_list_cases_with_source_filter(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/crm/consolidation/cases?source=web", headers=headers)
+        resp = client.get("/api/crm/casos?source=web", headers=headers)
         assert resp.status_code == 200
 
     def test_list_cases_with_stage_filter(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/crm/consolidation/cases?stage=ABIERTO", headers=headers)
+        resp = client.get("/api/crm/casos?stage=ABIERTO", headers=headers)
         assert resp.status_code == 200
 
     def test_list_cases_with_persona_id_filter(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get(f"/api/crm/consolidation/cases?persona_id={uuid.uuid4()}", headers=headers)
+        resp = client.get(f"/api/crm/casos?persona_id={uuid.uuid4()}", headers=headers)
         assert resp.status_code == 200
 
     def test_create_case_with_persona_id(self, client_auth, db_session):
         client, headers, (_, persona, sede) = client_auth
-        resp = client.post("/api/crm/consolidation/cases", json={
+        resp = client.post("/api/crm/casos", json={
             "persona_id": str(persona.id),
             "titulo": f"Case {uuid.uuid4().hex[:6]}",
             "sede_id": str(sede.id),
@@ -173,7 +173,7 @@ class TestConsolidationCases:
 
     def test_create_case_without_persona_id(self, client_auth):
         client, headers, (_, persona, sede) = client_auth
-        resp = client.post("/api/crm/consolidation/cases", json={
+        resp = client.post("/api/crm/casos", json={
             "first_name": "Test",
             "last_name": "User",
             "phone": f"+1{uuid.uuid4().int % 10000000000}",
@@ -183,7 +183,7 @@ class TestConsolidationCases:
 
     def test_get_case_404(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get(f"/api/crm/consolidation/cases/{uuid.uuid4()}", headers=headers)
+        resp = client.get(f"/api/crm/casos/{uuid.uuid4()}", headers=headers)
         assert resp.status_code in (404, 400)
 
 

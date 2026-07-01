@@ -24,12 +24,12 @@ def client_auth(client, db_session, admin_data):
 class TestPastoralCases:
     def test_list_cases(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/crm/consolidation/cases", headers=headers)
+        resp = client.get("/api/crm/casos", headers=headers)
         assert resp.status_code == 200
 
     def test_create_case(self, client_auth):
         client, headers, (_, persona, sede) = client_auth
-        resp = client.post("/api/crm/consolidation/cases", json={
+        resp = client.post("/api/crm/casos", json={
             "persona_id": str(persona.id),
             "titulo": f"Case {uuid.uuid4().hex[:6]}",
             "sede_id": str(sede.id),
@@ -38,7 +38,7 @@ class TestPastoralCases:
 
     def test_get_case_404(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get(f"/api/crm/consolidation/cases/{uuid.uuid4()}", headers=headers)
+        resp = client.get(f"/api/crm/casos/{uuid.uuid4()}", headers=headers)
         assert resp.status_code in (404, 400)
 
     def test_list_case_tasks(self, client_auth):
