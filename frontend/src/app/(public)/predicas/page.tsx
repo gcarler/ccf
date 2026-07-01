@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { useContentBlock } from "@/hooks/useContent";
 import { SITE_KEY } from "@/lib/site-config";
-import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 import { apiFetch } from "@/lib/http";
 
 /* ── Tipos ── */
@@ -389,8 +388,7 @@ export default function PredicasPage() {
     const rest     = !search.trim() ? filtered.slice(1) : filtered;
 
     return (
-        <CmsPageOverride slug="predicas">
-            <main className="min-h-screen bg-site-background pt-[88px]">
+        <main className="min-h-screen bg-site-background pt-[88px]">
 
                 {/* ── HERO ── */}
                 <section className="relative px-4 sm:px-6 md:px-8 xl:px-12 pt-14 pb-10 overflow-hidden">
@@ -568,7 +566,6 @@ export default function PredicasPage() {
                         viewOnYoutube={viewOnYoutube}
                     />
                 )}
-            </main>
-        </CmsPageOverride>
+        </main>
     );
 }
