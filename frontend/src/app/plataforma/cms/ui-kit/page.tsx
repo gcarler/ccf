@@ -4,10 +4,11 @@ import React, { useState } from "react";
 import { DSBadge } from "@/design/components/DSBadge";
 import { DSButton } from "@/design/components/DSButton";
 import { DSCard } from "@/design/components/DSCard";
+import { DSCommandEntry } from "@/design/components/DSCommandEntry";
 import { DSMetric } from "@/design/components/DSMetric";
 import { DSSectionHeader } from "@/design/components/DSSectionHeader";
-import { DSSkeleton } from "@/design/components/DSSkeleton";
 import { DSToolbarChip } from "@/design/components/DSToolbarChip";
+import { DSSkeleton } from "@/design/components/DSSkeleton";
 
 export default function CmsUiKitPage() {
   const [activeChip, setActiveChip] = useState("all");
@@ -22,7 +23,7 @@ export default function CmsUiKitPage() {
 
         {/* --- Buttons --- */}
         <section className="space-y-3">
-          <DSSectionHeader title="Botones (DSButton)" description="Acciones primarias, secundarias y de variante." />
+          <DSSectionHeader title="Botones" description="Acciones primarias, secundarias y de variante." />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <DSCard className="p-3 space-y-3">
               <h3 className="text-sm font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Variantes</h3>
@@ -115,7 +116,7 @@ export default function CmsUiKitPage() {
 
         {/* --- Skeletons --- */}
         <section className="space-y-3">
-          <DSSectionHeader title="Skeletons (DSSkeleton)" description="Estados de carga para evitar saltos visuales." />
+          <DSSectionHeader title="Skeletons (Skeleton)" description="Estados de carga para evitar saltos visuales." />
           <DSCard className="p-3 space-y-3">
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Líneas</h3>
@@ -137,6 +138,15 @@ export default function CmsUiKitPage() {
               <h3 className="text-sm font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Tarjeta/Imagen</h3>
               <DSSkeleton rounded="xl" className="h-32 w-full" />
             </div>
+          </DSCard>
+        </section>
+
+        <section className="space-y-3">
+          <DSSectionHeader title="Command Entries (DSCommandEntry)" description="Entradas del palette y acciones rápidas." />
+          <DSCard tone="light" className="space-y-2 p-3">
+            <DSCommandEntry label="Ir a CRM Pastoral" shortcut="G C" active description="Pipeline, personas y seguimiento." />
+            <DSCommandEntry label="Abrir Projects" shortcut="G P" description="Tableros de tareas y recursos." />
+            <DSCommandEntry label="Ver Academy" shortcut="G A" description="Cursos, progreso y certificados." />
           </DSCard>
         </section>
 
