@@ -155,7 +155,7 @@ class TestCreateConsolidationCase:
 
     def test_create_with_persona_id(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]
-        resp = c.post("/api/crm/consolidation/cases", json={
+        resp = c.post("/api/crm/casos", json={
             "persona_id": str(personas[0].id),
             "titulo": "Test Case",
             "descripcion": "Test description",
@@ -164,7 +164,7 @@ class TestCreateConsolidationCase:
 
     def test_create_without_persona_id(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]
-        resp = c.post("/api/crm/consolidation/cases", json={
+        resp = c.post("/api/crm/casos", json={
             "titulo": "New Case",
             "email": f"new_{uuid.uuid4().hex[:6]}@test.com",
             "phone": f"+57300999{uuid.uuid4().hex[:4]}",
@@ -173,7 +173,7 @@ class TestCreateConsolidationCase:
 
     def test_create_with_new_persona(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/crm/consolidation/cases", json={
+        resp = c.post("/api/crm/casos", json={
             "titulo": "New Persona Case",
             "first_name": "New",
             "last_name": "Persona",
@@ -189,7 +189,7 @@ class TestCreateConsolidationCall:
     def test_create_call(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]
         # Get a case first
-        cases_resp = c.get("/api/crm/consolidation/cases", headers=h)
+        cases_resp = c.get("/api/crm/casos", headers=h)
         assert _ok(cases_resp.status_code)
 
 
@@ -225,32 +225,32 @@ class TestConsolidationSubCRUDs:
     def test_create_assignment(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]
         # Get a case first
-        cases_resp = c.get("/api/crm/consolidation/cases", headers=h)
+        cases_resp = c.get("/api/crm/casos", headers=h)
         assert _ok(cases_resp.status_code)
 
     def test_create_interaction(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]
-        cases_resp = c.get("/api/crm/consolidation/cases", headers=h)
+        cases_resp = c.get("/api/crm/casos", headers=h)
         assert _ok(cases_resp.status_code)
 
     def test_create_task(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]
-        cases_resp = c.get("/api/crm/consolidation/cases", headers=h)
+        cases_resp = c.get("/api/crm/casos", headers=h)
         assert _ok(cases_resp.status_code)
 
     def test_list_tasks(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]
-        cases_resp = c.get("/api/crm/consolidation/cases", headers=h)
+        cases_resp = c.get("/api/crm/casos", headers=h)
         assert _ok(cases_resp.status_code)
 
     def test_list_interactions(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]
-        cases_resp = c.get("/api/crm/consolidation/cases", headers=h)
+        cases_resp = c.get("/api/crm/casos", headers=h)
         assert _ok(cases_resp.status_code)
 
     def test_list_calls(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]
-        cases_resp = c.get("/api/crm/consolidation/cases", headers=h)
+        cases_resp = c.get("/api/crm/casos", headers=h)
         assert _ok(cases_resp.status_code)
 
 
@@ -383,9 +383,9 @@ class TestSettings:
 class TestAllOtherEndpoints:
     def test_consolidation_cases_list(self, full):
         c, h = full["c"], full["h"]
-        assert _ok(c.get("/api/crm/consolidation/cases", headers=h).status_code)
-        assert _ok(c.get("/api/crm/consolidation/cases?source=EVANGELISMO", headers=h).status_code)
-        assert _ok(c.get("/api/crm/consolidation/cases?page=2", headers=h).status_code)
+        assert _ok(c.get("/api/crm/casos", headers=h).status_code)
+        assert _ok(c.get("/api/crm/casos?source=EVANGELISMO", headers=h).status_code)
+        assert _ok(c.get("/api/crm/casos?page=2", headers=h).status_code)
 
     def test_consolidation_interactions_list(self, full):
         c, h = full["c"], full["h"]

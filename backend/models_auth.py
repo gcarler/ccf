@@ -3,8 +3,8 @@ from __future__ import annotations
 import uuid as _uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, JSON,
-                        String, Text)
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Index, Integer,
+                        JSON, String, Text)
 from sqlalchemy.dialects.postgresql import CITEXT, UUID
 from sqlalchemy.orm import relationship, synonym
 
@@ -61,7 +61,7 @@ class Usuario(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    persona = relationship("backend.models_crm.Persona", foreign_keys=[id], primaryjoin="Usuario.id == backend.models_crm.Persona.id")
+    persona = relationship("Persona", foreign_keys=[id], primaryjoin="Usuario.id == Persona.id")
     rol_plataforma = relationship("RolPlataforma", foreign_keys=[rol_plataforma_id])
     roles_modulares = relationship("UsuarioRolModulo", back_populates="usuario", cascade="all, delete-orphan")
 
@@ -173,6 +173,9 @@ class NotificacionUsuario(Base):
 
 class RecordatorioUsuario(Base):
     __tablename__ = "auth_user_reminders"
+    __table_args__ = (
+        Index("ix_user_reminders_user_id", "user_id"),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False)
