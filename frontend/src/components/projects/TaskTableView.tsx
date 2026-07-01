@@ -452,7 +452,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     // Quick add task
     const handleQuickAdd = async (status: string, title: string) => {
         try {
-            await apiFetch(`/projects/${projectId}/tasks`, { method: 'POST', body: JSON.stringify({ title, status, priority: 'normal' }), token: token ?? undefined });
+            await apiFetch(`/projects/${projectId}/tasks`, { method: 'POST', body: JSON.stringify({ title, status, priority: 'medium' }), token: token ?? undefined });
             onAddTask(status);
         } catch { /* silently fail */ }
         setQuickAddGroup(null);

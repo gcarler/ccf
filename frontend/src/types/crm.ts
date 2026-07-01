@@ -92,10 +92,10 @@ export type Tab = 'overview' | 'spiritual' | 'academy' | 'financial' | 'history'
 
 // ── Counseling ────────────────────────────────────────────────────────────
 export interface CounselingSession {
-  id: number;
-  pastor_id: number;
+  id: string;
+  pastor_id: string | null;
   persona_id?: string;
-  lead_id?: number;
+  lead_id?: string;
   scheduled_at: string;
   duration_minutes: number;
   status: string;

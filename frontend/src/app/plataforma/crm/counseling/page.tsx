@@ -42,7 +42,7 @@ export default function CounselingPage() {
     });
 
     const [newSession, setNewSession] = useState({
-        pastor_id: user?.id || 1,
+        pastor_id: user?.id ?? null,
         persona_id: '',
         scheduled_at: '',
         topic: '',
@@ -94,7 +94,7 @@ export default function CounselingPage() {
             });
             addToast('Sesión agendada correctamente', 'success');
             setIsDrawerOpen(false);
-            setNewSession({ pastor_id: user?.id || 1, persona_id: '', scheduled_at: '', topic: '', notes: '', status: 'Pendiente', duration_minutes: 60 });
+            setNewSession({ pastor_id: user?.id ?? null, persona_id: '', scheduled_at: '', topic: '', notes: '', status: 'Pendiente', duration_minutes: 60 });
             fetchSessions();
         } catch {
             addToast('Error al agendar sesión', 'error');
@@ -103,7 +103,7 @@ export default function CounselingPage() {
         }
     };
 
-    const handleUpdateStatus = async (id: number, status: string) => {
+    const handleUpdateStatus = async (id: string, status: string) => {
         if (!token) return;
         try {
             await apiFetch(`/crm/counseling/${id}`, { method: 'PATCH', token, body: { status } });
@@ -710,5 +710,4 @@ export default function CounselingPage() {
         </CrmShell>
     );
 }
-
 

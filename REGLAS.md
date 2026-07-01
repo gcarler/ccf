@@ -46,23 +46,23 @@ rows = db.query(Persona).filter(Persona.sede_id == sede_id).all()
 
 No se acepta confiar en un `sede_id` enviado por el cliente cuando el usuario autenticado ya define su sede.
 
-### 4.1 Politica Orphan — fallback y persona sin sede
+### 4.1 Política estricta de ownership y sede
 
-El CRUD-layer debe distinguir dos edge cases de "ausencia de sede" y aplicar
-politicas explicitas. Cualquier cambio a esta politica debe actualizar
-`docs/CIERRE_ARQUITECTURA_CCF.md` y `tests/test_cms_sede_isolation.py` (y
-suites equivalentes en messaging) sincronizados.
+Toda mutación pastoral, administrativa o de contenido exige un actor UUID
+canónico. La ausencia, malformación o inexistencia del actor responde 401 y
+nunca desactiva los controles multi-tenant.
 
-| Caso | Definicion | Politica | Razon |
-|---|---|---|---|
-| **Orphan-fallback** (LENIENT) | `resolve_persona_id_for_user(actor) is None` Y `payload.author_persona_id is None` | Heredar `actor_sede` como `row.sede_id`. NO levanta error. | Back-compat con callers legacy (workers async, scripts de seeding, bulk imports) que propagan `actor_user_id` sin FK creator resoluble. |
-| **Orphan-persona** (STRICT) | `author_persona_id` resuelve a una `Persona` concreta con `Persona.sede_id is None` | `HTTPException(404)`. NO fallback. | Una `Persona` sin sede es una inconsistencia de datos, no un caso de uso legitimo. Fallback haria el contrato ambiguo entre "persona sin sede" y "actor en sede". |
-| **Doble orphan** | actor sin sede (`get_user_sede_id is None`) Y creator FK None | Crear con `row.sede_id = NULL`. Visible solo a superadmins sin sede. | Consistente con `TareaCRM` orphan-guard: sin actor con sede resoluble no hay forma de inferir la sede legitima. |
+| Caso | Política |
+|---|---|
+| Actor ausente o desconocido | REJECT 401 |
+| Creator/author no resoluble | REJECT 409 |
+| Creator/author sin sede | REJECT 409 |
+| Creator/author de otra sede | REJECT 404 |
+| UGC con owner o sede NULL | Prohibido por NOT NULL |
+| Superadministrador sin sede | Puede leer global; no puede crear UGC sin tenant atribuible |
 
-**Test contractual:** `tests/test_cms_sede_isolation.py::test_crud_create_testimonial_blocks_when_fk_resolves_to_persona_without_sede`
-y `test_crud_create_announcement_inherits_actor_sede_for_orphan_fk`
-codifican las dos ramas; cualquier regresion aqui es un compromiso de
-seguridad multi-tenant.
+Workers, seeds e importadores deben ejecutar con una persona de servicio
+canónica provista de sede. No existe bypass actor_user_id=None.
 
 ## 4.2 Cobertura de Sede por Modulo
 
@@ -121,65 +121,18 @@ inmutable**. NO se editan bajo ninguna circunstancia salvo descubrimiento
 de un bug critico con aprobacion explicita del arquitecto y un nuevo
 migration que corrija (sin tocar los archivos previos).
 
-### 9.1.1 Calout firmado del cierre v3.0.1
+### 9.1.1 Historia inmutable y runtime limpio
 
-**ESTA ES LA UNICA DEUDA LEGACY TOLERADA EN EL PROYECTO A PARTIR DEL
-CIERRE v3.0.1 (2026-07-01).** Las migraciones:
+Las migraciones cerradas de mayo de 2026 conservan texto SQL del contrato
+retirado porque forman parte de la cadena Alembic desplegada. No se importan,
+ejecutan ni consultan desde runtime.
 
-- `alembic/versions/20260524_0024_prod_hardening3.py`
-- `alembic/versions/20260524_0025_prod_final.py`
-
-contienen la cadena `CCF-MBR-*` en tokens generados durante el backfill
-de mayo-2026. Esa cadena es **memoria del pasado**, no uso vivo del
-concepto. La regla REGLAS §1 (personas por UUID) SI se cumple en el
-sistema **activo**:
-
-- Ningun modelo, schema, CRUD, fixture, test o endpoint activo usa
-  `CCF-MBR-`. Auditado por `tests/test_arquitectura_100pct.py::test_no_legacy_ccf_mbr_in_live_code`.
-- Los identificadores `personas.id` son UUID puros en runtime (ver
-  `tests/test_structural_contracts.py`).
-- Los tokens `CCF-MBR-*` emitidos durante el backfill son columnas
-  legacy de **filas historicas no activas**; ya no alimentan endpoints
-  ni autenticacion. Auditarlas requeriria correr `alembic` historico
-  en una DB de archivo (no en produccion).
-
-**Justificacion de la tolerancia:** reescribir las dos migraciones para
-eliminar la cadena `CCF-MBR-` romperia la cadena de migrations que ya
-esta deployed en produccion. La alternativa correcta — una migration
-correctiva que remplace los tokens en filas activas — no es rentable:
-los tokens legacy no son semanticos, no se consultan, no aparecen en
-outputs de usuario, y reemplazarlos solo trasladaria la deuda de nombre.
-
-**Reglas derivadas:**
-
-- Cualquier NUEVO uso de `CCF-MBR-` en codigo vivo, tests, fixtures o
-  migraciones futuras es **violacion de REGLAS §1** (Kernel de Personas).
-  Auditado por `tests/test_arquitectura_100pct.py::test_no_legacy_ccf_mbr_in_live_code`.
-- El gate `rg -g '!alembic/versions/*.py'` debe ejecutarse en cada CI run.
-- El archivo `tests/test_arquitectura_100pct.py` codifica este check
-  como test pytest ejecutable.
-
-### 9.1.2 Procedencia de la quitacion
-
-Para cerrar la queja del usuario ("nada de legacy") en el futuro, si en
-algun momento el proyecto decide eliminar incluso este rastro historico,
-la ruta correcta es:
-
-1. Crear una nueva migration de **limpieza** (no edita las previas):
-   ```sql
-   -- 2099-12-31_0001_drop_legacy_member_token_columns
-   ALTER TABLE personas_legacy_tokens DROP COLUMN token_ccf_mbr;
-   -- (o un equivalente que aplique al modelo de tu epoca)
-   ```
-2. Crear un script de validacion bajo `tests/` (no bajo `scripts/` —
-   ver 9.2) que verifique la ausencia de columnas o datos huérfanos.
-3. Una vez deployed y verificado, eliminar las dos migraciones legacy
-   de `alembic/versions/` solo si la cadena de migrations no las usa
-   (análisis de impacto obligatorio antes).
-
-Esta es la **ruta para eliminar definitivamente** la deuda CCF-MBR. Por
-ahora queda firmada como excepcion explicita en el cierre v3.0.1.
-
+La migración 20260701_0002_eradicate_runtime_legacy.py elimina de bases
+rezagadas las funciones y tablas paralelas, normaliza tokens/outcomes antiguos,
+purga UGC sin ownership verificable, normaliza etiquetas/prioridades de proyectos,
+renombra físicamente `personas.baptism_date` y endurece columnas obligatorias.
+El código activo no admite aliases, IDs enteros de persona, payloads dict sin
+schema ni bypasses sin actor.
 ### 9.2 Scripts Manuales y Operacionales
 
 Prohibido mantener en `scripts/` archivos cuyo proposito sea validacion

@@ -36,7 +36,7 @@ export default function LocationManagement() {
     const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [newLoc, setNewLoc] = useState({ name: '', address: '', pastor: '', type: 'Sede' });
+    const [newLoc, setNewLoc] = useState({ nombre: '', address: '', pastor: '', type: 'Sede' });
 
     const fetchLocations = useCallback(async () => {
         if (!token) return;
@@ -62,7 +62,7 @@ export default function LocationManagement() {
             await apiFetch('/admin/locations', { method: 'POST', token, body: newLoc });
             addToast("Sede registrada", "success");
             setIsDrawerOpen(false);
-            setNewLoc({ name: '', address: '', pastor: '', type: 'Sede' });
+            setNewLoc({ nombre: '', address: '', pastor: '', type: 'Sede' });
             fetchLocations();
         } catch {
             addToast("Error al registrar sede", "error");
@@ -172,7 +172,7 @@ export default function LocationManagement() {
                 <form id="location-create-form" onSubmit={handleCreate} className="space-y-3">
                     <div className="space-y-2">
                         <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nombre de la Sede *</label>
-                        <input required value={newLoc.name} onChange={e => setNewLoc({...newLoc, name: e.target.value})} className="w-full px-3 py-1.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white transition-all" placeholder="Ej: Sede Norte" />
+                        <input required value={newLoc.nombre} onChange={e => setNewLoc({...newLoc, nombre: e.target.value})} className="w-full px-3 py-1.5 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white transition-all" placeholder="Ej: Sede Norte" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Dirección</label>
@@ -197,4 +197,3 @@ export default function LocationManagement() {
         </div>
     );
 }
-

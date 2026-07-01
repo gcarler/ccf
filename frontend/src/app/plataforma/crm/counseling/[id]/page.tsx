@@ -11,10 +11,10 @@ import { DSBadge } from "@/design/components/DSBadge";
 import { toast } from "sonner";
 
 type CounselingDetail = {
-    id: number;
+    id: string;
     persona_id: string;
     persona_name: string;
-    pastor_id: number | null;
+    pastor_id: string | null;
     topic: string;
     summary: string | null;
     notes: string | null;

@@ -46,7 +46,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                 const newTask = await apiFetch<ProjectTaskRecord>(`/projects/${projectId}/tasks`, {
                     method: 'POST',
                     token,
-                    body: { title: title.trim(), status: id, priority: 'normal' }
+                    body: { title: title.trim(), status: id, priority: 'medium' }
                 });
                 onTaskCreated(newTask);
             } catch { /* silent */ }
