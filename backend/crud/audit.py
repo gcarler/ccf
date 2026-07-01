@@ -6,7 +6,6 @@ import uuid as _uuid
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.crud.crm import resolve_persona_id_for_user
 
 
 def create_admin_audit_log(

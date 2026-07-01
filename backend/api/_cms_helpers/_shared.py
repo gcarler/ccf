@@ -48,35 +48,24 @@ from backend.api.crm._shared import _get_scoped_persona
 from backend.crud.crm import get_user_sede_id
 
 
-def _actor_sede_or_none(db: Session, current_user: models.User | None) -> Optional[str]:
-    """Convenience wrapper sobre ``backend.crud.crm.get_user_sede_id``.
-
-    Devuelve ``None`` cuando:
-      - El user es ``None`` (auth no resuelto / scripts anterior).
-      - El user no tiene persona vinculada con sede asignada (superadmin
-        o token anterior v2 sin sede).
-
-    Caso contrario, retorna la ``sede_id`` como string (normalizada).
-    """
-    if current_user is None:
-        return None
+def _actor_sede_or_none(db: Session, current_user: models.User) -> Optional[str]:
+    """Retorna la sede del actor o ``None`` para superadministración."""
     user_id = getattr(current_user, "id", None)
     if user_id is None:
-        return None
+        raise HTTPException(status_code=401, detail="Authenticated actor required")
     return get_user_sede_id(db, user_id)
 
 
 def _scope_cms_testimonials_by_user_sede(
-    db: Session, current_user: models.User | None, query
+    db: Session, current_user: models.User, query
 ):
     """Filtra un query de ``models.Testimonial`` por ``sede_id == user_sede``.
 
-    Si el actor no tiene sede (superadmin / anterior), retorna el query sin
-    modificar — el actor ve TODO. Esto preserva compat con scripts y
-    con el workflow admin pre-Axioma-3.
+    Si el actor canónico no tiene sede (superadmin), retorna el query sin
+    modificar y conserva el alcance administrativo global.
 
-    Testimonial tiene ``sede_id`` propio (nullable) gracias a la migration
-    2026-07-01. El scope se aplica de forma directa sin necesidad de JOIN.
+    Testimonial exige ``sede_id`` propio desde la migración 2026-07-01. El
+    scope se aplica de forma directa sin necesidad de JOIN.
     """
     user_sede = _actor_sede_or_none(db, current_user)
     if user_sede:
@@ -85,14 +74,11 @@ def _scope_cms_testimonials_by_user_sede(
 
 
 def _scope_cms_announcements_by_user_sede(
-    db: Session, current_user: models.User | None, query
+    db: Session, current_user: models.User, query
 ):
     """Filtra un query de ``models.Announcement`` por ``sede_id == user_sede``.
 
-    Announcement recibió ``sede_id`` (nullable) + ``created_by_persona_id``
-    via la migration 2026-07-01. Rows anterior con ``sede_id=NULL`` sólo
-    son visibles a superadmins sin sede asignada — orphan-guard
-    consistente con ``TareaCRM`` en CRM.
+    Announcement exige ``sede_id`` + ``created_by_persona_id`` no nulos.
     """
     user_sede = _actor_sede_or_none(db, current_user)
     if user_sede:
@@ -101,14 +87,12 @@ def _scope_cms_announcements_by_user_sede(
 
 
 def _scope_cms_media_by_user_sede(
-    db: Session, current_user: models.User | None, query
+    db: Session, current_user: models.User, query
 ):
     """Filtra un query de ``models.CmsMediaItem`` por ``sede_id == user_sede``.
 
-    CmsMediaItem tiene ``sede_id`` propio (nullable) gracias a la
-    migration 2026-07-01. Pre-migration el scope se aplicaba sólo via
-    JOIN con personas via ``created_by_persona_id``. Ahora la columna
-    directa permite filtrado más eficiente y consistente.
+    CmsMediaItem exige ``sede_id`` propio desde la migración 2026-07-01 y
+    permite filtrado directo, eficiente y consistente.
     """
     user_sede = _actor_sede_or_none(db, current_user)
     if user_sede:
@@ -117,18 +101,16 @@ def _scope_cms_media_by_user_sede(
 
 
 def _scope_cms_pastoral_team_by_user_sede(
-    db: Session, current_user: models.User | None, query
+    db: Session, current_user: models.User, query
 ):
     """Filtra un query de pastoral-leaders por ``Persona.sede_id ==
-    user_sede``. Si el actor no tiene sede (superadmin / anterior path)
-    retorna el query sin modificar para preservar compat.
+    user_sede``. Si el actor canónico no tiene sede (superadmin), retorna el
+    query sin modificar y conserva el alcance administrativo global.
 
     Política STRICT (no permisiva con NULL): las Personas sin sede son
     tratadas como orphan y NO se exponen a editoriales cross-sede. Esto
-    cierra el vector donde un líder con ``sede_id=NULL`` (anterior data)
-    sería visible para TODAS las sedes. Para ver datos anterior un
-    superadmin debe ejecutar via path sin sede — política consistente
-    con el resto de Axioma 3 en TareaCRM orphan-guard.
+    cierra el vector donde un líder con ``sede_id=NULL`` sería visible para
+    todas las sedes. El acceso global queda reservado al superadmin canónico.
     """
     user_sede = _actor_sede_or_none(db, current_user)
     if user_sede:

@@ -257,18 +257,13 @@ def _get_scoped_task(db: Session, user: models.User, task_id) -> models.TareaCRM
 def _resolve_assignee_for_task(
     db: Session, current_user: models.User, raw_assignee_id
 ):
-    """Resolve `assignee_id` (UUID persona o Integer user_id) a un UUID de
-    persona y valida scope (Axioma 3). Preserva el contrato histórico de
-    aceptar user_id sin reintroducir el silent-bypass.
+    """Valida ``assignee_id`` como UUID canónico de persona y aplica scope.
 
     Raises 404 (no 403, para evitar existence-leaks) si:
-      - El input no es UUID ni Integer parseable.
-      - El Integer no corresponde a un User existente.
-      - El User no tiene persona vinculada.
+      - El input no es UUID.
       - La persona resuelta es cross-sede o INACTIVA.
 
-    Retorna None si raw_assignee_id es None / string vacío (compatibilidad
-    con payloads que omiten assignee_id).
+    Retorna ``None`` cuando el payload omite ``assignee_id``.
     """
     if not raw_assignee_id:
         return None
@@ -282,19 +277,7 @@ def _resolve_assignee_for_task(
         persona_uuid = None
     if persona_uuid:
         return _get_scoped_persona(db, current_user, persona_uuid).id
-    # 2. Intentar como Integer user_id
-    from backend.crud.crm import resolve_persona_id_for_user
-    try:
-        user_id_int = int(raw_str)
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=404, detail="Assignee no encontrado")
-    user = db.query(models.User).filter(models.User.id == user_id_int).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Assignee no encontrado")
-    persona_id = resolve_persona_id_for_user(db, user.id)
-    if not persona_id:
-        raise HTTPException(status_code=404, detail="Assignee no encontrado")
-    return _get_scoped_persona(db, current_user, persona_id).id
+    raise HTTPException(status_code=404, detail="Assignee no encontrado")
 
 
 def _serialize_persona_position(persona_position: models.PersonaPosition) -> dict:

@@ -281,7 +281,7 @@ class TestGruposMainDeep:
 
     def test_list_grupos_with_strategy(self, full):
         c, h, strategy = full["c"], full["h"], full["strategy"]
-        resp = c.get(f"/api/evangelism/grupos?estrategia_id={strategy.id}", headers=h)
+        resp = c.get(f"/api/evangelism/grupos?evangelism_strategy_id={strategy.id}", headers=h)
         assert _ok(resp.status_code)
 
     def test_list_my_grupos(self, full):

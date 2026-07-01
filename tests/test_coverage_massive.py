@@ -466,7 +466,7 @@ class TestCRUDCoverage:
     def test_academy_get_courses(self, db_session):
         from backend import crud
         try:
-            crud.get_courses(db_session)
+            crud.list_courses(db_session)
         except Exception:
             pass
 

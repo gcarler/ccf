@@ -134,7 +134,7 @@ class CounselingTicketBase(BaseModel):
     status: str = "open"
 
 class CounselingTicketCreate(CounselingTicketBase):
-    pastor_id: Optional[str] = None  # UUID string (personas.id)
+    pastor_id: Optional[UUID] = None
 
 class CounselingTicketUpdate(BaseModel):
     subject: Optional[str] = None
@@ -143,11 +143,11 @@ class CounselingTicketUpdate(BaseModel):
     priority_level: Optional[str] = None
     sentiment_score: Optional[float] = None
     sentiment_label: Optional[str] = None
-    pastor_id: Optional[str] = None  # UUID string (personas.id)
+    pastor_id: Optional[UUID] = None
 
 class CounselingTicket(CounselingTicketBase):
     id: UUID
-    pastor_id: Optional[str] = None  # UUID string (personas.id)
+    pastor_id: Optional[UUID] = None
     priority_level: Optional[str] = None
     sentiment_score: Optional[float] = None
     sentiment_label: Optional[str] = None
@@ -248,7 +248,7 @@ class CrmTaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     persona_id: Optional[UUID] = None
-    assignee_id: Optional[str] = None  # UUID string (personas.id)
+    assignee_id: Optional[UUID] = None
     due_date: Optional[datetime] = None
     status: CrmTaskStatus = CrmTaskStatus.pending
     priority: CrmTaskPriority = CrmTaskPriority.medium
@@ -282,10 +282,8 @@ class CrmTaskUpdate(BaseModel):
     # FK fields (Axioma 3 Multi-Tenant):
     #   * persona_id: target persona de la tarea. Cambio cross-sede debe
     #     ser rechazado por el scope re-check del CRUD.
-    #   * assignee_id: persona responsable. Acepta UUID persona o Integer
-    #     user_id (contrato histórico preservado) como string. La
-    #     resolución + scope check ocurre en el endpoint API vía
-    #     `_resolve_assignee_for_task` antes de delegar al CRUD.
+    #   * assignee_id: UUID canónico de la persona responsable. La
+    #     validación de scope ocurre en el endpoint API antes del CRUD.
     #   * caso_id: vincula/desvincula la tarea a un CasoCRM. Cambio
     #     cross-sede debe ser rechazado.
     # Estos campos eran ignorados silenciosamente por `extra='ignore'`
@@ -293,7 +291,7 @@ class CrmTaskUpdate(BaseModel):
     # para alinear el contrato Pydantic con el contrato real del
     # endpoint API (que lee el body como dict JSON crudo).
     persona_id: Optional[UUID] = None
-    assignee_id: Optional[str] = None  # UUID string (personas.id) o Integer user_id string
+    assignee_id: Optional[UUID] = None
     caso_id: Optional[UUID] = None
 
 class CrmTask(CrmTaskBase):
@@ -359,7 +357,7 @@ class PersonaResponse(BaseModel):
     spiritual_status: Optional[str] = "Nuevo"
     estado_vital: Optional[str] = None
     is_baptized: Optional[bool] = None
-    baptism_date: Optional[date] = Field(None, validation_alias="fecha_bautismo")
+    baptism_date: Optional[date] = None
     birthday: Optional[date] = None
     created_at: Optional[datetime] = None
     family_id: Optional[UUID] = None
@@ -759,7 +757,7 @@ class EvangelismStrategyBase(BaseModel):
     group_count: Optional[int] = None
 
 class EvangelismStrategy(EvangelismStrategyBase):
-    """Compatibility response schema — id is str (UUID) from canonical model."""
+    """Respuesta canónica de una estrategia de evangelismo."""
     id: UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -916,7 +914,7 @@ class CaseCall(BaseModel):
     id: UUID
     case_id: Optional[str] = None
     persona_id: Optional[UUID] = None
-    pastor_id: str  # UUID string
+    pastor_id: UUID
     outcome: str
     notes: Optional[str] = None
     prayer_requests: Optional[str] = None

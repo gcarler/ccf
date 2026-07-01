@@ -248,7 +248,7 @@ class TestAdminOtherFull:
     def test_create_location(self, client_auth):
         client, headers, _ = client_auth
         resp = client.post("/api/admin/locations", json={
-            "name": f"Location {uuid.uuid4().hex[:6]}",
+            "nombre": f"Location {uuid.uuid4().hex[:6]}",
         }, headers=headers)
         assert resp.status_code in (200, 201, 400, 422)
 
@@ -272,7 +272,7 @@ class TestAdminOtherFull:
     def test_create_donation_category(self, client_auth):
         client, headers, _ = client_auth
         resp = client.post("/api/admin/donation-categories", json={
-            "name": f"Cat {uuid.uuid4().hex[:6]}",
+            "nombre": f"Cat {uuid.uuid4().hex[:6]}",
         }, headers=headers)
         assert resp.status_code in (200, 201, 400, 422)
 

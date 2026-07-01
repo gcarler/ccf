@@ -68,7 +68,7 @@ def test_flujo_estrategia_triple7_geografica_relacional_semanal(client, db_sessi
                 "capacity": 10,
                 "day_of_week": "Lunes",
                 "start_time": "19:00",
-                "estrategia_id": strategy["id"],
+                    "evangelism_strategy_id": strategy["id"],
                 "base_attendee_ids": [str(persona.id) for persona in group_personas],
             },
             headers=headers,

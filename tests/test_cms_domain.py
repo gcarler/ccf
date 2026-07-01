@@ -43,7 +43,7 @@ def test_create_media_asset(db_session):
 
 
 def test_testimonial_accepts_explicit_author_persona_id(db_session):
-    _, persona = seed_user_and_persona(db_session)
+    user, persona = seed_user_and_persona(db_session)
 
     testimonial = crud.create_testimonial(
         db_session,
@@ -52,6 +52,7 @@ def test_testimonial_accepts_explicit_author_persona_id(db_session):
             emotion="Gratitud",
             author_persona_id=str(persona.id),
         ),
+        actor_user_id=user.id,
     )
 
     assert testimonial.author_persona_id == persona.id

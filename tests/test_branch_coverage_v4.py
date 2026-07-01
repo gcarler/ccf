@@ -203,8 +203,8 @@ class TestPastoralBranchesV4:
 
     def test_task_filters(self, full):
         c, h = full["c"], full["h"]
-        assert _ok(c.get("/api/crm/tasks?assignee_user_id=1", headers=h).status_code)
-        assert _ok(c.get("/api/crm/tasks?assignee_user_id=99999", headers=h).status_code)
+        assert _ok(c.get("/api/crm/tasks?assignee_persona_id=00000000-0000-0000-0000-000000000001", headers=h).status_code)
+        assert _ok(c.get("/api/crm/tasks?assignee_persona_id=00000000-0000-0000-0000-000000000002", headers=h).status_code)
 
     def test_case_tasks_status_filter(self, full):
         c, h, cases = full["c"], full["h"], full["cases"]

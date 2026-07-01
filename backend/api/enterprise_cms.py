@@ -7,16 +7,11 @@ All endpoints require authentication. Role-based access where noted.
 """
 from __future__ import annotations
 
-import hashlib
-import hmac
-import json
-import time
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel, Field
-from sqlalchemy import and_, desc, func, or_, text
+from pydantic import BaseModel
+from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
@@ -24,7 +19,7 @@ from backend.core.permissions import get_current_user
 from backend.models_enterprise import (
     AuditLog, BrokenLinkCheck, CmsCustomEntry, CmsCustomEntryVersion,
     CmsCustomType, CmsGlossaryTerm, CmsNotification, CmsRedirect,
-    ContentPermission, MediaFileVersion, MediaFolder, SearchIndex,
+    ContentPermission, MediaFolder, SearchIndex,
     SearchPromotion, UserSession, Webhook, WebhookDelivery,
 )
 from backend.models_identity import User

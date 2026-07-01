@@ -9,11 +9,17 @@ All public-facing endpoints should use this service instead of inline duplicatio
 import logging
 from dataclasses import dataclass, field
 from typing import Optional
+from uuid import UUID
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.models_crm_pipeline import (
+    CanalOrigenEnum,
+    EstadoCasoEnum,
+    TipoPipelineEnum,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +38,7 @@ class ContactRecord:
     spiritual_status: str = "Nuevo"
     church_role: str = "Visitante"
     extra_notes: list[str] = field(default_factory=list)
+    sede_id: Optional[UUID] = None
 
 
 @dataclass
@@ -67,6 +74,9 @@ class PublicContactTracker:
 
         # 1. Find existing Persona by phone or email
         persona = self._find_persona(db, email, phone)
+        sede = self._resolve_sede(db, record.sede_id, persona)
+        if sede is None:
+            raise RuntimeError("No active sede is configured for public contacts")
 
         # 2. Create Persona if not found
         if not persona:
@@ -75,6 +85,7 @@ class PublicContactTracker:
                 last_name=record.last_name or "",
                 email=email,
                 phone=phone,
+                sede_id=sede.id,
                 spiritual_status=record.spiritual_status,
                 church_role=record.church_role,
             )
@@ -82,13 +93,17 @@ class PublicContactTracker:
             db.flush()
             result.persona_created = True
             logger.info(
-                f"Nuevo Persona creado via public contact: "
-                f"{persona.first_name} {persona.last_name} ({email or phone})"
+                "Nueva Persona creada via contacto público: %s %s (%s)",
+                persona.first_name,
+                persona.last_name,
+                email or phone,
             )
+        elif persona.sede_id is None:
+            persona.sede_id = sede.id
 
         result.persona = persona
 
-        # 3. Create CasoCRM
+        # 3. Create a canonical CRM case in the sede visitor pipeline.
         notes_lines = list(record.extra_notes)
         if record.notes:
             notes_lines.append(record.notes)
@@ -97,12 +112,58 @@ class PublicContactTracker:
         if record.campaign:
             notes_lines.append(f"Campaign: {record.campaign}")
 
+        pipeline = (
+            db.query(models.PipelineCRM)
+            .filter(
+                models.PipelineCRM.sede_id == sede.id,
+                models.PipelineCRM.tipo == TipoPipelineEnum.NUEVOS_VISITANTES,
+                models.PipelineCRM.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if pipeline is None:
+            pipeline = models.PipelineCRM(
+                sede_id=sede.id,
+                nombre="Nuevos visitantes",
+                tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
+                activo=True,
+            )
+            db.add(pipeline)
+            db.flush()
+
+        stage = (
+            db.query(models.EtapaPipeline)
+            .filter(
+                models.EtapaPipeline.pipeline_id == pipeline.id,
+                models.EtapaPipeline.deleted_at.is_(None),
+            )
+            .order_by(models.EtapaPipeline.orden)
+            .first()
+        )
+        if stage is None:
+            stage = models.EtapaPipeline(
+                pipeline_id=pipeline.id,
+                nombre="Nuevo",
+                orden=1,
+            )
+            db.add(stage)
+            db.flush()
+
         case = models.CasoCRM(
             persona_id=persona.id,
-            stage="new",
-            status="active",
-            source=record.source,
-            notes="\n".join(notes_lines) if notes_lines else None,
+            sede_id=sede.id,
+            pipeline_id=pipeline.id,
+            etapa_actual_id=stage.id,
+            titulo_caso=(notes_lines[0] if notes_lines else f"Contacto: {record.source}")[:200],
+            estado=EstadoCasoEnum.ABIERTO,
+            origen_canal=CanalOrigenEnum.WEB_FORM,
+            origen_detalle_id=record.source[:200],
+            payload_web={
+                "source": record.source,
+                "landing_page": record.landing_page,
+                "campaign": record.campaign,
+                "notes": notes_lines,
+            },
         )
         db.add(case)
         db.flush()
@@ -110,6 +171,19 @@ class PublicContactTracker:
         result.case_created = True
 
         return result
+
+    @staticmethod
+    def _resolve_sede(
+        db: Session, sede_id: Optional[UUID], persona: Optional[models.Persona]
+    ):
+        candidate = sede_id or (persona.sede_id if persona else None)
+        query = db.query(models.Sede).filter(
+            models.Sede.es_activa.is_(True),
+            models.Sede.deleted_at.is_(None),
+        )
+        if candidate:
+            return query.filter(models.Sede.id == candidate).first()
+        return query.order_by(models.Sede.nombre).first()
 
     @staticmethod
     def _find_persona(

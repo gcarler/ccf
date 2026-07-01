@@ -58,7 +58,7 @@ def notify_task_assigned(
         if assigned_by_persona_id
         else None
     )
-    assignee_user_id = db.query(models.User.id).filter(models.User.id == assignee.id).scalar()
+    recipient_id = db.query(models.User.id).filter(models.User.id == assignee.id).scalar()
     task_url = f"/plataforma/tasks/{task.id}"
     project_title = getattr(project, "title", None)
     sender_name = _display_name(assigned_by)
@@ -90,11 +90,11 @@ def notify_task_assigned(
         if part
     )
 
-    if assignee_user_id:
+    if recipient_id:
         existing = (
             db.query(models.NotificacionUsuario)
             .filter(
-                models.NotificacionUsuario.user_id == assignee_user_id,
+                models.NotificacionUsuario.user_id == recipient_id,
                 models.NotificacionUsuario.title == notification_title,
                 models.NotificacionUsuario.content == notification_content,
                 models.NotificacionUsuario.is_read.is_(False),
@@ -104,7 +104,7 @@ def notify_task_assigned(
         if not existing:
             db.add(
                 models.NotificacionUsuario(
-                    user_id=assignee_user_id,
+                    user_id=recipient_id,
                     title=notification_title,
                     content=notification_content,
                     is_read=False,

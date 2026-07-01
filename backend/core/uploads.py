@@ -81,12 +81,7 @@ def validate_mime_extension_alignment(
     ext = Path(filename).suffix.lower().lstrip(".")
     category = _categorize_extension(ext)
     if category is None:
-        # Extensión ya validada por ensure_allowed_extension, así que esto
-        # sólo se da cuando alguien pasa explícitamente content_type sin
-        # pasar por ensure_allowed_extension. No fallamos en ese caso para
-        # no romper callers anterior; podría haber extensiones permitidas
-        # fuera del catálogo conocido que aún así sean válidas.
-        return
+        raise ValueError(f"Extension '.{ext}' has no MIME contract")
     expected = _EXTENSION_CATEGORY_PREFIXES[category]
     ct = (content_type or "").lower().split(";", 1)[0].strip()
     if not ct:

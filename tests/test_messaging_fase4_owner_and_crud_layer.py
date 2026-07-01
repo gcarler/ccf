@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import uuid as _uuid
 
+import pytest
 from fastapi import HTTPException
 
 from backend import crud, models, schemas
@@ -172,72 +173,32 @@ def test_crud_create_communication_log_allows_local_persona_when_actor_in_sede(d
     assert log.persona_id == persona_a.id
 
 
-def test_crud_create_communication_log_legacy_no_actor_allows_orphan(db_session):
-    """Back-compat: callers legacy sin actor (bulk import, seed script,
-    worker async) pueden crear filas aunque la persona sea cross-sede o
-    no exista en DB. Esto preserva los seeds existentes y los workers.
-
-    NOTA: ``schema.CommunicationLogCreate.persona_id: UUID`` (non-optional)
-    rechaza ``None``. Por eso el \"orphan\" se modela como UUID válido
-    pero sin fila ``Persona`` correspondiente — caso equivalente en
-    términos del scope re-check (anchor irresoluble).
-    """
-    (admin_a, persona_a, _sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
-    persona_b = _persona_in(db_session, sede_b.id, "crud-comm-legacy-b")
-
-    # 1. Cross-sede + no actor → pasa (legacy)
-    log_cross = crud.create_communication_log(
-        db_session,
-        schemas.CommunicationLogCreate(
-            persona_id=persona_b.id,
-            channel="internal",
-            content="bulk import cross-sede",
-        ),
-    )
-    db_session.commit()
-    assert log_cross.id is not None
-    assert log_cross.persona_id == persona_b.id
-
-    # 2. Unresolvable anchor (UUID válido sin fila Persona) + no actor
-    #    → pasa (legacy: el actor=None bypassea el scope re-check completo)
-    log_orphan = crud.create_communication_log(
-        db_session,
-        schemas.CommunicationLogCreate(
-            persona_id=_uuid.uuid4(),  # NO existe en DB
-            channel="internal",
-            content="bulk import unresolvable anchor",
-        ),
-    )
-    db_session.commit()
-    assert log_orphan.id is not None
+def test_crud_create_communication_log_requires_actor(db_session):
+    (_, _, _), (_, persona_b, _) = _seed_two_sedes(db_session)
+    with pytest.raises(TypeError):
+        crud.create_communication_log(
+            db_session,
+            schemas.CommunicationLogCreate(
+                persona_id=persona_b.id,
+                channel="internal",
+                content="missing actor",
+            ),
+        )
 
 
-def test_crud_create_communication_log_superadmin_bypass(db_session):
-    """Bypass para actor sin sede asignada (típicamente superadmin/legacy).
-    ``get_user_sede_id`` retorna ``None`` porque no hay user con ese
-    UUID, así que el scope check queda inert.
-    """
-    (admin_a, _persona_a, _sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
-    persona_b = _persona_in(db_session, sede_b.id, "crud-comm-superadmin-b")
-
-    # UUID válido que NO corresponde a ningún user registrado.
-    fake_superadmin_id = str(_uuid.uuid4())
-
-    log = crud.create_communication_log(
-        db_session,
-        schemas.CommunicationLogCreate(
-            persona_id=persona_b.id,  # cross-sede pero actor sin sede
-            channel="internal",
-            content="superadmin bypass",
-        ),
-        actor_user_id=fake_superadmin_id,
-    )
-    db_session.commit()
-    assert log.id is not None
-    assert log.persona_id == persona_b.id
-
-
-# ── PATCH /api/messaging/notifications/{id} — ownership ──────────────────
+def test_crud_create_communication_log_rejects_unknown_actor(db_session):
+    (_, _, _), (_, persona_b, _) = _seed_two_sedes(db_session)
+    with pytest.raises(HTTPException) as exc_info:
+        crud.create_communication_log(
+            db_session,
+            schemas.CommunicationLogCreate(
+                persona_id=persona_b.id,
+                channel="internal",
+                content="unknown actor",
+            ),
+            actor_user_id=str(_uuid.uuid4()),
+        )
+    assert exc_info.value.status_code == 401
 
 
 def _seed_notification_for_persona(db_session, persona_user_id_uuid, title: str):
@@ -329,24 +290,12 @@ def test_patch_notification_invalid_uuid_returns_404(client, db_session):
     )
 
 
-def test_mark_notification_as_read_without_owner_check_allows_backcompat(db_session):
-    """Back-compat: callers legacy (sin owner_persona_id) pueden modificar
-    notifications ajenas vía CRUD directo. Preserva scripts y bulk imports.
-    """
-    (admin_a, _persona_a, _), (admin_b, _, _) = _seed_two_sedes(db_session)
-    notif_b = _seed_notification(db_session, admin_b.id, "notif legacy target")
+def test_mark_notification_as_read_requires_owner(db_session):
+    (_, _, _), (admin_b, _, _) = _seed_two_sedes(db_session)
+    notif_b = _seed_notification(db_session, admin_b.id, "owner required")
     db_session.commit()
-
-    # CRUD directo sin owner_persona_id → legacy bypass
-    result = crud.mark_notification_as_read(db_session, notif_b.id)
-    db_session.commit()
-    assert result is not None, (
-        "Sin owner_persona_id, el CRUD legacy debe retornar la notification"
-    )
-    assert result.is_read is True, "El mark-as-read legacy debe persistir"
-
-
-# ── Cross-check end-to-end: API CRUD defense-in-depth propagado ──────────
+    with pytest.raises(TypeError):
+        crud.mark_notification_as_read(db_session, notif_b.id)
 
 
 def test_api_messaging_send_propagates_actor_user_id_to_crud(

@@ -52,7 +52,7 @@ Notas operativas:
     globales. Ahora acepta ``sede_id`` opcional y, cuando el caller tiene
     sede asignada (``get_user_sede_id`` retorna string), restringe el
     historial via JOIN con ``Persona.sede_id``. Staff sin sede siguen
-    viendo el log global (compat con superadmin).
+    viendo el log global por su alcance administrativo canónico.
 
   - ``POST /messaging/send`` validaba el cuerpo pero no el target. Ahora
     llama a ``_get_scoped_persona`` antes de crear el log: si el
@@ -61,10 +61,8 @@ Notas operativas:
     interno del staff no expone la sede del autor. **Defense-in-depth**:
     además del check API-layer, propaga ``actor_user_id`` al CRUD
     ``create_communication_log``, que re-valida el ``persona_id`` antes
-    del ``db.add`` — cierra el TOCTOU gap donde un caller no-API (worker,
-    script, seed) podría bypassear el check API-layer. Superadmin /
-    anterior (``actor_user_id=None``) bypassea, consistente con el resto
-    de Axioma 3.
+    del ``db.add`` — cierra el TOCTOU gap donde un caller no-API podría
+    omitir el check API-layer. El actor canónico es obligatorio.
 
   - ``PATCH /messaging/notifications/{id}`` validaba cualquier
     ``notification_id``. Ahora requiere ownership: el caller sólo puede
@@ -212,7 +210,7 @@ def messaging_history(
     # global. Defense-in-depth contra cross-sede leak: un staff de sede_a
     # NO puede leer logs de comunicación de personas de sede_b. Para
     # historia filtrada por persona, usar /api/crm/messaging/history.
-    user_sede = get_user_sede_id(db, getattr(current_user, "id", None))
+    user_sede = get_user_sede_id(db, current_user.id)
     return crud.get_communication_logs(db, limit=limit, sede_id=user_sede)
 
 
@@ -229,7 +227,7 @@ def messaging_send(
     # evitar existence-leaks. Ver module docstring para semántica de
     # outcome, ausencia de gateway y referencia canónica.
     _get_scoped_persona(db, current_user, payload.persona_id)
-    actor_user_id = getattr(current_user, "id", None)
+    actor_user_id = current_user.id
     entry = crud.create_communication_log(
         db,
         schemas.CommunicationLogCreate(
@@ -239,6 +237,6 @@ def messaging_send(
             leader_id=resolve_persona_id_for_user(db, actor_user_id) or actor_user_id,
             outcome=CommunicationOutcome.INTERNAL_LOG.value,
         ),
-        actor_user_id=str(actor_user_id) if actor_user_id else None,
+        actor_user_id=str(actor_user_id),
     )
     return entry

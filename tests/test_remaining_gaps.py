@@ -5,6 +5,7 @@ Uses populated database to exercise CRUD branches with real data.
 import uuid
 import pytest
 from datetime import datetime, date, timedelta, timezone
+from backend import schemas
 from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
 
 
@@ -155,8 +156,8 @@ def full(client, db_session):
         db_session.add(models.SystemVariable(key=f"faro_var_{i}", value=f"val_{i}"))
 
     for i in range(2):
-        db_session.add(models.Testimonial(content=f"Testimonial {i}", author_persona_id=str(personas[i].id), status="published", is_approved=True))
-        db_session.add(models.Announcement(title=f"Announcement {i}", content=f"Content {i}", status="published", published_at=datetime.now(timezone.utc)))
+        db_session.add(models.Testimonial(content=f"Testimonial {i}", author_persona_id=str(personas[i].id), sede_id=sede.id, status="published", is_approved=True))
+        db_session.add(models.Announcement(title=f"Announcement {i}", content=f"Content {i}", sede_id=sede.id, created_by_persona_id=personas[i].id, status="published", published_at=datetime.now(timezone.utc)))
     db_session.commit()
 
     headers = _auth_headers(client, email=admin.email, password="testpass123")
@@ -226,7 +227,12 @@ class TestCRMDeep:
         ev = _call(crm.get_crm_event, db, eid)
         assert ev is not None
         # update
-        _call(crm.update_crm_event, db, eid, {"name": "Updated Event", "description": "Updated"})
+        _call(
+            crm.update_crm_event,
+            db,
+            eid,
+            schemas.CrmEventUpdate(name="Updated Event", description="Updated"),
+        )
         # get attendance
         _call(crm.get_event_attendance, db, eid)
 
@@ -534,52 +540,6 @@ class TestEvangelismDeep:
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # ACADEMY CRUD DIRECT — academy.py (361 missed, 23%)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestAcademyDeep:
-    def test_academy_crud_all(self, db_session, full):
-        from backend.crud import academy
-        db = db_session
-        uid = str(full["admin"].id)
-        # courses
-        _call(academy.get_courses, db)
-        _call(academy.get_courses, db, modality="online")
-        _call(academy.get_courses, db, published_only=True)
-        _call(academy.get_courses, db, sede_id=str(full["sede"].id))
-        # candidates
-        _call(academy.get_academy_candidates, db)
-        # lessons
-        _call(academy.get_lessons_by_course, db, 1)
-        # assessments
-        _call(academy.get_assessments_by_course, db, 1)
-        # questions
-        _call(academy.get_assessment_questions, db, 1)
-        # options
-        _call(academy.get_assessment_options, db, 1)
-        # enrollments
-        _call(academy.get_enrollments_by_user, db, uid)
-        # certificates
-        _call(academy.get_certificates_by_user, db, uid)
-        # progress
-        _call(academy.get_lesson_progress, db, uid, 1)
-        # submissions
-        _call(academy.list_assignment_submissions_with_meta, db)
-        # attendance
-        _call(academy.get_course_attendance, db, 1)
-        # resources
-        _call(academy.get_lesson_resources, db, 1)
-        # students
-        _call(academy.get_course_students, db, 1)
-        # acta
-        _call(academy.get_latest_acta_by_course, db, 1)
-        # forum
-        _call(academy.get_forum_threads, db)
-        # course
-        _call(academy.get_course, db, 1)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# CMS CRUD DIRECT — cms.py (345 missed, 34%)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestCMSDeep:

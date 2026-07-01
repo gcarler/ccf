@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
-import uuid as _uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel

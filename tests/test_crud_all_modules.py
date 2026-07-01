@@ -221,9 +221,10 @@ class TestCMSPages:
 
 
 class TestCMSMedia:
-    def test_create_media_item(self, db_session):
+    def test_create_media_item(self, db_session, admin_data):
         from backend.crud.cms import create_cms_media_item
-        item = create_cms_media_item(db_session, url="/test.jpg", alt_text="Test", section="gallery", tags=[], created_by=None, filename="test.jpg", mime_type="image/jpeg")
+        user, persona, _ = admin_data
+        item = create_cms_media_item(db_session, url="/test.jpg", alt_text="Test", section="gallery", tags=[], created_by=persona.id, filename="test.jpg", mime_type="image/jpeg", actor_user_id=user.id)
         assert item is not None
 
     def test_list_media_items(self, db_session):
@@ -231,16 +232,18 @@ class TestCMSMedia:
         result = list_cms_media_items(db_session)
         assert result is not None
 
-    def test_get_media_item(self, db_session):
+    def test_get_media_item(self, db_session, admin_data):
         from backend.crud.cms import create_cms_media_item, get_cms_media_item
-        item = create_cms_media_item(db_session, url="/g.jpg", alt_text="G", section="gallery", tags=[], created_by=None, filename="g.jpg", mime_type="image/jpeg")
+        user, persona, _ = admin_data
+        item = create_cms_media_item(db_session, url="/g.jpg", alt_text="G", section="gallery", tags=[], created_by=persona.id, filename="g.jpg", mime_type="image/jpeg", actor_user_id=user.id)
         result = get_cms_media_item(db_session, item.id)
         assert result is not None
 
-    def test_delete_media_item(self, db_session):
+    def test_delete_media_item(self, db_session, admin_data):
         from backend.crud.cms import create_cms_media_item, delete_cms_media_item
-        item = create_cms_media_item(db_session, url="/d.jpg", alt_text="D", section="gallery", tags=[], created_by=None, filename="d.jpg", mime_type="image/jpeg")
-        result = delete_cms_media_item(db_session, item.id)
+        user, persona, _ = admin_data
+        item = create_cms_media_item(db_session, url="/d.jpg", alt_text="D", section="gallery", tags=[], created_by=persona.id, filename="d.jpg", mime_type="image/jpeg", actor_user_id=user.id)
+        result = delete_cms_media_item(db_session, item.id, actor_user_id=user.id)
         assert result is True
 
 

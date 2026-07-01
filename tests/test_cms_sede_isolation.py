@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import uuid as _uuid
 
+import pytest
 from fastapi import HTTPException
 
 from backend import crud, models
@@ -188,7 +189,7 @@ def test_cms_pastoral_team_list_filters_by_user_sede(client, db_session):
     """Axioma 3: lista admin de pastoral team se acota a la sede del
     staff. Pre-fix retornaba TODOS los ``is_pastoral_leader`` del
     platform (incluyendo los de sede_b — leak cross-sede)."""
-    (admin_a, _, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
+    (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
     pastor_a1 = _pastor_in(db_session, sede_a.id, "list-local-a1")
     pastor_a2 = _pastor_in(db_session, sede_a.id, "list-local-a2")
     pastor_b1 = _pastor_in(db_session, sede_b.id, "list-cross-b1")
@@ -209,7 +210,7 @@ def test_cms_pastoral_team_list_allows_both_for_superadmin(
     client, db_session, monkeypatch
 ):
     """Back-compat: actor sin sede (superadmin) ve TODOS los leaders."""
-    (admin_a, _, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
+    (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
     pastor_a = _pastor_in(db_session, sede_a.id, "superadmin-list-a")
     pastor_b = _pastor_in(db_session, sede_b.id, "superadmin-list-b")
     db_session.commit()
@@ -373,7 +374,7 @@ def test_create_testimonial_with_cross_sede_author_blocks_404(client, db_session
 
 def test_admin_announcements_scoped_by_sede(client, db_session):
     """Axioma 3: GET /api/admin/announcements filtra por sede del staff."""
-    (admin_a, _, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
+    (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
 
     # Seed directo (bypass API) con sede_id ya colocado.
     a_local = models.Announcement(
@@ -381,12 +382,14 @@ def test_admin_announcements_scoped_by_sede(client, db_session):
         title="Announce LEGITIMO sede_a",
         content="Bienvenida local",
         sede_id=sede_a.id,
+        created_by_persona_id=persona_a.id,
     )
     a_cross = models.Announcement(
         id=_uuid.uuid4(),
         title="Announce SECRETO sede_b",
         content="Contenido confidencial cross-sede — NO debe aparecer",
         sede_id=sede_b.id,
+        created_by_persona_id=persona_b.id,
     )
     db_session.add_all([a_local, a_cross])
     db_session.commit()
@@ -403,12 +406,13 @@ def test_admin_announcements_scoped_by_sede(client, db_session):
 
 def test_patch_admin_announcement_blocks_cross_sede(client, db_session):
     """Axioma 3: PATCH /api/admin/announcements/{id} cross-sede → 404."""
-    (admin_a, _, _), (_, _, sede_b) = _seed_two_sedes(db_session)
+    (admin_a, _, _), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
     a_cross = models.Announcement(
         id=_uuid.uuid4(),
         title="Announce secreto patch target",
         content="original",
         sede_id=sede_b.id,
+        created_by_persona_id=persona_b.id,
         status="published",
     )
     db_session.add(a_cross)
@@ -429,12 +433,13 @@ def test_patch_admin_announcement_blocks_cross_sede(client, db_session):
 
 def test_delete_admin_announcement_blocks_cross_sede(client, db_session):
     """Axioma 3: DELETE /api/admin/announcements/{id} cross-sede → 404."""
-    (admin_a, _, _), (_, _, sede_b) = _seed_two_sedes(db_session)
+    (admin_a, _, _), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
     a_cross = models.Announcement(
         id=_uuid.uuid4(),
         title="Announce secreto delete target",
         content="x",
         sede_id=sede_b.id,
+        created_by_persona_id=persona_b.id,
         status="published",
     )
     db_session.add(a_cross)
@@ -622,25 +627,13 @@ def test_crud_create_announcement_inherits_actor_sede_for_orphan_fk(
         title="Announcement orphan fallback from editor in sede",
         content="orphan-fallback heredando actor_sede",
     )
-    row = crud.create_announcement(
-        db_session,
-        payload,
-        actor_user_id=str(admin_a.id),
-    )
-    db_session.commit()
-    db_session.refresh(row)
-
-    assert row.id is not None, (
-        "Orphan-fallback: row debe existir (no raise 404)"
-    )
-    assert row.sede_id == sede_a.id, (
-        f"Orphan-fallback contrato: row.sede_id == actor_sede ({sede_a.id}); "
-        f"got {row.sede_id}"
-    )
-    assert row.created_by_persona_id is None, (
-        "Orphan-fallback: created_by_persona_id es None "
-        "(resolve monkeypatched a None)"
-    )
+    with pytest.raises(HTTPException) as exc_info:
+        crud.create_announcement(
+            db_session,
+            payload,
+            actor_user_id=str(admin_a.id),
+        )
+    assert exc_info.value.status_code == 401
 
 
 def test_crud_create_announcement_blocks_cross_sede_when_fk_resolves_to_other_sede(
@@ -673,7 +666,7 @@ def test_crud_create_announcement_blocks_cross_sede_when_fk_resolves_to_other_se
         _cms_crud,
         "resolve_persona_id_for_user",
         lambda db, user_id: persona_b.id
-        if user_id == str(admin_a.id) else None,
+        if str(user_id) == str(admin_a.id) else None,
     )
 
     payload = schemas.AnnouncementCreate(
@@ -754,22 +747,13 @@ def test_crud_create_testimonial_inherits_actor_sede_for_orphan_fk(
     payload = schemas.TestimonialCreate(
         content="Anonymous orphan testimonial que hereda actor_sede",
     )
-    row = crud.create_testimonial(
-        db_session,
-        payload,
-        actor_user_id=str(admin_a.id),
-    )
-    db_session.commit()
-    db_session.refresh(row)
-
-    assert row.id is not None, "Orphan-fallback: row debe existir"
-    assert row.author_persona_id is None, (
-        "Orphan-fallback: author FK es None (resolve monkeypatched)"
-    )
-    assert row.sede_id == sede_a.id, (
-        f"Orphan-fallback contrato: row.sede_id == actor_sede ({sede_a.id}); "
-        f"got {row.sede_id}"
-    )
+    with pytest.raises(HTTPException) as exc_info:
+        crud.create_testimonial(
+            db_session,
+            payload,
+            actor_user_id=str(admin_a.id),
+        )
+    assert exc_info.value.status_code == 401
 
 
 def test_crud_create_cms_media_item_inherits_actor_sede_for_orphan_fk(
@@ -795,26 +779,17 @@ def test_crud_create_cms_media_item_inherits_actor_sede_for_orphan_fk(
         lambda db, user_id: None,
     )
 
-    row = crud.create_cms_media_item(
-        db_session,
-        url="https://cdn.example.com/orphan-fallback-asset.png",
-        alt_text="orphan-fallback asset",
-        section="hero",
-        tags=[],
-        created_by=admin_a.id,  # User id con Usuario→Persona roto
-        actor_user_id=str(admin_a.id),
-    )
-    db_session.commit()
-    db_session.refresh(row)
-
-    assert row.id is not None
-    assert row.created_by_persona_id is None, (
-        "Orphan-fallback: created_by_persona_id es None (resolve roto)"
-    )
-    assert row.sede_id == sede_a.id, (
-        f"Orphan-fallback contrato: row.sede_id == actor_sede ({sede_a.id}); "
-        f"got {row.sede_id}"
-    )
+    with pytest.raises(HTTPException) as exc_info:
+        crud.create_cms_media_item(
+            db_session,
+            url="https://cdn.example.com/orphan-fallback-asset.png",
+            alt_text="orphan-fallback asset",
+            section="hero",
+            tags=[],
+            created_by=admin_a.id,
+            actor_user_id=str(admin_a.id),
+        )
+    assert exc_info.value.status_code == 401
 
 
 # ── Regression / invariantes estrictos del helper ──────────────────────────
@@ -956,10 +931,7 @@ def test_crud_update_pastoral_profile_allows_local_pastor(db_session):
     assert updated.bio_short == "Bio local OK"
 
 
-def test_crud_create_testimonial_legacy_no_actor_allows_any(db_session):
-    """Back-compat: CRUD sin ``actor_user_id`` (legacy path / bulk
-    import) bypassea el scope-check. Esto preserva la compatibilidad
-    con seeds existentes y workers async que aún no propagan actor."""
+def test_crud_create_testimonial_requires_actor(db_session):
     from backend import schemas
 
     (_, _, sede_b) = seed_admin(db_session, email="legacy-cms@example.com")
@@ -969,17 +941,11 @@ def test_crud_create_testimonial_legacy_no_actor_allows_any(db_session):
         content="Bulk import testimonial",
         author_persona_id=persona_b.id,
     )
-    # Sin actor_user_id → legacy bypass
-    t = crud.create_testimonial(db_session, payload)
-    db_session.commit()
-    assert t.id is not None
-    assert t.content == "Bulk import testimonial"
+    with pytest.raises(TypeError):
+        crud.create_testimonial(db_session, payload)
 
 
-def test_crud_create_testimonial_superadmin_bypass(db_session):
-    """Superadmin bypass: actor_user_id sin sede (UUID inválido que no
-    match ningún user) porpassea el scope-check via
-    ``_actor_sede_or_none_cms``."""
+def test_crud_create_testimonial_rejects_unknown_actor(db_session):
     from backend import schemas
 
     (admin_a, _, _), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
@@ -989,13 +955,13 @@ def test_crud_create_testimonial_superadmin_bypass(db_session):
         content="Superadmin bypass testimonial",
         author_persona_id=persona_b.id,
     )
-    t = crud.create_testimonial(
-        db_session,
-        payload,
-        actor_user_id=fake_superadmin,
-    )
-    db_session.commit()
-    assert t.id is not None
+    with pytest.raises(HTTPException) as exc_info:
+        crud.create_testimonial(
+            db_session,
+            payload,
+            actor_user_id=fake_superadmin,
+        )
+    assert exc_info.value.status_code == 401
 
 
 def test_crud_update_testimonial_blocks_toctou_when_row_moved_cross_sede(
@@ -1086,13 +1052,14 @@ def test_public_announcements_feed_remains_global(client, db_session):
     """Sanity regression: feed público de announcements publicados es
     global para preservar la home.
     """
-    (admin_a, _, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
+    (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
 
     a_a = models.Announcement(
         id=_uuid.uuid4(),
         title="A-public-a",
         content="publicado sede_a",
         sede_id=sede_a.id,
+        created_by_persona_id=persona_a.id,
         status="published",
     )
     a_b = models.Announcement(
@@ -1100,6 +1067,7 @@ def test_public_announcements_feed_remains_global(client, db_session):
         title="A-public-b",
         content="publicado sede_b",
         sede_id=sede_b.id,
+        created_by_persona_id=persona_b.id,
         status="published",
     )
     db_session.add_all([a_a, a_b])

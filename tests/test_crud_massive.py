@@ -138,10 +138,13 @@ class TestCRMTasks:
     def test_create_crm_task(self, db_session):
         from backend.crud.crm import create_crm_task
         from backend.schemas import CrmTaskCreate
+        from tests.conftest import seed_admin
+        user, persona, _ = seed_admin(db_session)
         task = create_crm_task(db_session, CrmTaskCreate(
             title="Test Task",
             description="desc",
-        ))
+            persona_id=persona.id,
+        ), actor_user_id=user.id)
         assert task is not None
 
     def test_get_crm_tasks(self, db_session):
@@ -207,12 +210,14 @@ class TestCRMCommunication:
     def test_create_communication_log(self, db_session):
         from backend.crud.crm import create_communication_log
         from backend.schemas.notifications import CommunicationLogCreate
+        from tests.conftest import seed_admin
+        user, persona, _ = seed_admin(db_session)
         log = create_communication_log(db_session, CommunicationLogCreate(
-            persona_id=str(uuid.uuid4()),
+            persona_id=persona.id,
             channel="Email",
             content="Test message",
             outcome="sent",
-        ))
+        ), actor_user_id=user.id)
         assert log is not None
 
     def test_get_communication_logs(self, db_session):

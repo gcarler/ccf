@@ -48,7 +48,7 @@ class TestAdminRoles:
         from backend.models_auth import RolPlataforma
         role = db_session.query(RolPlataforma).first()
         if role:
-            resp = client.put(f"/api/admin/roles/{role.id}", json={"permissions": {"crm:read": "allow"}}, headers=headers)
+            resp = client.patch(f"/api/admin/roles/{role.id}", json={"permissions": {"crm:read": "allow"}}, headers=headers)
             assert resp.status_code in (200, 404)
 
     def test_delete_role(self, client_auth, db_session):

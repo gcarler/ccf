@@ -224,7 +224,7 @@ class StubMessagingGateway(MessagingGateway):
       a las personas de la iglesia.
     """
 
-    STUB_OUTCOME = CommunicationOutcome.STUB.value  # alias para compatibilidad
+    OUTCOME = CommunicationOutcome.STUB.value
 
     async def send_whatsapp(
         self,
@@ -252,7 +252,7 @@ class StubMessagingGateway(MessagingGateway):
             leader_id=leader_id,
             campaign_name=campaign_name,
             external_id=external_id or f"STUB-WA-{uuid.uuid4().hex[:12]}",
-            outcome=self.STUB_OUTCOME,
+            outcome=self.OUTCOME,
         )
 
     async def send_sms(
@@ -281,7 +281,7 @@ class StubMessagingGateway(MessagingGateway):
             leader_id=leader_id,
             campaign_name=campaign_name,
             external_id=external_id or f"STUB-SMS-{uuid.uuid4().hex[:12]}",
-            outcome=self.STUB_OUTCOME,
+            outcome=self.OUTCOME,
         )
 
     async def send_email(
@@ -321,7 +321,7 @@ class StubMessagingGateway(MessagingGateway):
             leader_id=leader_id,
             campaign_name=campaign_name,
             external_id=external_id or f"STUB-EM-{uuid.uuid4().hex[:12]}",
-            outcome=self.STUB_OUTCOME,
+            outcome=self.OUTCOME,
         )
 
 

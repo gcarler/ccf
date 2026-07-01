@@ -329,7 +329,7 @@ def get_content_metrics(
     estructurales del site faro (``publications``, ``page_contents``)
     SÍ son globales por diseño — son el site público, no contenido
     User-Generated. Superadmin sin sede sigue viendo totales globales
-    (compat anterior), consistente con el resto del axioma 3.
+    por su alcance administrativo canónico, consistente con el axioma 3.
     """
     publications = crud.list_content_publications(db)
     status_counter = {

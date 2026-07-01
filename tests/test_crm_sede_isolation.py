@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import uuid as _uuid
 
+import pytest
+from fastapi import HTTPException
 from backend import models
 from backend.models_crm_pipeline import (
     CanalOrigenEnum,
@@ -350,11 +352,7 @@ def test_create_counseling_ticket_blocks_cross_sede(client, db_session):
 
 
 def test_create_counseling_ticket_pastor_id_resolves_and_validates_scope(client, db_session):
-    """Axioma 3: create_counseling_ticket acepta pastor_id como UUID o como
-    Integer user_id (contrato histórico preservado) pero valida scope en
-    ambos casos. Sin esta validación, un editor de sede_a podría usar un
-    user_id de sede_b como pastor_id y persistir la asignación cross-sede.
-    """
+    """Axioma 3: pastor_id acepta sólo UUID canónico de persona en scope."""
     (admin_a, _, sede_a), (admin_b, persona_b, sede_b) = _seed_two_sedes(db_session)
     persona_a_local = _persona_in(db_session, sede_a.id, "pastor-test-local-a")
     persona_a_target = _persona_in(db_session, sede_a.id, "pastor-test-target-a")
@@ -377,8 +375,7 @@ def test_create_counseling_ticket_pastor_id_resolves_and_validates_scope(client,
         f"Regresión: pastor_id como UUID local deberia funcionar (status {resp.status_code}): {resp.text}"
     )
 
-    # 2. pastor_id como Integer user_id de admin_b (sede_b) → 404 cross-sede
-    #    (admin_b es un User cuyo persona está en sede_b via seed_admin).
+    # 2. El UUID canónico de la persona de otra sede queda fuera de scope.
     resp_cross_user = client.post(
         "/api/crm/counseling/",
         headers=headers_a,
@@ -392,7 +389,7 @@ def test_create_counseling_ticket_pastor_id_resolves_and_validates_scope(client,
         },
     )
     assert resp_cross_user.status_code == 404, (
-        f"Leak: pastor_id como user_id de sede_b deberia 404 (status {resp_cross_user.status_code}): {resp_cross_user.text}"
+        f"pastor_id cross-sede debe rechazarse (status {resp_cross_user.status_code}): {resp_cross_user.text}"
     )
     # Sanity: NO se persistió el ticket cross-sede
     leaked_rows = (
@@ -407,9 +404,7 @@ def test_create_counseling_ticket_pastor_id_resolves_and_validates_scope(client,
         f"FUGA: {len(leaked_rows)} ticket(s) cross-sede persistido(s) pese al 404"
     )
 
-    # 3. pastor_id como Integer user_id de admin_a (misma sede) → 201
-    #    Esto valida que el camino de resolución user_id→persona funciona
-    #    y la asignación queda en scope.
+    # 3. El actor local comparte el UUID canónico de su Persona.
     resp_local_user = client.post(
         "/api/crm/counseling/",
         headers=headers_a,
@@ -423,12 +418,10 @@ def test_create_counseling_ticket_pastor_id_resolves_and_validates_scope(client,
         },
     )
     assert resp_local_user.status_code == 201, (
-        f"Regresión: pastor_id como user_id local deberia funcionar (status {resp_local_user.status_code}): {resp_local_user.text}"
+        f"pastor_id local canónico debe funcionar (status {resp_local_user.status_code}): {resp_local_user.text}"
     )
 
-    # 4. pastor_id como string inválido (ni UUID ni Integer) → 404
-    #    Comportamiento histórico era silent None; ahora 404 explícito
-    #    para evitar el silent-bypass.
+    # 4. Un string no UUID falla en la frontera Pydantic.
     resp_invalid = client.post(
         "/api/crm/counseling/",
         headers=headers_a,
@@ -441,11 +434,11 @@ def test_create_counseling_ticket_pastor_id_resolves_and_validates_scope(client,
             "status": "open",
         },
     )
-    assert resp_invalid.status_code == 404, (
-        f"Pastor_id inválido deberia 404 (status {resp_invalid.status_code}): {resp_invalid.text}"
+    assert resp_invalid.status_code == 422, (
+        f"Pastor_id inválido deberia 422 (status {resp_invalid.status_code}): {resp_invalid.text}"
     )
 
-    # 5. pastor_id como Integer que NO corresponde a ningún User → 404
+    # 5. Un entero serializado tampoco forma parte del contrato UUID.
     resp_nonexistent_user = client.post(
         "/api/crm/counseling/",
         headers=headers_a,
@@ -458,8 +451,8 @@ def test_create_counseling_ticket_pastor_id_resolves_and_validates_scope(client,
             "status": "open",
         },
     )
-    assert resp_nonexistent_user.status_code == 404, (
-        f"User_id inexistente deberia 404 (status {resp_nonexistent_user.status_code}): {resp_nonexistent_user.text}"
+    assert resp_nonexistent_user.status_code == 422, (
+        f"Identidad no UUID deberia 422 (status {resp_nonexistent_user.status_code}): {resp_nonexistent_user.text}"
     )
 
 
@@ -542,7 +535,7 @@ def test_update_counseling_ticket_blocks_cross_sede(client, db_session):
         "El pastor_id NO debe haberse mutado a un cross-sede"
     )
 
-    # 4. pastor_id como user_id (Integer) de admin_b (sede_b) → 404
+    # 4. El UUID canónico cross-sede continúa fuera de scope.
     resp_pastor_user_cross = client.patch(
         f"/api/crm/counseling/{local_ticket.id}",
         headers=headers_a,
@@ -555,7 +548,7 @@ def test_update_counseling_ticket_blocks_cross_sede(client, db_session):
         f"Leak pastor_id como user_id cross-sede en update: status {resp_pastor_user_cross.status_code}, body={resp_pastor_user_cross.text}"
     )
 
-    # 5. pastor_id como user_id (Integer) de admin_a (sede_a) → 200
+    # 5. El UUID canónico de la persona local es válido.
     resp_pastor_user_local = client.patch(
         f"/api/crm/counseling/{local_ticket.id}",
         headers=headers_a,
@@ -565,7 +558,7 @@ def test_update_counseling_ticket_blocks_cross_sede(client, db_session):
         },
     )
     assert resp_pastor_user_local.status_code == 200, (
-        f"Regresión: pastor_id como user_id local deberia funcionar (status {resp_pastor_user_local.status_code}): {resp_pastor_user_local.text}"
+        f"pastor_id local canónico debe funcionar (status {resp_pastor_user_local.status_code}): {resp_pastor_user_local.text}"
     )
 
 
@@ -678,11 +671,7 @@ def test_export_newsletter_leads_csv_blocks_cross_sede(client, db_session):
     `pipeline_id` y `etapa_actual_id` NOT NULL → hay que crear el pipeline
     y la etapa antes de instanciar el caso.
 
-    Nota: el endpoint tiene filtros legacy `origen_canal.like('%newsletter%')`
-    y `estado != 'CERRADO'` que no matchean los enums SAEnum actuales (bug
-    pre-existente, fuera de scope). El test valida el cross-sede; el positivo
-    'lead legitimo A en export' NO se asegura porque depende de esos filtros
-    rotos.
+    El origen canónico es WEB_FORM y el detalle conserva ``newsletter-web``.
     """
     (admin_a, _, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
 
@@ -715,6 +704,7 @@ def test_export_newsletter_leads_csv_blocks_cross_sede(client, db_session):
         etapa_actual_id=etapa_a.id,
         titulo_caso="lead legitimo A",
         origen_canal=CanalOrigenEnum.WEB_FORM,
+        origen_detalle_id="newsletter-web",
         estado=EstadoCasoEnum.ABIERTO,
         deleted_at=None,
     )
@@ -725,6 +715,7 @@ def test_export_newsletter_leads_csv_blocks_cross_sede(client, db_session):
         etapa_actual_id=etapa_b.id,
         titulo_caso="LEAD SECRETO SEDE B",
         origen_canal=CanalOrigenEnum.WEB_FORM,
+        origen_detalle_id="newsletter-web",
         estado=EstadoCasoEnum.ABIERTO,
         deleted_at=None,
     )
@@ -739,6 +730,7 @@ def test_export_newsletter_leads_csv_blocks_cross_sede(client, db_session):
     assert "LEAD SECRETO SEDE B" not in body_text, (
         f"FUGA: lead cross-sede en export admin A: {body_text[:300]}"
     )
+    assert "lead legitimo A" in body_text
 
 
 def test_get_newsletter_leads_blocks_cross_sede(client, db_session):
@@ -748,11 +740,7 @@ def test_get_newsletter_leads_blocks_cross_sede(client, db_session):
     `Persona.sede_id == user_sede` (mismo bug que export_newsletter_leads_csv).
     Cross-sede no debe aparecer en la lista retornada.
 
-    Nota: el endpoint tiene filtros legacy `origen_canal.like('%newsletter%')`
-    y `estado != 'CERRADO'` que no matchean los enums SAEnum actuales (bug
-    pre-existente, fuera de scope). El test valida el cross-sede; el positivo
-    'lead legitimo A en lista' NO se asegura porque depende de esos filtros
-    rotos.
+    El origen canónico es WEB_FORM y el detalle conserva ``newsletter-web``.
     """
     (admin_a, _, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
 
@@ -784,6 +772,7 @@ def test_get_newsletter_leads_blocks_cross_sede(client, db_session):
         etapa_actual_id=etapa_a.id,
         titulo_caso="lead legitimo lista A",
         origen_canal=CanalOrigenEnum.WEB_FORM,
+        origen_detalle_id="newsletter-web",
         estado=EstadoCasoEnum.ABIERTO,
         deleted_at=None,
     )
@@ -794,6 +783,7 @@ def test_get_newsletter_leads_blocks_cross_sede(client, db_session):
         etapa_actual_id=etapa_b.id,
         titulo_caso="LEAD SECRETO LISTA SEDE B",
         origen_canal=CanalOrigenEnum.WEB_FORM,
+        origen_detalle_id="newsletter-web",
         estado=EstadoCasoEnum.ABIERTO,
         deleted_at=None,
     )
@@ -808,6 +798,7 @@ def test_get_newsletter_leads_blocks_cross_sede(client, db_session):
     assert "LEAD SECRETO LISTA SEDE B" not in body_text, (
         f"FUGA: lead cross-sede en lista de leads admin A: {body_text[:500]}"
     )
+    assert "lead legitimo lista A" in body_text
 
     # Sanity inversa: el admin B tampoco debe ver el lead de sede_a
     headers_b = auth_headers(client, email="aboxB@example.com")
@@ -936,11 +927,8 @@ def test_create_crm_task_blocks_cross_sede_assignee_uuid(client, db_session):
     assert leaked is None, "FUGA CONFIRMADA: task persistida con assignee cross-sede"
 
 
-def test_create_crm_task_blocks_cross_sede_assignee_user_id(client, db_session):
-    """Axioma 3: cuando el editor pasa assignee_id como Integer user_id de
-    otra sede (contrato histórico), debe ser 404 antes de delegar al CRUD.
-    Sin esta validación, un editor de sede_a podría usar un user_id de
-    sede_b como assignee y persistir la asignación silenciosamente."""
+def test_create_crm_task_blocks_cross_sede_assignee_persona_id(client, db_session):
+    """assignee_id valida el UUID canónico de Persona contra el scope."""
     (admin_a, _, sede_a), (admin_b, _, sede_b) = _seed_two_sedes(db_session)
     persona_a_target = _persona_in(db_session, sede_a.id, "task-assignee-userid-target-a")
 
@@ -959,7 +947,7 @@ def test_create_crm_task_blocks_cross_sede_assignee_user_id(client, db_session):
         },
     )
     assert resp.status_code == 404, (
-        f"Leak: assignee_id como user_id cross-sede debería 404 "
+        f"assignee_id cross-sede debe rechazarse con 404 "
         f"(status {resp.status_code}): {resp.text}"
     )
     leaked = (
@@ -972,8 +960,8 @@ def test_create_crm_task_blocks_cross_sede_assignee_user_id(client, db_session):
     assert leaked is None, "FUGA CONFIRMADA: task persistida con assignee cross-sede via user_id"
 
 
-def test_create_crm_task_allows_local_assignee_user_id(client, db_session):
-    """Sanity: assignee_id como Integer user_id LOCAL funciona (regression)."""
+def test_create_crm_task_allows_local_assignee_persona_id(client, db_session):
+    """El UUID canónico de la Persona local puede recibir la tarea."""
     (admin_a, persona_a, sede_a), _ = _seed_two_sedes(db_session)
     persona_a_target = _persona_in(db_session, sede_a.id, "task-assignee-local-userid")
 
@@ -990,12 +978,9 @@ def test_create_crm_task_allows_local_assignee_user_id(client, db_session):
         },
     )
     assert resp.status_code == 200, (
-        f"Regresión: assignee_id como user_id local debería funcionar "
+        f"assignee_id local canónico debe funcionar "
         f"(status {resp.status_code}): {resp.text}"
     )
-    data = resp.json()
-    assert data["title"] == "Task con assignee local via user_id"
-    assert data["assignee_id"] == str(persona_a.id)
 
 
 def test_create_crm_task_validates_status_whitelist(client, db_session):
@@ -1178,28 +1163,28 @@ def test_update_crm_task_blocks_cross_sede_assignee_change(client, db_session):
         "El asignado NO debe haber mutado a cross-sede via UUID"
     )
 
-    # 2. Reasignar con Integer user_id de admin_b → 404
+    # 2. El UUID canónico cross-sede queda fuera de scope.
     resp_user = client.patch(
         f"/api/crm/tasks/{task_local.id}",
         headers=headers_a,
         json={"assignee_id": str(admin_b.id)},
     )
     assert resp_user.status_code == 404, (
-        f"Leak reasignación user_id cross-sede: status {resp_user.status_code}, body={resp_user.text}"
+        f"Reasignación cross-sede debe ser 404: status {resp_user.status_code}, body={resp_user.text}"
     )
     db_session.refresh(task_local)
     assert task_local.asignado_a_id == persona_a_admin.id, (
         "El asignado NO debe haber mutado a cross-sede via user_id"
     )
 
-    # 3. Sanity: asignarse a sí mismo (admin_a vía user_id local) → 200
+    # 3. El UUID canónico local puede recibir la tarea.
     resp_local = client.patch(
         f"/api/crm/tasks/{task_local.id}",
         headers=headers_a,
         json={"assignee_id": str(admin_a.id)},  # self user_id local
     )
     assert resp_local.status_code == 200, (
-        f"Regresión: self user_id local debería funcionar "
+        f"persona_id local debe aceptarse "
         f"(status {resp_local.status_code}): {resp_local.text}"
     )
     db_session.refresh(task_local)
@@ -1391,10 +1376,12 @@ def test_crud_create_crm_task_logs_audit_directly(db_session):
         category="Pastoral",
         priority="low",
         status="pending",
+        persona_id=persona_a.id,
     )
 
-    # Sin actor_user_id (simula un bulk import sin sesión de usuario).
-    task = crud.create_crm_task(db_session, create_payload)
+    task = crud.create_crm_task(
+        db_session, create_payload, actor_user_id=str(persona_a.id)
+    )
     db_session.commit()
     assert task.id is not None
 
@@ -1409,9 +1396,7 @@ def test_crud_create_crm_task_logs_audit_directly(db_session):
     )
     assert len(rows) == 1, f"Audit CREATE esperado, encontrados {len(rows)}"
     assert rows[0].detalles_cambio["title"] == "Direct CRUD create"
-    assert rows[0].usuario_id is None, (
-        "Sin actor_user_id, la fila debe tener usuario_id=NULL (system-level)"
-    )
+    assert str(rows[0].usuario_id) == str(persona_a.id)
 
     # Con actor_user_id: actor debe propagarse a LogAuditoria.usuario_id.
     task2 = crud.create_crm_task(
@@ -1549,12 +1534,10 @@ def test_crud_update_crm_task_no_audit_when_idempotent(db_session):
     )
 
 
-def test_crud_update_crm_task_logs_audit_with_dict_payload_legacy(db_session):
-    """Backward compat: callers legacy (tests directos al CRUD con `dict`)
-    deben seguir funcionando. Verifica que el audit log se emite también
-    en ese path."""
+def test_crud_update_crm_task_logs_audit_with_schema_payload(db_session):
+    """El contrato Pydantic canónico conserva la auditoría de cambios."""
     import uuid as _u
-    from backend import crud
+    from backend import crud, schemas
     from backend.models_evangelism import LogAuditoria
     from backend.models_crm_pipeline import TareaCRM
 
@@ -1574,7 +1557,7 @@ def test_crud_update_crm_task_logs_audit_with_dict_payload_legacy(db_session):
     crud.update_crm_task(
         db_session,
         t.id,
-        {"status": "completed"},  # duck-typing: dict en lugar de schema
+        schemas.CrmTaskUpdate(status="completed"),
         actor_user_id=str(persona_a.id),
     )
     db_session.commit()
@@ -1588,9 +1571,7 @@ def test_crud_update_crm_task_logs_audit_with_dict_payload_legacy(db_session):
         )
         .first()
     )
-    assert row is not None, (
-        "El path dict-legacy del CRUD no debe perder el audit log"
-    )
+    assert row is not None
     assert row.detalles_cambio["status"]["from"] == "pending"
     assert row.detalles_cambio["status"]["to"] == "completed"
 
@@ -1739,51 +1720,29 @@ def test_crud_update_crm_task_blocks_toctou_when_actor_in_sede(db_session):
     )
 
 
-def test_crud_create_crm_task_legacy_no_actor_back_compat(db_session):
-    """Back-compat: CRUD sin actor_user_id (bypass intencional de workers,
-    migraciones, seeds) debe proseguir sin check."""
-    from backend import crud, schemas
-    (_, _, sede_b) = seed_admin(db_session, email="legacy-side@example.com")
-    persona_b = _persona_in(db_session, sede_b.id, "crud-legacy-b")
-
-    payload = schemas.CrmTaskCreate(
-        title="CRUD legacy sin actor",
-        description="simula un bulk import sin contexto de usuario",
-        persona_id=persona_b.id,
-    )
-    task = crud.create_crm_task(db_session, payload)
-    db_session.commit()
-    assert task.id is not None, "Legacy path debe crear la fila sin raise"
-    assert task.persona_id == persona_b.id
-
-
-def test_crud_create_crm_task_superadmin_bypass(db_session):
-    """Back-compat: actor_user_id cuyo User no tiene sede (superadmin) debe
-    bypassear el scope re-check (ve todo, igual que el API layer)."""
+def test_crud_create_crm_task_requires_actor(db_session):
     from backend import crud, schemas
 
-    (admin_a, _persona_a, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
-    persona_b = _persona_in(db_session, sede_b.id, "crud-superadmin-b")
+    payload = schemas.CrmTaskCreate(title="Actor required")
+    with pytest.raises(TypeError):
+        crud.create_crm_task(db_session, payload)
 
-    # Un usuario superadmin hipotético SIN persona vinculada: pasamos
-    # un UUID válido que NO corresponde a ningún user en BD. `get_user_sede_id`
-    # retorna None porque no hay user con ese id → bypass fires.
-    # Usamos UUID (no Integer) porque `_audit_log` parsea el actor como UUID;
-    # un Integer ("999999999") haría fallar la conversión `_uuid.UUID()`.
-    superadmin_user_id = str(_uuid.uuid4())  # UUID válido → no user
+
+def test_crud_create_crm_task_rejects_unknown_actor(db_session):
+    from backend import crud, schemas
+
+    (_, _, _), (_, persona_b, _) = _seed_two_sedes(db_session)
     payload = schemas.CrmTaskCreate(
-        title="CRUD superadmin bypass",
-        description="actor sin sede bypassea scope check",
+        title="Unknown actor rejected",
         persona_id=persona_b.id,
     )
-    task = crud.create_crm_task(
-        db_session,
-        payload,
-        actor_user_id=superadmin_user_id,
-    )
-    db_session.commit()
-    assert task.id is not None, "Superadmin bypass debe crear la fila sin raise"
-    assert task.persona_id == persona_b.id
+    with pytest.raises(HTTPException) as exc_info:
+        crud.create_crm_task(
+            db_session,
+            payload,
+            actor_user_id=str(_uuid.uuid4()),
+        )
+    assert exc_info.value.status_code == 401
 
 
 def test_crud_update_crm_task_blocks_assignee_change_cross_sede(db_session):
@@ -1953,14 +1912,6 @@ def test_crud_create_crm_task_orphan_rejected_for_editor(db_session):
         "STRICT policy + orphan guard: editor en sede NO debe poder crear "
         "tarea huérfana (consistencia con API que rechaza orphans en lectura)"
     )
-
-    # Sanity: legacy path (sin actor_user_id) SÍ permite orphan create,
-    # preservando back-compat con bulk imports / seeds que corren sin
-    # contexto de usuario.
-    task = crud.create_crm_task(db_session, payload)
-    db_session.commit()
-    assert task.id is not None, "Legacy path debe permitir orphan create"
-    assert task.persona_id is None and task.asignado_a_id is None and task.caso_id is None
 
 def test_create_prayer_request_no_user_sede_returns_400(client, db_session, monkeypatch):
     """M3 — Axioma 3: create_prayer_request rechaza 400 cuando el editor

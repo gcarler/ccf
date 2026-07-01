@@ -1,7 +1,5 @@
 """Projects CRUD — corregido para cumplir los 3 axiomas del Kernel CCF."""
 
-import logging
-import uuid
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
@@ -23,19 +21,14 @@ def get_user_persona_id(db: Session, user_id: UUID | str | None) -> Optional[UUI
 
 # ── Projects ────────────────────────────────────────────
 
-def create_project(db: Session, project=None, owner_persona_id=None, sede_id=None, **kwargs):
-    """Create a Project. Two call shapes:
-
-    1. ``create_project(db, schemas.ProjectCreate(...), owner_id=..., sede_id=...)``
-       — used by ``backend/api/projects.py`` and pre-existing callers.
-    2. ``create_project(db, name=..., owner_id=..., sede_id=..., **kwargs)``
-       — used by ``tests/test_crud_integration.py::TestProjectsCrud.test_create_project``
-       (no schema passed; ``name`` maps to ``title`` since the model uses ``title``).
-    """
-    if project is None:
-        title = kwargs.pop("name", kwargs.pop("title", None)) or "Untitled"
-        project = schemas.ProjectCreate(title=title)
-        owner_persona_id = owner_persona_id or kwargs.pop("owner_id", None)
+def create_project(
+    db: Session,
+    project: schemas.ProjectCreate,
+    *,
+    owner_persona_id: UUID | str,
+    sede_id: UUID | str,
+):
+    """Crea un proyecto mediante el contrato Pydantic canónico."""
     data = project.model_dump()
     data.pop("owner_id", None)
     row = models.Project(**data)
@@ -59,13 +52,8 @@ def get_projects(db: Session, skip: int = 0, limit: int = 100, sede_id=None, sta
     return q.order_by(models.Project.updated_at.desc()).offset(skip).limit(limit).all()
 
 
-def get_project(db: Session, project_id, sede_id=None, **_kwargs):
-    """Fetch a project. ``sede_id`` is an optional multi-tenant filter used by
-    ``tests/test_crud_integration.py::TestProjectsCrud.test_get_project``.
-
-    Production callers continue to use the no-``sede_id`` form; the kwarg is
-    swallowed here so neither side needs a separate function.
-    """
+def get_project(db: Session, project_id, sede_id=None):
+    """Obtiene un proyecto y aplica el scope de sede cuando se proporciona."""
     q = (
         db.query(models.Project)
         .filter(models.Project.id == project_id, models.Project.deleted_at.is_(None))
@@ -75,50 +63,20 @@ def get_project(db: Session, project_id, sede_id=None, **_kwargs):
     return q.first()
 
 
-def update_project(db: Session, project_id, payload=None, *, sede_id=None, **kwargs):
-    """Update a project.
-
-    Accepts either ``schemas.ProjectUpdate`` (production path) or kwarg-driven
-    calls like ``update_project(db, pid, name='New Name', sede_id=...)`` from
-    the integration tests. Kwargs are routed through a synthesized
-    ``schemas.ProjectUpdate`` so Pydantic's type validation is preserved at the
-    boundary; ``name`` is aliased to ``title`` (mirroring ``create_project``'s
-    same idiom) so callers using the canonical ``name`` alias still write to
-    the column. Unknown kwarg keys are silently filtered before synthesis.
-    ``sede_id`` is always honored, even alongside a payload.
-    """
+def update_project(
+    db: Session,
+    project_id,
+    payload: schemas.ProjectUpdate,
+    *,
+    sede_id=None,
+):
+    """Actualiza un proyecto mediante el contrato Pydantic canónico."""
     row = get_project(db, project_id)
     if not row:
         return None
-    # Mirror ``create_project``'s name-over-title precedence. ``name`` wins
-    # over ``title`` when both are passed; we still log a warning on conflict
-    # so a future reader (or a frontend bug) gets a diagnostic instead of a
-    # silent override. Equal values are not warned about to avoid noise for
-    # the common case where a caller passes both fields identically.
-    if "name" in kwargs:
-        name_val = kwargs.pop("name")
-        existing_title = kwargs.get("title")
-        if existing_title is not None and existing_title != name_val:
-            logging.getLogger(__name__).warning(
-                "update_project: conflicting 'name'=%r and 'title'=%r on "
-                "project_id=%r; using 'name' (mirrors create_project precedence).",
-                name_val,
-                existing_title,
-                project_id,
-            )
-        kwargs["title"] = name_val
-    if payload is None and kwargs:
-        allowed_fields = set(schemas.ProjectUpdate.model_fields.keys())
-        payload = schemas.ProjectUpdate(**{k: v for k, v in kwargs.items() if k in allowed_fields})
-    if payload is not None:
-        changes = (
-            payload.model_dump(exclude_unset=True)
-            if hasattr(payload, "model_dump")
-            else dict(payload)
-        )
-        for key, value in changes.items():
-            if value is not None:
-                setattr(row, key, value)
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        if value is not None:
+            setattr(row, key, value)
     if sede_id is not None:
         row.sede_id = sede_id
     db.commit()
@@ -519,34 +477,3 @@ def get_workload_summary(db: Session, sede_id=None):
         .group_by(models.ProjectTask.assignee_id)
     )
     return q.all()
-
-
-# ── Test compatibility wrappers ───────────────────────────────────────
-# These expose the names expected by ``tests/test_crud_integration.py``'s
-# ``TestProjectsCrud`` without disturbing the production callers in
-# ``backend/api/projects.py`` that import the longer ``get_projects`` /
-# ``create_project_task`` variants. Production semantics are unchanged.
-
-def list_projects(db: Session, **kwargs) -> list[models.Project]:
-    return get_projects(db, **kwargs)
-
-
-def create_task(db: Session, project_id, title=None, assignee_id=None, **kwargs) -> models.ProjectTask:
-    """Test-compatible alias for ``create_project_task``.
-
-    Used by ``tests/test_crud_integration.py::TestProjectsCrud.test_create_task``.
-    """
-    payload = schemas.ProjectTaskCreate(
-        project_id=project_id,
-        title=title or "",
-        assignee_id=assignee_id,
-        **kwargs,
-    )
-    return create_project_task(db, payload)
-
-
-def list_tasks(db: Session, project_id, **kwargs) -> list[models.ProjectTask]:
-    """Test-compatible alias for ``get_project_tasks``.
-    Used by ``tests/test_crud_integration.py::TestProjectsCrud.test_list_tasks``.
-    """
-    return get_project_tasks(db, project_id, **kwargs)

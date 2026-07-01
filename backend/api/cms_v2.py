@@ -1203,7 +1203,7 @@ def cms_pastoral_profile_update(
         db,
         persona,
         payload,
-        actor_user_id=str(getattr(current_user, "id", None) or ""),
+        actor_user_id=str(current_user.id),
     )
     name = persona.nombre_completo
     return schemas.PastoralProfileRead(

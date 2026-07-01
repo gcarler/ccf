@@ -449,3 +449,86 @@ def test_auth_v3_uses_personas_uuid():
         "REGLAS §2 violada: auth_users.id no es UUID — "
         "Kernel compartido con personas.id esta roto"
     )
+
+
+# ── Gate 10: runtime sin bypasses de compatibilidad ───────────────────────
+
+
+def test_runtime_has_no_legacy_write_bypasses():
+    """Las mutaciones protegidas requieren actor/owner y UGC atribuible."""
+    import inspect
+
+    from backend import models
+    from backend.crud import cms, crm
+
+    guarded = (
+        (cms.create_cms_media_item, "actor_user_id"),
+        (cms.update_cms_media_item, "actor_user_id"),
+        (cms.delete_cms_media_item, "actor_user_id"),
+        (cms.create_announcement, "actor_user_id"),
+        (cms.update_announcement, "actor_user_id"),
+        (cms.delete_announcement, "actor_user_id"),
+        (cms.create_testimonial, "actor_user_id"),
+        (cms.update_testimonial, "actor_user_id"),
+        (cms.delete_testimonial, "actor_user_id"),
+        (crm.create_crm_task, "actor_user_id"),
+        (crm.update_crm_task, "actor_user_id"),
+        (crm.create_communication_log, "actor_user_id"),
+        (crm.mark_notification_as_read, "owner_persona_id"),
+    )
+    for function, parameter in guarded:
+        value = inspect.signature(function).parameters[parameter]
+        assert value.default is inspect.Parameter.empty, (
+            f"{function.__module__}.{function.__name__} permite omitir "
+            f"{parameter}"
+        )
+
+    required_columns = (
+        models.CmsMediaItem.__table__.c.created_by_persona_id,
+        models.CmsMediaItem.__table__.c.sede_id,
+        models.Announcement.__table__.c.created_by_persona_id,
+        models.Announcement.__table__.c.sede_id,
+        models.Testimonial.__table__.c.author_persona_id,
+        models.Testimonial.__table__.c.sede_id,
+        models.ProjectTask.__table__.c.labels,
+    )
+    assert all(not column.nullable for column in required_columns)
+
+    migration = (
+        ROOT
+        / "alembic"
+        / "versions"
+        / "20260701_0002_eradicate_runtime_legacy.py"
+    )
+    assert migration.exists(), "Falta migration de erradicacion runtime"
+
+    academy_source = (ROOT / "backend" / "crud" / "academy.py").read_text()
+    projects_source = (ROOT / "backend" / "crud" / "projects.py").read_text()
+    project_schema_source = (ROOT / "backend" / "schemas" / "projects.py").read_text()
+    crm_api_source = (ROOT / "backend" / "api" / "crm" / "pastoral.py").read_text()
+    crm_crud_source = (ROOT / "backend" / "crud" / "crm.py").read_text()
+    kernel_source = (ROOT / "backend" / "crud" / "kernel.py").read_text()
+    evangelism_schema = (ROOT / "backend" / "schemas" / "evangelism.py").read_text()
+    public_tracker = (
+        ROOT / "backend" / "services" / "public_contact_tracking.py"
+    ).read_text()
+    config_source = (ROOT / "backend" / "core" / "config.py").read_text()
+    counseling_ui = (
+        ROOT / "frontend" / "src" / "app" / "plataforma" / "crm" / "counseling" / "page.tsx"
+    ).read_text()
+    assert "Test compatibility" not in academy_source
+    assert "Test compatibility" not in projects_source
+    assert "assignee_user_id" not in crm_api_source
+    assert "Integer user_id" not in crm_api_source
+    assert "hasattr(payload, \"model_dump\")" not in crm_crud_source
+    assert "hasattr(payload, \"model_dump\")" not in projects_source
+    assert "_persona_id_for_user" not in kernel_source
+    assert "is_user_active" not in kernel_source
+    assert "_coerce_labels" not in project_schema_source
+    assert "PRIORITY_MAP" not in project_schema_source
+    assert "AliasChoices" not in evangelism_schema
+    assert "def completado(" not in evangelism_schema
+    assert 'stage="new"' not in public_tracker
+    assert 'source=record.source' not in public_tracker
+    assert "AliasChoices" not in config_source
+    assert "user?.id || 1" not in counseling_ui

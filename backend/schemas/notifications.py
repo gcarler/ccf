@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import AliasChoices, BaseModel, Field
+from pydantic import BaseModel
 
 from backend.services.messaging_outcomes import CommunicationOutcome
 from backend.schemas._common import orm_config
@@ -12,7 +12,7 @@ from backend.schemas._common import orm_config
 
 class Notification(BaseModel):
     id: UUID
-    persona_id: UUID = Field(validation_alias=AliasChoices("persona_id", "user_id"), serialization_alias="persona_id")
+    persona_id: UUID
     title: str
     content: Optional[str] = None
     is_read: bool = False

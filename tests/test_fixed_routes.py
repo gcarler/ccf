@@ -237,7 +237,7 @@ class TestAdminFixed:
 
     def test_create_location(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/locations", json={"name": f"Loc {uuid.uuid4().hex[:6]}"}, headers=headers)
+        resp = client.post("/api/admin/locations", json={"nombre": f"Loc {uuid.uuid4().hex[:6]}"}, headers=headers)
         assert resp.status_code in (200, 201, 400, 405, 422)
 
     def test_set_variable(self, client_auth):
@@ -252,7 +252,7 @@ class TestAdminFixed:
 
     def test_create_donation_category(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/donation-categories", json={"name": f"Cat {uuid.uuid4().hex[:6]}"}, headers=headers)
+        resp = client.post("/api/admin/donation-categories", json={"nombre": f"Cat {uuid.uuid4().hex[:6]}"}, headers=headers)
         assert resp.status_code in (200, 201, 400, 405, 422)
 
     def test_create_testimonial(self, client_auth):

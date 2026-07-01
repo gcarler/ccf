@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from uuid import UUID
-from pydantic import AliasChoices, BaseModel, Field, computed_field, model_validator
+from pydantic import BaseModel
 
 from backend.schemas._common import orm_config
 
@@ -225,21 +225,6 @@ class RegistroSeguimientoBase(BaseModel):
     fecha_seguimiento: Optional[datetime] = None
     estado_completado: bool = True
 
-    @model_validator(mode="before")
-    @classmethod
-    def _map_public_names(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            if "notas" in data and "observaciones" not in data:
-                data["observaciones"] = data.pop("notas")
-            if "completado" in data and "estado_completado" not in data:
-                data["estado_completado"] = data.pop("completado")
-            if "fecha_realizada" in data and "fecha_seguimiento" not in data:
-                data["fecha_seguimiento"] = data.pop("fecha_realizada")
-            if "fecha_programada" in data and "fecha_seguimiento" not in data:
-                data["fecha_seguimiento"] = data.pop("fecha_programada")
-        return data
-
-
 class RegistroSeguimientoCreate(RegistroSeguimientoBase):
     asistencia_id: str
     responsable_id: Optional[str] = None
@@ -252,21 +237,6 @@ class RegistroSeguimientoUpdate(BaseModel):
     responsable_id: Optional[str] = None
     tipo: Optional[TipoSeguimientoEnum] = None
 
-    @model_validator(mode="before")
-    @classmethod
-    def _map_public_names(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            if "notas" in data and "observaciones" not in data:
-                data["observaciones"] = data.pop("notas")
-            if "completado" in data and "estado_completado" not in data:
-                data["estado_completado"] = data.pop("completado")
-            if "fecha_realizada" in data and "fecha_seguimiento" not in data:
-                data["fecha_seguimiento"] = data.pop("fecha_realizada")
-            if "realizado_por_persona_id" in data and "responsable_id" not in data:
-                data["responsable_id"] = data.pop("realizado_por_persona_id")
-        return data
-
-
 class RegistroSeguimientoResponse(BaseModel):
     id: UUID
     asistencia_id: str
@@ -276,36 +246,6 @@ class RegistroSeguimientoResponse(BaseModel):
     estado_completado: bool = True
     responsable_id: Optional[str] = None
     created_at: datetime
-
-    @computed_field
-    @property
-    def completado(self) -> bool:
-        return self.estado_completado
-
-    @computed_field
-    @property
-    def notas(self) -> Optional[str]:
-        return self.observaciones
-
-    @computed_field
-    @property
-    def fecha_realizada(self) -> Optional[datetime]:
-        return self.fecha_seguimiento
-
-    @computed_field
-    @property
-    def fecha_programada(self) -> Optional[datetime]:
-        return self.fecha_seguimiento
-
-    @computed_field
-    @property
-    def realizado_por_persona_id(self) -> Optional[str]:
-        return self.responsable_id
-
-    @computed_field
-    @property
-    def resultado(self) -> Optional[str]:
-        return None  # columna no existe en modelo, retorna None
 
     model_config = orm_config
 
@@ -363,10 +303,7 @@ class GrupoEvangelismoCreate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     leader_name: Optional[str] = None
-    evangelism_strategy_id: Optional[UUID] = Field(
-        default=None,
-        validation_alias=AliasChoices("evangelism_strategy_id", "estrategia_id"),
-    )
+    evangelism_strategy_id: Optional[UUID] = None
     leader_id: Optional[UUID] = None
     assistant_id: Optional[UUID] = None
     host_id: Optional[UUID] = None

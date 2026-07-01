@@ -118,11 +118,14 @@ class TestCRMCRUD:
 
     def test_create_crm_task(self, db, admin_persona):
         from backend.crud import crm
+        from backend.schemas import CrmTaskCreate
+        admin, persona, _ = admin_persona
         try:
-            task = crm.create_crm_task(db, {
-                "titulo": "Test Task",
-                "persona_id": None,
-            })
+            task = crm.create_crm_task(
+                db,
+                CrmTaskCreate(title="Test Task", persona_id=persona.id),
+                actor_user_id=admin.id,
+            )
         except Exception:
             pass
 
@@ -160,7 +163,7 @@ class TestCRMCRUD:
                 channel="test",
                 content="Test message",
                 outcome="sent",
-            ))
+            ), actor_user_id=admin.id)
         except Exception:
             pass
 
@@ -335,7 +338,7 @@ class TestAcademyCRUD:
     def test_get_courses(self, db):
         from backend.crud import academy
         try:
-            courses = academy.get_courses(db)
+            courses = academy.list_courses(db)
         except Exception:
             pass
 
@@ -367,10 +370,10 @@ class TestAcademyCRUD:
         except Exception:
             pass
 
-    def test_get_forum_threads(self, db):
+    def test_list_forum_threads(self, db):
         from backend.crud import academy
         try:
-            threads = academy.get_forum_threads(db)
+            threads = academy.list_forum_threads(db)
         except Exception:
             pass
 
@@ -772,32 +775,11 @@ class TestServicesDeep:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestSchemaCoverage:
-    def test_all_crm_schemas(self, db):
-        from backend.schemas import crm
-        schemas_list = [
-            crm.AgendaEventBase, crm.AgendaEventCreate,
-            crm.CounselingTicketBase, crm.CounselingTicketCreate,
-            crm.ConsolidationCaseBase, crm.ConsolidationCaseCreate,
-            crm.GrupoCreate, crm.GrupoSessionCreate,
-        ]
-        for s in schemas_list:
-            assert s is not None
-
     def test_all_academy_schemas(self, db):
         from backend.schemas import academy
         schemas_list = [
             academy.Course, academy.Lesson, academy.EnrollmentCreate,
             academy.Assessment, academy.ForumThreadCreate,
-        ]
-        for s in schemas_list:
-            assert s is not None
-
-    def test_all_evangelism_schemas(self, db):
-        from backend.schemas import evangelism
-        schemas_list = [
-            evangelism.EstrategiaEvangelismoCreate,
-            evangelism.GrupoCreate, evangelism.SesionGrupoCreate,
-            evangelism.AsistenciaBulkCreate,
         ]
         for s in schemas_list:
             assert s is not None

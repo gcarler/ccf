@@ -112,7 +112,7 @@ def _validate_strategy_group_roles(db: Session, strategy_id: UUID | None, body: 
 @router.get("/grupos", response_model=List[dict])
 @router.get("/faro", response_model=List[dict])
 def list_grupos(
-    estrategia_id: Optional[UUID] = None,
+    evangelism_strategy_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -121,8 +121,8 @@ def list_grupos(
         GrupoEvangelismo.deleted_at.is_(None),
         GrupoEvangelismo.sede_id == user_sede,
     )
-    if estrategia_id:
-        q = q.filter(GrupoEvangelismo.estrategia_id == estrategia_id)
+    if evangelism_strategy_id:
+        q = q.filter(GrupoEvangelismo.estrategia_id == evangelism_strategy_id)
     groups = q.order_by(GrupoEvangelismo.nombre.asc()).all()
     return [
         {

@@ -81,7 +81,7 @@ def get_crm_dashboard(db: Session, sede_id: Optional[str] = None) -> CrmDashboar
     ).scalar() or 0
 
     # Pipeline por etapas — desde church_role de personas
-    from sqlalchemy import case, func
+    from sqlalchemy import func
     role_q = db.query(
         models.Persona.church_role,
         func.count(models.Persona.id)

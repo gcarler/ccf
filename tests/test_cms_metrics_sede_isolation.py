@@ -74,12 +74,13 @@ def _seed_testimonial_in_sede(db, author_persona, sede_id, content):
     return t
 
 
-def _seed_announcement_in_sede(db, sede_id, title, content):
+def _seed_announcement_in_sede(db, persona, sede_id, title, content):
     a = models.Announcement(
         id=_uuid.uuid4(),
         title=title,
         content=content,
         sede_id=sede_id,
+        created_by_persona_id=persona.id,
         status="published",
     )
     db.add(a)
@@ -143,15 +144,15 @@ def test_content_metrics_overview_scopes_announcements_by_sede(
     client, db_session
 ):
     """Axioma 3: announcements_total acotado por sede del staff."""
-    (admin_a, _, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
+    (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
     _seed_announcement_in_sede(
-        db_session, sede_a.id, "a-a-1", "local sede_a"
+        db_session, persona_a, sede_a.id, "a-a-1", "local sede_a"
     )
     _seed_announcement_in_sede(
-        db_session, sede_b.id, "a-b-1", "cross-sede leak"
+        db_session, persona_b, sede_b.id, "a-b-1", "cross-sede leak"
     )
     _seed_announcement_in_sede(
-        db_session, sede_b.id, "a-b-2", "cross-sede leak"
+        db_session, persona_b, sede_b.id, "a-b-2", "cross-sede leak"
     )
     db_session.commit()
 
