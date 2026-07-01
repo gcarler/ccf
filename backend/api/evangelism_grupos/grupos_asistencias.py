@@ -193,7 +193,7 @@ def add_faro_attendance(
             else:
                 db.add(
                     Asistencia(
-                        session_id=session_id,
+                        sesion_id=session_id,
                         persona_id=persona_id,
                         attended=attended,
                         absence_reason=absence_reason,
@@ -220,7 +220,7 @@ def add_faro_attendance(
                 .first()
             )
             if not exists:
-                db.add(Asistencia(session_id=session_id, persona_id=persona_id, attended=True))
+                db.add(Asistencia(sesion_id=session_id, persona_id=persona_id, attended=True))
                 processed += 1
 
     new_status = payload.get("status", session.status)
@@ -313,7 +313,7 @@ def submit_attendance(
             persona_uuid = _uuid.UUID(persona_uuid)
 
         db_att = Asistencia(
-            session_id=session_id,
+            sesion_id=session_id,
             persona_id=persona_uuid,
             detalle_excusa=absence_reason_detail,
             estado=nuevo_estado,
