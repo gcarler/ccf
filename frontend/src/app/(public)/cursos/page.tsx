@@ -97,7 +97,7 @@ export default function CursosPage() {
     const libraryDescription = typeof courseFeed.library_description === "string" ? courseFeed.library_description : "Una curaduría de obras que han transformado generaciones. Desde clásicos de la patrística hasta literatura contemporánea.";
     const emptyBooksMessage = typeof courseFeed.empty_books_message === "string" ? courseFeed.empty_books_message : "Próximamente tendremos libros disponibles.";
     const coursesTitle = typeof courseFeed.courses_title === "string" ? courseFeed.courses_title : "Cursos & Academia";
-    const coursesDescription = typeof courseFeed.courses_description === "string" ? courseFeed.courses_description : "Programas estructurados para líderes, estudiantes y buscadores de la verdad. Formación teológica y práctica con estándares de excelencia.";
+    const coursesDescription = typeof courseFeed.courses_description === "string" ? courseFeed.courses_description : "Programas estructurados para líderes, participantes y buscadores de la verdad. Formación teológica y práctica con estándares de excelencia.";
     const ctaTitle = typeof courseFeed.cta_title === "string" ? courseFeed.cta_title : "Únete a la Academia FARO";
     const ctaDescription = typeof courseFeed.cta_description === "string" ? courseFeed.cta_description : "Recibe actualizaciones sobre nuevos cursos, lanzamientos de libros y eventos exclusivos de formación directamente en tu correo.";
     const ctaPlaceholder = typeof courseFeed.cta_placeholder === "string" ? courseFeed.cta_placeholder : "Tu correo electrónico";

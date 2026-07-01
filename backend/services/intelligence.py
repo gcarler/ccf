@@ -26,7 +26,7 @@ class IntelligenceMESH:
 
     @staticmethod
     def analyze_pastoral_care(db: Session):
-        """Detecta miembros o leads que necesitan atención inmediata."""
+        """Detecta personas o leads que necesitan atención inmediata."""
         insights = []
 
         # 2. Miembros sin comunicación reciente
@@ -53,7 +53,7 @@ class IntelligenceMESH:
                 {
                     "title": "Líderes Emergentes",
                     "type": "academy_insight",
-                    "payload": f"Top estudiantes por XP: {names}. Considerar para roles de mentoría.",
+                    "payload": f"Top participantes por XP: {names}. Considerar para roles de mentoría.",
                 }
             )
 

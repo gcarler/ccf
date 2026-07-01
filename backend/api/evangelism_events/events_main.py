@@ -26,7 +26,6 @@ from backend.api.evangelism_shared import (
     utc_now,
 )
 from backend.core.permissions import (
-    normalize_role,
     require_active_user,
     require_module_access,
     require_pastor_or_admin,
@@ -592,7 +591,7 @@ def delete_role(
     if role.is_system_locked:
         raise HTTPException(status_code=400, detail="No se puede eliminar un rol del sistema")
 
-    # Reasignar miembros al rol de reemplazo
+    # Reasignar personas al rol de reemplazo
     db.query(models.Persona).filter(models.Persona.church_role == role.name).update({"church_role": fallback.name})
 
     # Soft-delete: marcar como inactivo y renombrar para liberar el unique constraint
@@ -604,7 +603,7 @@ def delete_role(
     db.commit()
     return {
         "success": True,
-        "message": f"Rol '{role.name}' desactivado y miembros reasignados a '{fallback.name}'",
+        "message": f"Rol '{role.name}' desactivado y personas reasignadas a '{fallback.name}'",
     }
 
 

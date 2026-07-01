@@ -295,7 +295,7 @@ def assign_persona_ministry(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    """Vincula a un miembro a un ministerio con un rol especifico.
+    """Vincula a una persona a un ministerio con un rol especifico.
     Axioma 3: scope por sede via persona.
     """
     persona = _get_scoped_persona(db, current_user, persona_id)
@@ -450,6 +450,6 @@ def get_family(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """Axioma 3: 404 si la familia no tiene miembros en la sede del usuario."""
+    """Axioma 3: 404 si la familia no tiene personas en la sede del usuario."""
     _get_scoped_family(db, current_user, family_id)
     return crud.get_family_personas(db, family_id=family_id)

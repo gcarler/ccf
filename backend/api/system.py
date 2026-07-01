@@ -170,7 +170,7 @@ def get_global_calendar(
                 "title": f"Seguimiento: {persona_name}",
                 "start": case.sla_vencimiento_contacto.isoformat(),
                 "end": None,
-                "type": "consolidation_case",
+                "type": "crm_caso",
                 "allDay": False,
                 "href": f"/plataforma/crm/pipeline/{case.id}",
             })

@@ -100,11 +100,11 @@ def _serialize_grupo(grupo: models.GrupoEvangelismo, db: Session) -> dict:
 
 @router.get("/multiplication/check", response_model=List[MultiplicationCheckItem])
 def check_multiplication(
-    umbral: int = Query(15, description="Umbral de miembros para sugerir división"),
+    umbral: int = Query(15, description="Umbral de personas para sugerir división"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Analiza todos los grupos y devuelve los que superan el umbral de miembros,
+    """Analiza todos los grupos y devuelve los que superan el umbral de personas,
     sugiriendo división."""
     user_sede = require_user_sede_id(db, current_user)
     q = db.query(models.GrupoEvangelismo).filter(
@@ -126,7 +126,7 @@ def check_multiplication(
         if excede:
             mitad = total // 2
             sugerencia = (
-                f"Dividir en dos grupos de aproximadamente {mitad} miembros cada uno. "
+                f"Dividir en dos grupos de aproximadamente {mitad} personas cada uno. "
                 f"Seleccione un nuevo líder para el grupo derivado."
             )
         else:
@@ -150,7 +150,7 @@ def split_group(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    """Divide un grupo existente en dos, transfiriendo la mitad de los miembros
+    """Divide un grupo existente en dos, transfiriendo la mitad de las personas
     al nuevo grupo. Registra el historial de multiplicación."""
     import uuid as _uuid
 
@@ -184,7 +184,7 @@ def split_group(
     if not nuevo_lider:
         raise HTTPException(status_code=404, detail="Persona del nuevo líder no encontrada.")
 
-    # ── Obtener miembros activos ──
+    # ── Obtener personas activas ──
     participantes = (
         db.query(models.ParticipanteGrupo)
         .filter(
@@ -198,7 +198,7 @@ def split_group(
     if len(participantes) < 2:
         raise HTTPException(
             status_code=400,
-            detail="El grupo necesita al menos 2 miembros para dividirse.",
+            detail="El grupo necesita al menos 2 personas para dividirse.",
         )
 
     # Dividir a la mitad
@@ -222,7 +222,7 @@ def split_group(
     db.add(nuevo_grupo)
     db.flush()  # obtener nuevo_grupo.id
 
-    # ── Transferir miembros ──
+    # ── Transferir personas ──
     transferidos = 0
     for part in transferir:
         part.grupo_id = nuevo_grupo.id
@@ -239,7 +239,7 @@ def split_group(
     db.refresh(grupo_original)
 
     logger.info(
-        "Grupo dividido: original=%d (%s) → nuevo=%d (%s), %d miembros transferidos por %s",
+        "Grupo dividido: original=%d (%s) → nuevo=%d (%s), %d personas transferidas por %s",
         grupo_original.id,
         grupo_original.nombre,
         nuevo_grupo.id,
@@ -251,7 +251,7 @@ def split_group(
     return SplitResponse(
         ok=True,
         mensaje=f"Grupo '{grupo_original.nombre}' dividido exitosamente. "
-        f"{transferidos} miembros transferidos al nuevo grupo '{nuevo_grupo.nombre}'.",
+        f"{transferidos} personas transferidas al nuevo grupo '{nuevo_grupo.nombre}'.",
         grupo_original=_serialize_grupo(grupo_original, db),
         nuevo_grupo=_serialize_grupo(nuevo_grupo, db),
         miembros_transferidos=transferidos,

@@ -158,7 +158,7 @@ tool_registry = ToolRegistry()
 # ──────────────────────────────────────────────
 
 class CRMSearchPersona(AgentTool):
-    """Busca miembros por nombre, email o teléfono."""
+    """Busca personas por nombre, email o teléfono."""
 
     @property
     def name(self): return "crm_search_persona"
@@ -182,7 +182,6 @@ class CRMSearchPersona(AgentTool):
     def execute(self, query: str, **kwargs) -> Dict[str, Any]:
         from backend import models
         from backend.core.database import SessionLocal
-        from sqlalchemy import func
 
         db = SessionLocal()
         try:
@@ -211,7 +210,7 @@ class CRMSearchPersona(AgentTool):
 
 
 class CRMGetPersonaProfile(AgentTool):
-    """Obtiene el perfil completo de un miembro."""
+    """Obtiene el perfil completo de una persona."""
 
     @property
     def name(self): return "crm_get_persona_profile"
@@ -286,6 +285,7 @@ class AcademySearchCourse(AgentTool):
     def execute(self, query: str, **kwargs) -> Dict[str, Any]:
         from backend import models
         from backend.core.database import SessionLocal
+        from sqlalchemy import func
 
         db = SessionLocal()
         try:

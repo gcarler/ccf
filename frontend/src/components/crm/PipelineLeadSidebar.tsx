@@ -38,7 +38,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
         const fetchAudit = async () => {
             try {
                 setLoadingAudit(true);
-                const logs = await apiFetch<any[]>(`/crm/consolidation/cases/${lead.id}/audit`, { token });
+                const logs = await apiFetch<any[]>(`/crm/casos/${lead.id}/audit`, { token });
                 setAuditLogs(logs || []);
             } catch (err) {
                 console.error("Error fetching audit:", err);

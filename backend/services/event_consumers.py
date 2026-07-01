@@ -48,19 +48,19 @@ class IntelligenceConsumer(EventConsumer):
         ]
 
     def handle_persona_registered(self, payload: Dict[str, Any]) -> None:
-        """Cuando se registra un miembro → genera insight de bienvenida."""
+        """Cuando se registra una persona → genera insight de bienvenida."""
         from backend import schemas
         from backend.core.database import SessionLocal
         from backend.crud.agents import create_agent_insight
 
         db = SessionLocal()
         try:
-            name = payload.get("name", "Nuevo miembro")
+            name = payload.get("name", "Nueva persona")
             role = payload.get("church_role", "visitante")
             create_agent_insight(
                 db,
                 schemas.AgentInsightCreate(
-                    title=f"Nuevo miembro registrado: {name}",
+                    title=f"Nueva persona registrada: {name}",
                     insight_type="persona_event",
                     description=f"{name} se registró como {role}",
                     confidence=1.0,
@@ -68,7 +68,7 @@ class IntelligenceConsumer(EventConsumer):
                     payload=payload,
                 ),
             )
-            log.info("Insight creado para nuevo miembro: %s", name)
+            log.info("Insight creado para nueva persona: %s", name)
         finally:
             db.close()
 

@@ -136,7 +136,7 @@ PAGE_CONTENT_DEFAULTS = {
         "title": "T??rminos de Servicio",
         "content": {
             "subtitle": "El uso de la plataforma implica aceptar estas condiciones.",
-            "content": "Usa los materiales ??nicamente para tu crecimiento espiritual, respeta a otros estudiantes y evita compartir accesos. Las evaluaciones son personales y sujetas al reglamento acad??mico vigente.",
+            "content": "Usa los materiales ??nicamente para tu crecimiento espiritual, respeta a otros participantes y evita compartir accesos. Las evaluaciones son personales y sujetas al reglamento acad??mico vigente.",
         },
     },
     "onboarding_page": {
@@ -267,7 +267,7 @@ PAGE_CONTENT_DEFAULTS = {
             "library_description": "Una curaduría de obras que han transformado generaciones.",
             "empty_books_message": "Próximamente tendremos libros disponibles.",
             "courses_title": "Cursos & Academia",
-            "courses_description": "Programas estructurados para líderes, estudiantes y buscadores de la verdad.",
+            "courses_description": "Programas estructurados para líderes, participantes y buscadores de la verdad.",
             "featured_course_id": None,
             "show_free_only": False,
         },

@@ -259,7 +259,7 @@ const RESOURCES: CmsResource[] = [
     fields: ["name", "phone", "email", "message", "source"],
     safeguards: ["Consentimiento y privacidad", "Source trazable", "Evitar duplicados por telefono/correo"],
     example: {
-      public_endpoint: "/crm/consolidation/cases",
+      public_endpoint: "/crm/casos",
       source: "conocer-a-jesus",
       crm_target: "consolidation",
     },

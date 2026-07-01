@@ -146,7 +146,7 @@ export default function CandidatesDashboard() {
             <AdminHero
                 eyebrow="Growth Analytics"
                 title="Gestión de Candidatos"
-                description="Identifica a los estudiantes que han cumplido con los requisitos académicos y de XP para avanzar en su ruta de crecimiento espiritual."
+                description="Identifica a los participantes que han cumplido con los requisitos académicos y de XP para avanzar en su ruta de crecimiento espiritual."
                 tags={['Automated Screening', 'Real-time', 'Hitos']}
                 watchers={['Coordinación Académica', 'Pastoral']}
                 primaryAction={{ label: 'Aprobar Masivamente', icon: CheckCircle2, onClick: handleApproveReady }}
@@ -172,7 +172,7 @@ export default function CandidatesDashboard() {
                             <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[hsl(var(--primary))] transition-colors" />
                             <input 
                                 value={search} onChange={e => setSearch(e.target.value)}
-                                placeholder="Filtrar por nombre de estudiante..." 
+                                placeholder="Filtrar por nombre de participante..." 
                                 className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all shadow-sm" 
                             />
                         </div>

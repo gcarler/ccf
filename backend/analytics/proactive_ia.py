@@ -40,7 +40,7 @@ def run_proactive_analysis(db: Session):
             schemas.AgentInsightCreate(
                 title="Riesgo de Deserción Académica",
                 insight_type="predictive",
-                payload=f"Se detectaron {len(stale_enrollments)} estudiantes con progreso estancado hace más de 30 días. Se recomienda campaña de re-engagement.",
+                payload=f"Se detectaron {len(stale_enrollments)} participantes con progreso estancado hace más de 30 días. Se recomienda campaña de re-engagement.",
             ),
         )
         insights_created += 1

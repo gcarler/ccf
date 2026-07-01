@@ -92,7 +92,7 @@ export default function AcademyStudentsPage() {
                             <input
                                 value={query}
                                 onChange={(event) => setQuery(event.target.value)}
-                                placeholder="Buscar estudiante..."
+                                placeholder="Buscar participante..."
                                 className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-11 pr-4 text-sm font-semibold outline-none focus:border-blue-400 dark:border-white/10 dark:bg-black/20"
                             />
                         </div>
@@ -107,7 +107,7 @@ export default function AcademyStudentsPage() {
                                             {(s.full_name || s.name || 'E')[0]}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{s.full_name || s.name || "Estudiante"}</p>
+                                            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{s.full_name || s.name || "Participante"}</p>
                                             <p className="text-xs text-slate-400">{s.email || 'Sin correo'}</p>
                                         </div>
                                         <span className="text-xs text-slate-500">{s.course_count ?? 0} cursos</span>
@@ -115,7 +115,7 @@ export default function AcademyStudentsPage() {
                                     </div>
                                 ))}
                                 {!loading && filtered.length === 0 && (
-                                    <div className="py-8 text-center text-sm font-semibold text-slate-400">No hay estudiantes registrados.</div>
+                                    <div className="py-8 text-center text-sm font-semibold text-slate-400">No hay participantes registrados.</div>
                                 )}
                             </div>
                         ) : viewType === 'grid' ? (
@@ -131,7 +131,7 @@ export default function AcademyStudentsPage() {
                                     </div>
                                 ))}
                                 {!loading && filtered.length === 0 && (
-                                    <div className="col-span-full py-8 text-center text-sm font-semibold text-slate-400">No hay estudiantes registrados.</div>
+                                    <div className="col-span-full py-8 text-center text-sm font-semibold text-slate-400">No hay participantes registrados.</div>
                                 )}
                             </div>
                         ) : (
@@ -166,14 +166,14 @@ export default function AcademyStudentsPage() {
                                 {!loading && filtered.length === 0 && (
                                     <tr>
                                         <td colSpan={5} className="px-4 py-1.5 text-center text-sm font-semibold text-slate-400">
-                                            No hay estudiantes registrados para mostrar.
+                                            No hay participantes registrados para mostrar.
                                         </td>
                                     </tr>
                                 )}
                                 {loading && (
                                     <tr>
                                         <td colSpan={5} className="px-4 py-1.5 text-center text-sm font-semibold text-slate-400">
-                                            Cargando estudiantes...
+                                            Cargando participantes...
                                         </td>
                                     </tr>
                                 )}

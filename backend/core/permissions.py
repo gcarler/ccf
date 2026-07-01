@@ -83,7 +83,7 @@ PERMISSIONS: Dict[str, Dict[str, str]] = {
     },
     "crm:manage": {
         "label": "CRM: gestor",
-        "description": "Gestionar CRM, eventos y miembros",
+        "description": "Gestionar CRM, eventos y personas",
     },
     "finance:read": {
         "label": "Finanzas: lector",
@@ -126,7 +126,7 @@ PERMISSIONS: Dict[str, Dict[str, str]] = {
         "description": "Ver cursos y contenido académico",
     },
     "academy:study": {
-        "label": "Academia: estudiante",
+        "label": "Academia: participante",
         "description": "Inscribirse en cursos y desarrollar evaluaciones",
     },
     "academy:edit": {

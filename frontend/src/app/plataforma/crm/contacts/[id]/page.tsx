@@ -92,8 +92,8 @@ export default function LeadDetail() {
         setLoading(true);
         try {
             const [leadData, logsData, counselingData] = await Promise.allSettled([
-                apiFetch(`/crm/consolidation/cases/${leadId}`, { token, cache: 'no-store' }),
-                apiFetch<CallLog[]>(`/crm/consolidation/cases/${leadId}/calls`, { token, cache: 'no-store' }),
+                apiFetch(`/crm/casos/${leadId}`, { token, cache: 'no-store' }),
+                apiFetch<CallLog[]>(`/crm/casos/${leadId}/calls`, { token, cache: 'no-store' }),
                 apiFetch(`/crm/counseling/lead/${leadId}`, { token, cache: 'no-store' }),
             ]);
             if (leadData.status === 'fulfilled') setLead(leadData.value);
@@ -113,7 +113,7 @@ export default function LeadDetail() {
         setIsStageOpen(false);
         setIsSavingStage(true);
         try {
-            await apiFetch(`/crm/consolidation/cases/${leadId}`, {
+            await apiFetch(`/crm/casos/${leadId}`, {
                 method: 'PATCH',
                 token,
                 body: { stage: newStage },
@@ -131,7 +131,7 @@ export default function LeadDetail() {
         e.preventDefault();
         setIsSavingCall(true);
         try {
-            await apiFetch(`/crm/consolidation/cases/${leadId}/calls`, {
+            await apiFetch(`/crm/casos/${leadId}/calls`, {
                 method: 'POST',
                 token,
                 body: callForm,
@@ -152,7 +152,7 @@ export default function LeadDetail() {
         if (!noteText.trim()) return;
         setIsSavingNote(true);
         try {
-            await apiFetch(`/crm/consolidation/cases/${leadId}/calls`, {
+            await apiFetch(`/crm/casos/${leadId}/calls`, {
                 method: 'POST',
                 token,
                 body: { outcome: 'Nota', notes: noteText.trim(), prayer_requests: '' },

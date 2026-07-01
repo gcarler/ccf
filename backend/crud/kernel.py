@@ -74,10 +74,8 @@ def is_persona_active(db: Session, persona_id: str) -> bool:
     return (persona.estado_vital or "ACTIVO") == "ACTIVO"
 
 
-def can_receive_assignment(db: Session, persona_id_or_user_id) -> bool:
-    if isinstance(persona_id_or_user_id, int):
-        return is_user_active(db, persona_id_or_user_id)
-    return is_persona_active(db, str(persona_id_or_user_id))
+def can_receive_assignment(db: Session, persona_id: str) -> bool:
+    return is_persona_active(db, str(persona_id))
 
 
 # ──────────────────────────────────────────────
@@ -330,14 +328,12 @@ def set_primary_ministry(db: Session, persona_id: str, ministry: str) -> bool:
     return True
 
 
-def get_church_role_history(db: Session, persona_or_user_id, limit: int = 50) -> List[dict]:
-    if isinstance(persona_or_user_id, int):
-        return get_church_role_history_by_user(db, persona_or_user_id, limit=limit)
+def get_church_role_history(db: Session, persona_id: str, limit: int = 50) -> List[dict]:
     from backend.models_kernel import PersonaRoleHistory
 
     rows = (
         db.query(PersonaRoleHistory)
-        .filter(PersonaRoleHistory.persona_id == uuid.UUID(str(persona_or_user_id)))
+        .filter(PersonaRoleHistory.persona_id == uuid.UUID(str(persona_id)))
         .order_by(PersonaRoleHistory.changed_at.desc())
         .limit(limit)
         .all()
@@ -355,16 +351,8 @@ def get_church_role_history(db: Session, persona_or_user_id, limit: int = 50) ->
     ]
 
 
-def get_kernel_profile(db: Session, persona_or_user_id, **kwargs) -> Optional[dict]:
-    if isinstance(persona_or_user_id, int):
-        pid = _persona_id_for_user(db, persona_or_user_id)
-        if not pid:
-            return None
-        result = _get_kernel_profile_by_persona(db, pid)
-        if result:
-            result["user_id"] = persona_or_user_id
-        return result
-    return _get_kernel_profile_by_persona(db, str(persona_or_user_id))
+def get_kernel_profile(db: Session, persona_id: str) -> Optional[dict]:
+    return _get_kernel_profile_by_persona(db, str(persona_id))
 
 
 def _get_kernel_profile_by_persona(db: Session, persona_id: str) -> Optional[dict]:
