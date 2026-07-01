@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Dict
+from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import or_, text
+from sqlalchemy import case, func, or_, text
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -318,37 +319,147 @@ def get_global_calendar(
     return events
 
 
+def _shape_workload_row(user_id, name, total, open_tasks, critical, overdue):
+    """Calcula ``load_status`` y ``capacity_percent`` para una fila de carga."""
+    status = "disponible"
+    if open_tasks > 8 or critical > 3:
+        status = "sobrecargado"
+    elif open_tasks > 4:
+        status = "en_capacidad"
+    return {
+        "persona_id": user_id,
+        "name": name,
+        "total": total,
+        "open": open_tasks,
+        "critical": critical,
+        "overdue": overdue,
+        "load_status": status,
+        "capacity_percent": min(int((open_tasks / 10) * 100), 100),
+    }
+
+
 @router.get("/workload")
 def get_team_workload(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    """Analiza la carga de trabajo ministerial."""
-    query = text("SELECT * FROM view_user_workload")
-    rows = db.execute(query).fetchall()
-    result = []
-    for r in rows:
-        open_tasks = r.open_tasks or 0
-        critical = r.critical_tasks or 0
-        status = "disponible"
-        if open_tasks > 8 or critical > 3:
-            status = "sobrecargado"
-        elif open_tasks > 4:
-            status = "en_capacidad"
+    """Analiza la carga de trabajo ministerial.
 
-        result.append(
+    Usa la vista precomputada ``view_user_workload`` (PostgreSQL) cuando
+    existe. En SQLite/tests o DB antes de la migración ``20260522_0021``
+    cae a un fallback ORM que produce el mismo shape de respuesta.
+    """
+    rows = []
+    try:
+        rows = db.execute(text("SELECT * FROM view_user_workload")).fetchall()
+        rows = [
+            _shape_workload_row(
+                user_id=r.user_id,
+                name=r.full_name or r.username,
+                total=r.total_tasks or 0,
+                open_tasks=r.open_tasks or 0,
+                critical=r.critical_tasks or 0,
+                overdue=r.overdue_tasks or 0,
+            )
+            for r in rows
+        ]
+    except (OperationalError, ProgrammingError):
+        # La vista no existe en este motor; calculamos el equivalente.
+        db.rollback()
+        rows = [_shape_workload_row(**row) for row in _compute_workload_via_orm(db)]
+
+    return rows
+
+
+def _compute_workload_via_orm(db: Session) -> List[Dict]:
+    """Replica semántica de ``view_user_workload`` sobre tablas base.
+
+    Mantiene el contrato de la vista: una fila por usuario con
+    user_id, full_name, username, total_tasks, open_tasks,
+    critical_tasks, overdue_tasks (mismas columnas que la migración
+    ``alembic/versions/20260522_0021_seed_and_view.py``).
+    """
+    user_model = getattr(models, "User", None)
+    task_model = getattr(models, "ProjectTask", None)
+
+    if task_model is None or not hasattr(task_model, "assignee_id"):
+        # Sin ProjectTask con ``assignee_id`` no podemos calcular: retornamos
+        # shape correcto con totales en cero para no romper el contrato.        if user_model is None:
+            return []
+        return [
             {
-                "persona_id": r.user_id,
-                "name": r.full_name or r.username,
-                "total": r.total_tasks,
-                "open": open_tasks,
-                "critical": critical,
-                "overdue": r.overdue_tasks or 0,
-                "load_status": status,
-                "capacity_percent": min(int((open_tasks / 10) * 100), 100),
+                # Claves alineadas con los kwargs de ``_shape_workload_row``.
+                "user_id": u.id,
+                "name": getattr(u, "username", "") or getattr(u, "email", ""),
+                "total": 0,
+                "open_tasks": 0,
+                "critical": 0,
+                "overdue": 0,
             }
+            for u in db.query(user_model).all()
+        ]
+
+
+    open_statuses = ("todo", "in_progress", "review")
+    rows = (
+        db.query(
+            user_model.id.label("user_id"),
+            user_model.username.label("username"),
+            func.coalesce(func.count(task_model.id), 0).label("total_tasks"),
+            func.coalesce(
+                func.sum(case((task_model.status.in_(open_statuses), 1), else_=0)),
+                0,
+            ).label("open_tasks"),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            (task_model.priority == "urgent")
+                            & (task_model.status != "done"),
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label("critical_tasks"),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            (task_model.due_date < func.now())
+                            & (task_model.status != "done"),
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label("overdue_tasks"),
         )
-    return result
+        .outerjoin(task_model, task_model.assignee_id == user_model.id)
+        .group_by(user_model.id, user_model.username)
+        .all()
+    )
+
+    return [
+        {
+            # Las claves coinciden con los kwargs de ``_shape_workload_row``
+            # para que el caller pueda hacer ``[_shape_workload_row(**row) ...]``.
+            "user_id": r.user_id,
+            "name": getattr(r, "full_name", None) or r.username,
+            "total": int(r.total_tasks or 0),
+            "open_tasks": int(r.open_tasks or 0),
+            "critical": int(r.critical_tasks or 0),
+            "overdue": int(r.overdue_tasks or 0),
+        }
+        for r in rows
+    ]
+
+
+# Nota: ``current_user`` es consumido por ``Depends(require_active_user)``;
+# este parámetro solo documenta la dependencia para FastAPI y alinea el
+# signature con otras rutas de /api/system/*.
 
 
 @router.post("/ai/generate")

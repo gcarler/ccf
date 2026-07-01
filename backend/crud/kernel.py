@@ -90,7 +90,6 @@ def get_persona_ministries(db: Session, persona_id: str) -> List[dict]:
         db.query(PersonaMinistry)
         .filter(
             PersonaMinistry.persona_id == uuid.UUID(persona_id),
-            PersonaMinistry.deleted_at.is_(None),
         )
         .order_by(PersonaMinistry.is_primary.desc(), PersonaMinistry.recognized_at)
         .all()
@@ -161,7 +160,7 @@ def remove_persona_ministry(db: Session, persona_id: str, ministry: str) -> bool
     )
     if not row:
         return False
-    row.deleted_at = _utcnow()
+    db.delete(row)
     db.commit()
     return True
 

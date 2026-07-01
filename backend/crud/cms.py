@@ -1069,24 +1069,44 @@ def reorder_cms_sections(
 
 
 def _build_page_snapshot(db: Session, page: models.CmsPage):
-    sections = list_cms_sections(db, page.id)
+    # ``list_cms_sections`` returns a ``(items, total)`` tuple (paginated
+    # contract). The previous code iterated the tuple unpacking its members;
+    # ``for section in sections`` would yield the list *and* the int total,
+    # causing ``section.section_key`` to AttributeError and crashing
+    # ``create_cms_page_version`` in production.
+    sections, _ = list_cms_sections(db, page.id)
+
+    def _jsonable(value):
+            # Convert SQLAlchemy/runtime types into JSON-serializable primitives.
+            # UUID and datetime objects cannot be encoded by ``json.dumps`` which
+            # is what SQLAlchemy uses for JSONB columns; this helper avoids the
+            # ``TypeError: Object of type UUID is not JSON serializable`` that
+            # crashed ``create_cms_page_version`` on first publish.
+            if value is None:
+                return None
+            if isinstance(value, uuid.UUID):
+                return str(value)
+            if isinstance(value, (dt.date, dt.datetime)):
+                return value.isoformat()
+            return value
+
     return {
         "page": {
-            "id": page.id,
-            "slug": page.slug,
-            "title": page.title,
-            "status": page.status,
+            "id": _jsonable(page.id),
+            "slug": _jsonable(page.slug),
+            "title": _jsonable(page.title),
+            "status": _jsonable(page.status),
             "seo_json": page.seo_json or {},
         },
         "sections": [
             {
-                "id": section.id,
-                "section_key": section.section_key,
-                "type": section.type,
+                "id": _jsonable(section.id),
+                "section_key": _jsonable(section.section_key),
+                "type": _jsonable(section.type),
                 "props_json": section.props_json or {},
-                "sort_order": section.sort_order,
-                "is_visible": section.is_visible,
-                "status": getattr(section, "status", "active") or "active",
+                "sort_order": _jsonable(section.sort_order),
+                "is_visible": _jsonable(section.is_visible),
+                "status": _jsonable(getattr(section, "status", "active") or "active"),
             }
             for section in sections
         ],

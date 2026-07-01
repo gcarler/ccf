@@ -31,6 +31,7 @@ from backend.models_auth import (
     LogSeguridad,
     RolPlataforma,
     TokenResetContrasena,
+    TokenSesion,
     Usuario,
 )
 
@@ -73,7 +74,6 @@ def _create_refresh_token(db: Session, user_id: uuid.UUID) -> str:
 
     token = secrets.token_urlsafe(48)
     expires_at = _utcnow() + timedelta(days=settings.refresh_token_expire_days)
-    from backend.models_auth import TokenSesion
 
     rt = TokenSesion(
         user_id=user_id,
@@ -698,23 +698,49 @@ def check_email(email: str, db: Session = Depends(get_db)):
 
 
 class RefreshRequest(BaseModel):
-    refresh_token: str
+    # Optional: el refresh token puede venir también desde la cookie
+    # httpOnly (``settings.refresh_token_cookie_name``). Dejarlo opcional
+    # evita un 422 cuando el cliente lo envía sólo en la cookie (p. ej.
+    # ``POST /api/v3/auth/refresh`` desde el frontend tras un login donde
+    # el cookie ya está presente).
+    refresh_token: Optional[str] = None
 
 
 @router.post("/refresh", response_model=dict)
 def refresh_token(
-    payload: RefreshRequest,
     request: Request,
     response: Response,
     db: Session = Depends(get_db),
+    payload: Optional[RefreshRequest] = None,
 ):
-    """Refresca el access token usando un refresh token válido."""
-    from backend.models_auth import TokenSesion
+    """Refresca el access token usando un refresh token válido.
+
+    El refresh_token puede venir en el body (``{ "refresh_token": "..." }``)
+    o en la cookie httpOnly ``settings.refresh_token_cookie_name``, igual
+    que ``/me``/``/login`` aceptan el access token desde la cookie o el
+    header ``Authorization: Bearer ...``. El body entero es opcional:
+    FastAPI ya no rechaza con 422 cuando el cliente lo envía solo en la
+    cookie (caso típico del frontend tras login).
+
+    Seguridad: ``SameSite=lax`` + ``Secure`` (cuando aplique) + ``httponly``
+    en la cookie mitigan CSRF/XSS; el endpoint sigue validando revocación
+    y expiración del ``TokenSesion`` antes de rotar el token.
+    """
+    # Aceptar refresh token desde body o desde la cookie httpOnly (mismo
+    # patrón que ``/me``/``/login`` ya usan para el access token).
+    provided = ""
+    if payload and payload.refresh_token:
+        provided = payload.refresh_token.strip()
+    if not provided:
+        provided = (request.cookies.get(settings.refresh_token_cookie_name) or "").strip()
+
+    if not provided:
+        raise HTTPException(status_code=401, detail="Refresh token requerido")
 
     rt = (
         db.query(TokenSesion)
         .filter(
-            TokenSesion.token == payload.refresh_token,
+            TokenSesion.token == provided,
             TokenSesion.revoked.is_(False),
         )
         .first()
@@ -793,8 +819,6 @@ def logout(
     db: Session = Depends(get_db),
 ):
     """Revoke every active refresh session for the authenticated UUID."""
-    from backend.models_auth import TokenSesion
-
     try:
         auth_user_id = uuid.UUID(user_id)
     except ValueError:

@@ -729,11 +729,18 @@ class TestPaymentResult:
 
 class TestPaymentsModule:
     def test_get_sdk_no_token(self):
-        from backend.services.payments import _get_sdk
-        with patch("backend.services.payments.settings") as mock_s:
-            mock_s.mercadopago_access_token = None
-            with pytest.raises(RuntimeError, match="MERCADOPAGO_ACCESS_TOKEN"):
-                _get_sdk()
+        import importlib
+        import backend.services.payments as pay_mod
+        # If mercadopago is installed, test the missing-token path
+        if getattr(pay_mod, "mercadopago", None) is not None:
+            with patch.object(pay_mod, "settings") as mock_s:
+                mock_s.mercadopago_access_token = None
+                with pytest.raises(RuntimeError, match="MERCADOPAGO_ACCESS_TOKEN"):
+                    pay_mod._get_sdk()
+        else:
+            # mercadopago not installed — test the no-package guard
+            with pytest.raises(RuntimeError, match="mercadopago"):
+                pay_mod._get_sdk()
 
     @patch("backend.services.payments._get_sdk")
     def test_create_preference(self, mock_sdk):
@@ -844,7 +851,8 @@ class TestConversationMemory:
     def test_create_conversation(self, db_session):
         from backend.services.conversation_memory import create_conversation
         uid = uuid.uuid4()
-        with patch("backend.services.conversation_memory.SessionLocal", return_value=db_session):
+        with patch("backend.services.conversation_memory.SessionLocal", return_value=db_session), \
+             patch("backend.services.conversation_memory.resolve_persona_id_for_user", return_value=uuid.uuid4()):
             result = create_conversation(str(uid), title="Test")
             assert result is not None
 

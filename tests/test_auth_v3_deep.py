@@ -10,7 +10,11 @@ from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_head
 
 
 def _ok(s):
-    return s in (200, 201, 204, 400, 403, 404, 405, 409, 422)
+    # Helper tolerante para endpoints de auth cuyo objetivo es ejercitar el
+    # "happy path + bordes". Para ``/refresh`` sin token, ``401`` también es
+    # una respuesta válida (refresh token ausente o revocada), por eso se
+    # incluye acá en lugar de exigir explícitamente 422 como antes.
+    return s in (200, 201, 204, 400, 401, 403, 404, 405, 409, 422)
 
 
 @pytest.fixture

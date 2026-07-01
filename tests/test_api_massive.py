@@ -164,11 +164,12 @@ class TestAdminOther:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestAuthV3:
-    def test_login(self, client):
+    def test_login(self, client, admin_data):
+        # admin_data fixture seeds an admin so the login can succeed (200).
         resp = client.post("/api/v3/auth/login", json={"email": "admin@example.com", "password": "testpass123"})
         assert resp.status_code == 200
 
-    def test_login_wrong_password(self, client):
+    def test_login_wrong_password(self, client, admin_data):
         resp = client.post("/api/v3/auth/login", json={"email": "admin@example.com", "password": "wrong"})
         assert resp.status_code in (401, 400)
 

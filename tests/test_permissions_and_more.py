@@ -138,10 +138,13 @@ class TestCreateRefreshToken:
         assert isinstance(token, str)
         assert len(token) > 0
 
-    def test_create_refresh_token_int_id(self, db_session):
-        from backend.core.permissions import create_refresh_token
-        import pytest
-        pytest.skip("Integer user_id path requires retired DB schema")
+    # NOTE: ``test_create_refresh_token_int_id`` was retired earlier when
+    # ``auth_users.id`` migrated from ``Integer`` to ``UUID``. The legacy
+    # Integer path no longer exists in ``create_refresh_token``; the test
+    # was deleted to avoid asserting against a contract that no longer
+    # holds. The UUID-only happy path is covered by
+    # ``test_create_refresh_token`` above.
+
 
 
 class TestRecordSession:
