@@ -457,7 +457,6 @@ class Asistencia(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # API field names
-    session_id = synonym("sesion_id")
     absence_reason = synonym("motivo_excusa_id")
     absence_reason_detail = synonym("detalle_excusa")
     notes = synonym("detalle_excusa")

@@ -428,7 +428,7 @@ def get_session_detail(
         attendance_list.append(
             {
                 "id": a.id,
-                "session_id": a.session_id,
+                "session_id": str(a.sesion_id),
                 "persona_id": a.persona_id,
                 "persona_name": persona_map.get(a.persona_id, f"Persona {a.persona_id}"),
                 "status": status,
