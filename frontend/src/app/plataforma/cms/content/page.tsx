@@ -24,6 +24,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ApiError, apiFetch } from "@/lib/http";
 import AdminHero from "@/components/admin/AdminHero";
 import { SITE_BLOCKS } from "@/lib/cms/blocks";
+import TextPromptDrawer from "@/components/ui/TextPromptDrawer";
 
 interface MediaItem {
   id: number;
@@ -179,6 +180,8 @@ function cloneTemplate(value: EditableValue | undefined): EditableValue {
 
 function RichTextEditor({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const editorRef = useRef<HTMLDivElement>(null);
+  const [linkUrlOpen, setLinkUrlOpen] = useState(false);
+  const [linkUrlDraft, setLinkUrlDraft] = useState("");
 
   useEffect(() => {
     if (editorRef.current && document.activeElement !== editorRef.current && editorRef.current.innerHTML !== value) {
@@ -192,8 +195,27 @@ function RichTextEditor({ value, onChange }: { value: string; onChange: (value: 
     onChange(editorRef.current?.innerHTML || "");
   };
 
+  const submitLink = () => {
+    const url = linkUrlDraft.trim();
+    if (!url) return;
+    runCommand("createLink", url);
+    setLinkUrlOpen(false);
+  };
+
   return (
     <div className="overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-[#0f1318]">
+      <TextPromptDrawer
+        isOpen={linkUrlOpen}
+        onClose={() => setLinkUrlOpen(false)}
+        onSubmit={submitLink}
+        title="Insertar enlace"
+        subtitle="Pega la URL del vínculo"
+        label="URL del enlace"
+        value={linkUrlDraft}
+        onChange={setLinkUrlDraft}
+        placeholder="https://..."
+        submitLabel="Insertar"
+      />
       <div className="flex flex-wrap items-center gap-2 border-b border-[hsl(var(--border))] p-2 dark:border-white/10">
         <button type="button" onClick={() => runCommand("bold")} className="rounded-md border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide">
           <Bold size={13} />
@@ -210,8 +232,8 @@ function RichTextEditor({ value, onChange }: { value: string; onChange: (value: 
         <button
           type="button"
           onClick={() => {
-            const url = window.prompt("URL del enlace");
-            if (url) runCommand("createLink", url);
+            setLinkUrlDraft("");
+            setLinkUrlOpen(true);
           }}
           className="rounded-md border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide"
         >

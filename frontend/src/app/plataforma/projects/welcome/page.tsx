@@ -9,21 +9,29 @@ import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectRecord } from '@/types/projects';
 import { Hash, Layout, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import TextPromptDrawer from '@/components/ui/TextPromptDrawer';
 
 export default function ProjectsWelcomePage() {
     const { token } = useAuth();
     const router = useRouter();
     const [creating, setCreating] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('grid');
+    const [projectNameDraft, setProjectNameDraft] = useState('');
+    const [createProjectOpen, setCreateProjectOpen] = useState(false);
     const quickStarts = [
         { title: 'Crear proyecto', description: 'Inicia un proyecto y define su alcance.' },
         { title: 'Organizar tareas', description: 'Usa Kanban para mover el trabajo del equipo.' },
         { title: 'Monitorear respuestas', description: 'Revisa comentarios y decisiones en un solo lugar.' },
     ];
 
-    const handleCreate = async () => {
-        const title = window.prompt('Nombre del primer proyecto');
-        if (!title || !title.trim()) return;
+    const handleCreate = () => {
+        setProjectNameDraft('');
+        setCreateProjectOpen(true);
+    };
+
+    const submitCreate = async () => {
+        const title = projectNameDraft.trim();
+        if (!title) return;
         setCreating(true);
         try {
             const project = await apiFetch<ProjectRecord>('/projects', {
@@ -41,6 +49,7 @@ export default function ProjectsWelcomePage() {
             toast.error('Error al crear proyecto');
         } finally {
             setCreating(false);
+            setCreateProjectOpen(false);
         }
     };
 
@@ -51,6 +60,18 @@ export default function ProjectsWelcomePage() {
             onViewChange={setViewType}
             viewOptions={['grid', 'list', 'table']}
         >
+            <TextPromptDrawer
+                isOpen={createProjectOpen}
+                onClose={() => setCreateProjectOpen(false)}
+                onSubmit={submitCreate}
+                title="Crear primer proyecto"
+                subtitle="Usa un nombre corto y claro"
+                label="Nombre del proyecto"
+                value={projectNameDraft}
+                onChange={setProjectNameDraft}
+                placeholder="Ej. Campaña de visitas"
+                submitLabel={creating ? 'Creando…' : 'Crear'}
+            />
             <main className="flex-1 overflow-y-auto p-3">
                 {viewType === 'list' && (
                     <div className="max-w-3xl space-y-3">
@@ -97,4 +118,3 @@ export default function ProjectsWelcomePage() {
         </ProjectsShell>
     );
 }
-

@@ -9,6 +9,7 @@ import { apiFetch } from "@/lib/http";
 import AdminHero from "@/components/admin/AdminHero";
 import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
+import TextPromptDrawer from "@/components/ui/TextPromptDrawer";
 import { Grupo, GrupoApi, Season, Attendee } from "@/types/crm";
 
 export default function GrupoAdmin() {
@@ -23,6 +24,8 @@ export default function GrupoAdmin() {
     const [attendees, setAttendees] = useState<Attendee[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
+    const [groupNameDraft, setGroupNameDraft] = useState('');
+    const [groupPromptOpen, setGroupPromptOpen] = useState(false);
 
     const fetchGrupos = useCallback(async () => {
         if (!token) return;
@@ -97,14 +100,21 @@ export default function GrupoAdmin() {
     };
 
     const createGrupo = async () => {
-        const name = window.prompt("Nombre del nuevo grupo");
-        if (!token || !name?.trim()) return;
+        setGroupNameDraft('');
+        setGroupPromptOpen(true);
+    };
+
+    const submitCreateGrupo = async () => {
+        const name = groupNameDraft.trim();
+        if (!token || !name) return;
         try {
             const created = await apiFetch<Grupo>("/community/grupos", { method: "POST", token, body: { name: name.trim(), status: "active" } });
             setGrupos((prev) => [created, ...prev]);
             addToast("Grupo creado correctamente", "success");
         } catch {
             addToast("No se pudo crear el grupo", "error");
+        } finally {
+            setGroupPromptOpen(false);
         }
     };
 
@@ -117,6 +127,18 @@ export default function GrupoAdmin() {
                 { label: 'Grupos Admin', icon: Star },
             ]}
         >
+            <TextPromptDrawer
+                isOpen={groupPromptOpen}
+                onClose={() => setGroupPromptOpen(false)}
+                onSubmit={submitCreateGrupo}
+                title="Crear nuevo grupo"
+                subtitle="Define el nombre del grupo"
+                label="Nombre del grupo"
+                value={groupNameDraft}
+                onChange={setGroupNameDraft}
+                placeholder="Ej. Jóvenes 20-25"
+                submitLabel="Crear grupo"
+            />
             <AdminHero
                 eyebrow="Gestion de Redes"
                 title="Consola de Grupos"

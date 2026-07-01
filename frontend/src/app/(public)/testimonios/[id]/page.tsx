@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Testimonial } from "@/lib/data/testimonios";
 import { apiFetch } from "@/lib/http";
 import { FAROHeader, FAROFooter } from "@/components/public/FAROShared";
+import { toast } from "sonner";
 
 function getTestimonialMediaUrl(t: Testimonial): string {
     if (t.media_type === "image") return t.image_url || t.media_url || "";
@@ -203,15 +204,17 @@ export default function TestimonioDetailPage() {
                         </button>
                         <button
                             onClick={() => {
+                                const shareUrl = window.location.href;
                                 if (navigator.share) {
                                     navigator.share({
                                         title: `Testimonio de ${testimonial.author?.username}`,
                                         text: `Lee el testimonio de ${testimonial.author?.username} en FARO.`,
-                                        url: window.location.href,
+                                        url: shareUrl,
                                     });
                                 } else {
-                                    navigator.clipboard.writeText(window.location.href);
-                                    alert("Enlace copiado al portapapeles");
+                                    navigator.clipboard.writeText(shareUrl)
+                                        .then(() => toast.success("Enlace copiado al portapapeles"))
+                                        .catch(() => toast.error("No pudimos copiar el enlace"));
                                 }
                             }}
                             className="flex items-center gap-2 px-3 py-3 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:scale-105"

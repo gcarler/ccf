@@ -29,6 +29,7 @@ import AdminShell from '@/components/admin/AdminShell';
 import AdminHero from '@/components/admin/AdminHero';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
+import TextPromptDrawer from '@/components/ui/TextPromptDrawer';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 
@@ -68,6 +69,9 @@ export default function SystemSettings() {
         actor: '',
     });
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
+    const [incidentNoteOpen, setIncidentNoteOpen] = useState(false);
+    const [incidentNoteDraft, setIncidentNoteDraft] = useState('');
+    const [incidentNoteTarget, setIncidentNoteTarget] = useState<string | null>(null);
 
     const fetchConfig = useCallback(async () => {
         if (!token) return;
@@ -323,17 +327,22 @@ export default function SystemSettings() {
     };
 
     const addIncidentNote = async (incidentId: string) => {
-        const note = window.prompt('Agregar nota del incidente');
-        if (!note || !note.trim()) return;
-        if (!token) return;
-        setActionLoading(`incident-${incidentId}-note`);
+        setIncidentNoteTarget(incidentId);
+        setIncidentNoteDraft('');
+        setIncidentNoteOpen(true);
+    };
+
+    const submitIncidentNote = async () => {
+        const note = incidentNoteDraft.trim();
+        if (!note || !token || !incidentNoteTarget) return;
+        setActionLoading(`incident-${incidentNoteTarget}-note`);
         try {
-            await apiFetch(`/workspace/flags/incidents/${incidentId}`, {
+            await apiFetch(`/workspace/flags/incidents/${incidentNoteTarget}`, {
                 method: 'PATCH',
                 token,
                 body: {
                     action: 'note',
-                    note: note.trim(),
+                    note,
                 },
             });
             addToast('Nota agregada al incidente', 'success');
@@ -343,6 +352,8 @@ export default function SystemSettings() {
             addToast('No se pudo agregar nota', 'error');
         } finally {
             setActionLoading(null);
+            setIncidentNoteOpen(false);
+            setIncidentNoteTarget(null);
         }
     };
 
@@ -574,6 +585,19 @@ export default function SystemSettings() {
     );
 
     return (
+        <>
+            <TextPromptDrawer
+                isOpen={incidentNoteOpen}
+                onClose={() => setIncidentNoteOpen(false)}
+                onSubmit={submitIncidentNote}
+                title="Agregar nota del incidente"
+                subtitle="La nota se guardará en el historial"
+                label="Nota"
+                value={incidentNoteDraft}
+                onChange={setIncidentNoteDraft}
+                placeholder="Describe la acción tomada..."
+                submitLabel="Guardar nota"
+            />
         <WorkspaceLayout 
             sidebarTitle="Ajustes del Sistema"
             parentTitle="Panel de Control"
@@ -581,7 +605,7 @@ export default function SystemSettings() {
             onBack={() => router.push('/plataforma/admin')}
             customSidebar={settingsSidebar}
         >
-            <AdminShell
+        <AdminShell
                 breadcrumbs={[
                     { label: 'Infraestructura', icon: Server },
                     { label: 'Configuración Maestra', icon: Shield }
@@ -1215,6 +1239,7 @@ export default function SystemSettings() {
         <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
         </AdminShell>
     </WorkspaceLayout>
+    </>
     );
 }
 

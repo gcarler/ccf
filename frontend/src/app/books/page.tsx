@@ -12,7 +12,7 @@ const BOOKS = [
     { id: 3, title: 'La Oración que Mueve a Dios', author: 'E.M. Bounds', category: 'Oración', rating: 4.7, free: true, cover: 'from-sky-600 to-blue-700', desc: 'Las enseñanzas más profundas sobre el poder transformador de la oración.' },
     { id: 4, title: 'Gracia Divina para el Matrimonio', author: 'Tim Keller', category: 'Familia', rating: 4.8, free: false, cover: 'from-rose-500 to-pink-600', desc: 'Una perspectiva bíblica profunda sobre el matrimonio como reflejo del evangelio.' },
     { id: 5, title: 'Finanzas con Fe', author: 'Equipo CCF', category: 'Mayordomía', rating: 4.6, free: true, cover: 'from-amber-500 to-orange-600', desc: 'Manual práctico para manejar las finanzas con principios del Reino de Dios.' },
-    { id: 6, title: 'Sanidad Interior', author: 'Leanne Payne', category: 'Consejería', rating: 4.7, free: false, cover: 'from-[hsl(var(--surface-3))] to-gray-700', desc: 'Un camino bíblico hacia la restauración emocional y espiritual profunda.' },
+    { id: 6, title: 'Sanidad Interior', author: 'Leanne Payne', category: 'Consejería', rating: 4.7, free: false, cover: 'from-[hsl(var(--surface-3))] to-[hsl(var(--bg-muted))]', desc: 'Un camino bíblico hacia la restauración emocional y espiritual profunda.' },
 ];
 
 const CATEGORIES = ['Todos', 'Discipulado', 'Liderazgo', 'Familia', 'Oración', 'Mayordomía', 'Consejería'];
@@ -116,4 +116,3 @@ export default function BooksPage() {
         </main>
     );
 }
-
