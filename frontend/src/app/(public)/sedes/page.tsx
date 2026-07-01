@@ -5,7 +5,6 @@ import { SITE_KEY } from "@/lib/site-config";
 import { AnimatePresence,motion } from "framer-motion";
 import { Calendar,Clock,Home,Navigation,Phone,Search } from "lucide-react";
 import { useEffect,useState } from "react";
-import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 const DEFAULT_MAP_EMBED_URL =
     "https://www.google.com/maps/d/embed?mid=1VDNpplw_9z1tcEhx25wEFRR5gQmnHgM&ehbc=2E312F";
@@ -83,8 +82,7 @@ export default function SedesPage() {
     );
 
     return (
-        <CmsPageOverride slug="sedes">
-            <main className="pt-[88px] flex flex-col md:flex-row bg-site-surface" style={{ minHeight: "100vh" }}>
+        <main className="pt-[88px] flex flex-col md:flex-row bg-site-surface" style={{ minHeight: "100vh" }}>
 
             {/* ── LISTADO DE SEDES ──────────────────────────── */}
             <aside className="w-full md:w-[340px] lg:w-[420px] xl:w-[480px] flex flex-col max-h-[60vh] md:max-h-none md:h-[calc(100vh-88px)] md:sticky md:top-[88px] bg-site-surface-container-lowest border-r border-site-outline-variant/10 overflow-hidden">
@@ -215,6 +213,5 @@ export default function SedesPage() {
                 />
             </section>
         </main>
-        </CmsPageOverride>
     );
 }
