@@ -48,7 +48,10 @@ def _get_user_role(user: models.User) -> str:
 
 
 def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[uuid.UUID]):
-    case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+    try:
+        case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+    except (ValueError, AttributeError):
+        raise HTTPException(status_code=400, detail="Invalid case ID format")
     case = (
         db.query(models.CasoCRM)
         .filter(
