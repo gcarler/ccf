@@ -112,13 +112,23 @@ jobs:
       - name: Run unit tests with coverage
         run: cd frontend && npx vitest run --coverage
 
-      - name: Run E2E smoke tests
-        run: cd frontend && npx playwright test --grep-invert @auth
-        env:
-          BASE_URL: http://localhost:4173
-
       - name: Build
         run: cd frontend && npm run build
+
+      - name: Install Playwright browsers
+        run: cd frontend && npx playwright install --with-deps chromium
+
+      - name: Run E2E smoke tests
+        # Playwright managed webServer boots `npm run dev` automatically.
+        # The build step above ensures .next/ exists for the dev server.
+        # BASE_URL is consumed by public-pages.spec.ts (absolute URLs);
+        # PLAYWRIGHT_MANAGED_WEBSERVER enables the managed webServer in config.
+        run: cd frontend && npx playwright test --grep-invert @auth
+        env:
+          PLAYWRIGHT_MANAGED_WEBSERVER: "1"
+          PLAYWRIGHT_BASE_URL: ""
+          BASE_URL: http://localhost:4173
+          NEXT_PUBLIC_API_URL: http://localhost:8000
 
       - name: Upload frontend coverage
         uses: codecov/codecov-action@v4

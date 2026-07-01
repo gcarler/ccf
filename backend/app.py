@@ -165,6 +165,23 @@ async def quality_assurance_middleware(request: Request, call_next):
     return response
 
 
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Handle HTTP exceptions with graded logging to avoid log noise.
+
+    404 responses from path-scanning probes are logged at DEBUG level
+    instead of ERROR/WARNING, keeping the log stream clean while preserving
+    visibility of genuine API errors (403, 409, 5xx, etc.).
+    """
+    if exc.status_code == 404:
+        logger.debug("404 Not Found: %s %s", request.method, request.url.path)
+    elif exc.status_code >= 500:
+        logger.error("HTTP %d on %s %s: %s", exc.status_code, request.method, request.url.path, exc.detail)
+    else:
+        logger.warning("HTTP %d on %s %s: %s", exc.status_code, request.method, request.url.path, exc.detail)
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail}, headers=exc.headers)
+
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, (StarletteHTTPException, RequestValidationError)):

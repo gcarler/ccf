@@ -204,16 +204,31 @@ const result = await apiFetch('/grupos', {
 
 Usar los componentes del sistema de diseño en `frontend/src/design/components/`:
 
-| Componente | Uso |
-|---|---|
-| `DSButton` | Botones principales |
-| `DSBadge` | Etiquetas / badges |
-| `DSCard` | Cards contenedoras |
-| `DSMetric` | Métricas / KPIs |
-| `DSSkeleton` | Estados de carga |
-| `DSSectionHeader` | Encabezados de sección |
-| `DSToolbarChip` | Chips de toolbar |
-| `DSCommandEntry` | Entrada de comando |
+| Componente | Uso | Ejemplo |
+|---|---|---|
+| `DSButton` | Botones (primary, secondary, ghost) | `<DSButton variant="primary">Guardar</DSButton>` |
+| `DSBadge` | Etiquetas / badges (slate, blue, emerald, amber) | `<DSBadge tone="emerald" label="Activo" />` |
+| `DSCard` | Cards contenedoras (light, dark, glass) | `<DSCard tone="dark">...</DSCard>` |
+| `DSMetric` | Métricas / KPIs para dashboards | `<DSMetric label="Usuarios" value="1,248" />` |
+| `DSChart` | Gráficos (line, area, bar) con Recharts | `<DSChart type="bar" data={data} />` |
+| `DSInput` | Inputs con label, error, helper, icon | `<DSInput label="Email" error="Requerido" />` |
+| `DSSelect` | Selects nativos estilizados | `<DSSelect label="País" options={options} />` |
+| `DSModal` | Modales con backdrop, focus trap, Escape | `<DSModal open={isOpen} title="Confirmar">` |
+| `DSTable` | Tablas con sorting (TanStack Table) | `<DSTable data={data} columns={columns} />` |
+| `DSTabs` | Navegación por pestañas | `<DSTabs tabs={tabs}>...</DSTabs>` |
+| `DSTooltip` | Tooltips con Radix UI | `<DSTooltip content="Info"><button>` |
+| `DSToast` | Notificaciones toast | `toast.success("Guardado")` |
+| `DSSkeleton` | Estados de carga / skeleton screens | `<DSSkeleton className="h-4 w-full" />` |
+| `DSSectionHeader` | Encabezados de sección con acciones | `<DSSectionHeader title="Título" />` |
+| `DSToolbarChip` | Chips de toolbar / filtros | `<DSToolbarChip label="Activos" />` |
+| `DSCommandEntry` | Entradas de command palette | `<DSCommandEntry label="Ir a CRM" />` |
+
+**Importar desde `@/design`:**
+```tsx
+import { DSButton, DSCard, DSInput, DSModal } from '@/design';
+```
+
+**Documentación completa:** `frontend/src/design/README.md`
 
 ### 10. Manejo de Estado (Zustand)
 
