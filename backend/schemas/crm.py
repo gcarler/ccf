@@ -18,6 +18,8 @@ EVENT_TYPES = [
     "ONCE",  # Única vez / fecha fija especial
     "SPECIAL",  # Campaña, conferencia invitada, evento especial
     "ONLINE",  # Transmisión en vivo / servicio virtual
+    "CULTURE",  # Culto/cultura cristiana regular (alias semántico de PERMANENT)
+    "CONFERENCE",  # Conferencia invitada (alias semántico de SPECIAL)
 ]
 
 
@@ -29,6 +31,8 @@ class EventType(str, Enum):
     SPECIAL = "SPECIAL"
     FARO = "FARO"
     ONLINE = "ONLINE"
+    CULTURE = "CULTURE"
+    CONFERENCE = "CONFERENCE"
 
 class EventAudienceType(str, Enum):
     ALL = "ALL"

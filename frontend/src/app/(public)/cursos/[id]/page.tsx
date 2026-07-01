@@ -250,83 +250,118 @@ export default function CursoDetailPage() {
                 </div>
             </section>
 
-            {/* ── ENROLLMENT MODAL ────────────────────── */}
-            {showEnrollModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "var(--site-overlay-bg)", backdropFilter: "blur(8px)" }}>
-                    <div
-                        className="w-full max-w-md rounded-lg p-4 shadow-2xl border max-h-[90vh] overflow-y-auto"
-                        style={{
-                            background: "var(--site-surface-container-lowest)",
-                            borderColor: "var(--site-outline-variant)",
-                        }}
-                    >
-                        <h3 className="text-lg font-bold mb-1" style={{ color: "var(--site-on-surface)" }}>
-                            Inscribirme en {course?.title}
-                        </h3>
-                        <p className="text-sm mb-3" style={{ color: "var(--site-on-surface-variant)" }}>
-                            Déjanos tus datos para crear tu acceso al curso.
-                        </p>
-                        <form onSubmit={submitEnroll} className="space-y-3">
-                            <div>
-                                <label className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: "var(--site-on-surface-variant)" }}>
-                                    Nombre completo
-                                </label>
-                                <input
-                                    type="text"
-                                    value={enrollForm.fullName}
-                                    onChange={(e) => setEnrollForm(f => ({ ...f, fullName: e.target.value }))}
-                                    required
-                                    className="w-full rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2"
-                                    style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
-                                />
+            {/* ── ENROLLMENT DRAWER ────────────────────── */}
+            <AnimatePresence>
+                {showEnrollModal && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-50 backdrop-blur-sm"
+                            style={{ backgroundColor: "hsl(var(--site-background) / 0.70)" }}
+                            onClick={() => setShowEnrollModal(false)}
+                        />
+                        <motion.aside
+                            initial={{ x: "100%", opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: "100%", opacity: 0 }}
+                            transition={{ type: "spring", damping: 26, stiffness: 260 }}
+                            className="fixed top-0 right-0 z-[60] h-screen w-full max-w-md overflow-hidden border-l shadow-2xl"
+                            style={{
+                                background: "var(--site-surface-container-lowest)",
+                                borderColor: "var(--site-outline-variant)",
+                            }}
+                        >
+                            <div className="flex h-full flex-col">
+                                <div className="flex items-start justify-between gap-4 border-b px-5 py-5" style={{ borderColor: "var(--site-outline-variant)" }}>
+                                    <div className="min-w-0">
+                                        <h3 className="text-lg font-bold leading-tight" style={{ color: "var(--site-on-surface)" }}>
+                                            Inscribirme en {course?.title}
+                                        </h3>
+                                        <p className="mt-1 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+                                            Déjanos tus datos para crear tu acceso al curso.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEnrollModal(false)}
+                                        className="size-10 rounded-lg border text-sm transition-all"
+                                        style={{
+                                            background: "var(--site-surface-container)",
+                                            borderColor: "var(--site-outline-variant)",
+                                            color: "var(--site-on-surface-variant)",
+                                        }}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+
+                                <form id="course-enroll-form" onSubmit={submitEnroll} className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
+                                    <div>
+                                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                                            Nombre completo
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={enrollForm.fullName}
+                                            onChange={(e) => setEnrollForm(f => ({ ...f, fullName: e.target.value }))}
+                                            required
+                                            className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                                            style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                                            Email
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={enrollForm.email}
+                                            onChange={(e) => setEnrollForm(f => ({ ...f, email: e.target.value }))}
+                                            required
+                                            className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                                            style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                                            WhatsApp (opcional)
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            value={enrollForm.phone}
+                                            onChange={(e) => setEnrollForm(f => ({ ...f, phone: e.target.value }))}
+                                            className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                                            style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
+                                        />
+                                    </div>
+                                </form>
+
+                                <div className="flex gap-3 border-t px-5 py-4" style={{ borderColor: "var(--site-outline-variant)" }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEnrollModal(false)}
+                                        className="flex-1 rounded-lg py-2 text-sm font-bold transition-all"
+                                        style={{ background: "var(--site-surface-container)", color: "var(--site-on-surface-variant)" }}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        form="course-enroll-form"
+                                        disabled={enrollSubmitting}
+                                        className="flex-1 rounded-lg py-2 text-sm font-bold text-white transition-all disabled:opacity-60"
+                                        style={{ background: "var(--site-cta-gradient)" }}
+                                    >
+                                        {enrollSubmitting ? "Inscribiendo..." : "Inscribirme"}
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <label className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: "var(--site-on-surface-variant)" }}>
-                                    Email
-                                </label>
-                                <input
-                                    type="email"
-                                    value={enrollForm.email}
-                                    onChange={(e) => setEnrollForm(f => ({ ...f, email: e.target.value }))}
-                                    required
-                                    className="w-full rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2"
-                                    style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-semibold uppercase tracking-wide block mb-1" style={{ color: "var(--site-on-surface-variant)" }}>
-                                    WhatsApp (opcional)
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={enrollForm.phone}
-                                    onChange={(e) => setEnrollForm(f => ({ ...f, phone: e.target.value }))}
-                                    className="w-full rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2"
-                                    style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
-                                />
-                            </div>
-                            <div className="flex gap-2 pt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowEnrollModal(false)}
-                                    className="flex-1 py-2 rounded-lg text-sm font-bold transition-all"
-                                    style={{ background: "var(--site-surface-container)", color: "var(--site-on-surface-variant)" }}
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={enrollSubmitting}
-                                    className="flex-1 py-2 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-60"
-                                    style={{ background: "var(--site-cta-gradient)" }}
-                                >
-                                    {enrollSubmitting ? "Inscribiendo..." : "Inscribirme"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
 
             <FAROFooter />
         </div>

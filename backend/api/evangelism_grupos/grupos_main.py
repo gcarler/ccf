@@ -23,6 +23,8 @@ from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
+static_router = APIRouter()
+dynamic_router = APIRouter()
 
 
 # ── Cell Group CRUD ──
@@ -109,8 +111,8 @@ def _validate_strategy_group_roles(db: Session, strategy_id: UUID | None, body: 
             raise HTTPException(status_code=400, detail=f"Rol no configurado en la estrategia: {role}")
 
 
-@router.get("/grupos", response_model=List[dict])
-@router.get("/faro", response_model=List[dict])
+@static_router.get("/grupos", response_model=List[dict])
+@static_router.get("/faro", response_model=List[dict])
 def list_grupos(
     evangelism_strategy_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
@@ -145,19 +147,42 @@ def list_grupos(
     ]
 
 
-@router.get("/grupos/mine", response_model=List[dict])
-@router.get("/faro/mine", response_model=List[dict])
+def _serialize_grupo(g):
+    """Serializa un GrupoEvangelismo ORM a dict compatible con
+    ``response_model=List[dict]``. Reutilizado por list_grupos y
+    list_my_grupos para evitar que Pydantic v2 reciba el ORM crudo
+    (causa error ``dict_type`` en validación de response_model)."""
+    return {
+        "id": g.id,
+        "name": g.nombre,
+        "zone": g.ubicacion,
+        "address": g.direccion,
+        "leader_name": g.lider.nombre_completo if g.lider else "",
+        "leader_id": str(g.lider_persona_id) if g.lider_persona_id else None,
+        "assistant_id": str(g.asistente_persona_id) if g.asistente_persona_id else None,
+        "host_id": str(g.anfitrion_persona_id) if g.anfitrion_persona_id else None,
+        "personas_count": sum(1 for p in (g.participantes or []) if p.activo and p.deleted_at is None),
+        "capacity": g.capacidad,
+        "day_of_week": g.dia_reunion,
+        "start_time": g.hora_reunion,
+        "status": "Activo" if g.activo else "Inactivo",
+        "evangelism_strategy_id": str(g.estrategia_id) if g.estrategia_id else None,
+    }
+
+
+@static_router.get("/grupos/mine", response_model=List[dict])
+@static_router.get("/faro/mine", response_model=List[dict])
 def list_my_grupos(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
     user_sede = require_user_sede_id(db, current_user)
     if _is_crm_admin_or_pastor(current_user):
-        return crud.get_grupos(db, sede_id=user_sede)
+        return [_serialize_grupo(g) for g in crud.get_grupos(db, sede_id=user_sede)]
     persona = _get_persona_for_user(db, current_user.id)
     if not persona:
         return []
-    return (
+    rows = (
         db.query(GrupoEvangelismo)
         .filter(
             models.GrupoEvangelismo.deleted_at.is_(None),
@@ -168,10 +193,11 @@ def list_my_grupos(
         .order_by(models.GrupoEvangelismo.nombre.asc())
         .all()
     )
+    return [_serialize_grupo(g) for g in rows]
 
 
-@router.get("/grupos/assignment-summary", response_model=dict)
-@router.get("/faro/assignment-summary", response_model=dict)
+@dynamic_router.get("/grupos/assignment-summary", response_model=dict)
+@dynamic_router.get("/faro/assignment-summary", response_model=dict)
 def get_faro_assignment_summary(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -270,9 +296,9 @@ def get_faro_assignment_summary(
     }
 
 
-@router.get("/grupos/{grupo_id}", response_model=dict)
-@router.get("/faro/{grupo_id}", response_model=dict)
-@router.get("/micro/{grupo_id}", response_model=dict)
+@dynamic_router.get("/grupos/{grupo_id:uuid}", response_model=dict)
+@dynamic_router.get("/faro/{grupo_id:uuid}", response_model=dict)
+@dynamic_router.get("/micro/{grupo_id:uuid}", response_model=dict)
 def get_grupo(
     grupo_id: UUID,
     db: Session = Depends(get_db),
@@ -336,12 +362,12 @@ def get_grupo(
         session_ids = [session.id for session in sessions]
         attendance_rows = db.query(Asistencia).filter(models.Asistencia.sesion_id.in_(session_ids)).all()
         for row in attendance_rows:
-            attendance_by_session[row.session_id].append(row)
+            attendance_by_session[row.sesion_id].append(row)
             if not row.attended and row.persona_id:
                 absence_counter[row.persona_id] += 1
                 absence_details[row.persona_id].append(
                     {
-                        "session_id": row.session_id,
+                        "session_id": row.sesion_id,
                         "session_date": None,
                         "reason": row.absence_reason,
                         "reason_detail": row.absence_reason_detail,
@@ -349,14 +375,14 @@ def get_grupo(
                 )
         attendance_counts = (
             db.query(
-                models.Asistencia.sesion_id.label("session_id"),
+                models.Asistencia.sesion_id.label("sesion_id"),
                 sqlfunc.count(models.Asistencia.id).label("cnt"),
             )
             .filter(models.Asistencia.sesion_id.in_(session_ids))
             .group_by(models.Asistencia.sesion_id)
             .all()
         )
-        attendance_map = {row.session_id: row.cnt for row in attendance_counts}
+        attendance_map = {row.sesion_id: row.cnt for row in attendance_counts}
     else:
         attendance_map = {}
 
@@ -495,8 +521,8 @@ def get_grupo(
     }
 
 
-@router.post("/grupos", response_model=dict)
-@router.post("/faro", response_model=dict)
+@static_router.post("/grupos", response_model=dict)
+@static_router.post("/faro", response_model=dict)
 async def create_grupo(
     payload: schemas.GrupoEvangelismoCreate,
     db: Session = Depends(get_db),
@@ -528,8 +554,8 @@ async def create_grupo(
     }
 
 
-@router.put("/grupos/{grupo_id}", response_model=dict)
-@router.put("/faro/{grupo_id}", response_model=dict)
+@dynamic_router.put("/grupos/{grupo_id:uuid}", response_model=dict)
+@dynamic_router.put("/faro/{grupo_id:uuid}", response_model=dict)
 def update_grupo(
     grupo_id: UUID,
     payload: schemas.GrupoEvangelismoUpdate,
@@ -562,8 +588,8 @@ def update_grupo(
     return {"id": house.id, "name": house.name, "personas_count": house.personas_count}
 
 
-@router.delete("/grupos/{grupo_id}", status_code=204)
-@router.delete("/faro/{grupo_id}", status_code=204)
+@dynamic_router.delete("/grupos/{grupo_id:uuid}", status_code=204)
+@dynamic_router.delete("/faro/{grupo_id:uuid}", status_code=204)
 def delete_grupo(
     grupo_id: UUID,
     db: Session = Depends(get_db),
@@ -581,8 +607,8 @@ def delete_grupo(
 # ── Campaign Seasons ──
 
 
-@router.get("/grupos/seasons")
-@router.get("/faro/seasons")
+@dynamic_router.get("/grupos/seasons")
+@dynamic_router.get("/faro/seasons")
 def list_campaign_seasons(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -602,8 +628,8 @@ def list_campaign_seasons(
     ]
 
 
-@router.post("/grupos/seasons", response_model=dict)
-@router.post("/faro/seasons", response_model=dict)
+@dynamic_router.post("/grupos/seasons", response_model=dict)
+@dynamic_router.post("/faro/seasons", response_model=dict)
 def create_campaign_season(
     payload: dict,
     db: Session = Depends(get_db),
@@ -638,8 +664,8 @@ def create_campaign_season(
     return {"id": season.id, "name": season.name, "status": season.status}
 
 
-@router.patch("/grupos/seasons/{season_id}", response_model=dict)
-@router.patch("/faro/seasons/{season_id}", response_model=dict)
+@dynamic_router.patch("/grupos/seasons/{season_id:uuid}", response_model=dict)
+@dynamic_router.patch("/faro/seasons/{season_id}", response_model=dict)
 def update_campaign_season(
     season_id: UUID,
     payload: dict,
@@ -659,8 +685,8 @@ def update_campaign_season(
 # ── Analytics ──
 
 
-@router.get("/grupos/analytics")
-@router.get("/faro/analytics")
+@dynamic_router.get("/grupos/analytics")
+@dynamic_router.get("/faro/analytics")
 def get_faro_analytics(
     season_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
@@ -708,7 +734,11 @@ def get_faro_analytics(
 # ── Macro despliegue ──
 
 
-@router.get("/macro/despliegue", response_model=dict)
+# Alias con guiones: el cliente espera ``/macro-despliegue`` (sin slash entre
+# ``macro`` y ``despliegue``). Mantener el path original ``/macro/despliegue``
+# para compatibilidad con consumidores existentes.
+@dynamic_router.get("/macro-despliegue", response_model=dict)
+@dynamic_router.get("/macro/despliegue", response_model=dict)
 def get_macro_despliegue(
     season_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
@@ -762,7 +792,10 @@ def get_macro_despliegue(
         .group_by(models.Asistencia.sesion_id)
         .all()
     )
-    att_map = {row.session_id: row.cnt for row in attendance_counts}
+    # Acceso por key de columna: el modelo Asistencia declara ``sesion_id`` (no
+    # ``session_id``) y la query anterior devuelve ``(sesion_id, cnt)``,
+    # así que ``row.sesion_id`` es la clave correcta en el Row namedtuple.
+    att_map = {row.sesion_id: row.cnt for row in attendance_counts}
 
     # 4. Build the dense JSON
     despliegue = []
@@ -849,8 +882,8 @@ def _ensure_group_visitor_link(db: Session, grupo_id: UUID, persona_id: UUID) ->
     )
 
 
-@router.post("/grupos/visitors", response_model=FaroVisitorResponse)
-@router.post("/faro/visitors", response_model=FaroVisitorResponse)
+@dynamic_router.post("/grupos/visitors", response_model=FaroVisitorResponse)
+@dynamic_router.post("/faro/visitors", response_model=FaroVisitorResponse)
 def register_faro_visitor(
     visitor: FaroVisitorCreate,
     db: Session = Depends(get_db),
@@ -938,7 +971,7 @@ def register_faro_visitor(
 # ── Dashboard Metrics ──
 
 
-@router.get("/strategies/{strategy_id}/metrics", response_model=dict)
+@dynamic_router.get("/strategies/{strategy_id}/metrics", response_model=dict)
 def get_strategy_metrics(
     strategy_id: UUID,
     weeks: int = 12,
@@ -1014,7 +1047,7 @@ def get_strategy_metrics(
     # Group attendance by session_id in memory
     att_by_session = collections.defaultdict(list)
     for a in all_attendance:
-        att_by_session[a.session_id].append(a)
+        att_by_session[a.sesion_id].append(a)
 
     weekly = collections.defaultdict(
         lambda: {
@@ -1072,3 +1105,8 @@ def get_strategy_metrics(
             "total_absences": total_absent,
         },
     }
+
+
+# Strategy D: static routes BEFORE dynamic ones (avoid FastAPI shadow)
+router.include_router(static_router)
+router.include_router(dynamic_router)

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React,{ useCallback,useEffect,useMemo,useRef,useState } from "react";
 import { sanitizeCmsHtml } from "@/lib/cms/sanitize";
+import { apiFetch } from "@/lib/http";
 
 function val(props: Record<string, unknown>, key: string, fallback = "") {
   const value = props?.[key];
@@ -875,12 +876,20 @@ function NewsletterSection({ section }: { section: CmsSection }) {
     setSubmitError(null);
     try {
       if (actionUrl.trim()) {
-        const res = await fetch(actionUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email }),
-        });
-        if (!res.ok) throw new Error("Error al enviar");
+        if (actionUrl.trim().startsWith("/")) {
+          await apiFetch<void>(actionUrl.trim(), {
+            method: "POST",
+            body: { name, email },
+            silent: true,
+          });
+        } else {
+          const res = await fetch(actionUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email }),
+          });
+          if (!res.ok) throw new Error("Error al enviar");
+        }
       }
       setSent(true);
     } catch {
@@ -1341,11 +1350,7 @@ function DocumentUploadSection({ section }: { section: CmsSection }) {
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
-      const res = await fetch("/api/public/documents", { method: "POST", body: formData });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Error al subir");
-      }
+      await apiFetch<void>("/public/documents", { method: "POST", body: formData, silent: true });
       setUploaded(true);
     } catch (err: any) {
       setError(err.message || "Error al subir el documento");

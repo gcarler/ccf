@@ -193,12 +193,38 @@ def client(db_session):
 # /api/auth/login endpoint queries Usuario (auth_users), not User (users).
 
 def seed_admin(db_session, email="admin@example.com", password="testpass123"):
-    """Crea un administrador funcional en Auth v3 y su Persona."""
+    """Crea un administrador funcional en Auth v3 y su Persona.
+
+    Idempotente: si ya existe un Usuario con este email en la sesión,
+    retorna el registro existente y sus relaciones (Persona, Sede) en vez
+    de re-insertar. Esto previene el cascade ``IntegrityError: UNIQUE
+    constraint failed: auth_users.email`` cuando un test invoca
+    ``seed_admin`` más de una vez (intencional o accidentalmente) y deja
+    la conexión compartida de ``StaticPool`` en mal estado.
+    """
     import uuid as _uuid
     from backend import models as _models
     from backend.models_auth import Usuario, RolPlataforma
     from backend.models_crm import Persona
     from backend.core.security import get_password_hash
+
+    existing_user = (
+        db_session.query(Usuario)
+        .filter(Usuario.email == email)
+        .first()
+    )
+    if existing_user is not None:
+        existing_persona = (
+            db_session.query(Persona)
+            .filter(Persona.id == existing_user.id)
+            .first()
+        )
+        existing_sede = (
+            db_session.query(_models.Sede)
+            .filter(_models.Sede.id == existing_user.sede_id)
+            .first()
+        )
+        return existing_user, existing_persona, existing_sede
 
     persona = Persona(
         id=_uuid.uuid4(),

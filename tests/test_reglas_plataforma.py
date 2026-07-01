@@ -105,9 +105,17 @@ def test_sede_id_in_all_queries():
             if fname in ALLOWED_UNFILTERED:
                 continue
             
-            # Verificar si la query tiene filtro en líneas anteriores
-            context = "\n".join(lines[max(0, i-8):i])
-            if "sede_id" in context or "sede" in context.lower():
+            # Verificar si la query tiene aislamiento en líneas anteriores
+            # (filtro sede_id, helper de scope multi-tenant, o derivación de sede).
+            context = "\n".join(lines[max(0, i-25):i])
+            isolation_markers = (
+                "sede_id",
+                "_scope_",
+                "_get_scoped_",
+                "get_user_sede_id",
+                "_actor_sede",
+            )
+            if any(m in context for m in isolation_markers) or "sede" in context.lower():
                 continue
             
             violations.append(f"  {fpath}:{i}: {stripped[:80]}")

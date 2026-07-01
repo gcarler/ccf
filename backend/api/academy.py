@@ -564,14 +564,16 @@ def my_profile(current_user: AcademyStudent, db: Session = Depends(get_db)):
 
 @router.get("/me/certificates")
 def my_certificates(current_user: AcademyStudent, db: Session = Depends(get_db)):
-    rows = db.query(models.Certificate, models.Course.title).join(
+    user_sede = get_user_sede_id(db, current_user.id)
+    query = db.query(models.Certificate, models.Course.title).join(
         models.Enrollment, models.Certificate.enrollment_id == models.Enrollment.id
     ).join(models.Course, models.Enrollment.course_id == models.Course.id).filter(
         models.Enrollment.persona_id == current_user.id,
         models.Enrollment.deleted_at.is_(None),
-        # Aislado por boundary de persona_id (Axioma 3). El JOIN con Course únicamente
-        # añade el título a la respuesta; no se usa como vector de scope.
-    ).all()
+    )
+    if user_sede is not None:
+        query = query.filter(models.Enrollment.sede_id == user_sede)
+    rows = query.all()
     return [
         {
             "id": certificate.id,
@@ -911,13 +913,14 @@ def course_students(
     course_id: UUID, current_user: AcademyEditor, db: Session = Depends(get_db)
 ):
     _get_scoped_course(db, current_user, course_id)
-    enrollments = db.query(models.Enrollment).options(joinedload(models.Enrollment.persona)).filter(
+    user_sede = get_user_sede_id(db, current_user.id)
+    query = db.query(models.Enrollment).options(joinedload(models.Enrollment.persona)).filter(
         models.Enrollment.course_id == course_id,
         models.Enrollment.deleted_at.is_(None),
-        # Aislado por _get_scoped_course(course_id) justo arriba (Axioma 3). El filtro
-        # de course_id es redundante a nivel defensivo, pero mantiene la simetría con
-        # list_lessons/list_assessments.
-    ).all()
+    )
+    if user_sede is not None:
+        query = query.filter(models.Enrollment.sede_id == user_sede)
+    enrollments = query.all()
     return [
         {
             "id": enrollment.id,

@@ -21,14 +21,12 @@ export const useMeshSocket = (clientId: string) => {
         const socket = new WebSocket(`${wsBaseUrl}/mesh/ws/${clientId}`);
 
         socket.onopen = () => {
-            console.log('🔗 Connected to Agentic Mesh Nervous System');
             setIsConnected(true);
         };
 
         socket.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data) as MeshEvent;
-                console.log('⚡ Received Mesh Event:', data);
                 setLastEvent(data);
             } catch (error) {
                 console.error('Failed to parse Mesh websocket message', error);
@@ -36,7 +34,6 @@ export const useMeshSocket = (clientId: string) => {
         };
 
         socket.onclose = () => {
-            console.log('🔌 Disconnected from Agentic Mesh');
             setIsConnected(false);
         };
 

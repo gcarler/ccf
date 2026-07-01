@@ -1,0 +1,70 @@
+"""Donation CRUD."""
+from typing import List, Optional
+from uuid import UUID
+
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from backend import models, schemas
+from backend.crud._utils import _utcnow
+
+
+def create_donation(db: Session, payload: schemas.DonationCreate) -> models.Donation:
+    row = models.Donation(**payload.model_dump())
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def get_donations(db: Session, skip: int = 0, limit: int = 100) -> List[models.Donation]:
+    return (
+        db.query(models.Donation)
+        .filter(models.Donation.deleted_at.is_(None))
+        .order_by(models.Donation.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+
+def get_total_donations_amount(db: Session) -> float:
+    return db.query(func.sum(models.Donation.amount)).scalar() or 0
+
+
+def get_donation(db: Session, donation_id: UUID) -> Optional[models.Donation]:
+    return (
+        db.query(models.Donation)
+        .filter(
+            models.Donation.id == donation_id,
+            models.Donation.deleted_at.is_(None),
+        )
+        .first()
+    )
+
+
+def update_donation(db: Session, donation_id: UUID, payload: schemas.DonationUpdate) -> Optional[models.Donation]:
+    row = db.query(models.Donation).filter(models.Donation.id == donation_id).first()
+    if not row:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_donation(db: Session, donation_id: UUID) -> bool:
+    row = (
+        db.query(models.Donation)
+        .filter(
+            models.Donation.id == donation_id,
+            models.Donation.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not row:
+        return False
+    row.deleted_at = _utcnow()
+    db.commit()
+    return True

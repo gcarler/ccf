@@ -52,7 +52,8 @@ export default function WorkspaceDrawer({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-x-0 bottom-0 top-10 bg-slate-900/20 dark:bg-black/40 backdrop-blur-[2px] z-[1000]"
+                        className="fixed inset-x-0 bottom-0 top-10 dark:bg-black/40 backdrop-blur-[2px] z-[1000]"
+                        style={{ backgroundColor: 'hsl(var(--bg-primary) / 0.35)' }}
                         onClick={onClose}
                     />
 
@@ -63,7 +64,7 @@ export default function WorkspaceDrawer({
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                         style={{ width: typeof window !== 'undefined' && window.innerWidth < 640 ? '100vw' : width }}
-                        className="fixed top-10 right-0 h-[calc(100dvh-2.5rem)] max-w-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[var(--shadow-floating)] z-[1001] border-l border-slate-200 dark:border-white/10 flex flex-col focus:outline-none overflow-hidden"
+                        className="fixed top-10 right-0 h-[calc(100dvh-2.5rem)] max-w-full bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] shadow-[var(--shadow-floating)] z-[1001] border-l border-[hsl(var(--border))] flex flex-col focus:outline-none overflow-hidden"
                         role="complementary"
                         aria-label={title}
                     >
@@ -77,18 +78,21 @@ export default function WorkspaceDrawer({
                         </div>
 
                         {/* Drawer Header */}
-                        <header className="min-h-14 flex items-center justify-between gap-2 px-3 sm:px-5 py-3 border-b border-slate-200 dark:border-white/10 shrink-0 bg-slate-50/50 dark:bg-white/5">
+                        <header
+                            className="min-h-14 flex items-center justify-between gap-2 px-3 sm:px-5 py-3 border-b border-[hsl(var(--border))] shrink-0"
+                            style={{ backgroundColor: 'hsl(var(--surface-2) / 0.5)' }}
+                        >
                             <div className="flex min-w-0 items-center gap-3 sm:gap-4 overflow-hidden">
-                                <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-md transition-colors text-slate-500">
+                                <button onClick={onClose} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md transition-colors text-[hsl(var(--text-secondary))]">
                                     <X size={20} />
                                 </button>
-                                <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10" />
+                                <div className="h-6 w-[1px] bg-[hsl(var(--border))] dark:bg-white/10" />
                                 <div className="flex flex-col overflow-hidden">
-                                    <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate tracking-tight">
+                                    <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] truncate tracking-tight">
                                         {title}
                                     </h2>
                                     {subtitle && (
-                                        <p className="text-[10px] text-slate-400 font-black truncate uppercase tracking-wide">
+                                        <p className="text-[10px] text-[hsl(var(--text-secondary))] font-black truncate uppercase tracking-wide">
                                             {subtitle}
                                         </p>
                                     )}
@@ -99,7 +103,7 @@ export default function WorkspaceDrawer({
                                 <button className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:opacity-80 transition-all border border-sky-100 dark:border-sky-900/50">
                                     <Sparkles size={14} /> Resumir
                                 </button>
-                                <div className="hidden sm:block h-5 w-[1px] bg-slate-200 dark:bg-white/10 mx-2" />
+                                <div className="hidden sm:block h-5 w-[1px] bg-[hsl(var(--border))] dark:bg-white/10 mx-2" />
                                 <HeaderButton icon={MessageSquare} tooltip="Comentarios" />
                                 <HeaderButton icon={Clock} tooltip="Historial" />
                                 <HeaderButton icon={MoreHorizontal} tooltip="Más" />
@@ -113,7 +117,10 @@ export default function WorkspaceDrawer({
 
                         {/* Drawer Footer */}
                         {actions && (
-                            <footer className="px-4 sm:px-8 py-5 border-t border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-end gap-3 sm:gap-4 bg-slate-50/50 dark:bg-white/5">
+                            <footer
+                                className="px-4 sm:px-8 py-5 border-t border-[hsl(var(--border))] flex flex-wrap items-center justify-end gap-3 sm:gap-4 dark:bg-white/5"
+                                style={{ backgroundColor: 'hsl(var(--surface-2) / 0.5)' }}
+                            >
                                 {actions}
                             </footer>
                         )}
@@ -130,7 +137,7 @@ function HeaderButton({ icon: Icon, onClick, tooltip }: { icon: any, onClick?: (
         <div className="relative group/drawer-btn">
             <button
                 onClick={onClick}
-                className="p-2 rounded-md text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all"
             >
                 <Icon size={18} />
             </button>

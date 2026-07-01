@@ -3,6 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Check, Calendar, ArrowRight, ShieldCheck, Heart } from 'lucide-react';
+import { apiFetch } from '@/lib/http';
 
 function RegisterForm() {
     const searchParams = useSearchParams();
@@ -27,16 +28,14 @@ function RegisterForm() {
 
         setStatus('loading');
         try {
-            const res = await fetch('/api/public/register', {
+            await apiFetch<void>('/public/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                body: {
                     ...form,
                     event_id: parseInt(eventId, 10)
-                })
+                },
+                silent: true,
             });
-
-            if (!res.ok) throw new Error('Error en el registro');
             setStatus('success');
         } catch (err) {
             setStatus('error');

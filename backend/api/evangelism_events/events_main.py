@@ -35,6 +35,10 @@ from backend.core.database import get_db
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
+static_router = APIRouter()
+dynamic_router = APIRouter()
+static_router = APIRouter()
+dynamic_router = APIRouter()
 
 
 class RoleDefinitionCreate(BaseModel):
@@ -56,7 +60,7 @@ class EventAudienceUpdate(BaseModel):
     target_persona_ids: Optional[List[str]] = None
 
 
-@router.get("/events/", response_model=List[schemas.CrmEvent])
+@static_router.get("/events/", response_model=List[schemas.CrmEvent])
 def list_events(
     skip: int = 0,
     limit: int = 100,
@@ -66,7 +70,7 @@ def list_events(
     if _get_user_role(current_user) not in {"admin", "administrador", "pastor"}:
         raise HTTPException(status_code=403, detail="Permisos insuficientes. Se requiere: crm:manage")
     user_sede = require_user_sede_id(db, current_user)
-    return (
+    events = (
         db.query(models.CrmEvent)
         .filter(models.CrmEvent.sede_id == user_sede)
         .order_by(models.CrmEvent.event_date.desc())
@@ -74,9 +78,16 @@ def list_events(
         .limit(limit)
         .all()
     )
+    # Pydantic v2 validation del response_model implica que cada elemento
+    # debe ser dict; convertimos cada ORM CrmEvent a dict compatible con
+    # el schema (preserva contrato y evita response model orm-only errores).
+    return [
+        schemas.CrmEvent.model_validate(event).model_dump(mode="json")
+        for event in events
+    ]
 
 
-@router.post("/events/", response_model=schemas.CrmEvent)
+@static_router.post("/events/", response_model=schemas.CrmEvent)
 def create_event(
     payload: schemas.CrmEventCreate,
     db: Session = Depends(get_db),
@@ -95,16 +106,22 @@ def create_event(
         resource_type="event",
         resource_id=str(event.id),
     )
-    return event
+    # Pydantic v2: response_model exige dicts/None; ORM crudo genera dict_type error.
+    return schemas.CrmEvent.model_validate(event).model_dump(mode="json")
 
 
-@router.put("/events/{event_id}", response_model=dict)
+@dynamic_router.put("/events/{event_id}", response_model=dict)
 def update_event(
     event_id: str,
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
+    # NOTA: event_id se mantiene como ``str`` (revertido de UUID constraint)
+    # porque los alias paths ``/events/dashboard-stats``, ``/events/roles``
+    # se registran DESPUÉS de ``/events/{event_id}`` en este archivo y
+    # Pydantic strict con UUID devolvía 422 cuando el dynamic capturaba
+    # matches no-UUID antes que las rutas estáticas.
     require_event_access(db, current_user, event_id)
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:
@@ -145,7 +162,7 @@ def update_event(
     return {"id": event.id, "name": event.name, "status": "updated"}
 
 
-@router.delete("/events/{event_id}", response_model=dict)
+@dynamic_router.delete("/events/{event_id}", response_model=dict)
 def delete_event(
     event_id: str,
     db: Session = Depends(get_db),
@@ -169,7 +186,7 @@ def delete_event(
     return {"status": "cancelled", "id": event_id}
 
 
-@router.get("/events/{event_id}", response_model=dict)
+@dynamic_router.get("/events/{event_id}", response_model=dict)
 def get_event_detail(
     event_id: str,
     db: Session = Depends(get_db),
@@ -204,7 +221,7 @@ def get_event_detail(
     }
 
 
-@router.put("/events/{event_id}/audience")
+@dynamic_router.put("/events/{event_id}/audience")
 def update_event_audience(
     event_id: str,
     payload: EventAudienceUpdate,
@@ -224,7 +241,7 @@ def update_event_audience(
     return {"success": True}
 
 
-@router.get("/events/analytics/global")
+@static_router.get("/events/analytics/global")
 def get_global_event_analytics(
     period: str = Query("MONTH"),
     event_type: Optional[str] = Query(None),
@@ -311,7 +328,7 @@ def get_global_event_analytics(
     }
 
 
-@router.get("/events/dashboard-stats")
+@static_router.get("/events/dashboard-stats")
 def get_events_dashboard_stats(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -393,7 +410,7 @@ def get_events_dashboard_stats(
     return stats
 
 
-@router.get("/events/{event_id}/analytics")
+@dynamic_router.get("/events/{event_id}/analytics")
 def get_event_analytics(
     event_id: str,
     db: Session = Depends(get_db),
@@ -446,7 +463,7 @@ def get_event_analytics(
     }
 
 
-@router.get("/events/{event_id}/sessions/{session_date}/export")
+@dynamic_router.get("/events/{event_id}/sessions/{session_date}/export")
 def export_event_session_report(
     event_id: str,
     session_date: datetime.date,
@@ -506,7 +523,8 @@ def export_event_session_report(
     )
 
 
-@router.get("/roles")
+@static_router.get("/events/roles", response_model=List[dict])
+@static_router.get("/roles")
 def get_roles(
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_active_user),
@@ -518,7 +536,8 @@ def get_roles(
     )
 
 
-@router.post("/roles")
+@static_router.post("/events/roles")
+@static_router.post("/roles")
 def create_role(
     payload: RoleDefinitionCreate,
     db: Session = Depends(get_db),
@@ -534,7 +553,8 @@ def create_role(
     return role
 
 
-@router.put("/roles/{role_id}")
+@static_router.put("/events/roles/{role_id}")
+@static_router.put("/roles/{role_id}")
 def update_role(
     role_id: str,
     payload: RoleDefinitionUpdate,
@@ -569,7 +589,8 @@ def update_role(
     return role
 
 
-@router.delete("/roles/{role_id}")
+@static_router.delete("/events/roles/{role_id}")
+@static_router.delete("/roles/{role_id}")
 def delete_role(
     role_id: str,
     fallback_id: str,
@@ -607,7 +628,8 @@ def delete_role(
     }
 
 
-@router.get("/personas/{persona_id}/attendance-history", response_model=dict)
+@static_router.get("/events/personas/{persona_id}/attendance-history", response_model=dict)
+@static_router.get("/personas/{persona_id}/attendance-history", response_model=dict)
 def get_persona_attendance_history(
     persona_id: str,
     db: Session = Depends(get_db),
@@ -658,3 +680,10 @@ def get_persona_attendance_history(
         "total_records": len(history),
         "history": history,
     }
+
+
+# Forzar prelación de rutas estáticas (dashboard-stats, /roles, /personas/...) ANTES
+# de las dinámicas con /events/{event_id}. Sin este orden FastAPI matchea el
+# dinámico primero y retorna 404 "Event not found" para paths no-UUID.
+router.include_router(static_router)
+router.include_router(dynamic_router)

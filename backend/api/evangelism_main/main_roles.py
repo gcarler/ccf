@@ -35,7 +35,17 @@ def list_strategy_roles(
     strategy = db.query(models.EstrategiaEvangelismo).filter(models.EstrategiaEvangelismo.id == strategy_id).first()
     if not strategy:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
-    return get_roles_personalizados(db, estrategia_id=strategy_id)
+    rows = get_roles_personalizados(db, estrategia_id=strategy_id)
+    # Serializa cada ORM a dict (UUID→str) para ResponseValidation strict.
+    return [
+        schemas.RolPersonalizadoEstrategiaResponse.model_validate(r).model_dump(mode="json")
+        for r in rows
+    ]
+
+
+def _serialize_rol_personalizado(obj) -> dict:
+    """Serializa un ORM ``RolPersonalizadoEstrategia`` a dict (UUID→str)."""
+    return schemas.RolPersonalizadoEstrategiaResponse.model_validate(obj).model_dump(mode="json")
 
 
 @roles_router.post(
@@ -55,7 +65,7 @@ def create_strategy_role(
     if not strategy:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
     payload.estrategia_id = strategy_id
-    return create_rol_personalizado(db, payload)
+    return _serialize_rol_personalizado(create_rol_personalizado(db, payload))
 
 
 @roles_router.delete("/strategies/{strategy_id}/roles/{role_id}")

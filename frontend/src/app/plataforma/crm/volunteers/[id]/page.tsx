@@ -12,9 +12,10 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
+import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 
-const INPUT = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md py-2.5 px-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all";
-const LABEL = "block text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1.5";
+const INPUT = "w-full bg-[hsl(var(--bg-muted))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all";
+const LABEL = "block text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
 
 type Volunteer = {
     id: number;
@@ -50,9 +51,8 @@ export default function VolunteerDetailPage() {
     const [volunteer, setVolunteer] = useState<Volunteer | null>(null);
     const [loading, setLoading] = useState(true);
     const [editOpen, setEditOpen] = useState(false);
-    const [deleteConfirm, setDeleteConfirm] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [deleting, setDeleting] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState<ConfirmActionState>(null);
 
     // Edit form
     const [fRole, setFRole] = useState("");
@@ -98,15 +98,13 @@ export default function VolunteerDetailPage() {
     };
 
     const handleDelete = async () => {
-        setDeleting(true);
         try {
             await apiFetch(`/crm/volunteers/${id}`, { method: "DELETE", token });
             toast.success("Servidor eliminado");
             router.push("/plataforma/crm/volunteers");
         } catch {
             toast.error("Error al eliminar");
-            setDeleting(false);
-            setDeleteConfirm(false);
+            throw new Error("Error al eliminar");
         }
     };
 
@@ -154,7 +152,14 @@ export default function VolunteerDetailPage() {
                                     className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all">
                                     <PencilLine size={13} /> Editar
                                 </button>
-                                <button onClick={() => setDeleteConfirm(true)}
+                                <button
+                                    onClick={() => setConfirmDelete({
+                                        title: "¿Eliminar servidor?",
+                                        description: `Esta acción eliminará a ${volunteer.name} del sistema. No se puede deshacer.`,
+                                        confirmLabel: "Sí, eliminar",
+                                        destructive: true,
+                                        onConfirm: handleDelete,
+                                    })}
                                     className="size-10 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-600 flex items-center justify-center hover:bg-rose-100 transition-all border border-rose-200/50">
                                     <Trash2 size={15} />
                                 </button>
@@ -164,42 +169,42 @@ export default function VolunteerDetailPage() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                         <div className="lg:col-span-2 space-y-3">
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-5">Información del Servidor</p>
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">Información del Servidor</p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Equipo</p>
-                                        <p className="text-sm font-bold text-slate-800 dark:text-white">{volunteer.team || "Sin equipo"}</p>
+                                        <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Equipo</p>
+                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{volunteer.team || "Sin equipo"}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Fecha de Ingreso</p>
-                                        <p className="text-sm font-bold text-slate-800 dark:text-white">
+                                        <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Fecha de Ingreso</p>
+                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">
                                             {volunteer.joined_date ? new Date(volunteer.joined_date).toLocaleDateString("es-ES") : "Sin fecha"}
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-4">Habilidades y Dones</p>
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Habilidades y Dones</p>
                                 <div className="flex flex-wrap gap-2">
                                     {volunteer.skills.length > 0
                                         ? volunteer.skills.map((s) => <Badge key={s} label={s} tone="blue" />)
-                                        : <p className="text-sm text-slate-400">Sin habilidades registradas.</p>}
+                                        : <p className="text-sm text-[hsl(var(--text-secondary))]">Sin habilidades registradas.</p>}
                                 </div>
                             </div>
                         </div>
 
                         <aside className="space-y-3">
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-slate-200 dark:border-white/5 p-3 shadow-sm">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-5">Métricas de Servicio</p>
+                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">Métricas de Servicio</p>
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium text-slate-500">Horas Totales</span>
-                                        <span className="text-sm font-bold text-slate-900 dark:text-white">{volunteer.total_hours}h</span>
+                                        <span className="text-xs font-medium text-[hsl(var(--text-secondary))]">Horas Totales</span>
+                                        <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{volunteer.total_hours}h</span>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium text-slate-500">Fidelidad</span>
+                                        <span className="text-xs font-medium text-[hsl(var(--text-secondary))]">Fidelidad</span>
                                         <div className="flex items-center gap-0.5 text-amber-400">
                                             {[...Array(5)].map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
                                         </div>
@@ -256,36 +261,7 @@ export default function VolunteerDetailPage() {
                 )}
             </AnimatePresence>
 
-            {/* Delete Confirm Modal */}
-            <AnimatePresence>
-                {deleteConfirm && (
-                    <>
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-                            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                                className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg p-4 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-white/10">
-                                <div className="size-8 rounded-lg bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-600 mb-5">
-                                    <Trash2 size={24} />
-                                </div>
-                                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">¿Eliminar servidor?</h3>
-                                <p className="text-sm text-slate-500 mb-3">
-                                    Esta acción eliminará a <span className="font-bold">{volunteer.name}</span> del sistema. No se puede deshacer.
-                                </p>
-                                <div className="flex gap-3">
-                                    <button onClick={() => setDeleteConfirm(false)}
-                                        className="flex-1 py-3 rounded-md border border-slate-200 dark:border-white/10 text-[10px] font-bold uppercase tracking-wide text-slate-500 hover:bg-slate-50 transition-all">
-                                        Cancelar
-                                    </button>
-                                    <button onClick={handleDelete} disabled={deleting}
-                                        className="flex-1 py-3 rounded-md bg-rose-600 text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-rose-500/20 hover:bg-rose-700 disabled:opacity-50 transition-all">
-                                        {deleting ? "Eliminando..." : "Sí, eliminar"}
-                                    </button>
-                                </div>
-                            </motion.div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
+            <ConfirmActionDrawer action={confirmDelete} onClose={() => setConfirmDelete(null)} />
         </CrmShell>
     );
 }

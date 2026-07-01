@@ -493,9 +493,8 @@ def sync_user_to_agent(db: Session, user) -> int:
 
 
 # ── Knowledge Base Endpoints ──
-from backend.services.knowledge_base import (  # noqa: E402
-    KnowledgeIndexer, AgentKnowledgeBase,
-)
+from backend.models_knowledge_base import AgentKnowledgeBase  # noqa: E402
+from backend.services.knowledge_base import KnowledgeIndexer  # noqa: E402
 from sqlalchemy import func  # noqa: E402
 
 

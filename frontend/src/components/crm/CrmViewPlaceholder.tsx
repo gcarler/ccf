@@ -64,15 +64,12 @@ export default function CrmViewPlaceholder({
     );
   }
 
-  if (viewType === "list") {
-    return (
+    if (viewType === "list") {
+      return (
       <UniversalListView
         items={listItems || []}
         title={`${moduleName} — Lista`}
         emptyMessage={`No hay elementos en la lista de ${moduleName}`}
-        onItemClick={(item) => {
-          console.log(`[_List] Item clicked:`, item);
-        }}
       />
     );
   }
