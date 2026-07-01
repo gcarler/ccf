@@ -1,11 +1,10 @@
 """Schemas para la Biblioteca de Recursos CRM."""
 from __future__ import annotations
-from uuid import UUID
 
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel
-
 
 # ── CategoriaRecurso ──────────────────────────────────────────────────────────
 

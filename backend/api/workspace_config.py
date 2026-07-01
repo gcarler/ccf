@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from backend import models
-from backend.api.workspace_shared import (_load_workspace_config,
-                                          _resolve_features,
-                                          _save_workspace_config)
+from backend.api.workspace_shared import _load_workspace_config, _resolve_features, _save_workspace_config
 from backend.core.permissions import require_active_user, require_admin
 
 router = APIRouter(tags=["workspace"])

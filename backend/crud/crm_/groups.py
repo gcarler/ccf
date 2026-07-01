@@ -117,7 +117,7 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
         # Sincronizar lider_persona_id, asistente_persona_id y anfitrion_persona_id desde los participantes.
         _SUBORDINATE_TOKENS = {"co", "colider", "colíder", "asistente", "del"}
         db.flush()
-        
+
         new_leader_id = None
         new_assistant_id = None
         new_host_id = None
@@ -135,11 +135,11 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
                     models.RolPersonalizadoEstrategia.id == custom_id
                 ).first()
                 role_str = (custom_rol.nombre_rol if custom_rol else role_str).lower().strip()
-            
+
             # Normalizar para comparación
             role_norm = role_str.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
             tokens = set(role_norm.replace("-", " ").replace("_", " ").split())
-            
+
             is_leader = ("lider" in tokens or "leader" in tokens) and not (tokens & _SUBORDINATE_TOKENS)
             is_assistant = ("asistente" in tokens or "colider" in tokens or ("co" in tokens and ("lider" in tokens or "leader" in tokens)))
             is_host = "anfitrion" in tokens or "host" in tokens

@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
+from backend.core.database import get_db
 from backend.core.permissions import require_active_user
 from backend.crud.crm import get_user_sede_id
-from backend.core.database import get_db
 
 router = APIRouter()
 

@@ -24,16 +24,19 @@ from backend.api.crm._shared import (
     _serialize_task,
     utc_now,
 )
-from backend.core.permissions import normalize_role, require_module_access
 from backend.core.database import get_db
+from backend.core.permissions import normalize_role, require_module_access
 from backend.crud.crm import (
     get_user_sede_id,
     resolve_persona_id_for_user,
 )
 from backend.models_crm_pipeline import CanalOrigenEnum, EstadoCasoEnum, TipoInteraccionEnum
 from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
-from backend.services.messaging import MessagingGateway, get_messaging_gateway
-from backend.services.messaging import StubMessagingGateway  # noqa: F401 — disponible para override manual en tests
+from backend.services.messaging import (
+    MessagingGateway,
+    StubMessagingGateway,  # noqa: F401 — disponible para override manual en tests
+    get_messaging_gateway,
+)
 from backend.services.public_contact_tracking import ContactRecord, tracker
 
 router = APIRouter(tags=["CRM"])

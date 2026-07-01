@@ -16,12 +16,12 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
-from backend.crud.crm import resolve_persona_id_for_user
 from backend.core.kernel_rbac import (
-    require_kernel_permission,
     require_active_for_assignment,
+    require_kernel_permission,
 )
 from backend.core.permissions import require_active_user
+from backend.crud.crm import resolve_persona_id_for_user
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/kernel", tags=["Kernel Identidad"])
@@ -56,8 +56,9 @@ class ActivityStatusUpdate(BaseModel):
 def _resolve_persona_id(db: Session, current_user, persona_id: str) -> str:
     """Permite que un admin/pastor actúe sobre cualquier persona_id.
     Un usuario normal solo puede actuar sobre su propia persona."""
-    from backend import models
     import uuid as _uuid
+
+    from backend import models
 
     target = db.query(models.Persona).filter(models.Persona.id == _uuid.UUID(persona_id)).first()
     if not target:

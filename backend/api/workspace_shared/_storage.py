@@ -4,11 +4,16 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Dict
 
-from backend.api.workspace_shared import (AUDIT_FILE, DATA_DIR,
-                                          DEFAULT_COMPLIANCE_POLICY,
-                                          DEFAULT_WORKSPACE_CONFIG, FLAGS_FILE,
-                                          INCIDENTS_FILE, NOTIFICATIONS_FILE,
-                                          SNAPSHOT_HISTORY_FILE)
+from backend.api.workspace_shared import (
+    AUDIT_FILE,
+    DATA_DIR,
+    DEFAULT_COMPLIANCE_POLICY,
+    DEFAULT_WORKSPACE_CONFIG,
+    FLAGS_FILE,
+    INCIDENTS_FILE,
+    NOTIFICATIONS_FILE,
+    SNAPSHOT_HISTORY_FILE,
+)
 from backend.core.file_lock import file_lock
 
 

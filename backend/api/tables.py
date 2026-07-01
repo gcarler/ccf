@@ -7,11 +7,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from backend.models_shared import _utcnow
 from backend import models
-from backend.crud.crm import resolve_persona_id_for_user
 from backend.core.database import get_db
 from backend.core.permissions import require_active_user
+from backend.crud.crm import resolve_persona_id_for_user
+from backend.models_shared import _utcnow
 
 router = APIRouter(prefix="/tables", tags=["tables"])
 

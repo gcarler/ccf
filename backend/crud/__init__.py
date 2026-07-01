@@ -9,9 +9,11 @@ This package re-exports only symbols consumed via ``from backend import crud``
 # ruff: noqa: F401
 
 # ── Sub-modules accessed directly (kernel, agenda, pipeline, test aliases) ──
-from backend.crud import agenda  # noqa: F401
-from backend.crud import crm_pipeline  # noqa: F401
-from backend.crud import kernel  # noqa: F401
+from backend.crud import (
+    agenda,  # noqa: F401
+    crm_pipeline,  # noqa: F401
+    kernel,  # noqa: F401
+)
 
 # ── Agents ─────────────────────────────────────────────────────────────────
 from backend.crud.agents import (
@@ -111,8 +113,8 @@ from backend.crud.crm import (
     create_persona,
     create_prayer_request,
     create_support_ticket,
-    get_community_cards,
     get_communication_logs,
+    get_community_cards,
     get_counseling_tickets,
     get_donations,
     get_families,
@@ -132,6 +134,7 @@ from backend.crud.crm import (
     mark_notification_as_read,
     search_personas,
     update_crm_task,
+    update_grupo,
     update_persona,
 )
 
@@ -151,6 +154,9 @@ from backend.crud.dashboard import (
     get_pastor_radar,
     search_knowledge_base,
 )
+
+# ── Evangelism ─────────────────────────────────────────────────────────────
+from backend.crud.evangelism import get_estrategias
 
 # ── Governance ─────────────────────────────────────────────────────────────
 from backend.crud.governance import get_automation_rules
@@ -173,6 +179,3 @@ from backend.crud.projects import (
     get_projects,
     set_project_phases,
 )
-
-# ── Evangelism ─────────────────────────────────────────────────────────────
-from backend.crud.evangelism import get_estrategias

@@ -4,8 +4,8 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from backend.models_shared import _utcnow
 from backend import models, schemas
+from backend.models_shared import _utcnow
 
 
 def create_agent_task(db: Session, payload: schemas.AgentTaskCreate):

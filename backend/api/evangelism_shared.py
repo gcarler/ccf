@@ -7,7 +7,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.services.messaging_outcomes import CommunicationOutcome, DELIVERED_OUTCOMES
+from backend.services.messaging_outcomes import DELIVERED_OUTCOMES, CommunicationOutcome
 
 ABSENTEES_PREVIEW_LIMIT = 50
 ABSENCE_REASON_LABELS = {
@@ -82,9 +82,9 @@ def _check_absence_trigger(db: Session, session_id: UUID, sede_id):
     """If a persona has 3 consecutive absences, create N2 task in Consolidation."""
     from backend.models import (
         Asistencia,
-        SesionGrupo,
         GrupoEvangelismo,
         ParticipanteGrupo,
+        SesionGrupo,
     )
     from backend.models_crm import Persona
     from backend.models_evangelism import EstadoAsistenciaEnum

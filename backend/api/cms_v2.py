@@ -11,15 +11,15 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
-from backend.models_shared import _utcnow
 from backend import crud, models, schemas
 from backend.api._cms_helpers import (
     _get_scoped_cms_media,
     _get_scoped_persona,
     _scope_cms_pastoral_team_by_user_sede,
 )
-from backend.core.permissions import normalize_role, require_module_access
 from backend.core.database import get_db
+from backend.core.permissions import normalize_role, require_module_access
+from backend.models_shared import _utcnow
 from backend.schemas._common import PaginatedResponse
 
 logger = logging.getLogger(__name__)
@@ -1353,6 +1353,7 @@ def get_page_analytics(
 ):
     """Get page view analytics."""
     from datetime import timedelta
+
     from sqlalchemy import func
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     page = db.query(models.CmsPage).join(models.CmsSite).filter(
@@ -1483,31 +1484,31 @@ async def optimize_uploaded_image(
         ) from exc
     from backend.core.config import get_settings
 
-    
+
     settings = get_settings()
     orig_path = os.path.join(settings.uploads_dir, media.filename)
     if not os.path.exists(orig_path):
         raise HTTPException(status_code=404, detail="File not found")
-    
+
     img = Image.open(orig_path)
     # Convert to RGB if necessary (for PNG with transparency)
     if img.mode in ("RGBA", "P"):
         img = img.convert("RGB")
-    
+
     # Resize if larger than max_width
     if img.width > max_width:
         ratio = max_width / img.width
         new_height = int(img.height * ratio)
         img = img.resize((max_width, new_height), Image.LANCZOS)
-    
+
     # Save optimized
     opt_filename = f"opt_{media.filename.rsplit('.', 1)[0]}_{max_width}w.jpg"
     opt_path = os.path.join(settings.uploads_dir, opt_filename)
     img.save(opt_path, "JPEG", quality=quality, optimize=True)
-    
+
     opt_size = os.path.getsize(opt_path)
     orig_size = os.path.getsize(orig_path)
-    
+
     return {
         "original_size": orig_size,
         "optimized_size": opt_size,

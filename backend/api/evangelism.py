@@ -22,7 +22,6 @@ from backend.api.evangelism_shared import utc_now
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
 
-
 router = APIRouter()
 router.include_router(events_router)
 router.include_router(grupos_router)

@@ -1,25 +1,25 @@
 """Bridge automático Evangelismo → CRM."""
 
 import logging
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-import uuid
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.models_crm import Persona
-from backend.models_evangelism import Asistencia, GrupoEvangelismo, SesionGrupo
 from backend.models_crm_pipeline import (
-    CasoCRM,
     CanalOrigenEnum,
+    CasoCRM,
     EstadoCasoEnum,
     EtapaPipeline,
     PipelineCRM,
     PrioridadCasoEnum,
     TipoPipelineEnum,
 )
+from backend.models_evangelism import Asistencia, GrupoEvangelismo, SesionGrupo
 
 logger = logging.getLogger(__name__)
 

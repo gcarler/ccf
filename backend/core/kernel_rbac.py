@@ -18,8 +18,7 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
-from backend.core.permissions import (get_current_active_user,
-                                      normalize_role)
+from backend.core.permissions import get_current_active_user, normalize_role
 
 log = logging.getLogger(__name__)
 
@@ -96,8 +95,7 @@ def _resolve_kernel_permissions(db: Session, user_id: UUID) -> Set[str]:
 
 def _resolve_role_model_permissions(db: Session, user) -> Set[str]:
     """Resuelve permisos desde roles textuales y Role model."""
-    from backend.core.permissions import (DEFAULT_ROLES,
-                                          get_user_effective_permissions)
+    from backend.core.permissions import DEFAULT_ROLES, get_user_effective_permissions
 
     result: Set[str] = set()
 

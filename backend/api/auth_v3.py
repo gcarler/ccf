@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from backend.core.config import get_settings
 from backend.core.database import get_db
+from backend.core.rate_limit import rate_limiter
 from backend.core.security import get_password_hash, verify_password
 from backend.models_auth import (
     HistorialContrasena,
@@ -32,7 +33,6 @@ from backend.models_auth import (
     TokenResetContrasena,
     Usuario,
 )
-from backend.core.rate_limit import rate_limiter
 
 settings = get_settings()
 log = logging.getLogger(__name__)

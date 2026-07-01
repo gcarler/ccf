@@ -21,9 +21,6 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from backend.core.permissions import require_active_user
-from backend.core.database import get_db
-from backend.core.tenant import require_user_sede_id
 from backend import models
 from backend.api.evangelism_shared import (
     ATTENDED_STATES,
@@ -31,6 +28,9 @@ from backend.api.evangelism_shared import (
     is_attended_status,
     is_excused_status,
 )
+from backend.core.database import get_db
+from backend.core.permissions import require_active_user
+from backend.core.tenant import require_user_sede_id
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +129,11 @@ def _generate_attendance_pdf(
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.lib.units import cm
     from reportlab.platypus import (
-        Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
     )
 
     buf = io.BytesIO()

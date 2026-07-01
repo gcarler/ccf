@@ -91,7 +91,8 @@ class IntelligenceConsumer(EventConsumer):
         from backend import schemas
         from backend.core.database import SessionLocal
         from backend.crud.agents import (
-            create_agent_insight, create_agent_task,
+            create_agent_insight,
+            create_agent_task,
         )
 
         db = SessionLocal()

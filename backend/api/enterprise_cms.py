@@ -17,10 +17,21 @@ from sqlalchemy.orm import Session
 from backend.core.database import get_db
 from backend.core.permissions import get_current_user
 from backend.models_enterprise import (
-    AuditLog, BrokenLinkCheck, CmsCustomEntry, CmsCustomEntryVersion,
-    CmsCustomType, CmsGlossaryTerm, CmsNotification, CmsRedirect,
-    ContentPermission, MediaFolder, SearchIndex,
-    SearchPromotion, UserSession, Webhook, WebhookDelivery,
+    AuditLog,
+    BrokenLinkCheck,
+    CmsCustomEntry,
+    CmsCustomEntryVersion,
+    CmsCustomType,
+    CmsGlossaryTerm,
+    CmsNotification,
+    CmsRedirect,
+    ContentPermission,
+    MediaFolder,
+    SearchIndex,
+    SearchPromotion,
+    UserSession,
+    Webhook,
+    WebhookDelivery,
 )
 from backend.models_identity import User
 
@@ -154,13 +165,13 @@ def list_audit_logs(
     logs = q.order_by(desc(AuditLog.created_at)).offset(offset).limit(limit).all()
     return [
         AuditLogResponse(
-            id=str(l.id), actor_email=l.actor_email, actor_role=l.actor_role,
-            action=l.action, entity_type=l.entity_type, entity_id=l.entity_id,
-            entity_slug=l.entity_slug, changes_json=l.changes_json,
-            ip_address=l.ip_address, severity=l.severity,
-            created_at=l.created_at.isoformat() if l.created_at else "",
+            id=str(log.id), actor_email=log.actor_email, actor_role=log.actor_role,
+            action=log.action, entity_type=log.entity_type, entity_id=log.entity_id,
+            entity_slug=log.entity_slug, changes_json=log.changes_json,
+            ip_address=log.ip_address, severity=log.severity,
+            created_at=log.created_at.isoformat() if log.created_at else "",
         )
-        for l in logs
+        for log in logs
     ]
 
 
@@ -1082,13 +1093,13 @@ def list_broken_links(
     links = q.order_by(desc(BrokenLinkCheck.checked_at)).limit(limit).all()
     return [
         {
-            "id": str(l.id), "source_url": l.source_url,
-            "target_url": l.target_url, "status_code": l.status_code,
-            "error_message": l.error_message, "is_broken": l.is_broken,
-            "resolved_at": l.resolved_at.isoformat() if l.resolved_at else None,
-            "checked_at": l.checked_at.isoformat() if l.checked_at else "",
+            "id": str(link.id), "source_url": link.source_url,
+            "target_url": link.target_url, "status_code": link.status_code,
+            "error_message": link.error_message, "is_broken": link.is_broken,
+            "resolved_at": link.resolved_at.isoformat() if link.resolved_at else None,
+            "checked_at": link.checked_at.isoformat() if link.checked_at else "",
         }
-        for l in links
+        for link in links
     ]
 
 

@@ -15,9 +15,9 @@ from backend.schemas.dashboard import (
     AcademyDashboard,
     AdminGlobalDashboard,
     AgendaDashboard,
+    ChartDataPoint,
     CmsDashboard,
     CrmDashboard,
-    ChartDataPoint,
     DashboardFilter,
     EvangelismDashboard,
     FinanceDashboard,
@@ -222,7 +222,7 @@ def get_evangelism_dashboard(
         WHERE sg.fecha_sesion >= :cutoff {where_asi}
         ORDER BY sg.fecha_sesion DESC LIMIT 10
     """), {"cutoff": cutoff, **params}).all()
-    
+
     asistencia_chart = []
     for s in reversed(sesiones):
         fecha = s.fecha_sesion
@@ -255,7 +255,7 @@ def get_evangelism_dashboard(
 
     # Detalle ausentes
     ausentes_rows = db.execute(sqlt(f"""
-        SELECT p.id, p.first_name, p.last_name, ge.nombre as grupo, 
+        SELECT p.id, p.first_name, p.last_name, ge.nombre as grupo,
                sg.fecha_sesion, a.estado, a.detalle_excusa
         FROM asistencias a
         JOIN sesiones_grupo sg ON a.sesion_id = sg.id
@@ -399,8 +399,8 @@ def get_academy_dashboard(db: Session, sede_id=None) -> AcademyDashboard:
 
     # Distribución de progreso
     progress_dist = db.execute(sqlt("""
-        SELECT 
-            CASE 
+        SELECT
+            CASE
                 WHEN progress_percent < 25 THEN '0-25%'
                 WHEN progress_percent < 50 THEN '25-50%'
                 WHEN progress_percent < 75 THEN '50-75%'
@@ -647,7 +647,7 @@ def get_admin_dashboard(db: Session) -> AdminGlobalDashboard:
     users = db.query(func.count(models.Usuario.id)).scalar() or 0
     sessions = db.query(func.count(models.TokenSesion.id)).filter(models.TokenSesion.revoked == False).scalar() or 0
     personas = db.query(func.count(models.Persona.id)).scalar() or 0
-    
+
     # Roles distribution using ORM
     roles = (
         db.query(models.Usuario.role, func.count(models.Usuario.id))
@@ -665,7 +665,7 @@ def get_admin_dashboard(db: Session) -> AdminGlobalDashboard:
         .limit(5)
         .all()
     )
-    
+
     admin_combined_chart = roles_chart + [
         ChartDataPoint(label=f"👤 {r[0]}", value=float(r[1]))
         for r in church_roles

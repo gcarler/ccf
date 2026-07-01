@@ -1,24 +1,26 @@
 """CRM — Biblioteca de Recursos: categorías, plantillas, adjuntos y bitácora de envíos."""
 from __future__ import annotations
 
+import uuid
 from typing import List, Optional
 from uuid import UUID
-
-import uuid
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from backend.core.permissions import require_module_access
+from backend.api.crm._shared import _resolve_campaign_personas
 from backend.core.database import get_db
-from backend.services.messaging import (
-    CommunicationOutcome,
-    MessagingGateway,
-    get_messaging_gateway,
-)
+from backend.core.permissions import require_module_access
 from backend.core.storage import storage_service
 from backend.core.uploads import ensure_allowed_extension, sanitize_filename
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_from_identity
+from backend.crud.crm_extended import (
+    create_crm_automation,
+    delete_crm_automation,
+    get_crm_automation,
+    get_crm_automations,
+    update_crm_automation,
+)
 from backend.crud.crm_resources import (
     count_envios,
     create_adjunto,
@@ -38,8 +40,17 @@ from backend.crud.crm_resources import (
     update_estado_envio,
     update_plantilla,
 )
+from backend.schemas.crm_automation import (
+    AutomationTriggerPayload,
+    AutomationTriggerResult,
+    CrmAutomationCreate,
+    CrmAutomationOut,
+    CrmAutomationUpdate,
+)
 from backend.schemas.crm_resources import (
     BitacoraEnvioOut,
+    CampaignFromPlantillaPayload,
+    CampaignResultOut,
     CategoriaRecursoCreate,
     CategoriaRecursoOut,
     CategoriaRecursoUpdate,
@@ -48,23 +59,11 @@ from backend.schemas.crm_resources import (
     PlantillaMensajeOut,
     PlantillaMensajeUpdate,
     RecursoAdjuntoOut,
-    CampaignFromPlantillaPayload,
-    CampaignResultOut,
 )
-from backend.api.crm._shared import _resolve_campaign_personas
-from backend.crud.crm_extended import (
-    create_crm_automation,
-    delete_crm_automation,
-    get_crm_automation,
-    get_crm_automations,
-    update_crm_automation,
-)
-from backend.schemas.crm_automation import (
-    AutomationTriggerPayload,
-    AutomationTriggerResult,
-    CrmAutomationCreate,
-    CrmAutomationOut,
-    CrmAutomationUpdate,
+from backend.services.messaging import (
+    CommunicationOutcome,
+    MessagingGateway,
+    get_messaging_gateway,
 )
 
 router = APIRouter(prefix="/resources", tags=["CRM Recursos"])

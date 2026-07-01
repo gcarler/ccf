@@ -293,8 +293,8 @@ def get_persona_platform_roles(db: Session, persona_id: str) -> List[dict]:
 
 
 def get_persona_effective_permissions(db: Session, persona_id: str) -> dict:
-    from backend.models_auth import Usuario
     from backend.core.permissions import get_user_effective_permissions
+    from backend.models_auth import Usuario
 
     user = db.query(Usuario).filter(Usuario.id == uuid.UUID(str(persona_id))).first()
     return get_user_effective_permissions(db, user) if user else {}

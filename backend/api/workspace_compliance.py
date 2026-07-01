@@ -6,25 +6,28 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 
 from backend import models
-from backend.api.workspace_shared import (DEFAULT_COMPLIANCE_POLICY,
-                                          _append_audit_event,
-                                          _append_snapshot_history,
-                                          _build_compliance_snapshot,
-                                          _cleanup_snapshot_history,
-                                          _compare_snapshot_payloads,
-                                          _find_snapshot_history_item,
-                                          _load_workspace_config,
-                                          _maybe_emit_snapshot_drift_alert,
-                                          _normalize_compliance_policy_update,
-                                          _normalize_suppression_payload,
-                                          _now_iso, _parse_timestamp,
-                                          _read_snapshot_history,
-                                          _resolve_compare_pair,
-                                          _resolve_compliance_policy,
-                                          _save_snapshot_history,
-                                          _save_workspace_config,
-                                          _verify_snapshot_history_item,
-                                          _weekly_snapshot_summary)
+from backend.api.workspace_shared import (
+    DEFAULT_COMPLIANCE_POLICY,
+    _append_audit_event,
+    _append_snapshot_history,
+    _build_compliance_snapshot,
+    _cleanup_snapshot_history,
+    _compare_snapshot_payloads,
+    _find_snapshot_history_item,
+    _load_workspace_config,
+    _maybe_emit_snapshot_drift_alert,
+    _normalize_compliance_policy_update,
+    _normalize_suppression_payload,
+    _now_iso,
+    _parse_timestamp,
+    _read_snapshot_history,
+    _resolve_compare_pair,
+    _resolve_compliance_policy,
+    _save_snapshot_history,
+    _save_workspace_config,
+    _verify_snapshot_history_item,
+    _weekly_snapshot_summary,
+)
 from backend.core.permissions import require_admin
 from backend.core.rate_limit import rate_limiter
 

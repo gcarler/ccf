@@ -58,7 +58,6 @@ def _find_scheduled_pages(db_session) -> list[Any]:
     """Find all pages with status='scheduled' whose scheduled_at <= now."""
     from backend import models
 
-    now = datetime.now(timezone.utc).isoformat()
     rows = (
         db_session.query(models.CmsPage)
         .filter(models.CmsPage.status == "scheduled")

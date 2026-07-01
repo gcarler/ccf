@@ -1,6 +1,6 @@
 """Communication log CRUD."""
 import uuid
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy.orm import Session
 

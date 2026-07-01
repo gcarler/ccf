@@ -4,10 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.core.permissions import get_current_user
 from backend.core.database import get_db
-from backend.services.knowledge_graph import build_graph_snapshot
+from backend.core.permissions import get_current_user
 from backend.crud.crm import get_user_sede_id
+from backend.services.knowledge_graph import build_graph_snapshot
 
 router = APIRouter(prefix="/graph", tags=["graph"])
 

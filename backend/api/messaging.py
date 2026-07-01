@@ -83,17 +83,16 @@ Notas operativas:
 
 from typing import List, Optional
 
-from fastapi import (APIRouter, Depends, HTTPException, WebSocket,
-                     WebSocketDisconnect)
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.core.permissions import require_module_access, require_staff_or_admin
-from backend.core.database import get_db
-from backend.mesh_websockets import manager
-from backend.crud.crm import resolve_persona_id_for_user, get_user_sede_id
 from backend.api.crm._shared import _get_scoped_persona
+from backend.core.database import get_db
+from backend.core.permissions import require_module_access, require_staff_or_admin
+from backend.crud.crm import get_user_sede_id, resolve_persona_id_for_user
+from backend.mesh_websockets import manager
 from backend.services.messaging import CommunicationOutcome
 
 

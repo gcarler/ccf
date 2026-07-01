@@ -22,7 +22,6 @@ from backend.schemas.crm_resources import (
     PlantillaMensajeUpdate,
 )
 
-
 # ── Categorías ────────────────────────────────────────────────────────────────
 
 def list_categorias(db: Session) -> List[CategoriaRecurso]:

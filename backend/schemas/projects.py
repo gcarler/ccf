@@ -1,13 +1,14 @@
 from __future__ import annotations
-from uuid import UUID
 
 import uuid
 from datetime import datetime
-from typing import Any, List, Literal, Optional, Annotated
+from typing import Annotated, Any, List, Literal, Optional
+from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, BeforeValidator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from backend.schemas._common import orm_config
+
 
 def coerce_uuid_to_str(v: Any) -> str:
     if isinstance(v, uuid.UUID):

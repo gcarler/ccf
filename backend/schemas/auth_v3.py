@@ -8,7 +8,6 @@ from pydantic import BaseModel, EmailStr, Field
 
 from backend.schemas._common import orm_config
 
-
 # ==========================================
 # Auth v3 — Schemas Pydantic
 # ==========================================

@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from backend.analytics.proactive_ia import run_proactive_analysis
 from backend.core.database import SessionLocal
@@ -27,7 +27,7 @@ def run_ai_analysis():
 
 def run_session_governance():
     """Habilita las sesiones de la semana en curso y cierra las de semanas pasadas."""
-    from backend.models_evangelism import SesionGrupo, HabilitacionSesionEnum
+    from backend.models_evangelism import HabilitacionSesionEnum, SesionGrupo
 
     db = SessionLocal()
     try:

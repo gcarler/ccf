@@ -1,5 +1,29 @@
 [tool.ruff]
 line-length = 120
 
+[tool.ruff.lint]
+# Align with existing .flake8 conventions: these rules are intentionally
+# ignored project-wide.  The CI gate uses `ruff check backend/` (no
+# --select override) so this config is the single source of truth.
+select = ["E", "W", "F", "I"]
+ignore = [
+    "E501",  # line-too-long — handled by formatter, not a lint error
+    "E261",  # invalid-comment-space — cosmetic
+    "E302",  # expected-2-blank-lines — cosmetic
+    "E305",  # expected-2-blank-lines-after-class — cosmetic
+    "E402",  # module-import-not-at-top — intentional in API route files
+    "E712",  # true-false-comparison — needed for SQLAlchemy filter expressions
+    "W293",  # blank-line-with-whitespace — cosmetic
+]
+
 [tool.ruff.lint.per-file-ignores]
+# Barrel / re-export files: star imports and unused re-exports are intentional.
+"backend/models_*.py" = ["F401", "F403", "F405"]
+"backend/models.py" = ["F401"]
+"backend/**/__init__.py" = ["F401", "F403", "F405"]
 "backend/schemas/__init__.py" = ["F401", "F811"]
+"backend/schemas/crm.py" = ["F401"]  # re-exports EvangelismStrategyUpdate alias
+"backend/crud/__init__.py" = ["F401"]
+"backend/crud/crm.py" = ["F401"]
+# Scripts may use star imports for model resolution.
+"scripts/*.py" = ["F401", "F403", "F405"]

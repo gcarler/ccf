@@ -3,8 +3,7 @@ from __future__ import annotations
 import uuid as _uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Index, Integer,
-                        JSON, String, Text)
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import CITEXT, UUID
 from sqlalchemy.orm import relationship, synonym
 

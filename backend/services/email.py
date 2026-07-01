@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import logging
 import smtplib
-from html import escape
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from html import escape
+
 from backend.core.config import get_settings
 
 log = logging.getLogger(__name__)

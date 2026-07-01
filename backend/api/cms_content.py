@@ -13,8 +13,8 @@ from backend.api._cms_helpers import (
     _scope_cms_media_by_user_sede,
     _scope_cms_testimonials_by_user_sede,
 )
-from backend.core.permissions import require_module_access
 from backend.core.database import get_db
+from backend.core.permissions import require_module_access
 
 router = APIRouter(prefix="/content", tags=["content"])
 

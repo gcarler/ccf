@@ -5,8 +5,8 @@ from uuid import UUID
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from backend.models_shared import _utcnow
 from backend import models
+from backend.models_shared import _utcnow
 
 # ── Schemas (inline — lightweight) ─────────────────────────────────────────
 
