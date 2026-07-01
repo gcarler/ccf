@@ -13,6 +13,7 @@ import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
+import TextPromptDrawer from '@/components/ui/TextPromptDrawer';
 
 interface Props {
     project_id: string;
@@ -34,6 +35,8 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
     const [isAiDrawing, setIsAiDrawing] = useState(false);
     const [zoom, setZoom] = useState(100);
+    const [diagramPromptOpen, setDiagramPromptOpen] = useState(false);
+    const [diagramPromptDraft, setDiagramPromptDraft] = useState('');
 
     useEffect(() => {
         projectIdRef.current = project_id;
@@ -236,7 +239,12 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
     };
 
     const handleAiDiagram = async () => {
-        const prompt = window.prompt('¿Qué proceso ministerial deseas diagramar?');
+        setDiagramPromptDraft('');
+        setDiagramPromptOpen(true);
+    };
+
+    const submitAiDiagram = async () => {
+        const prompt = diagramPromptDraft.trim();
         if (!prompt) return;
         setIsAiDrawing(true);
         try {
@@ -249,6 +257,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             toast.error('Error en la IA de diagramación.');
         } finally {
             setIsAiDrawing(false);
+            setDiagramPromptOpen(false);
         }
     };
 
@@ -266,6 +275,18 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             aria-label="Pizarra del proyecto"
             aria-hidden={!isOpen}
         >
+            <TextPromptDrawer
+                isOpen={diagramPromptOpen}
+                onClose={() => setDiagramPromptOpen(false)}
+                onSubmit={submitAiDiagram}
+                title="Generar diagrama con IA"
+                subtitle="Describe el proceso ministerial"
+                label="¿Qué proceso deseas diagramar?"
+                value={diagramPromptDraft}
+                onChange={setDiagramPromptDraft}
+                placeholder="Ej. seguimiento de nuevos creyentes"
+                submitLabel={isAiDrawing ? 'Generando…' : 'Generar'}
+            />
             {/* Top Bar */}
             <header className="h-11 px-4 shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-sm">
                 <div className="flex items-center gap-3">

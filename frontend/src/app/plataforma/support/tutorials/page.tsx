@@ -12,7 +12,7 @@ const TUTORIALS = [
     { id: 3, title: 'Gestionar el pipeline de consolidación paso a paso', category: 'CRM', duration: '18 min', level: 'Intermedio', views: 289, rating: 4.7, free: false, thumbnail: 'from-emerald-500 to-teal-600' },
     { id: 4, title: 'Crear cursos y contenido en la Academia', category: 'Academia', duration: '22 min', level: 'Avanzado', views: 198, rating: 4.6, free: false, thumbnail: 'from-amber-500 to-orange-600' },
     { id: 5, title: 'Configurar finanzas y transparencia', category: 'Finanzas', duration: '15 min', level: 'Intermedio', views: 167, rating: 4.5, free: true, thumbnail: 'from-rose-500 to-red-600' },
-    { id: 6, title: 'Administrar permisos y roles de usuario', category: 'Admin', duration: '10 min', level: 'Avanzado', views: 134, rating: 4.4, free: false, thumbnail: 'from-[hsl(var(--surface-3))] to-gray-600' },
+    { id: 6, title: 'Administrar permisos y roles de usuario', category: 'Admin', duration: '10 min', level: 'Avanzado', views: 134, rating: 4.4, free: false, thumbnail: 'from-[hsl(var(--surface-3))] to-[hsl(var(--bg-muted))]' },
 ];
 
 const LEVEL_COLOR: Record<string, string> = {
@@ -107,4 +107,3 @@ export default function SupportTutorialsPage() {
         </div>
     );
 }
-

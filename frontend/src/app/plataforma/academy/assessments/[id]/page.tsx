@@ -19,6 +19,7 @@ import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { toast } from 'sonner';
 
 interface Enrollment {
     id: string;
@@ -68,7 +69,7 @@ export default function AssessmentPage() {
             const enrollment = enrollments.find((e: Enrollment) => e.course.id === assessment.course_id);
 
             if (!enrollment) {
-                alert("No estas inscrito en este curso.");
+                toast.error("No estás inscrito en este curso.");
                 return;
             }
 

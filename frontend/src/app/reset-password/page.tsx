@@ -205,7 +205,7 @@ function ResetPasswordContent() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-[hsl(var(--bg-muted))] border-2 border-gray-100 rounded-lg py-1.5 px-3 text-sm text-[hsl(var(--text-primary))] placeholder-gray-300 focus:outline-none focus:border-[#018ABD] focus:bg-[hsl(var(--bg-primary))] transition-all pr-14"
+                  className="w-full bg-[hsl(var(--bg-muted))] border-2 border-[hsl(var(--border))] rounded-lg py-1.5 px-3 text-sm text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:border-[#018ABD] focus:bg-[hsl(var(--bg-primary))] transition-all pr-14"
                 />
                 <button
                   type="button"
@@ -234,7 +234,7 @@ function ResetPasswordContent() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-[hsl(var(--bg-muted))] border-2 border-gray-100 rounded-lg py-1.5 px-3 text-sm text-[hsl(var(--text-primary))] placeholder-gray-300 focus:outline-none focus:border-[#018ABD] focus:bg-[hsl(var(--bg-primary))] transition-all pr-14"
+                  className="w-full bg-[hsl(var(--bg-muted))] border-2 border-[hsl(var(--border))] rounded-lg py-1.5 px-3 text-sm text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:border-[#018ABD] focus:bg-[hsl(var(--bg-primary))] transition-all pr-14"
                 />
               </div>
             </motion.div>

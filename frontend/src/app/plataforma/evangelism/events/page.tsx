@@ -29,6 +29,7 @@ import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import React,{ useEffect,useState } from 'react';
 import { toast } from 'sonner';
+import TextPromptDrawer from '@/components/ui/TextPromptDrawer';
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
  PERMANENT: 'Semanal',
@@ -129,6 +130,13 @@ export default function EventsPage() {
  const [createManualSearch, setCreateManualSearch] = useState('');
  const [editManualSearch, setEditManualSearch] = useState('');
  const [audiencePresets, setAudiencePresets] = useState<AudiencePreset[]>([]);
+ const [audiencePresetNameOpen, setAudiencePresetNameOpen] = useState(false);
+ const [audiencePresetNameDraft, setAudiencePresetNameDraft] = useState('');
+ const [pendingAudiencePreset, setPendingAudiencePreset] = useState<{
+ target_audience: AudiencePreset['target_audience'];
+ target_role_ids: string[];
+ target_persona_ids: string[];
+ } | null>(null);
 
  const handleScanToken = async () => {
  if (!scannerToken || !selectedEvent) return;
@@ -282,20 +290,27 @@ export default function EventsPage() {
  return;
  }
 
- const name = window.prompt('Nombre de la plantilla de audiencia');
- if (!name || !name.trim()) return;
+ setPendingAudiencePreset({ target_audience: targetAudience, target_role_ids: targetRoleIds, target_persona_ids: targetPersonaIds });
+ setAudiencePresetNameDraft('');
+ setAudiencePresetNameOpen(true);
+ };
 
+ const submitAudiencePreset = () => {
+ const name = audiencePresetNameDraft.trim();
+ if (!name || !pendingAudiencePreset) return;
  setAudiencePresets((prev) => [
  {
  id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
- name: name.trim(),
- target_audience: targetAudience,
- target_role_ids: targetAudience === 'ROLE' ? targetRoleIds : [],
- target_persona_ids: targetAudience === 'MANUAL' ? targetPersonaIds : [],
+ name,
+ target_audience: pendingAudiencePreset.target_audience,
+ target_role_ids: pendingAudiencePreset.target_audience === 'ROLE' ? pendingAudiencePreset.target_role_ids : [],
+ target_persona_ids: pendingAudiencePreset.target_audience === 'MANUAL' ? pendingAudiencePreset.target_persona_ids : [],
  },
  ...prev,
  ]);
- addToast(`Plantilla guardada: ${name.trim()}`, "success");
+ addToast(`Plantilla guardada: ${name}`, "success");
+ setAudiencePresetNameOpen(false);
+ setPendingAudiencePreset(null);
  };
 
  const deleteAudiencePreset = (presetId: string) => {
@@ -759,6 +774,19 @@ export default function EventsPage() {
  }
 
  return (
+ <>
+ <TextPromptDrawer
+ isOpen={audiencePresetNameOpen}
+ onClose={() => setAudiencePresetNameOpen(false)}
+ onSubmit={submitAudiencePreset}
+ title="Guardar plantilla de audiencia"
+ subtitle="Define un nombre corto"
+ label="Nombre de la plantilla"
+ value={audiencePresetNameDraft}
+ onChange={setAudiencePresetNameDraft}
+ placeholder="Ej. Jóvenes del sábado"
+ submitLabel="Guardar plantilla"
+ />
  <EvangelismShell
  breadcrumbs={[{ label: 'Evangelismo' }, { label: 'Eventos' }]}
  viewOptions={ALL_VIEWS}
@@ -1660,5 +1688,6 @@ export default function EventsPage() {
  </WorkspaceDrawer>
  <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
  </EvangelismShell>
+ </>
  );
 }

@@ -168,7 +168,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
           })}
         </div>
       )}
-      <div className="border-t border-[hsl(var(--border-primary))] dark:border-gray-700 p-3">
+      <div className="border-t border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] p-3">
         <div className="flex gap-2">
           <input
             type="text"
@@ -176,7 +176,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Escribe un mensaje..."
-            className="flex-1 px-4 py-2 rounded-full border border-[hsl(var(--border-primary))] dark:border-gray-600 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white"
+            className="flex-1 px-4 py-2 rounded-full border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-white"
           />
           <button
             onClick={handleSend}

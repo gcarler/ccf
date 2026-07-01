@@ -320,7 +320,7 @@ export default function LoginPage() {
                     {/* Divider */}
                     <div className="relative my-4">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t-2 border-gray-100" />
+                            <div className="w-full border-t-2 border-[hsl(var(--border))]" />
                         </div>
                         <div className="relative flex justify-center">
                             <span className="bg-[hsl(var(--bg-primary))] px-4 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">

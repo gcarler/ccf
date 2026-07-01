@@ -183,7 +183,7 @@ export default function AgentsPage() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 mb-6 border-b border-[hsl(var(--border-primary))] dark:border-gray-700">
+                <div className="flex gap-2 mb-6 border-b border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))]">
                     {[
                         { id: 'agents', label: 'Agentes', icon: Bot },
                         { id: 'tools', label: 'Herramientas', icon: Zap },
@@ -216,12 +216,12 @@ export default function AgentsPage() {
                                     placeholder="Buscar agentes..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-[hsl(var(--bg-primary))] dark:border-gray-700 dark:text-white"
+                                    className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-[hsl(var(--bg-primary))] dark:border-[hsl(var(--border))] dark:text-white"
                                 />
                             </div>
                             <button
                                 onClick={fetchData}
-                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] rounded-lg hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-gray-700"
+                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] rounded-lg hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-[hsl(var(--bg-muted))]"
                             >
                                 <RefreshCw className="w-4 h-4" />
                                 Actualizar
@@ -235,7 +235,7 @@ export default function AgentsPage() {
                                 {filteredAgents.map(agent => (
                                     <div
                                         key={agent.id}
-                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-gray-700"
+                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))]"
                                     >
                                         <div className="flex items-center gap-3 mb-3">
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -300,7 +300,7 @@ export default function AgentsPage() {
                                 tools.map((tool, i) => (
                                     <div
                                         key={i}
-                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-gray-700"
+                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))]"
                                     >
                                         <div className="flex items-center gap-2 mb-2">
                                             <Zap className="w-5 h-5 text-yellow-500" />
@@ -346,7 +346,7 @@ export default function AgentsPage() {
                                             setActiveTab('chat');
                                             setChatMessages([]);
                                         }}
-                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-gray-700 text-left hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] text-left hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
@@ -374,8 +374,8 @@ export default function AgentsPage() {
 
                 {/* Chat Tab */}
                 {activeTab === 'chat' && (
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg shadow-sm border border-[hsl(var(--border-primary))] dark:border-gray-700">
-                        <div className="p-4 border-b border-[hsl(var(--border-primary))] dark:border-gray-700 flex items-center justify-between">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg shadow-sm border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))]">
+                        <div className="p-4 border-b border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <Bot className="w-6 h-6 text-[hsl(var(--primary))]" />
                                 <div>
@@ -407,7 +407,7 @@ export default function AgentsPage() {
                                         <div className={`max-w-[80%] rounded-lg p-3 ${
                                             msg.role === 'user'
                                                 ? 'bg-[hsl(var(--primary))] text-white'
-                                                : 'bg-[hsl(var(--bg-muted))] dark:bg-gray-700 text-[hsl(var(--text-primary))] dark:text-white'
+                                                : 'bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white'
                                         }`}>
                                             {msg.role === 'assistant' && <Bot className="w-4 h-4 mb-1 text-[hsl(var(--primary))]" />}
                                             <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -417,11 +417,11 @@ export default function AgentsPage() {
                             )}
                             {chatLoading && (
                                 <div className="flex justify-start">
-                                    <div className="bg-[hsl(var(--bg-muted))] dark:bg-gray-700 rounded-lg p-3">
+                                    <div className="bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-muted))] rounded-lg p-3">
                                         <div className="flex gap-1">
-                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
-                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
-                                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                                            <span className="w-2 h-2 bg-[hsl(var(--text-secondary))] rounded-full animate-bounce"></span>
+                                            <span className="w-2 h-2 bg-[hsl(var(--text-secondary))] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
+                                            <span className="w-2 h-2 bg-[hsl(var(--text-secondary))] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
                                         </div>
                                     </div>
                                 </div>
@@ -429,7 +429,7 @@ export default function AgentsPage() {
                         </div>
 
                         {/* Input */}
-                        <div className="p-4 border-t border-[hsl(var(--border-primary))] dark:border-gray-700">
+                        <div className="p-4 border-t border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))]">
                             <div className="flex gap-2">
                                 <input
                                     type="text"
@@ -437,7 +437,7 @@ export default function AgentsPage() {
                                     onChange={e => setChatInput(e.target.value)}
                                     onKeyDown={e => e.key === 'Enter' && sendChat()}
                                     placeholder="Pregunta algo a Optimus..."
-                                    className="flex-1 px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    className="flex-1 px-4 py-2 border rounded-lg dark:bg-[hsl(var(--bg-muted))] dark:border-[hsl(var(--border))] dark:text-white"
                                 />
                                 <button
                                     onClick={sendChat}
