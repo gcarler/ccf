@@ -36,8 +36,12 @@ export default function ConfirmActionDrawer({ action, onClose }: Props) {
             type="button"
             onClick={async () => {
               if (!action) return;
-              await action.onConfirm();
-              onClose();
+              try {
+                await action.onConfirm();
+                onClose();
+              } catch {
+                // Keep the drawer open so the user can retry or cancel.
+              }
             }}
             className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-white transition-colors ${
               action?.destructive

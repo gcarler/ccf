@@ -415,7 +415,20 @@ def list_pending_follow_ups(
     """Lista todos los seguimientos pendientes (no completados)."""
     from backend.crud.evangelism import get_pendientes_seguimiento
 
-    return get_pendientes_seguimiento(db, limit=limit)
+    rows = get_pendientes_seguimiento(db, limit=limit)
+    # Pydantic v2 strict: UUID→str requiere serialización explícita vía
+    # model_dump(mode="json") — evita el 500 ``string_type`` en
+    # ``RegistroSeguimientoResponse.asistencia_id``.
+    return [
+        schemas.RegistroSeguimientoResponse.model_validate(r).model_dump(mode="json")
+        for r in rows
+    ]
+
+
+def _serialize_seguimiento(obj) -> dict:
+    """Serializa un ORM ``RegistroSeguimiento`` a dict compatible con
+    ``RegistroSeguimientoResponse`` (UUID→str, datetime→ISO)."""
+    return schemas.RegistroSeguimientoResponse.model_validate(obj).model_dump(mode="json")
 
 
 @router.get("/follow-up/{asistencia_id}", response_model=List[schemas.RegistroSeguimientoResponse])
@@ -427,7 +440,11 @@ def list_seguimientos_for_attendance(
     """Lista los seguimientos de una asistencia."""
     from backend.crud.evangelism import get_seguimientos
 
-    return get_seguimientos(db, asistencia_id)
+    rows = get_seguimientos(db, asistencia_id)
+    return [
+        schemas.RegistroSeguimientoResponse.model_validate(r).model_dump(mode="json")
+        for r in rows
+    ]
 
 
 @router.post("/follow-up/{asistencia_id}", response_model=schemas.RegistroSeguimientoResponse)
@@ -445,7 +462,7 @@ def create_seguimiento(
         raise HTTPException(status_code=404, detail="Asistencia no encontrada")
 
     payload.asistencia_id = asistencia_id
-    return create_seguimiento(db, payload)
+    return _serialize_seguimiento(create_seguimiento(db, payload))
 
 
 @router.patch("/follow-up/{seguimiento_id}", response_model=schemas.RegistroSeguimientoResponse)
@@ -461,4 +478,4 @@ def update_seguimiento(
     result = update_seguimiento(db, seguimiento_id, payload)
     if not result:
         raise HTTPException(status_code=404, detail="Seguimiento no encontrado")
-    return result
+    return _serialize_seguimiento(result)

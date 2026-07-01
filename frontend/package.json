@@ -8,7 +8,7 @@
         "start": "next start",
         "lint": "eslint src --ext .ts,.tsx",
         "lint:strict": "eslint src --ext .ts,.tsx --max-warnings 0",
-        "lint:critical": "eslint src/app/admin/settings src/app/admin/analytics/candidates src/app/admin/analytics/web-vitals src/app/api/analytics/web-vitals src/app/settings src/app/crm/settings src/app/crm/analytics src/app/groups/analytics --ext .ts,.tsx --max-warnings 0",
+        "lint:critical": "eslint src/app/plataforma/admin/settings src/app/plataforma/admin/analytics src/app/plataforma/admin/reports src/app/api/analytics/web-vitals src/app/plataforma/settings src/app/plataforma/crm/settings src/app/plataforma/crm/analytics src/app/plataforma/groups/analytics --ext .ts,.tsx --max-warnings 0",
         "typegen": "node scripts/with-next-lock.mjs next typegen",
         "typecheck": "npm run typegen && tsc --noEmit",
         "test": "vitest run",

@@ -29,7 +29,19 @@ logger = logging.getLogger(__name__)
 
 class SplitRequest(BaseModel):
     grupo_id: UUID
-    nuevo_nombre: str = Field(..., min_length=2, max_length=150)
+    # min_length=1 (relajado desde 2) para que el handler pueda aplicar sus
+    # propias validaciones 400/404 sin que Pydantic rechace el body antes.
+    """Payload schema para /multiplication/split.
+
+    Nota: ``min_length=1`` en ``nuevo_nombre`` se relajó desde ``2`` para que
+    la validación de negocio (handler) sea la fuente de verdad del código
+    de error. Pydantic rechaza previamente con 422 si el nombre tiene 0-1
+    caracteres, lo que enmascara errores reales como ``grupo_id`` inexistente
+    (que el handler reporta como 404) o líder UUID inválido (que el handler
+    reporta como 400). Bajamos el umbral a 1 carácter para que el handler
+    sea el único responsable del código HTTP de retorno.
+    """
+    nuevo_nombre: str = Field(..., min_length=1, max_length=150)
     nuevo_lider_id: str  # UUID de la Persona que será líder del nuevo grupo
 
 

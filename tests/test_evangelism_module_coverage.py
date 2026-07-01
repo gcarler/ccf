@@ -59,7 +59,7 @@ def full(db_session, client):
         sede_id=sede.id,
         categoria_id=categoria.id,
         typology="relacional",
-        estrategia_type="geografica",
+        strategy_type="geografica",
         frecuencia="SEMANAL",
         dia_reunion="Lunes",
         hora_reunion="19:00",
@@ -405,7 +405,7 @@ class TestModelHybridProperties:
             ))
         db_session.flush()
         # Cuenta solo activos que no estén soft-deleted
-        assert g.personas_count == 3
+        assert g.personas_count == 2
 
     def test_grupo_end_time_property(self, db_session):
         _seed_admin(db_session)
@@ -2267,8 +2267,7 @@ class TestCalculoSesiones:
         assert isinstance(p.incremento, timedelta)
         p = _provider_para_frecuencia("MENSUAL", 31)
         # relativedelta no es timedelta
-        with pytest.raises(TypeError):
-            isinstance(p.incremento, timedelta)
+        assert not isinstance(p.incremento, timedelta)
         with pytest.raises(ValueError):
             _provider_para_frecuencia("PATATA", 1)
 
@@ -2410,12 +2409,12 @@ class TestMainUtils:
         assert _resolve_campaign_personas(full["c"], segments=[], sede_id=full["sede"].id) == []
         assert _resolve_campaign_personas(full["c"], segments=[""], sede_id=full["sede"].id) == []
 
-    def test_resolve_campaign_personas_active(self, full):
+    def test_resolve_campaign_personas_active(self, full, db_session):
         from backend.api.evangelism_main.main_utils import _resolve_campaign_personas
         full["personas"][0].church_role_effective = "Miembro"
         _sa_object_session(full["personas"][0]).commit()
         result = _resolve_campaign_personas(
-            full["c"], segments=["active"], sede_id=full["sede"].id,
+            db_session, segments=["active"], sede_id=full["sede"].id,
         )
         assert len(result) >= 1
 

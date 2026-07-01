@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from uuid import UUID
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from backend.schemas._common import orm_config
 
@@ -138,7 +138,8 @@ class RolPersonalizadoEstrategiaBase(BaseModel):
 
 
 class RolPersonalizadoEstrategiaCreate(RolPersonalizadoEstrategiaBase):
-    estrategia_id: UUID
+    # El handler asigna estrategia_id desde path-param; no requiere del body.
+    estrategia_id: Optional[UUID] = None
 
 
 class RolPersonalizadoEstrategiaResponse(RolPersonalizadoEstrategiaBase):
@@ -226,7 +227,8 @@ class RegistroSeguimientoBase(BaseModel):
     estado_completado: bool = True
 
 class RegistroSeguimientoCreate(RegistroSeguimientoBase):
-    asistencia_id: str
+    # El handler asigna asistencia_id desde path-param; no requiere del body.
+    asistencia_id: Optional[str] = None
     responsable_id: Optional[str] = None
 
 
@@ -239,15 +241,32 @@ class RegistroSeguimientoUpdate(BaseModel):
 
 class RegistroSeguimientoResponse(BaseModel):
     id: UUID
-    asistencia_id: str
+    # Cambiados de str → UUID para alinear con el ORM
+    # ``RegistroSeguimiento.asistencia_id`` y ``responsable_id``. Pydantic v2
+    # strict rechazaba implicit UUID→str; ahora acepta nativo y al serializar
+    # a JSON (``model_dump(mode="json")`` o Pydantic encoder) emite string.
+    asistencia_id: UUID
     tipo: TipoSeguimientoEnum
     observaciones: Optional[str] = None
     fecha_seguimiento: Optional[datetime] = None
     estado_completado: bool = True
-    responsable_id: Optional[str] = None
+    responsable_id: Optional[UUID] = None
     created_at: datetime
 
     model_config = orm_config
+
+    @field_validator("asistencia_id", "responsable_id", mode="before")
+    @classmethod
+    def coerce_uuid_to_str_or_uuid(cls, v):
+        """Acepta tanto ``str`` como ``UUID`` en la frontera para
+        compatibilidad con callers que serializan el body a JSON antes
+        de invocar ``model_validate``."""
+        if v is None or isinstance(v, UUID):
+            return v
+        try:
+            return UUID(str(v))
+        except (ValueError, AttributeError):
+            return v
 
 
 # ──────────────────────────────────────────────

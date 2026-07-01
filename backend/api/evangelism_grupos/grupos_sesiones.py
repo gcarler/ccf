@@ -24,13 +24,15 @@ from backend.core.tenant import require_user_sede_id
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+static_router = APIRouter()
+dynamic_router = APIRouter()
 
 
 # ── Sessions listing & creation ──
 
 
-@router.get("/grupos/sessions")
-@router.get("/faro/sessions")
+@static_router.get("/grupos/sessions")
+@static_router.get("/faro/sessions")
 def list_faro_sessions(
     season_id: Optional[UUID] = None,
     grupo_id: Optional[UUID] = None,
@@ -67,10 +69,10 @@ def list_faro_sessions(
 
     return [
         {
-            "id": session.id,
-            "grupo_id": session.grupo_id,
+            "id": str(session.id),
+            "grupo_id": str(session.grupo_id) if session.grupo_id else None,
             "grupo_name": (session.grupo.name if session.grupo else None),
-            "season_id": session.season_id,
+            "season_id": str(session.season_id) if session.season_id else None,
             "season_name": session.season.name if session.season else None,
             "session_date": session.session_date.isoformat(),
             "status": session.status,
@@ -80,8 +82,8 @@ def list_faro_sessions(
     ]
 
 
-@router.get("/grupos/sessions/mine/pending")
-@router.get("/faro/sessions/mine/pending")
+@static_router.get("/grupos/sessions/mine/pending")
+@static_router.get("/faro/sessions/mine/pending")
 def list_my_pending_faro_sessions(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
@@ -111,12 +113,14 @@ def list_my_pending_faro_sessions(
     if not house_ids:
         return []
 
+    # NOTE: ``SesionGrupo.season`` is a Python ``@property`` placeholder that
+    # returns ``None`` — it is NOT a SQLAlchemy ``relationship()`` so
+    # ``joinedload(SesionGrupo.season)`` raises
+    # ``expected ORM mapped attribute for loader strategy argument``.
+    # We omit that joinedload and batch-fetch CampaignSeason rows instead.
     sessions = (
         db.query(SesionGrupo)
-        .options(
-            joinedload(models.SesionGrupo.grupo),
-            joinedload(models.SesionGrupo.season),
-        )
+        .options(joinedload(models.SesionGrupo.grupo))
         .filter(models.SesionGrupo.grupo_id.in_(house_ids))
         .order_by(models.SesionGrupo.fecha_sesion.desc())
         .limit(40)
@@ -139,8 +143,20 @@ def list_my_pending_faro_sessions(
             .group_by(models.Asistencia.sesion_id)
             .all()
         )
+
+        # Batch-fetch season names referenced by these sessions (avoiding N+1).
+        season_ids = list({s.season_id for s in sessions if s.season_id is not None})
+        season_map: dict = {}
+        if season_ids:
+            season_map = {
+                row.id: row.name
+                for row in db.query(models.CampaignSeason)
+                .filter(models.CampaignSeason.id.in_(season_ids))
+                .all()
+            }
     else:
         att_counts = {}
+        season_map = {}
 
     for session in sessions:
         attendance_count = att_counts.get(session.id, 0)
@@ -154,10 +170,10 @@ def list_my_pending_faro_sessions(
             continue
         items.append(
             {
-                "session_id": session.id,
-                "grupo_id": session.grupo_id,
+                "session_id": str(session.id) if session.id else None,
+                "grupo_id": str(session.grupo_id) if session.grupo_id else None,
                 "grupo_name": (session.grupo.name if session.grupo else None),
-                "season_name": session.season.name if session.season else None,
+                "season_name": season_map.get(session.season_id),
                 "session_date": (session.session_date.isoformat() if session.session_date else None),
                 "status": session.status,
                 "attendance_count": attendance_count,
@@ -168,8 +184,8 @@ def list_my_pending_faro_sessions(
     return items
 
 
-@router.post("/grupos/sessions", response_model=dict)
-@router.post("/faro/sessions", response_model=dict)
+@static_router.post("/grupos/sessions", response_model=dict)
+@static_router.post("/faro/sessions", response_model=dict)
 def create_faro_session(
     payload: dict,
     db: Session = Depends(get_db),
@@ -238,11 +254,12 @@ def create_faro_session(
 
     created_sessions = []
     for h_id in houses_to_process:
+        from sqlalchemy import func
         existing = (
             db.query(SesionGrupo)
             .filter(
                 models.SesionGrupo.grupo_id == h_id,
-                models.SesionGrupo.fecha_sesion == session_date,
+                func.date(models.SesionGrupo.fecha_sesion) == session_date,
                 models.SesionGrupo.deleted_at.is_(None),
             )
             .first()
@@ -285,7 +302,7 @@ def create_faro_session(
 # ── Sessions & Attendance (standalone) ──
 
 
-@router.get("/sessions", response_model=List[dict])
+@static_router.get("/sessions", response_model=List[dict])
 def list_sessions(
     strategy_id: Optional[UUID] = None,
     house_id: Optional[UUID] = None,
@@ -323,7 +340,7 @@ def list_sessions(
     ]
 
 
-@router.post("/sessions", response_model=dict)
+@static_router.post("/sessions", response_model=dict)
 def create_session(
     data: schemas.SesionGrupoCreate,
     db: Session = Depends(get_db),
@@ -374,7 +391,7 @@ def create_session(
     }
 
 
-@router.get("/sessions/{session_id}", response_model=dict)
+@dynamic_router.get("/sessions/{session_id}", response_model=dict)
 def get_session_detail(
     session_id: UUID,
     db: Session = Depends(get_db),
@@ -442,7 +459,7 @@ def get_session_detail(
     }
 
 
-@router.put("/sessions/{session_id}", response_model=dict)
+@dynamic_router.put("/sessions/{session_id}", response_model=dict)
 def update_session(
     session_id: UUID,
     update: schemas.SesionGrupoUpdate,
@@ -469,10 +486,26 @@ def update_session(
     db_session.reported_at = _datetime.now(_timezone.utc)
     db.commit()
     db.refresh(db_session)
-    return db_session
+    # Retorna dict manual sin pasar por ``SesionGrupoResponse`` (no existe
+    # ese schema en ``schemas/evangelism.py``). Serialización nativa con
+    # UUID→str garantiza ``response_model=dict`` OK.
+    return {
+        "id": str(db_session.id),
+        "grupo_id": str(db_session.grupo_id),
+        "session_date": (db_session.fecha_sesion.isoformat() if db_session.fecha_sesion else None),
+        "status": (db_session.estado or "Realizada"),
+        "estado_habilitacion": getattr(db_session, "estado_habilitacion", "DESHABILITADO"),
+        "topic": db_session.tema_estudio,
+        "offering_amount": (float(db_session.offering_amount) if db_session.offering_amount is not None else None),
+        "report_notes": db_session.report_notes,
+        "cancellation_reason": db_session.cancellation_reason,
+        "novelty_type": getattr(db_session, "novelty_type", None),
+        "novelty_detail": getattr(db_session, "novelty_detail", None),
+        "reported_at": (db_session.reported_at.isoformat() if getattr(db_session, "reported_at", None) else None),
+    }
 
 
-@router.delete("/sessions/{session_id}")
+@dynamic_router.delete("/sessions/{session_id}")
 def delete_session(
     session_id: UUID,
     db: Session = Depends(get_db),
@@ -502,7 +535,7 @@ def delete_session(
 # ── GOBERNANZA DE SESIONES (Habilitacion / Bloqueo) ─────────────────────────
 
 
-@router.patch("/sessions/{session_id}/habilitacion", response_model=dict)
+@dynamic_router.patch("/sessions/{session_id}/habilitacion", response_model=dict)
 def toggle_session_habilitacion(
     session_id: UUID,
     payload: dict,
@@ -549,7 +582,7 @@ def toggle_session_habilitacion(
     }
 
 
-@router.post("/strategies/{strategy_id}/habilitar-todas", response_model=dict)
+@dynamic_router.post("/strategies/{strategy_id}/habilitar-todas", response_model=dict)
 def habilitar_todas_sesiones(
     strategy_id: UUID,
     db: Session = Depends(get_db),
@@ -582,7 +615,7 @@ def habilitar_todas_sesiones(
     return {"strategy_id": strategy_id, "sesiones_habilitadas": updated}
 
 
-@router.post("/strategies/{strategy_id}/deshabilitar-todas", response_model=dict)
+@dynamic_router.post("/strategies/{strategy_id}/deshabilitar-todas", response_model=dict)
 def deshabilitar_todas_sesiones(
     strategy_id: UUID,
     db: Session = Depends(get_db),
@@ -609,3 +642,8 @@ def deshabilitar_todas_sesiones(
     db.commit()
 
     return {"strategy_id": strategy_id, "sesiones_deshabilitadas": updated}
+
+
+# Strategy D: static routes BEFORE dynamic ones (avoid FastAPI shadow matching)
+router.include_router(static_router)
+router.include_router(dynamic_router)

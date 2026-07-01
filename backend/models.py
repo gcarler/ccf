@@ -90,12 +90,10 @@ from backend.models_crm import (  # noqa: F401
 )
 
 # Conversation Memory
-from backend.services.conversation_memory import (
-    AgentConversation, AgentMessage,
-)
+from backend.models_conversation import AgentConversation, AgentMessage
 
 # Knowledge Base
-from backend.services.knowledge_base import AgentKnowledgeBase
+from backend.models_knowledge_base import AgentKnowledgeBase
 
 # Enterprise CMS — Audit Trail, Permissions, Notifications, Webhooks, Custom Types, Search, Sessions
 from backend.models_enterprise import (  # noqa: F401

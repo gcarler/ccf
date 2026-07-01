@@ -4,6 +4,7 @@ import React, { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { apiFetch } from "@/lib/http";
 
 function ResetPasswordContent() {
   const params = useSearchParams();
@@ -60,14 +61,11 @@ function ResetPasswordContent() {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ token, new_password: password });
-      const res = await fetch(`/api/v3/auth/reset-password?${params.toString()}`, {
+      await apiFetch<void>("/v3/auth/reset-password", {
         method: "POST",
+        query: { token, new_password: password },
+        silent: true,
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Error al restablecer");
-      }
       setSuccess(true);
       setTimeout(() => router.push("/login"), 2500);
     } catch (err: any) {

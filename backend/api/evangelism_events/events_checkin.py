@@ -74,6 +74,18 @@ def fast_checkin_visitor(
         db.commit()
         db.refresh(new_visitor)
 
+    # Si el visitante ya estaba registrado (por email o phone), devolvemos marcador
+    # de duplicado SIN re-insertar EventAttendance (UNIQUE constraint
+    # event_id + session_date + persona_id). Esto evita el 500 al hacer
+    # check-in dos veces para la misma persona y misma sesión.
+    if already_exists:
+        return {
+            "status": "success",
+            "visitor_id": new_visitor.id,
+            "message": "Visitante ya registrado. Asistencia actualizada.",
+            "is_duplicate": True,
+        }
+
     if role:
         db.add(models.PersonaRoleLink(persona_id=new_visitor.id, role_id=role.id))
 
@@ -87,20 +99,14 @@ def fast_checkin_visitor(
     )
 
     # Create CRM follow-up records for new visitors
-    if not already_exists:
-        from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
-        crear_caso_nuevo_visitante(db, new_visitor, new_visitor.sede_id)
+    from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
+    crear_caso_nuevo_visitante(db, new_visitor, new_visitor.sede_id)
 
     db.commit()
 
-    message = (
-        "Visitante ya registrado. Asistencia actualizada."
-        if already_exists
-        else "Visitante registrado y marcado como presente"
-    )
     return {
         "status": "success",
         "visitor_id": new_visitor.id,
-        "message": message,
-        "is_duplicate": already_exists,
+        "message": "Visitante registrado y marcado como presente",
+        "is_duplicate": False,
     }

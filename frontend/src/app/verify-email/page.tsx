@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { apiFetch } from "@/lib/http";
 
 function VerifyEmailContent() {
   const params = useSearchParams();
@@ -20,12 +21,11 @@ function VerifyEmailContent() {
       return;
     }
 
-    fetch(`/api/v3/auth/verify-email?token=${encodeURIComponent(token)}`)
-      .then(async (res) => {
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || "Error al verificar");
-        }
+    apiFetch<void>(`/v3/auth/verify-email`, {
+      query: { token },
+      silent: true,
+    })
+      .then(() => {
         setStatus("success");
         setMessage("¡Tu correo fue verificado correctamente!");
       })
