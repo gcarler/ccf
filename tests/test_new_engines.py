@@ -1,10 +1,45 @@
 from __future__ import annotations
 
+import uuid
+
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from backend import crud, models, schemas
+from backend import crud, models
+
+
+def _create_test_user(db: Session, username: str, email: str) -> models.User:
+    """Create a User (auth) with required Persona and Sede."""
+    sede = models.Sede(
+        id=uuid.uuid4(),
+        nombre=f"Sede {username}",
+        ciudad="Bogota",
+        es_activa=True,
+    )
+    db.add(sede)
+    db.flush()
+
+    persona = models.Persona(
+        id=uuid.uuid4(),
+        sede_id=sede.id,
+        first_name=username,
+        last_name="Test",
+        email=email,
+    )
+    db.add(persona)
+    db.flush()
+
+    user = models.User(
+        id=persona.id,
+        sede_id=sede.id,
+        username=username,
+        email=email,
+        password_hash="hash",
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    return user
 
 
 def test_gamification_xp_and_levelup(db_session: Session):
@@ -15,14 +50,7 @@ def test_gamification_xp_and_levelup(db_session: Session):
     db_session.commit()
 
     # 2. Create user
-    user = models.User(
-        username="gametest",
-        email="game@test.com",
-        password_hash="hash",
-        role="estudiante",
-    )
-    db_session.add(user)
-    db_session.commit()
+    user = _create_test_user(db_session, "gametest", "game@test.com")
 
     # 3. Grant XP
     crud.grant_xp(db_session, user.id, 150)
@@ -35,14 +63,7 @@ def test_gamification_xp_and_levelup(db_session: Session):
 
 def test_ui_preferences_persistence(db_session: Session):
     # 1. Create user
-    user = models.User(
-        username="preftest",
-        email="pref@test.com",
-        password_hash="hash",
-        role="estudiante",
-    )
-    db_session.add(user)
-    db_session.commit()
+    user = _create_test_user(db_session, "preftest", "pref@test.com")
 
     # 2. Save prefs
     prefs = {"theme": "dark", "layout": "compact"}
@@ -56,14 +77,9 @@ def test_ui_preferences_persistence(db_session: Session):
 
 def test_badge_awarding_uniqueness(db_session: Session):
     # 1. Setup
-    user = models.User(
-        username="badgetest",
-        email="badge@test.com",
-        password_hash="hash",
-        role="estudiante",
-    )
+    user = _create_test_user(db_session, "badgetest", "badge@test.com")
     badge = models.Badge(name="Medalla Pro", icon_key="star", xp_reward=10)
-    db_session.add_all([user, badge])
+    db_session.add(badge)
     db_session.commit()
 
     # 2. Award twice
