@@ -283,9 +283,10 @@ class AcademySearchCourse(AgentTool):
         ]
 
     def execute(self, query: str, **kwargs) -> Dict[str, Any]:
+        from sqlalchemy import func
+
         from backend import models
         from backend.core.database import SessionLocal
-        from sqlalchemy import func
 
         db = SessionLocal()
         try:

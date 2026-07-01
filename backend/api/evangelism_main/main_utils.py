@@ -13,7 +13,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.services.messaging_outcomes import CommunicationOutcome, DELIVERED_OUTCOMES
+from backend.services.messaging_outcomes import DELIVERED_OUTCOMES, CommunicationOutcome
 
 
 def _channel_label(channel: str) -> str:
@@ -136,8 +136,6 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
         "id": representative.id,
         "name": display_name,
         "campaign_name": campaign_name,
-        # Both keys are part of the published response.
-        "persona_name": persona_name,
         "persona_name": persona_name,
         "channel": str(representative.channel).lower(),
         "status": status,
@@ -170,8 +168,6 @@ def _serialize_crm_task(
         "category": task.category,
         "due_date": task.due_date.isoformat() if task.due_date else None,
         "persona_id": task.persona_id,
-        # Both keys are part of the published response.
-        "persona_name": persona_name,
         "persona_name": persona_name,
         "contact_name": persona_name,
         "assigned_to": assigned_to,

@@ -8,13 +8,12 @@ Dimensión B: Roles Iglesia — embudo de consolidación
 Dimensión C: Roles Plataforma — permisos RBAC
 Estado Vital: ACTIVO / INACTIVO
 """
-from datetime import datetime, timezone
-
 import enum
 import uuid as _uuid
+from datetime import datetime, timezone
 
-from sqlalchemy import (Boolean, Column, DateTime, Enum as SAEnum, ForeignKey,
-                        Index, String, Text, UniqueConstraint)
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, String, Text, UniqueConstraint
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 

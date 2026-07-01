@@ -53,7 +53,8 @@ jobs:
           done
 
       - name: Lint with Ruff
-        run: ruff check backend/ --select=E,W,F,I
+        # Uses select/ignore/per-file-ignores from pyproject.toml
+        run: ruff check backend/
 
       - name: Security scan with Bandit
         run: bandit -r backend/ -f json -o bandit-report.json || true
@@ -171,20 +172,22 @@ jobs:
           pip install -r requirements.txt
 
       - name: Verify migrations apply cleanly
+        # alembic.ini lives at the project root, not in backend/.
+        # Running from root lets Alembic resolve script_location correctly.
         run: |
-          cd backend && alembic upgrade head
+          alembic upgrade head
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
 
       - name: Verify downgrade works
         run: |
-          cd backend && alembic downgrade base
+          alembic downgrade base
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
 
       - name: Verify upgrade again
         run: |
-          cd backend && alembic upgrade head
+          alembic upgrade head
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
 

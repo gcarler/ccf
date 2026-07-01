@@ -470,6 +470,7 @@ async def get_current_user(
         raise credentials_exception
 
     from sqlalchemy.orm import joinedload
+
     from backend.models_auth import Usuario
 
     user = (

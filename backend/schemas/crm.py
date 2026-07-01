@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from enum import Enum
-from uuid import UUID
 from typing import List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -729,10 +729,16 @@ class PersonaFormation(PersonaFormationBase):
 # ── EvangelismStrategy schemas re-exported from canonical schemas/evangelism.py ──
 from backend.schemas.evangelism import (  # noqa: E402, F401
     EstrategiaEvangelismoCreate as EvangelismStrategyCreate,
+)
+
+# Response schema: id as str (UUID)
+from backend.schemas.evangelism import (
+    EstrategiaEvangelismoResponse as _EstrategiaEvangelismoResponse,  # noqa: E402, F401
+)
+from backend.schemas.evangelism import (
     EstrategiaEvangelismoUpdate as EvangelismStrategyUpdate,
 )
-# Response schema: id as str (UUID)
-from backend.schemas.evangelism import EstrategiaEvangelismoResponse as _EstrategiaEvangelismoResponse  # noqa: E402, F401
+
 
 class EvangelismStrategyBase(BaseModel):
     """Schema used by api/evangelism.py.

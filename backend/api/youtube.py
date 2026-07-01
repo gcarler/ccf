@@ -3,10 +3,10 @@ YouTube RSS proxy para el canal de El Faro.
 Sin API key — usa el feed RSS público de YouTube + resolución automática de channel ID.
 Caché en memoria de 1 hora para no martillar YouTube en cada request.
 """
-import re
-import time
 import logging
 import os
+import re
+import time
 import xml.etree.ElementTree as ET
 from typing import Optional
 

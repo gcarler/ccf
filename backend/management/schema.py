@@ -4,10 +4,10 @@ import os
 from pathlib import Path
 from typing import Any
 
+from alembic.config import Config
 from sqlalchemy import inspect
 
 from alembic import command
-from alembic.config import Config
 from backend import models  # noqa: F401
 from backend.core.config import get_settings
 from backend.core.database import Base, engine

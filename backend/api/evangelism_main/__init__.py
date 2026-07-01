@@ -10,8 +10,7 @@ from fastapi import APIRouter
 estrategias_router = APIRouter(tags=["Evangelismo - Estrategias"])
 roles_router = APIRouter(tags=["Evangelismo - Roles y Excusas"])
 
-from backend.api.evangelism_main import main_estrategias
-from backend.api.evangelism_main import main_roles
+from backend.api.evangelism_main import main_estrategias, main_roles
 
 estrategias_router.include_router(main_estrategias.estrategias_router)
 roles_router.include_router(main_roles.roles_router)

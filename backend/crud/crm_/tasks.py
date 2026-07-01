@@ -225,9 +225,10 @@ def _emit_mesh_event(event_type: str, case_id: str, persona_id: str | None = Non
     calcular SLAs, asignar alertas Overdue, y actualizar dashboards en tiempo real.
     """
     try:
+        import json
+
         from backend.core.cache import get_redis
         from backend.core.config import get_settings
-        import json
 
         redis_client = get_redis()
         if redis_client is None:

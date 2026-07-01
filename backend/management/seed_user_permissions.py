@@ -15,7 +15,6 @@ import sys
 sys.path.insert(0, "/root/ccf")
 
 import backend.models  # noqa: F401
-
 from backend.core.database import SessionLocal
 from backend.core.permissions import MODULE_PERMISSION_MAP, expand_module_permissions
 

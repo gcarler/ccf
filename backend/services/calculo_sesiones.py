@@ -19,16 +19,16 @@ Reglas de calidad aplicadas:
 from __future__ import annotations
 
 import calendar
+import unicodedata
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import List, Union
-import uuid
-import unicodedata
 from uuid import UUID
 
 from dateutil.relativedelta import relativedelta
 from sqlalchemy.orm import Session
 
-from backend.models_evangelism import GrupoEvangelismo, SesionGrupo, FrecuenciaEnum
+from backend.models_evangelism import FrecuenciaEnum, GrupoEvangelismo, SesionGrupo
 
 # ──────────────────────────────────────────────
 # Estrategia de incremento

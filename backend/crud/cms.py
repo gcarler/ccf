@@ -45,6 +45,7 @@ def _actor_sede_or_none_cms(
     el control multi-tenant.
     """
     from fastapi import HTTPException as _HTTPException
+
     from backend.crud.crm import get_user_sede_id
 
     try:

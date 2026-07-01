@@ -1,9 +1,16 @@
-import uuid as _uuid
 import uuid
+import uuid as _uuid
 
 from sqlalchemy import (
-    Boolean, Column, DateTime, ForeignKey, Integer, JSON,
-    String, Text, UniqueConstraint,
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import backref, relationship

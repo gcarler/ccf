@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import collections
-from datetime import datetime as _datetime, timezone as _timezone
+from datetime import datetime as _datetime
+from datetime import timezone as _timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -10,17 +11,17 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.models import SesionGrupo, GrupoEvangelismo
 from backend.api.evangelism_shared import (
     FIRST_TIME_STATES,
-    is_absent_status,
-    _is_crm_admin_or_pastor,
-    _get_persona_for_user,
     _can_manage_grupo,
+    _get_persona_for_user,
+    _is_crm_admin_or_pastor,
+    is_absent_status,
 )
-from backend.core.permissions import get_current_user, require_active_user, require_pastor_or_admin
 from backend.core.database import get_db
+from backend.core.permissions import get_current_user, require_active_user, require_pastor_or_admin
 from backend.core.tenant import require_user_sede_id
+from backend.models import GrupoEvangelismo, SesionGrupo
 
 router = APIRouter()
 static_router = APIRouter()
@@ -304,7 +305,7 @@ def get_grupo(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    from backend.models_evangelism import GrupoEvangelismo, SesionGrupo, Asistencia
+    from backend.models_evangelism import Asistencia, GrupoEvangelismo, SesionGrupo
 
     house = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.id == grupo_id).first()
     if not house:
@@ -979,12 +980,13 @@ def get_strategy_metrics(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Weekly metrics for a strategy: attendance, absences, first-timers, groups."""
+    from datetime import timedelta
+
     from backend.models import (
-        SesionGrupo,
         Asistencia,
         GrupoEvangelismo,
+        SesionGrupo,
     )
-    from datetime import timedelta
 
     # Get all houses for this strategy
     strategy_ref = str(strategy_id)

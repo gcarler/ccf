@@ -2,8 +2,7 @@
 import uuid as _uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, UUID
-from sqlalchemy import String, Text, UniqueConstraint, JSON
+from sqlalchemy import JSON, UUID, Boolean, Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from backend.core.database import Base

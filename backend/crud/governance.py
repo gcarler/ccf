@@ -4,11 +4,10 @@ from typing import Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
-from backend.models_shared import _utcnow
 
 from backend import models
-from backend.schemas.governance import (AutomationRuleCreate,
-                                        AutomationRuleUpdate)
+from backend.models_shared import _utcnow
+from backend.schemas.governance import AutomationRuleCreate, AutomationRuleUpdate
 
 
 def get_automation_rules(db: Session, only_active: bool = False):

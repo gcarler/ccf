@@ -3,12 +3,10 @@
 Bus de eventos polimórfico con recurrencia RFC 5545, recordatorios,
 timezone-aware, soft-delete forense, y control de colisiones de recursos.
 """
+import uuid as _uuid
 from datetime import datetime, timezone
 
-import uuid as _uuid
-
-from sqlalchemy import (ARRAY, Boolean, Column, DateTime, ForeignKey,
-                        Integer, JSON, String, Text)
+from sqlalchemy import ARRAY, JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 

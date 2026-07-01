@@ -45,7 +45,7 @@ async def module_isolation_middleware(request: Request, call_next):
     """
     module = extract_module(request.url.path)
     circuit = get_circuit_state(module)
-    
+
     # Si el circuito está abierto, rechazar rápidamente
     if circuit["open"]:
         elapsed = time.time() - circuit["last_failure"]
@@ -62,7 +62,7 @@ async def module_isolation_middleware(request: Request, call_next):
             # Timeout alcanzado, intentar reconectar (half-open)
             circuit["open"] = False
             circuit["failures"] = 0
-    
+
     try:
         response = await call_next(request)
         # Si la respuesta es exitosa, resetear el circuit breaker
@@ -75,12 +75,12 @@ async def module_isolation_middleware(request: Request, call_next):
 
         tb_str = traceback.format_exc()
         logger.error(f"[{module}] Request failed ({circuit['failures']}/{CIRCUIT_THRESHOLD}): {e}\n{tb_str}")
-        
+
         # Abrir circuito si supera el threshold
         if circuit["failures"] >= CIRCUIT_THRESHOLD:
             circuit["open"] = True
             logger.warning(f"[{module}] Circuit breaker OPEN after {circuit['failures']} failures")
-        
+
         return JSONResponse(
             status_code=500,
             content={

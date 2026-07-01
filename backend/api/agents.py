@@ -4,14 +4,14 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from backend.models_shared import _utcnow
 from backend import crud, models, schemas
 from backend.agents.orchestrator import AgentOrchestrator
 from backend.api._cms_helpers import _scope_cms_testimonials_by_user_sede
-from backend.core.permissions import require_active_user, require_admin
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
+from backend.core.permissions import require_active_user, require_admin
 from backend.crud.crm import resolve_persona_id_for_user
+from backend.models_shared import _utcnow
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 analytics_router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -32,17 +32,17 @@ def analytics_summary(
     """
     from backend.crud.crm import get_user_sede_id
     user_sede = get_user_sede_id(db, current_user.id)
-    
+
     persona_q = db.query(models.Persona)
     project_q = db.query(models.Project).filter(models.Project.deleted_at.is_(None))
     enrollment_q = db.query(models.Enrollment)
-    
+
     if user_sede is not None:
         persona_q = persona_q.filter(models.Persona.sede_id == user_sede)
         project_q = project_q.filter(models.Project.sede_id == user_sede)
         # Enrollments join through persona or course sede
         enrollment_q = enrollment_q.join(models.Persona, models.Enrollment.persona_id == models.Persona.id).filter(models.Persona.sede_id == user_sede)
-    
+
     total_personas = persona_q.count()
     total_projects = project_q.count()
     total_enrollments = enrollment_q.count()
@@ -265,16 +265,24 @@ def ask_optimus(
 
 # ── Agent Identity API (Canonical Person Model) ──
 from typing import List as TypingList  # noqa: E402
-from sqlalchemy.orm import Session  # noqa: E402
-from backend.models import User  # noqa: E402
+
 from sqlalchemy import or_  # noqa: E402
-from backend.models_agents import (Agent as AgentModel, AgentActivity,  # noqa: E402
-                                    AgentJourney, AgentRole)
-from backend.schemas.agents import (AgentCreate, AgentProfileResponse,  # noqa: E402
-                                     AgentResponse, AgentRoleCreate,
-                                     AgentRoleResponse, AgentSearchResult,
-                                     AgentTimelineItem, AgentUpdate,
-                                     StageTransition)
+from sqlalchemy.orm import Session  # noqa: E402
+
+from backend.models import User  # noqa: E402
+from backend.models_agents import Agent as AgentModel  # noqa: E402
+from backend.models_agents import AgentActivity, AgentJourney, AgentRole
+from backend.schemas.agents import (  # noqa: E402
+    AgentCreate,
+    AgentProfileResponse,
+    AgentResponse,
+    AgentRoleCreate,
+    AgentRoleResponse,
+    AgentSearchResult,
+    AgentTimelineItem,
+    AgentUpdate,
+    StageTransition,
+)
 
 
 def _generate_agent_code(db) -> str:
@@ -460,10 +468,10 @@ def sync_user_to_agent(db: Session, user) -> int:
     existing = db.query(AgentModel).filter(
         or_(AgentModel.email == user.email)
     ).first()
-    
+
     if existing:
         return existing.id
-    
+
     agent = AgentModel(
         code=_generate_agent_code(db),
         first_name=user.username.split("@")[0] if "@" in user.email else user.username,
@@ -473,14 +481,14 @@ def sync_user_to_agent(db: Session, user) -> int:
     )
     db.add(agent)
     db.flush()
-    
+
     db.add(AgentModelAuth(
         agent_id=agent.id,
         username=user.username,
         password_hash=user.password_hash if hasattr(user, 'password_hash') else None,
         provider="local",
     ))
-    
+
     # Platform role
     if user.role:
         db.add(AgentRole(
@@ -493,9 +501,10 @@ def sync_user_to_agent(db: Session, user) -> int:
 
 
 # ── Knowledge Base Endpoints ──
+from sqlalchemy import func  # noqa: E402
+
 from backend.models_knowledge_base import AgentKnowledgeBase  # noqa: E402
 from backend.services.knowledge_base import KnowledgeIndexer  # noqa: E402
-from sqlalchemy import func  # noqa: E402
 
 
 class KBRebuildResponse(BaseModel):
@@ -566,8 +575,10 @@ def kb_stats(
 
 # ── Conversation Endpoints ──
 from backend.services.conversation_memory import (  # noqa: E402
-    create_conversation, get_user_conversations,
-    get_conversation_messages, delete_conversation,
+    create_conversation,
+    delete_conversation,
+    get_conversation_messages,
+    get_user_conversations,
 )
 
 
@@ -627,8 +638,9 @@ def delete_conv(
 
 
 # ── SSE Event Stream ──
-from fastapi.responses import StreamingResponse  # noqa: E402
 import asyncio  # noqa: E402
+
+from fastapi.responses import StreamingResponse  # noqa: E402
 
 
 async def _event_generator(user_id: uuid.UUID):

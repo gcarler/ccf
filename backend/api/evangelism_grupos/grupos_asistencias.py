@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime as _datetime, timezone as _timezone
+from datetime import datetime as _datetime
+from datetime import timezone as _timezone
 from typing import List
 from uuid import UUID
 
@@ -8,18 +9,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 
 from backend import models, schemas
-from backend.models import SesionGrupo, GrupoEvangelismo, Asistencia
 from backend.api.evangelism_shared import (
-    persona_payload,
-    expected_group_rows,
-    utc_now,
     _can_manage_grupo,
     _check_absence_trigger,
     _check_first_time_lead_trigger,
+    expected_group_rows,
+    persona_payload,
+    utc_now,
 )
-from backend.core.permissions import get_current_user, require_pastor_or_admin
 from backend.core.database import get_db
+from backend.core.permissions import get_current_user, require_pastor_or_admin
 from backend.core.tenant import require_user_sede_id
+from backend.models import Asistencia, GrupoEvangelismo, SesionGrupo
 
 router = APIRouter()
 
@@ -335,8 +336,8 @@ def submit_attendance(
     _check_first_time_lead_trigger(db, session_id)
 
     # ── CRM Bridge: first-time / seguimiento ──
-    from backend.services.evangelism_crm_bridge import crear_caso_desde_asistencia
     from backend.models_crm import Persona
+    from backend.services.evangelism_crm_bridge import crear_caso_desde_asistencia
 
     evento = None
     for att in submitted:

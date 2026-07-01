@@ -230,8 +230,9 @@ def _audit_log(
 
     Axioma 1 — Auditoría Estricta: toda mutación sensible debe dejar traza.
     """
-    from backend.models_evangelism import LogAuditoria
     import uuid as _uuid
+
+    from backend.models_evangelism import LogAuditoria
 
     db.add(
         LogAuditoria(

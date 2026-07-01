@@ -19,16 +19,15 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
 
-# Re-export del Enum/constantes (definidos en módulo leaf para evitar ciclo con schemas)
-from backend.services.messaging_outcomes import (  # noqa: F401
-    CommunicationOutcome,
-    OUTBOUND_OUTCOMES,
-    DELIVERED_OUTCOMES,
-)
-
-
 from backend import models
 from backend.core.config import get_settings
+
+# Re-export del Enum/constantes (definidos en módulo leaf para evitar ciclo con schemas)
+from backend.services.messaging_outcomes import (  # noqa: F401
+    DELIVERED_OUTCOMES,
+    OUTBOUND_OUTCOMES,
+    CommunicationOutcome,
+)
 
 if TYPE_CHECKING:
     from backend.core.config import Settings

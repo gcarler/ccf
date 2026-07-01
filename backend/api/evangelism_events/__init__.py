@@ -10,9 +10,7 @@ from fastapi import APIRouter
 
 router = APIRouter(tags=["Evangelismo - Eventos"])
 
-from backend.api.evangelism_events import events_main
-from backend.api.evangelism_events import events_participantes
-from backend.api.evangelism_events import events_checkin
+from backend.api.evangelism_events import events_checkin, events_main, events_participantes
 
 router.include_router(events_main.router)
 router.include_router(events_participantes.router)

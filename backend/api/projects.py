@@ -8,19 +8,19 @@ from typing import Any, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
-from sqlalchemy import cast, func, Integer
+from sqlalchemy import Integer, cast, func
 from sqlalchemy.orm import Session, selectinload
 
 from backend import crud, models, schemas
-from backend.core.permissions import normalize_role, require_module_access, require_staff_or_admin
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
+from backend.core.database import get_db
+from backend.core.permissions import normalize_role, require_module_access, require_staff_or_admin
+from backend.core.storage import storage_service
+from backend.core.uploads import sanitize_filename
 from backend.crud.crm import get_user_sede_id
 from backend.crud.projects import get_user_persona_id
 from backend.mesh_websockets import manager
-from backend.core.database import get_db
-from backend.core.storage import storage_service
-from backend.core.uploads import sanitize_filename
 from backend.services.task_notifications import notify_task_assigned
 
 settings = get_settings()

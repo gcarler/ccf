@@ -1,6 +1,7 @@
 from __future__ import annotations
-from datetime import timezone as _tz
+
 import logging
+from datetime import timezone as _tz
 from typing import List, Optional
 from uuid import UUID
 
@@ -8,12 +9,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend import crud, models
-from backend.core.permissions import require_pastor_or_admin
 from backend.core.database import get_db
+from backend.core.permissions import require_pastor_or_admin
 from backend.crud.evangelism import (
     create_estrategia as create_evangelism_strategy,
-    update_estrategia as update_evangelism_strategy,
+)
+from backend.crud.evangelism import (
     delete_estrategia as delete_evangelism_strategy,
+)
+from backend.crud.evangelism import (
+    update_estrategia as update_evangelism_strategy,
 )
 from backend.schemas.crm import (
     EvangelismStrategy,
@@ -39,8 +44,8 @@ def read_evangelism_strategies(
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
-    from backend.models_evangelism import GrupoEvangelismo
     from backend.crud.evangelism import get_estrategias
+    from backend.models_evangelism import GrupoEvangelismo
 
     strategies = get_estrategias(
         db,
@@ -110,8 +115,8 @@ def create_strategy(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     try:
-        from backend.models_evangelism import CategoriaEstrategia
         from backend.models import Sede as _Sede
+        from backend.models_evangelism import CategoriaEstrategia
         # Asignar sede_id desde el usuario autenticado
         sede_id = crud.get_user_sede_id(db, current_user.id)
         if not sede_id:
@@ -209,6 +214,7 @@ def generate_strategy_sessions(
     día correcto de la semana aunque la fecha_inicio esté en otro día.
     """
     from datetime import timedelta
+
     from backend.models_evangelism import EstrategiaEvangelismo as StratModel
     from backend.models_evangelism import GrupoEvangelismo
     from backend.services.calculo_sesiones import calcular_sesiones
@@ -296,8 +302,9 @@ def delete_strategy(
 
 def _project_phases_as_tasks(db, strategy_id: UUID, strategy_name: str, phases: list[dict], start_date=None):
     """Create N1 tasks in Projects module for each phase of a mass event."""
-    from backend.models_projects import Project, ProjectTask
     from datetime import datetime as dt
+
+    from backend.models_projects import Project, ProjectTask
 
     # Create a project linked to the strategy
     project = Project(

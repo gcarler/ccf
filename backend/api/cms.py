@@ -4,8 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import (APIRouter, Depends, File, Form, HTTPException, Query,
-                     UploadFile)
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -17,16 +16,16 @@ from backend.api._cms_helpers import (
     _scope_cms_media_by_user_sede,
     _scope_cms_testimonials_by_user_sede,
 )
-from backend.core.permissions import require_module_access
-from backend.schemas import PaginatedResponse
 from backend.core.config import get_settings
 from backend.core.database import get_db
+from backend.core.permissions import require_module_access
 from backend.core.storage import storage_service
 from backend.core.uploads import (
     ensure_allowed_extension,
     sanitize_filename,
     validate_mime_extension_alignment,
 )
+from backend.schemas import PaginatedResponse
 
 router = APIRouter(tags=["cms"])
 

@@ -6,8 +6,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from backend.services.messaging_outcomes import CommunicationOutcome
 from backend.schemas._common import orm_config
+from backend.services.messaging_outcomes import CommunicationOutcome
 
 
 class Notification(BaseModel):

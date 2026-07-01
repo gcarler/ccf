@@ -28,7 +28,6 @@ from backend.crud.crm import get_user_sede_id
 from backend.models_shared import _utcnow
 from backend.schemas import academy as schemas
 
-
 router = APIRouter(prefix="/academy", tags=["Academy"])
 
 AcademyReader = Annotated[models.User, Depends(require_module_access("academy", "read"))]

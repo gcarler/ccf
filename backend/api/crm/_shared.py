@@ -1,7 +1,6 @@
+import uuid as _uuid
 from datetime import datetime, timezone
 from uuid import UUID
-
-import uuid as _uuid
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -13,6 +12,7 @@ from backend.services.messaging_outcomes import (
     DELIVERED_OUTCOMES,
     CommunicationOutcome,
 )
+
 
 def _payload_key(name: str) -> str:
     return name

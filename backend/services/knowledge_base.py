@@ -10,9 +10,7 @@ from datetime import datetime, timezone
 from sqlalchemy import String, cast, func, inspect
 from sqlalchemy.orm import Session
 
-from backend.core.database import Base
 from backend.models_knowledge_base import AgentKnowledgeBase
-
 
 # ──────────────────────────────────────────────
 # KNOWLEDGE INDEXER

@@ -11,8 +11,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.core.permissions import require_admin, require_module_access
 from backend.core.database import get_db
+from backend.core.permissions import require_admin, require_module_access
 from backend.core.rate_limit import rate_limiter
 
 logger = logging.getLogger(__name__)

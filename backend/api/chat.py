@@ -11,11 +11,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.core.permissions import require_module_access
 from backend.core.database import get_db
+from backend.core.permissions import require_module_access
+from backend.crud.crm import resolve_persona_id_for_user
 from backend.mesh_websockets import manager
 from backend.models_shared import _utcnow
-from backend.crud.crm import resolve_persona_id_for_user
 
 router = APIRouter()
 
@@ -94,7 +94,7 @@ def _serialize_conversation(db: Session, conv: models.Conversation, current_user
         personas = db.query(models.Persona).filter(models.Persona.id.in_(participant_persona_ids)).all()
         for p in personas:
             user_map[p.id] = p
-            
+
     participants = []
     for cp in conv.participants:
         persona = user_map.get(cp.user_id)
@@ -105,9 +105,9 @@ def _serialize_conversation(db: Session, conv: models.Conversation, current_user
                 last_read_at=cp.last_read_at,
             )
         )
-        
+
     unread = crud.get_unread_count_for_conversation(db, conv.id, current_user_id)
-    
+
     return schemas.ConversationRead(
         id=conv.id,
         participants=participants,
@@ -172,13 +172,13 @@ def create_conversation(
     persona_id = _get_persona_id(db, current_user)
     if not persona_id:
         raise HTTPException(status_code=404, detail="Persona not found for current user")
-    
+
     # Resolve all participant user_ids (UUIDs) from their persona UUIDs
     payload_personas = db.query(models.Persona).filter(models.Persona.id.in_(payload.participant_ids)).all()
     participant_user_ids = [p.id for p in payload_personas]
     if current_user.id not in participant_user_ids:
         participant_user_ids.append(current_user.id)
-        
+
     if len(participant_user_ids) < 2:
         raise HTTPException(
             status_code=400,
@@ -223,11 +223,11 @@ def list_direct_messages(
         raise HTTPException(status_code=403, detail="Not a participant of this conversation")
     rows = crud.get_conversation_messages(db, conv_id, limit=limit, before_id=before)
     sender_ids = {r.sender_id for r in rows}
-    
+
     # Map sender UUIDs to Personas
     personas = db.query(models.Persona).filter(models.Persona.id.in_(sender_ids)).all() if sender_ids else []
     persona_map = {p.id: p for p in personas}
-    
+
     last_read = is_participant.last_read_at
     return [
         schemas.DirectMessageItem(

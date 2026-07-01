@@ -1,6 +1,5 @@
 """Persona CRUD and search helpers."""
 import datetime as dt
-import uuid
 from typing import List, Optional
 from uuid import UUID
 

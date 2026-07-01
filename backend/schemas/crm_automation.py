@@ -1,8 +1,8 @@
 """Schemas para CrmAutomation (automatizaciones de mensajes)."""
 from __future__ import annotations
-from uuid import UUID
 
 from typing import Any, Dict, Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 

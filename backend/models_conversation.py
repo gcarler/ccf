@@ -8,7 +8,7 @@ from __future__ import annotations
 import uuid as _uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, String, Text, UUID
+from sqlalchemy import UUID, Boolean, Column, DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.orm import relationship
 
 from backend.core.database import Base

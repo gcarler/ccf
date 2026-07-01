@@ -105,47 +105,76 @@ DEFAULT_WORKSPACE_CONFIG["compliance_policy"] = DEFAULT_COMPLIANCE_POLICY
 # ---------------------------------------------------------------------------
 
 # _audit
-from backend.api.workspace_shared._audit import (_build_event_diff,
-                                                 _enrich_audit_rows,
-                                                 _filter_audit_rows,
-                                                 _parse_timestamp,
-                                                 _summarize_audit)
+from backend.api.workspace_shared._audit import (
+    _build_event_diff,
+    _enrich_audit_rows,
+    _filter_audit_rows,
+    _parse_timestamp,
+    _summarize_audit,
+)
+
 # _flags
-from backend.api.workspace_shared._flags import (_normalize_role_list,
-                                                 _normalize_rollout,
-                                                 _normalize_rule_payload,
-                                                 _normalize_user_list,
-                                                 _resolve_features,
-                                                 _sanitize_feature_payload,
-                                                 _stable_rollout_hit)
+from backend.api.workspace_shared._flags import (
+    _normalize_role_list,
+    _normalize_rollout,
+    _normalize_rule_payload,
+    _normalize_user_list,
+    _resolve_features,
+    _sanitize_feature_payload,
+    _stable_rollout_hit,
+)
+
 # _incidents
 from backend.api.workspace_shared._incidents import (
-    _cleanup_incidents, _compute_incident_severity, _detect_anomalies,
-    _in_range, _incident_daily_trends, _incident_fingerprint,
-    _is_silenced_active, _pct_delta, _period_bounds, _period_incident_stats,
-    _scan_incidents_from_anomalies, _seconds_between, _set_incident_severity,
-    _summarize_incidents)
+    _cleanup_incidents,
+    _compute_incident_severity,
+    _detect_anomalies,
+    _in_range,
+    _incident_daily_trends,
+    _incident_fingerprint,
+    _is_silenced_active,
+    _pct_delta,
+    _period_bounds,
+    _period_incident_stats,
+    _scan_incidents_from_anomalies,
+    _seconds_between,
+    _set_incident_severity,
+    _summarize_incidents,
+)
+
 # _snapshots
 from backend.api.workspace_shared._snapshots import (
-    _assess_config_drift, _build_compliance_snapshot,
-    _cleanup_snapshot_history, _compare_snapshot_payloads,
-    _find_snapshot_history_item, _is_drift_signal_suppressed,
-    _maybe_emit_snapshot_drift_alert, _normalize_compliance_policy_update,
-    _normalize_suppression_payload, _resolve_compare_pair,
-    _resolve_compliance_policy, _snapshot_hash, _snapshot_metrics,
-    _verify_snapshot_history_item, _weekly_snapshot_summary)
+    _assess_config_drift,
+    _build_compliance_snapshot,
+    _cleanup_snapshot_history,
+    _compare_snapshot_payloads,
+    _find_snapshot_history_item,
+    _is_drift_signal_suppressed,
+    _maybe_emit_snapshot_drift_alert,
+    _normalize_compliance_policy_update,
+    _normalize_suppression_payload,
+    _resolve_compare_pair,
+    _resolve_compliance_policy,
+    _snapshot_hash,
+    _snapshot_metrics,
+    _verify_snapshot_history_item,
+    _weekly_snapshot_summary,
+)
+
 # _storage
-from backend.api.workspace_shared._storage import (_append_audit_event,
-                                                   _append_incident_history,
-                                                   _append_notification,
-                                                   _append_snapshot_history,
-                                                   _json_canonical,
-                                                   _load_incidents,
-                                                   _load_workspace_config,
-                                                   _now_iso,
-                                                   _read_audit_events,
-                                                   _read_notifications,
-                                                   _read_snapshot_history,
-                                                   _save_incidents,
-                                                   _save_snapshot_history,
-                                                   _save_workspace_config)
+from backend.api.workspace_shared._storage import (
+    _append_audit_event,
+    _append_incident_history,
+    _append_notification,
+    _append_snapshot_history,
+    _json_canonical,
+    _load_incidents,
+    _load_workspace_config,
+    _now_iso,
+    _read_audit_events,
+    _read_notifications,
+    _read_snapshot_history,
+    _save_incidents,
+    _save_snapshot_history,
+    _save_workspace_config,
+)

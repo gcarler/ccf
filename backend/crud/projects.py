@@ -6,10 +6,9 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session, selectinload
 
-from backend.models_shared import _utcnow
 from backend import models, schemas
 from backend.crud.crm import resolve_persona_id_for_user
-
+from backend.models_shared import _utcnow
 
 # ── Helper ──────────────────────────────────────────────
 

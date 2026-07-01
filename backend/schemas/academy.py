@@ -1,8 +1,8 @@
 from __future__ import annotations
-from uuid import UUID
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 

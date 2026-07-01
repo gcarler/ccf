@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.crm._shared import _get_scoped_persona
-from backend.core.permissions import require_module_access, require_permission
 from backend.core.database import get_db
+from backend.core.permissions import require_module_access, require_permission
 from backend.crud.crm import resolve_persona_id_for_user
 
 router = APIRouter(tags=["CRM"])

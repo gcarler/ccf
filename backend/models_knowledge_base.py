@@ -6,8 +6,7 @@ Base de conocimiento usada por el sistema multiagente.
 import uuid as _uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Index, String,
-                        Text, UUID)
+from sqlalchemy import UUID, Boolean, Column, DateTime, Float, ForeignKey, Index, String, Text
 
 from backend.core.database import Base
 

@@ -1,12 +1,11 @@
 from __future__ import annotations
-from uuid import UUID
 
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 
 from backend.schemas._common import orm_config
-
 
 # ═══════════════════════════════════════════════════════════════════
 # COMMON DASHBOARD ELEMENTS

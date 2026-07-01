@@ -8,9 +8,9 @@ from sqlalchemy import or_, text
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.core.permissions import require_active_user, require_admin
 from backend.core.ai import generate_ministerial_content
 from backend.core.database import get_db
+from backend.core.permissions import require_active_user, require_admin
 from backend.crud.crm import get_user_sede_id
 
 router = APIRouter()
@@ -68,6 +68,7 @@ def get_global_calendar(
     view: todo | evangelismo | crm | proyectos | personal
     """
     from sqlalchemy import func as sqlfunc
+
     from backend.crud.crm import resolve_persona_id_for_user
 
     events = []
@@ -371,9 +372,10 @@ def get_system_health():
 @router.get("/health/modules")
 def get_module_health():
     """Health check por módulo — muestra qué módulos están operativos."""
-    from backend.middleware.module_isolation import get_module_health
-    from backend.core.database import engine
     from sqlalchemy import text
+
+    from backend.core.database import engine
+    from backend.middleware.module_isolation import get_module_health
 
     modules = get_module_health()
 

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime as _datetime, timezone as _timezone
+from datetime import datetime as _datetime
+from datetime import timezone as _timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -9,17 +10,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 
 from backend import models, schemas
-from backend.models import SesionGrupo, GrupoEvangelismo, Asistencia
-from backend.models_evangelism import ParticipanteGrupo, SesionGrupo as SessionModel
 from backend.api.evangelism_shared import (
+    _get_persona_for_user,
+    _is_crm_admin_or_pastor,
     expected_group_rows,
     utc_now,
-    _is_crm_admin_or_pastor,
-    _get_persona_for_user,
 )
-from backend.core.permissions import get_current_user, require_pastor_or_admin
 from backend.core.database import get_db
+from backend.core.permissions import get_current_user, require_pastor_or_admin
 from backend.core.tenant import require_user_sede_id
+from backend.models import Asistencia, GrupoEvangelismo, SesionGrupo
+from backend.models_evangelism import ParticipanteGrupo
+from backend.models_evangelism import SesionGrupo as SessionModel
 
 logger = logging.getLogger(__name__)
 
@@ -589,7 +591,7 @@ def habilitar_todas_sesiones(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Admin: habilita todas las sesiones de una estrategia de un golpe."""
-    from backend.models_evangelism import HabilitacionSesionEnum, GrupoEvangelismo
+    from backend.models_evangelism import GrupoEvangelismo, HabilitacionSesionEnum
 
     grupos = db.query(GrupoEvangelismo).filter(
         GrupoEvangelismo.estrategia_id == strategy_id,
@@ -622,7 +624,7 @@ def deshabilitar_todas_sesiones(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Admin: bloquea todas las sesiones de una estrategia."""
-    from backend.models_evangelism import HabilitacionSesionEnum, GrupoEvangelismo
+    from backend.models_evangelism import GrupoEvangelismo, HabilitacionSesionEnum
 
     grupos = db.query(GrupoEvangelismo).filter(
         GrupoEvangelismo.estrategia_id == strategy_id,

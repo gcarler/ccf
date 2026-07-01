@@ -3,14 +3,12 @@
 Modelos para el CRM 2.0: pipelines configurables, call center omnicanal,
 trazabilidad de origen, y SLAs de tiempo de respuesta.
 """
-from datetime import datetime, timezone
-
 import enum
 import uuid as _uuid
+from datetime import datetime, timezone
 
-from sqlalchemy import (Boolean, Column, DateTime, Enum as SAEnum, ForeignKey,
-                        Integer, String, Text, UniqueConstraint, func)
-from sqlalchemy import JSON
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship, synonym

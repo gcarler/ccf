@@ -5,12 +5,11 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
-
 from uuid import UUID
+
 from pydantic import BaseModel, field_validator
 
 from backend.schemas._common import orm_config
-
 
 # ──────────────────────────────────────────────
 # ENUMS (re-exportados para uso en endpoints)

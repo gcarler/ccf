@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import mercadopago
+
 from backend.core.config import get_settings
 
 logger = logging.getLogger(__name__)

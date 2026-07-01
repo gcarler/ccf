@@ -17,8 +17,8 @@ from backend.api.evangelism_shared import (
     parse_session_date,
     utc_now,
 )
-from backend.core.permissions import require_active_user, require_pastor_or_admin
 from backend.core.database import get_db
+from backend.core.permissions import require_active_user, require_pastor_or_admin
 from backend.crud._utils import _utcnow
 
 router = APIRouter()
@@ -233,7 +233,6 @@ def get_event_session_detail(
         {
             "id": a.id,
             "persona_id": a.persona_id,
-            "persona_id": a.persona_id,
             "role": a.role,
             "persona_name": (a.persona.nombre_completo if a.persona else "Unknown"),
         }
@@ -273,7 +272,6 @@ def get_event_session_detail(
         attendee_list.append(
             {
                 "persona_id": persona.id,
-                "persona_id": persona.id,
                 "name": persona.nombre_completo,
                 "role": role_name,
                 "scanned_at": att.scanned_at.isoformat() if att.scanned_at else None,
@@ -287,7 +285,6 @@ def get_event_session_detail(
         if persona.id not in attended_ids:
             absentees_full.append(
                 {
-                    "persona_id": persona.id,
                     "persona_id": persona.id,
                     "name": persona.nombre_completo,
                     "role": persona.church_role,

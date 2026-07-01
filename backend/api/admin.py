@@ -8,13 +8,17 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from backend.models_shared import _utcnow
 from backend import crud, models, schemas
-from backend.core.permissions import require_active_user, require_admin
 from backend.core.database import get_db
-from backend.core.permissions import (MODULE_PERMISSION_MAP, PERMISSION_LEVELS,
-                                      expand_module_permissions,
-                                      get_all_permissions)
+from backend.core.permissions import (
+    MODULE_PERMISSION_MAP,
+    PERMISSION_LEVELS,
+    expand_module_permissions,
+    get_all_permissions,
+    require_active_user,
+    require_admin,
+)
+from backend.models_shared import _utcnow
 
 router = APIRouter()
 
@@ -87,6 +91,7 @@ def update_role(
 ):
     """Actualiza los permisos de un rol de plataforma."""
     import uuid as _uuid
+
     from backend.models_auth import RolPlataforma
 
     try:
@@ -109,6 +114,7 @@ def delete_role(
 ):
     """Elimina un rol de plataforma (no usado por usuarios activos)."""
     import uuid as _uuid
+
     from backend.models_auth import RolPlataforma, Usuario
 
     try:
@@ -153,8 +159,10 @@ def get_user_permissions(
 ):
     """Obtiene los permisos actuales de un usuario auth_users."""
     import uuid as _uuid
-    from backend.models_auth import Usuario
+
     from sqlalchemy.orm import joinedload
+
+    from backend.models_auth import Usuario
     try:
         uid = _uuid.UUID(str(user_id))
         user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == uid).first()
@@ -199,8 +207,10 @@ def set_user_permissions(
     Niveles: read, edit, manage (y study para academy).
     """
     import uuid as _uuid
-    from backend.models_auth import Usuario, RolPlataforma
+
     from sqlalchemy.orm import joinedload
+
+    from backend.models_auth import RolPlataforma, Usuario
 
     # Resolve user from auth_users (UUID-based)
     try:
@@ -297,7 +307,7 @@ def list_locations(db: Session = Depends(get_db), _user=Depends(require_active_u
         }
         for loc in locs
     ]
-    
+
 
 @router.post("/locations")
 def create_location(
@@ -422,6 +432,7 @@ def _assign_auth_user_role(db: Session, user, role_name: str) -> None:
         return
 
     from sqlalchemy import func
+
     from backend.models_auth import RolPlataforma
     role_aliases = {
         "admin": "ADMINISTRADOR",
@@ -458,8 +469,9 @@ def list_admin_users(
     db: Session = Depends(get_db), current_user=Depends(require_admin)
 ):
     """Lista usuarios de auth_users para gestión de permisos granulares."""
-    from backend.models_auth import Usuario
     from sqlalchemy.orm import joinedload
+
+    from backend.models_auth import Usuario
     users = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).all()
     return [_serialize_auth_user_row(u) for u in users]
 
@@ -472,8 +484,10 @@ def get_admin_user(
 ):
     """Obtiene un usuario auth por UUID."""
     import uuid as _uuid
-    from backend.models_auth import Usuario
+
     from sqlalchemy.orm import joinedload
+
+    from backend.models_auth import Usuario
 
     try:
         uid = _uuid.UUID(str(user_id))
@@ -503,6 +517,7 @@ def create_admin_user(
     con las credenciales proporcionadas y rol MIEMBRO por defecto.
     """
     import uuid as _uuid
+
     from backend.core.permissions import hash_password
     from backend.models_auth import RolPlataforma, Usuario
     from backend.models_crm import Persona
@@ -581,10 +596,12 @@ def update_admin_user(
 ):
     """Actualiza campos básicos de auth_users por UUID."""
     import uuid as _uuid
+
+    from sqlalchemy.orm import joinedload
+
     from backend.core.permissions import hash_password
     from backend.models_auth import Usuario
     from backend.models_crm import Persona
-    from sqlalchemy.orm import joinedload
 
     try:
         uid = _uuid.UUID(str(user_id))
@@ -649,6 +666,7 @@ def delete_admin_user(
     dependientes; la baja real se hace por desactivación.
     """
     import uuid as _uuid
+
     from backend.models_auth import Usuario
 
     try:
@@ -672,6 +690,7 @@ def change_user_role(
 ):
     """Asigna un rol de plataforma a un usuario auth por UUID."""
     import uuid as _uuid
+
     from backend.models_auth import RolPlataforma, Usuario
 
     try:
@@ -1022,6 +1041,7 @@ def update_auth_role_definition(
 ):
     """Actualiza permisos de un rol auth."""
     import uuid
+
     from backend.models_auth import RolPlataforma
     try:
         rid = uuid.UUID(role_id)
@@ -1047,6 +1067,7 @@ def delete_auth_role_definition(
 ):
     """Elimina un rol auth (solo si no esta asignado a ningun usuario)."""
     import uuid
+
     from backend.models_auth import RolPlataforma, Usuario
     try:
         rid = uuid.UUID(role_id)
@@ -1072,7 +1093,7 @@ def list_user_module_roles(
 ):
     """Lista todas las asignaciones de roles modulares."""
     try:
-        from backend.models_auth import UsuarioRolModulo, RolPlataforma
+        from backend.models_auth import RolPlataforma, UsuarioRolModulo
         rows = (
             db.query(UsuarioRolModulo, RolPlataforma)
             .join(RolPlataforma, RolPlataforma.id == UsuarioRolModulo.rol_id)
@@ -1101,7 +1122,8 @@ def assign_user_module_role(
 ):
     """Asigna un rol modular a un usuario UUID-based."""
     import uuid
-    from backend.models_auth import UsuarioRolModulo, RolPlataforma, Usuario
+
+    from backend.models_auth import RolPlataforma, Usuario, UsuarioRolModulo
     user_id_str = str(payload.get("user_id", ""))
     modulo = str(payload.get("modulo", "")).strip().lower()
     rol_id_str = str(payload.get("rol_id", ""))
@@ -1141,8 +1163,9 @@ def remove_user_module_role(
     current_user: models.User = Depends(require_admin),
 ):
     """Elimina una asignacion de rol modular."""
-    from datetime import datetime, timezone
     import uuid
+    from datetime import datetime, timezone
+
     from backend.models_auth import UsuarioRolModulo
     try:
         aid = uuid.UUID(assignment_id)
@@ -1167,7 +1190,7 @@ def list_users_with_roles(
 
     Util para el panel de administracion de permisos granulares.
     """
-    from backend.models_auth import Usuario, RolPlataforma, UsuarioRolModulo
+    from backend.models_auth import RolPlataforma, Usuario, UsuarioRolModulo
     from backend.models_crm import Persona
 
     users = db.query(Usuario).all()

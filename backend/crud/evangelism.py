@@ -3,21 +3,19 @@
 from __future__ import annotations
 
 import uuid
-from uuid import UUID
-
 from typing import List, Optional
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud._utils import _utcnow
-from backend.models_evangelism import EstrategiaEvangelismo
 from backend.models_evangelism import (
-    ParticipanteGrupo, Asistencia,
-)
-from backend.models_evangelism import (
-    RolPersonalizadoEstrategia,
+    Asistencia,
+    EstrategiaEvangelismo,
+    ParticipanteGrupo,
     RegistroSeguimiento,
+    RolPersonalizadoEstrategia,
 )
 from backend.schemas.evangelism import (
     AsistenciaSesionCreate,
@@ -29,7 +27,6 @@ from backend.schemas.evangelism import (
     RegistroSeguimientoUpdate,
     RolPersonalizadoEstrategiaCreate,
 )
-
 
 # ──────────────────────────────────────────────
 # ESTRATEGIAS

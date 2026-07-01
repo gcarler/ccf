@@ -11,7 +11,6 @@ All models follow CCF conventions:
 from backend.models_shared import *
 from backend.models_shared import _utcnow
 
-
 # ─── 1. AUDIT TRAIL ─────────────────────────────────────────────────────────
 
 class AuditLog(Base):

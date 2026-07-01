@@ -10,19 +10,42 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from backend.api import (
+    academy,
+    admin,
+    agenda,
+    agents,
+    analytics,
+    auth_v3,
+    chat,
+    cms,
+    cms_content,
+    cms_v2,
+    community,
+    crm,
+    dashboard,
+    donations,
+    enterprise_cms,
+    evangelism,
+    finance,
+    governance,
+    graph,
+    kernel,
+    messaging,
+    prayer,
+    projects,
+    public,
+    spiritual_life,
+    support,
+    system,
+    tables,
+    workspace,
+    youtube,
+)
 from backend.core.config import get_settings
 from backend.core.logging import request_id_middleware
 from backend.core.security_headers import mount_security_headers
 from backend.middleware.module_isolation import register_module_isolation
-
-from backend.api import (
-    academy, admin, agenda, agents,
-    auth_v3, analytics, chat, cms, cms_v2, community,
-    cms_content, crm, dashboard, donations, enterprise_cms,
-    evangelism, finance, governance, graph, kernel, messaging,
-    prayer, projects, public, spiritual_life, support, system,
-    tables, workspace, youtube,
-)
 
 logging.basicConfig(level=logging.INFO)  # Fallback; configure_logging() in core/logging overrides
 logger = logging.getLogger("CCF-Core")
