@@ -18,21 +18,13 @@ Plus
 import { useRouter } from 'next/navigation';
 import { useCallback,useEffect,useMemo,useState } from 'react';
 import { toast } from 'sonner';
+import type { Strategy } from './types';
 
-export interface EvangelismStrategy {
- id: string;
- name: string;
- description: string;
- codigo?: string;
- clase_raiz?: string;
- activa: boolean;
- status: 'active' | 'pending' | 'done';
- strategy_type: string;
- start_date?: string | null;
- end_date?: string | null;
- created_at: string;
- updated_at: string;
-}
+// Antes: este archivo redeclaraba una interfaz EvangelismStrategy local
+// que duplicaba (y divergía parcialmente de) Strategy en ./types.ts.
+// Centralizamos en ./types.ts para tener un solo contrato UI y reusamos
+// aqui con un alias retrocompatible.
+export type EvangelismStrategy = Strategy;
 
 export default function EvangelismClient() {
  const { token } = useAuth();

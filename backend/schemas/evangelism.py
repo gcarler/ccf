@@ -388,3 +388,53 @@ class AsistenciaGrupoCreate(BaseModel):
     persona_id: UUID
     status: str = "present"
     notes: Optional[str] = None
+
+
+# ──────────────────────────────────────────────
+# SESION GRUPO — respuesta
+# ──────────────────────────────────────────────
+
+class SesionGrupoResponse(BaseModel):
+    """Schema de respuesta canonica para endpoints de ``SesionGrupo``.
+
+    Serializa ``UUID`` a ``str`` y ``datetime`` a ISO-8601 para preservar
+    el contrato que el frontend esperaba, antes expuesto como ``dict``
+    manual en ``PUT /api/evangelism/sessions/{id}``. Unificar la
+    serializacion evita drift de tipos entre backend y frontend y
+    permite que el handler retorne un modelo Pydantic en vez de un
+    ``dict`` artesanal.
+
+    Los atributos del ORM se leen via ``from_attributes=True``
+    (``orm_config``): los synonyms ``session_date``, ``status``,
+    ``topic``, ``report_notes``, ``cancellation_reason`` se resuelven
+    automaticamente desde las columnas en espanol de
+    ``backend.models_evangelism.SesionGrupo``.
+    """
+    id: str
+    grupo_id: str
+    session_date: Optional[datetime] = None
+    status: str = "Realizada"
+    estado_habilitacion: str = "DESHABILITADO"
+    topic: Optional[str] = None
+    offering_amount: Optional[float] = None
+    report_notes: Optional[str] = None
+    cancellation_reason: Optional[str] = None
+    novelty_type: Optional[str] = None
+    novelty_detail: Optional[str] = None
+    reported_at: Optional[datetime] = None
+
+    model_config = orm_config
+
+    @field_validator("id", "grupo_id", mode="before")
+    @classmethod
+    def _coerce_uuid_to_str(cls, v):
+        """Acepta ``UUID`` o ``str`` y siempre emite ``str``.
+
+        Esencial para mantener el contrato historico con el frontend
+        (donde ``session_id`` y ``grupo_id`` se reciben como string).
+        """
+        if v is None:
+            return v
+        if isinstance(v, UUID):
+            return str(v)
+        return v

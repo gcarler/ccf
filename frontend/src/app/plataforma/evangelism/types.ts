@@ -92,6 +92,16 @@ export interface Strategy {
  sede_id?: string;
  grupos_count?: number;
  sessions_count?: number;
+ // Campos adicionales consumidos por EvangelismClient (badges de estado,
+ // tipo legible y marcas de tiempo). El endpoint ``/api/evangelism/
+ // strategies`` los devuelve siempre, por lo que se mantienen como
+ // obligatorios para preservar la firma de tipo que el indexado por
+ // ``Record<'pending'|'active'|'done', string>`` requiere en
+ // EvangelismClient.
+ status: 'active' | 'pending' | 'done';
+ strategy_type: string;
+ created_at: string;
+ updated_at: string;
 }
 
 export interface StrategyGroup {

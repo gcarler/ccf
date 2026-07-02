@@ -461,7 +461,7 @@ def get_session_detail(
     }
 
 
-@dynamic_router.put("/sessions/{session_id}", response_model=dict)
+@dynamic_router.put("/sessions/{session_id}", response_model=schemas.SesionGrupoResponse)
 def update_session(
     session_id: UUID,
     update: schemas.SesionGrupoUpdate,
@@ -488,23 +488,11 @@ def update_session(
     db_session.reported_at = _datetime.now(_timezone.utc)
     db.commit()
     db.refresh(db_session)
-    # Retorna dict manual sin pasar por ``SesionGrupoResponse`` (no existe
-    # ese schema en ``schemas/evangelism.py``). Serialización nativa con
-    # UUID→str garantiza ``response_model=dict`` OK.
-    return {
-        "id": str(db_session.id),
-        "grupo_id": str(db_session.grupo_id),
-        "session_date": (db_session.fecha_sesion.isoformat() if db_session.fecha_sesion else None),
-        "status": (db_session.estado or "Realizada"),
-        "estado_habilitacion": getattr(db_session, "estado_habilitacion", "DESHABILITADO"),
-        "topic": db_session.tema_estudio,
-        "offering_amount": (float(db_session.offering_amount) if db_session.offering_amount is not None else None),
-        "report_notes": db_session.report_notes,
-        "cancellation_reason": db_session.cancellation_reason,
-        "novelty_type": getattr(db_session, "novelty_type", None),
-        "novelty_detail": getattr(db_session, "novelty_detail", None),
-        "reported_at": (db_session.reported_at.isoformat() if getattr(db_session, "reported_at", None) else None),
-    }
+    # Serializar via SesionGrupoResponse (antes dict manual). El validador
+    # ``_coerce_uuid_to_str`` garantiza que ``id`` y ``grupo_id`` se
+    # expongan como string en el JSON — preserva el contrato con el
+    # frontend (que espera ``session_id`` y ``grupo_id`` como string).
+    return schemas.SesionGrupoResponse.model_validate(db_session)
 
 
 @dynamic_router.delete("/sessions/{session_id}")
