@@ -18,9 +18,9 @@ export default function FaroMobileNav() {
     const items = navItems;
 
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 w-full flex justify-center z-50" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+        <nav className="md:hidden fixed bottom-0 left-0 w-full flex justify-center z-50" style={{ paddingBottom: 'max(1.75rem, env(safe-area-inset-bottom))' }}>
             <div
-                className="backdrop-blur-2xl w-[90%] max-w-md rounded-[0.75rem] px-3 py-3 flex justify-between items-center"
+                className="backdrop-blur-2xl w-[92%] max-w-md rounded-[1rem] px-4 py-3.5 flex justify-between items-center"
                 style={{
                     background: "var(--site-mobile-nav-bg)",
                     boxShadow: "var(--site-mobile-nav-shadow)",
@@ -32,7 +32,7 @@ export default function FaroMobileNav() {
                         <Link
                             key={href}
                             href={href}
-                            className="flex flex-col items-center justify-center rounded-[0.75rem] p-2 transition-all"
+                            className="flex flex-col items-center justify-center rounded-[0.875rem] px-2.5 py-2 transition-all"
                             style={isActive
                                 ? {
                                       color: "var(--site-primary)",
@@ -44,8 +44,8 @@ export default function FaroMobileNav() {
                                   }
                             }
                         >
-                            <Icon size={20} strokeWidth={2} aria-hidden="true" />
-                            <span className="font-body text-[10px] font-medium tracking-wide">{label}</span>
+                            <Icon size={22} strokeWidth={2} aria-hidden="true" />
+                            <span className="font-body text-[11px] font-medium tracking-wide mt-1">{label}</span>
                         </Link>
                     );
                 })}

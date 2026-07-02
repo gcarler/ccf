@@ -99,7 +99,7 @@ export default function PublicHomePage() {
         
             <main>
             {/* ─── HERO ─────────────────────────────────────────────── */}
-            <section className="relative min-h-[92svh] md:min-h-screen flex items-center justify-center overflow-hidden">
+            <section className="relative faro-hero flex items-center justify-center overflow-hidden">
                 {/* Background: imagen faro con overlay */}
                 <div
                     className="absolute inset-0 bg-cover bg-center"
@@ -126,7 +126,7 @@ export default function PublicHomePage() {
                 />
 
                 {/* Content */}
-                <div className="relative z-10 text-center w-full px-3 md:px-4 lg:px-8 xl:px-12 pt-24">
+                <div className="relative z-10 text-center w-full faro-container pt-24">
                     <span
                         className="inline-block text-xs font-bold uppercase tracking-wide mb-3"
                         style={{ color: "var(--site-hero-badge-color)" }}
@@ -134,7 +134,7 @@ export default function PublicHomePage() {
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="mx-auto max-w-5xl font-bold tracking-tight leading-[0.9] mb-3 text-5xl sm:text-6xl lg:text-8xl"
+                        className="mx-auto max-w-5xl font-bold faro-display mb-3 text-5xl sm:text-6xl lg:text-8xl"
                         style={{ color: "var(--site-on-hero)" }}
                     >
                         {heroTitleLead}{" "}
@@ -159,18 +159,19 @@ export default function PublicHomePage() {
                         </span>
                     </h1>
                     <p
-                        className="text-base sm:text-lg max-w-2xl mx-auto leading-relaxed mb-3"
-                        style={{ color: "var(--site-on-hero)", opacity: 0.75 }}
+                        className="faro-body text-base sm:text-lg max-w-2xl mx-auto mb-8"
+                        style={{ color: "var(--site-on-hero)", opacity: 0.8 }}
                     >
                         {heroDescription}
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Link
                             href="/conocer-a-jesus"
-                            className="group flex items-center gap-3 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide text-white transition-all hover:scale-105"
+                            className="faro-button group"
                             style={{
                                 background: "var(--site-hero-cta-gradient)",
                                 boxShadow: "var(--site-hero-cta-shadow)",
+                                color: "var(--site-on-hero)",
                             }}
                         >
                             {heroPrimaryCta}
@@ -181,7 +182,7 @@ export default function PublicHomePage() {
                         </Link>
                         <Link
                             href="/predicas"
-                            className="flex items-center gap-3 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide transition-all hover:scale-105"
+                            className="faro-button"
                             style={{
                                 background: "var(--site-hero-bg-light)",
                                 border: "2px solid var(--site-hero-border-light)",
@@ -211,15 +212,15 @@ export default function PublicHomePage() {
 
             {/* ─── BENTO: Bienvenidos a Casa ────────────────────────── */}
             <section
-                className="py-16 md:py-24 px-4 sm:px-6 md:px-8 xl:px-12 overflow-hidden"
+                className="faro-section overflow-hidden"
                 style={{ background: "var(--site-surface-container-low)" }}
             >
-                <div className="w-full">
+                <div className="faro-container">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, margin: "-100px" }}
-                        className="mb-10"
+                        className="mb-14"
                     >
                         <span
                             className="text-xs font-bold uppercase tracking-widest block mb-4"
@@ -228,17 +229,17 @@ export default function PublicHomePage() {
                             {homeEyebrow}
                         </span>
                         <h2
-                            className="font-black tracking-tight leading-tight text-4xl sm:text-5xl lg:text-6xl"
+                            className="font-black faro-headline text-4xl sm:text-5xl lg:text-6xl"
                             style={{ color: "var(--site-on-background)" }}
                         >
                             {homeSectionTitle}
                         </h2>
-                        <p className="mt-4 text-base sm:text-lg max-w-3xl" style={{ color: "var(--site-on-surface-variant)" }}>
+                        <p className="faro-body mt-6 text-base sm:text-lg max-w-3xl" style={{ color: "var(--site-on-surface-variant)" }}>
                             {homeSectionDescription}
                         </p>
                     </motion.div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6">
                         {/* Card grande — Conocer a Jesús */}
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
@@ -247,13 +248,17 @@ export default function PublicHomePage() {
                             transition={{ delay: 0.1 }}
                             className="sm:col-span-2 md:col-span-2 rounded-2xl flex flex-col justify-end group relative overflow-hidden min-h-[420px]"
                         >
-                            <Image
-                                src={(homeFeaturedCard?.img as string) || "/images/pastores-banner.jpg"}
-                                alt={(homeFeaturedCard?.alt as string) || "Equipo pastoral de FARO"}
-                                fill
-                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 66vw"
-                                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                            />
+                            {homeFeaturedCard?.img ? (
+                                <Image
+                                    src={homeFeaturedCard.img as string}
+                                    alt={(homeFeaturedCard?.alt as string) || "Equipo pastoral de FARO"}
+                                    fill
+                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 66vw"
+                                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                />
+                            ) : (
+                                <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))/0.2] via-[hsl(var(--secondary))/0.18] to-[hsl(var(--background))]" />
+                            )}
                             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 55%, transparent 100%)" }} />
                             <div className="relative z-10 p-8">
                                 <h3 className="text-2xl md:text-3xl font-black text-white mb-3">
@@ -272,26 +277,7 @@ export default function PublicHomePage() {
                         </motion.div>
 
                         {/* Mini cards con imagen */}
-                        {(homeCards.length > 0 ? homeCards : [
-                            {
-                                title: "Librería",
-                                desc: "Recursos para profundizar en tu estudio bíblico.",
-                                href: "/cursos",
-                                img: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80",
-                            },
-                            {
-                                title: "Horarios",
-                                desc: "Reuniones presenciales y online cada semana.",
-                                href: "/eventos",
-                                img: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80",
-                            },
-                            {
-                                title: "Sedes",
-                                desc: "Encuéntranos en tu ciudad.",
-                                href: "/sedes",
-                                img: "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=600&q=80",
-                            },
-                        ]).map((card, idx) => {
+                        {homeCards.map((card, idx) => {
                             const title = card.title as string;
                             const desc = card.desc as string;
                             const href = card.href as string;
@@ -309,13 +295,17 @@ export default function PublicHomePage() {
                                     href={href || "#"}
                                     className="block rounded-2xl overflow-hidden group relative min-h-[130px] flex flex-col justify-end transition-transform hover:scale-[1.02]"
                                 >
-                                    <Image
-                                        src={img || "https://picsum.photos/seed/1506905925346-21bda4d32df4/800/600"}
-                                        alt={alt || title}
-                                        fill
-                                        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
-                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                    />
+                                    {img ? (
+                                        <Image
+                                            src={img}
+                                            alt={alt || title}
+                                            fill
+                                            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))/0.18] to-[hsl(var(--surface-2))/0.35]" />
+                                    )}
                                     <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)" }} />
                                     <div className="relative z-10 p-5">
                                         <h4 className="font-black text-white text-base mb-1">{title}</h4>
@@ -331,15 +321,15 @@ export default function PublicHomePage() {
 
             {/* ─── ACTIVIDADES RECIENTES ────────────────────────────── */}
             <section
-                className="py-8 md:py-12 px-4 sm:px-6 md:px-8 xl:px-12 overflow-hidden"
+                className="faro-section-tight overflow-hidden"
                 style={{ background: "var(--site-surface)" }}
             >
-                <div className="w-full">
+                <div className="faro-container">
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        className="flex justify-between items-end mb-6"
+                        className="flex justify-between items-end mb-10"
                     >
                         <div>
                             <span
@@ -349,7 +339,7 @@ export default function PublicHomePage() {
                                 {activitiesEyebrow}
                             </span>
                             <h2
-                                className="font-bold text-2xl md:text-3xl tracking-tight"
+                                className="font-bold faro-headline text-2xl md:text-3xl"
                                 style={{ color: "var(--site-on-background)" }}
                             >
                                 {activitiesTitle}
@@ -367,11 +357,11 @@ export default function PublicHomePage() {
                         </Link>
                     </motion.div>
                     {publicEvents.length === 0 ? (
-                        <p className="text-center py-1.5" style={{ color: "var(--site-on-surface-variant)" }}>
+                        <p className="faro-body text-center py-2" style={{ color: "var(--site-on-surface-variant)" }}>
                             {activitiesEmpty}
                         </p>
                     ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6">
                         {publicEvents.slice(0, 3).map(({ img, tag, date, title, desc }, idx: number) => (
                             <motion.div
                                 key={title}
@@ -385,13 +375,17 @@ export default function PublicHomePage() {
                                     className="relative aspect-video rounded-lg overflow-hidden mb-4 shadow-md"
                                     style={{ background: "var(--site-surface-container-high)" }}
                                 >
-                                    <Image
-                                        src={img || "https://picsum.photos/seed/1506905925346-21bda4d32df4/800/600"}
-                                        alt={title || "Image"}
-                                        fill
-                                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                                        className="object-cover group-hover:scale-105 transition-transform duration-700"
-                                    />
+                                    {img ? (
+                                        <Image
+                                            src={img}
+                                            alt={title || "Image"}
+                                            fill
+                                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                            className="object-cover group-hover:scale-105 transition-transform duration-700"
+                                        />
+                                    ) : (
+                                        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))/0.18] to-[hsl(var(--surface-2))/0.35]" />
+                                    )}
                                 </div>
                                 <div className="flex gap-3 mb-3 items-center">
                                     <span
@@ -430,23 +424,23 @@ export default function PublicHomePage() {
             </section>
 
             {/* ─── CTA NEWSLETTER ───────────────────────────────────── */}
-            <section className="py-16 md:py-24 px-4 sm:px-6 md:px-8 xl:px-12" style={{ background: "var(--site-surface-container-low)" }}>
+            <section className="faro-section" style={{ background: "var(--site-surface-container-low)" }}>
                 <motion.div
                     initial={{ opacity: 0, y: 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="max-w-3xl mx-auto text-center"
+                    className="faro-container max-w-3xl mx-auto text-center"
                 >
                     <span className="inline-block text-xs font-bold uppercase tracking-widest mb-5 px-4 py-1.5 rounded-full" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
                         {newsletterEyebrow}
                     </span>
                     <h2
-                        className="font-black tracking-tight mb-5 leading-tight text-3xl sm:text-4xl lg:text-5xl"
+                        className="font-black faro-headline mb-5 text-3xl sm:text-4xl lg:text-5xl"
                         style={{ color: "var(--site-on-background)" }}
                     >
                         {newsletterTitle}
                     </h2>
-                    <p className="text-base sm:text-lg mb-10 leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
+                    <p className="faro-body text-base sm:text-lg mb-10 mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>
                         {newsletterDescription.split('\n').map((line, i) => (
                             <React.Fragment key={i}>
                                 {i > 0 && <br />}
@@ -460,7 +454,7 @@ export default function PublicHomePage() {
                     {nlStatus === "sent" ? (
                         <div className="py-6">
                             <p className="text-2xl font-black mb-2" style={{ color: "var(--site-on-background)" }}>{newsletterSuccessTitle}</p>
-                            <p className="text-base" style={{ color: "var(--site-on-surface-variant)" }}>{newsletterSuccessDesc}</p>
+                            <p className="faro-body text-base mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>{newsletterSuccessDesc}</p>
                         </div>
                     ) : (
                         <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
@@ -481,10 +475,11 @@ export default function PublicHomePage() {
                             <button
                                 type="submit"
                                 disabled={nlStatus === "sending"}
-                                className="shrink-0 px-8 py-4 rounded-full font-black text-sm uppercase tracking-wider text-white transition-all hover:scale-105 disabled:opacity-60"
+                                className="faro-button shrink-0"
                                 style={{
                                     background: "var(--site-cta-gradient)",
                                     boxShadow: "var(--site-cta-shadow)",
+                                    color: "var(--site-on-primary)",
                                 }}
                             >
                                 {nlStatus === "sending" ? "Enviando..." : newsletterSubmit}

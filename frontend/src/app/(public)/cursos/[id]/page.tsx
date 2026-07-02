@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { PREMIUM_COURSES, CourseItem } from "@/lib/data/cursos";
+import { CourseItem } from "@/lib/data/cursos";
 import { ArrowLeft, CheckCircle2, Clock, User, BookOpen, Share2 } from "lucide-react";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
@@ -32,11 +32,6 @@ export default function CursoDetailPage() {
                 setLoading(false);
             })
             .catch(() => {
-                // Try finding locally as fallback
-                const localCourse = PREMIUM_COURSES.find(c => c.id === id);
-                if (localCourse) {
-                    setCourse(localCourse);
-                }
                 setLoading(false);
             });
     }, [id]);
@@ -202,13 +197,17 @@ export default function CursoDetailPage() {
                         className="relative aspect-video lg:aspect-square rounded-lg overflow-hidden shadow-2xl border"
                         style={{ borderColor: "var(--site-outline-variant)" }}
                     >
-                        <Image
-                            src={course.imageUrl || "https://picsum.photos/seed/default-course/800/800"}
-                            alt={course.title}
-                            fill
-                            className="object-cover"
-                            priority
-                        />
+                        {course.imageUrl ? (
+                            <Image
+                                src={course.imageUrl}
+                                alt={course.title}
+                                fill
+                                className="object-cover"
+                                priority
+                            />
+                        ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))/0.18] to-[hsl(var(--surface-2))/0.35]" />
+                        )}
                     </motion.div>
                 </div>
             </header>

@@ -132,13 +132,13 @@ export default function FaroFooter() {
                             className="rounded-lg border p-4 sm:p-0 sm:border-0 lg:col-span-2"
                             style={{ borderColor: "var(--site-outline-variant)" }}
                         >
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6" style={{ color: "var(--site-primary)" }}>
+                            <h4 className="text-xs font-bold uppercase tracking-widest mb-5 sm:mb-7" style={{ color: "var(--site-primary)" }}>
                                 {navSectionTitle}
                             </h4>
-                            <ul className="grid gap-2.5 sm:gap-3">
+                            <ul className="grid gap-3 sm:gap-4">
                                 {navLinks.map(({ href, label }) => (
                                     <li key={href}>
-                                        <Link href={href} className="block min-h-7 text-sm leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                        <Link href={href} className="block min-h-8 text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
                                             {label}
                                         </Link>
                                     </li>
@@ -151,13 +151,13 @@ export default function FaroFooter() {
                             className="rounded-lg border p-4 sm:p-0 sm:border-0 lg:col-span-2"
                             style={{ borderColor: "var(--site-outline-variant)" }}
                         >
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6" style={{ color: "var(--site-primary)" }}>
+                            <h4 className="text-xs font-bold uppercase tracking-widest mb-5 sm:mb-7" style={{ color: "var(--site-primary)" }}>
                                 {resourceSectionTitle}
                             </h4>
-                            <ul className="grid gap-2.5 sm:gap-3">
+                            <ul className="grid gap-3 sm:gap-4">
                                 {resourceLinks.map(({ href, label }) => (
                                     <li key={href}>
-                                        <Link href={href} className="block min-h-7 text-sm leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                        <Link href={href} className="block min-h-8 text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
                                             {label}
                                         </Link>
                                     </li>
@@ -170,24 +170,24 @@ export default function FaroFooter() {
                             className="col-span-2 rounded-lg border p-4 sm:p-0 sm:border-0 sm:col-span-2 lg:col-span-3"
                             style={{ borderColor: "var(--site-outline-variant)" }}
                         >
-                            <h4 className="text-[10px] font-bold uppercase tracking-widest mb-4 sm:mb-6" style={{ color: "var(--site-primary)" }}>
+                            <h4 className="text-xs font-bold uppercase tracking-widest mb-5 sm:mb-7" style={{ color: "var(--site-primary)" }}>
                                 {contactSectionTitle}
                             </h4>
-                            <ul className="grid gap-2.5 sm:grid-cols-3 lg:grid-cols-1 sm:gap-3">
+                            <ul className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 sm:gap-4">
                                 <li>
                                     {SITE_EMAIL ? (
-                                        <a href={`mailto:${SITE_EMAIL}`} className="block min-h-7 break-words text-sm leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                        <a href={`mailto:${SITE_EMAIL}`} className="block min-h-8 break-words text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
                                             {SITE_EMAIL}
                                         </a>
                                     ) : null}
                                 </li>
                                 <li>
-                                    <Link href="/sedes" className="block min-h-7 text-sm leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    <Link href="/sedes" className="block min-h-8 text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
                                         {locationLabel}
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link href="/boletin" className="block min-h-7 text-sm leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    <Link href="/boletin" className="block min-h-8 text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
                                         {newsletterLabel}
                                     </Link>
                                 </li>
@@ -199,12 +199,12 @@ export default function FaroFooter() {
 
             {/* Bottom bar */}
             <div
-                className="px-4 sm:px-6 lg:px-8 xl:px-12 py-5 border-t"
+                className="faro-container py-6 sm:py-7 border-t"
                 style={{ borderColor: "var(--site-outline-variant)" }}
             >
-                <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-3 text-center sm:flex-row sm:text-left">
+                <div className="flex w-full flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
                     <p
-                        className="max-w-[32rem] text-[11px] leading-relaxed sm:text-xs"
+                        className="max-w-[36rem] text-xs leading-relaxed sm:text-sm"
                         style={{ color: "var(--site-on-surface-variant)" }}
                     >
                         © {new Date().getFullYear()}{" "}

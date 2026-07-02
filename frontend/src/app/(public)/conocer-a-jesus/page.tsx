@@ -123,7 +123,7 @@ export default function ConocerAJesusPage() {
     return (
         <main className="pt-[88px]">
             {/* ── HERO ──────────────────────────────────────── */}
-            <header className="relative min-h-[88svh] md:min-h-screen flex items-center overflow-hidden">
+            <header className="relative faro-hero flex items-center overflow-hidden">
                 {/* Background: lighthouse in fog */}
                 <div
                     className="absolute inset-0 bg-cover bg-center"
@@ -150,7 +150,7 @@ export default function ConocerAJesusPage() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="relative z-10 px-4 sm:px-6 md:px-10 xl:px-16 pb-8 md:pb-16"
+                    className="relative z-10 faro-container pb-8 md:pb-16"
                 >
                     <span
                         className="inline-block px-4 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wide mb-3"
@@ -163,7 +163,7 @@ export default function ConocerAJesusPage() {
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="max-w-3xl text-5xl sm:text-6xl lg:text-8xl font-bold tracking-tight leading-[0.95] mb-3"
+                        className="max-w-3xl text-5xl sm:text-6xl lg:text-8xl font-bold faro-display mb-4"
                         style={{ color: "var(--site-on-hero)" }}
                     >
                         {heroTitleLead}{" "}
@@ -179,10 +179,10 @@ export default function ConocerAJesusPage() {
                         </span>{" "}
                         {heroTitleTail}
                     </h1>
-                    <RichText html={heroDescription} className="text-base sm:text-lg max-w-2xl leading-relaxed mb-3" />
+                    <RichText html={heroDescription} className="faro-body text-base sm:text-lg max-w-2xl mb-8" />
                     <a
                         href="#contacto"
-                        className="inline-flex items-center gap-3 px-4 py-2 rounded-full font-black text-sm uppercase tracking-wide transition-all hover:scale-105"
+                        className="faro-button"
                         style={{
                             background: "var(--site-hero-cta-gradient)",
                             color: "var(--site-on-hero)",
@@ -197,37 +197,37 @@ export default function ConocerAJesusPage() {
 
             {/* ── INTRO EDITORIAL ─────────────────────────── */}
             <section
-                className="py-8 md:py-12 lg:py-16 px-4 sm:px-6 md:px-8 xl:px-12"
+                className="faro-section"
                 style={{ background: "var(--site-surface-container-low)" }}
             >
-                <div className="grid md:grid-cols-2 gap-3 items-center">
+                <div className="faro-container grid md:grid-cols-2 gap-6 md:gap-10 items-center">
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                     >
                         <h2
-                            className="text-lg font-bold mb-3"
+                            className="faro-headline text-2xl md:text-3xl font-bold mb-4"
                             style={{ color: "var(--site-primary)" }}
                         >
                             {introTitle}
                         </h2>
                         <div className="space-y-5">
                             <div
-                                className="text-lg leading-relaxed"
+                                className="faro-body text-lg"
                                 style={{ color: "var(--site-on-surface-variant)" }}
                             >
                                 <RichText html={introParagraph1} className="[&_strong]:text-site-on-surface" />
                             </div>
                             <p
-                                className="text-lg leading-relaxed"
+                                className="faro-body text-lg"
                                 style={{ color: "var(--site-on-surface-variant)" }}
                             >
                                 {introParagraph2}
                             </p>
                         </div>
                     </motion.div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-6">
                         {benefitCards.map(({ icon, title, desc }, idx) => (
                             <motion.div
                                 key={title}
@@ -235,7 +235,7 @@ export default function ConocerAJesusPage() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.1 * (idx + 1) }}
-                                className="rounded-lg p-3 transition-transform hover:-translate-y-1 hover:shadow-lg"
+                                className="faro-card p-5"
                                 style={{ background: "var(--site-surface-container)" }}
                             >
                                 <div
@@ -254,7 +254,7 @@ export default function ConocerAJesusPage() {
                                     {title}
                                 </h4>
                                 <p
-                                    className="text-xs leading-relaxed"
+                                    className="faro-body text-xs"
                                     style={{ color: "var(--site-on-surface-variant)" }}
                                 >
                                     {desc}
@@ -267,22 +267,22 @@ export default function ConocerAJesusPage() {
 
             {/* ── TESTIMONIOS RÁPIDOS ──────────────────────── */}
             <section
-                className="py-8 md:py-12 lg:py-16 px-4 sm:px-6 md:px-8 xl:px-12"
+                className="faro-section"
                 style={{ background: "var(--site-surface)" }}
             >
-                <div>
+                <div className="faro-container">
                     <h2
-                        className="text-xl font-bold mb-3 text-center"
+                        className="faro-headline text-xl md:text-2xl font-bold mb-6 text-center"
                         style={{ color: "var(--site-on-background)" }}
                     >
                         {testimonialsTitle}
                     </h2>
                     {testimonials.length === 0 ? (
-                        <p className="text-center col-span-full py-8" style={{ color: "var(--site-on-surface-variant)" }}>
+                        <p className="faro-body text-center col-span-full py-8" style={{ color: "var(--site-on-surface-variant)" }}>
                             {testimonialsEmptyTitle}
                         </p>
                     ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6">
                         {testimonials.map((t, idx) => (
                             <motion.div
                                 key={t.id}
@@ -290,14 +290,14 @@ export default function ConocerAJesusPage() {
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.1 * idx }}
-                                className="rounded-lg p-4 border-b-4 hover:shadow-md transition-shadow"
+                                className="faro-card p-6 border-b-4"
                                 style={{
                                     background: "var(--site-surface-container)",
                                     borderColor: "var(--site-primary)",
                                 }}
                             >
                                 <p
-                                    className="text-lg italic leading-relaxed mb-3"
+                                    className="faro-body text-lg italic mb-3"
                                     style={{ color: "var(--site-on-surface)" }}
                                 >
                                     &quot;{t.content}&quot;
@@ -318,20 +318,20 @@ export default function ConocerAJesusPage() {
             {/* ── FORMULARIO DE CONTACTO ───────────────────── */}
             <section
                 id="contacto"
-                className="py-8 md:py-12 lg:py-16 px-4 sm:px-6 md:px-8 xl:px-12"
+                className="faro-section"
                 style={{ background: "var(--site-surface-container-low)" }}
             >
-                <div className="grid md:grid-cols-2 gap-3 items-start">
+                <div className="faro-container grid md:grid-cols-2 gap-6 md:gap-10 items-start">
                     {/* Info lado izq */}
                     <div>
                         <h2
-                            className="text-lg font-bold mb-3"
+                            className="faro-headline text-2xl md:text-3xl font-bold mb-4"
                             style={{ color: "var(--site-on-background)" }}
                         >
                             {contactTitle}
                         </h2>
                         <p
-                            className="text-lg leading-relaxed mb-3"
+                            className="faro-body text-lg mb-5"
                             style={{ color: "var(--site-on-surface-variant)" }}
                         >
                             {contactDescription}
@@ -363,10 +363,9 @@ export default function ConocerAJesusPage() {
                         initial={{ opacity: 0, x: 30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        className="rounded-lg p-4 md:p-4 shadow-xl backdrop-blur-xl"
+                        className="faro-card p-6 md:p-8"
                         style={{
                             background: "var(--site-surface-container)",
-                            border: "1px solid var(--site-outline-variant)"
                         }}
                     >
                         {status === "sent" ? (
@@ -383,13 +382,13 @@ export default function ConocerAJesusPage() {
                                 >
                                     {successTitle}
                                 </h3>
-                                <p style={{ color: "var(--site-on-surface-variant)" }}>
+                                <p className="faro-body" style={{ color: "var(--site-on-surface-variant)" }}>
                                     {successDescription}
                                 </p>
                             </div>
                         ) : (
-                            <form onSubmit={handleSubmit} className="space-y-3">
-                                <div className="grid md:grid-cols-2 gap-3">
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="grid md:grid-cols-2 gap-4">
                                     {[
                                         { key: "name", label: nameLabel, placeholder: namePlaceholder, type: "text" },
                                         { key: "phone", label: phoneLabel, placeholder: phonePlaceholder, type: "tel" },
@@ -409,7 +408,7 @@ export default function ConocerAJesusPage() {
                                                 }
                                                 placeholder={placeholder}
                                                 required
-                                                className="w-full rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 transition-all"
+                                                className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 transition-all"
                                                 style={{
                                                     background: "var(--site-surface)",
                                                     border: "2px solid var(--site-outline-variant)",
@@ -435,7 +434,7 @@ export default function ConocerAJesusPage() {
                                         }
                                         placeholder={messagePlaceholder}
                                         rows={4}
-                                        className="w-full rounded-lg px-3 py-1.5 text-sm focus:outline-none resize-none"
+                                        className="w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none resize-none"
                                         style={{
                                             background: "var(--site-surface)",
                                             border: "2px solid var(--site-outline-variant)",
@@ -446,7 +445,7 @@ export default function ConocerAJesusPage() {
                                     <button
                                         type="submit"
                                         disabled={status === "sending"}
-                                        className="w-full py-2 rounded-lg font-black text-sm uppercase tracking-wide transition-all hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                                        className="faro-button w-full"
                                     style={{
                                         background:
                                             "linear-gradient(135deg, var(--site-primary), var(--site-secondary))",

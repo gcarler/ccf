@@ -259,3 +259,154 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FARO PUBLIC — AMPLITUDE & SOPHISTICATION LAYER
+   Increases perceived luxury through generous spacing, larger type,
+   fluid motion and refined surface treatments.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Base public scale: larger, airier foundation */
+.theme-light,
+.theme-institutional,
+.theme-dark {
+    --faro-section-py: clamp(5rem, 10vw, 9rem);
+    --faro-hero-min-h: 95svh;
+    --faro-container-max: 92rem;
+    --faro-title-spacing: 1.25em;
+    --faro-body-leading: 1.75;
+    --faro-radius-xl: 1.75rem;
+    --faro-radius-2xl: 2.5rem;
+}
+
+@media (min-width: 1280px) {
+    html:has(.theme-light),
+    html:has(.theme-institutional),
+    html:has(.theme-dark) {
+        font-size: 18px;
+    }
+}
+
+/* Generous section rhythm */
+.faro-section {
+    padding-top: var(--faro-section-py);
+    padding-bottom: var(--faro-section-py);
+}
+
+.faro-section-tight {
+    padding-top: calc(var(--faro-section-py) * 0.6);
+    padding-bottom: calc(var(--faro-section-py) * 0.6);
+}
+
+/* Wide, editorial container */
+.faro-container {
+    width: 100%;
+    max-width: var(--faro-container-max);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: clamp(1.5rem, 5vw, 4rem);
+    padding-right: clamp(1.5rem, 5vw, 4rem);
+}
+
+/* Hero that dominates the viewport */
+.faro-hero {
+    min-height: var(--faro-hero-min-h);
+}
+
+/* Sophisticated display typography */
+.faro-display {
+    letter-spacing: -0.035em;
+    line-height: 0.92;
+}
+
+.faro-headline {
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+}
+
+.faro-body {
+    line-height: var(--faro-body-leading);
+    max-width: 70ch;
+}
+
+/* Elegant glass cards */
+.faro-card {
+    background: var(--site-glass-bg);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--site-glass-border);
+    border-radius: var(--faro-radius-xl);
+    box-shadow: var(--site-card-shadow);
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faro-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 48px 80px -24px rgba(0, 0, 0, 0.18);
+}
+
+/* Cinematic reveal animation */
+@keyframes faro-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.faro-reveal {
+    animation: faro-fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Soft ambient glow behind focal elements */
+.faro-ambient-glow {
+    position: relative;
+}
+
+.faro-ambient-glow::before {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    background: radial-gradient(circle at 50% 50%, var(--site-glow-subtle) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Refined buttons */
+.faro-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faro-button:hover {
+    transform: translateY(-2px) scale(1.02);
+}
+
+/* Editorial image treatment */
+.faro-image {
+    border-radius: var(--faro-radius-xl);
+    overflow: hidden;
+    box-shadow: var(--site-card-shadow);
+}
+
+.faro-image img {
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faro-image:hover img {
+    transform: scale(1.05);
+}

@@ -73,11 +73,11 @@ export default function PrivacidadPage() {
         <main className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#07080c] pt-[88px]">
 
             {/* ── Hero ── */}
-            <section className="relative overflow-hidden border-b border-[hsl(var(--border))]/60 dark:border-white/[0.05]">
+            <section className="relative faro-section overflow-hidden border-b border-[hsl(var(--border))]/60 dark:border-white/[0.05]">
                 <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[hsl(var(--primary))/0.06] to-transparent blur-3xl" />
                 </div>
-                <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 py-14 md:py-20 relative z-10">
+                <div className="faro-container relative z-10">
                     <div className="flex items-center gap-2 text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-6">
                         <Link href="/" className="hover:text-[hsl(var(--primary))] transition-colors">Inicio</Link>
                         <ChevronRight size={12} />
@@ -88,7 +88,7 @@ export default function PrivacidadPage() {
                             <Shield size={24} className="text-[hsl(var(--primary))]" />
                         </div>
                         <div>
-                            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-[hsl(var(--text-primary))] dark:text-white tracking-tight mb-3">
+                            <h1 className="faro-headline text-3xl md:text-4xl lg:text-5xl font-black text-[hsl(var(--text-primary))] dark:text-white mb-3">
                                 Política de Privacidad
                             </h1>
                             <div className="flex flex-wrap items-center gap-4 text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
@@ -105,8 +105,8 @@ export default function PrivacidadPage() {
                     </div>
 
                     {/* Resumen ejecutivo */}
-                    <div className="mt-8 p-5 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))/0.06] to-transparent border border-[hsl(var(--primary))/0.12]">
-                        <p className="text-sm md:text-base text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">
+                    <div className="mt-10 p-6 md:p-8 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))/0.06] to-transparent border border-[hsl(var(--primary))/0.12]">
+                        <p className="faro-body text-sm md:text-base text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                             {summary || (
                                 <>
                                     Esta política describe cómo <strong className="text-[hsl(var(--text-primary))] dark:text-white">PLES SAS</strong> y la{" "}
@@ -122,13 +122,13 @@ export default function PrivacidadPage() {
             </section>
 
             {/* ── Contenido + Índice ── */}
-            <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 py-12 md:py-16">
-                <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-start">
+            <div className="faro-section faro-container">
+                <div className="flex flex-col lg:flex-row gap-10 lg:gap-20 items-start">
 
                     {/* Índice lateral */}
-                    <aside className="w-full lg:w-72 shrink-0 lg:sticky lg:top-[108px]">
-                        <div className="rounded-2xl border border-[hsl(var(--border))]/60 dark:border-white/[0.06] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] p-5 shadow-sm">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4">
+                    <aside className="w-full lg:w-80 shrink-0 lg:sticky lg:top-[108px]">
+                        <div className="rounded-2xl border border-[hsl(var(--border))]/60 dark:border-white/[0.06] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] p-6 shadow-sm">
+                            <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4">
                                 Contenido
                             </p>
                             <nav className="space-y-1">
@@ -136,7 +136,7 @@ export default function PrivacidadPage() {
                                     <button
                                         key={s.id}
                                         onClick={() => scrollTo(s.id)}
-                                        className={`w-full text-left text-xs px-3 py-2 rounded-lg transition-all duration-200 ${
+                                        className={`w-full text-left text-sm px-4 py-2.5 rounded-lg transition-all duration-200 ${
                                             activeSection === s.id
                                                 ? "bg-[hsl(var(--primary))/0.1] text-[hsl(var(--primary))] font-semibold"
                                                 : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.04]"
@@ -430,12 +430,12 @@ export default function PrivacidadPage() {
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
     return (
-        <section id={id} className="mb-12 scroll-mt-[108px]">
-            <h2 className="text-xl md:text-2xl font-black text-[hsl(var(--text-primary))] dark:text-white tracking-tight mb-1">
+        <section id={id} className="mb-14 md:mb-16 scroll-mt-[108px]">
+            <h2 className="faro-headline text-2xl md:text-3xl font-black text-[hsl(var(--text-primary))] dark:text-white mb-1">
                 {title}
             </h2>
-            <div className="h-0.5 w-10 rounded-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))] mb-5" />
-            <div className="space-y-4 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm md:text-base leading-relaxed [&_strong]:text-[hsl(var(--text-primary))] [&_strong]:dark:text-white [&_a]:text-[hsl(var(--primary))] [&_a:hover]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-2">
+            <div className="h-0.5 w-10 rounded-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))] mb-6" />
+            <div className="faro-body text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm md:text-base [&_strong]:text-[hsl(var(--text-primary))] [&_strong]:dark:text-white [&_a]:text-[hsl(var(--primary))] [&_a:hover]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-2">
                 {children}
             </div>
         </section>
@@ -444,8 +444,8 @@ function Section({ id, title, children }: { id: string; title: string; children:
 
 function Subsection({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <div className="my-3">
-            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] mb-1">{title}</p>
+        <div className="my-4">
+            <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] mb-2">{title}</p>
             {children}
         </div>
     );
@@ -477,7 +477,7 @@ function InfoRow({ label, value, link }: { label: string; value: string; link?: 
 
 function ContactCard({ title, email, detail, web }: { title: string; email: string; detail: string; web?: string }) {
     return (
-        <div className="p-5 rounded-2xl border border-[hsl(var(--border))]/60 dark:border-white/[0.06] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] shadow-sm space-y-3">
+        <div className="p-6 rounded-2xl border border-[hsl(var(--border))]/60 dark:border-white/[0.06] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] shadow-sm space-y-3">
             <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-sm">{title}</p>
             <a href={`mailto:${email}`}
                 className="inline-flex items-center gap-2 text-sm text-[hsl(var(--primary))] hover:underline">

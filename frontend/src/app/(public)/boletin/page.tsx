@@ -41,24 +41,24 @@ export default function BoletinPage() {
     };
 
     return (
-        <main className="pt-[100px] flex-1 flex items-center justify-center px-3 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16">
+        <main className="pt-[100px] flex-1 flex items-center justify-center">
+            <section className="faro-section faro-container w-full flex items-center justify-center">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="w-full max-w-3xl rounded-2xl p-8 md:p-12 relative overflow-hidden text-center shadow-2xl border"
+                    className="faro-card w-full max-w-3xl p-8 md:p-14 relative overflow-hidden text-center"
                     style={{
                         backgroundColor: "var(--site-primary-container)",
-                        borderColor: "var(--site-outline-variant)"
                     }}
                 >
                     <div className="relative z-10">
                         <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--site-primary)" }}>
                             {subtitle}
                         </p>
-                        <h1 className="font-black text-3xl md:text-4xl lg:text-5xl tracking-tight mb-4" style={{ color: "var(--site-on-background)" }}>
+                        <h1 className="font-black faro-display text-3xl md:text-4xl lg:text-5xl mb-4" style={{ color: "var(--site-on-background)" }}>
                             {title}
                         </h1>
-                        <RichText html={description} className="text-lg md:text-xl mb-8 max-w-xl mx-auto leading-relaxed" />
+                        <RichText html={description} className="faro-body text-lg md:text-xl mb-8 max-w-xl mx-auto" />
                         {status === "sent" ? (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
@@ -86,8 +86,8 @@ export default function BoletinPage() {
                                 <button
                                     type="submit"
                                     disabled={status === "sending"}
-                                    className="px-8 py-3.5 rounded-xl font-bold text-base text-white transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
-                                    style={{ background: "var(--site-cta-gradient)" }}
+                                    className="faro-button disabled:opacity-60 disabled:cursor-not-allowed"
+                                    style={{ background: "var(--site-cta-gradient)", color: "var(--site-on-primary)" }}
                                 >
                                     {status === "sending" ? sendingLabel : ctaText}
                                 </button>
@@ -95,6 +95,7 @@ export default function BoletinPage() {
                         )}
                     </div>
                 </motion.div>
+            </section>
         </main>
     );
 }
