@@ -3,6 +3,8 @@
 import Link from "next/link";
 import React from "react";
 import { SITE_EMAIL, SITE_NAME } from "@/lib/site-config";
+import OptimizedImage from "@/components/ui/OptimizedImage";
+import { useSiteBranding } from "@/lib/site-branding";
 
 type PublicLink = { href: string; label: string; kind?: string };
 
@@ -33,6 +35,7 @@ function socialIcon(kindOrLabel: string) {
 }
 
 export default function FaroFooter() {
+    const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const fallbackNavLinks: PublicLink[] = [
         { href: "/", label: "Inicio" },
         { href: "/nosotros", label: "Sobre Nosotros" },
@@ -59,7 +62,7 @@ export default function FaroFooter() {
     const resourceLinks = fallbackResourceLinks;
     const socialLinks = fallbackSocialLinks;
     const description = "Iluminando el camino hacia una conexión profunda con lo divino a través de la comunidad y la guía espiritual. Una casa de fe abierta para toda la familia.";
-    const brandName = SITE_NAME;
+    const brandName = logoName || SITE_NAME;
     const navSectionTitle = "Navegación";
     const resourceSectionTitle = "Recursos";
     const contactSectionTitle = "Contáctanos";
@@ -86,13 +89,17 @@ export default function FaroFooter() {
                         <div className="col-span-2 lg:col-span-5 space-y-4 text-center sm:text-left">
                             <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
                                 <div
-                                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shrink-0"
-                                    style={{ background: "var(--site-cta-gradient)" }}
+                                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
+                                    style={{ background: "var(--site-surface-container)" }}
                                 >
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" width="24" height="24" className="shrink-0 w-6 h-6 sm:w-7 sm:h-7">
-                                        <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
-                                        <circle cx="12" cy="4" r="1.5" fill="white" />
-                                    </svg>
+                                    {logoUrl ? (
+                                        <OptimizedImage src={logoUrl} alt={brandName} width={48} height={48} className="w-full h-full object-contain p-1.5" />
+                                    ) : (
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24" className="shrink-0 w-6 h-6 sm:w-7 sm:h-7" style={{ color: "var(--site-primary)" }}>
+                                            <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
+                                            <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+                                        </svg>
+                                    )}
                                 </div>
                                 <div>
                                     <div className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: "var(--site-on-surface)" }}>
