@@ -4,8 +4,8 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Target, Sparkles, Quote, Heart, Users, BookOpen, Cross, ChevronRight, ArrowRight } from "lucide-react";
-import { useContentBlock } from "@/hooks/useContent";
-import { SITE_KEY } from "@/lib/site-config";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
+
 import RichText from "@/components/public/RichText";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
@@ -36,8 +36,9 @@ const VALOR_ICONS: Record<string, React.ReactNode> = {
 };
 
 export default function NosotrosPage() {
-    const { data: heroCms }   = useContentBlock(`${SITE_KEY}_about_hero`);
-    const { data: aboutCms }  = useContentBlock(`${SITE_KEY}_about_feed`);
+    const heroPage = useCmsV2Page('about');
+    const heroCms = heroPage?.blocks?.hero;
+    const aboutCms = heroPage?.blocks?.about;
 
     /* ── Hero ── */
     const hero = (heroCms?.parsed && typeof heroCms.parsed === "object" && !Array.isArray(heroCms.parsed))

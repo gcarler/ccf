@@ -6,23 +6,23 @@ import Image from "next/image";
 import { ArrowRight, Play } from "lucide-react";
 import { motion } from "framer-motion";
 import { SITE_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
-import { SITE_KEY, SITE_NAME } from "@/lib/site-config";
-import { useContentBlocks } from "@/hooks/useContent";
+import { SITE_NAME } from "@/lib/site-config";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
 
 
 export default function PublicHomePage() {
-    const { data: homeBlocks } = useContentBlocks([
-        `${SITE_KEY}_home_hero`,
-        `${SITE_KEY}_home_feed`,
-        SITE_EVENTS_BLOCK_KEY,
-    ]);
+    const homePage = useCmsV2Page('home');
+    const heroContent = homePage?.blocks?.hero;
+    const homeFeedContent = homePage?.blocks?.feed;
+    const eventsPage = useCmsV2Page('events');
+    const eventsContent = eventsPage?.blocks?.events;
 
-    const heroContent = homeBlocks[`${SITE_KEY}_home_hero`] ?? null;
-    const homeFeedContent = homeBlocks[`${SITE_KEY}_home_feed`] ?? null;
-    const eventsContent = homeBlocks[SITE_EVENTS_BLOCK_KEY] ?? null;
+
+
+
 
 
 

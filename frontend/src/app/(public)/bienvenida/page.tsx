@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, BookOpen, HeartHandshake, Sparkles } from "lucide-react";
-import { useContentBlock } from "@/hooks/useContent";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
-import { SITE_KEY } from "@/lib/site-config";
+
 
 const HIGHLIGHTS = [
     {
@@ -31,7 +31,8 @@ const ICONS = {
 
 export default function WelcomePage() {
     const [name, setName] = useState("amigo");
-    const { data: welcomeContent } = useContentBlock(`${SITE_KEY}_welcome`);
+    const welcomePage = useCmsV2Page('welcome');
+    const welcomeContent = welcomePage?.blocks?.welcome;
     const content = (welcomeContent?.parsed && typeof welcomeContent.parsed === "object" && !Array.isArray(welcomeContent.parsed))
         ? welcomeContent.parsed as Record<string, unknown>
         : {};

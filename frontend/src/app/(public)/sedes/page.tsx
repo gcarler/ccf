@@ -1,7 +1,7 @@
 "use client";
 
-import { useContentBlock } from "@/hooks/useContent";
-import { SITE_KEY } from "@/lib/site-config";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
+
 import { AnimatePresence,motion } from "framer-motion";
 import { Calendar,Clock,Home,Navigation,Phone,Search } from "lucide-react";
 import { useEffect,useState } from "react";
@@ -42,8 +42,9 @@ const fallbackLocations: LocationItem[] = [
 ];
 
 export default function SedesPage() {
-    const { data: heroContent } = useContentBlock(`${SITE_KEY}_locations_hero`);
-    const { data: locationsContent } = useContentBlock(`${SITE_KEY}_locations_feed`);
+    const heroPage = useCmsV2Page('locations');
+    const heroContent = heroPage?.blocks?.hero;
+    const locationsContent = heroPage?.blocks?.feed;
     const mapEmbedUrl = heroContent?.map_embed_url || DEFAULT_MAP_EMBED_URL;
     const mainBadge = heroContent?.main_badge || "Principal";
     const directionsCta = heroContent?.directions_cta || "Cómo llegar";

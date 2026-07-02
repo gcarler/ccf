@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, Cross, Sparkles } from 'lucide-react';
 import RichText from "@/components/public/RichText";
-import { useContentBlock } from '@/hooks/useContent';
-import { SITE_KEY } from '@/lib/site-config';
+import { useCmsV2Page } from '@/hooks/useCmsV2Page';
+
 import { sanitizeCmsHtml } from '@/lib/cms/sanitize';
 
 type CmsPastor = {
@@ -23,9 +23,11 @@ type CmsPastor = {
 };
 
 export default function PastoresIndexPage() {
-    const { data: heroCms } = useContentBlock(`${SITE_KEY}_pastores_hero`);
-    const { data: feedCms } = useContentBlock(`${SITE_KEY}_pastores_index`);
-    const { data: pastorsCms } = useContentBlock(`${SITE_KEY}_pastores_feed`);
+    const heroPage = useCmsV2Page('pastors');
+    const heroCms = heroPage?.blocks?.hero;
+    const feedCms = heroPage?.blocks?.feed;
+    const pastorsPage = useCmsV2Page('pastors');
+    const pastorsCms = pastorsPage?.blocks?.pastors;
 
     const heroContent = heroCms?.content ? JSON.parse(heroCms.content) : null;
     const feedContent = feedCms?.content ? JSON.parse(feedCms.content) : null;

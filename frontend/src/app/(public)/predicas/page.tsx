@@ -6,8 +6,8 @@ import {
     Play, Calendar, Youtube, RefreshCw, ExternalLink,
     Search, X, Check, Link2, MessageCircle, BookOpen, Eye,
 } from "lucide-react";
-import { useContentBlock } from "@/hooks/useContent";
-import { SITE_KEY } from "@/lib/site-config";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
+
 import { apiFetch } from "@/lib/http";
 
 /* ── Tipos ── */
@@ -307,7 +307,8 @@ function PlayerModal({
 
 /* ── Página principal ── */
 export default function PredicasPage() {
-    const { data: feedContent } = useContentBlock(`${SITE_KEY}_sermons_feed`);
+    const feedPage = useCmsV2Page('sermons');
+    const feedContent = feedPage?.blocks?.feed;
     const [data, setData]     = useState<YTResponse | null>(null);
     const [loading, setLoad]  = useState(true);
     const [error, setError]   = useState(false);

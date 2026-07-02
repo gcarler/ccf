@@ -115,4 +115,14 @@ export interface CmsPublicPage {
   title: string;
   seo_json: Record<string, unknown>;
   sections: CmsSection[];
+  /**
+   * Derived map keyed by ``CmsSection.section_key`` (``"hero"``,
+   * ``"feed"``, ``"events"``, ``"pastors"`` …). Each entry is the raw
+   * ``props_json`` of the matching section, so call sites can do
+   * ``page?.blocks?.hero?.eyebrow`` without unwrapping ``props_json``.
+   * Computed client-side by ``useCmsV2Page`` — the API itself returns
+   * ``sections`` only; this field is optional for backward compat with
+   * the catch-all renderer that iterates ``page.sections``.
+   */
+  blocks?: Record<string, Record<string, unknown>>;
 }

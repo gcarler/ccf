@@ -3,14 +3,15 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import RichText from "@/components/public/RichText";
-import { useContentBlock } from "@/hooks/useContent";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { apiFetch } from "@/lib/http";
-import { SITE_KEY } from "@/lib/site-config";
+
 import { toast } from "sonner";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 export default function BoletinPage() {
-    const { data: cms } = useContentBlock(`${SITE_KEY}_boletin_hero`);
+    const boletinPage = useCmsV2Page('boletin');
+    const cms = boletinPage?.blocks?.hero;
     const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
     const [email, setEmail] = useState("");
 

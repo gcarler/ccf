@@ -6,9 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Quote, BookOpen, Cross, Sparkles, Instagram, Heart } from 'lucide-react';
 import { PASTORS } from '@/data/pastors';
-import { SITE_KEY, SITE_NAME } from '@/lib/site-config';
+import { SITE_NAME } from '@/lib/site-config';
 import ShareButtons from '@/components/public/ShareButtons';
-import { useContentBlock } from '@/hooks/useContent';
+import { useCmsV2Page } from '@/hooks/useCmsV2Page';
 import { sanitizeCmsHtml } from '@/lib/cms/sanitize';
 
 type CmsPastor = {
@@ -32,7 +32,8 @@ export default function PastorDetailPage() {
     const router = useRouter();
     const slug = params?.slug as string;
 
-    const { data: pastorsCms } = useContentBlock(`${SITE_KEY}_pastores_feed`);
+    const pastorsPage = useCmsV2Page('pastors');
+    const pastorsCms = pastorsPage?.blocks?.pastors;
     const pastor = useMemo(() => {
         const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
         if (!Array.isArray(list)) return null;

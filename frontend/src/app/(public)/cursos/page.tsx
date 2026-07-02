@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useContentBlock } from "@/hooks/useContent";
-import { SITE_KEY } from "@/lib/site-config";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
+
 import RichText from "@/components/public/RichText";
 import { motion, AnimatePresence } from "framer-motion";
 import { PREMIUM_COURSES, PREMIUM_BOOKS, CourseItem, BookItem } from "@/lib/data/cursos";
@@ -12,8 +12,9 @@ import { ShoppingBag, ArrowRight, Clock, User, CheckCircle2 } from "lucide-react
 import { apiFetch } from "@/lib/http";
 
 export default function CursosPage() {
-    const { data: heroContent } = useContentBlock(`${SITE_KEY}_courses_hero`);
-    const { data: coursesContent } = useContentBlock(`${SITE_KEY}_courses_feed`);
+    const heroPage = useCmsV2Page('courses');
+    const heroContent = heroPage?.blocks?.hero;
+    const coursesContent = heroPage?.blocks?.feed;
     
     // State
     const [toastMessage, setToastMessage] = useState<string | null>(null);
