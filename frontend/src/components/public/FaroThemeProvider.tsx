@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
@@ -19,6 +20,23 @@ const ThemeContext = createContext<FaroThemeContextType>({
     themeTokens: {},
 });
 
+function inferThemeMode(themeName?: string, tokens?: Record<string, unknown>): FaroTheme {
+    const raw = `${themeName || ""} ${String(tokens?.["--site-theme-mode"] ?? tokens?.theme_mode ?? tokens?.mode ?? "")}`
+        .toLowerCase()
+        .trim();
+
+    if (raw.includes("dark") || raw.includes("oscur")) return "dark";
+    if (raw.includes("light") || raw.includes("claro")) return "light";
+    return "institutional";
+}
+
+const CMS_TOKEN_ALLOWLIST = new Set([
+    "--site-logo-url",
+    "--site-logo-name",
+    "--site-header-cta-label",
+    "--site-header-cta-href",
+]);
+
 export function useFaroTheme() {
     return useContext(ThemeContext);
 }
@@ -26,10 +44,14 @@ export function useFaroTheme() {
 export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
     const [theme, setTheme] = useState<FaroTheme>("institutional");
     const [remoteTokens, setRemoteTokens] = useState<Record<string, string>>({});
+    const [hasManualOverride, setHasManualOverride] = useState(false);
 
     useEffect(() => {
-        const saved = (localStorage.getItem("site-theme-v2") || localStorage.getItem("faro-theme-v2") || "institutional") as FaroTheme;
-        setTheme(saved);
+        const saved = (localStorage.getItem("site-theme-v2") || localStorage.getItem("faro-theme-v2") || "").trim();
+        if (saved === "institutional" || saved === "light" || saved === "dark") {
+            setTheme(saved);
+            setHasManualOverride(true);
+        }
     }, []);
 
     useEffect(() => {
@@ -45,31 +67,69 @@ export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         let mounted = true;
+
         const loadRemoteTheme = async () => {
             try {
-                const row = await apiFetch<{ tokens_json?: Record<string, string> }>(`/cms/v2/public/sites/${SITE_KEY}/theme`, { silent: true });
+                const row = await apiFetch<{ name?: string; tokens_json?: Record<string, string> }>(`/cms/v2/public/sites/${SITE_KEY}/theme`, { silent: true });
                 if (mounted && row?.tokens_json && typeof row.tokens_json === "object") {
                     setRemoteTokens(row.tokens_json);
+                }
+                if (mounted && !hasManualOverride) {
+                    setTheme(inferThemeMode(row?.name, row?.tokens_json));
                 }
             } catch {
                 // fallback to local CSS theme tokens
             }
         };
+
+        const syncTheme = () => {
+            const saved = (localStorage.getItem("site-theme-v2") || localStorage.getItem("faro-theme-v2") || "").trim();
+            if (saved === "institutional" || saved === "light" || saved === "dark") {
+                setHasManualOverride(true);
+                setTheme(saved);
+            }
+        };
+
+        const onStorage = (event: StorageEvent) => {
+            if (event.key === "site-theme-v2" || event.key === "faro-theme-v2") {
+                syncTheme();
+            }
+        };
+
+        const onVisibility = () => {
+            if (document.visibilityState === "visible") {
+                loadRemoteTheme().catch(() => undefined);
+                syncTheme();
+            }
+        };
+
         loadRemoteTheme();
+        const pollId = window.setInterval(() => {
+            if (document.visibilityState === "visible") {
+                loadRemoteTheme().catch(() => undefined);
+            }
+        }, 30000);
+        window.addEventListener("storage", onStorage);
+        document.addEventListener("visibilitychange", onVisibility);
+
         return () => {
             mounted = false;
+            window.clearInterval(pollId);
+            window.removeEventListener("storage", onStorage);
+            document.removeEventListener("visibilitychange", onVisibility);
         };
-    }, []);
+    }, [hasManualOverride]);
 
     useEffect(() => {
         const root = document.documentElement;
         Object.entries(remoteTokens).forEach(([key, value]) => {
-            if (!key.startsWith("--") || typeof value !== "string") return;
+            if (!CMS_TOKEN_ALLOWLIST.has(key) || typeof value !== "string") return;
             root.style.setProperty(key, value);
         });
     }, [remoteTokens]);
 
     const toggle = () => {
+        setHasManualOverride(true);
         setTheme((prev) => {
             if (prev === "institutional") return "light";
             if (prev === "light") return "dark";
@@ -83,4 +143,3 @@ export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
         </ThemeContext.Provider>
     );
 }
-
