@@ -210,7 +210,7 @@ export default function CmsHomePage() {
         label: "Bloques en revision",
         description: stats.inReviewBlocks > 0 ? "Contenido listo para aprobar o devolver" : "Sin bloque esperando aprobacion",
         value: stats.inReviewBlocks,
-        href: "/cms/content",
+        href: "/cms/pages",
         tone: stats.inReviewBlocks > 0 ? "warning" : "success",
         icon: Clock3,
       },
@@ -226,7 +226,7 @@ export default function CmsHomePage() {
         label: "Bloques publicados",
         description: stats.publishedBlocks > 0 ? "Contenido visible para el sitio" : "Aun no hay bloques publicados",
         value: stats.publishedBlocks,
-        href: "/cms/content",
+        href: "/cms/pages",
         tone: stats.publishedBlocks > 0 ? "success" : "warning",
         icon: Layers3,
       },
@@ -433,7 +433,7 @@ export default function CmsHomePage() {
               {[
                 { label: "Editar estructura", detail: "Paginas, menus y secciones del builder.", href: "/cms/pages" },
                 { label: "Completar media", detail: "Alt text, etiquetas y archivos reutilizables.", href: "/cms/media" },
-                { label: "Revisar contenido", detail: "Testimonios, bloques en revision y eventos.", href: "/cms/content" },
+                { label: "Revisar contenido", detail: "Testimonios, bloques en revision y eventos.", href: "/cms/pages" },
                 { label: "Publicar", detail: "Aprobar, publicar y revisar el sitio en vivo.", href: "/" },
               ].map((step, index) => (
                 <Link

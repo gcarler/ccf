@@ -52,7 +52,7 @@ export function useWikiDocument(pageKey: string, options: UseWikiDocumentOptions
             }
 
             try {
-                const document = await apiFetch<WikiDocument>(`/cms/content/${pageKey}`, {
+                const document = await apiFetch<WikiDocument>(`/wiki/pages/${pageKey}`, {
                     token,
                     cache: 'no-store',
                 });
@@ -62,11 +62,11 @@ export function useWikiDocument(pageKey: string, options: UseWikiDocumentOptions
                     setContent(serverContent);
                     localStorage.setItem(pageKey, serverContent);
                 } else if (localValue) {
-                    await apiFetch(`/cms/content/${pageKey}`, {
+                    await apiFetch(`/wiki/pages/${pageKey}`, {
                         method: 'POST',
                         token,
                         body: {
-                            title: options.title,
+                            title: options.title || pageKey,
                             content: localValue,
                         },
                     });
@@ -100,11 +100,11 @@ export function useWikiDocument(pageKey: string, options: UseWikiDocumentOptions
         setIsSaving(true);
         setError(null);
         try {
-            await apiFetch(`/cms/content/${pageKey}`, {
+            await apiFetch(`/wiki/pages/${pageKey}`, {
                 method: 'POST',
                 token,
                 body: {
-                    title: options.title,
+                    title: options.title || pageKey,
                     content: nextContent,
                 },
             });

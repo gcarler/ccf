@@ -4,12 +4,9 @@ import { useMemo,useState } from "react";
 
 import RichText from "@/components/public/RichText";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
-
-import { SITE_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 import { Bell,ChevronLeft,ChevronRight,MapPin,Star } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
-import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 interface PublicEventItem {
     title?: string;
@@ -123,8 +120,7 @@ export default function EventosPage() {
     ];
 
     return (
-        <CmsPageOverride slug="eventos">
-            <main className="pt-[88px] pb-4 px-4 sm:px-6 md:px-8 xl:px-12">
+        <main className="pt-[88px] pb-4 px-4 sm:px-6 md:px-8 xl:px-12">
             <header className="mb-14 pt-12 md:grid md:grid-cols-12 gap-3 items-end">
                 <div className="md:col-span-8">
                     <span
@@ -694,6 +690,5 @@ export default function EventosPage() {
                 </div>
             </section>
         </main>
-        </CmsPageOverride>
     );
 }

@@ -14,7 +14,6 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.crud._utils import _utcnow
 
 
 def _enum_val(e):

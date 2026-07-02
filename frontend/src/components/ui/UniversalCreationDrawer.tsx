@@ -13,6 +13,8 @@ import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { useCreation } from '@/context/CreationContext';
 import { apiFetch } from '@/lib/http';
+import { createCmsPage } from '@/lib/cms/v2';
+import { SITE_KEY } from '@/lib/site-config';
 import { toast } from 'sonner';
 import type { ProjectRecord } from '@/types/projects';
 import { RightPanel } from '@/components/ui/RightPanel';
@@ -274,11 +276,9 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                 setSelectedProjectId(created.id);
                 toast.success('Proyecto creado');
             } else if (type === 'doc') {
-                // Endpoint referencial, depende de los docs del sistema
-                await apiFetch('/plataforma/cms/pages', {
-                    method: 'POST', token,
-                    body: { title: title.trim(), content: description || ' ' }
-                }).catch((err) => { console.error('[UniversalCreationDrawer] Failed to create document:', err); toast.error('Error al crear documento'); });
+                const slug = title.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '').replace(/-+/g, '-');
+                await createCmsPage(SITE_KEY, { slug, title: title.trim() }, token)
+                    .catch((err) => { console.error('[UniversalCreationDrawer] Failed to create document:', err); toast.error('Error al crear documento'); });
                 toast.success('Documento creado');
             } else if (type === 'reminder') {
                 // Usando logs o un endpoint si existe, o simularlo:

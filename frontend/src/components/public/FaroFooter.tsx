@@ -2,24 +2,9 @@
 
 import Link from "next/link";
 import React from "react";
-import { useContentBlock } from "@/hooks/useContent";
-import { SITE_EMAIL, SITE_KEY, SITE_NAME } from "@/lib/site-config";
+import { SITE_EMAIL, SITE_NAME } from "@/lib/site-config";
 
 type PublicLink = { href: string; label: string; kind?: string };
-
-function readLinks(value: unknown, fallback: PublicLink[]) {
-    if (!Array.isArray(value)) return fallback;
-    const items = value
-        .map((item) => item && typeof item === "object" ? item as Record<string, unknown> : null)
-        .filter(Boolean)
-        .map((item) => ({
-            href: typeof item!.href === "string" ? item!.href : "",
-            label: typeof item!.label === "string" ? item!.label : "",
-            kind: typeof item!.kind === "string" ? item!.kind : undefined,
-        }))
-        .filter((item) => item.href && item.label);
-    return items.length > 0 ? items : fallback;
-}
 
 function socialIcon(kindOrLabel: string) {
     const key = kindOrLabel.toLowerCase();
@@ -48,11 +33,6 @@ function socialIcon(kindOrLabel: string) {
 }
 
 export default function FaroFooter() {
-    const { data: footerContent } = useContentBlock(`${SITE_KEY}_footer`);
-    const footer = (footerContent?.parsed && typeof footerContent.parsed === "object" && !Array.isArray(footerContent.parsed))
-        ? footerContent.parsed as Record<string, unknown>
-        : {};
-
     const fallbackNavLinks: PublicLink[] = [
         { href: "/", label: "Inicio" },
         { href: "/nosotros", label: "Sobre Nosotros" },
@@ -75,22 +55,20 @@ export default function FaroFooter() {
         { href: "https://youtube.com/comunidadfaro", label: "YouTube", kind: "youtube" },
     ];
 
-    const navLinks = readLinks(footer.nav_links, fallbackNavLinks);
-    const resourceLinks = readLinks(footer.resource_links, fallbackResourceLinks);
-    const socialLinks = readLinks(footer.social_links, fallbackSocialLinks);
-    const description = typeof footer.description === "string"
-        ? footer.description
-        : "Iluminando el camino hacia una conexión profunda con lo divino a través de la comunidad y la guía espiritual. Una casa de fe abierta para toda la familia.";
-    const brandName = typeof footer.brand_name === "string" ? footer.brand_name : SITE_NAME;
-    const navSectionTitle = typeof footer.nav_section_title === "string" ? footer.nav_section_title : "Navegación";
-    const resourceSectionTitle = typeof footer.resource_section_title === "string" ? footer.resource_section_title : "Recursos";
-    const contactSectionTitle = typeof footer.contact_section_title === "string" ? footer.contact_section_title : "Contáctanos";
-    const locationLabel = typeof footer.location_label === "string" ? footer.location_label : "Cartagena, Colombia";
-    const newsletterLabel = typeof footer.newsletter_label === "string" ? footer.newsletter_label : "Boletín semanal";
-    const copyrightCompany = typeof footer.copyright_company === "string" ? footer.copyright_company : "PLES SAS";
-    const copyrightCompanyUrl = typeof footer.copyright_company_url === "string" ? footer.copyright_company_url : "https://ples.com.co";
-    const copyrightText = typeof footer.copyright_text === "string" ? footer.copyright_text : "El uso inteligente de la experiencia. Todos los derechos reservados.";
-    const privacyLabel = typeof footer.privacy_label === "string" ? footer.privacy_label : "Política de Privacidad";
+    const navLinks = fallbackNavLinks;
+    const resourceLinks = fallbackResourceLinks;
+    const socialLinks = fallbackSocialLinks;
+    const description = "Iluminando el camino hacia una conexión profunda con lo divino a través de la comunidad y la guía espiritual. Una casa de fe abierta para toda la familia.";
+    const brandName = SITE_NAME;
+    const navSectionTitle = "Navegación";
+    const resourceSectionTitle = "Recursos";
+    const contactSectionTitle = "Contáctanos";
+    const locationLabel = "Cartagena, Colombia";
+    const newsletterLabel = "Boletín semanal";
+    const copyrightCompany = "PLES SAS";
+    const copyrightCompanyUrl = "https://ples.com.co";
+    const copyrightText = "El uso inteligente de la experiencia. Todos los derechos reservados.";
+    const privacyLabel = "Política de Privacidad";
 
     return (
         <footer

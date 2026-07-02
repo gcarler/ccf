@@ -35,7 +35,7 @@ export default function WikiHomePage() {
     const fetchDocs = async () => {
         if (!token) return;
         try {
-            const data = await apiFetch<WikiDoc[]>('/cms/content', { token });
+            const data = await apiFetch<WikiDoc[]>('/wiki/pages', { token });
             setDocs(Array.isArray(data) ? data.filter((doc) => doc.page_key.includes('wiki')) : []);
         } catch (error) {
             console.error("Error fetching docs:", error);
@@ -50,7 +50,7 @@ export default function WikiHomePage() {
 
         try {
             const page_key = `wiki_${newTitle.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "")}`;
-            await apiFetch(`/cms/content/${page_key}`, {
+            await apiFetch(`/wiki/pages/${page_key}`, {
                 method: 'POST',
                 token,
                 body: {

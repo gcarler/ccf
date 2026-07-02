@@ -18,6 +18,15 @@ def list_community_cards(
     column_id: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
+    """Listado público del tablero comunitario.
+
+    EXCEPCIÓN FIRMA Axioma 3 (Sprint 3 — design intencional):
+    ``CommunityBoardCard`` no está tenant-isolated porque sirve a la UX
+    pública del Home Comunitario. SI requiere scope multi-tenant en
+    producción, debe introducirse un nuevo endpoint autenticado
+    (e.g. ``/api/community/admin/cards``) — el anónimo público sigue
+    siendo global por compatibilidad.
+    """
     return crud.get_community_cards(db, column_id=column_id)
 
 
@@ -45,7 +54,29 @@ def delete_community_card(
 
 @router.get("/grupos", response_model=List[dict])
 def list_community_grupos(db: Session = Depends(get_db)):
-    """Lista grupos para la vista comunitaria."""
+    """Lista grupos para la vista comunitaria.
+
+    EXCEPCIÓN FIRMA Axioma 3 (Sprint 3 — design intencional):
+    Este endpoint es PÚBLICO sin auth y devuelve
+    ``GrupoEvangelismo`` global. La tenant-isolation por ``sede_id``
+    NO se aplica aquí porque la vista comunitaria es un atractor de
+    nuevos visitantes externos — un grupo cross-sede visible aporta
+    valor ministerial y la información expuesta es de metadata
+    pública (nombre del grupo, líder total y total de personas).
+
+    Política para futuro hardening: si la operación requiere scope por
+    sede, introducir un endpoint autenticado dedicado
+    (e.g. ``/api/community/admin/grupos``) con ``require_staff_or_admin``
+    + ``get_user_sede_id``. Este anónimo permanece global.
+
+    Riesgo reconocido: una sede podría exponer nombres/links de sus
+    propios grupos en esta lista pública. Mitigación aplicada: el endpoint
+    sólo expone metadata pública (nombre del grupo, nombre del líder
+    concatenado first_name+last_name y total de participantes). NO expone
+    direcciones, finanzas, listas de miembros privados ni atributos
+    sensibles de las personas. El serializador de respuesta está
+    deliberadamente restringido a 4 campos por grupo.
+    """
     grupos = (
         db.query(models.GrupoEvangelismo)
         .filter(models.GrupoEvangelismo.deleted_at.is_(None))

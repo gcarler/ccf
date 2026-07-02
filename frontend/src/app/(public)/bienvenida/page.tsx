@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, BookOpen, HeartHandshake, Sparkles } from "lucide-react";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
-import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 
 const HIGHLIGHTS = [
@@ -61,8 +60,7 @@ export default function WelcomePage() {
         : [...HIGHLIGHTS];
 
     return (
-        <CmsPageOverride slug="bienvenida">
-            <main className="min-h-screen pt-[96px] pb-8 px-3 md:px-6 lg:px-8 xl:px-12" style={{ background: "var(--site-background)" }}>
+        <main className="min-h-screen pt-[96px] pb-8 px-3 md:px-6 lg:px-8 xl:px-12" style={{ background: "var(--site-background)" }}>
             <section className="mx-auto max-w-6xl rounded-[24px] border border-[color:var(--site-outline-variant)] overflow-hidden">
                 <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
                     <div className="p-6 md:p-10 lg:p-12" style={{ background: "linear-gradient(135deg, var(--site-surface-container-lowest), var(--site-surface-container-low))" }}>
@@ -126,7 +124,6 @@ export default function WelcomePage() {
                     </div>
                 </div>
             </section>
-            </main>
-        </CmsPageOverride>
+        </main>
     );
 }

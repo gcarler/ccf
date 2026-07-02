@@ -125,13 +125,8 @@ from backend.schemas.cms import (
                                      CmsThemeRead,
                                      CmsThemeUpdate,
                                      CmsWorkflowAction,
-                                     ContentWorkflowRead,
-                                     ContentWorkflowUpdate,
                                      NewsletterSubscriptionCreate,
                                      NewsletterSubscriptionRead,
-                                     PageContentRead,
-                                     PageContentUpdate,
-                                     PageContentVersionRead,
                                      PastoralProfileRead,
                                      PastoralProfileUpdate,
                                      TestimonialAuthorRead,
@@ -339,6 +334,8 @@ from backend.schemas.projects import (  # noqa: F401
                                      ProjectCommentUpdate,
                                      ProjectCreate,
                                      ProjectDocument,
+                                     ProjectDocumentCreate,
+                                     ProjectDocumentRead,
                                      ProjectDocumentUpdate,
                                      ProjectInboxItem,
                                      ProjectMessageCreate,
@@ -362,3 +359,4 @@ from backend.schemas.projects import (  # noqa: F401
                                      TaskSupplyCreate,
                                      TaskSupplyUpdate,
 )
+from backend.schemas.wiki import WikiPageCreate, WikiPageRead, WikiPageUpdate  # noqa: F401

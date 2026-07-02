@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Shield, ChevronRight, Mail, Calendar, ArrowUp } from "lucide-react";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { SITE_NAME, SITE_URL, SITE_EMAIL } from "@/lib/site-config";
-import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 const LAST_UPDATE = "12 de junio de 2026";
 
@@ -71,7 +70,6 @@ export default function PrivacidadPage() {
     };
 
     return (
-        <CmsPageOverride slug="privacidad">
         <main className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#07080c] pt-[88px]">
 
             {/* ── Hero ── */}
@@ -425,7 +423,6 @@ export default function PrivacidadPage() {
                 </button>
             )}
         </main>
-        </CmsPageOverride>
     );
 }
 

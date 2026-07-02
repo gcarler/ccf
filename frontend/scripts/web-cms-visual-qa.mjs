@@ -11,9 +11,8 @@ const outputDir = path.join(frontendDir, 'analytics', 'visual-qa')
 const baseUrl = process.env.VISUAL_BASE_URL || 'http://127.0.0.1:3000'
 const routes = [
   '/cms',
-  '/cms/content',
+  '/cms/pages',
   '/cms/media',
-  '/cms/events',
   '/faro',
   '/faro/eventos',
   '/faro/testimonios',

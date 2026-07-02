@@ -1,3 +1,42 @@
+"""Agents / Knowledge Base / Optimus endpoints.
+
+Axioma 3 — Multi-Tenant (decisión arquitectónica del Sprint 3)
+-------------------------------------------------------------
+Por definición del Kernel, los ``Agent`` representan individuos absolutos
+del sistema (1:1 con ``personas.id``) y son **globales por diseño**.
+Aislar la tabla ``agents`` por ``sede_id`` rompería:
+
+  - Las automatizaciones neuronales cross-tenant (Optimus, KB ingestion).
+  - Las funciones de búsqueda semántica que correlacionan agentes de
+    múltiples sedes para encontrar patrones ministeriales.
+  - El espacio único de KB indexada (``agent_knowledge_base``) compartido
+    entre todas las sedes.
+
+Por esta razón, los endpoints ``/agents/search``, ``/agents/profile/{id}``,
+``/agents/timeline/{id}``, ``/agents/roles/{id}`` y ``/agents/kb/*`` NO
+filtran por ``sede_id``. El Audit Forense (Hilaridad §2.3, 2026-06-02)
+marcó este módulo como ``❌ NO sede_id``; tras revisión arquitectónica
+del Sprint 3 se reclasifica como **FALSO POSITIVO** y se documenta aquí.
+
+**Excepciones donde sí aplica sede_id:**
+
+  - ``GET /analytics/summary`` (``analytics_summary``): cuenta totales
+    operativos (personas, projects, enrollments, testimonios pendientes).
+    Aquí sí filtramos por sede para que el Dashboard Admin de sede_a
+    muestre los totales de sede_a, no agregados globales. Este endpoint
+    ya tenía el filtro antes del Sprint 3.
+
+  - Las mutaciones ``sync_persona_to_agent`` y ``sync_user_to_agent``
+    quedan restringidas a través de los hooks de provision que viven en
+    rutas admin. Los callers ya validan ``require_admin`` y propagan la
+    ``persona_id`` del actor, no la ``sede_id`` — la fila ``Agent`` es
+    global y el ``Persona`` mantiene su ``sede_id`` independiente.
+
+Cualquier cambio futuro que quiera introducir scope multi-tenant sobre
+``agents`` debe ser documentado en ``docs/ESTADO_ARQUITECTURA_CCF.md``
+y aceptado por el Cierre Arquitectónico.
+"""
+
 import uuid
 from typing import List, Optional
 

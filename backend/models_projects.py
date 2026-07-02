@@ -198,6 +198,7 @@ class ProjectDocument(Base):
     author_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     last_edited_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     project = relationship("Project")
     author = relationship("Persona", foreign_keys=[author_id])

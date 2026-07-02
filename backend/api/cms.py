@@ -27,10 +27,9 @@ from backend.core.uploads import (
 )
 from backend.schemas import PaginatedResponse
 
+# CMS endpoints — preferir /cms/v2/* en integraciones nuevas.
 router = APIRouter(tags=["cms"])
 
-TESTIMONIALS_KEY = "faro_testimonials_feed"
-ANNOUNCEMENTS_KEY = "faro_announcements_feed"
 settings = get_settings()
 
 
@@ -477,22 +476,7 @@ def get_cms_metrics(
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     """Axioma 3 — Multi-Tenant: pre-filtramos métricas por sede del staff.
-    El superadmin canónico sin sede conserva totales globales.
-
-    Se preservan las métricas estructurales (page contents y
-    publications) porque son del site "faro" (CmsSite) y son globales;
-    los counts User-Generated (testimonials/announcements/media) sí se
-    acotan por sede."""
-    publications = crud.list_content_publications(db)
-    status_counter = {
-        "draft": 0,
-        "in_review": 0,
-        "approved": 0,
-        "published": 0,
-        "archived": 0,
-    }
-    for item in publications:
-        status_counter[item.status] = status_counter.get(item.status, 0) + 1
+    El superadmin canónico sin sede conserva totales globales."""
 
     # Scoped queries para User-Generated content:
     t_query = db.query(models.Testimonial)
@@ -508,12 +492,6 @@ def get_cms_metrics(
     media = m_query.all()
 
     return schemas.CmsMetrics(
-        total_blocks=len(crud.list_page_contents(db, limit=500)),
-        draft_blocks=status_counter.get("draft", 0),
-        in_review_blocks=status_counter.get("in_review", 0),
-        approved_blocks=status_counter.get("approved", 0),
-        published_blocks=status_counter.get("published", 0),
-        archived_blocks=status_counter.get("archived", 0),
         testimonials_total=len(testimonials),
         testimonials_approved=sum(1 for row in testimonials if row.is_approved),
         announcements_total=len(announcements),
@@ -530,75 +508,4 @@ def get_cms_metrics(
         media_audio=sum(
             1 for row in media if (row.mime_type or "").startswith("audio/")
         ),
-    )
-
-
-# ── CMS Pages (PageContent CRUD) ────────────────────────
-# PageContent es parte del site "faro" (CmsSite, global) y NO recibe
-# scope de sede: los editors admin crean páginas de la home pública, no
-# contenido User-Generated (eso va a Testimonial/Announcement).
-
-
-@router.get("/cms/pages", response_model=list[schemas.PageContentRead])
-def list_cms_pages(
-    limit: int = 200,
-    db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
-):
-    return crud.list_page_contents(db, limit=limit)
-
-
-@router.get("/cms/pages/{page_key}", response_model=schemas.PageContentRead)
-def get_cms_page(
-    page_key: str,
-    db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
-):
-    return crud.get_or_create_page_content(db, page_key)
-
-
-@router.post("/cms/pages", response_model=schemas.PageContentRead, status_code=201)
-def create_cms_page(
-    payload: dict[str, Any],
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
-):
-    title = str(payload.get("title") or "").strip()
-    if not title:
-        raise HTTPException(status_code=400, detail="title is required")
-    page_key = str(payload.get("page_key") or "").strip()
-    if not page_key:
-        import re
-
-        page_key = re.sub(r"[^\w-]", "", title.lower().replace(" ", "-"))
-    content = str(payload.get("content") or f"# {title}\n\nNueva pagina creada.")
-    row = crud.get_or_create_page_content(db, page_key)
-    row.title = title
-    row.content = content
-    db.commit()
-    db.refresh(row)
-    return row
-
-
-@router.patch("/cms/pages/{page_key}", response_model=schemas.PageContentRead)
-def patch_cms_page(
-    page_key: str,
-    payload: schemas.PageContentUpdate,
-    db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
-):
-    return crud.update_page_content(db, page_key, payload)
-
-
-@router.delete("/cms/pages/{page_key}", status_code=204)
-def delete_cms_page(
-    page_key: str,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
-):
-    crud.update_content_publication(
-        db,
-        page_key,
-        status="archived",
-        updated_by=current_user.id,
     )

@@ -77,14 +77,10 @@ from backend.models_cms import (  # noqa: F401
     CmsSection,
     CmsSite,
     CmsTheme,
-    ContentMetric,
-    ContentPublication,
-    MediaAsset,
-    PageContent,
-    PageContentVersion,
     SavedView,
     Testimonial,
 )
+from backend.models_wiki import WikiPage  # noqa: F401
 
 # Conversation Memory
 from backend.models_conversation import AgentConversation, AgentMessage
