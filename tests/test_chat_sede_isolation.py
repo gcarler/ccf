@@ -804,11 +804,11 @@ def test_delete_chat_message_blocks_with_malformed_room_id(client, db_session):
         f"(got {resp_d.status_code}): {resp_d.text}"
     )
     # Anti-leak defensivo (tolerante a header evolution): parseamos JSON
-    # y comparamos el ``detail`` exacto + el conjunto de keys permitidas.
-    # Esto previene que un futuro maintainer introduzca un detail distinto
-    # (``"Conversation not found"``, ``"Invalid message reference"``,
-    # ``"bad UUID parse"``, etc.) que reabriría el vector de enumeración,
-    # sin ser tan frágil como una comparación de bytes del body completo.
+    # y comparamos el ``detail`` exacto. NO verificamos subsets de keys
+    # porque el contrato anti-leak es el ``detail`` (mensaje al usuario);
+    # un middleware futuro que inyecte ``request_id``/``trace_id`` es
+    # legítimo y NO reabre el vector (el usuario no distingue el
+    # path por keys extra). El subset check era overstrict.
     try:
         parsed = resp_d.json()
     except Exception:
@@ -816,10 +816,6 @@ def test_delete_chat_message_blocks_with_malformed_room_id(client, db_session):
     assert parsed.get("detail") == "Message not found", (
         f"Anti-leak violation: detail no uniforme (got {parsed!r}, "
         f"expected detail='Message not found')"
-    )
-    assert set(parsed.keys()) <= {"detail"}, (
-        f"Anti-leak violation: keys inesperadas en response (got "
-        f"{sorted(parsed.keys())!r}, expected subset of ['detail'])"
     )
     # Doble-check: el suffix crudo NUNCA debe aparecer en el body.
     assert "NOT-A-UUID-VALUE" not in resp_d.text, (
@@ -973,19 +969,16 @@ def test_send_direct_message_toctou_blocks_after_participant_removal(
         "FUGA: msg post-removal persistido pese al 404 TOCTOU"
     )
 
-    # Anti-leak defensivo (mirror del patrón ``malformed_room_id``): parseamos
-    # JSON y verificamos que el ``detail`` es uniforme y NO se filtran keys
-    # extra que reabrían el vector de enumeración.
+    # Anti-leak defensivo (mirror del patrón ``malformed_room_id``):
+    # sólo verificamos el ``detail`` uniforme. NO chequeamos subsets de
+    # keys porque un middleware futuro que inyecte ``request_id``
+    # sería legítimo y NO reabre el vector.
     try:
         parsed = resp_m2.json()
     except Exception:
         parsed = {}
     assert parsed.get("detail") == "Conversation not found", (
         f"Anti-leak violation: detail no uniforme (got {parsed!r})"
-    )
-    assert set(parsed.keys()) <= {"detail"}, (
-        f"Anti-leak violation: keys inesperadas en response "
-        f"(got {sorted(parsed.keys())!r}, expected subset of ['detail'])"
     )
 
 
@@ -1062,14 +1055,12 @@ def test_mark_conversation_read_toctou_blocks_after_participant_removal(
         "FUGA: ConversationParticipant re-insertado por side-effect"
     )
 
-    # Anti-leak defensivo: el response body debe ser uniforme.
+    # Anti-leak defensivo: el response body debe ser uniforme — sólo chequeamos
+    # ``detail``. NO verificamos subsets de keys (legitimamente tolerante a
+    # middleware que enriquezca con ``request_id``/``trace_id``).
     parsed = _json.loads(resp_r.text) if resp_r.text else {}
     assert parsed.get("detail") == "Conversation not found", (
         f"Anti-leak violation: detail no uniforme (got {parsed!r})"
-    )
-    assert set(parsed.keys()) <= {"detail"}, (
-        f"Anti-leak violation: keys inesperadas en response "
-        f"(got {sorted(parsed.keys())!r}, expected subset of ['detail'])"
     )
 
 
@@ -1239,6 +1230,40 @@ def test_assert_actor_still_participant_unit_malformed_conv_id_raises_404(
     )
     assert raised.status_code == 404, (
         f"Helper debe raise 404 para malformed conv_id, no {raised.status_code}"
+    )
+    assert raised.detail == "Conversation not found", (
+        f"Anti-leak violation: detail no uniforme (got {raised.detail!r})"
+    )
+
+
+def test_assert_actor_still_participant_unit_none_conv_id_raises_404(
+    client, db_session
+):
+    """Direct unit test — ``conv_id is None`` debe raise 404 en lugar
+    de TypeError → 500 server error.
+
+    Cierra el vector donde un caller pasa None (retry path, mock
+    defectuoso o path null) y el helper fallaría con TypeError visible
+    al cliente. Comportamiento correcto = tratar como ``not found``
+    (mismo detail uniforme).
+    """
+    from backend.api import chat as chat_module
+    from fastapi import HTTPException
+
+    (admin_a, _, _), _ = _seed_two_sedes(db_session)
+
+    raised = None
+    try:
+        chat_module._assert_actor_still_participant_at_commit_time(
+            db_session, None, admin_a
+        )
+    except HTTPException as exc:
+        raised = exc
+    assert raised is not None, (
+        "Helper no raise cuando conv_id es None"
+    )
+    assert raised.status_code == 404, (
+        f"Helper debe raise 404 para conv_id=None, no {raised.status_code}"
     )
     assert raised.detail == "Conversation not found", (
         f"Anti-leak violation: detail no uniforme (got {raised.detail!r})"

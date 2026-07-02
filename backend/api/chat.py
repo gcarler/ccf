@@ -198,6 +198,14 @@ def _assert_actor_still_participant_at_commit_time(
 
     Performance: 1 query indexed (lookup pk+uk en ConvParticipant).
     """
+    if conv_id is None:
+        # Treat None conv_id as "not found" — prevents TypeError from
+        # leaking as 500 server error. Existence-leak safe: mismo detail
+        # uniforme con el resto de los paths de no-encontrado.
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found",
+        )
     try:
         target_conv_id = _uuid.UUID(str(conv_id)) if not isinstance(conv_id, _uuid.UUID) else conv_id
     except (TypeError, ValueError):
