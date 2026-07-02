@@ -27,6 +27,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
 
+from backend.core.rate_limit import rate_limiter
+
 from sqlalchemy.orm import Session
 from backend import models as cms_models
 
@@ -809,7 +811,11 @@ def workflow_page(
     return row
 
 
-@router.get("/public/sites/{site_key}/theme", response_model=schemas.CmsThemeRead)
+@router.get(
+    "/public/sites/{site_key}/theme",
+    response_model=schemas.CmsThemeRead,
+    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+)
 @cached_public(ttl=300)
 def public_theme(site_key: str, db: Session = Depends(get_db)):
     site = _get_public_site_or_404(db, site_key)
@@ -819,7 +825,10 @@ def public_theme(site_key: str, db: Session = Depends(get_db)):
     return row
 
 
-@router.get("/public/sites/{site_key}/menus/{menu_key}")
+@router.get(
+    "/public/sites/{site_key}/menus/{menu_key}",
+    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+)
 @cached_public(ttl=300)
 def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
     site = _get_public_site_or_404(db, site_key)
@@ -1000,7 +1009,11 @@ def _build_section_defaults(
     return props or {}
 
 
-@router.get("/public/sites/{site_key}/pages", response_model=PaginatedResponse[schemas.CmsPageRead])
+@router.get(
+    "/public/sites/{site_key}/pages",
+    response_model=PaginatedResponse[schemas.CmsPageRead],
+    dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))],
+)
 @cached_public(ttl=300)
 def public_pages_list(
     site_key: str,
@@ -1017,7 +1030,9 @@ def public_pages_list(
 
 
 @router.get(
-    "/public/sites/{site_key}/pages/{slug}", response_model=schemas.CmsPublicPageRead
+    "/public/sites/{site_key}/pages/{slug}",
+    response_model=schemas.CmsPublicPageRead,
+    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
 )
 @cached_public(ttl=300)
 def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
@@ -1123,6 +1138,7 @@ def _pastoral_role(persona: models.Persona) -> str:
 @router.get(
     "/public/sites/{site_key}/pastoral-team",
     response_model=List[schemas.PastoralProfileRead],
+    dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))],
 )
 @cached_public(ttl=300)
 def public_pastoral_team(site_key: str, db: Session = Depends(get_db)):
@@ -1455,7 +1471,11 @@ def schedule_page_publish(
 
 
 # ── IMAGE OPTIMIZATION (Phase 7) ───────────────────────────────────────────────
-@router.get("/images/{media_id}/resize", response_model=dict)
+@router.get(
+    "/images/{media_id}/resize",
+    response_model=dict,
+    dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))],
+)
 def get_resized_image(
     media_id: uuid.UUID,
     width: int = Query(800, le=2400),
