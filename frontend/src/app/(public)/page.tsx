@@ -248,8 +248,8 @@ export default function PublicHomePage() {
                             className="sm:col-span-2 md:col-span-2 rounded-2xl flex flex-col justify-end group relative overflow-hidden min-h-[420px]"
                         >
                             <Image
-                                src={(homeFeaturedCard?.img as string) || "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=900&q=80"}
-                                alt={(homeFeaturedCard?.alt as string) || SITE_NAME}
+                                src={(homeFeaturedCard?.img as string) || "/images/pastores-banner.jpg"}
+                                alt={(homeFeaturedCard?.alt as string) || "Equipo pastoral de FARO"}
                                 fill
                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 66vw"
                                 className="object-cover transition-transform duration-700 group-hover:scale-105"

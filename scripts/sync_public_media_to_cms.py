@@ -41,7 +41,7 @@ PUBLIC_IMAGE_EXTS = {".avif", ".jpg", ".jpeg", ".png", ".svg", ".webp"}
 
 EXTERNAL_PUBLIC_IMAGES = {
     "home": [
-        "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=900&q=80",
+        "/images/pastores-banner.jpg",
         "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80",
         "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80",
         "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=600&q=80",
