@@ -1266,33 +1266,48 @@ def update_counseling_ticket(
 # ── Settings ─────────────────────────────────────────────
 
 
+_CRM_SETTINGS_KEY = "crm_settings"
+
+
+def _get_crm_settings_raw(db: Session) -> dict:
+    import json
+
+    row = db.query(models.SystemVariable).filter(models.SystemVariable.key == _CRM_SETTINGS_KEY).first()
+    if not row or not row.value:
+        return {}
+    try:
+        return json.loads(row.value) if isinstance(row.value, str) else dict(row.value)
+    except (json.JSONDecodeError, TypeError):
+        return {}
+
+
 @router.get("/settings", response_model=dict)
 def get_crm_settings(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("crm", "read")),
+    _: models.User = Depends(require_module_access("crm", "read")),
 ):
-    row = crud.get_or_create_page_content(db, "crm_settings")
-    import json
-
-    try:
-        return json.loads(row.content) if row.content else {}
-    except (json.JSONDecodeError, TypeError):
-        return {}
+    return _get_crm_settings_raw(db)
 
 
 @router.post("/settings", response_model=dict)
 def save_crm_settings(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("crm", "edit")),
+    _: models.User = Depends(require_module_access("crm", "edit")),
 ):
     import json
 
-    crud.update_page_content(
-        db,
-        "crm_settings",
-        schemas.PageContentUpdate(title="CRM Settings", content=json.dumps(payload, ensure_ascii=False)),
-    )
+    row = db.query(models.SystemVariable).filter(models.SystemVariable.key == _CRM_SETTINGS_KEY).first()
+    if row:
+        row.value = json.dumps(payload, ensure_ascii=False)
+    else:
+        row = models.SystemVariable(
+            key=_CRM_SETTINGS_KEY,
+            value=json.dumps(payload, ensure_ascii=False),
+            description="CRM module configuration",
+        )
+        db.add(row)
+    db.commit()
     return payload
 
 

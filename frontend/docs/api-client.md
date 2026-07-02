@@ -53,19 +53,11 @@ Con esto podemos mantener un único punto de configuración para cabeceras, aute
 
 ## Hooks de contenido reutilizable
 
-Cuando necesites leer bloques gestionados por el CMS (`/cms/content/<clave>`), usa los hooks de `src/hooks/useContent.ts` para estandarizar el parseo del campo `content` y compartir estados de carga.
+El CMS legacy basado en bloques `/cms/content/<clave>` fue retirado. Para contenido público usa el CMS v2 (`useCmsV2Page`) y para documentos colaborativos usa `useWikiDocument`.
 
 ```ts
-import { useContentBlock, useContentBlocks } from "@/hooks/useContent";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 
-const { data: hero, loading } = useContentBlock("home_hero");
-const { data: sections } = useContentBlocks([
-  "home_academy_card",
-  "home_giving_card",
-]);
+const page = useCmsV2Page("inicio");
+const hero = page?.blocks?.hero;
 ```
-
-- Ambos hooks devuelven `{ data, loading, error, refresh }`.
-- El campo `data.content` se parsea automáticamente (si trae JSON) y se mezcla en la respuesta. Si necesitas el string original para editar, usa `hero?.raw_content`.
-- `useContentBlocks` acepta un array de claves y construye un diccionario `{ [key]: block | null }`.
-- Usa estos hooks en vez de repetir `fetch('/cms/content/...')` seguido de `JSON.parse` en cada página.

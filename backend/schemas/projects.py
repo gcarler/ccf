@@ -247,9 +247,19 @@ class ProjectDocument(BaseModel):
     model_config = orm_config
 
 
+class ProjectDocumentCreate(BaseModel):
+    title: str
+    content: Optional[str] = ""
+    project_id: UUIDStr
+
+
 class ProjectDocumentUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
+
+
+# Alias used by wiki endpoints
+ProjectDocumentRead = ProjectDocument
 
 
 class ProjectWhiteboard(BaseModel):

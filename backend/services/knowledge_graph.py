@@ -1,11 +1,36 @@
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, Iterable, List, Optional, Set, cast
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
 from backend import models
+
+logger = logging.getLogger(__name__)
+
+# Cache de warnings emitido una vez por proceso, para no inundar el log
+# cuando un modelo no está registrado en runtime (graceful degradation).
+_warned_missing_models: Set[str] = set()
+
+
+def _has_model(name: str) -> bool:
+    """Convenio SQLAlchemy: ``getattr(models, name, None)`` idiomático.
+
+    Retorna ``True`` cuando ``models.<name>`` existe y no es ``None``.
+    Si retorna ``False``, el caller debe omitir la sección correspondiente
+    (graceful degradation). Un único warning se emite por nombre ausente
+    por proceso para evitar spam en logs producción.
+    """
+    cls = getattr(models, name, None)
+    if cls is None and name not in _warned_missing_models:
+        _warned_missing_models.add(name)
+        logger.warning(
+            "KnowledgeGraph: model '%s' not registered; skipping corresponding nodes",
+            name,
+        )
+    return cls is not None
 
 
 def _course_nodes(db: Session, limit: int, sede_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
@@ -163,9 +188,22 @@ def build_graph_snapshot(
                 nodes.append(node)
                 seen.add(node["id"])
 
-    # Build enrollment edges person -> course
-    enrollments = db.query(models.Enrollment).limit(limit).all()
-    for enrollment in enrollments:
+    # Build enrollment edges person -> course.
+    # Axioma 3: limita edges a la sede del actor para evitar leaks
+    # cross-sede cuando el grafo ya filtró los nodos visibles. Sin este
+    # JOIN, la query global de Enrollment devuelve aristas que apuntan a
+    # person/course de otras sedes y la vista local queda sin conexiones.
+    edge_limit = max(limit, 1)
+    if sede_id is not None:
+        enrollment_q = (
+            db.query(models.Enrollment)
+            .join(models.Persona, models.Enrollment.persona_id == models.Persona.id)
+            .filter(models.Persona.sede_id == sede_id)
+            .limit(edge_limit)
+        )
+    else:
+        enrollment_q = db.query(models.Enrollment).limit(edge_limit)
+    for enrollment in enrollment_q.all():
         person_id = f"person-{enrollment.persona_id}" if enrollment.persona_id else None
         if person_id and f"course-{enrollment.course_id}" in seen:
             edges.append(
@@ -176,34 +214,45 @@ def build_graph_snapshot(
                 }
             )
 
-    # Asset maintenance edges
-    logs = db.query(models.MaintenanceLog).limit(limit).all()
-    for log in logs:
-        asset_id = f"asset-{log.item_id}"
-        if asset_id in seen:
-            edges.append(
-                {
-                    "from": asset_id,
-                    "to": f"maintenance-{log.log_id}",
-                    "relation": "MAINTENANCE",
-                }
+    # Asset maintenance edges — filtrar por sede del Asset referenciado.
+    # Graceful degradation: si MaintenanceLog / AssetItem no están
+    # registrados en ``models``, esta sección se omite silenciosamente.
+    if _has_model("MaintenanceLog") and _has_model("AssetItem"):
+        if sede_id is not None:
+            logs_q = (
+                db.query(models.MaintenanceLog)
+                .join(models.AssetItem, models.MaintenanceLog.item_id == models.AssetItem.item_id)
+                .filter(models.AssetItem.sede_id == sede_id)
+                .limit(edge_limit)
             )
-            nodes.append(
-                {
-                    "id": f"maintenance-{log.log_id}",
-                    "type": "maintenance_log",
-                    "label": log.description[:42] if log.description else "Servicio",
-                    "detail": str(log.service_date),
-                }
-            )
+        else:
+            logs_q = db.query(models.MaintenanceLog).limit(edge_limit)
+        for log in logs_q.all():
+            asset_id = f"asset-{log.item_id}"
+            if asset_id in seen:
+                edges.append(
+                    {
+                        "from": asset_id,
+                        "to": f"maintenance-{log.log_id}",
+                        "relation": "MAINTENANCE",
+                    }
+                )
+                nodes.append(
+                    {
+                        "id": f"maintenance-{log.log_id}",
+                        "type": "maintenance_log",
+                        "label": log.description[:42] if log.description else "Servicio",
+                        "detail": str(log.service_date),
+                    }
+                )
 
-    # Family participation edges
-    family_personas = (
-        db.query(models.Persona)
-        .filter(models.Persona.family_id.isnot(None))
-        .limit(limit)
-        .all()
-    )
+    # Family participation edges — la query ya filtra personas con
+    # ``family_id`` no nulo. Sumamos el scope por sede aquí (defense-in-depth
+    # complementario a ``_family_nodes`` que ya filtra).
+    family_p_q = db.query(models.Persona).filter(models.Persona.family_id.isnot(None))
+    if sede_id is not None:
+        family_p_q = family_p_q.filter(models.Persona.sede_id == sede_id)
+    family_personas = family_p_q.limit(edge_limit).all()
     for person in family_personas:
         pid = f"person-{person.id}"
         fid = f"family-{person.family_id}"
@@ -216,9 +265,19 @@ def build_graph_snapshot(
                 }
             )
 
-    # Project -> asset edges (when supplies reference asset)
-    project_tasks = db.query(models.ProjectTask).limit(limit).all()
-    for task in project_tasks:
+    # Project -> asset edges (when supplies reference asset). Filtra por
+    # sede del proyecto (ya cubierto por ``_project_nodes`` si la sede
+    # está resuelta) — defense-in-depth.
+    if sede_id is not None:
+        task_q = (
+            db.query(models.ProjectTask)
+            .join(models.Project, models.ProjectTask.project_id == models.Project.id)
+            .filter(models.Project.sede_id == sede_id)
+            .limit(edge_limit)
+        )
+    else:
+        task_q = db.query(models.ProjectTask).limit(edge_limit)
+    for task in task_q.all():
         project_id = f"project-{task.project_id}"
         if project_id in seen:
             edges.append(
@@ -237,8 +296,12 @@ def build_graph_snapshot(
                 }
             )
 
-    # Funds impact edges (donations)
-    donations = db.query(models.Donation).limit(limit).all()
+    # Funds impact edges (donations) — filtrar por Donation.sede_id cuando
+    # esté disponible. (Donation tiene ``sede_id`` desde la fase 4.)
+    donation_q = db.query(models.Donation)
+    if sede_id is not None:
+        donation_q = donation_q.filter(models.Donation.sede_id == sede_id)
+    donations = donation_q.limit(edge_limit).all()
     for donation in donations:
         if donation.fund_id is not None:
             source = "fund-untracked"

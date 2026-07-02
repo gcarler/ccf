@@ -1,155 +1,151 @@
-"""Global Wiki API — standalone wiki documents (not tied to a single project).
+"""Wiki API — standalone knowledge-base documents.
 
-Uses the ``project_documents`` table but allows ``project_id`` to reference any
-project or be omitted for org-wide docs.
+Replaces the retired ``/cms/content`` storage used by the platform wiki.
+Documents are keyed by ``page_key`` (e.g. ``wiki_intro``) and are editable by
+users with CMS read/write access.
 """
 from __future__ import annotations
 
+import re
+from datetime import datetime, timezone
 from typing import List, Optional
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import or_
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
-from backend import models, schemas
+from backend import models
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
-from backend.crud.projects import get_user_persona_id
+from backend.schemas.wiki import WikiPageCreate, WikiPageRead, WikiPageUpdate
 
 router = APIRouter(prefix="/wiki", tags=["wiki"])
 
 
-# ── search MUST be above /{doc_id} so "search" isn't captured as a doc_id ────
+def _slugify(value: str) -> str:
+    value = value.strip().lower()
+    value = re.sub(r"\s+", "-", value)
+    value = re.sub(r"[^a-z0-9_-]", "", value)
+    return value.strip("-")
 
 
-@router.get("/search", response_model=List[schemas.ProjectDocumentRead])
-def search_wiki_docs(
-    q: str = Query(..., min_length=2, description="Término de búsqueda"),
-    project_id: Optional[UUID] = Query(None),
-    limit: int = Query(20, le=50),
+def _normalize_page_key(value: str) -> str:
+    """Ensure wiki page keys always start with the ``wiki_`` prefix."""
+    key = _slugify(value)
+    if not key.startswith("wiki_"):
+        key = f"wiki_{key}"
+    return key
+
+
+@router.get("/pages", response_model=List[WikiPageRead])
+def list_wiki_pages(
+    search: Optional[str] = Query(None, description="Filtrar por título o page_key"),
+    limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """Búsqueda full-text simple en documentos wiki."""
-    search_term = f"%{q}%"
-    stmt = (
-        db.query(models.ProjectDocument)
-        .options(selectinload(models.ProjectDocument.author))
-        .filter(models.ProjectDocument.deleted_at.is_(None))
-        .filter(
-            or_(
-                models.ProjectDocument.title.ilike(search_term),
-                models.ProjectDocument.content.ilike(search_term),
-            )
+    """List active wiki pages ordered by most recently updated."""
+    query = db.query(models.WikiPage).filter(models.WikiPage.deleted_at.is_(None))
+    if search:
+        term = f"%{search.strip()}%"
+        query = query.filter(
+            (models.WikiPage.title.ilike(term)) | (models.WikiPage.page_key.ilike(term))
         )
-    )
-    if project_id:
-        stmt = stmt.filter(models.ProjectDocument.project_id == project_id)
-
-    return stmt.order_by(models.ProjectDocument.updated_at.desc()).limit(limit).all()
+    return query.order_by(models.WikiPage.updated_at.desc()).limit(limit).all()
 
 
-# ── CRUD ─────────────────────────────────────────────────────────────────────
-
-
-@router.get("", response_model=List[schemas.ProjectDocumentRead])
-def list_wiki_docs(
-    project_id: Optional[UUID] = Query(None, description="Filtrar por proyecto"),
-    limit: int = Query(50, le=100),
-    offset: int = Query(0, ge=0),
+@router.get("/pages/{page_key}", response_model=WikiPageRead)
+def get_wiki_page(
+    page_key: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """Listar documentos wiki (globales o por proyecto)."""
-    stmt = (
-        db.query(models.ProjectDocument)
-        .options(selectinload(models.ProjectDocument.author))
-        .filter(models.ProjectDocument.deleted_at.is_(None))
-    )
-    if project_id:
-        stmt = stmt.filter(models.ProjectDocument.project_id == project_id)
-
-    return (
-        stmt.order_by(models.ProjectDocument.updated_at.desc())
-        .limit(limit)
-        .offset(offset)
-        .all()
-    )
-
-
-@router.get("/{doc_id}", response_model=schemas.ProjectDocumentRead)
-def get_wiki_doc(
-    doc_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
-):
-    """Obtener un documento wiki."""
-    doc = (
-        db.query(models.ProjectDocument)
-        .options(selectinload(models.ProjectDocument.author))
-        .filter(models.ProjectDocument.id == doc_id, models.ProjectDocument.deleted_at.is_(None))
+    """Get a single wiki page by key, creating an empty skeleton if missing."""
+    key = _normalize_page_key(page_key)
+    row = (
+        db.query(models.WikiPage)
+        .filter(models.WikiPage.page_key == key, models.WikiPage.deleted_at.is_(None))
         .first()
     )
-    if not doc:
-        raise HTTPException(status_code=404, detail="Documento no encontrado")
-    return doc
+    if not row:
+        title = key.replace("wiki_", "").replace("-", " ").title() or "Wiki"
+        row = models.WikiPage(page_key=key, title=title, content="")
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+    return row
 
 
-@router.post("", response_model=schemas.ProjectDocumentRead, status_code=status.HTTP_201_CREATED)
-def create_wiki_doc(
-    data: schemas.ProjectDocumentCreate,
+@router.post("/pages/{page_key}", response_model=WikiPageRead, status_code=status.HTTP_201_CREATED)
+def upsert_wiki_page(
+    page_key: str,
+    data: WikiPageCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    _: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Crear documento wiki."""
-    persona_id = get_user_persona_id(db, current_user.id)
-    doc = models.ProjectDocument(
-        title=data.title,
-        content=data.content or "",
-        project_id=data.project_id,
-        author_id=persona_id,
+    """Create or fully replace a wiki page."""
+    key = _normalize_page_key(page_key)
+    row = (
+        db.query(models.WikiPage)
+        .filter(models.WikiPage.page_key == key, models.WikiPage.deleted_at.is_(None))
+        .first()
     )
-    db.add(doc)
+    if row:
+        row.title = data.title or row.title
+        row.content = data.content if data.content is not None else row.content
+        row.updated_at = datetime.now(timezone.utc)
+    else:
+        row = models.WikiPage(
+            page_key=key,
+            title=data.title or key.replace("wiki_", "").replace("-", " ").title(),
+            content=data.content or "",
+        )
+        db.add(row)
     db.commit()
-    db.refresh(doc)
-    return doc
+    db.refresh(row)
+    return row
 
 
-@router.patch("/{doc_id}", response_model=schemas.ProjectDocumentRead)
-def update_wiki_doc(
-    doc_id: UUID,
-    data: schemas.ProjectDocumentUpdate,
+@router.patch("/pages/{page_key}", response_model=WikiPageRead)
+def patch_wiki_page(
+    page_key: str,
+    data: WikiPageUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    _: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Actualizar documento wiki."""
-    doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.id == doc_id).first()
-    if not doc:
-        raise HTTPException(status_code=404, detail="Documento no encontrado")
-
+    """Partially update a wiki page (title and/or content)."""
+    key = _normalize_page_key(page_key)
+    row = (
+        db.query(models.WikiPage)
+        .filter(models.WikiPage.page_key == key, models.WikiPage.deleted_at.is_(None))
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="wiki page not found")
     if data.title is not None:
-        doc.title = data.title
+        row.title = data.title
     if data.content is not None:
-        doc.content = data.content
-
+        row.content = data.content
+    row.updated_at = datetime.now(timezone.utc)
     db.commit()
-    db.refresh(doc)
-    return doc
+    db.refresh(row)
+    return row
 
 
-@router.delete("/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_wiki_doc(
-    doc_id: UUID,
+@router.delete("/pages/{page_key}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_wiki_page(
+    page_key: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    _: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Eliminar documento wiki (soft delete)."""
-    from datetime import datetime, timezone
-
-    doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.id == doc_id).first()
-    if not doc:
-        raise HTTPException(status_code=404, detail="Documento no encontrado")
-
-    doc.deleted_at = datetime.now(timezone.utc)
+    """Soft-delete a wiki page."""
+    key = _normalize_page_key(page_key)
+    row = (
+        db.query(models.WikiPage)
+        .filter(models.WikiPage.page_key == key, models.WikiPage.deleted_at.is_(None))
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="wiki page not found")
+    row.deleted_at = datetime.now(timezone.utc)
     db.commit()
+    return None

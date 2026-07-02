@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import { useContentBlock } from '@/hooks/useContent';
 import { SITE_NAME } from '@/lib/site-config';
 
 export default function UnifiedSidebar({
@@ -23,9 +22,8 @@ export default function UnifiedSidebar({
 }) {
     const pathname = usePathname();
     const [isMini, setIsMini] = useState(false);
-    const { data: logoBranding } = useContentBlock('logo_branding');
-    const logoUrl: string | undefined = logoBranding?.logo_url;
-    const logoDisplayName: string = logoBranding?.site_name || title || SITE_NAME;
+    const logoUrl: string | undefined = undefined;
+    const logoDisplayName: string = title || SITE_NAME;
     const [expandedFolders, setExpandedFolders] = useState<string[]>(['contextual-root', 'Income']);
 
     // Persist sidebar state

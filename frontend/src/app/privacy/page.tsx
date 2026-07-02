@@ -3,16 +3,9 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import { ShieldAlert } from 'lucide-react';
-import { useContentBlock } from '@/hooks/useContent';
-import CmsPageOverride from '@/components/public/cms/CmsPageOverride';
 
 export default function PrivacyPage() {
-    const { data: content } = useContentBlock('privacy_policy');
-
-    const rawContent = content?.content || "Cargando contenido...";
-
     return (
-        <CmsPageOverride slug="privacy">
         <div className="min-h-screen bg-[hsl(var(--surface-1))] dark:bg-background-dark bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
             <Navbar />
             <div className="pt-32 pb-4 container mx-auto px-3 max-w-4xl relative z-10">
@@ -21,19 +14,18 @@ export default function PrivacyPage() {
                         <ShieldAlert size={32} />
                     </div>
                     <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-3 tracking-tight">
-                        {content?.title || "Política de Privacidad"}
+                        Política de Privacidad
                     </h1>
                     <p className="text-lg text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium mb-3">
-                        {content?.subtitle || "Comprometidos con la seguridad de tus datos."}
+                        Comprometidos con la seguridad de tus datos.
                     </p>
 
                     <div className="prose prose-slate dark:prose-invert prose-lg max-w-none prose-headings:font-black prose-headings:text-[hsl(var(--text-primary))] dark:prose-headings:text-white prose-p:text-[hsl(var(--text-secondary))] dark:prose-p:text-[hsl(var(--text-secondary))] prose-p:leading-relaxed whitespace-pre-wrap">
-                        {rawContent}
+                        La política de privacidad de la plataforma se encuentra en construcción. Para dudas sobre el manejo de tus datos, contacta al equipo pastoral.
                     </div>
                 </div>
             </div>
         </div>
-        </CmsPageOverride>
     );
 }
 

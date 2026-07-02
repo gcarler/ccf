@@ -4,9 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import {
-  CalendarRange,
   ChevronRight,
-  Feather,
   FileText,
   Globe,
   ImageIcon,
@@ -32,8 +30,6 @@ const CMS_TABS = [
   { id: "resumen", label: "Resumen", href: "/cms", icon: LayoutDashboard },
   { id: "paginas", label: "Paginas", href: "/cms/pages", icon: FileText },
   { id: "testimonios", label: "Testimonios", href: "/cms/testimonials", icon: MessageCircle },
-  { id: "hero", label: "Landing hero", href: "/cms/content", icon: Feather },
-  { id: "eventos", label: "Eventos", href: "/cms/events", icon: CalendarRange },
   { id: "menus", label: "Menus", href: "/cms/menus", icon: Link2 },
   { id: "media", label: "Media", href: "/cms/media", icon: ImageIcon },
   { id: "builder", label: "Builder", href: "/cms/builder", icon: PanelsTopLeft },

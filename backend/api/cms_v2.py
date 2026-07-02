@@ -67,9 +67,16 @@ CMS_PUBLISHER_ROLES = {"admin", "coordinador", "pastor"}
 def _assert_role(
     user: models.User, allowed_roles: set[str], detail: str = "Not enough permissions"
 ) -> None:
-    # Fallback to rol_plataforma.nombre mirrors the resolution already used by
-    # `get_current_user` / `require_permission` in backend/core/permissions.py,
-    # so Auth v3 personas (whose canonical role lives on `rol_plataforma`) aren't blocked.
+    """Validate that the user belongs to one of the allowed role groups.
+
+    Args:
+        user: Authenticated ``User`` model instance.
+        allowed_roles: Set of role names (lower‑cased) permitted to perform the action.
+        detail: Custom error detail returned in the 403 response.
+    """
+    # Preserve backward‑compatible behaviour for V3 personas where the role is stored
+    # in ``rol_plataforma.nombre``. ``normalize_role`` handles case‑insensitivity and
+    # whitespace trimming.
     role = normalize_role(getattr(user, "role", ""))
     if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
         role = normalize_role(user.rol_plataforma.nombre)
@@ -78,6 +85,12 @@ def _assert_role(
 
 
 def _slugify(value: str) -> str:
+    """Normalize a string into a URL‑safe slug.
+
+    - Trims whitespace, lower‑cases, replaces internal whitespace with hyphens.
+    - Removes characters that are not alphanumeric, hyphen, underscore or slash.
+    - Strips leading/trailing hyphens.
+    """
     value = value.strip().lower()
     value = re.sub(r"\s+", "-", value)
     value = re.sub(r"[^a-z0-9\-_/]", "", value)
@@ -85,6 +98,12 @@ def _slugify(value: str) -> str:
 
 
 def _get_site_or_404(db: Session, site_key: str) -> models.CmsSite:
+    """Retrieve a CMS site by its key or raise a 404 error.
+
+    Args:
+        db: SQLAlchemy session.
+        site_key: Identifier of the site (case‑insensitive).
+    """
     row = crud.get_cms_site_by_key(db, site_key.strip().lower())
     if not row:
         raise HTTPException(status_code=404, detail="site not found")
@@ -92,6 +111,10 @@ def _get_site_or_404(db: Session, site_key: str) -> models.CmsSite:
 
 
 def _get_public_site_or_404(db: Session, site_key: str) -> models.CmsSite:
+    """Fetch a public‑active CMS site or raise 404.
+
+    Ensures the site exists and ``is_active`` flag is true.
+    """
     row = _get_site_or_404(db, site_key)
     if not row.is_active:
         raise HTTPException(status_code=404, detail="site not found")
@@ -99,6 +122,13 @@ def _get_public_site_or_404(db: Session, site_key: str) -> models.CmsSite:
 
 
 def _get_menu_or_404(db: Session, site_id: UUID, menu_key: str) -> models.CmsMenu:
+    """Retrieve a CMS menu by its key for a given site or raise 404.
+
+    Args:
+        db: Database session.
+        site_id: UUID of the site.
+        menu_key: Key of the menu (case‑insensitive).
+    """
     row = crud.get_cms_menu(db, site_id, menu_key.strip().lower())
     if not row:
         raise HTTPException(status_code=404, detail="menu not found")
@@ -465,44 +495,8 @@ def list_pages(
 ):
     site = _get_site_or_404(db, site_key)
     pages, total = crud.list_cms_pages(db, site.id, skip=skip, limit=limit, status=status)
-    if pages:
-        return PaginatedResponse[schemas.CmsPageRead](
-            items=pages, total=total, skip=skip, limit=limit
-        )
-
-    fallback_contents = [
-        row
-        for row in crud.list_page_contents(db, limit=500)
-        if not str(getattr(row, "page_key", "")).endswith("_wiki_notes")
-    ]
-    if not fallback_contents:
-        return PaginatedResponse[schemas.CmsPageRead](
-            items=[], total=0, skip=skip, limit=limit
-        )
-
-    publications = {
-        row.page_key: row
-        for row in crud.list_content_publications(db)
-        if getattr(row, "page_key", None)
-    }
-    items = [
-        schemas.CmsPageRead(
-            id=row.id,
-            site_id=site.id,
-            slug=row.page_key,
-            title=row.title,
-            status=(publications.get(row.page_key).status if publications.get(row.page_key) else "draft"),
-            seo_json={},
-            published_version_id=None,
-            created_by=None,
-            updated_by=None,
-            created_at=row.created_at,
-            updated_at=row.updated_at,
-        )
-        for row in fallback_contents
-    ]
     return PaginatedResponse[schemas.CmsPageRead](
-        items=items, total=len(items), skip=skip, limit=limit
+        items=pages, total=total, skip=skip, limit=limit
     )
 
 

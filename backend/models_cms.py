@@ -2,60 +2,6 @@ from backend.models_shared import *
 from backend.models_shared import _utcnow
 
 
-class PageContent(Base):
-    __tablename__ = "page_contents"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    page_key = Column(String(120), unique=True, nullable=False, index=True)
-    title = Column(String(255), nullable=False)
-    content = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
-    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
-
-
-class PageContentVersion(Base):
-    __tablename__ = "page_content_versions"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    page_key = Column(String(120), nullable=False, index=True)
-    title = Column(String(255), nullable=False)
-    content = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
-
-
-class ContentPublication(Base):
-    __tablename__ = "content_publications"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    page_key = Column(String(120), unique=True, nullable=False, index=True)
-    status = Column(
-        String(30), default="draft", index=True
-    )  # draft, in_review, approved, published, archived
-    publish_at = Column(DateTime(timezone=True), nullable=True)
-    expire_at = Column(DateTime(timezone=True), nullable=True)
-    last_published_at = Column(DateTime(timezone=True), nullable=True)
-    updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    notes = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
-    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
-
-
-class ContentMetric(Base):
-    __tablename__ = "content_metrics"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    metric_key = Column(String(120), nullable=False, index=True)
-    ref_id = Column(String(120), nullable=True, index=True)
-    value = Column(Integer, default=0)
-    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
-
-
-class MediaAsset(Base):
-    __tablename__ = "media_assets"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    filename = Column(String(255), nullable=False)
-    url = Column(String(500), nullable=False)
-    mime_type = Column(String(120), nullable=True)
-    size_bytes = Column(Integer, default=0)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
-
-
 class CmsMediaItem(Base):
     __tablename__ = "cms_media_items"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

@@ -7,7 +7,6 @@ import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { apiFetch } from "@/lib/http";
 
 import { toast } from "sonner";
-import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 export default function BoletinPage() {
     const boletinPage = useCmsV2Page('boletin');
@@ -42,8 +41,7 @@ export default function BoletinPage() {
     };
 
     return (
-        <CmsPageOverride slug="boletin">
-            <main className="pt-[100px] flex-1 flex items-center justify-center px-3 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16">
+        <main className="pt-[100px] flex-1 flex items-center justify-center px-3 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -97,7 +95,6 @@ export default function BoletinPage() {
                         )}
                     </div>
                 </motion.div>
-            </main>
-        </CmsPageOverride>
+        </main>
     );
 }

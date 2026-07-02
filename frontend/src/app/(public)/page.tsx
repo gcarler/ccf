@@ -5,7 +5,6 @@ import React from "react";
 import Image from "next/image";
 import { ArrowRight, Play } from "lucide-react";
 import { motion } from "framer-motion";
-import { SITE_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 import { SITE_NAME } from "@/lib/site-config";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { useState } from "react";

@@ -7,7 +7,6 @@ import { Target, Sparkles, Quote, Heart, Users, BookOpen, Cross, ChevronRight, A
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 
 import RichText from "@/components/public/RichText";
-import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 /* ── Fallbacks ── */
 const DEFAULT_STATS = [
@@ -76,8 +75,7 @@ export default function NosotrosPage() {
     const breadcrumbPage = (about?.breadcrumbPage as string) || "Quiénes Somos";
 
     return (
-        <CmsPageOverride slug="nosotros">
-            <main className="min-h-screen bg-site-background pt-[88px] overflow-hidden">
+        <main className="min-h-screen bg-site-background pt-[88px] overflow-hidden">
 
                 {/* ── HERO ── */}
                 <section className="relative px-4 md:px-6 lg:px-8 xl:px-12 py-16 md:py-24 lg:py-28 overflow-hidden">
@@ -358,7 +356,6 @@ export default function NosotrosPage() {
                     </div>
                 </section>
 
-            </main>
-        </CmsPageOverride>
+        </main>
     );
 }

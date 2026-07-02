@@ -124,5 +124,5 @@ export interface CmsPublicPage {
    * ``sections`` only; this field is optional for backward compat with
    * the catch-all renderer that iterates ``page.sections``.
    */
-  blocks?: Record<string, Record<string, unknown>>;
+  blocks?: Record<string, any>;
 }

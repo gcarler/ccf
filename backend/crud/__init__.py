@@ -6,7 +6,7 @@ This package re-exports only symbols consumed via ``from backend import crud``
 / ``crud.function_name(...)``.  Direct sub-module imports
 (``from backend.crud import cms``) are preferred for new code.
 """
-# ruff: noqa: F401
+# ruff: noqa: F401, I001
 
 # ── Sub-modules accessed directly (kernel, agenda, pipeline, test aliases) ──
 from backend.crud import (
@@ -28,7 +28,7 @@ from backend.crud.agents import (
 # ── Audit ──────────────────────────────────────────────────────────────────
 from backend.crud.audit import create_admin_audit_log, get_admin_audit_logs
 
-# ── CMS (consumed by cms_v2, cms, cms_content) ────────────────────────────
+# ── CMS (consumed by cms_v2, cms) ────────────────────────────
 from backend.crud.cms import (
     activate_cms_theme,
     archive_cms_section,
@@ -42,7 +42,6 @@ from backend.crud.cms import (
     create_cms_section,
     create_cms_site,
     create_cms_theme,
-    create_media_asset,
     create_testimonial,
     delete_announcement,
     delete_cms_media_item,
@@ -60,12 +59,8 @@ from backend.crud.cms import (
     get_cms_section,
     get_cms_site_by_key,
     get_cms_theme,
-    get_or_create_content_publication,
-    get_or_create_page_content,
-    get_page_content_versions,
     get_public_cms_page,
     get_testimonial,
-    increment_content_metric,
     list_announcements,
     list_cms_menu_items,
     list_cms_menus,
@@ -75,14 +70,11 @@ from backend.crud.cms import (
     list_cms_sections,
     list_cms_sites,
     list_cms_themes,
-    list_content_publications,
-    list_page_contents,
     list_testimonials,
     reorder_cms_menu_items,
     reorder_cms_sections,
     resolve_persona_id_for_user,
     restore_cms_page_version,
-    restore_page_content_version,
     transition_cms_page_status,
     update_announcement,
     update_cms_media_item,
@@ -92,8 +84,6 @@ from backend.crud.cms import (
     update_cms_section,
     update_cms_site,
     update_cms_theme,
-    update_content_publication,
-    update_page_content,
     update_pastoral_profile,
     update_testimonial,
 )

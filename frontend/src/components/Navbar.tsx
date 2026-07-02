@@ -13,14 +13,13 @@ import {
     LogOut,
     ChevronDown
 } from 'lucide-react';
-import { useContentBlock } from '@/hooks/useContent';
 import { SITE_NAME } from '@/lib/site-config';
 
 export default function Navbar() {
     const { isAuthenticated, logout } = useAuth();
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [navItems, setNavItems] = useState([
+    const navItems = [
         { label: 'Inicio', href: '/' },
         { label: 'Academia', href: '/plataforma/academy' },
         { label: 'Proyectos', href: '/plataforma/projects' },
@@ -29,18 +28,10 @@ export default function Navbar() {
         { label: 'Testimonios', href: '/testimonios' },
         { label: 'Eventos', href: '/eventos' },
         { label: 'Donaciones', href: '/donate' },
-    ]);
+    ];
     const pathname = usePathname() ?? '/';
-    const { data: navContent } = useContentBlock('navbar_items');
-    const { data: logoBranding } = useContentBlock('logo_branding');
-    const logoUrl: string | undefined = logoBranding?.logo_url;
-    const siteName: string = (logoBranding?.site_name as string | undefined) || SITE_NAME;
-
-    useEffect(() => {
-        if (navContent?.items && Array.isArray(navContent.items)) {
-            setNavItems(navContent.items);
-        }
-    }, [navContent]);
+    const logoUrl: string | undefined = undefined;
+    const siteName: string = SITE_NAME;
 
     useEffect(() => {
         const handleScroll = () => {

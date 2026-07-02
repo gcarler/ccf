@@ -9,54 +9,7 @@ from pydantic import BaseModel, Field
 from backend.schemas._common import orm_config
 
 
-class PageContentUpdate(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
-
-
-class PageContentRead(BaseModel):
-    id: UUID
-    page_key: str
-    title: str
-    content: str
-    created_at: datetime
-    updated_at: datetime
-    model_config = orm_config
-
-
-class PageContentVersionRead(BaseModel):
-    id: UUID
-    page_key: str
-    title: str
-    content: str
-    created_at: datetime
-    model_config = orm_config
-
-
-class ContentWorkflowUpdate(BaseModel):
-    action: str
-    notes: Optional[str] = None
-    publish_at: Optional[datetime] = None
-    expire_at: Optional[datetime] = None
-
-
-class ContentWorkflowRead(BaseModel):
-    page_key: str
-    status: str
-    publish_at: Optional[datetime] = None
-    expire_at: Optional[datetime] = None
-    last_published_at: Optional[datetime] = None
-    notes: Optional[str] = None
-    updated_at: datetime
-
-
 class CmsMetrics(BaseModel):
-    total_blocks: int
-    draft_blocks: int
-    in_review_blocks: int
-    approved_blocks: int
-    published_blocks: int
-    archived_blocks: int
     testimonials_total: int
     testimonials_approved: int
     announcements_total: int

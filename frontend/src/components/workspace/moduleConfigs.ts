@@ -399,18 +399,6 @@ export const MODULE_CONFIGS: Record<string, any> = {
             href: '/plataforma/cms/testimonials',
             icon: MessageCircle,
           },
-          {
-            id: 'cms-content',
-            label: 'Landing Hero',
-            href: '/plataforma/cms/content',
-            icon: FileText,
-          },
-          {
-            id: 'cms-events',
-            label: 'Eventos públicos',
-            href: '/plataforma/cms/events',
-            icon: Calendar,
-          },
         ],
       },
     ],
