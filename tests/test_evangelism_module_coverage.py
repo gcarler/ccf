@@ -2362,6 +2362,182 @@ class TestCalculoSesiones:
 # ════════════════════════════════════════════════════════════════════
 
 
+class TestSesionGrupoReportedAt:
+    """Regression Sprint 3 — antes de la migración ``20260702_reported_at_tz``
+    el ORM definía ``reported_at`` como un ``@property`` Python con setter stub
+    (``pass``), por lo que el getter siempre retornaba ``None`` aunque los
+    handlers setearan un ``datetime`` real con ``_datetime.now(_timezone.utc)``.
+
+    Tras eliminar el stub y declarar la columna directamente en el ORM, un
+    valor asignado al campo debe persistir en SQLite/Postgres y ser legible
+    tras ``session.expire`` + ``refresh``."""
+
+    def test_reported_at_value_persists_across_db_roundtrip(self, db_session):
+        _seed_admin(db_session)
+        sede = db_session.query(models.Sede).first()
+        g = GrupoEvangelismo(
+            nombre="G", sede_id=sede.id, ubicacion="u", capacidad=10, activo=True,
+        )
+        db_session.add(g); db_session.flush()
+        ts = datetime(2026, 6, 15, 12, 30, tzinfo=timezone.utc)
+        s = SesionGrupo(
+            grupo_id=g.id, fecha_sesion=datetime(2026, 6, 15, tzinfo=timezone.utc),
+            estado="PENDIENTE",
+        )
+        db_session.add(s); db_session.commit(); db_session.refresh(s)
+        s.reported_at = ts
+        db_session.commit()
+        db_session.expire(s); db_session.refresh(s)
+        assert s.reported_at is not None, (
+            "Regression: reported_at sigue retornando None tras persistir. "
+            "Revisar si la columna real fue añadida y se eliminó el @property stub."
+        )
+        if s.reported_at.tzinfo is None and ts.tzinfo is not None:
+            assert s.reported_at == ts.replace(tzinfo=None)
+        else:
+            assert s.reported_at == ts
+
+    def test_reported_at_nullable_when_no_set(self, db_session):
+        _seed_admin(db_session)
+        sede = db_session.query(models.Sede).first()
+        g = GrupoEvangelismo(
+            nombre="G", sede_id=sede.id, ubicacion="u", capacidad=10, activo=True,
+        )
+        db_session.add(g); db_session.flush()
+        s = SesionGrupo(
+            grupo_id=g.id, fecha_sesion=datetime(2026, 6, 20, tzinfo=timezone.utc),
+            estado="PENDIENTE",
+        )
+        db_session.add(s); db_session.commit(); db_session.refresh(s)
+        assert s.reported_at is None
+
+    def test_update_session_endpoint_persists_reported_at(self, full):
+        s = full["sesiones"][0]
+        resp = full["c"].put(
+            f"/api/evangelism/sessions/{s.id}",
+            json={"topic": "Con reporte"},
+            headers=full["h"],
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body.get("reported_at") is not None, (
+            "Regression: PUT /sessions/{id} sigue emitiendo reported_at=null."
+        )
+
+
+class TestSesionGrupoOfferingAmount:
+    """Regression Sprint 3.5 — antes del fix, ``SesionGrupo.__init__`` hacía
+    ``kwargs.pop("offering_amount")`` y guardaba el valor en un atributo
+    privado ``_offering_amount`` que NUNCA se leía. Esto significaba que
+    ``SesionGrupo(offering_amount=150.50, ...)`` parecía persistir pero la
+    ``Column(Numeric(12, 2))`` quedaba en NULL.
+
+    Tras eliminar el ``pop``, el valor fluye a ``super().__init__`` y
+    SQLAlchemy lo persiste correctamente. Los readers (``get_grupo``,
+    analytics, weekly aggregates) ahora ven el valor real."""
+
+    def test_offering_amount_value_persists_across_db_roundtrip(self, db_session):
+        _seed_admin(db_session)
+        sede = db_session.query(models.Sede).first()
+        g = GrupoEvangelismo(
+            nombre="G", sede_id=sede.id, ubicacion="u", capacidad=10, activo=True,
+        )
+        db_session.add(g); db_session.flush()
+
+        # Asignación via constructor con offering_amount kwarg.
+        # Antes el pop descartaba el valor; ahora debe fluir a la Column.
+        s = SesionGrupo(
+            grupo_id=g.id,
+            fecha_sesion=datetime(2026, 7, 1, tzinfo=timezone.utc),
+            estado="PENDIENTE",
+            offering_amount=150.50,
+        )
+        db_session.add(s); db_session.commit()
+        # Forzar reload completo descartando el cache de SQLAlchemy.
+        db_session.expire(s); db_session.refresh(s)
+        assert s.offering_amount is not None, (
+            "Regression: offering_amount quedó NULL tras persistir via constructor. "
+            "Verificar que se eliminó el kwargs.pop('offering_amount') del __init__."
+        )
+        # Numeric(12,2) → Decimal; comparar vía float para no depender del tipo.
+        assert float(s.offering_amount) == pytest.approx(150.50, abs=0.01), (
+            f"Offering amount persistido con valor incorrecto: {s.offering_amount}"
+        )
+
+    def test_offering_amount_nullable_when_no_set(self, db_session):
+        """Sin asignación explícita, ``offering_amount`` queda en NULL
+        y no se inicializa con 0.00."""
+        _seed_admin(db_session)
+        sede = db_session.query(models.Sede).first()
+        g = GrupoEvangelismo(
+            nombre="G", sede_id=sede.id, ubicacion="u", capacidad=10, activo=True,
+        )
+        db_session.add(g); db_session.flush()
+        s = SesionGrupo(
+            grupo_id=g.id,
+            fecha_sesion=datetime(2026, 7, 15, tzinfo=timezone.utc),
+            estado="PENDIENTE",
+        )
+        db_session.add(s); db_session.commit(); db_session.refresh(s)
+        assert s.offering_amount is None
+
+    def test_offering_amount_setter_via_attribute(self, db_session):
+        """Asignación directa via ``s.offering_amount = X`` (estilo ORM
+        estándar) también persiste."""
+        _seed_admin(db_session)
+        sede = db_session.query(models.Sede).first()
+        g = GrupoEvangelismo(
+            nombre="G", sede_id=sede.id, ubicacion="u", capacidad=10, activo=True,
+        )
+        db_session.add(g); db_session.flush()
+        s = SesionGrupo(
+            grupo_id=g.id,
+            fecha_sesion=datetime(2026, 7, 22, tzinfo=timezone.utc),
+            estado="PENDIENTE",
+        )
+        db_session.add(s); db_session.commit(); db_session.refresh(s)
+        s.offering_amount = 99.99
+        db_session.commit()
+        db_session.expire(s); db_session.refresh(s)
+        assert float(s.offering_amount) == pytest.approx(99.99, abs=0.01)
+
+    def test_get_grupo_serializes_offering_amount(self, full):
+        """GET /api/evangelism/grupos/{id} debe retornar offering_amount no-None
+        cuando el valor fue seteado via endpoint de creación."""
+        g = full["grupos"][0]
+        # Crear sesión con ofrenda vía POST directo. Antes del fix, el
+        # constructor descartaba el valor y el campo llegaba NULL.
+        resp = full["c"].post("/api/evangelism/sessions", json={
+            "grupo_id": str(g.id),
+            "session_date": "2026-10-05",
+            "topic": "Con ofrenda",
+            "offering_amount": 75.25,
+        }, headers=full["h"])
+        assert resp.status_code == 200, resp.text
+        new_session_id = resp.json()["id"]
+        # GET detalle del grupo incluye la oferta en su lista de sesiones.
+        get_resp = full["c"].get(
+            f"/api/evangelism/grupos/{g.id}", headers=full["h"],
+        )
+        assert get_resp.status_code == 200, get_resp.text
+        sessions_data = get_resp.json().get("sessions", [])
+        new_session = next(
+            (s for s in sessions_data if s.get("id") == new_session_id), None,
+        )
+        assert new_session is not None, (
+            "Sesión recién creada no aparece en get_grupo. "
+            "Posible regression del POST /api/evangelism/sessions."
+        )
+        assert new_session.get("offering_amount") is not None, (
+            "Regression: offering_amount salió None en GET /grupos/{id} aunque "
+            "el POST lo creó con 75.25. Confirma que el kwargs.pop "
+            "de SesionGrupo.__init__ está eliminado."
+        )
+        assert float(new_session["offering_amount"]) == pytest.approx(
+            75.25, abs=0.01,
+        )
+
+
 class TestMainUtils:
     def test_channel_label(self):
         from backend.api.evangelism_main.main_utils import _channel_label

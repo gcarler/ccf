@@ -385,6 +385,11 @@ class SesionGrupo(Base):
     season_id = Column(UUID(as_uuid=True), ForeignKey("campaign_seasons.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
+    # Marca de tiempo de cuando se reportó la asistencia por última vez.
+    # Antes era un ``@property`` Python con setter stub (``pass``)
+    # que retornaba ``None`` — fix en Sprint 3 vía migración
+    # ``20260702_reported_at_tz``: ahora es columna real.
+    reported_at = Column(DateTime(timezone=True), nullable=True)
 
     grupo = relationship("GrupoEvangelismo", back_populates="sesiones")
     asistencias = relationship("Asistencia", back_populates="sesion", cascade="all, delete-orphan")
@@ -423,13 +428,11 @@ class SesionGrupo(Base):
     def reported_by_persona_id(self, value):
         self._reported_by_persona_id = value
 
-    @property
-    def reported_at(self):
-        return None
-
-    @reported_at.setter
-    def reported_at(self, value):
-        pass
+    # ``reported_at`` ya NO es ``@property`` stub: es columna real
+    # ``Column(DateTime(timezone=True), nullable=True)``. El fix en
+    # ``20260702_reported_at_tz`` cierra el bug por el cual los
+    # endpoints siempre emitían ``null`` aunque el handler seteara
+    # el timestamp con ``_datetime.now(_timezone.utc)``.
 
     @property
     def report_deadline(self):
@@ -440,15 +443,24 @@ class SesionGrupo(Base):
         self._report_deadline = value
 
     def __init__(self, **kwargs):
-        offering_amount = kwargs.pop("offering_amount", None)
         kwargs.pop("reported_by_persona_id", None)
-        kwargs.pop("reported_at", None)
+        # ``reported_at`` y ``offering_amount`` son columnas reales (``Column``)
+        # y deben llegar a ``super().__init__`` para que SQLAlchemy las persista.
+        # Antes ambos eran ``kwargs.pop``+@property-stub:
+        #   * reported_at: fix Sprint 3 vía columna real + migración
+        #     ``20260702_reported_at_tz``.
+        #   * offering_amount: idéntico anti-pattern — el pop descartaba el valor
+        #     y se asignaba a un ``_offering_amount`` privado que NUNCA se leía.
+        #     Si el caller hacía ``SesionGrupo(offering_amount=N, ...)`` la
+        #     ``Column(Numeric(12, 2))`` quedaba en NULL y todos los readers
+        #     (``evangelism_analytics`` sums, ``get_grupo``, weekly aggregates)
+        #     devolvían None/0. Fix Sprint 3.5: dejar fluir a la columna.
+        # Los atributos virtuales restantes (``novelty_type``/``detail`` y
+        # ``report_deadline``) sí son campos computados via @property + setter.
         kwargs.pop("novelty_type", None)
         kwargs.pop("novelty_detail", None)
         report_deadline = kwargs.pop("report_deadline", None)
         super().__init__(**kwargs)
-        if offering_amount is not None:
-            self._offering_amount = offering_amount
         if report_deadline is not None:
             self._report_deadline = report_deadline
 
