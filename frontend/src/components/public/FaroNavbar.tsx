@@ -1,6 +1,6 @@
 "use client";
 
-import { useContentBlock } from "@/hooks/useContent";
+
 import { getCmsPublicMenu } from "@/lib/cms/v2";
 import { SITE_KEY, SITE_NAME } from "@/lib/site-config";
 import OptimizedImage from "@/components/ui/OptimizedImage";
@@ -34,13 +34,11 @@ export default function FaroNavbar() {
     const ctaHref = themeTokens["--site-header-cta-href"] || "/conocer-a-jesus";
 
     // Dinamización vía CMS
-    const { data: navContent } = useContentBlock(`${SITE_KEY}_nav_items`);
-    const navParsed = (navContent?.parsed && typeof navContent.parsed === "object" && !Array.isArray(navContent.parsed))
-        ? navContent.parsed as Record<string, unknown>
-        : null;
-    const locationTitle = (navParsed?.location_title as string) || "Nuestras Sedes";
-    const themeToggleTitle = (navParsed?.theme_toggle_title as string) || "Cambiar tema";
-    const fallbackLinks = (Array.isArray(navContent?.items) ? navContent.items : DEFAULT_NAV_LINKS).map((item: any, index: number) => ({
+    // Archived CMS navigation block removed — using static defaults
+
+    const locationTitle = "Nuestras Sedes";
+    const themeToggleTitle = "Cambiar tema";
+    const fallbackLinks = DEFAULT_NAV_LINKS.map((item: any, index: number) => ({
         id: `fallback_${index}`,
         href: item.href,
         label: item.label,
