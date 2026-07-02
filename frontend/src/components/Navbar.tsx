@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import OptimizedImage from "@/components/ui/OptimizedImage";
+import { useSiteBranding } from '@/lib/site-branding';
 import {
     Menu,
     X,
@@ -17,6 +18,7 @@ import { SITE_NAME } from '@/lib/site-config';
 
 export default function Navbar() {
     const { isAuthenticated, logout } = useAuth();
+    const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const navItems = [
@@ -30,8 +32,7 @@ export default function Navbar() {
         { label: 'Donaciones', href: '/donate' },
     ];
     const pathname = usePathname() ?? '/';
-    const logoUrl: string | undefined = undefined;
-    const siteName: string = SITE_NAME;
+    const siteName: string = logoName || SITE_NAME;
 
     useEffect(() => {
         const handleScroll = () => {
