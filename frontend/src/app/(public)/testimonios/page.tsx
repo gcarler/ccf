@@ -6,8 +6,8 @@ import OptimizedImage from "@/components/ui/OptimizedImage";
 import { Quote, ArrowRight, Sparkles, Search, Users, Headphones, ImageIcon, PlayCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import RichText from "@/components/public/RichText";
-import { useContentBlock } from "@/hooks/useContent";
-import { SITE_KEY } from "@/lib/site-config";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
+
 import { apiFetch } from "@/lib/http";
 import { Testimonial } from "@/lib/data/testimonios";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
@@ -160,8 +160,9 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
 }
 
 export default function TestimoniosPage() {
-    const { data: heroContent } = useContentBlock(`${SITE_KEY}_testimonials_hero`);
-    const { data: feedContent } = useContentBlock(`${SITE_KEY}_testimonials_feed`);
+    const heroPage = useCmsV2Page('testimonials');
+    const heroContent = heroPage?.blocks?.hero;
+    const feedContent = heroPage?.blocks?.feed;
     const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");

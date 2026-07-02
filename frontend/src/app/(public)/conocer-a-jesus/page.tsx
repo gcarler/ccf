@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from "react";
 
 import { ArrowRight, Clock, Mail, Heart, Star, Shield } from "lucide-react";
-import { useContentBlock } from "@/hooks/useContent";
-import { SITE_KEY, SITE_EMAIL } from "@/lib/site-config";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
+import { SITE_EMAIL } from "@/lib/site-config";
 import RichText from "@/components/public/RichText";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -19,8 +19,9 @@ interface TestimonialItem {
 }
 
 export default function ConocerAJesusPage() {
-    const { data: heroContent } = useContentBlock(`${SITE_KEY}_discover_hero`);
-    const { data: discoverContent } = useContentBlock(`${SITE_KEY}_discover_feed`);
+    const discoverPage = useCmsV2Page('discover');
+    const heroContent = discoverPage?.blocks?.hero;
+    const discoverContent = discoverPage?.blocks?.feed;
     const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
 
     const discoverData = (discoverContent?.parsed && typeof discoverContent.parsed === "object" && !Array.isArray(discoverContent.parsed))

@@ -3,8 +3,8 @@
 import { useMemo,useState } from "react";
 
 import RichText from "@/components/public/RichText";
-import { useContentBlock } from "@/hooks/useContent";
-import { SITE_KEY } from "@/lib/site-config";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
+
 import { SITE_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 import { Bell,ChevronLeft,ChevronRight,MapPin,Star } from "lucide-react";
 import Image from "next/image";
@@ -46,9 +46,11 @@ function formatMonthDay(date?: string) {
 }
 
 export default function EventosPage() {
-    const { data: heroContent } = useContentBlock(`${SITE_KEY}_events_hero`);
-    const { data: feedContent } = useContentBlock(`${SITE_KEY}_events_feed`);
-    const { data: eventsContent } = useContentBlock(SITE_EVENTS_BLOCK_KEY);
+    const heroPage = useCmsV2Page('events');
+    const heroContent = heroPage?.blocks?.hero;
+    const feedContent = heroPage?.blocks?.feed;
+    const eventsPage = useCmsV2Page('events');
+    const eventsContent = eventsPage?.blocks?.events;
     const [activeFilter, setActiveFilter] = useState("Todos");
     const [calendarView, setCalendarView] = useState<"Semanal" | "Mensual" | "Anual">("Mensual");
     const [currentMonth, setCurrentMonth] = useState(5); // June (0-indexed)
@@ -642,7 +644,7 @@ export default function EventosPage() {
                                     const blob = new Blob([ics], { type: "text/calendar" });
                                     const url = URL.createObjectURL(blob);
                                     const a = document.createElement("a");
-                                    a.href = url; a.download = `${SITE_KEY}-eventos.ics`; a.click();
+                                    a.href = url; a.download = `eventos.ics`; a.click();
                                     URL.revokeObjectURL(url);
                                     toast.success(syncCalendarToast);
                                 }}

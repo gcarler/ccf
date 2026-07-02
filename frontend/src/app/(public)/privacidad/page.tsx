@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Shield, ChevronRight, Mail, Calendar, ArrowUp } from "lucide-react";
-import { useContentBlock } from "@/hooks/useContent";
-import { SITE_NAME, SITE_URL, SITE_EMAIL, SITE_KEY } from "@/lib/site-config";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
+import { SITE_NAME, SITE_URL, SITE_EMAIL } from "@/lib/site-config";
 import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
 
 const LAST_UPDATE = "12 de junio de 2026";
@@ -28,7 +28,8 @@ const FALLBACK_SECTIONS = [
 export default function PrivacidadPage() {
     const [activeSection, setActiveSection] = useState("");
     const [showScrollTop, setShowScrollTop] = useState(false);
-    const { data: privacyContent } = useContentBlock(`${SITE_KEY}_privacy`);
+    const privacyPage = useCmsV2Page('privacy');
+    const privacyContent = privacyPage?.blocks?.privacy;
     const privacy = (privacyContent?.parsed && typeof privacyContent.parsed === "object" && !Array.isArray(privacyContent.parsed))
         ? privacyContent.parsed as Record<string, unknown>
         : {};
