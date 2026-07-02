@@ -176,11 +176,21 @@ class CmsSection(Base):
     sort_order = Column(Integer, default=0)
     is_visible = Column(Boolean, default=True, index=True)
     status = Column(String(20), default="active", index=True)
-    is_global = Column(Boolean, default=False, server_default="0")
+    is_global = Column(Boolean, default=False, server_default="0", index=True)
     global_key = Column(String(120), nullable=True, unique=True, index=True)
     locale = Column(String(5), default="es", server_default="es", index=True)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
+class CmsSectionType(Base):
+    __tablename__ = "cms_section_types"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(80), nullable=False, unique=True, index=True)
+    description = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 

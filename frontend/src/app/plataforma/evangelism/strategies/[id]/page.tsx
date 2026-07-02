@@ -945,7 +945,7 @@ export default function StrategyDetailPage() {
  catch { return dateStr; }
  };
 
- const groupName = (houseId: string) => groups.find(g => g.id === houseId)?.name || `Grupo #${houseId}`;
+ const groupName = (grupoId: string) => groups.find(g => g.id === grupoId)?.name || `Grupo #${grupoId}`;
 
  const shareGroupLink = (groupId: string, gName: string, via: 'copy' | 'whatsapp' | 'telegram') => {
  const url = `${window.location.origin}/plataforma/evangelism/faro/${groupId}`;

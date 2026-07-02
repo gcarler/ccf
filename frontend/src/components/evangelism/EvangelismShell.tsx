@@ -5,7 +5,7 @@ import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import type { LucideIcon } from 'lucide-react';
-import { Calendar,Flame,Scan,ShieldAlert,Users,Zap } from 'lucide-react';
+import { Award,BarChart3,Calendar,Flame,GitBranch,Scan,ShieldAlert,Trophy,Users,Zap } from 'lucide-react';
 import React,{ useCallback,useEffect,useState } from 'react';
 import { toast } from 'sonner';
 
@@ -114,10 +114,18 @@ export default function EvangelismShell({
             })),
         }] : []),
         {
-            title: 'Herramientas',
+            title: 'Métricas y Análisis',
+            items: [
+                { id: 'ev-rankings', label: 'Rankings', href: '/plataforma/evangelism/rankings', icon: Trophy },
+                { id: 'ev-multiplication', label: 'Multiplicación', href: '/plataforma/evangelism/multiplication', icon: GitBranch },
+            ],
+        },
+        {
+            title: 'Herramientas y Gestión',
             items: [
                 { id: 'ev-events', label: 'Eventos', href: '/plataforma/evangelism/events', icon: Calendar },
                 { id: 'ev-scanner', label: 'Escáner ASST', href: '/plataforma/evangelism/scanner', icon: Scan },
+                { id: 'ev-counseling', label: 'Consejería', href: '/plataforma/crm?counseling=open', icon: Award },
             ],
         },
     ];

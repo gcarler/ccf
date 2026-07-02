@@ -11,7 +11,7 @@ import { DSBadge,DSCard,DSMetric } from '@/design';
 import { MINIMAL_VIEWS,useViewType } from '@/hooks/useViewType';
 import { ApiError,apiFetch } from '@/lib/http';
 import clsx from 'clsx';
-import { CheckCircle2,ChevronRight,Clock,Home,Loader2 } from 'lucide-react';
+import { Award,CheckCircle2,ChevronRight,Clock,FileText,Home,Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback,useEffect,useState } from 'react';
 import { toast } from 'sonner';
@@ -53,6 +53,9 @@ export default function FaroPage() {
  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
  const [savingSession, setSavingSession] = useState(false);
  const [savingSeason, setSavingSeason] = useState(false);
+ const [counselingCount, setCounselingCount] = useState<number | null>(null);
+ const [confirmReminders, setConfirmReminders] = useState<ConfirmActionState>(null);
+ const [sendingReminders, setSendingReminders] = useState(false);
  const [sessionForm, setSessionForm] = useState({ grupo_id: '', session_date: new Date().toISOString().split('T')[0], topic: 'S1', report_deadline: '' });
  const [seasonForm, setSeasonForm] = useState<SeasonForm>({ name: '', start_date: '', end_date: '', periodicity: 'SEMANAL' });
  const isSeasonFormValid = Boolean(seasonForm.name.trim() && seasonForm.start_date && seasonForm.end_date);
@@ -83,6 +86,45 @@ export default function FaroPage() {
  useEffect(() => {
  load();
  }, [load]);
+
+ useEffect(() => {
+   if (!token) return;
+   apiFetch<unknown>('/crm/counseling', { token, query: { status: 'open', limit: 1 } })
+     .then((res: any) => {
+       const arr = Array.isArray(res) ? res : Array.isArray(res?.items) ? res.items : [];
+       setCounselingCount(arr.length);
+     })
+     .catch(() => setCounselingCount(0));
+ }, [token]);
+
+ const triggerReminders = async () => {
+   setSendingReminders(true);
+   try {
+     const res: any = await apiFetch('/evangelism/notifications/send-reminders', { method: 'POST', token });
+     const total = res?.notifications_created ?? res?.created ?? 0;
+     const sessionsT = res?.sessions_tomorrow_count ?? 0;
+     const inactive = res?.inactive_groups_count ?? 0;
+     toast.success(
+       total
+         ? `Se enviaron ${total} recordatorios (${sessionsT} sesiones de mañana, ${inactive} grupos sin reporte)`
+         : 'Sin recordatorios pendientes. Todos los líderes están al día.'
+     );
+     setConfirmReminders(null);
+   } catch (e: any) {
+     toast.error(e?.message || 'Error al enviar recordatorios');
+   } finally {
+     setSendingReminders(false);
+   }
+ };
+
+ const requestSendReminders = () => {
+   setConfirmReminders({
+     title: 'Disparar recordatorios pastorales',
+     description: 'Se enviarán notificaciones a líderes con sesiones programadas para mañana y a grupos sin reporte de asistencia en los últimos 7 días. Esta operación es masiva pero idempotente.',
+     confirmLabel: 'Enviar recordatorios',
+     onConfirm: triggerReminders,
+   });
+ };
 
  const handleCreateSeason = async () => {
  if (!seasonForm.name || !seasonForm.start_date || !seasonForm.end_date) return toast.error('Completa todos los campos');
@@ -196,6 +238,38 @@ export default function FaroPage() {
  <DSMetric label="Asistentes Totales" value={String(analytics?.total_attendance ?? '—')} tone="blue" trend="Acumulado" />
  <DSMetric label="Promedio / Sesión" value={String(analytics?.avg_per_session ?? '—')} tone="amber" trend="Por semana" />
  </div>
+
+ {isPrivileged && (
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+   <button onClick={requestSendReminders} disabled={sendingReminders}
+    className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md transition-all text-left disabled:opacity-60">
+    <div className="size-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
+     {sendingReminders ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
+    </div>
+    <div className="flex-1 min-w-0">
+     <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Acción pastoral</p>
+     <p className="text-sm font-bold text-[hsl(var(--text-primary))] mt-0.5">Disparar recordatorios</p>
+     <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">Notifica a líderes sobre sesiones de mañana y reportes atrasados.</p>
+    </div>
+   </button>
+   <a href="/plataforma/crm?counseling=open"
+    className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-amber-300 dark:hover:border-amber-500 hover:shadow-md transition-all">
+    <div className="size-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
+     <Award size={18} />
+    </div>
+    <div className="flex-1 min-w-0">
+     <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Seguimiento pastoral</p>
+     <p className="text-sm font-bold text-[hsl(var(--text-primary))] mt-0.5">
+      Consejería pendiente
+      {counselingCount !== null && (
+       <span className="ml-2 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px] font-bold">{counselingCount}</span>
+      )}
+     </p>
+     <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">Tickets abiertos esperando respuesta pastoral.</p>
+    </div>
+   </a>
+  </div>
+ )}
 
  <div className="space-y-3 pb-12">
  {/* Mis Faros */}
@@ -400,6 +474,7 @@ export default function FaroPage() {
  </div>
  </WorkspaceDrawer>
  <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
+ <ConfirmActionDrawer action={confirmReminders} onClose={() => setConfirmReminders(null)} />
  </EvangelismShell>
  );
 }

@@ -70,7 +70,7 @@ const nextConfig = {
         ignoreDuringBuilds: true,
     },
     typescript: {
-        ignoreBuildErrors: true,
+        ignoreBuildErrors: false,
     },
     outputFileTracingRoot: process.env.OUTPUT_FILE_TRACING_ROOT || '/root/ccf/frontend',
     outputFileTracingExcludes: {

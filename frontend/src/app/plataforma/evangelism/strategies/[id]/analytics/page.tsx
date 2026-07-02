@@ -215,6 +215,8 @@ export default function StrategyAnalyticsPage() {
   const [data, setData] = useState<FullAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [weeks, setWeeks] = useState(12);
+  const [heatmap, setHeatmap] = useState<Array<{ weekday: number; label: string; sessions: number; present: number; total: number; pct: number | null }>>([]);
+  const [velocity, setVelocity] = useState<Array<{ role: string; label: string; avg_days: number; transitions: number; order: number; pct_of_max: number }>>([]);
 
   const breadcrumbs: BreadcrumbOption[] = [
     { label: "Evangelismo", href: "/plataforma/evangelism" },
@@ -238,7 +240,29 @@ export default function StrategyAnalyticsPage() {
     }
   }, [id, token, weeks]);
 
+  const fetchHeatmapVelocity = useCallback(async () => {
+    if (!id) return;
+    try {
+      const periodMap: Record<number, string> = { 4: "90d", 8: "90d", 12: "90d", 24: "180d", 52: "365d" };
+      const [hm, vc] = await Promise.all([
+        apiFetch<{ cells: Array<{ weekday: number; label: string; sessions: number; present: number; total: number; pct: number | null }> }>(
+          `/evangelism/analytics/strategy/${id}/heatmap?period=${periodMap[weeks] || '90d'}`,
+          { token }
+        ).catch(() => null),
+        apiFetch<{ stages: typeof velocity }>(
+          `/evangelism/analytics/strategy/${id}/velocity`,
+          { token }
+        ).catch(() => null),
+      ]);
+      if (hm?.cells) setHeatmap(hm.cells);
+      if (vc?.stages) setVelocity(vc.stages);
+    } catch {
+      // silent
+    }
+  }, [id, token, weeks]);
+
   useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchHeatmapVelocity(); }, [fetchHeatmapVelocity]);
 
   if (loading) return (
     <EvangelismShell breadcrumbs={breadcrumbs}>
@@ -606,6 +630,129 @@ export default function StrategyAnalyticsPage() {
               </ResponsiveContainer>
             </div>
           </div>
+        </div>
+
+        {/* ── HEATMAP DE ASISTENCIA POR DÍA ── */}
+        <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl p-5">
+          <SectionHeader icon={Activity} title="Heatmap de Asistencia por Día de la Semana"
+            sub="¿Qué días concentran más asistencia? Color según % de asistencia promedio" />
+          {heatmap.length === 0 ? (
+            <p className="text-[11px] text-[hsl(var(--text-secondary))] italic text-center py-4">
+              Sin datos suficientes para calcular heatmap en el período actual
+            </p>
+          ) : (
+            <div className="space-y-3">
+              <div className="grid grid-cols-7 gap-1.5">
+                {heatmap.map((d) => {
+                  const ratio = d.pct !== null ? Math.max(0, Math.min(1, d.pct / 100)) : 0;
+                  const intensity = ratio; // 0..1
+                  return (
+                    <div key={d.weekday} className="flex flex-col gap-1">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center">
+                        {d.label.slice(0, 3)}
+                      </p>
+                      <div
+                        className="aspect-square rounded-md flex items-center justify-center text-white font-black text-sm transition-all hover:scale-105 cursor-default border border-[hsl(var(--border-primary))]"
+                        style={{
+                          backgroundColor: d.sessions === 0
+                            ? 'hsl(var(--bg-muted))'
+                            : `rgba(99, 102, 241, ${0.15 + intensity * 0.85})`,
+                          color: intensity > 0.55 || d.sessions === 0 ? 'white' : 'hsl(var(--text-primary))',
+                        }}
+                        title={`${d.label}: ${d.sessions} sesiones, ${d.pct !== null ? `${d.pct.toFixed(1)}% asistencia` : 'sin datos'}`}
+                      >
+                        {d.sessions > 0 ? `${Math.round(d.pct ?? 0)}%` : '—'}
+                      </div>
+                      <p className="text-[9px] text-[hsl(var(--text-secondary))] text-center font-mono">
+                        {d.sessions} ses.
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-[hsl(var(--border-primary))]">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                    Leyenda:
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
+                    <span className="size-3 rounded" style={{ background: 'hsl(var(--bg-muted))' }} /> Sin sesiones
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
+                    <span className="size-3 rounded" style={{ background: 'rgba(99, 102, 241, 0.2)' }} /> Bajo
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
+                    <span className="size-3 rounded" style={{ background: 'rgba(99, 102, 241, 0.55)' }} /> Medio
+                  </span>
+                  <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
+                    <span className="size-3 rounded" style={{ background: 'rgba(99, 102, 241, 0.95)' }} /> Alto
+                  </span>
+                </div>
+                <p className="text-[10px] text-[hsl(var(--text-secondary))] italic">
+                  Período: últimas {weeks} semanas
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── VELOCIDAD DE TRANSICIÓN DE ROLES ── */}
+        <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl p-5">
+          <SectionHeader icon={Zap} title="Velocidad de Transición entre Roles"
+            sub="Días promedio antes de que una persona avance al siguiente rol en el embudo ministerial" />
+          {velocity.length === 0 ? (
+            <p className="text-[11px] text-[hsl(var(--text-secondary))] italic text-center py-4">
+              Sin transiciones de rol registradas aún
+            </p>
+          ) : (
+            <div className="overflow-x-auto pb-2">
+              <div className="flex items-center gap-2 min-w-fit">
+                {velocity.map((s, i) => {
+                  const maxDays = Math.max(...velocity.map(v => v.avg_days), 1);
+                  const barWidth = (s.avg_days / maxDays) * 100;
+                  const toneColor = s.avg_days < 30
+                    ? 'bg-emerald-500'
+                    : s.avg_days < 90
+                    ? 'bg-amber-500'
+                    : 'bg-red-500';
+                  return (
+                    <div key={`${s.role}-${i}`} className="flex items-center gap-2 shrink-0">
+                      <div className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 min-w-[140px] flex flex-col gap-2 hover:shadow-md transition-shadow">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                          Etapa {i + 1}
+                        </p>
+                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate" title={s.label}>
+                          {s.label}
+                        </p>
+                        <div className="flex items-baseline gap-1">
+                          <p className="text-2xl font-black text-[hsl(var(--primary))]">
+                            {Math.round(s.avg_days)}
+                          </p>
+                          <p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))]">días</p>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="h-1.5 w-full bg-[hsl(var(--bg-muted))] rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all ${toneColor}`} style={{ width: `${barWidth}%` }} />
+                          </div>
+                          <p className="text-[9px] text-[hsl(var(--text-secondary))] font-mono">
+                            {s.transitions} transición{s.transitions !== 1 ? 'es' : ''}
+                          </p>
+                        </div>
+                      </div>
+                      {i < velocity.length - 1 && (
+                        <div className="text-[hsl(var(--text-secondary))] shrink-0 px-1" aria-hidden="true">
+                          →
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-[hsl(var(--text-secondary))] italic mt-3 text-center">
+                El conteo se reinicia al cambiar de rol. La barra crece con días promedio.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* ── DIM 7 + 8: MULTIPLICACIÓN Y LIDERAZGO ── */}
