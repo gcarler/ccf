@@ -19,6 +19,7 @@ that exec's this file).
 """
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -84,20 +85,24 @@ def load_settings(start: Path | str | None = None) -> "Settings":
     from backend.core.config import Settings
 
     env_path = root / ".env"
-    if not env_path.is_file():
-        raise RuntimeError(
-            f".env not found at {env_path}. Create it, or export the required "
-            f"settings (DATABASE_URL, SECRET_KEY, etc.) before running this "
-            f"entrypoint."
-        )
-    try:
-        return Settings(_env_file=str(env_path))
-    except ValueError as exc:
-        # Settings.validate_security_defaults raises ValueError for weak
-        # production secrets — surface it with the .env path so the user
-        # knows which file to fix.
-        raise RuntimeError(
-            f"Settings rejected env values from {env_path}. "
-            f"Check SECRET_KEY / ENCRYPTION_KEY / SMTP / DATABASE_URL per "
-            f"validate_security_defaults: {exc}"
-        ) from exc
+    if env_path.is_file():
+        try:
+            return Settings(_env_file=str(env_path))
+        except ValueError as exc:
+            # Settings.validate_security_defaults raises ValueError for weak
+            # production secrets — surface it with the .env path so the user
+            # knows which file to fix.
+            raise RuntimeError(
+                f"Settings rejected env values from {env_path}. "
+                f"Check SECRET_KEY / ENCRYPTION_KEY / SMTP / DATABASE_URL per "
+                f"validate_security_defaults: {exc}"
+            ) from exc
+
+    if os.getenv("DATABASE_URL"):
+        return Settings()
+
+    raise RuntimeError(
+        f".env not found at {env_path}. Create it, or export the required "
+        f"settings (DATABASE_URL, SECRET_KEY, etc.) before running this "
+        f"entrypoint."
+    )

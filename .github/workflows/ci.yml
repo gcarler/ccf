@@ -125,6 +125,7 @@ jobs:
         # PLAYWRIGHT_MANAGED_WEBSERVER enables the managed webServer in config.
         run: cd frontend && npx playwright test --grep-invert @auth
         env:
+          API_PROXY_TARGET: https://elfarocc.tech
           PLAYWRIGHT_MANAGED_WEBSERVER: "1"
           PLAYWRIGHT_BASE_URL: ""
           BASE_URL: http://localhost:4173
