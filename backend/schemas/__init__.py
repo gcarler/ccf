@@ -281,6 +281,7 @@ from backend.schemas.evangelism import (
                                      RolPersonalizadoEstrategiaCreate,
                                      RolPersonalizadoEstrategiaResponse,
                                      SesionGrupoCreate,
+                                     SesionGrupoResponse,
                                      SesionGrupoUpdate,
                                      TipoSeguimientoEnum,
 )
