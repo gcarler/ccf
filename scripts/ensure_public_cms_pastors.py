@@ -37,6 +37,25 @@ from backend.core.database import SessionLocal  # noqa: E402
 SITE_KEY = "faro"
 PAGE_SLUG = "pastors"
 MENU_KEY = "main"
+THEME_NAME = "Tema institucional Faro"
+THEME_TOKENS = {
+    "--site-background": "#f8f9ff",
+    "--site-on-background": "#101828",
+    "--site-surface": "#ffffff",
+    "--site-surface-container": "#ffffff",
+    "--site-surface-container-low": "#f0f4ff",
+    "--site-surface-container-high": "#e6ecff",
+    "--site-surface-container-highest": "#d9e2ff",
+    "--site-on-surface": "#101828",
+    "--site-on-surface-variant": "#475467",
+    "--site-primary": "#3155d4",
+    "--site-on-primary": "#ffffff",
+    "--site-primary-container": "#e1e8ff",
+    "--site-on-primary-container": "#001a66",
+    "--site-secondary": "#e0a931",
+    "--site-cta-gradient": "linear-gradient(135deg,#3155d4,#1a3ab8)",
+    "--site-outline-variant": "rgba(0,0,0,0.1)",
+}
 
 
 def _load_page_content(db, page_key: str) -> tuple[str, dict[str, Any]]:
@@ -151,6 +170,44 @@ def _ensure_menu(db, site: models.CmsSite, nav_payload: dict[str, Any]) -> tuple
     return created, changed
 
 
+def _ensure_theme(db, site: models.CmsSite) -> tuple[bool, bool]:
+    theme = (
+        db.query(models.CmsTheme)
+        .filter(models.CmsTheme.site_id == site.id, models.CmsTheme.name == THEME_NAME)
+        .first()
+    )
+    created = False
+    changed = False
+    if theme is None:
+        theme = models.CmsTheme(
+            site_id=site.id,
+            name=THEME_NAME,
+            tokens_json=THEME_TOKENS,
+            is_active=True,
+            status="active",
+        )
+        db.add(theme)
+        db.flush()
+        db.query(models.CmsTheme).filter(
+            models.CmsTheme.site_id == site.id,
+            models.CmsTheme.id != theme.id,
+        ).update({"is_active": False})
+        created = True
+        changed = True
+    else:
+        if theme.tokens_json != THEME_TOKENS:
+            theme.tokens_json = THEME_TOKENS
+            changed = True
+        if not theme.is_active or theme.status != "active":
+            db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site.id).update(
+                {"is_active": False}
+            )
+            theme.is_active = True
+            theme.status = "active"
+            changed = True
+    return created, changed
+
+
 def _ensure_page(db, site: models.CmsSite) -> tuple[bool, bool]:
     meta_title, meta = _load_page_content(db, "faro_pastores_meta")
     hero_title, hero = _load_page_content(db, "faro_pastores_hero")
@@ -162,8 +219,9 @@ def _ensure_page(db, site: models.CmsSite) -> tuple[bool, bool]:
             "hero",
             "hero",
             {
-                "content": _stable_json(hero),
+                "content": _stable_json({**hero, "bg_image": meta.get("image")}),
                 **hero,
+                "bg_image": meta.get("image"),
             },
             0,
         ),
@@ -307,11 +365,13 @@ def main() -> int:
 
         menu_title, nav_payload = _load_page_content(db, "faro_nav_items")
         menu_created, menu_changed = _ensure_menu(db, site, nav_payload)
+        theme_created, theme_changed = _ensure_theme(db, site)
         page_created, page_changed = _ensure_page(db, site)
         db.commit()
 
         print(f"Site: {SITE_KEY}")
         print(f"Menu {MENU_KEY}: {'created' if menu_created else 'exists'}; {'updated' if menu_changed else 'unchanged'}")
+        print(f"Theme: {'created' if theme_created else 'exists'}; {'updated/activated' if theme_changed else 'unchanged'}")
         print(f"Page {PAGE_SLUG}: {'created' if page_created else 'exists'}; {'updated/published' if page_changed else 'unchanged'}")
         print(f"Menu source: {menu_title}")
         return 0
