@@ -1,7 +1,7 @@
 """Ensure sesiones_grupo.reported_at is DateTime(timezone=True).
 
-Revision ID: 20260702_reported_at_tz
-Revises: 20260611_season_id_sesiones
+Revision ID: 20260702_0002_reported_at_tz
+Revises: 20260702_0001_canonical_baseline
 Create Date: 2026-07-02
 
 PROBLEMA
@@ -18,7 +18,7 @@ Adicionalmente, la sesión Pydantic ``SesionGrupoResponse`` propagaba este
 otros endpoints, ocultando la trazabilidad de cuándo se reportó asistencia.
 
 Este Sprint 3 cierra el bug propagando la semántica de la columna hasta
-``SesionGrupo`` (la columna ya existe; s髄o necesitamos asegurar que su tipo
+``SesionGrupo`` (la columna ya existe; sólo necesitamos asegurar que su tipo
 sea ``DateTime(timezone=True)`` y que el modelo la respete como columna
 real).
 
@@ -32,16 +32,24 @@ CAMBIOS
     ``20260528_0048_datetime_to_timestamptz.py``).
   - Sin backfill: la columna estaba inutilizada en producción (orphan por
     el stub), por lo que los valores preexistentes son NULL.
-  - Sin índice: el campo se modifica en cada reporte, pero no se filtra
-    por él en queries (consultas por ``sede_id`` + ``fecha_sesion`` ya
-    cubren los patrones de uso).
+  - En la rama legacy ``alembic/versions/`` nunca se añadió índice:
+    el campo se modificaba poco y ``sede_id + fecha_sesion`` cubría los
+    patrones de uso. En este Sprint 3 (post-fix) añadimos índice PARCIAL
+    ``ix_sesiones_grupo_unreported`` sobre ``(grupo_id) WHERE reported_at
+    IS NULL`` — optimiza ``list_my_pending_faro_sessions``
+    (``grupos_sesiones.py:169``: ``or not session.reported_at``). Sin
+    índice parcial, escaneo completo de la tabla en estrategias grandes.
 
-POST-RESYNC
------------
-Después de aplicar esta migración, el modelo ORM de ``SesionGrupo`` debe
-dejar de definir el ``@property stub reported_at`` y declarar la columna
-directamente con ``Column(DateTime(timezone=True), nullable=True)``. La
-implementación de ese cambio vive en la rama de feature (no aquí).
+CONTEXTO HISTÓRICO
+------------------
+El ``@property stub reported_at`` de ``SesionGrupo`` (cuyo setter hacía
+``pass`` y devolvía siempre ``None``) fue eliminado en el commit Sprint 3
+que tocó ``backend/models_evangelism.py``: ``SesionGrupo`` ahora declara
+directamente ``Column(DateTime(timezone=True), nullable=True)``. Antes
+esta migration apuntaba a ``20260611_season_id_sesiones`` en la legacy
+chain de ``alembic/versions/`` (archivada); se re-chainó aquí porque el
+proyecto sólo consume ``alembic/canonical_versions/`` (la única
+``version_location`` activa según ``alembic.ini``).
 
 DOWNGRADE
 ---------
@@ -57,12 +65,11 @@ import sqlalchemy as sa
 from alembic import op
 
 
-revision: str = "20260702_reported_at_tz"
-# Chain from the evangelismo ``season_id`` migration — that's the most
-# recent leaf migration that touched ``sesiones_grupo`` directly. The
-# previously-attempted `down_revision = "20260702_0001_canonical_baseline"`
-# doesn't actually exist on disk; this anchors the chain to the real head.
-down_revision: Union[str, None] = "20260611_season_id_sesiones"
+revision: str = "20260702_0002_reported_at_tz"
+# Chain desde el canonical baseline (única ``version_location`` activa
+# en ``alembic.ini``: ``alembic/canonical_versions``) para que
+# ``alembic upgrade head`` quede con un solo head en CI/prod.
+down_revision: Union[str, None] = "20260702_0001_canonical_baseline"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
