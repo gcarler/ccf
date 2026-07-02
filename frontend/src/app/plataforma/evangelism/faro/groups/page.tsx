@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/http';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
+import { downloadGroupAttendanceExcel, downloadGroupAttendancePdf } from '@/lib/evangelism-downloads';
 import {
  Home,
  Plus,
@@ -23,6 +24,8 @@ import {
  BarChart3,
  Trash2,
  ChevronRight,
+ FileSpreadsheet,
+ FileText,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -369,16 +372,15 @@ function FaroGroupsContent() {
  });
  }, [handleDeleteHouse]);
 
- const handleQuickAssignPersona = async (personaId: string) => {
- const houseId = quickAssignmentTargets[personaId];
- if (!houseId) {
+ const handleQuickAssignPersona = async (personaId: string) => {  const grupoId = quickAssignmentTargets[personaId];
+  if (!grupoId) {
  toast.error('Selecciona una casa');
  return;
  }
  setSaving(true);
  try {
- const detail = await apiFetch<Grupo>(
- `/evangelism/grupos/${houseId}`,
+ const detail = await apiFetch<Grupo>(  `/evangelism/grupos/${grupoId}`,
+ 
  { token }
  );
  const current = new Set(
@@ -387,8 +389,8 @@ function FaroGroupsContent() {
  []
  );
  current.add(personaId);
- const updated = await apiFetch<Grupo>(
- `/evangelism/grupos/${houseId}`,
+ const updated = await apiFetch<Grupo>(  `/evangelism/grupos/${grupoId}`,
+ 
  {
  method: 'PUT',
  body: {
@@ -1184,14 +1186,33 @@ function FaroGroupsContent() {
  <p className="text-xs font-medium text-blue-700/70 dark:text-blue-300/70">
  Ir al panel dedicado para registrar la asistencia, ofrendas y novedades de las reuniones semanales de este grupo.
  </p>
- </div>
- <a
- href={`/plataforma/evangelism/faro/${selectedHouse.id}`}
- className="px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2 shrink-0"
- >
- <Calendar size={14} /> Registrar Asistencia
- </a>
- </div>
+ </div>                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
+                                  <a
+                                    href={`/plataforma/evangelism/faro/${selectedHouse.id}`}
+                                    className="px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2"
+                                  >
+                                    <Calendar size={14} /> Registrar Asistencia
+                                  </a>
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => downloadGroupAttendancePdf(selectedHouse.id)}
+                                      title="Descargar reporte de asistencia (PDF)"
+                                      className="px-2.5 py-2.5 bg-rose-50 dark:bg-rose-500/10 text-[hsl(var(--destructive))] dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5"
+                                    >
+                                      <FileText size={13} /> PDF
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => downloadGroupAttendanceExcel(selectedHouse.id)}
+                                      title="Descargar reporte de asistencia (Excel)"
+                                      className="px-2.5 py-2.5 bg-emerald-50 dark:bg-emerald-500/10 text-[hsl(var(--secondary))] dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5"
+                                    >
+                                      <FileSpreadsheet size={13} /> XLSX
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
 
  {/* ADD MEMBERS CATALOG */}
  {isAddingPersonas && (

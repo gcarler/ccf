@@ -115,7 +115,7 @@
 | `/plataforma/evangelism/faro` | FaroList | `GET /evangelism/faro` | ✅ |
 | `/plataforma/evangelism/faro/[id]` | FaroDetail | `GET /evangelism/faro/{id}`, `PUT /evangelism/faro/{id}` | ✅ |
 | `/plataforma/evangelism/faro/groups` | FaroGroups | `GET /evangelism/faro/mine` | ✅ |
-| `/plataforma/evangelism/faro/sessions/[house_id]` | SessionDetail | `GET /evangelism/faro/sessions`, `POST /evangelism/faro/sessions` | ✅ |
+| `/plataforma/evangelism/faro/sessions/[grupo_id]` | SessionDetail | `GET /evangelism/faro/sessions`, `POST /evangelism/faro/sessions` | ✅ |
 | `/plataforma/evangelism/scanner` | ScannerView | `POST /evangelism/scanner/generate/{id}`, `POST /evangelism/scanner/validate/{token}` | ✅ |
 
 ### CMS (23 páginas)

@@ -26,40 +26,52 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
 
-ALLOWED_SECTION_TYPES = {
-    # Existing 19
-    "hero",
-    "video_hero",
-    "rich_text",
-    "rich_text_columns",
-    "cards",
-    "cta_banner",
-    "gallery",
-    "faq",
-    "embed",
-    "testimonials",
-    "stats",
-    "team",
-    "countdown",
-    "pricing",
-    "image_text",
-    "timeline",
-    "icon_grid",
-    "newsletter",
-    "popup_banner",
-    # New 11
-    "button",
-    "toc",
-    "divider",
-    "collapsible",
-    "social_links",
-    "spacer",
-    "calendar",
-    "map",
-    "document_upload",
-    "content_blocks",
-    "accordion",
-}
+from sqlalchemy.orm import Session
+from backend import models as cms_models
+
+def get_allowed_section_types(db: Session) -> set[str]:
+    """Return set of active section type names from DB, fallback to hardcoded."""
+    try:
+        rows = db.query(cms_models.CmsSectionType.name).filter(cms_models.CmsSectionType.is_active == True).all()
+        types = {row[0] for row in rows}
+        if types:
+            return types
+    except Exception:
+        # If table missing or any error, fall back
+        pass
+    # Fallback hardcoded list (same as previous ALLOWED_SECTION_TYPES)
+    return {
+        "hero",
+        "video_hero",
+        "rich_text",
+        "rich_text_columns",
+        "cards",
+        "cta_banner",
+        "gallery",
+        "faq",
+        "embed",
+        "testimonials",
+        "stats",
+        "team",
+        "countdown",
+        "pricing",
+        "image_text",
+        "timeline",
+        "icon_grid",
+        "newsletter",
+        "popup_banner",
+        "button",
+        "toc",
+        "divider",
+        "collapsible",
+        "social_links",
+        "spacer",
+        "calendar",
+        "map",
+        "document_upload",
+        "content_blocks",
+        "accordion",
+    }
 CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "pastor"}
 CMS_PUBLISHER_ROLES = {"admin", "coordinador", "pastor"}
 
@@ -599,7 +611,8 @@ def create_section(
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    if payload.type not in ALLOWED_SECTION_TYPES:
+    allowed_types = get_allowed_section_types(db)
+    if payload.type not in allowed_types:
         raise HTTPException(status_code=422, detail="unsupported section type")
     # Validate props against section type schema
     from backend.schemas.cms_v2_sections import validate_section_props
@@ -630,7 +643,8 @@ def patch_section(
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    if payload.type is not None and payload.type not in ALLOWED_SECTION_TYPES:
+    allowed_types = get_allowed_section_types(db)
+    if payload.type is not None and payload.type not in allowed_types:
         raise HTTPException(status_code=422, detail="unsupported section type")
     if payload.status is not None:
         payload.status = payload.status.strip().lower()
@@ -1253,7 +1267,8 @@ def create_global_block(
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    if payload.type not in ALLOWED_SECTION_TYPES:
+    allowed_types = get_allowed_section_types(db)
+    if payload.type not in allowed_types:
         raise HTTPException(status_code=422, detail="unsupported section type")
     from backend.schemas.cms_v2_sections import validate_section_props
     try:

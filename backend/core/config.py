@@ -129,10 +129,8 @@ class Settings(BaseSettings):
         ):
             self.access_token_cookie_secure = True
 
-        if env in {"production", "prod", "staging"} and self.database_url.startswith(
-            "sqlite"
-        ):
-            raise ValueError("SQLite is not supported in production environments")
+        if env not in {"local", "test", "testing", "ci"} and self.database_url.startswith("sqlite"):
+            raise ValueError("SQLite is not supported in non-local environments")
 
         if self.access_token_expire_minutes <= 0:
             raise ValueError("ACCESS_TOKEN_EXPIRE_MINUTES must be greater than zero")

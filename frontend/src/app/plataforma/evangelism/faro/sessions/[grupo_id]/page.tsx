@@ -7,11 +7,12 @@ import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import {
  ArrowLeft, Calendar, Users, CheckCircle2, XCircle, UserPlus,
- Save, DollarSign, FileText, Clock, Plus, Search,
+ Save, DollarSign, FileText, FileSpreadsheet, Clock, Plus, Search,
  Home, User, Shield, AlertCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
+import { downloadGroupAttendanceExcel, downloadGroupAttendancePdf } from '@/lib/evangelism-downloads';
 
 interface Grupo {
  id: string;
@@ -53,7 +54,7 @@ interface NewGuest {
 export default function SessionReportPage() {
  const params = useParams();
  const router = useRouter();
- const houseId = (params?.house_id as string) || '';
+ const grupoId = (params?.grupo_id as string) || '';
  const { token } = useAuth();
 
  const [house, setHouse] = useState<Grupo | null>(null);
@@ -68,7 +69,7 @@ export default function SessionReportPage() {
  const [searchQuery, setSearchQuery] = useState('');  const fetchHouse = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<Grupo>(`/evangelism/grupos/${houseId}`, { token: token || '' });
+      const data = await apiFetch<Grupo>(`/evangelism/grupos/${grupoId}`, { token: token || '' });
       setHouse(data);
 
       const basePersonas = data.base_attendees || [];
@@ -107,7 +108,7 @@ export default function SessionReportPage() {
     } finally {
       setLoading(false);
     }
-  }, [houseId, token]);
+  }, [grupoId, token]);
 
  useEffect(() => { fetchHouse(); }, [fetchHouse]);
 
@@ -139,7 +140,7 @@ export default function SessionReportPage() {
  const sessionData = await apiFetch<any>('/evangelism/sessions', {
  method: 'POST', token: token || '',
  body: {
- grupo_id: houseId,
+ grupo_id: grupoId,
  session_date: new Date(sessionDate).toISOString(),
  topic: topic || null,
  offering_amount: offering ? parseFloat(offering) : null,
@@ -171,7 +172,7 @@ export default function SessionReportPage() {
  first_name: guest.firstName.trim(),
  last_name: guest.lastName.trim(),
  phone: guest.phone.trim() || null,
- grupo_id: houseId,
+ grupo_id: grupoId,
  session_id: sessionId,
  },
  });
