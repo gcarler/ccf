@@ -16,6 +16,7 @@ import {
   rollbackCmsPageVersion,
   workflowCmsPage,
 } from "@/lib/cms/v2";
+import { PAGE_TEMPLATES } from "@/components/cms/builder/constants";
 import type { CmsPage, CmsPageVersion, CmsPublishLog, CmsSection } from "@/types/cms-v2";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
@@ -43,6 +44,8 @@ export interface UsePageBuilderOptions {
   canEdit: boolean;
   canPublish: boolean;
 }
+
+export type PageBuilderState = ReturnType<typeof usePageBuilder>;
 
 export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOptions) {
   const searchParams = useSearchParams();
@@ -286,33 +289,46 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     setActiveSlug(row.slug);
   }, [token, newPageTitle, canEdit, siteKey, loadPages]);
 
-  const createPageFromTemplate = useCallback(async (templateSections: Array<{ type: string; props_json: Record<string, unknown> }>) => {
+  const createPageFromTemplate = useCallback(async () => {
     if (!token || !newPageTitle.trim() || !canEdit) return;
     const slug = newPageTitle.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\-/]/g, "");
     if (!slug) return;
     const page = await createCmsPage(siteKey, { slug, title: newPageTitle }, token);
-    for (let i = 0; i < templateSections.length; i++) {
-      await createCmsSection(siteKey, page.slug, {
-        type: templateSections[i].type,
-        sort_order: i,
-        props_json: templateSections[i].props_json,
-      }, token);
+    const template = PAGE_TEMPLATES.find((item) => item.key === pageTemplateKey);
+    if (template) {
+      for (let i = 0; i < template.sections.length; i++) {
+        await createCmsSection(siteKey, page.slug, {
+          type: template.sections[i].type,
+          sort_order: i,
+          props_json: template.sections[i].props_json,
+        }, token);
+      }
     }
     setNewPageTitle("");
     await loadPages(siteKey);
     setActiveSlug(page.slug);
     await loadSectionsAndVersions(page.slug);
-  }, [token, newPageTitle, canEdit, siteKey, loadPages, loadSectionsAndVersions]);
+  }, [token, newPageTitle, canEdit, siteKey, pageTemplateKey, loadPages, loadSectionsAndVersions]);
 
-  const addSection = useCallback(async (type: string, props?: Record<string, unknown>) => {
+  const addTemplateSection = useCallback(async (template: { type: string; props_json: Record<string, unknown> }) => {
     if (!token || !activeSlug || !canEdit) return;
     await createCmsSection(siteKey, activeSlug, {
-      type,
+      type: template.type,
+      sort_order: sections.length,
+      props_json: template.props_json,
+    }, token);
+    await loadSectionsAndVersions(activeSlug);
+  }, [token, activeSlug, canEdit, siteKey, sections.length, loadSectionsAndVersions]);
+
+  const addSection = useCallback(async (type?: string, props?: Record<string, unknown>) => {
+    if (!token || !activeSlug || !canEdit) return;
+    await createCmsSection(siteKey, activeSlug, {
+      type: type || newSectionType,
       sort_order: sections.length,
       props_json: props || { title: "Nueva sección", body: "Edita este contenido", cta_label: "Ver más", cta_href: "/" },
     }, token);
     await loadSectionsAndVersions(activeSlug);
-  }, [token, activeSlug, canEdit, siteKey, sections.length, loadSectionsAndVersions]);
+  }, [token, activeSlug, canEdit, siteKey, sections.length, loadSectionsAndVersions, newSectionType]);
 
   const saveSectionField = useCallback(async (field: string, value: string) => {
     if (!token || !activeSection || !activeSlug || !canEdit) return;
@@ -335,6 +351,37 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     } finally {
       setSaving(false);
     }
+  }, [token, activeSection, activeSlug, canEdit, siteKey, loadSectionsAndVersions]);
+
+  const upsertArrayItem = useCallback((
+    key: "items",
+    index: number,
+    patch: Record<string, unknown>,
+  ) => {
+    if (!activeSection) return;
+    const currentProps = asObject(activeSection.props_json);
+    const currentItems = Array.isArray(currentProps[key]) ? [...(currentProps[key] as Array<Record<string, unknown>>)] : [];
+    const currentItem = asObject(currentItems[index]);
+    currentItems[index] = { ...currentItem, ...patch };
+    const nextProps = { ...currentProps, [key]: currentItems };
+    setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: nextProps } : s));
+    return nextProps;
+  }, [activeSection]);
+
+  const addArrayItem = useCallback((key: "items", template: Record<string, unknown>) => {
+    if (!activeSection) return;
+    const currentProps = asObject(activeSection.props_json);
+    const currentItems = Array.isArray(currentProps[key]) ? [...(currentProps[key] as Array<Record<string, unknown>>)] : [];
+    const nextItems = [...currentItems, template];
+    const nextProps = { ...currentProps, [key]: nextItems };
+    setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: nextProps } : s));
+    return nextProps;
+  }, [activeSection]);
+
+  const setSectionVisibility = useCallback(async (visible: boolean) => {
+    if (!token || !activeSection || !activeSlug || !canEdit) return;
+    await patchCmsSection(siteKey, activeSlug, activeSection.id, { is_visible: visible }, token);
+    await loadSectionsAndVersions(activeSlug);
   }, [token, activeSection, activeSlug, canEdit, siteKey, loadSectionsAndVersions]);
 
   const updateSectionPropsLocal = useCallback((nextProps: Record<string, unknown>) => {
@@ -653,6 +700,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     loadSectionsAndVersions,
     createPage,
     createPageFromTemplate,
+    addTemplateSection,
     addSection,
     saveSectionField,
     saveSectionProps,
@@ -661,6 +709,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     moveSectionToIndex,
     duplicateSection,
     toggleSectionArchive,
+    setSectionVisibility,
     runWorkflow,
     rollback,
     savePageMetadata,
@@ -669,5 +718,10 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     handleAiImageGenerate,
     handleInsertAiAsSection,
     handleReplaceActiveSectionWithAi,
+    upsertArrayItem,
+    addArrayItem,
+
+    // Direct lib access (for advanced use in child components)
+    token,
   };
 }
