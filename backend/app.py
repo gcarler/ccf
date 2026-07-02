@@ -40,6 +40,7 @@ from backend.api import (
     support_kb,
     system,
     tables,
+    wiki,
     workspace,
     youtube,
 )
@@ -86,6 +87,7 @@ ROUTER_REGISTRY = [
     (tables.router, "/api", ["tables"]),
     (youtube.router, "/api", ["youtube"]),
     (enterprise_cms.router, "/api", ["Enterprise CMS"]),
+    (wiki.router, "/api", ["wiki"]),
 ]
 
 
