@@ -374,9 +374,10 @@ def get_team_workload(
 def _compute_workload_via_orm(db: Session) -> List[Dict]:
     """Replica semántica de ``view_user_workload`` sobre tablas base.
 
-    Mantiene el contrato de la vista: una fila por usuario con
-    user_id, full_name, username, total_tasks, open_tasks,
-    critical_tasks, overdue_tasks (mismas columnas que la migración
+    Mantiene el contrato de ``_shape_workload_row``: una fila por usuario
+    con las keys ``user_id``, ``name``, ``total``, ``open_tasks``,
+    ``critical`` y ``overdue`` (alineadas con los kwargs del helper; las
+    columnas equivalentes en la vista PostgreSQL viven en la migración
     ``alembic/versions/20260522_0021_seed_and_view.py``).
     """
     user_model = getattr(models, "User", None)
@@ -384,7 +385,8 @@ def _compute_workload_via_orm(db: Session) -> List[Dict]:
 
     if task_model is None or not hasattr(task_model, "assignee_id"):
         # Sin ProjectTask con ``assignee_id`` no podemos calcular: retornamos
-        # shape correcto con totales en cero para no romper el contrato.        if user_model is None:
+        # shape correcto con totales en cero para no romper el contrato.
+        if user_model is None:
             return []
         return [
             {

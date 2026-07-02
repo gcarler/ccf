@@ -13,7 +13,7 @@ import Link from 'next/link';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 
 interface WikiDoc {
-    id: number;
+    id: string;
     page_key: string;
     title: string;
     updated_at: string;
@@ -35,7 +35,7 @@ export default function WikiHomePage() {
     const fetchDocs = async () => {
         if (!token) return;
         try {
-            const data = await apiFetch<WikiDoc[]>('/content', { token });
+            const data = await apiFetch<WikiDoc[]>('/cms/content', { token });
             setDocs(Array.isArray(data) ? data.filter((doc) => doc.page_key.includes('wiki')) : []);
         } catch (error) {
             console.error("Error fetching docs:", error);

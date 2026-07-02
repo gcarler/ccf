@@ -29,9 +29,22 @@ def get_pastor_radar(
 @router.get("/dashboard-metrics", response_model=schemas.DashboardMetrics)
 def get_dashboard_metrics(
     db: Session = Depends(get_db),
-    _user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    return crud.get_dashboard_metrics(db)
+    """Métricas planas del módulo Academia.
+
+    Contrato: ``schemas.DashboardMetrics`` (active_students,
+    completion_rate, certificates_issued, cards, top_courses, etc.).
+    Restaurado alineando ``crud.get_dashboard_metrics`` con el shape
+    esperado — antes delegaba en ``get_academy_dashboard`` y devolvía un
+    ``AcademyDashboard`` (visual con cards/enrollment_trends), lo que
+    rompía ``response_model`` con ``ResponseValidationError``.
+
+    Axioma 3: el scope por sede se resuelve con la sede del usuario
+    autenticado; un superadmin sin sede ve todas las sedes.
+    """
+    sede_id = crud.get_user_sede_id(db, current_user.id)
+    return crud.get_dashboard_metrics(db, sede_id=sede_id)
 
 
 @router.get("/events/summary")

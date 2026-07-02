@@ -1,3 +1,5 @@
+import { apiFetch } from "./http";
+
 export type GridStyle = "dots" | "lines" | "ruled" | "none";
 export type GridSize = 16 | 24 | 32;
 
@@ -9,6 +11,22 @@ export interface WhiteboardRecord {
   updated_at?: string;
   gridStyle?: GridStyle;
   gridSize?: GridSize;
+}
+
+export interface ProjectWhiteboard {
+  id: string;
+  project_id: string;
+  title: string;
+  elements_json: string;
+  created_at: string;
+  updated_at?: string | null;
+  thumbnail_url?: string | null;
+}
+
+export interface ProjectWhiteboardInput {
+  title?: string;
+  elements_json?: string;
+  thumbnail_url?: string | null;
 }
 
 export const WHITEBOARDS_KEY = "ccf_whiteboards";
@@ -60,4 +78,50 @@ export function upsertWhiteboard(storage: Storage, record: WhiteboardRecord) {
   }
   writeWhiteboards(storage, boards);
   return boards;
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// API remota — pizarras vinculadas a proyectos
+// ═════════════════════════════════════════════════════════════════════════════
+
+export async function fetchProjectWhiteboards(
+  token: string
+): Promise<ProjectWhiteboard[]> {
+  const data = await apiFetch<ProjectWhiteboard[]>("/projects/whiteboards", {
+    token,
+  });
+  return Array.isArray(data) ? data : [];
+}
+
+export async function fetchProjectWhiteboard(
+  projectId: string,
+  token: string
+): Promise<ProjectWhiteboard | null> {
+  const data = await apiFetch<ProjectWhiteboard | null>(
+    `/projects/${projectId}/whiteboard`,
+    { token }
+  );
+  return data ?? null;
+}
+
+export async function saveProjectWhiteboard(
+  projectId: string,
+  input: ProjectWhiteboardInput,
+  token: string
+): Promise<ProjectWhiteboard> {
+  return apiFetch<ProjectWhiteboard>(`/projects/${projectId}/whiteboard`, {
+    method: "POST",
+    token,
+    body: input,
+  });
+}
+
+export async function deleteProjectWhiteboard(
+  projectId: string,
+  token: string
+): Promise<void> {
+  await apiFetch(`/projects/${projectId}/whiteboard`, {
+    method: "DELETE",
+    token,
+  });
 }

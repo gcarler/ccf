@@ -11,6 +11,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.schemas.academy import DashboardMetrics
 from backend.schemas.dashboard import (
     AcademyDashboard,
     AdminGlobalDashboard,
@@ -690,8 +691,136 @@ def get_admin_dashboard(db: Session) -> AdminGlobalDashboard:
 # Dashboard helpers
 # ═══════════════════════════════════════════════════════════════════
 
-def get_dashboard_metrics(db: Session):
-    return get_academy_dashboard(db)
+def get_dashboard_metrics(db: Session, sede_id=None) -> DashboardMetrics:
+    """Devuelve las métricas planas del módulo Academia.
+
+    Antes este helper delegaba en ``get_academy_dashboard`` y devolvía un
+    ``AcademyDashboard`` (shape visual con cards/enrollment_trends/etc.),
+    que no casaba con el ``response_model=schemas.DashboardMetrics``
+    declarado en ``backend/api/analytics.py`` y disparaba
+    ``ResponseValidationError`` en Pydantic v2 strict mode. Esta versión
+    consulta directamente las tablas ``academy_*`` con ORM y construye un
+    ``DashboardMetrics`` (active_students/completion_rate/certificates_issued/
+    cards/top_courses/formal_stats/no_formal_stats) coherente con el
+    contrato OpenAPI y lo que consume el frontend.
+
+    Nota: ``sede_id`` es opcional; cuando es ``None`` se incluyen todas las
+    sedes (mismo comportamiento que ``get_academy_dashboard``).
+    """
+    from sqlalchemy import func
+
+    # ── scope por sede (Axioma 3) ──────────────────────────────────
+    course_base = db.query(models.Course).filter(models.Course.deleted_at.is_(None))
+    if sede_id is not None:
+        course_base = course_base.filter(
+            (models.Course.sede_id == sede_id) | (models.Course.sede_id.is_(None))
+        )
+    total_courses = course_base.count()
+    scoped_course_ids = [r[0] for r in course_base.with_entities(models.Course.id).all()]
+
+    if not scoped_course_ids:
+        return DashboardMetrics(
+            active_students=0,
+            completion_rate=0.0,
+            certificates_issued=0,
+            cards=[
+                {"title": "Cursos", "value": "0"},
+                {"title": "Matrículas", "value": "0"},
+                {"title": "Estudiantes activos", "value": "0"},
+                {"title": "Certificados emitidos", "value": "0"},
+                {"title": "Tasa de finalización", "value": "0%"},
+            ],
+            formal_stats={"total": 0, "completed": 0, "rate": 0, "avg_grade": 0},
+            no_formal_stats={"total": 0, "completed": 0, "rate": 0, "avg_grade": 0},
+            top_courses=[],
+        )
+
+    # ── enrollment base (scoped) ───────────────────────────────────
+    enrollment_base = db.query(models.Enrollment).filter(
+        models.Enrollment.course_id.in_(scoped_course_ids),
+        models.Enrollment.deleted_at.is_(None),
+    )
+
+    total_enrollments = enrollment_base.count()
+    completed = enrollment_base.filter(models.Enrollment.status == "completed").count()
+    active_students = db.query(func.count(func.distinct(models.Enrollment.persona_id))).filter(
+        models.Enrollment.course_id.in_(scoped_course_ids),
+        models.Enrollment.deleted_at.is_(None),
+        models.Enrollment.status == "active",
+    ).scalar() or 0
+    certificates_issued = enrollment_base.filter(
+        models.Enrollment.certificate_issued.is_(True)
+    ).count()
+
+    completion_rate = (
+        round((completed / total_enrollments) * 100, 1)
+        if total_enrollments else 0.0
+    )
+
+    # ── top courses ────────────────────────────────────────────────
+    top_rows = (
+        db.query(models.Course.title, func.count(models.Enrollment.id).label("cnt"))
+        .join(models.Enrollment, models.Enrollment.course_id == models.Course.id)
+        .filter(
+            models.Course.id.in_(scoped_course_ids),
+            models.Enrollment.deleted_at.is_(None),
+        )
+        .group_by(models.Course.id, models.Course.title)
+        .order_by(func.count(models.Enrollment.id).desc())
+        .limit(5)
+        .all()
+    )
+    top_courses = [{"title": r[0], "count": r[1]} for r in top_rows]
+
+    # ── formal_stats / no_formal_stats ─────────────────────────────
+    def _build_modality_stats(modality_filter):
+        """Construye {total, completed, rate, avg_grade} para una modalidad."""
+        base = (
+            db.query(models.Enrollment)
+            .join(models.Course, models.Enrollment.course_id == models.Course.id)
+            .filter(
+                models.Course.id.in_(scoped_course_ids),
+                models.Enrollment.deleted_at.is_(None),
+            )
+        )
+        if callable(modality_filter):
+            base = base.filter(modality_filter(models.Course.modality))
+        else:
+            base = base.filter(models.Course.modality == modality_filter)
+
+        total = base.count()
+        comp = base.filter(models.Enrollment.status == "completed").count()
+        rate = round((comp / total) * 100, 1) if total else 0
+        grade_val = base.filter(models.Enrollment.final_grade.isnot(None)).with_entities(
+            func.avg(models.Enrollment.final_grade)
+        ).scalar()
+        return {
+            "total": total,
+            "completed": comp,
+            "rate": rate,
+            "avg_grade": round(float(grade_val), 1) if grade_val else 0,
+        }
+
+    formal_stats = _build_modality_stats("formal")
+    no_formal_stats = _build_modality_stats(
+        lambda m: (m.is_(None)) | (m != "formal")
+    )
+
+    return DashboardMetrics(
+        active_students=int(active_students),
+        completion_rate=float(completion_rate),
+        certificates_issued=int(certificates_issued),
+        cards=[
+            {"title": "Cursos", "value": str(total_courses)},
+            {"title": "Matrículas", "value": str(total_enrollments)},
+            {"title": "Estudiantes activos", "value": str(active_students)},
+            {"title": "Certificados emitidos", "value": str(certificates_issued)},
+            {"title": "Tasa de finalización", "value": f"{completion_rate}%"},
+        ],
+        formal_stats=formal_stats,
+        no_formal_stats=no_formal_stats,
+        top_courses=top_courses,
+    )
 
 
 def get_pastor_radar(db: Session, sede_id: Optional[str] = None):
