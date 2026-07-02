@@ -14,6 +14,7 @@ ecdsa>=0.19.2
 pyasn1>=0.6.3
 passlib[bcrypt]
 bcrypt==4.0.1
+python-dateutil
 python-multipart>=0.0.26
 websockets
 # Kafka (opcional) — instalar solo si se usa KafkaEventBus
