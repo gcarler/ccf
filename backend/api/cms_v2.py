@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -17,6 +17,7 @@ from backend.api._cms_helpers import (
     _get_scoped_persona,
     _scope_cms_pastoral_team_by_user_sede,
 )
+from backend.core.cache_v2 import cached_public
 from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access
 from backend.models_shared import _utcnow
@@ -809,6 +810,7 @@ def workflow_page(
 
 
 @router.get("/public/sites/{site_key}/theme", response_model=schemas.CmsThemeRead)
+@cached_public(ttl=300)
 def public_theme(site_key: str, db: Session = Depends(get_db)):
     site = _get_public_site_or_404(db, site_key)
     row = crud.get_active_cms_theme(db, site.id)
@@ -818,6 +820,7 @@ def public_theme(site_key: str, db: Session = Depends(get_db)):
 
 
 @router.get("/public/sites/{site_key}/menus/{menu_key}")
+@cached_public(ttl=300)
 def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
     site = _get_public_site_or_404(db, site_key)
     menu = _get_menu_or_404(db, site.id, menu_key)
@@ -848,14 +851,30 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
     }
 
 
+import time
+
+
+_system_var_cache: dict[str, tuple[float, str]] = {}
+_SYSTEM_VAR_TTL = 300  # 5 minutes
+
+
 def _get_system_var(db, site_key: str, var_key: str, default: str = "") -> str:
-    """Read a single SystemVariable by key, with optional site_key prefix."""
+    """Read a single SystemVariable by key, with optional site_key prefix.
+    Cached for 5 minutes per site_key+var_key to avoid repeated DB hits."""
+    cache_key = f"{site_key}:{var_key}"
+    now = time.monotonic()
+    if cache_key in _system_var_cache:
+        cached_time, cached_val = _system_var_cache[cache_key]
+        if now - cached_time < _SYSTEM_VAR_TTL:
+            return cached_val
     row = (
         db.query(models.SystemVariable)
         .filter(models.SystemVariable.key == f"{site_key}_{var_key}")
         .first()
     )
-    return row.value if row and row.value else default
+    val = row.value if row and row.value else default
+    _system_var_cache[cache_key] = (now, val)
+    return val
 
 
 def _build_section_defaults(
@@ -981,9 +1000,26 @@ def _build_section_defaults(
     return props or {}
 
 
+@router.get("/public/sites/{site_key}/pages", response_model=PaginatedResponse[schemas.CmsPageRead])
+@cached_public(ttl=300)
+def public_pages_list(
+    site_key: str,
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(200, ge=1, le=500),
+):
+    """Public endpoint: list published CMS pages for sitemap and SEO."""
+    site = _get_public_site_or_404(db, site_key)
+    pages, total = crud.list_cms_pages(db, site.id, skip=skip, limit=limit, status="published")
+    return PaginatedResponse[schemas.CmsPageRead](
+        items=pages, total=total, skip=skip, limit=limit
+    )
+
+
 @router.get(
     "/public/sites/{site_key}/pages/{slug}", response_model=schemas.CmsPublicPageRead
 )
+@cached_public(ttl=300)
 def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
     site = _get_public_site_or_404(db, site_key)
     page = crud.get_public_cms_page(db, site.id, _slugify(slug))
@@ -1088,6 +1124,7 @@ def _pastoral_role(persona: models.Persona) -> str:
     "/public/sites/{site_key}/pastoral-team",
     response_model=List[schemas.PastoralProfileRead],
 )
+@cached_public(ttl=300)
 def public_pastoral_team(site_key: str, db: Session = Depends(get_db)):
     """Public endpoint: list pastoral leaders.
 
@@ -1452,6 +1489,7 @@ async def optimize_uploaded_image(
     quality: int = Query(80),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
+    background_tasks: BackgroundTasks = None,
 ):
     """Optimize an uploaded image by resizing and reducing quality.
 
@@ -1476,6 +1514,9 @@ async def optimize_uploaded_image(
     PIL instalado NO bypassee el scope check con un 500 — el cross-sede
     sigue siendo 404 limpio. Si PIL falta y el media es local+active,
     devolvemos 503 con un mensaje actionable (instale ``pillow``).
+
+    Performance: la optimización pesada se ejecuta en background via
+    ``BackgroundTasks`` para no bloquear la respuesta HTTP.
     """
     media = _get_scoped_cms_media(db, current_user, media_id)
     if (media.status or "") == "archived":
@@ -1493,34 +1534,31 @@ async def optimize_uploaded_image(
         ) from exc
     from backend.core.config import get_settings
 
-
     settings = get_settings()
     orig_path = os.path.join(settings.uploads_dir, media.filename)
     if not os.path.exists(orig_path):
         raise HTTPException(status_code=404, detail="File not found")
 
-    img = Image.open(orig_path)
-    # Convert to RGB if necessary (for PNG with transparency)
-    if img.mode in ("RGBA", "P"):
-        img = img.convert("RGB")
+    def _do_optimize():
+        img = Image.open(orig_path)
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        if img.width > max_width:
+            ratio = max_width / img.width
+            new_height = int(img.height * ratio)
+            img = img.resize((max_width, new_height), Image.LANCZOS)
+        opt_filename = f"opt_{media.filename.rsplit('.', 1)[0]}_{max_width}w.jpg"
+        opt_path = os.path.join(settings.uploads_dir, opt_filename)
+        img.save(opt_path, "JPEG", quality=quality, optimize=True)
 
-    # Resize if larger than max_width
-    if img.width > max_width:
-        ratio = max_width / img.width
-        new_height = int(img.height * ratio)
-        img = img.resize((max_width, new_height), Image.LANCZOS)
+    if background_tasks is not None:
+        background_tasks.add_task(_do_optimize)
 
-    # Save optimized
     opt_filename = f"opt_{media.filename.rsplit('.', 1)[0]}_{max_width}w.jpg"
-    opt_path = os.path.join(settings.uploads_dir, opt_filename)
-    img.save(opt_path, "JPEG", quality=quality, optimize=True)
-
-    opt_size = os.path.getsize(opt_path)
-    orig_size = os.path.getsize(orig_path)
-
     return {
-        "original_size": orig_size,
-        "optimized_size": opt_size,
-        "savings_pct": round((1 - opt_size / orig_size) * 100, 1),
+        "status": "queued",
         "url": f"/uploads/{opt_filename}",
+        "media_id": str(media_id),
+        "max_width": max_width,
+        "quality": quality,
     }
