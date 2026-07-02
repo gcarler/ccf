@@ -241,8 +241,8 @@ BLOCKS = {
                 "desc": "Descubre la base de nuestra fe a través de un viaje personal y transformador. En FARO, te acompañamos en cada paso.",
                 "href": "/conocer-a-jesus",
                 "cta": "Empezar el camino",
-                "img": "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=900&q=80",
-                "alt": "Reunión de personas en comunidad",
+                "img": "/images/pastores-banner.jpg",
+                "alt": "Equipo pastoral de FARO",
             },
             "cards": [
                 {
