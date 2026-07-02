@@ -13,6 +13,7 @@ import { CommandCenter } from "@/components/ui/CommandCenter";
 import { CommandCenterProvider } from "@/context/CommandCenterContext";
 import { CreationProvider } from "@/context/CreationContext";
 import { SidebarLayerProvider } from "@/context/SidebarLayerContext";
+import SiteBrandAssets from "@/components/SiteBrandAssets";
 
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 
@@ -69,6 +70,7 @@ export default function RootLayout({
                                 <CommandCenterProvider>
                                     <CreationProvider>
                                         <SidebarLayerProvider>
+                                            <SiteBrandAssets />
                                             <ClientBootstrap />
                                             <Toaster position="bottom-right" expand={false} richColors />
                                             <CommandCenter />
@@ -84,4 +86,3 @@ export default function RootLayout({
         </html>
     );
 }
-

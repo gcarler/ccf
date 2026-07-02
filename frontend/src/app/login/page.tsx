@@ -2,6 +2,9 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
+import OptimizedImage from '@/components/ui/OptimizedImage';
+import { useSiteBranding } from '@/lib/site-branding';
+import { SITE_NAME } from '@/lib/site-config';
 import { AnimatePresence,motion } from 'framer-motion';
 import { Eye,EyeOff,Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -16,6 +19,7 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [expired] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('expired') === '1');
     const { login, isAuthenticated, user } = useAuth();
+    const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const router = useRouter();
 
     useEffect(() => {
@@ -99,12 +103,23 @@ export default function LoginPage() {
                     className="relative z-10"
                 >
                     <div className="inline-flex items-center gap-3 border border-white/20 rounded-full px-3 py-2.5 bg-white/5 backdrop-blur-md">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                            <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round"/>
-                            <circle cx="12" cy="4" r="1.5" fill="white" stroke="none"/>
-                        </svg>
+                        {logoUrl ? (
+                            <OptimizedImage
+                                src={logoUrl}
+                                alt={logoName || SITE_NAME}
+                                width={18}
+                                height={18}
+                                className="h-[18px] w-[18px] object-contain"
+                                objectFit="contain"
+                            />
+                        ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                                <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round"/>
+                                <circle cx="12" cy="4" r="1.5" fill="white" stroke="none"/>
+                            </svg>
+                        )}
                         <span className="text-white font-bold uppercase tracking-wide text-[10px]">
-                            Ministerio Internacional
+                            {logoName || "Ministerio Internacional"}
                         </span>
                     </div>
                 </motion.div>
@@ -116,12 +131,28 @@ export default function LoginPage() {
                     transition={{ delay: 0.6, duration: 0.8 }}
                     className="relative z-10"
                 >
-                    <h1 className="font-bold tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
-                        EL <br /> FARO
-                    </h1>
-                    <p className="text-ccf-blue-light text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
-                        Comunidad <br /> Cristiana
-                    </p>
+                    {logoUrl ? (
+                        <div className="max-w-[420px]">
+                            <OptimizedImage
+                                src={logoUrl}
+                                alt={logoName || SITE_NAME}
+                                width={420}
+                                height={180}
+                                className="w-full h-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.25)]"
+                                objectFit="contain"
+                                priority
+                            />
+                        </div>
+                    ) : (
+                        <>
+                            <h1 className="font-bold tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
+                                EL <br /> FARO
+                            </h1>
+                            <p className="text-ccf-blue-light text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
+                                Comunidad <br /> Cristiana
+                            </p>
+                        </>
+                    )}
                     <div className="w-16 h-1.5 bg-[hsl(var(--bg-primary))] mt-3 rounded-full" />
                 </motion.div>
 
