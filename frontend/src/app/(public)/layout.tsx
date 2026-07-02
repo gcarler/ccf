@@ -24,7 +24,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <PublicSeoManager />
             <div className={`min-h-screen overflow-x-clip bg-site-background text-site-on-background font-body antialiased selection:bg-site-primary/30 ${inter.variable}`}>
                 <FaroNavbar />
-                {children}
+                <main className="relative">
+                    {children}
+                </main>
                 <FaroFooter />
                 <div className="h-32 md:h-0" />
                 <FaroMobileNav />

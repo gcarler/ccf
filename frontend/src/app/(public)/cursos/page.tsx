@@ -7,7 +7,7 @@ import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 
 import RichText from "@/components/public/RichText";
 import { motion, AnimatePresence } from "framer-motion";
-import { PREMIUM_COURSES, PREMIUM_BOOKS, CourseItem, BookItem } from "@/lib/data/cursos";
+import { CourseItem, BookItem } from "@/lib/data/cursos";
 import { ShoppingBag, ArrowRight, Clock, User, CheckCircle2 } from "lucide-react";
 import { apiFetch } from "@/lib/http";
 
@@ -21,7 +21,7 @@ export default function CursosPage() {
     const [email, setEmail] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [apiCourses, setApiCourses] = useState<CourseItem[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [_isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         apiFetch<CourseItem[]>("/public/courses", { silent: true })
@@ -80,19 +80,13 @@ export default function CursosPage() {
         : {};
     const heroImageUrl = typeof courseFeed.hero_image_url === "string"
         ? courseFeed.hero_image_url
-        : "https://picsum.photos/seed/1481627834876-b7833e8f5570/1920/1080";
-    const featuredFallbackImageUrl = typeof courseFeed.featured_fallback_image_url === "string"
-        ? courseFeed.featured_fallback_image_url
-        : "https://picsum.photos/seed/1524178232363-1fb2b075b655/800/600";
+        : "";
     const ctaImages = Array.isArray(courseFeed.cta_images) && courseFeed.cta_images.length >= 2
         ? courseFeed.cta_images.map((item) => item && typeof item === "object" ? item as Record<string, unknown> : {}).map((item) => ({
             src: typeof item.src === "string" ? item.src : "",
             alt: typeof item.alt === "string" ? item.alt : "Academia",
         })).filter((item) => item.src)
-        : [
-            { src: "https://picsum.photos/seed/academia1/800/800", alt: "Estudio" },
-            { src: "https://picsum.photos/seed/academia2/800/800", alt: "Librería" },
-        ];
+        : [];
     const libraryTitle = typeof courseFeed.library_title === "string" ? courseFeed.library_title : "Nuestra Librería";
     const libraryDescription = typeof courseFeed.library_description === "string" ? courseFeed.library_description : "Una curaduría de obras que han transformado generaciones. Desde clásicos de la patrística hasta literatura contemporánea.";
     const emptyBooksMessage = typeof courseFeed.empty_books_message === "string" ? courseFeed.empty_books_message : "Próximamente tendremos libros disponibles.";
@@ -107,24 +101,46 @@ export default function CursosPage() {
     const wishlistSuccessPrefix = typeof courseFeed.wishlist_success_toast_prefix === "string" ? courseFeed.wishlist_success_toast_prefix : "añadido a tu lista — te contactaremos con info";
     const wishlistFallbackPrefix = typeof courseFeed.wishlist_fallback_toast_prefix === "string" ? courseFeed.wishlist_fallback_toast_prefix : "guardado en tu lista";
 
-    const cmsCourses: CourseItem[] = Array.isArray(coursesContent?.parsed) && coursesContent.parsed.length > 0 
-        ? coursesContent.parsed as CourseItem[]
+    const cmsCourses: CourseItem[] = Array.isArray(courseFeed.course_cards)
+        ? (courseFeed.course_cards as Array<Record<string, unknown>>).map((course) => ({
+            id: typeof course.id === "string" ? course.id : String(course.id || ""),
+            title: typeof course.title === "string" ? course.title : "",
+            desc: typeof course.desc === "string" ? course.desc : "",
+            excerpt: typeof course.excerpt === "string" ? course.excerpt : undefined,
+            tag: typeof course.tag === "string" ? course.tag : undefined,
+            modality: typeof course.modality === "string" ? course.modality : undefined,
+            cta: typeof course.cta === "string" ? course.cta : undefined,
+            lessons: typeof course.lessons === "number" ? course.lessons : undefined,
+            imageUrl: typeof course.imageUrl === "string" ? course.imageUrl : "",
+            syllabus: Array.isArray(course.syllabus) ? course.syllabus.map((item) => String(item)) : undefined,
+            instructor: typeof course.instructor === "string" ? course.instructor : undefined,
+        })).filter((course) => Boolean(course.id) && Boolean(course.title))
         : [];
+    const cmsCourseImageMap = new Map(
+        cmsCourses.map((course) => [course.id, course.imageUrl || ""] as const),
+    );
 
-    // Prioritize Backend API Courses -> CMS Courses -> Local Fallback Premium Courses
-    let activeCourses = apiCourses.length > 0 ? apiCourses : cmsCourses;
-    if (activeCourses.length === 0 && !isLoading) {
-        activeCourses = PREMIUM_COURSES;
-    }
+    const activeCoursesSource = cmsCourses.length > 0 ? cmsCourses : apiCourses;
+    const activeCourses = activeCoursesSource.map((course) => ({
+        ...course,
+        imageUrl: cmsCourseImageMap.get(course.id) || "",
+    }));
 
     const featuredCourse = activeCourses[0];
     const secondaryCourses = activeCourses.slice(1);
 
-    const cmsBooks: BookItem[] = (coursesContent?.parsed && typeof coursesContent.parsed === "object" && !Array.isArray(coursesContent.parsed) && Array.isArray((coursesContent.parsed as Record<string, unknown>).books))
-        ? (coursesContent.parsed as Record<string, unknown>).books as BookItem[]
+    const cmsBooks: BookItem[] = Array.isArray(courseFeed.books)
+        ? (courseFeed.books as Array<Record<string, unknown>>).map((book) => ({
+            id: typeof book.id === "string" ? book.id : String(book.id || ""),
+            title: typeof book.title === "string" ? book.title : "",
+            author: typeof book.author === "string" ? book.author : "",
+            price: typeof book.price === "string" ? book.price : "",
+            img: typeof book.img === "string" ? book.img : "",
+            desc: typeof book.desc === "string" ? book.desc : "",
+        })).filter((book) => Boolean(book.id) && Boolean(book.title))
         : [];
-        
-    const books = cmsBooks.length > 0 ? cmsBooks : PREMIUM_BOOKS;
+
+    const books = cmsBooks;
 
     return (
         <main className="pt-[88px] pb-4 overflow-hidden">
@@ -149,16 +165,20 @@ export default function CursosPage() {
             </AnimatePresence>
 
             {/* ── HERO ──────────────────────────────────── */}
-            <section className="relative min-h-[380px] md:h-[560px] flex items-center px-4 sm:px-6 md:px-8 lg:px-12 overflow-hidden">
+            <section className="relative faro-hero flex items-center overflow-hidden">
                 <div className="absolute inset-0 z-0">
-                    <Image
-                        src={heroImageUrl}
-                        alt="Librería"
-                        fill
-                        priority
-                        className="object-cover"
-                        style={{ filter: "brightness(0.3) saturate(0.5)" }}
-                    />
+                    {heroImageUrl ? (
+                        <Image
+                            src={heroImageUrl}
+                            alt="Librería"
+                            fill
+                            priority
+                            className="object-cover"
+                            style={{ filter: "brightness(0.3) saturate(0.5)" }}
+                        />
+                    ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))/0.2] via-[hsl(var(--secondary))/0.18] to-[hsl(var(--background))]" />
+                    )}
                     <div
                         className="absolute inset-0"
                         style={{
@@ -166,11 +186,11 @@ export default function CursosPage() {
                         }}
                     />
                 </div>
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8 }}
-                    className="relative z-10 max-w-4xl"
+                    className="relative z-10 faro-container"
                 >
                     <span
                         className="text-xs font-semibold uppercase tracking-wide mb-4 block"
@@ -179,7 +199,7 @@ export default function CursosPage() {
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="max-w-4xl font-bold tracking-tighter leading-none mb-3 text-5xl sm:text-6xl lg:text-8xl"
+                        className="max-w-4xl font-bold faro-display text-5xl sm:text-6xl lg:text-8xl mb-4"
                         style={{ color: "var(--site-on-background)" }}
                     >
                         {heroTitleLead}
@@ -194,13 +214,13 @@ export default function CursosPage() {
                             {heroAccent}.
                         </span>
                     </h1>
-                    <RichText html={heroDescription} className="text-base sm:text-lg max-w-xl leading-relaxed" />
+                    <RichText html={heroDescription} className="faro-body text-base sm:text-lg max-w-xl" />
                 </motion.div>
             </section>
 
             {/* ── CURSOS BENTO ──────────────────────────── */}
-            <section className="px-4 sm:px-6 md:px-8 lg:px-12 mt-10 md:mt-24">
-                <motion.div 
+            <section className="faro-section faro-container">
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -208,18 +228,18 @@ export default function CursosPage() {
                 >
                     <div className="max-w-2xl">
                         <h2
-                            className="text-lg md:text-xl font-bold mb-4 tracking-tight"
+                            className="faro-headline text-2xl md:text-3xl font-bold mb-4"
                             style={{ color: "var(--site-on-surface)" }}
                         >
                             {coursesTitle}
                         </h2>
-                        <p className="text-lg leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
+                        <p className="faro-body text-lg" style={{ color: "var(--site-on-surface-variant)" }}>
                             {coursesDescription}
                         </p>
                     </div>
                 </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6">
                     {/* Featured course */}
                     {featuredCourse && (
                         <motion.div
@@ -231,13 +251,17 @@ export default function CursosPage() {
                             style={{ background: "var(--site-surface-container-low)" }}
                         >
                             <Link href={`/cursos/${featuredCourse.id || "1"}`} className="block absolute inset-0 z-20" />
-                            <Image
-                                src={featuredCourse.imageUrl || featuredFallbackImageUrl}
-                                alt={featuredCourse.title}
-                                fill
-                                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                                style={{ opacity: 0.5 }}
-                            />
+                            {featuredCourse.imageUrl ? (
+                                <Image
+                                    src={featuredCourse.imageUrl}
+                                    alt={featuredCourse.title}
+                                    fill
+                                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                    style={{ opacity: 0.5 }}
+                                />
+                            ) : (
+                                <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))/0.14] to-[hsl(var(--surface-2))/0.32]" />
+                            )}
                             <div
                                 className="absolute inset-0"
                                 style={{
@@ -277,8 +301,8 @@ export default function CursosPage() {
                                             {featuredCourse.modality || "Online"}
                                         </span>
                                         <button
-                                            className="ml-auto px-4 py-1.5 rounded-lg font-black text-sm text-white transition-all hover:scale-105 uppercase tracking-wide flex items-center gap-2"
-                                            style={{ background: "var(--site-cta-gradient)" }}
+                                            className="faro-button ml-auto"
+                                            style={{ background: "var(--site-cta-gradient)", color: "var(--site-on-primary)" }}
                                         >
                                             {featuredCourse.cta || "Ver Curso"} <ArrowRight size={16} />
                                         </button>
@@ -297,10 +321,9 @@ export default function CursosPage() {
                                     whileInView={{ opacity: 1, x: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: i * 0.1 }}
-                                    className="h-full rounded-lg p-4 group transition-all hover:-translate-y-2 hover:shadow-2xl flex flex-col justify-between"
+                                    className="faro-card h-full p-6 group flex flex-col justify-between"
                                     style={{
                                         background: "var(--site-surface-container-high)",
-                                        border: "1px solid var(--site-outline-variant)",
                                     }}
                                 >
                                     <div>
@@ -345,32 +368,33 @@ export default function CursosPage() {
 
             {/* ── LIBRERÍA ──────────────────────────────── */}
             <section
-                className="px-4 sm:px-6 md:px-8 lg:px-12 mt-32 py-8 md:py-12 lg:py-16"
+                className="faro-section"
                 style={{ background: "var(--site-surface-container-low)" }}
             >
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="max-w-xl mb-16"
-                >
-                        <h2
-                            className="text-lg md:text-xl font-bold mb-3 tracking-tight"
-                            style={{ color: "var(--site-on-surface)" }}
-                        >
-                        {libraryTitle}
-                        </h2>
-                        <p className="text-lg leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
-                        {libraryDescription}
+                <div className="faro-container">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="max-w-2xl mb-16"
+                    >
+                            <h2
+                                className="faro-headline text-2xl md:text-3xl font-bold mb-3"
+                                style={{ color: "var(--site-on-surface)" }}
+                            >
+                            {libraryTitle}
+                            </h2>
+                            <p className="faro-body text-lg" style={{ color: "var(--site-on-surface-variant)" }}>
+                            {libraryDescription}
+                            </p>
+                        </motion.div>
+
+                    {books.length === 0 ? (
+                        <p className="faro-body text-center py-8 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+                            {emptyBooksMessage}
                         </p>
-                    </motion.div>
-                
-                {books.length === 0 ? (
-                    <p className="text-center py-8 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                        {emptyBooksMessage}
-                    </p>
-                ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 md:gap-6">
                         {books.map((book, i) => (
                             <motion.div 
                                 initial={{ opacity: 0, y: 20 }}
@@ -380,7 +404,7 @@ export default function CursosPage() {
                                 key={book.title} 
                                 className="group flex flex-col h-full"
                             >
-                                <div className="relative w-full aspect-[2/3] rounded-lg mb-3 overflow-hidden shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl">
+                                <div className="faro-image relative w-full aspect-[2/3] mb-3">
                                     <Image
                                         src={book.img}
                                         alt={book.title}
@@ -431,10 +455,11 @@ export default function CursosPage() {
                         ))}
                     </div>
                 )}
-            </section>
+            </div>
+        </section>
 
             {/* ── CTA ACADEMIA ─────────────────────────── */}
-            <section className="px-4 sm:px-6 md:px-8 lg:px-12 mt-16 md:mt-32">
+            <section className="faro-section faro-container">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -452,13 +477,13 @@ export default function CursosPage() {
                     <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
                         <div>
                             <h2
-                                className="text-lg md:text-xl font-bold mb-3 tracking-tight leading-[1.1]"
+                                className="faro-headline text-2xl md:text-3xl font-bold mb-3"
                                 style={{ color: "var(--site-on-surface)" }}
                             >
                                 {ctaTitle}
                             </h2>
                             <p
-                                className="text-xl leading-relaxed mb-3"
+                                className="faro-body text-xl mb-6"
                                 style={{ color: "var(--site-on-surface-variant)" }}
                             >
                                 {ctaDescription}
@@ -471,7 +496,7 @@ export default function CursosPage() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder={ctaPlaceholder}
                                     disabled={isSubmitting}
-                                    className="flex-1 rounded-lg px-3 py-1.5 text-lg focus:outline-none transition-shadow focus:shadow-xl"
+                                    className="flex-1 rounded-lg px-5 py-3 text-lg focus:outline-none transition-shadow focus:shadow-xl"
                                     style={{
                                         background: "var(--site-surface-container-highest)",
                                         color: "var(--site-on-surface)",
@@ -480,43 +505,48 @@ export default function CursosPage() {
                                 />
                                 <button
                                     type="submit"
-                                    className="px-4 py-1.5 rounded-lg font-black text-sm text-white shadow-lg transition-all hover:scale-105 uppercase tracking-wide"
+                                    className="faro-button"
                                     style={{
                                         background: "var(--site-cta-gradient)",
+                                        color: "var(--site-on-primary)",
                                     }}
                                 >
                                     {ctaSubmit}
                                 </button>
                             </form>
                         </div>
-                        <div className="hidden md:grid grid-cols-2 gap-3">
+                        <div className="hidden md:grid grid-cols-2 gap-5">
                             <motion.div
                                 initial={{ y: 20 }}
                                 whileInView={{ y: 0 }}
-                                className="relative aspect-square rounded-lg overflow-hidden shadow-2xl"
+                                className="faro-image relative aspect-square"
                                 style={{ background: "var(--site-surface)" }}
                             >
-                                <Image
-                                    src={ctaImages[0]?.src || "https://picsum.photos/seed/academia1/800/800"}
-                                    alt={ctaImages[0]?.alt || "Estudio"}
-                                    fill
-                                    className="object-cover"
-                                    style={{ opacity: 0.9 }}
-                                />
+                                {ctaImages[0]?.src ? (
+                                    <Image
+                                        src={ctaImages[0].src}
+                                        alt={ctaImages[0]?.alt || "Estudio"}
+                                        fill
+                                        className="object-cover"
+                                        style={{ opacity: 0.9 }}
+                                    />
+                                ) : null}
                             </motion.div>
                             <motion.div
                                 initial={{ y: 40 }}
                                 whileInView={{ y: 20 }}
-                                className="relative aspect-square rounded-lg overflow-hidden shadow-2xl"
+                                className="faro-image relative aspect-square"
                                 style={{ background: "var(--site-surface)" }}
                             >
-                                <Image
-                                    src={ctaImages[1]?.src || "https://picsum.photos/seed/academia2/800/800"}
-                                    alt={ctaImages[1]?.alt || "Librería"}
-                                    fill
-                                    className="object-cover"
-                                    style={{ opacity: 0.9 }}
-                                />
+                                {ctaImages[1]?.src ? (
+                                    <Image
+                                        src={ctaImages[1].src}
+                                        alt={ctaImages[1]?.alt || "Librería"}
+                                        fill
+                                        className="object-cover"
+                                        style={{ opacity: 0.9 }}
+                                    />
+                                ) : null}
                             </motion.div>
                         </div>
                     </div>

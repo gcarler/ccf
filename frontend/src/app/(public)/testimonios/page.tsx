@@ -44,7 +44,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.4 }}
-            className="break-inside-avoid relative rounded-lg p-4 lg:p-4 border transition-shadow duration-500 hover:shadow-2xl overflow-hidden group flex flex-col h-fit"
+            className="break-inside-avoid relative rounded-lg p-6 lg:p-8 border transition-shadow duration-500 hover:shadow-2xl overflow-hidden group flex flex-col h-fit"
             style={{
                 background: isHighlight ? "var(--site-primary-container)" : "var(--site-surface-container-low)",
                 borderColor: isHighlight ? "var(--site-primary)" : "var(--site-outline-variant)",
@@ -209,14 +209,14 @@ export default function TestimoniosPage() {
     return (
         <main className="pt-[88px] pb-4 overflow-hidden">
             {/* ── HERO ──────────────────────────────────────────── */}
-            <header className="relative px-3 md:px-4 lg:px-8 xl:px-12 py-6 md:py-10 lg:py-14 flex flex-col items-center text-center">
+            <header className="faro-section relative flex flex-col items-center text-center">
                 <div className="absolute inset-0 bg-beam-gradient pointer-events-none opacity-60" />
 
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="relative z-10 max-w-4xl"
+                    className="faro-container relative z-10 max-w-4xl"
                 >
                     <span
                         className="text-xs font-semibold uppercase tracking-wide block mb-3"
@@ -225,7 +225,7 @@ export default function TestimoniosPage() {
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="mx-auto max-w-4xl font-bold tracking-tighter leading-[0.92] mb-3 text-5xl sm:text-6xl lg:text-7xl"
+                        className="mx-auto max-w-4xl font-bold faro-display text-5xl sm:text-6xl lg:text-7xl mb-3"
                         style={{ color: "var(--site-on-background)" }}
                     >
                         {heroTitleLead} <br/>
@@ -242,16 +242,16 @@ export default function TestimoniosPage() {
                     </h1>
                     <RichText
                         html={heroDescription}
-                        className="text-base sm:text-lg max-w-2xl mx-auto leading-relaxed"
+                        className="faro-body text-base sm:text-lg max-w-2xl mx-auto"
                     />
                 </motion.div>
             </header>
 
             {/* ── SEARCH & CALL TO ACTION BANNER ────────────────── */}
-            <section className="px-4 sm:px-6 md:px-8 xl:px-12 mb-16">
-                <div className="flex flex-col lg:flex-row gap-3">
+            <section className="faro-section-tight faro-container">
+                <div className="flex flex-col lg:flex-row gap-4">
                     {/* Search Bar */}
-                    <div className="flex-1 rounded-lg p-3 flex items-center gap-4 border transition-all focus-within:shadow-2xl focus-within:-translate-y-1"
+                    <div className="flex-1 rounded-lg p-4 flex items-center gap-4 border transition-all focus-within:shadow-2xl focus-within:-translate-y-1"
                          style={{
                              background: "var(--site-surface-container)",
                              borderColor: "var(--site-outline-variant)"
@@ -268,7 +268,7 @@ export default function TestimoniosPage() {
                     </div>
 
                     {/* CTA */}
-                    <div className="rounded-lg p-3 flex items-center justify-between gap-3 border"
+                    <div className="rounded-lg p-4 flex items-center justify-between gap-3 border"
                          style={{
                              background: "var(--site-surface-container)",
                              borderColor: "var(--site-outline-variant)"
@@ -283,11 +283,10 @@ export default function TestimoniosPage() {
                         </div>
                         <Link
                             href="/conocer-a-jesus"
-                            className="flex items-center gap-3 px-3 py-3 rounded-full text-xs font-semibold uppercase tracking-wide transition-all hover:scale-105 w-full justify-center md:w-auto"
+                            className="faro-button w-full justify-center md:w-auto"
                             style={{
                                 background: "var(--site-primary)",
                                 color: "var(--site-on-primary)",
-                                boxShadow: undefined
                             }}
                         >
                             {storyCta} <ArrowRight size={16} />
@@ -297,7 +296,7 @@ export default function TestimoniosPage() {
             </section>
 
             {/* ── MASONRY GRID ───────────────────────────────────── */}
-            <section className="px-4 sm:px-6 md:px-8 xl:px-12 min-h-[50vh]">
+            <section className="faro-section-tight faro-container min-h-[50vh]">
                 <AnimatePresence mode="popLayout">
                     {filteredTestimonials.length === 0 ? (
                         <motion.div
@@ -308,14 +307,14 @@ export default function TestimoniosPage() {
                         >
                             <Users size={64} className="mb-3 opacity-20" style={{ color: "var(--site-primary)" }} />
                             <h3 className="text-xl font-bold mb-4" style={{ color: "var(--site-on-surface)" }}>{emptyTitle}</h3>
-                            <p className="text-lg opacity-80 max-w-md" style={{ color: "var(--site-on-surface-variant)" }}>
+                            <p className="faro-body text-lg opacity-80 max-w-md mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>
                                 {emptyDescription}
                             </p>
                         </motion.div>
                     ) : (
                         <motion.div
                             layout
-                            className="columns-1 md:columns-2 xl:columns-3 gap-3 space-y-3"
+                            className="columns-1 md:columns-2 xl:columns-3 gap-5 space-y-5"
                         >
                             {filteredTestimonials.map((t, index) => (
                                 <TestimonialCard

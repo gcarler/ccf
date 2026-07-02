@@ -187,6 +187,86 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
         { src: "https://picsum.photos/seed/academia1/800/800", alt: "Estudio" },
         { src: "https://picsum.photos/seed/academia2/800/800", alt: "Librería" }
       ],
+      course_cards: [
+        {
+          id: "el-evangelio-que-no-conocias",
+          title: "El Evangelio que no Conocías",
+          desc: "Después de dos mil años, el Evangelio corre el riesgo de volverse una marca, un sistema de reglas o una terapia emocional.",
+          tag: "Fundamentos Radicales",
+          modality: "Presencial & Online",
+          lessons: 10,
+          cta: "Quiero Inscribirme",
+          imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop",
+          instructor: "Pastor Luis Ricardo Meza Gutiérrez",
+        },
+        {
+          id: "jesus-el-subversivo",
+          title: "Jesús el Subversivo",
+          desc: "Recupera al Jesús real del contexto judío del Segundo Templo.",
+          tag: "Teología Crítica",
+          modality: "100% Online",
+          lessons: 8,
+          cta: "Quiero Conocerlo de Verdad",
+          imageUrl: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=600&fit=crop",
+          instructor: "Academia FARO — Teología Histórica",
+        },
+        {
+          id: "escatologia-sin-miedo",
+          title: "Escatología sin Apocalipsis-Fobia",
+          desc: "El Apocalipsis como carta de resistencia y esperanza.",
+          tag: "Profecía & Esperanza",
+          modality: "100% Online",
+          lessons: 8,
+          cta: "Quiero Leer el Apocalipsis de Nuevo",
+          imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop",
+          instructor: "Academia FARO — Teología Bíblica",
+        },
+        {
+          id: "teodicea-dios-frente-al-sufrimiento",
+          title: "Teodicea: Dios Frente al Sufrimiento",
+          desc: "Las respuestas fáciles al sufrimiento son una ofensa a quienes sufren.",
+          tag: "Apologética Profunda",
+          modality: "Híbrido",
+          lessons: 10,
+          cta: "Quiero Afrontar Esta Pregunta",
+          imageUrl: "https://images.unsplash.com/photo-1476611338391-6f395a0ebc7b?w=800&h=600&fit=crop",
+          instructor: "Academia FARO — Filosofía y Teología",
+        }
+      ],
+      books: [
+        {
+          id: "b1",
+          title: "La Búsqueda de Dios",
+          author: "A.W. Tozer",
+          price: "$15.00",
+          img: "https://picsum.photos/seed/tozer-book/400/600",
+          desc: "Un clásico indispensable sobre la sed espiritual y la verdadera intimidad con el Creador."
+        },
+        {
+          id: "b2",
+          title: "Mero Cristianismo",
+          author: "C.S. Lewis",
+          price: "$18.50",
+          img: "https://picsum.photos/seed/cslewis-book/400/600",
+          desc: "La apología moderna más brillante sobre las bases objetivas de la fe cristiana."
+        },
+        {
+          id: "b3",
+          title: "El Costo del Discipulado",
+          author: "Dietrich Bonhoeffer",
+          price: "$14.00",
+          img: "https://picsum.photos/seed/bonhoeffer-book/400/600",
+          desc: "La diferencia entre la gracia barata y la gracia costosa."
+        },
+        {
+          id: "b4",
+          title: "La Política de Jesús",
+          author: "John Howard Yoder",
+          price: "$16.00",
+          img: "https://picsum.photos/seed/yoder-book/400/600",
+          desc: "Jesús como modelo de ética social."
+        }
+      ],
       library_title: "Nuestra Librería",
       library_description: "Una curaduría de obras que han transformado generaciones.",
       empty_books_message: "Próximamente tendremos libros disponibles.",

@@ -45,9 +45,9 @@ export default function PastoresIndexPage() {
     const principalLabel = feedContent?.principal_label || "Pastor Principal";
 
     return (
-        <main className="pt-24 pb-4">
+        <main className="pt-24 pb-4 overflow-hidden">
             {/* ── Hero Section ── */}
-            <section className="relative overflow-hidden min-h-[70vh] md:min-h-[85vh] flex flex-col">
+            <section className="relative faro-hero flex flex-col">
                 {heroBgImage ? (
                     <>
                         <div
@@ -63,20 +63,20 @@ export default function PastoresIndexPage() {
                     </div>
                 )}
 
-                <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 mt-auto text-center relative z-10 pb-12 md:pb-16">
+                <div className="faro-container mt-auto text-center relative z-10 pb-12 md:pb-16">
                     <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white/70 text-xs font-bold uppercase tracking-widest mb-5 border border-white/20 shadow-lg">
                         <Sparkles size={12} className="animate-pulse" /> {heroBadge}
                     </div>
-                    <h1 className={`text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-5 leading-[1.05] ${heroBgImage ? "text-white" : "text-[hsl(var(--text-primary))] dark:text-white"}`}>
+                    <h1 className={`faro-display text-4xl md:text-5xl lg:text-6xl font-black mb-5 ${heroBgImage ? "text-white" : "text-[hsl(var(--text-primary))] dark:text-white"}`}>
                         {heroTitle}
                     </h1>
                     {heroBgImage ? (
-                        <p className="text-base md:text-lg max-w-2xl mx-auto font-medium leading-relaxed" style={{ color: 'white' }}
+                        <p className="faro-body text-base md:text-lg max-w-2xl mx-auto font-medium" style={{ color: 'white' }}
                             dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(heroDescription) }} />
                     ) : (
                         <RichText
                             html={heroDescription}
-                            className="text-base md:text-lg max-w-2xl mx-auto font-medium leading-relaxed text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                            className="faro-body text-base md:text-lg max-w-2xl mx-auto font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                         />
                     )}
                     <div className="flex items-center justify-center gap-3 mt-8">
@@ -88,7 +88,7 @@ export default function PastoresIndexPage() {
             </section>
 
             {/* ── Pastors Grid ── */}
-            <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 pt-[3cm] pb-20 md:pb-28">
+            <section className="faro-section faro-container pt-[3cm]">
                 {!pastorsCms ? (
                     <div className="flex items-center justify-center py-20">
                         <div className="w-8 h-8 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
@@ -97,7 +97,7 @@ export default function PastoresIndexPage() {
                 ) : pastors.length === 0 ? (
                     <p className="text-center text-[hsl(var(--text-secondary))] py-20">{emptyTitle}</p>
                 ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                     {pastors.map((pastor, idx) => (
                         <div key={pastor.id || pastor.slug} className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] rounded-2xl overflow-hidden border border-[hsl(var(--border))]/70 dark:border-white/[0.06] shadow-lg shadow-black/10/40 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:shadow-2xl hover:shadow-[hsl(var(--primary))/0.15] dark:hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col"
                             style={{ animationDelay: `${idx * 100}ms` }}>
