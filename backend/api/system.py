@@ -378,7 +378,7 @@ def _compute_workload_via_orm(db: Session) -> List[Dict]:
     con las keys ``user_id``, ``name``, ``total``, ``open_tasks``,
     ``critical`` y ``overdue`` (alineadas con los kwargs del helper; las
     columnas equivalentes en la vista PostgreSQL viven en la migración
-    ``alembic/versions/20260522_0021_seed_and_view.py``).
+    histórica ``20260522_0021_seed_and_view.py``).
     """
     user_model = getattr(models, "User", None)
     task_model = getattr(models, "ProjectTask", None)

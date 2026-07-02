@@ -25,6 +25,10 @@ def _is_auxiliary_sqlite_table(table_name: str) -> bool:
 def _alembic_config() -> Config:
     config = Config(str(ALEMBIC_INI))
     config.set_main_option("script_location", str(PROJECT_ROOT / "alembic"))
+    config.set_main_option(
+        "version_locations",
+        str(PROJECT_ROOT / "alembic" / "canonical_versions"),
+    )
     return config
 
 
