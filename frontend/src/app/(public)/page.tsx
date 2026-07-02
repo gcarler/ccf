@@ -3,20 +3,29 @@
 import Link from "next/link";
 import React from "react";
 import Image from "next/image";
-import {ArrowRight, Play} from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 import { motion } from "framer-motion";
-import { useContentBlock } from "@/hooks/useContent";
 import { SITE_EVENTS_BLOCK_KEY } from "@/lib/cms/blocks";
 import { SITE_KEY, SITE_NAME } from "@/lib/site-config";
+import { useContentBlocks } from "@/hooks/useContent";
 import { useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
-import CmsPageOverride from "@/components/public/cms/CmsPageOverride";
+
 
 export default function PublicHomePage() {
-    const { data: heroContent } = useContentBlock(`${SITE_KEY}_home_hero`);
-    const { data: homeFeedContent } = useContentBlock(`${SITE_KEY}_home_feed`);
-    const { data: eventsContent } = useContentBlock(SITE_EVENTS_BLOCK_KEY);
+    const { data: homeBlocks } = useContentBlocks([
+        `${SITE_KEY}_home_hero`,
+        `${SITE_KEY}_home_feed`,
+        SITE_EVENTS_BLOCK_KEY,
+    ]);
+
+    const heroContent = homeBlocks[`${SITE_KEY}_home_hero`] ?? null;
+    const homeFeedContent = homeBlocks[`${SITE_KEY}_home_feed`] ?? null;
+    const eventsContent = homeBlocks[SITE_EVENTS_BLOCK_KEY] ?? null;
+
+
+
 
     const heroEyebrow = heroContent?.eyebrow || "BIENVENIDOS";
     const heroTitleLead = heroContent?.title_lead || SITE_NAME;
@@ -88,7 +97,7 @@ export default function PublicHomePage() {
         : [];
 
     return (
-        <CmsPageOverride slug="home">
+        
             <main>
             {/* ─── HERO ─────────────────────────────────────────────── */}
             <section className="relative min-h-[92svh] md:min-h-screen flex items-center justify-center overflow-hidden">
@@ -486,6 +495,6 @@ export default function PublicHomePage() {
                 </motion.div>
             </section>
         </main>
-        </CmsPageOverride>
+
     );
 }
