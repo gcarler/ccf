@@ -75,6 +75,7 @@ from backend.models_cms import (  # noqa: F401
     CmsPageView,
     CmsPublishLog,
     CmsSection,
+    CmsSectionType,
     CmsSite,
     CmsTheme,
     SavedView,

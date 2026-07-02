@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /plataforma/
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://ccfministerio.com/sitemap.xml

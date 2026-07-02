@@ -179,6 +179,7 @@ class CmsSection(Base):
     is_global = Column(Boolean, default=False, server_default="0", index=True)
     global_key = Column(String(120), nullable=True, unique=True, index=True)
     locale = Column(String(5), default="es", server_default="es", index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
