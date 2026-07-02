@@ -571,7 +571,10 @@ def my_certificates(current_user: AcademyStudent, db: Session = Depends(get_db))
         models.Enrollment.deleted_at.is_(None),
     )
     if user_sede is not None:
-        query = query.filter(models.Enrollment.sede_id == user_sede)
+        # ``Enrollment`` no tiene ``sede_id`` propio; la sede vive en ``Course``
+        # (ya joined arriba). Filtramos a través de la relación para mantener
+        # el aislamiento por sede sin romper la query.
+        query = query.filter(models.Course.sede_id == user_sede)
     rows = query.all()
     return [
         {
@@ -918,7 +921,10 @@ def course_students(
         models.Enrollment.deleted_at.is_(None),
     )
     if user_sede is not None:
-        query = query.filter(models.Enrollment.sede_id == user_sede)
+        # ``Enrollment`` no tiene ``sede_id`` propio; la sede vive en ``Course``
+        # (ya joined arriba). Filtramos a través de la relación para mantener
+        # el aislamiento por sede sin romper la query.
+        query = query.filter(models.Course.sede_id == user_sede)
     enrollments = query.all()
     return [
         {

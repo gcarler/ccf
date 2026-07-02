@@ -140,7 +140,7 @@ export const CALENDAR_VIEW_META: Record<CalendarView, { label: string; descripti
   },
   cumpleanos: {
     label: 'Cumpleaños',
-    description: 'Cumpleaños de los miembros de la iglesia',
+    description: 'Cumpleaños de las personas de la iglesia',
     color: '#ec4899',
   },
 };

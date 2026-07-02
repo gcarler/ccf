@@ -67,6 +67,46 @@ def list_community_grupos(db: Session = Depends(get_db)):
     ]
 
 
+@router.get("/events", response_model=List[dict])
+def list_community_events(db: Session = Depends(get_db)):
+    """Lista eventos públicos para la vista comunitaria."""
+    events = (
+        db.query(models.EventoAgenda)
+        .filter(
+            models.EventoAgenda.deleted_at.is_(None),
+            models.EventoAgenda.visibilidad.in_(["PUBLICO", "COMUNIDAD"]),
+            models.EventoAgenda.estado == "ACTIVO",
+        )
+        .order_by(models.EventoAgenda.fecha_inicio)
+        .all()
+    )
+
+    def _infer_category(title: str) -> str:
+        lower = title.lower()
+        if any(w in lower for w in ("joven", "juvenil", "youth")):
+            return "Juveniles"
+        if any(w in lower for w in ("estudio", "biblia", "celula", "grupo")):
+            return "Estudios"
+        if any(w in lower for w in ("mision", "misiones", "evangelismo", "calle")):
+            return "Misiones"
+        return "Servicios"
+
+    return [
+        {
+            "id": str(e.id),
+            "title": e.titulo,
+            "description": e.descripcion or "",
+            "date": e.fecha_inicio.isoformat() if e.fecha_inicio else "",
+            "category": _infer_category(e.titulo),
+            "location": e.ubicacion_texto or "",
+            "attendees_count": len(
+                [p for p in e.participantes if p.deleted_at is None]
+            ),
+        }
+        for e in events
+    ]
+
+
 @router.post("/grupos", response_model=dict)
 def create_community_grupo(
     payload: dict,

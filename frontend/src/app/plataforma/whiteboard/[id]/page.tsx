@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import * as fabric from "fabric";
 import {
@@ -31,13 +31,12 @@ import {
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import clsx from "clsx";
 import {
-    readWhiteboards,
-    upsertWhiteboard,
-    whiteboardCanvasKey,
-    WhiteboardRecord,
+    fetchProjectWhiteboard,
+    saveProjectWhiteboard,
     GridStyle,
     GridSize,
 } from "@/lib/whiteboards";
+import { useAuth } from "@/context/AuthContext";
 
 type WhiteboardTool = "select" | "draw";
 
@@ -103,14 +102,14 @@ function getGridBackground(style: GridStyle, size: GridSize, isDark: boolean): s
 
 export default function WhiteboardSessionPage() {
     const params = useParams();
-    const id = params?.id as string;
+    const projectId = params?.id as string;
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const fabricCanvas = useRef<fabric.Canvas | null>(null);
     const restoringRef = useRef(false);
     const saveTimerRef = useRef<number | null>(null);
+    const { token } = useAuth();
 
     const [title, setTitle] = useState("Lienzo colaborativo");
-    const [description, setDescription] = useState("");
     const [tool, setTool] = useState<WhiteboardTool>("select");
     const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
     const [layers, setLayers] = useState<LayerRow[]>([]);
@@ -143,8 +142,6 @@ export default function WhiteboardSessionPage() {
     const [objHeight, setObjHeight] = useState(0);
 
     const [isDark, setIsDark] = useState(false);
-
-    const storageKey = useMemo(() => whiteboardCanvasKey(id || "unknown"), [id]);
 
     // Detect dark mode
     useEffect(() => {
@@ -217,56 +214,52 @@ export default function WhiteboardSessionPage() {
 
     const persistCanvas = useCallback((status: "saving" | "saved" = "saving") => {
         const canvas = fabricCanvas.current;
-        if (!canvas || restoringRef.current || typeof window === "undefined" || !id) return;
+        if (!canvas || restoringRef.current || typeof window === "undefined" || !projectId || !token) return;
 
         if (saveTimerRef.current) {
             window.clearTimeout(saveTimerRef.current);
         }
 
         setSaveStatus(status);
-        saveTimerRef.current = window.setTimeout(() => {
-            window.localStorage.setItem(storageKey, JSON.stringify(canvas.toJSON()));
-            const now = new Date().toISOString();
-            const existing = readWhiteboards(window.localStorage).find((board) => board.id === id);
-            upsertWhiteboard(window.localStorage, {
-                id,
-                title: existing?.title || title,
-                description: existing?.description || description,
-                created_at: existing?.created_at || now,
-                updated_at: now,
-                gridStyle,
-                gridSize,
-            });
-            setSaveStatus("saved");
+        saveTimerRef.current = window.setTimeout(async () => {
+            try {
+                await saveProjectWhiteboard(projectId, {
+                    title,
+                    elements_json: JSON.stringify(canvas.toJSON()),
+                }, token);
+                setSaveStatus("saved");
+            } catch (err) {
+                console.error("Error saving whiteboard:", err);
+                setSaveStatus("idle");
+            }
             window.setTimeout(() => setSaveStatus("idle"), 1600);
         }, 350);
-    }, [description, gridSize, gridStyle, id, storageKey, title]);
+    }, [projectId, title, token]);
 
     // ── Load board metadata ──
     useEffect(() => {
-        if (typeof window === "undefined" || !id) return;
-        const board = readWhiteboards(window.localStorage).find((item) => item.id === id);
-        if (board) {
-            setTitle(board.title);
-            setDescription(board.description || "");
-            if (board.gridStyle) setGridStyle(board.gridStyle);
-            if (board.gridSize) setGridSize(board.gridSize);
-        } else {
-            const now = new Date().toISOString();
-            const fallback: WhiteboardRecord = {
-                id,
-                title: "Lienzo colaborativo",
-                description: "",
-                created_at: now,
-                updated_at: now,
-            };
-            upsertWhiteboard(window.localStorage, fallback);
-        }
-    }, [id]);
+        if (!projectId || !token) return;
+        let cancelled = false;
+        const load = async () => {
+            try {
+                const board = await fetchProjectWhiteboard(projectId, token);
+                if (cancelled) return;
+                if (board) {
+                    setTitle(board.title);
+                }
+            } catch (err) {
+                console.error("Error loading whiteboard:", err);
+            }
+        };
+        load();
+        return () => {
+            cancelled = true;
+        };
+    }, [projectId, token]);
 
     // ── Init Fabric canvas ──
     useEffect(() => {
-        if (!canvasRef.current || typeof window === "undefined") return;
+        if (!canvasRef.current || typeof window === "undefined" || !projectId || !token) return;
 
         const canvas = new fabric.Canvas(canvasRef.current, {
             backgroundColor: "#ffffff",
@@ -285,24 +278,29 @@ export default function WhiteboardSessionPage() {
         resizeCanvas();
         window.addEventListener("resize", resizeCanvas);
 
-        // Load saved data
-        const saved = window.localStorage.getItem(storageKey);
-        if (saved) {
-            restoringRef.current = true;
+        // Load saved data from backend
+        const loadSaved = async () => {
             try {
-                canvas.loadFromJSON(JSON.parse(saved), () => {
-                    canvas.renderAll();
+                const board = await fetchProjectWhiteboard(projectId, token);
+                if (board?.elements_json && board.elements_json !== "[]") {
+                    restoringRef.current = true;
+                    canvas.loadFromJSON(JSON.parse(board.elements_json), () => {
+                        canvas.renderAll();
+                        syncLayers();
+                        restoringRef.current = false;
+                    });
+                } else {
+                    addStarterObjects(canvas);
                     syncLayers();
-                    restoringRef.current = false;
-                });
+                    persistCanvas("saved");
+                }
             } catch {
-                restoringRef.current = false;
+                addStarterObjects(canvas);
+                syncLayers();
+                persistCanvas("saved");
             }
-        } else {
-            addStarterObjects(canvas);
-            syncLayers();
-            persistCanvas("saved");
-        }
+        };
+        loadSaved();
 
         const handleChanged = () => {
             syncLayers();
@@ -322,8 +320,8 @@ export default function WhiteboardSessionPage() {
             canvas.dispose();
             fabricCanvas.current = null;
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [projectId, token]);
 
     // ── Keyboard shortcuts ──
     useEffect(() => {
@@ -471,7 +469,7 @@ export default function WhiteboardSessionPage() {
     const exportCanvas = () => {
         const canvas = fabricCanvas.current;
         if (!canvas || typeof window === "undefined") return;
-        const payload = JSON.stringify({ title, description, canvas: canvas.toJSON() }, null, 2);
+        const payload = JSON.stringify({ title, description: "", canvas: canvas.toJSON() }, null, 2);
         const blob = new Blob([payload], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -603,7 +601,7 @@ export default function WhiteboardSessionPage() {
                     <section className="space-y-2">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Objetivo</p>
                         <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{title}</h1>
-                        <p className="text-xs font-medium leading-5 text-[hsl(var(--text-secondary))]">{description || "Sin objetivo documentado."}</p>
+                        <p className="text-xs font-medium leading-5 text-[hsl(var(--text-secondary))]">Sin objetivo documentado.</p>
                     </section>
 
                     {/* ── Object properties ── */}

@@ -738,6 +738,21 @@ def update_project_wiki(
     return _normalize_dates(doc)
 
 
+@router.get("/whiteboards", response_model=List[schemas.ProjectWhiteboard])
+def list_whiteboards(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista todas las pizarras activas ordenadas por fecha de actualización."""
+    boards = (
+        db.query(models.ProjectWhiteboard)
+        .filter(models.ProjectWhiteboard.deleted_at.is_(None))
+        .order_by(models.ProjectWhiteboard.updated_at.desc())
+        .all()
+    )
+    return [_normalize_dates(b) for b in boards]
+
+
 @router.get("/{project_id}/whiteboard", response_model=Optional[schemas.ProjectWhiteboard])
 def get_project_whiteboard(
     project_id: str,
@@ -779,6 +794,25 @@ def update_project_whiteboard(
     db.commit()
     db.refresh(board)
     return _normalize_dates(board)
+
+
+@router.delete("/{project_id}/whiteboard", status_code=status.HTTP_204_NO_CONTENT)
+def delete_project_whiteboard(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Realiza soft delete de la pizarra asociada a un proyecto."""
+    _ensure_project(db, project_id)
+    board = (
+        db.query(models.ProjectWhiteboard)
+        .filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id))
+        .first()
+    )
+    if board:
+        board.deleted_at = datetime.now(timezone.utc)
+        db.commit()
+    return None
 
 
 # --- ATTACHMENTS & SUPPLIES ---
