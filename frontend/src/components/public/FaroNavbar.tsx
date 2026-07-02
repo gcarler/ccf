@@ -9,6 +9,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect,useState } from "react";
 import { useFaroTheme } from "./FaroThemeProvider";
+import { useSiteBranding } from "@/lib/site-branding";
 
 const DEFAULT_NAV_LINKS = [
     { href: "/", label: "Inicio" },
@@ -23,13 +24,12 @@ const DEFAULT_NAV_LINKS = [
 
 export default function FaroNavbar() {
     const { toggle, themeTokens } = useFaroTheme();
+    const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const [menuItemsV2, setMenuItemsV2] = useState<Array<{ id?: string; href: string; label: string; children?: Array<{ id?: string; href: string; label: string }> }>>([]);
 
-    const logoUrl = themeTokens["--site-logo-url"] || "";
-    const logoName = themeTokens["--site-logo-name"] || SITE_NAME;
     const ctaLabel = themeTokens["--site-header-cta-label"] || "Quiero conocer a Jesús";
     const ctaHref = themeTokens["--site-header-cta-href"] || "/conocer-a-jesus";
 

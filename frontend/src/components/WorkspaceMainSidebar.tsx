@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import OptimizedImage from '@/components/ui/OptimizedImage';
 import {
     ChevronDown, Plus,
     ChevronLeft, ChevronRight, Circle
@@ -12,6 +13,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import Tooltip from '@/components/ui/Tooltip';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
+import { SITE_NAME } from '@/lib/site-config';
+import { useSiteBranding } from '@/lib/site-branding';
 
 interface NavItem {
     id: string;
@@ -168,6 +171,7 @@ function NavRow({
 
 export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle, isCollapsed }: Props) {
     const pathname = usePathname();
+    const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const { 
         sidebarStack, 
         popSidebarPanel, 
@@ -217,6 +221,31 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
     return (
         <aside className="h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113] transition-colors duration-500 ease-in-out relative overflow-hidden">
             <div className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.04] relative z-20 bg-white/80 dark:bg-[#0f1113]/80 backdrop-blur-xl">
+                {!isMini && (
+                    <div className="px-3 pt-3 pb-2 flex items-center gap-2.5">
+                        {logoUrl ? (
+                            <OptimizedImage
+                                src={logoUrl}
+                                alt={logoName || SITE_NAME}
+                                width={28}
+                                height={28}
+                                className="size-7 object-contain shrink-0"
+                            />
+                        ) : (
+                            <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white font-black text-[10px] shrink-0">
+                                CCF
+                            </div>
+                        )}
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[hsl(var(--text-primary))] dark:text-white truncate">
+                                {logoName || SITE_NAME}
+                            </p>
+                            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[hsl(var(--text-secondary))] truncate">
+                                {displayTitle}
+                            </p>
+                        </div>
+                    </div>
+                )}
                 {/* 1. Breadcrumbs (Opcional pero recomendado para contexto) */}
                 {!isMini && (
                     <div className="px-3 pt-2 pb-0.5 flex items-center gap-1.5 overflow-hidden min-h-[18px]">
