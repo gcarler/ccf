@@ -456,3 +456,46 @@ class PastoralProfileUpdate(BaseModel):
     social_twitter: Optional[str] = None
     is_main_pastor: Optional[bool] = None
     is_pastoral_leader: Optional[bool] = None
+
+
+# ── Section Types (platform-wide catalog) ────────────────────────
+#
+# A CmsSectionType is the schema-of-schemas: it defines which ``type``
+# strings a ``CmsSection`` is allowed to use. Catalog is global — there
+# is no site FK because section types are shared across all CMS sites
+
+
+class CmsSectionTypeCreate(BaseModel):
+    """Payload to register a new section type in the platform catalog."""
+
+    # ``name`` mirrors ``CmsSectionType.name`` ``String(80)`` in the DB
+    # schema. The ``max_length`` constraint here prevents 500 on commit
+    # when an oversized name is submitted via the API.
+    name: str = Field(min_length=1, max_length=80)
+    description: Optional[str] = Field(default=None, max_length=255)
+    # Creating with ``is_active=False`` is intentional: a type can be
+    # provisioned before the renderer ships.
+    is_active: bool = True
+
+
+class CmsSectionTypeUpdate(BaseModel):
+    """Payload to update an existing section type entry.
+
+    ``name`` is intentionally NOT exposed: ``CmsSection.type`` is a
+    free-string column with no FK to ``cms_section_types``. A rename
+    would orphan every existing section that uses the type. To rename,
+    admins must DELETE (soft) and recreate.
+    """
+
+    description: Optional[str] = Field(default=None, max_length=255)
+    is_active: Optional[bool] = None
+
+
+class CmsSectionTypeRead(BaseModel):
+    id: UUID
+    name: str
+    description: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    model_config = orm_config
