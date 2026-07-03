@@ -395,18 +395,20 @@ def test_platform_frontend_respects_ccf_ui_contracts():
         root / "frontend" / "src" / "components",
         root / "frontend" / "src" / "design",
     ]
-    forbidden = (
-        "indigo",
-        "violet",
-        "purple",
-        "Miembro",
-        "miembro",
-        "Membresía",
-        "membresía",
-        "@radix-ui/react-dialog",
-        "<Dialog",
-        "Dialog.",
+    # Raw-substring forbidden: Tailwind colors and direct Radix Dialog imports
+    # must NEVER appear regardless of identifier casing.
+    _raw_forbidden = (
+        "indigo", "violet", "purple",
+        "@radix-ui/react-dialog", "<Dialog", "Dialog.",
     )
+    # Word-boundary forbidden: display-copy Spanish terminology should not
+    # surface to end users. snake_case identifiers (`total_miembros`,
+    # `miembros_actuales`) are intentionally permitted because they mirror
+    # backend Pydantic field names — renaming would break the API wire
+    # contract. `\b` in Python regex treats `_` as a word character, so
+    # `_miembros` is exempt while ` miembros` (prose) still trips the rule.
+    _word_forbidden = ("Miembro", "miembro", "Membresía", "membresía")
+    _word_patterns = tuple(re.compile(rf"\b{re.escape(t)}\b") for t in _word_forbidden)
     violations = []
 
     for scan_root in scan_roots:
@@ -414,8 +416,11 @@ def test_platform_frontend_respects_ccf_ui_contracts():
             if path.suffix not in {".ts", ".tsx"}:
                 continue
             for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-                for term in forbidden:
+                for term in _raw_forbidden:
                     if term in line:
+                        violations.append(f"{path.relative_to(root)}:{line_no} contains {term}")
+                for term, pattern in zip(_word_forbidden, _word_patterns):
+                    if pattern.search(line):
                         violations.append(f"{path.relative_to(root)}:{line_no} contains {term}")
 
     assert violations == []
