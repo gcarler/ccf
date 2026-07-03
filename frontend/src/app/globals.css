@@ -187,6 +187,14 @@
   .hover-scale {
     @apply transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98];
   }
+
+  /* Sidebar nav item hover - ensures dark text in light theme */
+  .sidebar-nav-item:hover {
+    color: #0A192F !important;
+  }
+  .dark .sidebar-nav-item:hover {
+    color: white !important;
+  }
   
   .scrollbar-none::-webkit-scrollbar {
     display: none;
