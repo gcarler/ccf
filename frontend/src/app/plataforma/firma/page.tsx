@@ -11,7 +11,6 @@ import {
   PenTool,
   Plus,
   Send,
-  Signature,
   Trash2,
   User,
 } from "lucide-react";
@@ -28,7 +27,7 @@ const SECTIONS = [
       { id: "facturacion", label: "Facturación", href: "/plataforma/facturacion", icon: FileText },
       { id: "gastos", label: "Gastos", href: "/plataforma/gastos", icon: Plus },
       { id: "documentos", label: "Documentos", href: "/plataforma/documentos", icon: FileText },
-      { id: "firma", label: "Firma Digital", href: "/plataforma/firma", icon: Signature },
+      { id: "firma", label: "Firma Digital", href: "/plataforma/firma", icon: PenTool },
     ],
   },
 ];
@@ -179,7 +178,7 @@ export default function FirmaPage() {
                   <motion.div key={req.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="size-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] flex items-center justify-center"><Signature size={16} /></div>
+                        <div className="size-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] flex items-center justify-center"><PenTool size={16} /></div>
                         <div>
                           <p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-white">{req.title}</p>
                           <p className="text-[10px] text-[hsl(var(--text-secondary))]">{req.country_code} · {req.legal_framework}</p>

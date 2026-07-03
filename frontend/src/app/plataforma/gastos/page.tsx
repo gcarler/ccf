@@ -16,6 +16,7 @@ import {
   Search,
   Trash2,
   Upload,
+  Send,
   Wallet,
   XCircle,
 } from "lucide-react";

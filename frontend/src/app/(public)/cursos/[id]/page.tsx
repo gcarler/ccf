@@ -362,7 +362,7 @@ export default function CursoDetailPage() {
                 )}
             </AnimatePresence>
 
-            <Footer />
+            <Footer_Simple />
         </div>
     );
 }

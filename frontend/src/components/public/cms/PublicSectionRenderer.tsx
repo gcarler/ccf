@@ -1403,7 +1403,7 @@ function ContentBlocksSection({ section }: { section: CmsSection }) {
       <div className={`grid grid-cols-1 ${colClass} gap-6`}>
         {blocks.map((block, i) => {
           const type = val(block, "type", "text");
-          if (type === "text") return <div key={i} dangerouslySetInnerHTML={{ __html: sanitizeHtml(val(block, "content", "")) }} />;
+          if (type === "text") return <div key={i} dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(val(block, "content", "")) }} />;
           if (type === "image") return (
             <div key={i} className="rounded-lg overflow-hidden">
               <OptimizedImage src={val(block, "image_url", "")} alt={val(block, "alt", "")} width={800} height={450} className="w-full h-auto" />
