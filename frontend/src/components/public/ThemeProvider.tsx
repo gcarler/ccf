@@ -4,23 +4,23 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 
-export type CcfTheme = "institutional" | "light" | "dark";
+export type Theme = "institutional" | "light" | "dark";
 
-interface CcfThemeContextType {
-    theme: CcfTheme;
-    setTheme: (theme: CcfTheme) => void;
+interface ThemeContextType {
+    theme: Theme;
+    setTheme: (theme: Theme) => void;
     toggle: () => void;
     themeTokens: Record<string, string>;
 }
 
-const ThemeContext = createContext<CcfThemeContextType>({
+const ThemeContext = createContext<ThemeContextType>({
     theme: "institutional",
     setTheme: () => {},
     toggle: () => {},
     themeTokens: {},
 });
 
-function inferThemeMode(themeName?: string, tokens?: Record<string, unknown>): CcfTheme {
+function inferThemeMode(themeName?: string, tokens?: Record<string, unknown>): Theme {
     const raw = `${themeName || ""} ${String(tokens?.["--site-theme-mode"] ?? tokens?.theme_mode ?? tokens?.mode ?? "")}`
         .toLowerCase()
         .trim();
@@ -37,14 +37,14 @@ const CMS_TOKEN_ALLOWLIST = new Set([
     "--site-header-cta-href",
 ]);
 
-export function useCcfTheme() {
+export function useTheme() {
     return useContext(ThemeContext);
 }
 
-export const useFaroTheme = useCcfTheme;
+export const useFaroTheme = useTheme;
 
-export function CcfThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setTheme] = useState<CcfTheme>("institutional");
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+    const [theme, setTheme] = useState<Theme>("institutional");
     const [remoteTokens, setRemoteTokens] = useState<Record<string, string>>({});
     const [hasManualOverride, setHasManualOverride] = useState(false);
 
@@ -145,4 +145,4 @@ export function CcfThemeProvider({ children }: { children: React.ReactNode }) {
     );
 }
 
-export const FaroThemeProvider = CcfThemeProvider;
+export const FaroThemeProvider = ThemeProvider;

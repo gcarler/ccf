@@ -9,7 +9,7 @@ import { CourseItem } from "@/lib/data/cursos";
 import { ArrowLeft, CheckCircle2, Clock, User, BookOpen, Share2 } from "lucide-react";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
-import { CcfHeader, CcfFooter } from "@/components/public/CcfShared";
+import { Header, Footer_Simple } from "@/components/public/Shared";
 
 export default function CursoDetailPage() {
     const params = useParams();
@@ -99,7 +99,7 @@ export default function CursoDetailPage() {
 
     return (
         <div className="min-h-screen flex flex-col" style={{ background: "var(--site-background)", color: "var(--site-on-background)" }}>
-            <CcfHeader />
+            <Header />
 
             {/* ── TOAST NOTIFICATION ────────────────────── */}
             <AnimatePresence>
@@ -362,7 +362,7 @@ export default function CursoDetailPage() {
                 )}
             </AnimatePresence>
 
-            <CcfFooter />
+            <Footer />
         </div>
     );
 }

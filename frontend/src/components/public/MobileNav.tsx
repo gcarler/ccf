@@ -13,7 +13,7 @@ const navItems = [
     { href: "/conocer-a-jesus", label: "Conectar", icon: Menu },
 ];
 
-export default function CcfMobileNav() {
+export default function MobileNav() {
     const pathname = usePathname();
     const items = navItems;
 
@@ -54,4 +54,4 @@ export default function CcfMobileNav() {
     );
 }
 
-export const FaroMobileNav = CcfMobileNav;
+export const MobileNav_compat = MobileNav;

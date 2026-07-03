@@ -8,7 +8,7 @@ import { ArrowLeft, Quote, Share2, Heart, Send, CheckCircle2, Loader2, X, Headph
 import { motion, AnimatePresence } from "framer-motion";
 import { Testimonial } from "@/lib/data/testimonios";
 import { apiFetch } from "@/lib/http";
-import { CcfHeader, CcfFooter } from "@/components/public/CcfShared";
+import { Header, Footer_Simple } from "@/components/public/Shared";
 import { toast } from "sonner";
 
 function getTestimonialMediaUrl(t: Testimonial): string {
@@ -49,11 +49,11 @@ export default function TestimonioDetailPage() {
     if (loading) {
         return (
             <div className="min-h-screen flex flex-col" style={{ background: "var(--site-background)" }}>
-                <CcfHeader />
+                <Header />
                 <main className="pt-[120px] pb-4 min-h-screen flex items-center justify-center">
                     <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--site-primary) transparent transparent transparent" }} />
                 </main>
-                <CcfFooter />
+                <Footer />
             </div>
         );
     }
@@ -61,7 +61,7 @@ export default function TestimonioDetailPage() {
     if (!testimonial) {
         return (
             <div className="min-h-screen flex flex-col" style={{ background: "var(--site-background)" }}>
-                <CcfHeader />
+                <Header />
                 <main className="pt-[120px] pb-4 min-h-[70vh] flex flex-col items-center justify-center text-center px-3">
                     <Quote size={80} className="mb-3 opacity-20" style={{ color: "var(--site-primary)" }} />
                     <h1 className="text-lg font-bold mb-4" style={{ color: "var(--site-on-background)" }}>Testimonio no encontrado</h1>
@@ -76,7 +76,7 @@ export default function TestimonioDetailPage() {
                         <ArrowLeft size={16} /> Ver más testimonios
                     </button>
                 </main>
-                <CcfFooter />
+                <Footer />
             </div>
         );
     }
@@ -85,7 +85,7 @@ export default function TestimonioDetailPage() {
 
     return (
         <div className="min-h-screen flex flex-col" style={{ background: "var(--site-background)", color: "var(--site-on-background)" }}>
-            <CcfHeader />
+            <Header />
             <main className="pt-[120px] pb-4 min-h-screen">
             <article className="px-3 lg:px-0">
                 {/* ── BACK BUTTON ────────────────────────────────────── */}
@@ -331,7 +331,7 @@ export default function TestimonioDetailPage() {
                 </AnimatePresence>
             </article>
             </main>
-            <CcfFooter />
+            <Footer />
         </div>
     );
 }

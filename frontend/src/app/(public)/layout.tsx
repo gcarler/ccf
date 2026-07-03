@@ -1,9 +1,9 @@
 import "./public.css";
 import { Inter } from "next/font/google";
-import { CcfThemeProvider } from "../../components/public/CcfThemeProvider";
-import CcfNavbar from "../../components/public/CcfNavbar";
-import CcfFooter from "../../components/public/CcfFooter";
-import CcfMobileNav from "../../components/public/CcfMobileNav";
+import { ThemeProvider } from "../../components/public/ThemeProvider";
+import Navbar from "../../components/public/Navbar";
+import Footer from "../../components/public/Footer";
+import MobileNav from "../../components/public/MobileNav";
 import PublicSeoManager from "../../components/public/cms/PublicSeoManager";
 
 const inter = Inter({
@@ -14,7 +14,7 @@ const inter = Inter({
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
     return (
-        <CcfThemeProvider>
+        <ThemeProvider>
             {/* Apply theme class to <html> before React hydration so CSS vars resolve immediately */}
             <script
                 dangerouslySetInnerHTML={{
@@ -23,14 +23,14 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             />
             <PublicSeoManager />
             <div className={`min-h-screen overflow-x-clip bg-site-background text-site-on-background font-body antialiased selection:bg-site-primary/30 ${inter.variable}`}>
-                <CcfNavbar />
+                <Navbar />
                 <main className="relative">
                     {children}
                 </main>
-                <CcfFooter />
+                <Footer />
                 <div className="h-32 md:h-0" />
-                <CcfMobileNav />
+                <MobileNav />
             </div>
-        </CcfThemeProvider>
+        </ThemeProvider>
     );
 }

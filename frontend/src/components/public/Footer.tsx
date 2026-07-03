@@ -34,7 +34,7 @@ function socialIcon(kindOrLabel: string) {
     );
 }
 
-export default function CcfFooter() {
+export default function Footer() {
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const fallbackNavLinks: PublicLink[] = [
         { href: "/", label: "Inicio" },
@@ -235,4 +235,4 @@ export default function CcfFooter() {
     );
 }
 
-export const FaroFooter = CcfFooter;
+export const Footer_compat = Footer;
