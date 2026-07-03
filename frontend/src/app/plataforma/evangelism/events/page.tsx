@@ -37,7 +37,7 @@ const EVENT_TYPE_LABEL: Record<string, string> = {
  ANNUAL: 'Anual',
  ONCE: 'Única Vez',
  SPECIAL: 'Especial',
- FARO: 'Temporada - fuera del templo',
+ GROUPS: 'Temporada - fuera del templo',
  ONLINE: 'En Línea',
 };
 
@@ -47,7 +47,7 @@ const EVENT_TYPE_COLOR: Record<string, string> = {
  ANNUAL: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400',
  ONCE: 'bg-rose-100 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400',
  SPECIAL: 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400',
- FARO: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400',
+ GROUPS: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400',
  ONLINE: 'bg-cyan-100 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400',
 };
 
@@ -436,7 +436,7 @@ export default function EventsPage() {
  end_time: endParsed.normalized,
  };
 
- if (['PERMANENT', 'FARO', 'ONLINE'].includes(newEvent.event_type)) payload.day_of_week = parseInt(newEvent.day_of_week);
+ if (['PERMANENT', 'GROUPS', 'ONLINE'].includes(newEvent.event_type)) payload.day_of_week = parseInt(newEvent.day_of_week);
  if (['ANNUAL', 'MONTHLY'].includes(newEvent.event_type)) payload.month_day = newEvent.month_day;
  if (['ONCE', 'SPECIAL'].includes(newEvent.event_type)) payload.fixed_date = new Date(newEvent.fixed_date).toISOString();
 
@@ -1075,7 +1075,7 @@ export default function EventsPage() {
  <option value="ANNUAL">Anual</option>
  <option value="ONCE">Única Vez / Fecha Fija</option>
  <option value="SPECIAL">Especial / Campaña</option>
- <option value="FARO">Temporada - fuera del templo</option>
+ <option value="GROUPS">Temporada - fuera del templo</option>
  <option value="ONLINE">En Línea / Transmisión</option>
  </select>
  </div>
@@ -1252,7 +1252,7 @@ export default function EventsPage() {
  </div>
  </div>
 
- {['PERMANENT', 'FARO', 'ONLINE'].includes(newEvent.event_type) && (
+ {['PERMANENT', 'GROUPS', 'ONLINE'].includes(newEvent.event_type) && (
  <div className="space-y-1.5">
  <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Día de la Semana</label>
  <select

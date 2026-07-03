@@ -561,7 +561,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
           `5. **Propuesta Corta & Fuerte:** "Crecer en fe, servir con amor."\n\n` +
           `*Selecciona cualquiera de estos titulares para copiarlo directamente en tu sección Hero.*`;
       } else if (aiTemplate === "improve") {
-        fallbackText = `### ✨ TEXTO MEJORADO POR FAROGPT (Tono: ${toneText}) ✨\n\n` +
+        fallbackText = `### ✨ TEXTO MEJORADO POR CCFGPT (Tono: ${toneText}) ✨\n\n` +
           `**Texto Original Analizado:**\n"${kw}"\n\n` +
           `**Versión Optimizada y Pulida:**\nQueremos invitarte a ser parte activa de lo que Dios está haciendo en nuestra casa. A través de esta iniciativa en ${pageTitle}, no solo encontrarás un canal para canalizar tu vocación de servicio, sino también una comunidad dispuesta a caminar contigo. Creemos firmemente que cada pequeño esfuerzo sumado produce una gran transformación.\n\n` +
           `*Este texto ha sido enriquecido para mejorar la retención de usuarios y el impacto emocional.*`;

@@ -2,12 +2,12 @@ import re
 
 f = open("backend/api/crm.py", encoding="utf-8").read()
 
-# 1. Inventory all event/faro routes
+# 1. Inventory all event/group routes
 routes = re.findall(r'@router\.(get|post|put|patch|delete)\("(/[^"]+)"', f)
 event_routes = [
     (m, r)
     for m, r in routes
-    if any(k in r.lower() for k in ["event", "faro", "session", "visitor", "scanner"])
+    if any(k in r.lower() for k in ["event", "group", "session", "visitor", "scanner"])
 ]
 print("=== EVENT API ROUTES ===")
 for m, r in event_routes:

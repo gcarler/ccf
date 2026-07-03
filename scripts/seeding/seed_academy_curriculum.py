@@ -46,7 +46,7 @@ def seed_curriculum():
             # Lecciones EL-N1
             lessons = [
                 (
-                    "La Visión del Faro",
+                    "La Visión del CCF",
                     "Entendiendo nuestro propósito como comunidad.",
                     1,
                 ),

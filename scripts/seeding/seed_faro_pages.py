@@ -28,7 +28,7 @@ from backend.models import PageContent
 
 
 def seed_ccf_pages():
-    print("Iniciando Seed de Páginas Públicas de FARO (Actualización de Feeds)...")
+    print("Iniciando Seed de Páginas Públicas de CCF (Actualización de Feeds)...")
     db: Session = SessionLocal()
 
     ccf_blocks = [
@@ -38,7 +38,7 @@ def seed_ccf_pages():
             "content": json.dumps(
                 {
                     "eyebrow": "UNA COMUNIDAD QUE ILUMINA",
-                    "title_lead": "Somos El Faro,",
+                    "title_lead": "Somos CCF,",
                     "title_accent": "Tu Refugio",
                     "title_tail": "Y Tu Guía.",
                     "description": "Somos un ccf de luz que ilumina y guía con amor, que salva vidas y restaura el alma; un puerto seguro que acompaña a cada persona a reencontrarse con su propósito en Dios. Bienvenido a casa.",
@@ -152,7 +152,7 @@ def seed_ccf_pages():
                     },
                     {
                         "id": 3,
-                        "content": "Llevaba mucho tiempo sintiendo soledad. En FARO hallé una comunidad que me cuidó y donde hoy también sirvo a otros.",
+                        "content": "Llevaba mucho tiempo sintiendo soledad. En CCF hallé una comunidad que me cuidó y donde hoy también sirvo a otros.",
                         "emotion": "Compañerismo Genuino",
                         "author": {"username": "Esteban R."},
                     },
@@ -226,7 +226,7 @@ def seed_ccf_pages():
                         "title": "Una Comunidad Auténtica",
                         "speaker": "Ps. Jóvenes",
                         "duration": "28 min",
-                        "series": "Identidad FARO",
+                        "series": "Identidad CCF",
                         "thumbnail": "https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&q=80",
                         "category": "Relaciones",
                     },
@@ -261,7 +261,7 @@ def seed_ccf_pages():
             "content": json.dumps(
                 [
                     {
-                        "name": "Sede Central (Faro Principal)",
+                        "name": "Sede Central (CCF Principal)",
                         "address": "Av. Esperanza 124, Centro Financiero",
                         "services": ["Domingos 9 AM y 11 AM", "Lunes 7 PM"],
                         "pastor": "David & Sara Mendoza",

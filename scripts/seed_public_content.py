@@ -41,7 +41,7 @@ BLOCKS = {
         "title": "Hero — Inicio",
         "content": {
             "eyebrow": "UNA COMUNIDAD QUE ILUMINA",
-            "title_lead": "FARO:",
+            "title_lead": "CCF:",
             "title_accent": "Tu Guía,",
             "title_tail": "Su Luz",
             "description": "Navegando juntos hacia la verdad. Un espacio de encuentro, fe y transformación en el corazón de nuestra comunidad.",
@@ -57,7 +57,7 @@ BLOCKS = {
             "eyebrow": "Nuestra Identidad",
             "title_lead": "Iluminando el",
             "title_accent": "camino juntos.",
-            "description": "Somos la <strong>Comunidad Cristiana El Faro</strong>, una iglesia viva y en crecimiento que existe para conectar corazones con Dios y entre sí, fundamentada en la Palabra y movida por el amor.",
+            "description": "Somos la <strong>Comunidad Cristiana CCF</strong>, una iglesia viva y en crecimiento que existe para conectar corazones con Dios y entre sí, fundamentada en la Palabra y movida por el amor.",
         },
     },
     "ccf_about_feed": {
@@ -82,8 +82,8 @@ BLOCKS = {
             "founder2_name": "Histar Ariza Herrera",
             "founder2_role": "Pastor Principal",
             "founder2_image": "/pastores/histar_ariza_1777656780660.png",
-            "founder_bio": "La Comunidad Cristiana El Faro nació de un profundo encuentro con la paternidad de Dios. Nuestros pastores principales, <strong>Luis Ricardo Meza Gutiérrez</strong> e <strong>Histar Ariza Herrera</strong>, han dedicado más de dos décadas a construir una iglesia que sea verdaderamente una casa — un lugar donde cada persona sea vista, amada y formada.",
-            "founder_bio2": "Desde sus inicios, el ADN de El Faro ha sido claro: <em>sana doctrina, corazón pastoral y vida en comunidad</em>. Una iglesia que no teme enseñar la Palabra en su profundidad y que, al mismo tiempo, envuelve a cada persona con la calidez del amor de Cristo.",
+            "founder_bio": "La Comunidad Cristiana CCF nació de un profundo encuentro con la paternidad de Dios. Nuestros pastores principales, <strong>Luis Ricardo Meza Gutiérrez</strong> e <strong>Histar Ariza Herrera</strong>, han dedicado más de dos décadas a construir una iglesia que sea verdaderamente una casa — un lugar donde cada persona sea vista, amada y formada.",
+            "founder_bio2": "Desde sus inicios, el ADN de CCF ha sido claro: <em>sana doctrina, corazón pastoral y vida en comunidad</em>. Una iglesia que no teme enseñar la Palabra en su profundidad y que, al mismo tiempo, envuelve a cada persona con la calidez del amor de Cristo.",
             "valores_title": "Valores que nos Guían",
             "valores": [
                 {"num": "01", "key": "palabra",    "title": "Palabra",       "desc": "La Escritura es nuestra brújula. Cada decisión, enseñanza y acción está fundamentada en la sana doctrina de la Biblia."},
@@ -93,9 +93,9 @@ BLOCKS = {
                 {"num": "05", "key": "mision",     "title": "Misión",        "desc": "No existimos solo para nosotros mismos. Somos enviados a alcanzar a los que aún no conocen el amor de Cristo."},
                 {"num": "06", "key": "excelencia", "title": "Excelencia",    "desc": "Damos lo mejor de nosotros en todo lo que hacemos, como un acto de adoración y respeto a quien nos llamó."},
             ],
-            "quote_text": "La luz que encontramos en El Faro no es para guardarla — es para guiar a otros que aún caminan en la oscuridad.",
+            "quote_text": "La luz que encontramos en CCF no es para guardarla — es para guiar a otros que aún caminan en la oscuridad.",
             "quote_author": "Pastor Histar Ariza Herrera",
-            "quote_subtitle": "Comunidad Cristiana El Faro",
+            "quote_subtitle": "Comunidad Cristiana CCF",
             "cta_title": "¿Listo para ser parte?",
             "cta_desc": "Ven a conocernos. Tenemos puertas abiertas y un lugar reservado para ti y tu familia.",
         },
@@ -147,7 +147,7 @@ BLOCKS = {
                     "image": "/pastores/camilo_alba_1777656794964.png",
                     "quote": "Mi mayor gozo no está en una posición o en un título, sino en pertenecer a la obra de Dios y ser útil en sus manos.",
                     "verse": "Juan 3:16",
-                    "story": "<p>Antes de llegar a la Comunidad Cristiana El Faro, la Pastora Alba Arias no había tenido acercamientos a ninguna iglesia ni una relación personal con Dios. Fue en este lugar donde experimentó la presencia del Espíritu Santo por primera vez, un encuentro que transformó su carácter, sanó su corazón y le dio una profunda identidad como hija amada. Esta revelación de la bondad del Padre la impulsó a compartir su amor con otros.</p><blockquote>\"Elijo Juan 3:16 porque nos muestra la esencia misma de lo que Él es y lo que quiere con cada uno de nosotros.\"</blockquote><p>Lo que más le apasiona es enseñar, una vocación que también constituye su profesión. Alba cree firmemente que la educación transforma vidas y que, a través de ella, Dios le concede el privilegio de sembrar conocimiento y valores eternos en el corazón de cada estudiante.</p><p><strong>Perfil Ministerial:</strong> A lo largo de su servicio en la casa de Dios, Alba ha apoyado en múltiples áreas. Comenzó colaborando en la limpieza del templo y en diversas tareas logísticas; posteriormente se integró al equipo de bienvenida para recibir con amor a todos los que llegaban. Más adelante sirvió en el ministerio infantil (sala cuna y escuela dominical), sembrando principios bíblicos en la niñez. Actualmente se desempeña en el ministerio pastoral, apoyando a los pastores principales en las áreas administrativa y financiera.</p><p><strong>Perfil Familiar:</strong> Está casada con el Pastor Camilo Pájaro, a quien conoció en su etapa escolar. Juntos comenzaron asistiendo a los servicios de madrugón. Aunque en los inicios de su relación vivieron altibajos que los llevaron a separarse durante un año —período en el que Alba se alejó temporalmente de la iglesia—, el Señor restauró su lazo amoroso y ella regresó a El Faro. En 2014 se bautizaron y se casaron. En doce años de matrimonio, el Padre los ha sustentado y hecho crecer ministerialmente. Hoy en día, tienen dos hermosas hijas, Sara Valentina y Shaddai Antonella, y su historia es un testimonio de la fidelidad y provisión divina.</p>",
+                    "story": "<p>Antes de llegar a la Comunidad Cristiana CCF, la Pastora Alba Arias no había tenido acercamientos a ninguna iglesia ni una relación personal con Dios. Fue en este lugar donde experimentó la presencia del Espíritu Santo por primera vez, un encuentro que transformó su carácter, sanó su corazón y le dio una profunda identidad como hija amada. Esta revelación de la bondad del Padre la impulsó a compartir su amor con otros.</p><blockquote>\"Elijo Juan 3:16 porque nos muestra la esencia misma de lo que Él es y lo que quiere con cada uno de nosotros.\"</blockquote><p>Lo que más le apasiona es enseñar, una vocación que también constituye su profesión. Alba cree firmemente que la educación transforma vidas y que, a través de ella, Dios le concede el privilegio de sembrar conocimiento y valores eternos en el corazón de cada estudiante.</p><p><strong>Perfil Ministerial:</strong> A lo largo de su servicio en la casa de Dios, Alba ha apoyado en múltiples áreas. Comenzó colaborando en la limpieza del templo y en diversas tareas logísticas; posteriormente se integró al equipo de bienvenida para recibir con amor a todos los que llegaban. Más adelante sirvió en el ministerio infantil (sala cuna y escuela dominical), sembrando principios bíblicos en la niñez. Actualmente se desempeña en el ministerio pastoral, apoyando a los pastores principales en las áreas administrativa y financiera.</p><p><strong>Perfil Familiar:</strong> Está casada con el Pastor Camilo Pájaro, a quien conoció en su etapa escolar. Juntos comenzaron asistiendo a los servicios de madrugón. Aunque en los inicios de su relación vivieron altibajos que los llevaron a separarse durante un año —período en el que Alba se alejó temporalmente de la iglesia—, el Señor restauró su lazo amoroso y ella regresó a CCF. En 2014 se bautizaron y se casaron. En doce años de matrimonio, el Padre los ha sustentado y hecho crecer ministerialmente. Hoy en día, tienen dos hermosas hijas, Sara Valentina y Shaddai Antonella, y su historia es un testimonio de la fidelidad y provisión divina.</p>",
                 },
                 {
                     "slug": "camilo-pajaro",
@@ -204,7 +204,7 @@ BLOCKS = {
         "content": [
             {
                 "id": 1,
-                "name": "Sede Central — El Faro",
+                "name": "Sede Central — CCF",
                 "address": "Barranquilla, Colombia",
                 "phone": "+57 300 000 0000",
                 "schedule": "Domingos 9 AM y 11 AM",
@@ -258,7 +258,7 @@ BLOCKS = {
     "ccf_events_hero": {
         "title": "Hero — Eventos",
         "content": {
-            "eyebrow": "Agenda El Faro",
+            "eyebrow": "Agenda CCF",
             "title": "Próximos Eventos",
             "description": "Momentos diseñados para conectarte con Dios y con nuestra comunidad. ¡No te los pierdas!",
         },
@@ -270,7 +270,7 @@ BLOCKS = {
         "content": {
             "eyebrow": "Formación & Sabiduría",
             "title_lead": "El Camino",
-            "title_accent": "del Faro",
+            "title_accent": "del CCF",
             "description": "Explora nuestra academia de cursos especializados y sumérgete en una selección literaria para iluminar tu entendimiento.",
         },
     },
@@ -301,7 +301,7 @@ BLOCKS = {
                     "lessons": 8,
                     "cta": "Quiero Conocerlo de Verdad",
                     "imageUrl": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=600&fit=crop",
-                    "instructor": "Academia FARO — Teología Histórica",
+                    "instructor": "Academia CCF — Teología Histórica",
                 },
             ],
             "books": [
@@ -340,7 +340,7 @@ BLOCKS = {
     "ccf_boletin_hero": {
         "title": "Hero — Boletín",
         "content": {
-            "subtitle": "Boletín Semanal — Comunidad Cristiana El Faro",
+            "subtitle": "Boletín Semanal — Comunidad Cristiana CCF",
             "title": "Recibe nuestra palabra de aliento",
             "description": "Cada semana te enviamos una reflexión bíblica, un versículo de ánimo y consejos prácticos para fortalecer tu fe.",
             "cta_text": "Suscribirme ahora",
@@ -390,7 +390,7 @@ BLOCKS = {
         "content": {
             "title": "Política de Privacidad",
             "last_update": "12 de junio de 2026",
-            "intro": "Esta política describe cómo PLES SAS y la Comunidad Cristiana El Faro recopilan, usan, almacenan y protegen tus datos personales conforme a la Ley 1581 de 2012.",
+            "intro": "Esta política describe cómo PLES SAS y la Comunidad Cristiana CCF recopilan, usan, almacenan y protegen tus datos personales conforme a la Ley 1581 de 2012.",
         },
     },
 
