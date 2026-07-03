@@ -81,7 +81,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
                         "size-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer",
                         isActive
                             ? "bg-blue-600/10 dark:bg-white/10 text-[hsl(var(--primary))] dark:text-white shadow-inner"
-                            : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-black/5 dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]"
+                            : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 hover:text-[hsl(222_47%_11%)] dark:hover:text-white"
                     )}>
                         <Icon size={19} className={clsx(isActive && "text-[hsl(var(--primary))]")} />
                         {badge && (
@@ -127,7 +127,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             <div className="mt-auto flex flex-col items-center gap-1 pb-1">
                 <Tooltip content="Ajustes" side="right">
                     <Link href="/plataforma/settings">
-                        <div className="size-10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-black/5 dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] transition-all duration-200 cursor-pointer">
+                        <div className="size-10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 hover:text-[hsl(222_47%_11%)] dark:hover:text-white transition-all duration-200 cursor-pointer">
                             <Settings size={19} />
                         </div>
                     </Link>
