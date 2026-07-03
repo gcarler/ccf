@@ -29,7 +29,7 @@ export const PASTORS: PastorProfile[] = [
         name: "Histar Ariza Herrera",
         role: "Apóstol",
         category: "apostles",
-        description: "Pilar fundamental en la consolidación de la iglesia y un maestro excepcional de las Escrituras. El Apóstol Histar posee una gracia especial para impartir sabiduría, restaurar familias y guiar a la congregación hacia una madurez espiritual profunda. Su liderazgo compasivo y su enfoque en el discipulado personal han sido vitales para el crecimiento sostenido de FARO. Dedica gran parte de su tiempo a la mentoría pastoral y al desarrollo de estrategias para el fortalecimiento del núcleo familiar.",
+        description: "Pilar fundamental en la consolidación de la iglesia y un maestro excepcional de las Escrituras. El Apóstol Histar posee una gracia especial para impartir sabiduría, restaurar familias y guiar a la congregación hacia una madurez espiritual profunda. Su liderazgo compasivo y su enfoque en el discipulado personal han sido vitales para el crecimiento sostenido de CCF. Dedica gran parte de su tiempo a la mentoría pastoral y al desarrollo de estrategias para el fortalecimiento del núcleo familiar.",
         img: "/images/pastores/histar_ariza.png",
         social: { instagram: "https://instagram.com/comunidadccf", facebook: "https://facebook.com/comunidadccf" }
     },
@@ -49,7 +49,7 @@ export const PASTORS: PastorProfile[] = [
         name: "Alex Cabarcas y Elvia Ángulo",
         role: "Pastor",
         category: "pastors",
-        description: "Apasionados por el servicio social y la movilización comunitaria. Alex y Elvia son la fuerza detrás de muchas iniciativas de alcance que conectan a la iglesia con las necesidades de la ciudad. Su liderazgo dinámico fomenta una cultura de generosidad y acción. Trabajan incansablemente en la asimilación de nuevos creyentes, asegurando que cada persona que llega a FARO encuentre su lugar, descubra sus dones y comience a servir con alegría.",
+        description: "Apasionados por el servicio social y la movilización comunitaria. Alex y Elvia son la fuerza detrás de muchas iniciativas de alcance que conectan a la iglesia con las necesidades de la ciudad. Su liderazgo dinámico fomenta una cultura de generosidad y acción. Trabajan incansablemente en la asimilación de nuevos creyentes, asegurando que cada persona que llega a CCF encuentre su lugar, descubra sus dones y comience a servir con alegría.",
         img: "/images/pastores/alex_elvia.png",
         social: { instagram: "https://instagram.com/comunidadccf", facebook: "https://facebook.com/comunidadccf" }
     },
@@ -69,7 +69,7 @@ export const PASTORS: PastorProfile[] = [
         name: "Yair Macea",
         role: "Pastor",
         category: "pastors",
-        description: "Voz profética y líder de la nueva generación. El Pastor Yair combina su talento en la adoración con un fervor contagioso por ver a los jóvenes vivir una fe radical. Bajo su guía, los ministerios juveniles han experimentado un avivamiento caracterizado por la autenticidad, la creatividad y la pasión por la presencia de Dios. Su energía inagotable y su habilidad para comunicar verdades eternas en un lenguaje contemporáneo lo hacen un referente vital en FARO.",
+        description: "Voz profética y líder de la nueva generación. El Pastor Yair combina su talento en la adoración con un fervor contagioso por ver a los jóvenes vivir una fe radical. Bajo su guía, los ministerios juveniles han experimentado un avivamiento caracterizado por la autenticidad, la creatividad y la pasión por la presencia de Dios. Su energía inagotable y su habilidad para comunicar verdades eternas en un lenguaje contemporáneo lo hacen un referente vital en CCF.",
         img: "/images/pastores/yair_macea.png",
         social: { instagram: "https://instagram.com/comunidadccf", facebook: "https://facebook.com/comunidadccf" }
     },
@@ -89,7 +89,7 @@ export const PASTORS: PastorProfile[] = [
         name: "Nehemías Morales",
         role: "Pastor",
         category: "pastors",
-        description: "Estratega, administrador y constructor de equipos. El Pastor Nehemías asegura que la visión espiritual de FARO esté respaldada por una estructura operativa de excelencia. Su mente analítica, combinada con un profundo llamado pastoral, le permite liderar equipos de voluntarios y coordinar la logística de la iglesia con precisión. Es un maestro en el arte de optimizar recursos para maximizar el impacto del evangelio, operando siempre detrás de escena con gran humildad.",
+        description: "Estratega, administrador y constructor de equipos. El Pastor Nehemías asegura que la visión espiritual de CCF esté respaldada por una estructura operativa de excelencia. Su mente analítica, combinada con un profundo llamado pastoral, le permite liderar equipos de voluntarios y coordinar la logística de la iglesia con precisión. Es un maestro en el arte de optimizar recursos para maximizar el impacto del evangelio, operando siempre detrás de escena con gran humildad.",
         img: "/images/pastores/nehemias_morales.png",
         social: { instagram: "https://instagram.com/comunidadccf", facebook: "https://facebook.com/comunidadccf" }
     }

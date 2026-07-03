@@ -52,7 +52,7 @@ export const PREMIUM_COURSES: CourseItem[] = [
         lessons: 8,
         cta: "Quiero Conocerlo de Verdad",
         imageUrl: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=600&fit=crop",
-        instructor: "Academia FARO — Teología Histórica",
+        instructor: "Academia CCF — Teología Histórica",
         syllabus: [
             "Palestina en el siglo I: Roma, Herodes y el Templo",
             "Las fuentes no-bíblicas sobre Jesús",
@@ -70,7 +70,7 @@ export const PREMIUM_COURSES: CourseItem[] = [
         lessons: 8,
         cta: "Quiero Leer el Apocalipsis de Nuevo",
         imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop",
-        instructor: "Academia FARO — Teología Bíblica",
+        instructor: "Academia CCF — Teología Bíblica",
         syllabus: [
             "Historia del dispensacionalismo: Darby, Scofield y el 'Left Behind'",
             "El Apocalipsis como género literario",
@@ -88,7 +88,7 @@ export const PREMIUM_COURSES: CourseItem[] = [
         lessons: 10,
         cta: "Quiero Afrontar Esta Pregunta",
         imageUrl: "https://images.unsplash.com/photo-1476611338391-6f395a0ebc7b?w=800&h=600&fit=crop",
-        instructor: "Academia FARO — Filosofía y Teología",
+        instructor: "Academia CCF — Filosofía y Teología",
         syllabus: [
             "El problema del mal: formulación lógica y evidencial",
             "Las respuestas que no funcionan",

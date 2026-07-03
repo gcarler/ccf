@@ -1,5 +1,5 @@
 """
-YouTube RSS proxy para el canal de El Faro.
+YouTube RSS proxy para el canal de CCF.
 Sin API key — usa el feed RSS público de YouTube + resolución automática de channel ID.
 Caché en memoria de 1 hora para no martillar YouTube en cada request.
 """
@@ -117,7 +117,7 @@ async def _fetch_rss(channel_id: str) -> list[dict]:
 @router.get("/youtube/videos")
 async def get_youtube_videos():
     """
-    Devuelve los últimos videos del canal de YouTube de El Faro.
+    Devuelve los últimos videos del canal de YouTube de CCF.
     Caché de 1 hora en memoria — sin API key requerida.
     """
     global _channel_id_cache, _videos_cache, _cache_ts

@@ -15,7 +15,7 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 """
-Seed de cursos académicos disruptivos — Academia FARO.
+Seed de cursos académicos disruptivos — Academia CCF.
 
 Cursos cristocéntricos con perspectiva crítica, diseñados para ser referencia.
 Ejecutar desde la raíz del proyecto:
@@ -40,7 +40,7 @@ SEDE_ID = "91eedd12-a1b2-474b-8270-5ccdcd111f86"
 
 CURSOS = [
     {
-        "code": "FARO-EVG-01",
+        "code": "CCF-EVG-01",
         "slug": "el-evangelio-que-no-conocias",
         "title": "El Evangelio que no Conocías",
         "tag": "Fundamentos Radicales",
@@ -89,13 +89,13 @@ CURSOS = [
         ],
     },
     {
-        "code": "FARO-JES-02",
+        "code": "CCF-JES-02",
         "slug": "jesus-el-subversivo",
         "title": "Jesús el Subversivo: Historia, Contexto y Escándalo",
         "tag": "Teología Crítica",
         "modality": "100% Online",
         "duration_hours": 8,
-        "instructor_name": "Academia FARO — Teología Histórica",
+        "instructor_name": "Academia CCF — Teología Histórica",
         "image_url": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=600&fit=crop",
         "excerpt": "El Jesús manso y gentil de las estampitas religiosas no sobreviviría un minuto en el Palestina del siglo I. Este curso estudia al Jesús real: el que perturbó al Imperio y fue ejecutado por razones políticas.",
         "description": (
@@ -139,13 +139,13 @@ CURSOS = [
         ],
     },
     {
-        "code": "FARO-ESC-03",
+        "code": "CCF-ESC-03",
         "slug": "escatologia-sin-miedo",
         "title": "Escatología sin Apocalipsis-Fobia",
         "tag": "Profecía & Esperanza",
         "modality": "100% Online",
         "duration_hours": 8,
-        "instructor_name": "Academia FARO — Teología Bíblica",
+        "instructor_name": "Academia CCF — Teología Bíblica",
         "image_url": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop",
         "excerpt": "Décadas de películas del Arrebatamiento, bestias numéricas y calculadoras de fechas del fin del mundo. Ya es hora de leer el Apocalipsis como lo que es: una carta de resistencia y esperanza, no un almanaque de catástrofes.",
         "description": (
@@ -189,13 +189,13 @@ CURSOS = [
         ],
     },
     {
-        "code": "FARO-TEO-04",
+        "code": "CCF-TEO-04",
         "slug": "teodicea-dios-frente-al-sufrimiento",
         "title": "Teodicea: Dios Frente al Sufrimiento",
         "tag": "Apologética Profunda",
         "modality": "Híbrido",
         "duration_hours": 10,
-        "instructor_name": "Academia FARO — Filosofía y Teología",
+        "instructor_name": "Academia CCF — Filosofía y Teología",
         "image_url": "https://images.unsplash.com/photo-1476611338391-6f395a0ebc7b?w=800&h=600&fit=crop",
         "excerpt": "Las respuestas fáciles al sufrimiento son una ofensa a quienes sufren. 'Dios tiene un propósito', 'Todo pasa por algo' — frases que suelen venir de los que no están sufriendo. Este curso afronta sin filtros el problema más difícil de la fe.",
         "description": (
@@ -239,13 +239,13 @@ CURSOS = [
         ],
     },
     {
-        "code": "FARO-POL-05",
+        "code": "CCF-POL-05",
         "slug": "politica-poder-y-el-reino",
         "title": "Política, Poder y el Reino de Dios",
         "tag": "Ética Pública",
         "modality": "Presencial",
         "duration_hours": 8,
-        "instructor_name": "Academia FARO — Ética y Teología Pública",
+        "instructor_name": "Academia CCF — Ética y Teología Pública",
         "image_url": "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=600&fit=crop",
         "excerpt": "Decir 'no me meto en política' es la postura política más cómoda para quienes tienen privilegios. La Biblia nunca fue apolítica. Este curso explora la tensión entre el reino de Dios y los reinos del mundo sin esquivar ninguna pregunta incómoda.",
         "description": (
@@ -289,13 +289,13 @@ CURSOS = [
         ],
     },
     {
-        "code": "FARO-ECO-06",
+        "code": "CCF-ECO-06",
         "slug": "ecologia-creacion-crisis-climatica",
         "title": "Ecología, Creación y la Crisis Climática",
         "tag": "Cosmovisión",
         "modality": "Híbrido",
         "duration_hours": 6,
-        "instructor_name": "Academia FARO — Cosmovisión y Creación",
+        "instructor_name": "Academia CCF — Cosmovisión y Creación",
         "image_url": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop",
         "excerpt": "La tierra gime (Romanos 8:22) y la mayoría de las iglesias evitan el tema. Este curso desafía el antropocentrismo cristiano que ha justificado el saqueo de la creación y propone una teología del cuidado para el siglo XXI.",
         "description": (
@@ -400,5 +400,5 @@ def seed():
 
 
 if __name__ == "__main__":
-    print("🌱 Sembrando cursos de la Academia FARO...\n")
+    print("🌱 Sembrando cursos de la Academia CCF...\n")
     seed()

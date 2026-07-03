@@ -35,7 +35,7 @@ from backend.core.database import SessionLocal  # noqa: E402
 
 BLOCKS = {
     "ccf_events_feed": {
-        "title": "Eventos publico FARO",
+        "title": "Eventos publico CCF",
         "content": {
             "empty_title": "Esperando agenda desde el CMS",
             "empty_description": "Cuando haya eventos reales publicados, apareceran aqui sin contenido simulado.",
@@ -54,9 +54,9 @@ BLOCKS = {
         },
     },
     "ccf_sermons_feed": {
-        "title": "Prédicas publico FARO",
+        "title": "Prédicas publico CCF",
         "content": {
-            "hero_eyebrow": "Ministerios Faro Oficial",
+            "hero_eyebrow": "Ministerios CCF Oficial",
             "hero_title_lead": "Prédicas &",
             "hero_title_accent": "Mensajes",
             "hero_description": "Alimento para el alma — explora los mensajes más recientes de nuestro canal de YouTube.",
@@ -76,7 +76,7 @@ BLOCKS = {
         },
     },
     "ccf_testimonials_hero": {
-        "title": "Hero testimonios publico FARO",
+        "title": "Hero testimonios publico CCF",
         "content": {
             "eyebrow": "Impacto Real",
             "title_lead": "Historias de",
@@ -85,7 +85,7 @@ BLOCKS = {
         },
     },
     "ccf_testimonials_feed": {
-        "title": "Testimonios publico FARO",
+        "title": "Testimonios publico CCF",
         "content": {
             "search_placeholder": "Buscar por tema, nombre o palabra clave",
             "loading_label": "Cargando...",
@@ -99,16 +99,16 @@ BLOCKS = {
         },
     },
     "ccf_boletin_hero": {
-        "title": "Boletín publico FARO",
+        "title": "Boletín publico CCF",
         "content": {
-            "subtitle": "Boletín Semanal FARO",
+            "subtitle": "Boletín Semanal CCF",
             "title": "Recibe nuestra palabra de aliento",
             "description": "Cada semana te enviamos una reflexión bíblica, un versículo de ánimo y consejos prácticos para fortalecer tu fe.",
             "cta_text": "Suscribirme ahora",
         },
     },
     "ccf_pastores_index": {
-        "title": "Pastores publico FARO",
+        "title": "Pastores publico CCF",
         "content": {
             "hero_badge": "Conoce a nuestro equipo pastoral",
             "hero_title": "Liderazgo Pastoral",
@@ -120,7 +120,7 @@ BLOCKS = {
         },
     },
     "ccf_pastores_feed": {
-        "title": "Pastores publico FARO",
+        "title": "Pastores publico CCF",
         "content": {
             "pastors": [
                 {
@@ -194,15 +194,15 @@ BLOCKS = {
                     "role": "Pastora Fundadora",
                     "image": "/images/pastores/martina_herrera.webp",
                     "isMain": True,
-                    "story": "Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor.",
-                    "bio_short": "Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor.",
-                    "bio_full": "<p>La Pastora Martina Herrera es la pastora fundadora del ministerio Comunidad Cristiana El Faro. Junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor, sembró con fe, oración y perseverancia las bases espirituales de esta casa.</p><blockquote>\"La obra de Dios se edifica con fe, obediencia y amor por las almas.\"</blockquote><p>Desde los primeros días del ministerio, la Pastora Martina ha sido un pilar de oración, fidelidad y cuidado pastoral. Su corazón maternal ha acompañado a generaciones de creyentes que encontraron en ella una pastora, una consejera y una madre espiritual.</p><p>Su legado permanece vivo en la familia espiritual de Comunidad Cristiana El Faro: una iglesia levantada para amar a Dios, servir a las personas y continuar la obra que el Señor puso en sus manos.</p>",
+                    "story": "Pastora fundadora del ministerio Comunidad Cristiana CCF junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor.",
+                    "bio_short": "Pastora fundadora del ministerio Comunidad Cristiana CCF junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor.",
+                    "bio_full": "<p>La Pastora Martina Herrera es la pastora fundadora del ministerio Comunidad Cristiana CCF. Junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor, sembró con fe, oración y perseverancia las bases espirituales de esta casa.</p><blockquote>\"La obra de Dios se edifica con fe, obediencia y amor por las almas.\"</blockquote><p>Desde los primeros días del ministerio, la Pastora Martina ha sido un pilar de oración, fidelidad y cuidado pastoral. Su corazón maternal ha acompañado a generaciones de creyentes que encontraron en ella una pastora, una consejera y una madre espiritual.</p><p>Su legado permanece vivo en la familia espiritual de Comunidad Cristiana CCF: una iglesia levantada para amar a Dios, servir a las personas y continuar la obra que el Señor puso en sus manos.</p>",
                 },
             ]
         },
     },
     "ccf_courses_feed": {
-        "title": "Cursos publico FARO",
+        "title": "Cursos publico CCF",
         "content": {
             "library_title": "Nuestra Librería",
             "library_description": "Una curaduría de obras que han transformado generaciones. Desde clásicos de la patrística hasta literatura contemporánea.",
@@ -212,10 +212,10 @@ BLOCKS = {
         },
     },
     "ccf_discover_feed": {
-        "title": "Conocer a Jesús publico FARO",
+        "title": "Conocer a Jesús publico CCF",
         "content": {
             "intro_title": "Un Encuentro Personal",
-            "intro_paragraph_1": "En FARO, creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: <strong>Ven y ve.</strong>",
+            "intro_paragraph_1": "En CCF, creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: <strong>Ven y ve.</strong>",
             "intro_paragraph_2": "Descubre un espacio donde las preguntas son bienvenidas y la gracia es el lenguaje principal. Jesús ofrece descanso para el alma y una dirección clara para el futuro.",
             "testimonials_title": "Historias que iluminan",
             "testimonials_empty_title": "Próximamente compartiremos historias de transformación.",
@@ -231,18 +231,18 @@ BLOCKS = {
         },
     },
     "ccf_home_feed": {
-        "title": "Home publico FARO",
+        "title": "Home publico CCF",
         "content": {
             "eyebrow": "Nuestra esencia",
             "section_title": "Bienvenidos a Casa",
             "section_description": "Rutas públicas para conocer la comunidad, profundizar en la fe y encontrar dónde dar el siguiente paso.",
             "featured_card": {
                 "title": "Conocer a Jesús",
-                "desc": "Descubre la base de nuestra fe a través de un viaje personal y transformador. En FARO, te acompañamos en cada paso.",
+                "desc": "Descubre la base de nuestra fe a través de un viaje personal y transformador. En CCF, te acompañamos en cada paso.",
                 "href": "/conocer-a-jesus",
                 "cta": "Empezar el camino",
                 "img": "/images/pastores-banner.jpg",
-                "alt": "Equipo pastoral de FARO",
+                "alt": "Equipo pastoral de CCF",
             },
             "cards": [
                 {
@@ -270,7 +270,7 @@ BLOCKS = {
         },
     },
     "ccf_footer": {
-        "title": "Footer publico FARO",
+        "title": "Footer publico CCF",
         "content": {
             "description": (
                 "Iluminando el camino hacia una conexión profunda con lo divino "
@@ -292,16 +292,16 @@ BLOCKS = {
                 {"href": "/boletin", "label": "Boletín"},
             ],
             "social_links": [
-                {"href": "https://facebook.com/comunidadfaro", "label": "Facebook", "kind": "facebook"},
-                {"href": "https://instagram.com/comunidadfaro", "label": "Instagram", "kind": "instagram"},
-                {"href": "https://youtube.com/comunidadfaro", "label": "YouTube", "kind": "youtube"},
+                {"href": "https://facebook.com/comunidadccf", "label": "Facebook", "kind": "facebook"},
+                {"href": "https://instagram.com/comunidadccf", "label": "Instagram", "kind": "instagram"},
+                {"href": "https://youtube.com/comunidadccf", "label": "YouTube", "kind": "youtube"},
             ],
             "location_label": "Cartagena, Colombia",
             "newsletter_label": "Boletín semanal",
         },
     },
     "ccf_mobile_nav": {
-        "title": "Navegacion movil publica FARO",
+        "title": "Navegacion movil publica CCF",
         "content": {
             "items": [
                 {"href": "/", "label": "Inicio", "icon": "home"},
@@ -313,7 +313,7 @@ BLOCKS = {
         },
     },
     "ccf_welcome": {
-        "title": "Bienvenida publica FARO",
+        "title": "Bienvenida publica CCF",
         "content": {
             "eyebrow": "Bienvenida",
             "title_template": "Hola, {name}.",
@@ -342,11 +342,11 @@ BLOCKS = {
         },
     },
     "ccf_privacy": {
-        "title": "Política de privacidad FARO",
+        "title": "Política de privacidad CCF",
         "content": {
             "last_update": "12 de junio de 2026",
             "summary": (
-                "Esta política describe cómo PLES SAS y la Comunidad Cristiana El Faro "
+                "Esta política describe cómo PLES SAS y la Comunidad Cristiana CCF "
                 "recopilan, usan, almacenan y protegen tus datos personales."
             ),
             "sections": [
@@ -399,7 +399,7 @@ MERGE_BLOCKS = {
                     "lessons": 8,
                     "cta": "Quiero Conocerlo de Verdad",
                     "imageUrl": "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=600&fit=crop",
-                    "instructor": "Academia FARO — Teología Histórica",
+                    "instructor": "Academia CCF — Teología Histórica",
                 },
                 {
                     "id": "escatologia-sin-miedo",
@@ -410,7 +410,7 @@ MERGE_BLOCKS = {
                     "lessons": 8,
                     "cta": "Quiero Leer el Apocalipsis de Nuevo",
                     "imageUrl": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop",
-                    "instructor": "Academia FARO — Teología Bíblica",
+                    "instructor": "Academia CCF — Teología Bíblica",
                 },
                 {
                     "id": "teodicea-dios-frente-al-sufrimiento",
@@ -421,7 +421,7 @@ MERGE_BLOCKS = {
                     "lessons": 10,
                     "cta": "Quiero Afrontar Esta Pregunta",
                     "imageUrl": "https://images.unsplash.com/photo-1476611338391-6f395a0ebc7b?w=800&h=600&fit=crop",
-                    "instructor": "Academia FARO — Filosofía y Teología",
+                    "instructor": "Academia CCF — Filosofía y Teología",
                 },
             ],
             "books": [

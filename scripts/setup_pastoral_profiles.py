@@ -96,18 +96,18 @@ def main():
             martina.church_role = 'Pastora Fundadora'
             martina.photo_url = MARTINA_PHOTO
             martina.bio_short = (
-                'Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, '
+                'Pastora fundadora del ministerio Comunidad Cristiana CCF junto a su esposo, '
                 'Alejandro Ariza Torres, quien ya partió y está con el Señor.'
             )
             martina.bio_full = (
-                '<p>La Pastora Martina Herrera es la pastora fundadora del ministerio Comunidad Cristiana El Faro. '
+                '<p>La Pastora Martina Herrera es la pastora fundadora del ministerio Comunidad Cristiana CCF. '
                 'Junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor, sembró con fe, '
                 'oración y perseverancia las bases espirituales de esta casa.</p>'
                 '<blockquote>"La obra de Dios se edifica con fe, obediencia y amor por las almas."</blockquote>'
                 '<p>Desde los primeros días del ministerio, la Pastora Martina ha sido un pilar de oración, '
                 'fidelidad y cuidado pastoral. Su corazón maternal ha acompañado a generaciones de creyentes '
                 'que encontraron en ella una pastora, una consejera y una madre espiritual.</p>'
-                '<p>Su legado permanece vivo en la familia espiritual de Comunidad Cristiana El Faro: una iglesia '
+                '<p>Su legado permanece vivo en la familia espiritual de Comunidad Cristiana CCF: una iglesia '
                 'levantada para amar a Dios, servir a las personas y continuar la obra que el Señor puso en sus manos.</p>'
             )
             print(f"✓ Martina Herrera actualizada (existente, ID: {martina.id})")
@@ -124,18 +124,18 @@ def main():
                 is_pastoral_leader=True,
                 is_main_pastor=True,
                 bio_short=(
-                    'Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, '
+                    'Pastora fundadora del ministerio Comunidad Cristiana CCF junto a su esposo, '
                     'Alejandro Ariza Torres, quien ya partió y está con el Señor.'
                 ),
                 bio_full=(
-                    '<p>La Pastora Martina Herrera es la pastora fundadora del ministerio Comunidad Cristiana El Faro. '
+                    '<p>La Pastora Martina Herrera es la pastora fundadora del ministerio Comunidad Cristiana CCF. '
                     'Junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor, sembró con fe, '
                     'oración y perseverancia las bases espirituales de esta casa.</p>'
                     '<blockquote>"La obra de Dios se edifica con fe, obediencia y amor por las almas."</blockquote>'
                     '<p>Desde los primeros días del ministerio, la Pastora Martina ha sido un pilar de oración, '
                     'fidelidad y cuidado pastoral. Su corazón maternal ha acompañado a generaciones de creyentes '
                     'que encontraron en ella una pastora, una consejera y una madre espiritual.</p>'
-                    '<p>Su legado permanece vivo en la familia espiritual de Comunidad Cristiana El Faro: una iglesia '
+                    '<p>Su legado permanece vivo en la familia espiritual de Comunidad Cristiana CCF: una iglesia '
                     'levantada para amar a Dios, servir a las personas y continuar la obra que el Señor puso en sus manos.</p>'
                 ),
             )

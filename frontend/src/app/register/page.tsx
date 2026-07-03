@@ -211,7 +211,7 @@ export default function RegisterPage() {
                         </div>
                     </motion.div>
 
-                    {/* Título EL FARO */}
+                    {/* Título CCF */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -223,7 +223,7 @@ export default function RegisterPage() {
                             fontSize: 'clamp(5rem, 10vw, 8rem)',
                             margin: 0,
                         }}>
-                            EL <br /> FARO
+                            EL <br /> CCF
                         </h1>
                         <p style={{
                             color: 'var(--ccf-blue-light)',

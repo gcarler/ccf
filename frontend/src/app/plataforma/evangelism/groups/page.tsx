@@ -272,7 +272,7 @@ export default function GroupPage() {
  )}
 
  <div className="space-y-3 pb-12">
- {/* Mis Faros */}
+ {/* Mis Grupos */}
  <section>
  <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Mis Grupos</h2>
  {houses.length === 0 ? (

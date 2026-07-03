@@ -143,7 +143,7 @@ export default function GrupoAdmin() {
                 eyebrow="Gestion de Redes"
                 title="Consola de Grupos"
                 description="Gestion operativa real de grupos, temporadas y reportes semanales de asistencia."
-                tags={["Campo Activo", "Reportes", "Faro"]}
+                tags={["Campo Activo", "Reportes", "Grupo"]}
                 watchers={["Coordinacion General", "Consolidacion"]}
                 primaryAction={{ label: "Nuevo Grupo", icon: Plus, onClick: createGrupo }}
                 secondaryAction={{ label: "Exportar Reportes", icon: FileText, onClick: () => window.print() }}

@@ -49,7 +49,7 @@ export default function GlobalEventAnalyticsPage() {
  { value: 'ALL', label: 'Todos los Eventos' },
  { value: 'PERMANENT', label: 'Servicios Fijos' },
  { value: 'SPECIAL', label: 'Especiales' },
- { value: 'FARO', label: 'Grupos en Casa' }
+ { value: 'GROUPS', label: 'Grupos en Casa' }
  ];
 
  return (

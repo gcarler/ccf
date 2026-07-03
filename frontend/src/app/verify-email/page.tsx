@@ -76,7 +76,7 @@ function VerifyEmailContent() {
           className="relative z-10"
         >
           <h1 className="font-bold tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
-            EL <br /> FARO
+            EL <br /> CCF
           </h1>
           <p className="text-[#018ABD] text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
             Comunidad <br /> Cristiana

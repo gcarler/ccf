@@ -1413,7 +1413,7 @@ function GroupsContent() {
  );
 }
 
-export default function FaroGroupsPage() {
+export default function GroupsPage() {
  return (
  <Suspense
  fallback={
