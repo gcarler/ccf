@@ -302,6 +302,8 @@ class CmsPublicPageRead(BaseModel):
     sections: List[CmsSectionRead] = Field(default_factory=list)
     json_ld: Optional[Dict[str, Any]] = None
     canonical_url: Optional[str] = None
+    breadcrumbs: Optional[List[Dict[str, str]]] = None
+    breadcrumb_json_ld: Optional[Dict[str, Any]] = None
 
 
 # ── Announcements ───────────────────────────────────────

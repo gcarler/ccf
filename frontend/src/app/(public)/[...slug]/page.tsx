@@ -1,6 +1,7 @@
 import React from "react";
 import { notFound } from "next/navigation";
 import PublicSectionRenderer from "@/components/public/cms/PublicSectionRenderer";
+import BreadcrumbNav from "@/components/public/cms/BreadcrumbNav";
 import { Metadata } from "next";
 import { getCmsPublicPage } from "@/lib/cms/v2";
 import { CmsPublicPage } from "@/types/cms-v2";
@@ -78,16 +79,25 @@ export default async function FaroDynamicPage({ params }: { params: Promise<{ sl
     notFound();
   }
 
-  const jsonLdScript = page.json_ld
-    ? `<script type="application/ld+json">${JSON.stringify(page.json_ld)}</script>`
-    : null;
+  const jsonLdScripts: string[] = [];
+  if (page.json_ld) {
+    jsonLdScripts.push(`<script type="application/ld+json">${JSON.stringify(page.json_ld)}</script>`);
+  }
+  if (page.breadcrumb_json_ld) {
+    jsonLdScripts.push(`<script type="application/ld+json">${JSON.stringify(page.breadcrumb_json_ld)}</script>`);
+  }
 
   return (
     <>
-      {jsonLdScript && (
-        <head dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
+      {jsonLdScripts.length > 0 && (
+        <head dangerouslySetInnerHTML={{ __html: jsonLdScripts.join("") }} />
       )}
       <main className="flex-1 px-3 md:px-6 lg:px-8 xl:px-12 pt-[100px] pb-16 space-y-8">
+        {page.breadcrumbs && page.breadcrumbs.length > 1 && (
+          <div className="max-w-7xl mx-auto w-full">
+            <BreadcrumbNav items={page.breadcrumbs} />
+          </div>
+        )}
         {page.sections.filter((section) => section.is_visible).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((section) => (
           <PublicSectionRenderer key={section.id} section={section} />
         ))}

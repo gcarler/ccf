@@ -4,7 +4,7 @@ import React from "react";
 import {
   Eye, ExternalLink, FileImage, ImageIcon, Save, Send, Settings,
   Sparkles, BarChart3, CheckCircle2, AlertTriangle, XCircle, Wand2, RefreshCw,
-  Upload, Undo2,
+  Upload, Undo2, Home, ChevronRight,
 } from "lucide-react";
 import { SITE_URL } from "@/lib/site-config";
 import { asObject } from "@/components/cms/builder/utils";

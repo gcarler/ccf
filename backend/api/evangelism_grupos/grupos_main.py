@@ -713,14 +713,14 @@ def get_groups_analytics(
     rows = query.group_by(models.SesionGrupo.grupo_id, models.SesionGrupo.season_id).all()
     total_attendance = sum(row.total_attendance or 0 for row in rows)
     total_sessions = sum(row.total_sessions or 0 for row in rows)
-    active_groupss = len({row.grupo_id for row in rows})
+    active_groups = len({row.grupo_id for row in rows})
 
     return {
         "total_attendance": total_attendance,
         "total_sessions": total_sessions,
-        "active_groupss": active_groupss,
+        "active_groups": active_groups,
         "avg_per_session": (round(total_attendance / total_sessions) if total_sessions > 0 else 0),
-        "per_groups": [
+        "per_group": [
             {
                 "grupo_id": row.grupo_id,
                 "total_attendance": row.total_attendance or 0,

@@ -217,6 +217,48 @@ def build_event_json_ld(
     return data
 
 
+def build_breadcrumb_items_from_slug(
+    slug: str,
+    page_title: str,
+    base_url: str = "",
+    site_name: str = "Home",
+) -> List[Dict[str, str]]:
+    """Build breadcrumb items from a nested slug path.
+
+    Args:
+        slug: Page slug like ``"about/team"`` or ``"blog/post-1"``.
+        page_title: Human-readable title of the current page.
+        base_url: Site base URL for constructing links.
+        site_name: Label for the root/home item.
+
+    Returns:
+        List of dicts with ``name`` and ``item`` keys suitable for
+        ``build_breadcrumb_list_json_ld``.
+    """
+    items: List[Dict[str, str]] = []
+    if base_url:
+        items.append({"name": site_name, "item": base_url.rstrip("/") + "/"})
+
+    parts = [p for p in slug.split("/") if p]
+    accumulated = ""
+    for part in parts[:-1]:
+        accumulated = f"{accumulated}/{part}" if accumulated else part
+        # Title-case the slug segment for display
+        display = part.replace("-", " ").replace("_", " ").title()
+        url = f"{base_url.rstrip('/')}/{accumulated.lstrip('/')}"
+        items.append({"name": display, "item": url})
+
+    # Current page (no URL needed for the last item in some UX patterns,
+    # but JSON-LD benefits from having it).
+    if parts:
+        items.append({"name": page_title, "item": f"{base_url.rstrip('/')}/{slug.lstrip('/')}"})
+    elif not parts and base_url:
+        # Slug is empty (home page) — already added site_name
+        pass
+
+    return items
+
+
 def build_breadcrumb_list_json_ld(
     items: List[Dict[str, str]],
     base_url: str = "",

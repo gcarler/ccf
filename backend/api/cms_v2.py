@@ -26,6 +26,8 @@ from backend.models_shared import _utcnow
 from backend.schemas._common import PaginatedResponse
 from backend.core.seo import (
     auto_json_ld_for_page,
+    build_breadcrumb_items_from_slug,
+    build_breadcrumb_list_json_ld,
     build_sitemap_xml,
     build_robots_txt,
 )
@@ -921,6 +923,13 @@ def preview_page(
     # Allow manual override of JSON-LD from seo_json
     if isinstance(page.seo_json, dict) and page.seo_json.get("json_ld"):
         json_ld_data = page.seo_json["json_ld"]
+
+    # Build breadcrumbs
+    breadcrumb_items = build_breadcrumb_items_from_slug(
+        page.slug, page.title, base_url=base_url, site_name=site.name or "Home"
+    )
+    breadcrumb_json_ld = build_breadcrumb_list_json_ld(breadcrumb_items, base_url=base_url)
+
     return schemas.CmsPublicPageRead(
         site_key=site.site_key,
         slug=page.slug,
@@ -931,6 +940,8 @@ def preview_page(
         ],
         json_ld=json_ld_data,
         canonical_url=canonical or page_url,
+        breadcrumbs=breadcrumb_items,
+        breadcrumb_json_ld=breadcrumb_json_ld,
     )
 
 
@@ -1249,18 +1260,28 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
             )
             for s in section_rows
         ]
+
+        slug_val = (
+            str(page_snapshot.get("slug") or page.slug)
+            if isinstance(page_snapshot, dict)
+            else page.slug
+        )
+        title_val = (
+            str(page_snapshot.get("title") or page.title)
+            if isinstance(page_snapshot, dict)
+            else page.title
+        )
+        settings = get_settings()
+        base_url = settings.frontend_url.rstrip("/")
+        breadcrumb_items = build_breadcrumb_items_from_slug(
+            slug_val, title_val, base_url=base_url, site_name=site.name or "Home"
+        )
+        breadcrumb_json_ld = build_breadcrumb_list_json_ld(breadcrumb_items, base_url=base_url)
+
         return schemas.CmsPublicPageRead(
             site_key=site.site_key,
-            slug=(
-                str(page_snapshot.get("slug") or page.slug)
-                if isinstance(page_snapshot, dict)
-                else page.slug
-            ),
-            title=(
-                str(page_snapshot.get("title") or page.title)
-                if isinstance(page_snapshot, dict)
-                else page.title
-            ),
+            slug=slug_val,
+            title=title_val,
             seo_json=(
                 page_snapshot.get("seo_json")
                 if isinstance(page_snapshot, dict)
@@ -1268,6 +1289,8 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
                 else {}
             ),
             sections=section_rows,
+            breadcrumbs=breadcrumb_items,
+            breadcrumb_json_ld=breadcrumb_json_ld,
         )
 
     sections_list, _ = crud.list_cms_sections(db, page.id)
@@ -1294,6 +1317,12 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
     if isinstance(page.seo_json, dict) and page.seo_json.get("json_ld"):
         json_ld_data = page.seo_json["json_ld"]
 
+    # Build breadcrumbs
+    breadcrumb_items = build_breadcrumb_items_from_slug(
+        page.slug, page.title, base_url=base_url, site_name=site.name or "Home"
+    )
+    breadcrumb_json_ld = build_breadcrumb_list_json_ld(breadcrumb_items, base_url=base_url)
+
     return schemas.CmsPublicPageRead(
         site_key=site.site_key,
         slug=page.slug,
@@ -1302,6 +1331,8 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
         sections=section_reads,
         json_ld=json_ld_data,
         canonical_url=canonical or page_url,
+        breadcrumbs=breadcrumb_items,
+        breadcrumb_json_ld=breadcrumb_json_ld,
     )
 
 
