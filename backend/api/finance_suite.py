@@ -3,11 +3,10 @@ Finance Suite API — Contabilidad, Facturación, Gastos, Documentos, Firma
 """
 from __future__ import annotations
 
-import uuid as _uuid
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -89,7 +88,7 @@ def create_bank_transaction(
 @router.get("/bank-transactions", response_model=List[schemas.BankTransactionOut])
 def list_bank_transactions(
     bank_account_id: Optional[str] = None,
-    status: Optional[str] = None,
+    tx_status: Optional[str] = None,
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
@@ -97,8 +96,8 @@ def list_bank_transactions(
     q = db.query(models.BankTransaction).order_by(models.BankTransaction.transaction_date.desc())
     if bank_account_id:
         q = q.filter(models.BankTransaction.bank_account_id == bank_account_id)
-    if status:
-        q = q.filter(models.BankTransaction.status == status)
+    if tx_status:
+        q = q.filter(models.BankTransaction.status == tx_status)
     return q.limit(limit).all()
 
 

@@ -25,7 +25,6 @@ from sqlalchemy.orm import relationship
 
 from backend.models_shared import Base, _utcnow
 
-
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1. CONTABILIDAD (Accounting)
 # ═══════════════════════════════════════════════════════════════════════════════
