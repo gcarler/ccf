@@ -8,8 +8,6 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from backend.core.config import get_settings
-
 
 def _iso_date(value: Optional[datetime]) -> str:
     if not value:

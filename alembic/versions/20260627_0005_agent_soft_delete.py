@@ -7,8 +7,8 @@ Revises: 20260627_0004_drop_identity
 from typing import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 revision: str = "20260627_0005_agent_soft_delete"
 down_revision: str | None = "20260627_0004_drop_identity"

@@ -1,19 +1,15 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import uuid as _uuid
-import asyncio
 import warnings
 
 os.environ.setdefault("ENV", "test")
 
-import pytest
 import anyio.to_thread as _anyio_to_thread
 import httpx
-from sqlalchemy import create_engine, event, text
-from sqlalchemy.engine import make_url
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+import pytest
 
 # ── SQLite UUID adapter (MUST be before any model import) ──────────────
 # SQLite no soporta UUID nativamente. El bind_processor de Uuid espera
@@ -21,8 +17,11 @@ from sqlalchemy.pool import StaticPool
 # también acepte strings (lo que ocurre en comparaciones como
 # UUIDColumn == string_param en SQLite).
 import sqlalchemy.types as _satypes
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.exc import SAWarning
-import uuid as _uuid
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 _sqlite_uuid_patched = False
 
@@ -74,9 +73,9 @@ if os.getenv("CCF_TEST_INLINE_SYNC_HANDLERS", "1") != "0":
 
     _anyio_to_thread.run_sync = _run_sync_inline
 
+import backend.models  # noqa: F401 — register all models (including Auth v3) so create_all works
 from backend.app import app
 from backend.core.database import Base, get_db
-import backend.models  # noqa: F401 — register all models (including Auth v3) so create_all works
 
 SQLALCHEMY_DATABASE_URL = (
     os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or "sqlite://"
@@ -203,10 +202,11 @@ def seed_admin(db_session, email="admin@example.com", password="testpass123"):
     la conexión compartida de ``StaticPool`` en mal estado.
     """
     import uuid as _uuid
+
     from backend import models as _models
-    from backend.models_auth import Usuario, RolPlataforma
-    from backend.models_crm import Persona
     from backend.core.security import get_password_hash
+    from backend.models_auth import RolPlataforma, Usuario
+    from backend.models_crm import Persona
 
     existing_user = (
         db_session.query(Usuario)
@@ -288,9 +288,9 @@ def seed_user_with_role(db_session, role_name="persona", email="user@example.com
     Útil para tests que necesitan usuarios no-admin con roles personalizados.
     """
     from backend import models as _models
-    from backend.models_auth import Usuario, RolPlataforma
-    from backend.models_crm import Persona
     from backend.core.security import get_password_hash
+    from backend.models_auth import RolPlataforma, Usuario
+    from backend.models_crm import Persona
 
     persona = Persona(
         id=_uuid.uuid4(),

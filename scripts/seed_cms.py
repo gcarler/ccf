@@ -21,14 +21,14 @@ Run once:
     cd /root/ccf && source venv/bin/activate && python scripts/seed_cms.py
 """
 import json
-import sys
 import os
+import sys
 
 sys.path.insert(0, "/root/ccf")
 os.environ.setdefault("DATABASE_URL", "")
 
-from backend.core.database import SessionLocal
 from backend import models
+from backend.core.database import SessionLocal
 
 # page_key → (page_slug, sort_order_within_page)
 SECTION_MAP: dict[str, tuple[str, int]] = {

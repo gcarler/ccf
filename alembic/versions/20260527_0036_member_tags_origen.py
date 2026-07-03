@@ -4,9 +4,10 @@ Revision ID: 20260527_0036_member_tags_origen
 Revises: 20260526_0034_kernel_identity
 Create Date: 2026-05-27
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 revision = "20260527_0036_member_tags_origen"
 down_revision = "20260526_0034_kernel_identity"

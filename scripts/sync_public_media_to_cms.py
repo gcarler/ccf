@@ -34,7 +34,6 @@ sys.path.insert(0, str(ROOT))
 from backend import models
 from backend.core.database import SessionLocal
 
-
 PUBLIC_DIR = ROOT / "frontend" / "public"
 
 PUBLIC_IMAGE_EXTS = {".avif", ".jpg", ".jpeg", ".png", ".svg", ".webp"}

@@ -48,7 +48,6 @@ import shutil
 import subprocess
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -433,8 +432,8 @@ def test_auth_v3_uses_personas_uuid():
     try:
         # Import lazy: si Backend tiene modelos no consolidados,
         # marcamos SKIP explicito (no PASS silencioso).
-        from backend.models_identity import Persona  # type: ignore
         from backend.models_auth import AuthUser  # type: ignore
+        from backend.models_identity import Persona  # type: ignore
     except ImportError as exc:
         pytest.skip(
             f"Gate 9 (Auth v3) requiere modelos consolidados: {exc}. "

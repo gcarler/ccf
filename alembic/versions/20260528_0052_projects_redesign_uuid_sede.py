@@ -25,8 +25,9 @@ Cambios respecto al diseño anterior:
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+
 from alembic import op
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 revision: str = "20260528_0052"
 down_revision: Union[str, None] = "20260528_0051"

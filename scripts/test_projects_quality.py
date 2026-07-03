@@ -24,24 +24,30 @@ documentos, comentarios y verifica el flujo completo.
 Uso:
     cd /root/ccf && ./venv/bin/python scripts/test_projects_quality.py
 """
+import base64
+import datetime
 import os
 import sys
-import datetime
 import tempfile
-import base64
 
 # Asegurar que el path del proyecto esté disponible
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
 os.chdir(os.path.dirname(os.path.abspath(__file__)) + "/..")
 
 from backend.core.database import SessionLocal
+from backend.core.security import get_password_hash
 from backend.models import *  # noqa: F401 - importa todos los modelos para resolver relaciones
 from backend.models_identity import User
 from backend.models_projects import (
-    Project, ProjectTask, ProjectMilestone, ProjectComment,
-    ProjectPhase, ProjectActivityLog, ProjectDocument, ProjectAttachment
+    Project,
+    ProjectActivityLog,
+    ProjectAttachment,
+    ProjectComment,
+    ProjectDocument,
+    ProjectMilestone,
+    ProjectPhase,
+    ProjectTask,
 )
-from backend.core.security import get_password_hash
 
 db = SessionLocal()
 
@@ -589,7 +595,7 @@ section(f"RESUMEN: {PASS} passed, {FAIL} failed")
 
 info(f"Proyecto ID: {project.id}")
 info(f"Usuarios: {u1.username} (id={u1.id}), {u2.username} (id={u2.id}), {u3.username} (id={u3.id})")
-info(f"Contraseña de prueba: prueba123")
+info("Contraseña de prueba: prueba123")
 info(f"URL del proyecto: https://elfarocc.tech/plataforma/projects/{project.id}")
 
 if FAIL > 0:

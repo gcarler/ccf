@@ -5,9 +5,12 @@ Creates comprehensive test data and exercises ALL functions and API endpoints
 in evangelism_events/events_main.py to maximize code execution.
 """
 import uuid
-import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+
+import pytest
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(status):

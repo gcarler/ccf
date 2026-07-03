@@ -14,6 +14,7 @@ para mantener performance en queries del hot-path.
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "20260602_add_soft_delete"

@@ -11,6 +11,7 @@ Cierra el último endpoint sin filtro multi-tenant: GET /analytics/events/summar
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "20260528_0049"

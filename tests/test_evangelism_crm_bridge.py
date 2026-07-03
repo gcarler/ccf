@@ -1,21 +1,19 @@
-from datetime import datetime, timedelta, timezone
 import uuid
-
-import pytest
+from datetime import datetime, timedelta, timezone
 
 from backend import models
-from backend.services.evangelism_projection import proyectar_sesiones, FRECUENCIAS
-from tests.conftest import seed_admin, auth_headers
-from backend.services.evangelism_crm_bridge import (
-    crear_caso_desde_asistencia,
-    _obtener_o_crear_pipeline_nuevos_visitantes,
-)
 from backend.models_crm_pipeline import (
-    TipoPipelineEnum,
+    CanalOrigenEnum,
     EstadoCasoEnum,
     PrioridadCasoEnum,
-    CanalOrigenEnum,
+    TipoPipelineEnum,
 )
+from backend.services.evangelism_crm_bridge import (
+    _obtener_o_crear_pipeline_nuevos_visitantes,
+    crear_caso_desde_asistencia,
+)
+from backend.services.evangelism_projection import proyectar_sesiones
+from tests.conftest import auth_headers, seed_admin
 
 
 def _seed_sede(db_session):

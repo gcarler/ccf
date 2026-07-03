@@ -5,9 +5,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from backend import models
 from backend.api import workspace_shared
-from tests.conftest import seed_admin, auth_headers
+from tests.conftest import auth_headers, seed_admin
 
 pytestmark = pytest.mark.xfail(
     reason="DATA_DIR apunta a ruta Windows (C:/Users/USUARIO/) — no disponible en servidor Linux",

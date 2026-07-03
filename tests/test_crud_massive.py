@@ -4,9 +4,10 @@ Strategy: Create SQLAlchemy models directly → call CRUD functions → verify r
 This bypasses API routing and hits the actual business logic.
 """
 import uuid
+from datetime import datetime, timezone
+
 import pytest
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
+
 from tests.conftest import seed_admin
 
 
@@ -564,8 +565,8 @@ class TestAuditCRUD:
 
 class TestAgentsCRUD:
     def test_create_agent_task(self, db_session):
-        from backend.schemas.agents import AgentTaskCreate
         from backend.crud.agents import create_agent_task
+        from backend.schemas.agents import AgentTaskCreate
         task = create_agent_task(db_session, AgentTaskCreate(title="Agent Task", description="test"))
         assert task is not None
 
@@ -575,8 +576,8 @@ class TestAgentsCRUD:
         assert isinstance(result, list)
 
     def test_create_agent_insight(self, db_session):
-        from backend.schemas.agents import AgentInsightCreate
         from backend.crud.agents import create_agent_insight
+        from backend.schemas.agents import AgentInsightCreate
         insight = create_agent_insight(db_session, AgentInsightCreate(title="Insight", insight_type="observation"))
         assert insight is not None
 

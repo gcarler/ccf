@@ -16,8 +16,8 @@ Convenciones:
 """
 from __future__ import annotations
 
-import uuid
 import datetime as _dt
+import uuid
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -26,18 +26,21 @@ from sqlalchemy.orm import object_session as _sa_object_session
 from backend import models
 from backend.models_evangelism import (
     Asistencia as MAsistencia,
+)
+from backend.models_evangelism import (
+    CampaignSeason,
+    CategoriaEstrategia,
     EstrategiaEvangelismo,
     GrupoEvangelismo,
+    HistorialEmbudo,
+    MotivoExcusa,
     ParticipanteGrupo,
     RegistroSeguimiento,
     RolPersonalizadoEstrategia,
     SesionGrupo,
-    CategoriaEstrategia,
-    MotivoExcusa,
-    CampaignSeason,
-    HistorialEmbudo,
 )
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _uuid_str() -> str:
@@ -233,7 +236,9 @@ class TestSharedPureHelpers:
 
     def test_is_attended_absent_excused(self):
         from backend.api.evangelism_shared import (
-            is_attended_status, is_absent_status, is_excused_status,
+            is_absent_status,
+            is_attended_status,
+            is_excused_status,
         )
         assert is_attended_status("ASISTIO") is True
         assert is_attended_status("primera_vez") is True
@@ -1899,6 +1904,7 @@ class TestEvents:
         }, headers=full["h"]).json()
         full["admin"]
         from sqlalchemy.orm import object_session as _os
+
         from backend import models as _m
         role_obj = _os(full["admin"]).query(_m.RoleDefinition).filter(
             _m.RoleDefinition.id == r1["id"],
@@ -2261,8 +2267,9 @@ class TestCalculoSesiones:
             _normalizar_frecuencia(None)  # type: ignore[arg-type]
 
     def test_provider_para_frecuencia(self):
-        from backend.services.calculo_sesiones import _provider_para_frecuencia
         from datetime import timedelta
+
+        from backend.services.calculo_sesiones import _provider_para_frecuencia
         p = _provider_para_frecuencia("SEMANAL", 1)
         assert isinstance(p.incremento, timedelta)
         p = _provider_para_frecuencia("MENSUAL", 31)
@@ -2273,7 +2280,8 @@ class TestCalculoSesiones:
 
     def test_generar_fechas_semanal(self):
         from backend.services.calculo_sesiones import (
-            _provider_para_frecuencia, _generar_fechas,
+            _generar_fechas,
+            _provider_para_frecuencia,
         )
         provider = _provider_para_frecuencia("SEMANAL", 1)
         inicio = datetime(2026, 6, 1, tzinfo=timezone.utc)
@@ -2283,7 +2291,8 @@ class TestCalculoSesiones:
 
     def test_generar_fechas_quincenal(self):
         from backend.services.calculo_sesiones import (
-            _provider_para_frecuencia, _generar_fechas,
+            _generar_fechas,
+            _provider_para_frecuencia,
         )
         provider = _provider_para_frecuencia("QUINCENAL", 1)
         inicio = datetime(2026, 6, 1, tzinfo=timezone.utc)
@@ -2293,7 +2302,8 @@ class TestCalculoSesiones:
 
     def test_generar_fechas_evento_unico(self):
         from backend.services.calculo_sesiones import (
-            _provider_para_frecuencia, _generar_fechas,
+            _generar_fechas,
+            _provider_para_frecuencia,
         )
         provider = _provider_para_frecuencia("EVENTO_UNICO", 1)
         inicio = datetime(2026, 6, 1, tzinfo=timezone.utc)
@@ -2303,7 +2313,8 @@ class TestCalculoSesiones:
 
     def test_generar_fechas_inicio_mayor_fin(self):
         from backend.services.calculo_sesiones import (
-            _provider_para_frecuencia, _generar_fechas,
+            _generar_fechas,
+            _provider_para_frecuencia,
         )
         provider = _provider_para_frecuencia("SEMANAL", 1)
         with pytest.raises(ValueError):

@@ -10,7 +10,6 @@ pasar por el helper API `_get_scoped_*` correspondiente.
 """
 
 import datetime as dt
-import json
 import logging
 import uuid
 

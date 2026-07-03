@@ -5,7 +5,8 @@ Goal: Maximize line coverage by exercising all API routes.
 Each test makes a single request to verify the endpoint exists and responds.
 """
 import pytest
-from tests.conftest import seed_admin, auth_headers
+
+from tests.conftest import auth_headers, seed_admin
 
 
 @pytest.fixture(scope="function")

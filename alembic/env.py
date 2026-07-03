@@ -21,12 +21,11 @@ sys.path.insert(
     )),
 )
 
-from backend.core.bootstrap import load_settings  # noqa: E402
-
 from sqlalchemy import engine_from_config, pool  # noqa: E402
 
 import backend.models as models  # noqa: E402,F401
 from alembic import context  # noqa: E402
+from backend.core.bootstrap import load_settings  # noqa: E402
 from backend.core.database import Base  # noqa: E402
 
 config = context.config

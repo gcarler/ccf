@@ -5,7 +5,8 @@ Because ESLint flagged each as 'defined but never used', we rename ALL whole-wor
 occurrences of the identifier in the file. The convention `_var` is the standard
 TypeScript ESLint pattern for unused declarations.
 """
-import json, re
+import json
+import re
 from pathlib import Path
 
 LINT_JSON = Path('/tmp/lint.json')

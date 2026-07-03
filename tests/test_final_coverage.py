@@ -4,9 +4,12 @@ auth_v3.py (320 missed), grupos_main.py (305 missed), evangelism.py (283 missed)
 enterprise_cms.py (277 missed).
 """
 import uuid
+from datetime import date, datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, date, timedelta, timezone
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(s):
@@ -46,7 +49,13 @@ def full(client, db_session):
     from backend.models_evangelism import CategoriaEstrategia
     cat_e = CategoriaEstrategia(nombre="Cat")
     db_session.add(cat_e); db_session.flush()
-    from backend.models_evangelism import EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo, Asistencia, ParticipanteGrupo
+    from backend.models_evangelism import (
+        Asistencia,
+        EstrategiaEvangelismo,
+        GrupoEvangelismo,
+        ParticipanteGrupo,
+        SesionGrupo,
+    )
     strat = EstrategiaEvangelismo(nombre="S", sede_id=sede.id, frecuencia="semanal", categoria_id=cat_e.id,
         fecha_inicio=datetime.now(timezone.utc)-timedelta(days=90), fecha_fin=datetime.now(timezone.utc)+timedelta(days=90))
     db_session.add(strat); db_session.flush()

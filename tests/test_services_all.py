@@ -1,10 +1,9 @@
 """Massive service-level coverage tests — exercises every public function/class."""
 import asyncio
 import uuid
-import pytest
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch
 
+import pytest
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TOOL REGISTRY (tool_registry.py) — 223 stmts, 0% coverage
@@ -60,7 +59,7 @@ class TestToolDefinition:
 
 class TestAgentToolABC:
     def _make_tool(self):
-        from backend.services.tool_registry import AgentTool, ToolParameter
+        from backend.services.tool_registry import AgentTool
 
         class DummyTool(AgentTool):
             @property
@@ -182,7 +181,7 @@ class TestToolRegistry:
         assert names == {"a", "b"}
 
     def test_list_by_module(self):
-        from backend.services.tool_registry import ToolRegistry, AgentTool
+        from backend.services.tool_registry import AgentTool, ToolRegistry
 
         class M1(AgentTool):
             @property
@@ -234,7 +233,7 @@ class TestToolRegistry:
         assert result["error"] == "Tool 'nonexistent' not found"
 
     def test_execute_raises(self):
-        from backend.services.tool_registry import ToolRegistry, AgentTool
+        from backend.services.tool_registry import AgentTool, ToolRegistry
 
         class BadTool(AgentTool):
             @property
@@ -587,7 +586,7 @@ class TestStubMessagingGateway:
 
 class TestGetMessagingGateway:
     def test_returns_stub_when_stub_comms(self):
-        from backend.services.messaging import get_messaging_gateway, reset_gateway_singleton, StubMessagingGateway
+        from backend.services.messaging import StubMessagingGateway, get_messaging_gateway, reset_gateway_singleton
         reset_gateway_singleton()
         with patch("backend.services.messaging.get_settings") as mock_s:
             mock_s.return_value.stub_comms = True
@@ -596,7 +595,7 @@ class TestGetMessagingGateway:
         reset_gateway_singleton()
 
     def test_returns_real_when_not_stub(self):
-        from backend.services.messaging import get_messaging_gateway, reset_gateway_singleton, MessagingGateway
+        from backend.services.messaging import MessagingGateway, get_messaging_gateway, reset_gateway_singleton
         reset_gateway_singleton()
         with patch("backend.services.messaging.get_settings") as mock_s:
             mock_s.return_value.stub_comms = False
@@ -729,7 +728,6 @@ class TestPaymentResult:
 
 class TestPaymentsModule:
     def test_get_sdk_no_token(self):
-        import importlib
         import backend.services.payments as pay_mod
         # If mercadopago is installed, test the missing-token path
         if getattr(pay_mod, "mercadopago", None) is not None:
@@ -744,7 +742,7 @@ class TestPaymentsModule:
 
     @patch("backend.services.payments._get_sdk")
     def test_create_preference(self, mock_sdk):
-        from backend.services.payments import create_donation_preference, PaymentPreference
+        from backend.services.payments import PaymentPreference, create_donation_preference
         mock_pref = MagicMock()
         mock_pref.create.return_value = {"response": {"id": "123", "init_point": "url"}}
         mock_sdk.return_value.preference.return_value = mock_pref
@@ -754,7 +752,7 @@ class TestPaymentsModule:
 
     @patch("backend.services.payments._get_sdk")
     def test_create_preference_with_all_fields(self, mock_sdk):
-        from backend.services.payments import create_donation_preference, PaymentPreference
+        from backend.services.payments import PaymentPreference, create_donation_preference
         mock_pref = MagicMock()
         mock_pref.create.return_value = {"response": {"id": "456", "init_point": "url2"}}
         mock_sdk.return_value.preference.return_value = mock_pref
@@ -768,7 +766,7 @@ class TestPaymentsModule:
 
     @patch("backend.services.payments._get_sdk")
     def test_create_preference_error(self, mock_sdk):
-        from backend.services.payments import create_donation_preference, PaymentPreference
+        from backend.services.payments import PaymentPreference, create_donation_preference
         mock_pref = MagicMock()
         mock_pref.create.side_effect = Exception("MP error")
         mock_sdk.return_value.preference.return_value = mock_pref

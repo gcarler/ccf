@@ -8,9 +8,12 @@ Key: Creates real entities via models, then calls API endpoints that
 process them to execute code paths.
 """
 import uuid
-import pytest
 from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+
+import pytest
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(status):
@@ -22,14 +25,18 @@ def full(client, db_session):
     """Create comprehensive test data for evangelism_analytics.py."""
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_evangelism import (
-        EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
-        Asistencia, ParticipanteGrupo, RolPersonalizadoEstrategia,
-        HistorialEmbudo,
-    )
 
     # Create category
-    from backend.models_evangelism import CategoriaEstrategia
+    from backend.models_evangelism import (
+        Asistencia,
+        CategoriaEstrategia,
+        EstrategiaEvangelismo,
+        GrupoEvangelismo,
+        HistorialEmbudo,
+        ParticipanteGrupo,
+        RolPersonalizadoEstrategia,
+        SesionGrupo,
+    )
     categoria = CategoriaEstrategia(
         nombre="Test Category",
     )

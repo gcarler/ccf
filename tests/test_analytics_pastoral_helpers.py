@@ -2,10 +2,12 @@
 
 Strategy: Test pure functions directly (highest coverage per line), then hit API endpoints."""
 import uuid
+from datetime import datetime, timezone
+from unittest.mock import MagicMock
+
 import pytest
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
-from tests.conftest import seed_admin, auth_headers
+
+from tests.conftest import auth_headers, seed_admin
 
 
 @pytest.fixture
@@ -198,8 +200,9 @@ class TestPastoralHelpers:
         case.__class__ = MagicMock()  # won't match CasoCRM
 
     def test_get_case_or_404_not_found(self, db_session):
-        from backend.api.crm.pastoral import _get_case_or_404
         from fastapi import HTTPException
+
+        from backend.api.crm.pastoral import _get_case_or_404
         with pytest.raises(HTTPException) as exc_info:
             _get_case_or_404(db_session, str(uuid.uuid4()), None)
         assert exc_info.value.status_code == 404

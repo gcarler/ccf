@@ -9,10 +9,8 @@ Cubre:
 - Regla 7: UUID en FKs a personas.id
 - Regla 8: JSON en vez de JSONB
 """
-import re
 import os
 import re
-import ast
 import sys
 from pathlib import Path
 

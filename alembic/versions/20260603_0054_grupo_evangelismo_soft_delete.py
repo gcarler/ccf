@@ -10,6 +10,7 @@ Adds soft-delete support to grupos_evangelismo without removing data.
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "20260603_0054_grupo_soft_delete"

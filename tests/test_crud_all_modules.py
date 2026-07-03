@@ -4,9 +4,9 @@ Covers: cms, academy, projects, crm_extended, evangelism, agenda, ops,
 agents and crm_resources.
 """
 import uuid
+
 import pytest
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
+
 from tests.conftest import seed_admin
 
 
@@ -61,7 +61,7 @@ class TestCMSSites:
         assert updated.name == "Updated"
 
     def test_archive_site(self, db_session):
-        from backend.crud.cms import create_cms_site, archive_cms_site
+        from backend.crud.cms import archive_cms_site, create_cms_site
         from backend.schemas import CmsSiteCreate
         site = create_cms_site(db_session, CmsSiteCreate(site_key=f"a_{uuid.uuid4().hex[:6]}", name="A", base_path="/a"))
         result = archive_cms_site(db_session, site)
@@ -98,7 +98,7 @@ class TestCMSThemes:
         assert updated.name == "Updated Theme"
 
     def test_activate_theme(self, db_session):
-        from backend.crud.cms import create_cms_theme, activate_cms_theme
+        from backend.crud.cms import activate_cms_theme, create_cms_theme
         from backend.schemas.cms import CmsThemeCreate
         site = _site_id(db_session)
         theme = create_cms_theme(db_session, site, CmsThemeCreate(name="Act", tokens_json={}, is_active=False, status="archived"), created_by=None)
@@ -106,7 +106,7 @@ class TestCMSThemes:
         assert result is not None
 
     def test_archive_theme(self, db_session):
-        from backend.crud.cms import create_cms_theme, archive_cms_theme
+        from backend.crud.cms import archive_cms_theme, create_cms_theme
         from backend.schemas.cms import CmsThemeCreate
         site = _site_id(db_session)
         theme = create_cms_theme(db_session, site, CmsThemeCreate(name="Arch", tokens_json={}, is_active=False, status="archived"), created_by=None)
@@ -157,7 +157,7 @@ class TestCMSMenus:
         assert result is True
 
     def test_menu_items(self, db_session):
-        from backend.crud.cms import create_cms_menu, list_cms_menu_items, create_cms_menu_item
+        from backend.crud.cms import create_cms_menu, create_cms_menu_item, list_cms_menu_items
         from backend.schemas.cms import CmsMenuCreate, CmsMenuItemCreate
         site = _site_id(db_session)
         menu = create_cms_menu(db_session, site, CmsMenuCreate(menu_key="items", name="Items", is_active=True))
@@ -206,7 +206,7 @@ class TestCMSPages:
         assert result is True
 
     def test_sections(self, db_session):
-        from backend.crud.cms import create_cms_page, list_cms_sections, create_cms_section
+        from backend.crud.cms import create_cms_page, create_cms_section, list_cms_sections
         from backend.schemas.cms import CmsPageCreate, CmsSectionCreate
         site = _site_id(db_session)
         page = create_cms_page(db_session, site, CmsPageCreate(slug="sec", title="Sec", status="draft"), user_id=None)
@@ -416,7 +416,7 @@ class TestProjects:
         assert isinstance(tasks, list)
 
     def test_project_milestones(self, db_session, admin_data):
-        from backend.crud.projects import create_project, create_milestone, get_project_milestones
+        from backend.crud.projects import create_milestone, create_project, get_project_milestones
         from backend.schemas.projects import ProjectCreate
         _, persona, sede = admin_data
         project = create_project(db_session, ProjectCreate(title="PM", description="d"), owner_persona_id=str(persona.id), sede_id=str(sede.id))
@@ -426,7 +426,7 @@ class TestProjects:
         assert isinstance(milestones, list)
 
     def test_project_comments(self, db_session, admin_data):
-        from backend.crud.projects import create_project, create_comment, get_project_comments
+        from backend.crud.projects import create_comment, create_project, get_project_comments
         from backend.schemas.projects import ProjectCreate
         _, persona, sede = admin_data
         project = create_project(db_session, ProjectCreate(title="PC", description="d"), owner_persona_id=str(persona.id), sede_id=str(sede.id))
@@ -447,7 +447,7 @@ class TestCRMExtended:
         assert isinstance(result, list)
 
     def test_create_position(self, db_session):
-        from backend.crud.crm_extended import create_position, PositionCreate
+        from backend.crud.crm_extended import PositionCreate, create_position
         pos = create_position(db_session, PositionCreate(name=f"Pos {uuid.uuid4().hex[:6]}"))
         assert pos is not None
 

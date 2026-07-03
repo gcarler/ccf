@@ -7,9 +7,9 @@ Revises: 20260627_0001_academy
 from typing import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
 
 revision: str = "20260627_0002_drop_academy"
 down_revision: str | None = "20260627_0001_academy"

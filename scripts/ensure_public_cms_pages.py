@@ -34,7 +34,6 @@ from sqlalchemy import func  # noqa: E402
 from backend import models  # noqa: E402
 from backend.core.database import SessionLocal  # noqa: E402
 
-
 PUBLIC_PAGES = {
     "home": "Inicio",
     "nosotros": "Quienes Somos",

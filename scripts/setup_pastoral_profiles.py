@@ -27,8 +27,8 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, '.')
 
-from backend.core.database import SessionLocal
 from backend import models
+from backend.core.database import SessionLocal
 
 
 def utcnow():

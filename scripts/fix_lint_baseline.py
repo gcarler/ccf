@@ -8,7 +8,9 @@ Multi-line imports are SKIPPED (logged) — handle separately with a block-aware
 script to avoid regex-induced syntax breakage.
 """
 from __future__ import annotations
-import json, re
+
+import json
+import re
 from pathlib import Path
 
 ENTITIES = {"'": "&apos;", '"': "&quot;", ">": "&gt;", "}": "&#125;"}

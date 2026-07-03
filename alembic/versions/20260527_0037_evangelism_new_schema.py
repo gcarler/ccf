@@ -11,9 +11,10 @@ Revision ID: 20260527_0037_evangelism_new_schema
 Revises: 20260527_0036_member_tags_origen
 Create Date: 2026-05-27
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 revision = "20260527_0037"
 down_revision = "20260527_0036_member_tags_origen"

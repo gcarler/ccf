@@ -23,17 +23,28 @@ Finds duplicate agents by email/phone and offers merge operations.
 Usage:
     cd /root/ccf && ./venv/bin/python scripts/deduplicate_agents.py [--auto-merge]
 """
-import os, sys
+import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
 os.chdir(os.path.dirname(os.path.abspath(__file__)) + "/..")
 
-from backend.models import *  # noqa: F401
-from backend.core.database import SessionLocal
-from backend.models_agents import (Agent, AgentActivity, AgentAuth,
-                                    AgentContact, AgentFamily, AgentJourney,
-                                    AgentPermission, AgentRole)
-from sqlalchemy import or_
 from collections import defaultdict
+
+from sqlalchemy import or_
+
+from backend.core.database import SessionLocal
+from backend.models import *  # noqa: F401
+from backend.models_agents import (
+    Agent,
+    AgentActivity,
+    AgentAuth,
+    AgentContact,
+    AgentFamily,
+    AgentJourney,
+    AgentPermission,
+    AgentRole,
+)
 
 db = SessionLocal()
 

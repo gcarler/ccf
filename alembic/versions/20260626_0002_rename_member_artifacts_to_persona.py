@@ -7,9 +7,9 @@ Create Date: 2026-06-26 15:30:00.000000
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 revision: str = "20260626_0002_persona_names"
 down_revision: Union[str, None] = "20260626_drop_personas_user_id"

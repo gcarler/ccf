@@ -7,8 +7,8 @@ Revises: 20260627_0007_cms_site_base_path
 from typing import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 revision: str = "20260627_0008_agenda_contract"
 down_revision: str | None = "20260627_0007_cms_site_base_path"

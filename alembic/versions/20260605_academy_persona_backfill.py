@@ -11,9 +11,9 @@ keeps UUID/persona identity as the only person contract.
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
 
 revision: str = "20260605_acad_pers_backfill"
 down_revision: Union[str, None] = "20260604_personas_scanner_token"

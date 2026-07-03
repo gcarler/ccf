@@ -4,10 +4,13 @@ crm.py (92), cms.py (75), academy.py (65), crm_extended.py (64), projects.py (44
 Total: 378 functions. Each covers ~3-10 lines.
 """
 import uuid
+from datetime import datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, date, timedelta, timezone
+
 from backend import schemas
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _c(fn, *a, **kw):
@@ -19,8 +22,15 @@ def _c(fn, *a, **kw):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
-    from backend.models_evangelism import (EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo, Asistencia, ParticipanteGrupo, CategoriaEstrategia)
+    from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
+    from backend.models_evangelism import (
+        Asistencia,
+        CategoriaEstrategia,
+        EstrategiaEvangelismo,
+        GrupoEvangelismo,
+        ParticipanteGrupo,
+        SesionGrupo,
+    )
     personas = []
     for i in range(20):
         p = models.Persona(first_name=f"U{i}", last_name=f"T{i}", email=f"u{i}_{uuid.uuid4().hex[:6]}@t.com",

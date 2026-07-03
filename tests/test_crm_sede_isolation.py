@@ -18,6 +18,7 @@ import uuid as _uuid
 
 import pytest
 from fastapi import HTTPException
+
 from backend import models
 from backend.models_crm_pipeline import (
     CanalOrigenEnum,
@@ -827,6 +828,7 @@ def _seed_task_in(
     """Inserta una TareaCRM sin pasar por la API. Útil para sembrar el
     target cross-sede de tests de hardening."""
     import uuid as _u
+
     from backend.models_crm_pipeline import TareaCRM
     t = TareaCRM(
         id=_u.uuid4(),
@@ -1427,9 +1429,10 @@ def test_crud_update_crm_task_logs_audit_on_real_change(db_session):
     """Axioma 1 — defense in depth: `crud.update_crm_task` emite audit log
     cuando hay cambios REALES (no idempotent updates)."""
     import uuid as _u
+
     from backend import crud, schemas
-    from backend.models_evangelism import LogAuditoria
     from backend.models_crm_pipeline import TareaCRM
+    from backend.models_evangelism import LogAuditoria
 
     _, persona_a, _ = seed_admin(db_session, email="crud-update@example.com")
 
@@ -1493,9 +1496,10 @@ def test_crud_update_crm_task_no_audit_when_idempotent(db_session):
     inflar el log con filas inútiles y mantiene la traza enfocada en
     cambios reales."""
     import uuid as _u
+
     from backend import crud, schemas
-    from backend.models_evangelism import LogAuditoria
     from backend.models_crm_pipeline import TareaCRM
+    from backend.models_evangelism import LogAuditoria
 
     _, persona_a, _ = seed_admin(db_session, email="crud-noop@example.com")
 
@@ -1537,9 +1541,10 @@ def test_crud_update_crm_task_no_audit_when_idempotent(db_session):
 def test_crud_update_crm_task_logs_audit_with_schema_payload(db_session):
     """El contrato Pydantic canónico conserva la auditoría de cambios."""
     import uuid as _u
+
     from backend import crud, schemas
-    from backend.models_evangelism import LogAuditoria
     from backend.models_crm_pipeline import TareaCRM
+    from backend.models_evangelism import LogAuditoria
 
     _, persona_a, _ = seed_admin(db_session, email="crud-dict@example.com")
 
@@ -1595,6 +1600,7 @@ def test_crud_create_crm_task_blocks_cross_sede_when_actor_in_sede(db_session):
     se aplica check. Como aquí sí tiene sede, el check dispara.
     """
     from fastapi import HTTPException
+
     from backend import crud, schemas
     from backend.models_crm_pipeline import TareaCRM
 
@@ -1644,6 +1650,7 @@ def test_crud_update_crm_task_blocks_toctou_when_actor_in_sede(db_session):
     `_crud_scope_re_check_task` debe abortar con 404.
     """
     from fastapi import HTTPException
+
     from backend import crud, schemas
     from backend.models_crm_pipeline import TareaCRM
 
@@ -1756,6 +1763,7 @@ def test_crud_update_crm_task_blocks_assignee_change_cross_sede(db_session):
     el contrato del schema y evita el workaround dict-bypass previo.
     """
     from fastapi import HTTPException
+
     from backend import crud, schemas
 
     (admin_a, persona_a_admin, _sede_a), (_, persona_b_admin, sede_b) = _seed_two_sedes(db_session)
@@ -1813,6 +1821,7 @@ def test_crud_update_crm_task_blocks_tropical_case_under_strict(db_session):
     Si el negocio requiere tareas tropicales editables, debe resolverse a
     nivel API (admin cross-sede con bypass explícito), NO en el CRUD."""
     from fastapi import HTTPException
+
     from backend import crud, schemas
     (admin_a, persona_a_admin, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
     persona_a_local = _persona_in(db_session, sede_a.id, "crud-tropical-local-a")
@@ -1889,6 +1898,7 @@ def test_crud_create_crm_task_orphan_rejected_for_editor(db_session):
     Si el caller NO provee actor_user_id (legacy path), la creación de
     orphans se permite para back-compat con scripts y bulk imports."""
     from fastapi import HTTPException
+
     from backend import crud, schemas
 
     (admin_a, _, _), _ = _seed_two_sedes(db_session)

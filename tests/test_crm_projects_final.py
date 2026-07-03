@@ -6,9 +6,12 @@ projects.py: project CRUD, task CRUD with assignee, comments CRUD, supplies CRUD
   milestones CRUD, wiki/whiteboard, inbox, messages, subtasks, update/delete project.
 """
 import uuid
+from datetime import date, datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, date, timedelta, timezone
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(s):
@@ -23,10 +26,13 @@ def _call(fn, *a, **kw):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import (
-        EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
-        Asistencia, ParticipanteGrupo, CategoriaEstrategia,
+        Asistencia,
+        CategoriaEstrategia,
+        EstrategiaEvangelismo,
+        GrupoEvangelismo,
+        ParticipanteGrupo,
+        SesionGrupo,
     )
 
     personas = []
@@ -137,7 +143,7 @@ def full(client, db_session):
 
 class TestCRMFinal:
     def test_create_grupo_direct(self, db_session, full):
-        from backend.crud.crm import create_grupo, get_grupo, delete_grupo
+        from backend.crud.crm import create_grupo, get_grupo
         # Create with auto-generated code (empty code triggers auto-generation)
         result = _call(create_grupo, db_session, type("P", (), {
             "model_dump": lambda self, **kw: {
@@ -237,7 +243,7 @@ class TestCRMFinal:
         _call(get_families, db_session, skip=0, limit=5)
 
     def test_counseling_crud(self, db_session, full):
-        from backend.crud.crm import get_counseling_tickets, get_counseling_ticket, update_counseling_ticket
+        from backend.crud.crm import get_counseling_tickets
         tickets = get_counseling_tickets(db_session)
         assert isinstance(tickets, list)
         get_counseling_tickets(db_session, status="open")
@@ -245,13 +251,13 @@ class TestCRMFinal:
         get_counseling_tickets(db_session, sede_id=str(full["sede"].id))
 
     def test_prayer_requests_crud(self, db_session, full):
-        from backend.crud.crm import get_prayer_requests, get_prayer_request, update_prayer_request
+        from backend.crud.crm import get_prayer_requests
         reqs = get_prayer_requests(db_session)
         assert isinstance(reqs, list)
         get_prayer_requests(db_session, status="pending")
 
     def test_crm_events_crud(self, db_session, full):
-        from backend.crud.crm import get_crm_events, get_crm_event
+        from backend.crud.crm import get_crm_events
         events = get_crm_events(db_session, sede_id=str(full["sede"].id))
         assert isinstance(events, list)
 

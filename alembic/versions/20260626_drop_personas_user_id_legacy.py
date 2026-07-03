@@ -7,10 +7,10 @@ Create Date: 2026-06-26 00:00:00.000000
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
 
 revision: str = "20260626_drop_personas_user_id"
 down_revision: Union[str, None] = "20260622_0001_mass_uuid_migr"

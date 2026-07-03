@@ -3,8 +3,10 @@ CRUD MASSIVE COVERAGE — Direct CRUD function calls for maximum coverage.
 Uses try/except to ensure all functions get called even if data is missing.
 """
 import uuid
-import pytest
 from datetime import datetime, timedelta, timezone
+
+import pytest
+
 from backend import schemas
 from tests.conftest import seed_admin as _seed_admin
 
@@ -13,10 +15,12 @@ from tests.conftest import seed_admin as _seed_admin
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
     from backend.models_evangelism import (
-        EstrategiaEvangelismo, GrupoEvangelismo, CategoriaEstrategia,
-        ParticipanteGrupo, SesionGrupo, Asistencia,
+        CategoriaEstrategia,
+        EstrategiaEvangelismo,
+        GrupoEvangelismo,
+        ParticipanteGrupo,
     )
 
     personas = []

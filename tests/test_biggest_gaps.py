@@ -7,9 +7,12 @@ BIGGEST GAPS — Tests for the 5 modules with most missed lines:
 5. grupos_asistencias.py (185 missed, 13%)
 """
 import uuid
+from datetime import datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, date, timedelta, timezone
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(s):
@@ -20,10 +23,13 @@ def _ok(s):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import (
-        EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
-        Asistencia, ParticipanteGrupo, CategoriaEstrategia,
+        Asistencia,
+        CategoriaEstrategia,
+        EstrategiaEvangelismo,
+        GrupoEvangelismo,
+        ParticipanteGrupo,
+        SesionGrupo,
     )
 
     personas = []

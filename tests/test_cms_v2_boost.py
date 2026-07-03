@@ -5,9 +5,11 @@ track_page_view, get_page_analytics, schedule_page_publish, _snapshot_section_re
 _get_system_var, public_menu visibility, helper functions.
 """
 import uuid
+
 import pytest
-from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(s):
@@ -17,9 +19,7 @@ def _ok(s):
 @pytest.fixture
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
-    from backend import models, crud
-    from backend.schemas import CmsPageCreate
-    from backend.api.cms_v2 import _slugify
+    from backend import models
 
     site = models.CmsSite(
         site_key="faro", name="El Faro", base_path="/", is_active=True,

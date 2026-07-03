@@ -7,8 +7,8 @@ Revises: 20260627_0005_agent_soft_delete
 from typing import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 revision: str = "20260627_0006_crm_contract"
 down_revision: str | None = "20260627_0005_agent_soft_delete"

@@ -3,12 +3,11 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-import sqlalchemy as sa
 import pytest
+import sqlalchemy as sa
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
 from pydantic import ValidationError
-
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = (

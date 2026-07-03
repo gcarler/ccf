@@ -29,7 +29,6 @@ sys.path.insert(0, str(ROOT))
 from backend import models
 from backend.core.database import SessionLocal
 
-
 SCAN_ROOTS = [
     ROOT / "frontend" / "src" / "app" / "(public)",
     ROOT / "frontend" / "src" / "components" / "public",

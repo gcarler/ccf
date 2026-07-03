@@ -180,6 +180,32 @@ from backend.models_evangelism import (
     TipoSeguimientoEnum,
 )
 
+# Finance Suite — Contabilidad, Facturación, Gastos, Documentos, Firma
+from backend.models_finance_suite import (
+    AccountingEntry,
+    AccountingEntryLine,
+    BankAccount,
+    BankReconciliation,
+    BankTransaction,
+    ChartOfAccount,
+    Document,
+    DocumentTag,
+    DocumentTagLink,
+    ExpenseItem,
+    ExpenseReceipt,
+    ExpenseReport,
+    FinancialStatement,
+    Invoice,
+    InvoiceItem,
+    InvoicePayment,
+    ReconciliationLine,
+    SalesOrder,
+    SalesOrderItem,
+    SignRequest,
+    SignSigner,
+    TaxConfiguration,
+)
+
 # Governance / Identity / Ops
 from backend.models_governance import AdminAuditLog, AutomationRule
 from backend.models_identity import (
@@ -225,29 +251,3 @@ from backend.models_projects import (
     TaskSupply,
 )
 from backend.models_wiki import WikiPage  # noqa: F401
-
-# Finance Suite — Contabilidad, Facturación, Gastos, Documentos, Firma
-from backend.models_finance_suite import (
-    AccountingEntry,
-    AccountingEntryLine,
-    BankAccount,
-    BankReconciliation,
-    BankTransaction,
-    ChartOfAccount,
-    Document,
-    DocumentTag,
-    DocumentTagLink,
-    ExpenseItem,
-    ExpenseReceipt,
-    ExpenseReport,
-    FinancialStatement,
-    Invoice,
-    InvoiceItem,
-    InvoicePayment,
-    ReconciliationLine,
-    SalesOrder,
-    SalesOrderItem,
-    SignRequest,
-    SignSigner,
-    TaxConfiguration,
-)

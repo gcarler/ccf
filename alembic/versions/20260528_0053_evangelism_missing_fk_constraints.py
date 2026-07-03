@@ -16,8 +16,8 @@ B) Añade FK constraints UUID→UUID en todas las tablas afectadas.
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
-from sqlalchemy.dialects.postgresql import UUID
 
 revision: str = "20260528_0053"
 down_revision: Union[str, None] = "20260528_0052"

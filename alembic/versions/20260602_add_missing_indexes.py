@@ -11,6 +11,7 @@ Usa CREATE INDEX CONCURRENTLY IF NOT EXISTS para evitar bloqueos de escritura.
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "20260602_add_missing_idx"

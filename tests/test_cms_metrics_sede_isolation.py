@@ -31,7 +31,6 @@ import uuid as _uuid
 from backend import models
 from tests.conftest import auth_headers, seed_admin
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 

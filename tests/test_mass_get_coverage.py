@@ -4,9 +4,10 @@ Mass GET Coverage — Hits every GET endpoint in the system.
 Goal: Cover as many code paths as possible by calling every endpoint once.
 All requests are GET (read-only) — safe for production.
 """
+
 import pytest
-import uuid
-from tests.conftest import seed_admin, auth_headers
+
+from tests.conftest import auth_headers, seed_admin
 
 # Dummy UUID for path params
 DUMMY = "00000000-0000-0000-0000-000000000000"

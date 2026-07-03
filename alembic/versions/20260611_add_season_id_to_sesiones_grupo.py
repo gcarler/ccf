@@ -13,8 +13,8 @@ Las sesiones existentes quedan con season_id NULL — sin pérdida de datos.
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 revision: str = "20260611_season_id_sesiones"
 down_revision: Union[str, None] = "20260607_evangelism_default_role"

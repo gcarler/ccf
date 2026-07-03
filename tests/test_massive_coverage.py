@@ -3,9 +3,12 @@ MASSIVE COVERAGE — One giant test that creates rich data and calls EVERY funct
 This is the most efficient approach: create data ONCE, then call 200+ functions.
 """
 import uuid
+from datetime import datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, date, timedelta, timezone
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(s):
@@ -35,10 +38,14 @@ def rich_data(client, db_session):
     """Create rich data ONCE for all tests in this module."""
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
     from backend.models_evangelism import (
-        EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
-        Asistencia, ParticipanteGrupo, CategoriaEstrategia,
+        Asistencia,
+        CategoriaEstrategia,
+        EstrategiaEvangelismo,
+        GrupoEvangelismo,
+        ParticipanteGrupo,
+        SesionGrupo,
     )
 
     # 20 personas
@@ -236,7 +243,7 @@ class TestCRMAllFunctions:
         assert result is not None and len(result) > 0
 
     def test_families_crud(self, rich_data):
-        from backend.crud.crm import get_families, create_family, get_family_personas
+        from backend.crud.crm import create_family, get_families, get_family_personas
         db = rich_data["db"]
         families = _c(get_families, db)
         assert isinstance(families, list)
@@ -262,7 +269,7 @@ class TestCRMAllFunctions:
             assert isinstance(result, (list, dict))
 
     def test_grupos(self, rich_data):
-        from backend.crud.crm import get_grupos, get_grupo
+        from backend.crud.crm import get_grupo, get_grupos
         db = rich_data["db"]
         groups = _c(get_grupos, db)
         assert isinstance(groups, list)

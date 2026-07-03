@@ -1,6 +1,9 @@
 #!/usr/bin/env python3.12
 """CCF PLATFORM FIX-ALL — Single script to verify and fix everything."""
-import sys, os, subprocess, re
+import os
+import re
+import subprocess
+import sys
 
 sys.path.insert(0, '/root/ccf')
 os.environ['ENV_FILE'] = '/root/ccf/backend/.env'
@@ -98,7 +101,7 @@ except:
 
 # ─── 6. RECENT ERRORS ───
 print("\n6. Recent errors (last 20 lines)")
-out, _, _ = run("pm2 logs ccf-backend-staging --lines 20 --nostream 2>&1 | grep -i 'error\|traceback\|cannot import' | tail -5")
+out, _, _ = run(r"pm2 logs ccf-backend-staging --lines 20 --nostream 2>&1 | grep -i 'error\|traceback\|cannot import' | tail -5")
 if out:
     print(f"   {FAIL} Errors found:\n{out}")
 else:

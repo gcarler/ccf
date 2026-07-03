@@ -7,9 +7,9 @@ Revises: 20260627_0010_strategy_uuid
 from typing import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
 
 revision: str = "20260627_0011_crm_tasks"
 down_revision: str | None = "20260627_0010_strategy_uuid"
