@@ -82,7 +82,7 @@ export default function StudentCertificates() {
                 title="Mis certificados"
                 description="Diplomas por nivel de formación: Básico, Intermedio y Misión Global."
                 tags={['Básico', 'Intermedio', 'Misión Global']}
-                watchers={['Academia Faro', 'Optimus Brain']}
+                watchers={['Academia CCF', 'Optimus Brain']}
                 primaryAction={{ label: alertsEnabled ? 'Alertas activas' : 'Activar alertas', icon: Bell, onClick: () => {
                     setAlertsEnabled(true);
                     toast.success('Alertas de certificados activadas');

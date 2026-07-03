@@ -780,7 +780,7 @@ export default function StrategyDetailPage() {
  if (!attendanceSession) return;
  setSavingNewVisitor(true);
  try {
- const res = await apiFetch<{ status: string; persona_id: string; first_name?: string | null; last_name?: string | null }>('/evangelism/faro/visitors', {
+ const res = await apiFetch<{ status: string; persona_id: string; first_name?: string | null; last_name?: string | null }>('/evangelism/groups/visitors', {
  method: 'POST', token,
  body: {
  first_name: newVisitorForm.first_name || null,
@@ -948,7 +948,7 @@ export default function StrategyDetailPage() {
  const groupName = (grupoId: string) => groups.find(g => g.id === grupoId)?.name || `Grupo #${grupoId}`;
 
  const shareGroupLink = (groupId: string, gName: string, via: 'copy' | 'whatsapp' | 'telegram') => {
- const url = `${window.location.origin}/plataforma/evangelism/faro/${groupId}`;
+ const url = `${window.location.origin}/plataforma/evangelism/groups/${groupId}`;
  const msg = `Hola, este es el enlace directo a tu grupo "${gName}" en la plataforma CCF:`;
  if (via === 'copy') {
  navigator.clipboard.writeText(url).then(() => toast.success('Enlace copiado al portapapeles'));
@@ -1280,7 +1280,7 @@ export default function StrategyDetailPage() {
  <Users size={10} /> Personas
  </button>
  <button
- onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/evangelism/faro/${item.id}`); }}
+ onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/evangelism/groups/${item.id}`); }}
  className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors"
  >
  <Calendar size={10} /> Detalle
@@ -1606,7 +1606,7 @@ export default function StrategyDetailPage() {
  className="absolute top-2 right-2 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Eliminar">
  <Trash2 size={14} />
  </button>
- <button onClick={e => { e.stopPropagation(); router.push(`/plataforma/evangelism/faro/${g.id}`); }}
+ <button onClick={e => { e.stopPropagation(); router.push(`/plataforma/evangelism/groups/${g.id}`); }}
  className="absolute top-2 right-8 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Ver detalle">
  <Calendar size={14} />
  </button>

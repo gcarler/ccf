@@ -55,7 +55,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
         href: "/conocer-a-jesus",
         cta: "Empezar el camino",
         img: "/images/pastores-banner.jpg",
-        alt: "Equipo pastoral de FARO"
+        alt: "Equipo pastoral de la comunidad"
       },
       cards: [
         {
@@ -144,7 +144,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     description: "Etiquetas y estados del catálogo de prédicas.",
     page: "/predicas",
     sample: {
-      hero_eyebrow: "Ministerios Faro Oficial",
+      hero_eyebrow: "Ministerios de la Comunidad",
       hero_title_lead: "Prédicas &",
       hero_title_accent: "Mensajes",
       hero_description: "Alimento para el alma — explora los mensajes más recientes de nuestro canal de YouTube.",
@@ -208,7 +208,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
           lessons: 8,
           cta: "Quiero Conocerlo de Verdad",
           imageUrl: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=600&fit=crop",
-          instructor: "Academia FARO — Teología Histórica",
+          instructor: "Academia Bíblica — Teología Histórica",
         },
         {
           id: "escatologia-sin-miedo",
@@ -219,7 +219,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
           lessons: 8,
           cta: "Quiero Leer el Apocalipsis de Nuevo",
           imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop",
-          instructor: "Academia FARO — Teología Bíblica",
+          instructor: "Academia Bíblica — Teología Bíblica",
         },
         {
           id: "teodicea-dios-frente-al-sufrimiento",
@@ -230,7 +230,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
           lessons: 10,
           cta: "Quiero Afrontar Esta Pregunta",
           imageUrl: "https://images.unsplash.com/photo-1476611338391-6f395a0ebc7b?w=800&h=600&fit=crop",
-          instructor: "Academia FARO — Filosofía y Teología",
+          instructor: "Academia Bíblica — Filosofía y Teología",
         }
       ],
       books: [
@@ -298,7 +298,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     page: "/conocer-a-jesus",
     sample: {
       intro_title: "Un Encuentro Personal",
-      intro_paragraph_1: "En FARO, creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: Ven y ve.",
+      intro_paragraph_1: "Creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: Ven y ve.",
       intro_paragraph_2: "Descubre un espacio donde las preguntas son bienvenidas y la gracia es el lenguaje principal.",
       testimonials_title: "Historias que iluminan",
       testimonials_empty_title: "Próximamente compartiremos historias de transformación.",
@@ -397,8 +397,8 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
           name: "Martina Herrera",
           role: "Pastora Fundadora",
           image: "/images/pastores/martina_herrera.webp",
-          story: "Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, Alejandro Ariza Torres.",
-          bio_short: "Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, Alejandro Ariza Torres.",
+          story: "Pastora fundadora del ministerio de la comunidad junto a su esposo, Alejandro Ariza Torres.",
+          bio_short: "Pastora fundadora del ministerio de la comunidad junto a su esposo, Alejandro Ariza Torres.",
         }
       ]
     }
@@ -424,7 +424,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     description: "Portada del boletín informativo.",
     page: "/boletin",
     sample: {
-      subtitle: "Boletín Semanal FARO",
+      subtitle: "Boletín Semanal",
       title: "Recibe nuestra palabra de aliento",
       description: "Cada semana te enviamos una reflexión bíblica, un versículo de ánimo y consejos prácticos para fortalecer tu fe.",
       cta_text: "Suscribirme ahora"
@@ -446,7 +446,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
         { href: "/testimonios", label: "Testimonios" }
       ],
       social_links: [
-        { href: "https://facebook.com/comunidadfaro", label: "Facebook", kind: "facebook" }
+        { href: "https://facebook.com/comunidad", label: "Facebook", kind: "facebook" }
       ],
       location_label: "Cartagena, Colombia",
       newsletter_label: "Boletín semanal"
@@ -494,7 +494,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     page: "/privacidad",
     sample: {
       last_update: "12 de junio de 2026",
-      summary: "Esta política describe cómo PLES SAS y la Comunidad Cristiana El Faro recopilan, usan, almacenan y protegen tus datos personales.",
+      summary: "Esta política describe cómo PLES SAS y la comunidad recopilan, usan, almacenan y protegen tus datos personales.",
       sections: [
         { id: "responsables", title: "1. Responsables del tratamiento" },
         { id: "datos-recopilados", title: "2. Datos que recopilamos" }

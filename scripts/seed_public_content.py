@@ -37,7 +37,7 @@ from backend.core.database import engine
 BLOCKS = {
 
     # ── HOME ────────────────────────────────────────────────────────────────
-    "faro_home_hero": {
+    "ccf_home_hero": {
         "title": "Hero — Inicio",
         "content": {
             "eyebrow": "UNA COMUNIDAD QUE ILUMINA",
@@ -51,7 +51,7 @@ BLOCKS = {
     },
 
     # ── NOSOTROS ────────────────────────────────────────────────────────────
-    "faro_about_hero": {
+    "ccf_about_hero": {
         "title": "Hero — Quiénes Somos",
         "content": {
             "eyebrow": "Nuestra Identidad",
@@ -60,7 +60,7 @@ BLOCKS = {
             "description": "Somos la <strong>Comunidad Cristiana El Faro</strong>, una iglesia viva y en crecimiento que existe para conectar corazones con Dios y entre sí, fundamentada en la Palabra y movida por el amor.",
         },
     },
-    "faro_about_feed": {
+    "ccf_about_feed": {
         "title": "Contenido — Quiénes Somos",
         "content": {
             "stats": [
@@ -102,14 +102,14 @@ BLOCKS = {
     },
 
     # ── PASTORES ────────────────────────────────────────────────────────────
-    "faro_pastores_hero": {
+    "ccf_pastores_hero": {
         "title": "Hero — Pastores",
         "content": {
             "title": "Liderazgo Pastoral",
             "description": "Hombres y mujeres llamados por Dios para servir, guiar y amar a esta casa.",
         },
     },
-    "faro_pastores_feed": {
+    "ccf_pastores_feed": {
         "title": "Grid — Pastores",
         "content": {
             "pastors": [
@@ -191,7 +191,7 @@ BLOCKS = {
     },
 
     # ── SEDES ───────────────────────────────────────────────────────────────
-    "faro_locations_hero": {
+    "ccf_locations_hero": {
         "title": "Hero — Sedes",
         "content": {
             "eyebrow": "Nuestra Presencia",
@@ -199,7 +199,7 @@ BLOCKS = {
             "search_placeholder": "Buscar ciudad o dirección...",
         },
     },
-    "faro_locations_feed": {
+    "ccf_locations_feed": {
         "title": "Listado — Sedes",
         "content": [
             {
@@ -236,7 +236,7 @@ BLOCKS = {
     },
 
     # ── PRÉDICAS ────────────────────────────────────────────────────────────
-    "faro_sermons_hero": {
+    "ccf_sermons_hero": {
         "title": "Hero — Prédicas",
         "content": {
             "eyebrow": "Mensaje Destacado",
@@ -245,7 +245,7 @@ BLOCKS = {
             "description": "Explora nuestra biblioteca de mensajes que iluminan el camino. Una guía espiritual diseñada para nutrir tu fe.",
         },
     },
-    "faro_sermons_feed": {
+    "ccf_sermons_feed": {
         "title": "Feed — Prédicas",
         "content": {
             "featured_label": "Mensaje de la Semana",
@@ -255,7 +255,7 @@ BLOCKS = {
     },
 
     # ── EVENTOS ─────────────────────────────────────────────────────────────
-    "faro_events_hero": {
+    "ccf_events_hero": {
         "title": "Hero — Eventos",
         "content": {
             "eyebrow": "Agenda El Faro",
@@ -265,7 +265,7 @@ BLOCKS = {
     },
 
     # ── CURSOS ──────────────────────────────────────────────────────────────
-    "faro_courses_hero": {
+    "ccf_courses_hero": {
         "title": "Hero — Cursos",
         "content": {
             "eyebrow": "Formación & Sabiduría",
@@ -274,7 +274,7 @@ BLOCKS = {
             "description": "Explora nuestra academia de cursos especializados y sumérgete en una selección literaria para iluminar tu entendimiento.",
         },
     },
-    "faro_courses_feed": {
+    "ccf_courses_feed": {
         "title": "Feed — Cursos",
         "content": {
             "featured_label": "Curso Destacado",
@@ -326,7 +326,7 @@ BLOCKS = {
     },
 
     # ── TESTIMONIOS ─────────────────────────────────────────────────────────
-    "faro_testimonios_hero": {
+    "ccf_testimonios_hero": {
         "title": "Hero — Testimonios",
         "content": {
             "eyebrow": "Impacto Real",
@@ -337,7 +337,7 @@ BLOCKS = {
     },
 
     # ── BOLETÍN ─────────────────────────────────────────────────────────────
-    "faro_boletin_hero": {
+    "ccf_boletin_hero": {
         "title": "Hero — Boletín",
         "content": {
             "subtitle": "Boletín Semanal — Comunidad Cristiana El Faro",
@@ -348,7 +348,7 @@ BLOCKS = {
     },
 
     # ── CONOCER A JESÚS ─────────────────────────────────────────────────────
-    "faro_discover_hero": {
+    "ccf_discover_hero": {
         "title": "Hero — Conocer a Jesús",
         "content": {
             "eyebrow": "Inicia tu camino",
@@ -359,7 +359,7 @@ BLOCKS = {
             "cta": "Quiero conocer a Jesús",
         },
     },
-    "faro_discover_feed": {
+    "ccf_discover_feed": {
         "title": "Feed — Conocer a Jesús",
         "content": {
             "steps": [
@@ -385,7 +385,7 @@ BLOCKS = {
     },
 
     # ── PRIVACIDAD ─────────────────────────────────────────────────────────
-    "faro_privacidad": {
+    "ccf_privacidad": {
         "title": "Política de Privacidad",
         "content": {
             "title": "Política de Privacidad",
@@ -395,7 +395,7 @@ BLOCKS = {
     },
 
     # ── NAV GLOBAL ──────────────────────────────────────────────────────────
-    "faro_nav_items": {
+    "ccf_nav_items": {
         "title": "Menú de Navegación",
         "content": {
             "items": [

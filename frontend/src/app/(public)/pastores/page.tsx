@@ -47,7 +47,7 @@ export default function PastoresIndexPage() {
     return (
         <main className="pt-24 pb-4 overflow-hidden">
             {/* ── Hero Section ── */}
-            <section className="relative faro-hero flex flex-col">
+            <section className="relative ccf-hero flex flex-col">
                 {heroBgImage ? (
                     <>
                         <div
@@ -63,20 +63,20 @@ export default function PastoresIndexPage() {
                     </div>
                 )}
 
-                <div className="faro-container mt-auto text-center relative z-10 pb-12 md:pb-16">
+                <div className="ccf-container mt-auto text-center relative z-10 pb-12 md:pb-16">
                     <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white/70 text-xs font-bold uppercase tracking-widest mb-5 border border-white/20 shadow-lg">
                         <Sparkles size={12} className="animate-pulse" /> {heroBadge}
                     </div>
-                    <h1 className={`faro-display text-4xl md:text-5xl lg:text-6xl font-black mb-5 ${heroBgImage ? "text-white" : "text-[hsl(var(--text-primary))] dark:text-white"}`}>
+                    <h1 className={`ccf-display text-4xl md:text-5xl lg:text-6xl font-black mb-5 ${heroBgImage ? "text-white" : "text-[hsl(var(--text-primary))] dark:text-white"}`}>
                         {heroTitle}
                     </h1>
                     {heroBgImage ? (
-                        <p className="faro-body text-base md:text-lg max-w-2xl mx-auto font-medium" style={{ color: 'white' }}
+                        <p className="ccf-body text-base md:text-lg max-w-2xl mx-auto font-medium" style={{ color: 'white' }}
                             dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(heroDescription) }} />
                     ) : (
                         <RichText
                             html={heroDescription}
-                            className="faro-body text-base md:text-lg max-w-2xl mx-auto font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                            className="ccf-body text-base md:text-lg max-w-2xl mx-auto font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                         />
                     )}
                     <div className="flex items-center justify-center gap-3 mt-8">
@@ -88,7 +88,7 @@ export default function PastoresIndexPage() {
             </section>
 
             {/* ── Pastors Grid ── */}
-            <section className="faro-section faro-container pt-[3cm]">
+            <section className="ccf-section ccf-container pt-[3cm]">
                 {!pastorsCms ? (
                     <div className="flex items-center justify-center py-20">
                         <div className="w-8 h-8 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />

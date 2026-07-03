@@ -39,7 +39,7 @@ const ACCESS_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'c
 
 const MODULES = [
     { id: 'crm', label: 'CRM Pastoral', icon: Users, color: 'text-[hsl(var(--primary))]' },
-    { id: 'academy', label: 'Academia Faro', icon: BookOpen, color: 'text-emerald-500' },
+    { id: 'academy', label: 'Academia CCF', icon: BookOpen, color: 'text-emerald-500' },
     { id: 'projects', label: 'Proyectos', icon: ClipboardList, color: 'text-[hsl(var(--primary))]' },
     { id: 'finance', label: 'Finanzas', icon: Lock, color: 'text-amber-500' },
     { id: 'cms', label: 'Sitio Web', icon: Layout, color: 'text-[hsl(var(--primary))]' },

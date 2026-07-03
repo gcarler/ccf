@@ -137,7 +137,7 @@ const MODE_CONFIG: Record<
  },
 };
 
-function FaroGroupsContent() {
+function GroupsContent() {
  const { token } = useAuth();
  const searchParams = useSearchParams();
  const router = useRouter();
@@ -225,7 +225,7 @@ function FaroGroupsContent() {
  Promise.all([
  apiFetch<Grupo[]>('/evangelism/grupos', { token }),
  loadPersonas(),
- apiFetch<AssignmentSummary>('/evangelism/faro/assignment-summary', {
+ apiFetch<AssignmentSummary>('/evangelism/groups/assignment-summary', {
  token,
  }).catch(() => null),
  ])
@@ -413,7 +413,7 @@ function FaroGroupsContent() {
  );
  setHouses(prev => prev.map(h => (h.id === updated.id ? updated : h)));
  const refreshed = await apiFetch<AssignmentSummary>(
- '/evangelism/faro/assignment-summary',
+ '/evangelism/groups/assignment-summary',
  { token }
  );
  setSummary(refreshed);
@@ -727,7 +727,7 @@ function FaroGroupsContent() {
  // PUSH LIST TO SIDEBAR 2
  useEffect(() => {
  pushSidebarPanel({
- id: 'faro-groups-list',
+ id: 'groups-list',
  title: 'Grupos',
  replaceAll: true,
  content: (
@@ -864,7 +864,7 @@ function FaroGroupsContent() {
  return (
  <EvangelismShell
  breadcrumbs={[
- { label: 'Grupos en Casa', href: '/plataforma/evangelism/faro', icon: Home },
+ { label: 'Grupos en Casa', href: '/plataforma/evangelism/groups', icon: Home },
  { label: 'Grupos', icon: Home },
  ]}
  viewType={viewType}
@@ -883,7 +883,7 @@ function FaroGroupsContent() {
  <div className="flex items-center gap-1">
  {!isCreating && selectedHouse && (
  <button
- onClick={() => router.push(`/plataforma/evangelism/faro/sessions/${selectedHouse.id}`)}
+ onClick={() => router.push(`/plataforma/evangelism/groups/sessions/${selectedHouse.id}`)}
  className="size-8 rounded-lg bg-green-50 dark:bg-green-500/10 flex items-center justify-center text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))] hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors"
  title="Reportar sesión"
  >
@@ -930,7 +930,7 @@ function FaroGroupsContent() {
  </div>
  )}
  <form
- id="faro-form"
+ id="groups-form"
  onSubmit={handleSave}
  className="space-y-4 w-full"
  >
@@ -1188,7 +1188,7 @@ function FaroGroupsContent() {
  </p>
  </div>                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
                                   <a
-                                    href={`/plataforma/evangelism/faro/${selectedHouse.id}`}
+                                    href={`/plataforma/evangelism/groups/${selectedHouse.id}`}
                                     className="px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2"
                                   >
                                     <Calendar size={14} /> Registrar Asistencia
@@ -1308,7 +1308,7 @@ function FaroGroupsContent() {
  </button>
  <button
  type="submit"
- form="faro-form"
+ form="groups-form"
  disabled={saving}
  className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
  >
@@ -1420,7 +1420,7 @@ export default function FaroGroupsPage() {
  <div className="p-4 text-center text-[hsl(var(--text-secondary))]">Cargando grupos...</div>
  }
  >
- <FaroGroupsContent />
+ <GroupsContent />
  </Suspense>
  );
 }

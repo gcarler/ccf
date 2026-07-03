@@ -171,7 +171,7 @@ const mockCertificates = [
 const mockLessons = {
   1: [
     { id: 201, title: 'Visión y ADN', content: 'Conoce nuestra historia y pilares espirituales.', order_index: 1, duration_minutes: 25 },
-    { id: 202, title: 'Cultura Faro', content: 'Prácticas clave para discipulado continuo.', order_index: 2, duration_minutes: 30 },
+    { id: 202, title: 'Cultura CCF', content: 'Prácticas clave para discipulado continuo.', order_index: 2, duration_minutes: 30 },
   ],
   2: [
     { id: 301, title: 'Multiplica tu mesa', content: 'Dinámicas para crecer en grupos vida.', order_index: 1, duration_minutes: 20 },

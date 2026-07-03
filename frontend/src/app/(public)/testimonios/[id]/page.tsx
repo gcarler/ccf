@@ -208,7 +208,7 @@ export default function TestimonioDetailPage() {
                                 if (navigator.share) {
                                     navigator.share({
                                         title: `Testimonio de ${testimonial.author?.username}`,
-                                        text: `Lee el testimonio de ${testimonial.author?.username} en FARO.`,
+                                        text: `Lee el testimonio de ${testimonial.author?.username} en la comunidad.`,
                                         url: shareUrl,
                                     });
                                 } else {

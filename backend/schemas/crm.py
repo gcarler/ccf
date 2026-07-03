@@ -864,7 +864,7 @@ class Family(BaseModel):
     created_at: datetime
     model_config = orm_config
 
-class FaroAttendanceReportItem(BaseModel):
+class GroupAttendanceReportItem(BaseModel):
     persona_id: UUID
     attended: bool = True
     absence_reason: Optional[str] = None
@@ -872,7 +872,7 @@ class FaroAttendanceReportItem(BaseModel):
     estado: Optional[str] = None  # EstadoAsistenciaEnum
     es_primera_vez: bool = False
 
-class FaroSessionReportUpdate(BaseModel):
+class GroupSessionReportUpdate(BaseModel):
     session_date: Optional[date] = None
     status: Optional[str] = None
     topic: Optional[str] = None
@@ -882,9 +882,9 @@ class FaroSessionReportUpdate(BaseModel):
     novelty_detail: Optional[str] = None
     cancellation_reason: Optional[str] = None
     reported_by_persona_id: Optional[str] = None
-    attendees: Optional[List[FaroAttendanceReportItem]] = None
+    attendees: Optional[List[GroupAttendanceReportItem]] = None
 
-class FaroSessionAttendanceItem(BaseModel):
+class GroupSessionAttendanceItem(BaseModel):
     persona_id: UUID
     name: str
     role: Optional[str] = None
@@ -895,7 +895,7 @@ class FaroSessionAttendanceItem(BaseModel):
     estado: Optional[str] = None  # EstadoAsistenciaEnum
     es_primera_vez: bool = False
 
-class FaroSessionAttendance(BaseModel):
+class GroupSessionAttendance(BaseModel):
     session_id: UUID
     session_date: date
     grupo_id: str
@@ -908,9 +908,9 @@ class FaroSessionAttendance(BaseModel):
     cancellation_reason: Optional[str] = None
     reported_by_persona_id: Optional[str] = None
     total: int
-    attendees: List[FaroSessionAttendanceItem] = []
-    absentees: List[FaroSessionAttendanceItem] = []
-    expected_participantes: List[FaroSessionAttendanceItem] = []
+    attendees: List[GroupSessionAttendanceItem] = []
+    absentees: List[GroupSessionAttendanceItem] = []
+    expected_participantes: List[GroupSessionAttendanceItem] = []
     model_config = orm_config
 
 class CaseCallCreate(BaseModel):

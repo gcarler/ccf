@@ -168,7 +168,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                         <div className="mt-auto w-full grid grid-cols-3 items-end pt-12 relative z-10">
                             <div className="flex flex-col items-center">
                                 <div className="w-full max-w-[180px] border-t-2 border-[hsl(var(--border))] pt-3">
-                                    <p className="font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide">Coordinación Faro</p>
+                                    <p className="font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide">Coordinación CCF</p>
                                 </div>
                             </div>
 

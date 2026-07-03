@@ -157,7 +157,7 @@ export default function NewCoursePage() {
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4">Código Identificador</label>
                                     <input 
-                                        required type="text" placeholder="Ej: FARO-01" value={formData.code}
+                                        required type="text" placeholder="Ej: CCF-01" value={formData.code}
                                         onChange={(e) => setFormData({...formData, code: e.target.value})}
                                         className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
                                     />

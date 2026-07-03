@@ -12,6 +12,107 @@ import OptimizedImage from "@/components/ui/OptimizedImage";
 import BuilderSectionInspector from "./BuilderSectionInspector";
 import type { PageBuilderState, AiTemplate, AiTone } from "@/hooks/usePageBuilder";
 
+/* ── JSON-LD Preview Component ─────────────────────────────────────── */
+
+interface JsonLdPreviewProps {
+  pageTitle: string;
+  slug: string;
+  seoTitle: string;
+  seoDescription: string;
+  seoImage: string;
+  canonicalUrl: string;
+  sections: Array<{ type: string; props_json: Record<string, unknown> }>;
+  siteUrl: string;
+}
+
+function JsonLdPreview({ pageTitle, slug, seoTitle, seoDescription, seoImage, canonicalUrl, sections, siteUrl }: JsonLdPreviewProps) {
+  const baseUrl = siteUrl.startsWith("http") ? siteUrl : `https://${siteUrl}`;
+  const url = canonicalUrl || `${baseUrl.replace(/\/$/, "")}/${slug}`;
+  const title = seoTitle || pageTitle || "Página";
+  const description = seoDescription || undefined;
+  const image = seoImage || undefined;
+
+  // Detect FAQ sections
+  const faqItems: Array<{ question: string; answer: string }> = [];
+  sections.forEach((s) => {
+    if (s.type === "faq") {
+      const props = s.props_json || {};
+      const items = (props.items as Array<Record<string, string>>) || (props.faqs as Array<Record<string, string>>) || [];
+      items.forEach((item) => {
+        const q = item.q || item.question || "";
+        const a = item.a || item.answer || "";
+        if (q && a) faqItems.push({ question: q, answer: a });
+      });
+    }
+  });
+
+  // Detect Article signals (rich_text heavy)
+  const hasArticle = sections.some((s) => s.type === "rich_text" || s.type === "rich_text_columns");
+
+  let jsonLd: Record<string, unknown> | null = null;
+
+  if (faqItems.length > 0) {
+    jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqItems.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.answer,
+        },
+      })),
+      url,
+    };
+  } else if (hasArticle) {
+    let wordCount = 0;
+    sections.forEach((s) => {
+      const body = (s.props_json?.body as string) || "";
+      wordCount += body.split(/\s+/).filter(Boolean).length;
+    });
+    jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: title,
+      url,
+      ...(description ? { description } : {}),
+      ...(image ? { image } : {}),
+      ...(wordCount > 0 ? { wordCount } : {}),
+    };
+  } else {
+    jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: title,
+      url,
+      ...(description ? { description } : {}),
+      ...(image ? { image } : {}),
+    };
+  }
+
+  const jsonString = JSON.stringify(jsonLd, null, 2);
+
+  return (
+    <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+          Vista previa JSON-LD (Schema.org)
+        </p>
+        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
+          {faqItems.length > 0 ? "FAQPage" : hasArticle ? "Article" : "WebPage"}
+        </span>
+      </div>
+      <pre className="text-[10px] font-mono bg-[hsl(var(--bg-primary))] dark:bg-[#0d1117] border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-2 max-h-40 overflow-y-auto whitespace-pre-wrap break-all">
+        <code>{jsonString}</code>
+      </pre>
+      <p className="text-[9px] text-[hsl(var(--text-secondary))]">
+        Este structured data se inyecta automáticamente en el &lt;head&gt; de la página pública.
+      </p>
+    </div>
+  );
+}
+
 export default function BuilderRightPanel({
   builder,
 }: {
@@ -22,7 +123,8 @@ export default function BuilderRightPanel({
     versions, publishLogs, runWorkflow, rollback, savePageMetadata, togglePageArchive,
     pageTitleDraft, setPageTitleDraft, pageSlugDraft, setPageSlugDraft,
     seoTitleDraft, setSeoTitleDraft, seoDescriptionDraft, setSeoDescriptionDraft,
-    seoImageDraft, setSeoImageDraft, seoKeyword, setSeoKeyword, seoAnalysis, readabilityScore,
+    seoImageDraft, setSeoImageDraft, seoCanonicalDraft, setSeoCanonicalDraft, seoRobotsDraft, setSeoRobotsDraft,
+    seoKeyword, setSeoKeyword, seoAnalysis, readabilityScore,
     serpPreviewDevice, setSerpPreviewDevice, activeRightTab, setActiveRightTab,
     aiPrompt, setAiPrompt, aiGenerating, aiOutput, aiTone, setAiTone, aiTemplate, setAiTemplate,
     handleAiGenerate, handleAiImageGenerate, handleInsertAiAsSection, handleReplaceActiveSectionWithAi,
@@ -52,7 +154,7 @@ export default function BuilderRightPanel({
               onClick={() => setActiveRightTab("ai")}
               className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${activeRightTab === "ai" ? "bg-[hsl(var(--primary))] text-white" : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"}`}
             >
-              <Wand2 size={12} /> FaroGPT
+              <Wand2 size={12} /> Asistente IA
             </button>
             <button
               onClick={() => setActiveRightTab("analytics")}
@@ -299,6 +401,48 @@ export default function BuilderRightPanel({
                 </div>
               </div>
 
+              {/* ADVANCED SEO */}
+              <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">SEO Técnico</p>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-[9px] uppercase tracking-wide font-bold text-[hsl(var(--text-secondary))] block mb-1">Canonical URL</label>
+                    <input
+                      value={seoCanonicalDraft}
+                      onChange={(e) => setSeoCanonicalDraft(e.target.value)}
+                      placeholder={`${SITE_URL || "https://ejemplo.com"}/${activePage?.slug || ""}`}
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    />
+                    <p className="text-[9px] text-[hsl(var(--text-secondary))] mt-1">Si se deja vacío, se usa la URL automática de la página.</p>
+                  </div>
+                  <div>
+                    <label className="text-[9px] uppercase tracking-wide font-bold text-[hsl(var(--text-secondary))] block mb-1">Meta Robots</label>
+                    <select
+                      value={seoRobotsDraft}
+                      onChange={(e) => setSeoRobotsDraft(e.target.value)}
+                      className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                    >
+                      <option value="">index, follow (por defecto)</option>
+                      <option value="index, nofollow">index, nofollow</option>
+                      <option value="noindex, follow">noindex, follow</option>
+                      <option value="noindex, nofollow">noindex, nofollow</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* JSON-LD PREVIEW */}
+              <JsonLdPreview
+                pageTitle={activePage?.title || ""}
+                slug={activePage?.slug || ""}
+                seoTitle={seoTitleDraft}
+                seoDescription={seoDescriptionDraft}
+                seoImage={seoImageDraft}
+                canonicalUrl={seoCanonicalDraft}
+                sections={builder.sections}
+                siteUrl={SITE_URL || siteKey}
+              />
+
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Recomendaciones SEO</p>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
@@ -318,11 +462,11 @@ export default function BuilderRightPanel({
             </div>
           )}
 
-          {/* TAB 3: AI ASSISTANT (FAROGPT) */}
+          {/* TAB 3: AI ASSISTANT */}
           {activeRightTab === "ai" && (
             <div className="space-y-4 animate-fade-in">
               <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">FaroGPT Asistente Editorial</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asistente IA Editorial</p>
                 
                 <div className="space-y-3">
                   <div>
@@ -371,7 +515,7 @@ export default function BuilderRightPanel({
                 >
                   {aiGenerating ? (
                     <>
-                      <RefreshCw size={12} className="animate-spin" /> FaroGPT redactando...
+                      <RefreshCw size={12} className="animate-spin" /> Asistente IA redactando...
                     </>
                   ) : (
                     <>

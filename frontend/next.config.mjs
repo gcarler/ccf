@@ -108,6 +108,16 @@ const nextConfig = {
                 destination: '/:path*',
                 permanent: true,
             },
+            {
+                source: '/plataforma/evangelism/faro',
+                destination: '/plataforma/evangelism/groups',
+                permanent: true,
+            },
+            {
+                source: '/plataforma/evangelism/faro/:path*',
+                destination: '/plataforma/evangelism/groups/:path*',
+                permanent: true,
+            },
         ];
     },
     async rewrites() {

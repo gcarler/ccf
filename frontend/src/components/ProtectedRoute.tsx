@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 }
 
 // ─── Icono de llama del brand (igual que el login) ───────────────────────────
-function FaroFlame({ size = 16 }: { size?: number }) {
+function GroupFlame({ size = 16 }: { size?: number }) {
     return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
             <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
@@ -106,7 +106,7 @@ function GateScreen({
 
                 {/* Badge del brand — idéntico al login */}
                 <div className="inline-flex items-center gap-3 border border-white/20 rounded-full px-3 py-2.5 bg-white/5 backdrop-blur-md mb-10">
-                    <FaroFlame size={16} />
+                    <GroupFlame size={16} />
                     <span className="text-white font-bold uppercase tracking-wide text-[10px]">
                         Ministerio Internacional
                     </span>
@@ -241,7 +241,7 @@ function LoadingScreen() {
             <div className="relative z-10 flex flex-col items-center gap-5">
                 {/* Badge */}
                 <div className="inline-flex items-center gap-2.5 border border-white/15 rounded-full px-3 py-2 bg-white/5 backdrop-blur-md mb-2">
-                    <FaroFlame size={14} />
+                    <GroupFlame size={14} />
                     <span className="text-white/60 font-bold uppercase tracking-wide text-[9px]">{SITE_NAME}</span>
                 </div>
 

@@ -112,7 +112,7 @@ const RESOURCES: CmsResource[] = [
       props_json: {
         title: "Vida en comunidad",
         items: [
-          { url: "/media/servicio-1.jpg", alt: "Servicio dominical", caption: "Domingo en FARO" },
+          { url: "/media/servicio-1.jpg", alt: "Servicio dominical", caption: "Domingo en comunidad" },
           { url: "/media/grupo-1.jpg", alt: "Grupo reunido", caption: "Casas de bendicion" },
         ],
       },
@@ -137,7 +137,7 @@ const RESOURCES: CmsResource[] = [
         title: "Sede principal",
         address: "Mocoa, Putumayo",
         embed_url: "https://www.google.com/maps/embed?...",
-        directions_url: "https://maps.google.com/?q=FARO",
+        directions_url: "https://maps.google.com/?q=iglesia",
       },
     },
   },
@@ -299,7 +299,7 @@ const RESOURCES: CmsResource[] = [
     example: {
       tokens_json: {
         "--site-primary": "#2563eb",
-        "--site-logo-name": "FARO",
+        "--site-logo-name": "Comunidad",
         "--site-header-cta-href": "/conocer-a-jesus",
       },
     },

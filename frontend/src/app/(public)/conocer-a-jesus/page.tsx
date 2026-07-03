@@ -45,7 +45,7 @@ export default function ConocerAJesusPage() {
     const heroCta = heroContent?.cta || "Quiero conocer a Jesús";
     const heroBgImage = heroContent?.bg_image || null;
     const introTitle = (discoverData?.intro_title as string) || "Un Encuentro Personal";
-    const introParagraph1 = (discoverData?.intro_paragraph_1 as string) || "En FARO, creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: Ven y ve.";
+    const introParagraph1 = (discoverData?.intro_paragraph_1 as string) || "Creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: Ven y ve.";
     const introParagraph2 = (discoverData?.intro_paragraph_2 as string) || "Descubre un espacio donde las preguntas son bienvenidas y la gracia es el lenguaje principal. Jesús ofrece descanso para el alma y una dirección clara para el futuro.";
     const testimonialsTitle = (discoverData?.testimonials_title as string) || "Historias que iluminan";
     const testimonialsEmptyTitle = (discoverData?.testimonials_empty_title as string) || "Próximamente compartiremos historias de transformación.";
@@ -123,7 +123,7 @@ export default function ConocerAJesusPage() {
     return (
         <main className="pt-[88px]">
             {/* ── HERO ──────────────────────────────────────── */}
-            <header className="relative faro-hero flex items-center overflow-hidden">
+            <header className="relative ccf-hero flex items-center overflow-hidden">
                 {/* Background: lighthouse in fog */}
                 <div
                     className="absolute inset-0 bg-cover bg-center"
@@ -150,7 +150,7 @@ export default function ConocerAJesusPage() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="relative z-10 faro-container pb-8 md:pb-16"
+                    className="relative z-10 ccf-container pb-8 md:pb-16"
                 >
                     <span
                         className="inline-block px-4 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wide mb-3"
@@ -163,7 +163,7 @@ export default function ConocerAJesusPage() {
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="max-w-3xl text-5xl sm:text-6xl lg:text-8xl font-bold faro-display mb-4"
+                        className="max-w-3xl text-5xl sm:text-6xl lg:text-8xl font-bold ccf-display mb-4"
                         style={{ color: "var(--site-on-hero)" }}
                     >
                         {heroTitleLead}{" "}
@@ -179,10 +179,10 @@ export default function ConocerAJesusPage() {
                         </span>{" "}
                         {heroTitleTail}
                     </h1>
-                    <RichText html={heroDescription} className="faro-body text-base sm:text-lg max-w-2xl mb-8" />
+                    <RichText html={heroDescription} className="ccf-body text-base sm:text-lg max-w-2xl mb-8" />
                     <a
                         href="#contacto"
-                        className="faro-button"
+                        className="ccf-button"
                         style={{
                             background: "var(--site-hero-cta-gradient)",
                             color: "var(--site-on-hero)",
@@ -197,30 +197,30 @@ export default function ConocerAJesusPage() {
 
             {/* ── INTRO EDITORIAL ─────────────────────────── */}
             <section
-                className="faro-section"
+                className="ccf-section"
                 style={{ background: "var(--site-surface-container-low)" }}
             >
-                <div className="faro-container grid md:grid-cols-2 gap-6 md:gap-10 items-center">
+                <div className="ccf-container grid md:grid-cols-2 gap-6 md:gap-10 items-center">
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                     >
                         <h2
-                            className="faro-headline text-2xl md:text-3xl font-bold mb-4"
+                            className="ccf-headline text-2xl md:text-3xl font-bold mb-4"
                             style={{ color: "var(--site-primary)" }}
                         >
                             {introTitle}
                         </h2>
                         <div className="space-y-5">
                             <div
-                                className="faro-body text-lg"
+                                className="ccf-body text-lg"
                                 style={{ color: "var(--site-on-surface-variant)" }}
                             >
                                 <RichText html={introParagraph1} className="[&_strong]:text-site-on-surface" />
                             </div>
                             <p
-                                className="faro-body text-lg"
+                                className="ccf-body text-lg"
                                 style={{ color: "var(--site-on-surface-variant)" }}
                             >
                                 {introParagraph2}
@@ -235,7 +235,7 @@ export default function ConocerAJesusPage() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.1 * (idx + 1) }}
-                                className="faro-card p-5"
+                                className="ccf-card p-5"
                                 style={{ background: "var(--site-surface-container)" }}
                             >
                                 <div
@@ -254,7 +254,7 @@ export default function ConocerAJesusPage() {
                                     {title}
                                 </h4>
                                 <p
-                                    className="faro-body text-xs"
+                                    className="ccf-body text-xs"
                                     style={{ color: "var(--site-on-surface-variant)" }}
                                 >
                                     {desc}
@@ -267,18 +267,18 @@ export default function ConocerAJesusPage() {
 
             {/* ── TESTIMONIOS RÁPIDOS ──────────────────────── */}
             <section
-                className="faro-section"
+                className="ccf-section"
                 style={{ background: "var(--site-surface)" }}
             >
-                <div className="faro-container">
+                <div className="ccf-container">
                     <h2
-                        className="faro-headline text-xl md:text-2xl font-bold mb-6 text-center"
+                        className="ccf-headline text-xl md:text-2xl font-bold mb-6 text-center"
                         style={{ color: "var(--site-on-background)" }}
                     >
                         {testimonialsTitle}
                     </h2>
                     {testimonials.length === 0 ? (
-                        <p className="faro-body text-center col-span-full py-8" style={{ color: "var(--site-on-surface-variant)" }}>
+                        <p className="ccf-body text-center col-span-full py-8" style={{ color: "var(--site-on-surface-variant)" }}>
                             {testimonialsEmptyTitle}
                         </p>
                     ) : (
@@ -290,14 +290,14 @@ export default function ConocerAJesusPage() {
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.1 * idx }}
-                                className="faro-card p-6 border-b-4"
+                                className="ccf-card p-6 border-b-4"
                                 style={{
                                     background: "var(--site-surface-container)",
                                     borderColor: "var(--site-primary)",
                                 }}
                             >
                                 <p
-                                    className="faro-body text-lg italic mb-3"
+                                    className="ccf-body text-lg italic mb-3"
                                     style={{ color: "var(--site-on-surface)" }}
                                 >
                                     &quot;{t.content}&quot;
@@ -318,20 +318,20 @@ export default function ConocerAJesusPage() {
             {/* ── FORMULARIO DE CONTACTO ───────────────────── */}
             <section
                 id="contacto"
-                className="faro-section"
+                className="ccf-section"
                 style={{ background: "var(--site-surface-container-low)" }}
             >
-                <div className="faro-container grid md:grid-cols-2 gap-6 md:gap-10 items-start">
+                <div className="ccf-container grid md:grid-cols-2 gap-6 md:gap-10 items-start">
                     {/* Info lado izq */}
                     <div>
                         <h2
-                            className="faro-headline text-2xl md:text-3xl font-bold mb-4"
+                            className="ccf-headline text-2xl md:text-3xl font-bold mb-4"
                             style={{ color: "var(--site-on-background)" }}
                         >
                             {contactTitle}
                         </h2>
                         <p
-                            className="faro-body text-lg mb-5"
+                            className="ccf-body text-lg mb-5"
                             style={{ color: "var(--site-on-surface-variant)" }}
                         >
                             {contactDescription}
@@ -363,7 +363,7 @@ export default function ConocerAJesusPage() {
                         initial={{ opacity: 0, x: 30 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        className="faro-card p-6 md:p-8"
+                        className="ccf-card p-6 md:p-8"
                         style={{
                             background: "var(--site-surface-container)",
                         }}
@@ -382,7 +382,7 @@ export default function ConocerAJesusPage() {
                                 >
                                     {successTitle}
                                 </h3>
-                                <p className="faro-body" style={{ color: "var(--site-on-surface-variant)" }}>
+                                <p className="ccf-body" style={{ color: "var(--site-on-surface-variant)" }}>
                                     {successDescription}
                                 </p>
                             </div>
@@ -445,7 +445,7 @@ export default function ConocerAJesusPage() {
                                     <button
                                         type="submit"
                                         disabled={status === "sending"}
-                                        className="faro-button w-full"
+                                        className="ccf-button w-full"
                                     style={{
                                         background:
                                             "linear-gradient(135deg, var(--site-primary), var(--site-secondary))",

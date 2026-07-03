@@ -92,7 +92,7 @@ export default function CursosPage() {
     const emptyBooksMessage = typeof courseFeed.empty_books_message === "string" ? courseFeed.empty_books_message : "Próximamente tendremos libros disponibles.";
     const coursesTitle = typeof courseFeed.courses_title === "string" ? courseFeed.courses_title : "Cursos & Academia";
     const coursesDescription = typeof courseFeed.courses_description === "string" ? courseFeed.courses_description : "Programas estructurados para líderes, participantes y buscadores de la verdad. Formación teológica y práctica con estándares de excelencia.";
-    const ctaTitle = typeof courseFeed.cta_title === "string" ? courseFeed.cta_title : "Únete a la Academia FARO";
+    const ctaTitle = typeof courseFeed.cta_title === "string" ? courseFeed.cta_title : "Únete a la Academia";
     const ctaDescription = typeof courseFeed.cta_description === "string" ? courseFeed.cta_description : "Recibe actualizaciones sobre nuevos cursos, lanzamientos de libros y eventos exclusivos de formación directamente en tu correo.";
     const ctaPlaceholder = typeof courseFeed.cta_placeholder === "string" ? courseFeed.cta_placeholder : "Tu correo electrónico";
     const ctaSubmit = typeof courseFeed.cta_submit === "string" ? courseFeed.cta_submit : "Suscribirme";
@@ -165,7 +165,7 @@ export default function CursosPage() {
             </AnimatePresence>
 
             {/* ── HERO ──────────────────────────────────── */}
-            <section className="relative faro-hero flex items-center overflow-hidden">
+            <section className="relative ccf-hero flex items-center overflow-hidden">
                 <div className="absolute inset-0 z-0">
                     {heroImageUrl ? (
                         <Image
@@ -190,7 +190,7 @@ export default function CursosPage() {
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8 }}
-                    className="relative z-10 faro-container"
+                    className="relative z-10 ccf-container"
                 >
                     <span
                         className="text-xs font-semibold uppercase tracking-wide mb-4 block"
@@ -199,7 +199,7 @@ export default function CursosPage() {
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="max-w-4xl font-bold faro-display text-5xl sm:text-6xl lg:text-8xl mb-4"
+                        className="max-w-4xl font-bold ccf-display text-5xl sm:text-6xl lg:text-8xl mb-4"
                         style={{ color: "var(--site-on-background)" }}
                     >
                         {heroTitleLead}
@@ -214,12 +214,12 @@ export default function CursosPage() {
                             {heroAccent}.
                         </span>
                     </h1>
-                    <RichText html={heroDescription} className="faro-body text-base sm:text-lg max-w-xl" />
+                    <RichText html={heroDescription} className="ccf-body text-base sm:text-lg max-w-xl" />
                 </motion.div>
             </section>
 
             {/* ── CURSOS BENTO ──────────────────────────── */}
-            <section className="faro-section faro-container">
+            <section className="ccf-section ccf-container">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -228,12 +228,12 @@ export default function CursosPage() {
                 >
                     <div className="max-w-2xl">
                         <h2
-                            className="faro-headline text-2xl md:text-3xl font-bold mb-4"
+                            className="ccf-headline text-2xl md:text-3xl font-bold mb-4"
                             style={{ color: "var(--site-on-surface)" }}
                         >
                             {coursesTitle}
                         </h2>
-                        <p className="faro-body text-lg" style={{ color: "var(--site-on-surface-variant)" }}>
+                        <p className="ccf-body text-lg" style={{ color: "var(--site-on-surface-variant)" }}>
                             {coursesDescription}
                         </p>
                     </div>
@@ -301,7 +301,7 @@ export default function CursosPage() {
                                             {featuredCourse.modality || "Online"}
                                         </span>
                                         <button
-                                            className="faro-button ml-auto"
+                                            className="ccf-button ml-auto"
                                             style={{ background: "var(--site-cta-gradient)", color: "var(--site-on-primary)" }}
                                         >
                                             {featuredCourse.cta || "Ver Curso"} <ArrowRight size={16} />
@@ -321,7 +321,7 @@ export default function CursosPage() {
                                     whileInView={{ opacity: 1, x: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: i * 0.1 }}
-                                    className="faro-card h-full p-6 group flex flex-col justify-between"
+                                    className="ccf-card h-full p-6 group flex flex-col justify-between"
                                     style={{
                                         background: "var(--site-surface-container-high)",
                                     }}
@@ -368,10 +368,10 @@ export default function CursosPage() {
 
             {/* ── LIBRERÍA ──────────────────────────────── */}
             <section
-                className="faro-section"
+                className="ccf-section"
                 style={{ background: "var(--site-surface-container-low)" }}
             >
-                <div className="faro-container">
+                <div className="ccf-container">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -379,18 +379,18 @@ export default function CursosPage() {
                         className="max-w-2xl mb-16"
                     >
                             <h2
-                                className="faro-headline text-2xl md:text-3xl font-bold mb-3"
+                                className="ccf-headline text-2xl md:text-3xl font-bold mb-3"
                                 style={{ color: "var(--site-on-surface)" }}
                             >
                             {libraryTitle}
                             </h2>
-                            <p className="faro-body text-lg" style={{ color: "var(--site-on-surface-variant)" }}>
+                            <p className="ccf-body text-lg" style={{ color: "var(--site-on-surface-variant)" }}>
                             {libraryDescription}
                             </p>
                         </motion.div>
 
                     {books.length === 0 ? (
-                        <p className="faro-body text-center py-8 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+                        <p className="ccf-body text-center py-8 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
                             {emptyBooksMessage}
                         </p>
                     ) : (
@@ -404,7 +404,7 @@ export default function CursosPage() {
                                 key={book.title} 
                                 className="group flex flex-col h-full"
                             >
-                                <div className="faro-image relative w-full aspect-[2/3] mb-3">
+                                <div className="ccf-image relative w-full aspect-[2/3] mb-3">
                                     <Image
                                         src={book.img}
                                         alt={book.title}
@@ -459,7 +459,7 @@ export default function CursosPage() {
         </section>
 
             {/* ── CTA ACADEMIA ─────────────────────────── */}
-            <section className="faro-section faro-container">
+            <section className="ccf-section ccf-container">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -477,13 +477,13 @@ export default function CursosPage() {
                     <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
                         <div>
                             <h2
-                                className="faro-headline text-2xl md:text-3xl font-bold mb-3"
+                                className="ccf-headline text-2xl md:text-3xl font-bold mb-3"
                                 style={{ color: "var(--site-on-surface)" }}
                             >
                                 {ctaTitle}
                             </h2>
                             <p
-                                className="faro-body text-xl mb-6"
+                                className="ccf-body text-xl mb-6"
                                 style={{ color: "var(--site-on-surface-variant)" }}
                             >
                                 {ctaDescription}
@@ -505,7 +505,7 @@ export default function CursosPage() {
                                 />
                                 <button
                                     type="submit"
-                                    className="faro-button"
+                                    className="ccf-button"
                                     style={{
                                         background: "var(--site-cta-gradient)",
                                         color: "var(--site-on-primary)",
@@ -519,7 +519,7 @@ export default function CursosPage() {
                             <motion.div
                                 initial={{ y: 20 }}
                                 whileInView={{ y: 0 }}
-                                className="faro-image relative aspect-square"
+                                className="ccf-image relative aspect-square"
                                 style={{ background: "var(--site-surface)" }}
                             >
                                 {ctaImages[0]?.src ? (
@@ -535,7 +535,7 @@ export default function CursosPage() {
                             <motion.div
                                 initial={{ y: 40 }}
                                 whileInView={{ y: 20 }}
-                                className="faro-image relative aspect-square"
+                                className="ccf-image relative aspect-square"
                                 style={{ background: "var(--site-surface)" }}
                             >
                                 {ctaImages[1]?.src ? (

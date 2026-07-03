@@ -17,7 +17,7 @@ export default function RedirectsPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<Redirect[]>("/cms/v2/redirects?site_key=faro", { silent: true });
+      const data = await apiFetch<Redirect[]>("/cms/v2/redirects?site_key=ccf", { silent: true });
       setRedirects(Array.isArray(data) ? data : []);
     } catch { setRedirects([]); }
     setLoading(false);
@@ -27,7 +27,7 @@ export default function RedirectsPage() {
 
   const create = async () => {
     if (!form.from_path || !form.to_path) return;
-    await apiFetch("/cms/v2/redirects", { method: "POST", body: { site_key: "faro", ...form }, silent: true });
+    await apiFetch("/cms/v2/redirects", { method: "POST", body: { site_key: "ccf", ...form }, silent: true });
     setForm({ from_path: "", to_path: "", status_code: 301 });
     setShowForm(false);
     load();

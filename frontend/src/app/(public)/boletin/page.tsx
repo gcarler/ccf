@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import RichText from "@/components/public/RichText";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { apiFetch } from "@/lib/http";
+import { SITE_NAME } from "@/lib/site-config";
 
 import { toast } from "sonner";
 
@@ -16,7 +17,7 @@ export default function BoletinPage() {
 
     const content = cms?.content ? JSON.parse(cms.content) : null;
     const title = content?.title || "Recibe nuestra palabra de aliento";
-    const subtitle = content?.subtitle || "Boletín Semanal FARO";
+    const subtitle = content?.subtitle || "Boletín Semanal";
     const description = content?.description || "Cada semana te enviamos una reflexión bíblica, un versículo de ánimo y consejos prácticos para fortalecer tu fe.";
     const ctaText = content?.cta_text || "Suscribirme ahora";
     const successMessage = content?.success_message || "¡Gracias por suscribirte!";
@@ -33,7 +34,7 @@ export default function BoletinPage() {
                 body: { email, source: "newsletter-web", landing_page: "/boletin" },
             });
             setStatus("sent");
-            toast.success("¡Suscrito al boletín de FARO!");
+            toast.success(`¡Suscrito al boletín de ${SITE_NAME}!`);
         } catch {
             setStatus("error");
             toast.error("No se pudo suscribir. Intenta de nuevo.");
@@ -42,11 +43,11 @@ export default function BoletinPage() {
 
     return (
         <main className="pt-[100px] flex-1 flex items-center justify-center">
-            <section className="faro-section faro-container w-full flex items-center justify-center">
+            <section className="ccf-section ccf-container w-full flex items-center justify-center">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="faro-card w-full max-w-3xl p-8 md:p-14 relative overflow-hidden text-center"
+                    className="ccf-card w-full max-w-3xl p-8 md:p-14 relative overflow-hidden text-center"
                     style={{
                         backgroundColor: "var(--site-primary-container)",
                     }}
@@ -55,10 +56,10 @@ export default function BoletinPage() {
                         <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--site-primary)" }}>
                             {subtitle}
                         </p>
-                        <h1 className="font-black faro-display text-3xl md:text-4xl lg:text-5xl mb-4" style={{ color: "var(--site-on-background)" }}>
+                        <h1 className="font-black ccf-display text-3xl md:text-4xl lg:text-5xl mb-4" style={{ color: "var(--site-on-background)" }}>
                             {title}
                         </h1>
-                        <RichText html={description} className="faro-body text-lg md:text-xl mb-8 max-w-xl mx-auto" />
+                        <RichText html={description} className="ccf-body text-lg md:text-xl mb-8 max-w-xl mx-auto" />
                         {status === "sent" ? (
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.9 }}
@@ -86,7 +87,7 @@ export default function BoletinPage() {
                                 <button
                                     type="submit"
                                     disabled={status === "sending"}
-                                    className="faro-button disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="ccf-button disabled:opacity-60 disabled:cursor-not-allowed"
                                     style={{ background: "var(--site-cta-gradient)", color: "var(--site-on-primary)" }}
                                 >
                                     {status === "sending" ? sendingLabel : ctaText}

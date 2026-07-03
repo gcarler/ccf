@@ -963,7 +963,7 @@ function PopupBlock({ section }: { section: CmsSection }) {
   const hideOnPaths = asStringList(props, "hide_on_paths");
   const dismissMode = val(props, "dismiss_mode", "local").toLowerCase();
   const dismissDays = Math.max(1, parseInt(val(props, "dismiss_days", "30"), 10) || 30);
-  const dismissKey = val(props, "dismiss_key", "") || `faro_popup_${section.id}`;
+  const dismissKey = val(props, "dismiss_key", "") || `cms_popup_${section.id}`;
   const [isVisible, setIsVisible] = useState(false);
   const shouldRenderForRoute = useMemo(() => {
     const current = pathname || "/";
@@ -1174,15 +1174,11 @@ function DividerSection({ section }: { section: CmsSection }) {
 
 // ─── Collapsible ───────────────────────────────────────────────────────────────
 
-function sanitizeHtml(html: string): string {
-  return sanitizeCmsHtml(html);
-}
-
 function CollapsibleSection({ section }: { section: CmsSection }) {
   const props = section.props_json || {};
   const title = val(props, "title", "Información");
   const defaultOpen = props.default_open === true;
-  const contentHtml = sanitizeHtml(val(props, "content_html", ""));
+  const contentHtml = sanitizeCmsHtml(val(props, "content_html", ""));
   const [open, setOpen] = useState(defaultOpen);
 
   return (
@@ -1259,8 +1255,8 @@ function CalendarSection({ section }: { section: CmsSection }) {
   const props = section.props_json || {};
   const title = val(props, "title", "Próximos Eventos");
   const items = asItems(props).filter(Boolean);
-  const showTime = props.show_time !== false;
-  const showLocation = props.show_location !== false;
+  const shouldShowTime = props.show_time !== false;
+  const shouldShowLocation = props.show_location !== false;
 
   return (
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
@@ -1275,8 +1271,8 @@ function CalendarSection({ section }: { section: CmsSection }) {
             <div className="flex-1">
               <p className="font-bold" style={{ color: "var(--site-on-surface)" }}>{val(item, "title", "Evento")}</p>
               <div className="flex flex-wrap gap-3 text-xs mt-1" style={{ color: "var(--site-on-surface-variant)" }}>
-                {showTime && val(item, "date") && <span>{val(item, "date")}{showTime && val(item, "time") ? ` · ${val(item, "time")}` : ""}</span>}
-                {showLocation && val(item, "location") && <span>{val(item, "location")}</span>}
+                {shouldShowTime && val(item, "date") && <span>{val(item, "date")}{val(item, "time") ? ` · ${val(item, "time")}` : ""}</span>}
+                {shouldShowLocation && val(item, "location") && <span>{val(item, "location")}</span>}
               </div>
             </div>
           </div>

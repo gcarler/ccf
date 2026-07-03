@@ -247,7 +247,7 @@ export default function CmsHomePage() {
     { label: "Imagenes", value: stats.mediaImages, icon: ImageIcon },
     { label: "Videos", value: stats.mediaVideos, icon: Video },
     { label: "Podcasts", value: stats.mediaAudio, icon: Volume2 },
-    { label: "Bloques FARO", value: stats.sections, icon: Layers3 },
+    { label: "Bloques CMS", value: stats.sections, icon: Layers3 },
     { label: "Publicados", value: stats.publishedBlocks, icon: CheckCircle2 },
     { label: "En revision", value: stats.inReviewBlocks, icon: Clock3 },
     { label: "Anuncios activos", value: stats.activeAnnouncements, icon: Megaphone },
@@ -271,7 +271,7 @@ export default function CmsHomePage() {
           eyebrow="CMS"
           title="Administracion del sitio web"
           description="Control editorial para paginas, bloques, media, testimonios, eventos y publicacion multisitio."
-          tags={["Calidad web", "Publicacion", "FARO"]}
+          tags={["Calidad web", "Publicacion", "CMS"]}
           watchers={["Comunicaciones", "Pastoral", "Web"]}
           primaryAction={{ label: "Abrir sitio", icon: ExternalLink, onClick: () => window.open("/", "_blank") }}
           secondaryAction={canEdit ? { label: "Ir al builder", icon: PanelsTopLeft, onClick: () => router.push("/cms/builder") } : undefined}

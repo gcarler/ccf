@@ -1,4 +1,4 @@
-/* FARO DYNAMIC THEMES */
+/* CCF DYNAMIC THEMES */
 /* All 3 themes use independent selectors — no overlap, no cascade pollution */
 
 /* ─── COMPLIANCE: Design System & Theme Enforcement Protocol ────────────────
@@ -191,19 +191,19 @@
   --site-card-shadow: 0 32px 64px -16px rgba(0,0,0,0.3);
 }
 
-/* FARO Public Theme — Utility classes (ALL use --site-* variables, ZERO hardcoded colors) */
+/* CCF Public Theme — Utility classes (ALL use --site-* variables, ZERO hardcoded colors) */
 .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     vertical-align: middle;
 }
-.faro-glass-nav {
+.ccf-glass-nav {
     background: var(--site-glass-bg);
     backdrop-filter: blur(20px);
 }
-.faro-beam-glow {
+.ccf-beam-glow {
     background: radial-gradient(circle at 50% 50%, var(--site-glow-subtle) 0%, transparent 70%);
 }
-.faro-hero-gradient {
+.ccf-hero-gradient {
     background: linear-gradient(135deg, var(--site-primary) 0%, var(--site-primary-container) 100%);
 }
 

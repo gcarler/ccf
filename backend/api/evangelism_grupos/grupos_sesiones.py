@@ -34,8 +34,8 @@ dynamic_router = APIRouter()
 
 
 @static_router.get("/grupos/sessions")
-@static_router.get("/faro/sessions")
-def list_faro_sessions(
+@static_router.get("/groups/sessions")
+def list_groups_sessions(
     season_id: Optional[UUID] = None,
     grupo_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
@@ -85,8 +85,8 @@ def list_faro_sessions(
 
 
 @static_router.get("/grupos/sessions/mine/pending")
-@static_router.get("/faro/sessions/mine/pending")
-def list_my_pending_faro_sessions(
+@static_router.get("/groups/sessions/mine/pending")
+def list_my_pending_groups_sessions(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -187,8 +187,8 @@ def list_my_pending_faro_sessions(
 
 
 @static_router.post("/grupos/sessions", response_model=dict)
-@static_router.post("/faro/sessions", response_model=dict)
-def create_faro_session(
+@static_router.post("/groups/sessions", response_model=dict)
+def create_groups_session(
     payload: dict,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -270,7 +270,7 @@ def create_faro_session(
             if str(grupo_id).lower() != "all":
                 raise HTTPException(
                     status_code=400,
-                    detail="Ya existe una sesion registrada para ese Faro en esa fecha",
+                    detail="Ya existe una sesion registrada para ese Grupo en esa fecha",
                 )
             continue  # In batch mode, we just skip existing
 

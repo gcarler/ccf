@@ -78,7 +78,7 @@ export default function NosotrosPage() {
         <main className="min-h-screen bg-site-background pt-[88px] overflow-hidden">
 
                 {/* ── HERO ── */}
-                <section className="relative faro-section overflow-hidden">
+                <section className="relative ccf-section overflow-hidden">
                     <div className="absolute inset-0 pointer-events-none">
                         <div
                             className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full blur-3xl"
@@ -89,7 +89,7 @@ export default function NosotrosPage() {
                             style={{ background: "radial-gradient(ellipse, var(--site-glow-subtle) 0%, transparent 70%)" }}
                         />
                     </div>
-                    <div className="relative z-10 faro-container">
+                    <div className="relative z-10 ccf-container">
                         <div className="flex items-center gap-2 text-xs text-site-outline mb-8">
                             <Link href="/" className="hover:text-site-primary transition-colors">{breadcrumbInicio}</Link>
                             <ChevronRight size={12} />
@@ -100,7 +100,7 @@ export default function NosotrosPage() {
                             <Sparkles size={12} className="animate-pulse" /> {heroEyebrow}
                         </span>
                         <h1
-                            className="max-w-4xl font-black faro-display text-5xl sm:text-6xl lg:text-7xl mb-6"
+                            className="max-w-4xl font-black ccf-display text-5xl sm:text-6xl lg:text-7xl mb-6"
                         >
                             <span className="text-site-on-surface">{heroTitleLead}</span>
                             <br />
@@ -117,7 +117,7 @@ export default function NosotrosPage() {
                         </h1>
                         <RichText
                             html={heroDescription}
-                            className="faro-body text-lg md:text-xl text-site-on-surface-variant max-w-2xl mb-10 [&_strong]:text-site-on-surface"
+                            className="ccf-body text-lg md:text-xl text-site-on-surface-variant max-w-2xl mb-10 [&_strong]:text-site-on-surface"
                         />
 
                         {/* Stats */}
@@ -133,22 +133,22 @@ export default function NosotrosPage() {
                 </section>
 
                 {/* ── VISIÓN Y MISIÓN ── */}
-                <section className="faro-section bg-site-surface-container-low">
-                    <div className="faro-container grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <section className="ccf-section bg-site-surface-container-low">
+                    <div className="ccf-container grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                         {/* Visión */}
-                        <div className="faro-card relative p-8 md:p-10 overflow-hidden bg-site-surface">
+                        <div className="ccf-card relative p-8 md:p-10 overflow-hidden bg-site-surface">
                             <div className="absolute top-6 right-6 opacity-[0.06] text-site-primary">
                                 <Target size={100} />
                             </div>
                             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-[10px] font-bold uppercase tracking-widest mb-5">
                                 <Target size={11} /> Visión
                             </div>
-                            <h2 className="faro-headline text-2xl md:text-3xl font-black text-site-on-surface mb-4">
+                            <h2 className="ccf-headline text-2xl md:text-3xl font-black text-site-on-surface mb-4">
                                 {(about?.vision_title as string) || "¿A dónde vamos?"}
                             </h2>
                             <RichText
                                 html={visionText}
-                                className="faro-body text-base md:text-lg text-site-on-surface-variant [&_strong]:text-site-on-surface"
+                                className="ccf-body text-base md:text-lg text-site-on-surface-variant [&_strong]:text-site-on-surface"
                             />
                         </div>
 
@@ -166,23 +166,23 @@ export default function NosotrosPage() {
                             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest mb-5">
                                 <Sparkles size={11} /> Misión
                             </div>
-                            <h2 className="faro-headline text-2xl md:text-3xl font-black text-white mb-4">
+                            <h2 className="ccf-headline text-2xl md:text-3xl font-black text-white mb-4">
                                 {(about?.mision_title as string) || "¿Por qué existimos?"}
                             </h2>
                             <RichText
                                 html={misionText}
-                                className="faro-body text-base md:text-lg text-white/85 [&_strong]:text-white"
+                                className="ccf-body text-base md:text-lg text-white/85 [&_strong]:text-white"
                             />
                         </div>
                     </div>
                 </section>
 
                 {/* ── FUNDADORES ── */}
-                <section className="faro-section">
-                    <div className="faro-container flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
+                <section className="ccf-section">
+                    <div className="ccf-container flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
                         {/* Fotos */}
                         <div className="w-full lg:w-5/12 relative shrink-0">
-                            <div className="relative h-[340px] sm:h-[420px] md:h-[520px] overflow-hidden faro-image">
+                            <div className="relative h-[340px] sm:h-[420px] md:h-[520px] overflow-hidden ccf-image">
                                 <div className="absolute left-0 top-0 w-[58%] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-site-outline-variant/20 z-10">
                                     {about?.founder1_image ? (
                                         <Image
@@ -245,21 +245,21 @@ export default function NosotrosPage() {
                             <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-site-primary mb-4">
                                 <Heart size={12} /> {(about?.founder_label as string) || "Nuestros Pastores Principales"}
                             </span>
-                            <h2 className="faro-headline text-3xl md:text-4xl lg:text-5xl font-black text-site-on-surface mb-5">
+                            <h2 className="ccf-headline text-3xl md:text-4xl lg:text-5xl font-black text-site-on-surface mb-5">
                                 {(about?.founder_title as string) || "Un llamado a construir"}
                                 <br />
                                 <span className="text-site-primary">
                                     {(about?.founder_title_accent as string) || "una familia de fe"}
                                 </span>
                             </h2>
-                            <div className="faro-body space-y-4 text-base md:text-lg text-site-on-surface-variant [&_strong]:text-site-on-surface [&_em]:text-site-outline">
+                            <div className="ccf-body space-y-4 text-base md:text-lg text-site-on-surface-variant [&_strong]:text-site-on-surface [&_em]:text-site-outline">
                                 <RichText html={founderBio} />
                                 <RichText html={founderBio2} />
                             </div>
                             <div className="mt-10 flex flex-wrap gap-4">
                                 <Link
                                     href="/pastores"
-                                    className="faro-button"
+                                    className="ccf-button"
                                     style={{
                                         background: "var(--site-cta-gradient)",
                                         boxShadow: "var(--site-cta-shadow)",
@@ -270,7 +270,7 @@ export default function NosotrosPage() {
                                 </Link>
                                 <Link
                                     href="/sedes"
-                                    className="faro-button bg-site-surface-container text-site-on-surface-variant border border-site-outline-variant/30"
+                                    className="ccf-button bg-site-surface-container text-site-on-surface-variant border border-site-outline-variant/30"
                                 >
                                     {founderCtaVisit}
                                 </Link>
@@ -280,13 +280,13 @@ export default function NosotrosPage() {
                 </section>
 
                 {/* ── VALORES ── */}
-                <section className="faro-section bg-site-surface-container-low">
-                    <div className="faro-container">
+                <section className="ccf-section bg-site-surface-container-low">
+                    <div className="ccf-container">
                         <div className="text-center mb-14">
                             <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-site-primary mb-3">
                                 <Sparkles size={12} /> {valuesEyebrow}
                             </span>
-                            <h2 className="faro-headline text-3xl md:text-4xl lg:text-5xl font-black text-site-on-surface mb-4">
+                            <h2 className="ccf-headline text-3xl md:text-4xl lg:text-5xl font-black text-site-on-surface mb-4">
                                 {(about?.valores_title as string) || "Valores que nos Guían"}
                             </h2>
                             <div className="h-1 w-16 rounded-full bg-site-primary mx-auto" />
@@ -296,7 +296,7 @@ export default function NosotrosPage() {
                             {valores.map((v: any, idx: number) => (
                                 <div
                                     key={v.key || v.num || idx}
-                                    className="faro-card group p-6 md:p-8 bg-site-surface"
+                                    className="ccf-card group p-6 md:p-8 bg-site-surface"
                                     style={{ "--tw-shadow-color": "var(--site-glow-intense)" } as React.CSSProperties}
                                 >
                                     <div className="flex items-start justify-between mb-5">
@@ -308,7 +308,7 @@ export default function NosotrosPage() {
                                         </span>
                                     </div>
                                     <h3 className="text-lg font-black text-site-on-surface mb-2 tracking-tight">{v.title}</h3>
-                                    <p className="faro-body text-sm text-site-on-surface-variant">{v.desc}</p>
+                                    <p className="ccf-body text-sm text-site-on-surface-variant">{v.desc}</p>
                                 </div>
                             ))}
                         </div>
@@ -316,10 +316,10 @@ export default function NosotrosPage() {
                 </section>
 
                 {/* ── CITA ── */}
-                <section className="faro-section">
-                    <div className="faro-container max-w-4xl text-center">
+                <section className="ccf-section">
+                    <div className="ccf-container max-w-4xl text-center">
                         <Quote size={48} className="mx-auto mb-6 text-site-primary/20" />
-                        <blockquote className="faro-headline text-2xl md:text-3xl lg:text-4xl font-black text-site-on-surface italic mb-6">
+                        <blockquote className="ccf-headline text-2xl md:text-3xl lg:text-4xl font-black text-site-on-surface italic mb-6">
                             &ldquo;{quoteText}&rdquo;
                         </blockquote>
                         <div className="flex items-center justify-center gap-3">
@@ -336,8 +336,8 @@ export default function NosotrosPage() {
                 </section>
 
                 {/* ── CTA ── */}
-                <section className="faro-section-tight">
-                    <div className="faro-container">
+                <section className="ccf-section-tight">
+                    <div className="ccf-container">
                         <div
                             className="relative rounded-3xl overflow-hidden p-6 md:p-10 lg:p-14 text-center"
                             style={{
@@ -347,23 +347,23 @@ export default function NosotrosPage() {
                         >
                             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.12),transparent_60%)] pointer-events-none" />
                             <div className="relative z-10">
-                                <h2 className="faro-headline text-3xl md:text-4xl font-black text-white mb-4">
+                                <h2 className="ccf-headline text-3xl md:text-4xl font-black text-white mb-4">
                                     {(about?.cta_title as string) || "¿Listo para ser parte?"}
                                 </h2>
                                 <RichText
                                     html={(about?.cta_desc as string) || "Ven a conocernos. Tenemos puertas abiertas y un lugar reservado para ti y tu familia."}
-                                    className="faro-body text-base md:text-lg text-white/80 max-w-xl mx-auto mb-8"
+                                    className="ccf-body text-base md:text-lg text-white/80 max-w-xl mx-auto mb-8"
                                 />
                                 <div className="flex flex-wrap items-center justify-center gap-4">
                                     <Link
                                         href="/sedes"
-                                        className="faro-button bg-[hsl(var(--bg-primary))] text-site-primary shadow-xl"
+                                        className="ccf-button bg-[hsl(var(--bg-primary))] text-site-primary shadow-xl"
                                     >
                                         {ctaViewSedes} <ArrowRight size={14} />
                                     </Link>
                                     <Link
                                         href="/eventos"
-                                        className="faro-button bg-white/15 border border-white/25 text-white hover:bg-white/20"
+                                        className="ccf-button bg-white/15 border border-white/25 text-white hover:bg-white/20"
                                     >
                                         {ctaViewEvents}
                                     </Link>

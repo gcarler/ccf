@@ -43,7 +43,7 @@ def create_grupo(db: Session, payload: schemas.GrupoEvangelismoCreate, sede_id: 
         data["code"] = f"{base}-{suffix}"[:30]
     if not str(data.get("name") or "").strip():
         fallback_name = str(data.get("address") or data["code"]).strip()
-        data["name"] = f"Faro pendiente - {fallback_name}"
+        data["name"] = f"Grupo pendiente - {fallback_name}"
     db_obj = models.GrupoEvangelismo(**data)
     db.add(db_obj)
 

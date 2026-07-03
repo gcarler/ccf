@@ -15,7 +15,7 @@ export default function MediaFoldersPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<MediaFolder[]>("/cms/v2/media-folders?site_key=faro", { silent: true });
+      const data = await apiFetch<MediaFolder[]>("/cms/v2/media-folders?site_key=ccf", { silent: true });
       setFolders(Array.isArray(data) ? data : []);
     } catch { setFolders([]); }
     setLoading(false);
@@ -25,7 +25,7 @@ export default function MediaFoldersPage() {
 
   const create = async () => {
     if (!form.name || !form.slug) return;
-    await apiFetch("/cms/v2/media-folders", { method: "POST", body: { site_key: "faro", ...form, parent_id: form.parent_id || undefined }, silent: true });
+    await apiFetch("/cms/v2/media-folders", { method: "POST", body: { site_key: "ccf", ...form, parent_id: form.parent_id || undefined }, silent: true });
     setForm({ name: "", slug: "", parent_id: "" });
     setShowForm(false);
     load();

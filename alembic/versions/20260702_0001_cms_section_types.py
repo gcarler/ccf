@@ -27,7 +27,7 @@ down_revision: Union[str, None] = "20260701_0003_crm_events_uuid"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-# All supported section types (from cms_v2.py ALLOWED_SECTION_TYPES)
+# All supported section types (kept in sync with scripts/seed_cms_section_types.py)
 SECTION_TYPES = [
     # Existing 19
     "hero",
@@ -61,6 +61,13 @@ SECTION_TYPES = [
     "document_upload",
     "content_blocks",
     "accordion",
+    # Civic 6
+    "civic_hero_search",
+    "civic_convocatoria_cards",
+    "civic_quick_links",
+    "civic_file_downloads",
+    "civic_data_table",
+    "civic_alert_banner",
 ]
 
 

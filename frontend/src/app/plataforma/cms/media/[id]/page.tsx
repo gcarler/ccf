@@ -225,7 +225,7 @@ export default function CmsMediaDetailPage() {
                                 <input
                                     value={tagsText}
                                     onChange={(e) => setTagsText(e.target.value)}
-                                    placeholder="hero, faro, campana"
+                                    placeholder="hero, comunidad, campana"
                                     className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-4 py-3 text-sm font-bold outline-none focus:border-blue-500"
                                 />
                                 <div className="flex flex-wrap gap-2">
@@ -244,4 +244,3 @@ export default function CmsMediaDetailPage() {
         </div>
     );
 }
-

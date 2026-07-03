@@ -123,7 +123,7 @@ export default function EditCoursePage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div className="space-y-2">
                                         <label className={LABEL}>Codigo Identificador</label>
-                                        <input type="text" required placeholder="Ej: FARO-01" value={form.code} onChange={set('code')} className={INPUT} />
+                                        <input type="text" required placeholder="Ej: CCF-01" value={form.code} onChange={set('code')} className={INPUT} />
                                     </div>
                                     <div className="space-y-2">
                                         <label className={LABEL}>Nombre Publico</label>

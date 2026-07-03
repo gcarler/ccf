@@ -48,14 +48,14 @@ const DEFAULT_CONTACTS: ContactItem[] = [
   {
     id: "3",
     label: "Correo General",
-    value: "info@ccfaro.org",
+    value: "info@ccf.org",
     type: "email",
     active: true,
   },
   {
     id: "4",
     label: "Correo de Soporte",
-    value: "soporte@ccfaro.org",
+    value: "soporte@ccf.org",
     type: "email",
     active: false,
   },

@@ -46,7 +46,7 @@ export default function WebhooksPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<WebhookItem[]>("/cms/v2/webhooks?site_key=faro", { silent: true });
+      const data = await apiFetch<WebhookItem[]>("/cms/v2/webhooks?site_key=ccf", { silent: true });
       setWebhooks(Array.isArray(data) ? data : []);
     } catch { setWebhooks([]); }
     setLoading(false);
@@ -56,7 +56,7 @@ export default function WebhooksPage() {
 
   const create = async () => {
     if (!form.name || !form.url) return;
-    await apiFetch("/cms/v2/webhooks", { method: "POST", body: { site_key: "faro", ...form }, silent: true });
+    await apiFetch("/cms/v2/webhooks", { method: "POST", body: { site_key: "ccf", ...form }, silent: true });
     setForm({ name: "", url: "", events: [] });
     setShowForm(false);
     load();

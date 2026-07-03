@@ -24,8 +24,8 @@ print("UniqueConstraint in EventAttendance:", "UniqueConstraint" in ea_block)
 print("attended field in EventAttendance:", "attended" in ea_block)
 print("ondelete CASCADE in EventAttendance:", "ondelete" in ea_block)
 
-# Check FaroSeason exists in models
-print("\nFaroSeason in models.py:", "class FaroSeason" in models_f)
+# Check CCFSeason exists in models
+print("\nCCFSeason in models.py:", "class CCFSeason" in models_f)
 print("SesionGrupo in models.py:", "class SesionGrupo" in models_f)
 print("Asistencia in models.py:", "class Asistencia" in models_f)
 print(
@@ -43,10 +43,10 @@ print("Absentees limit (ABSENTEES_PREVIEW_LIMIT):", "ABSENTEES_PREVIEW_LIMIT" in
 print("update_event endpoint:", "def update_event" in f)
 print("delete_event endpoint:", "def delete_event" in f)
 print("get_global_event_analytics:", "def get_global_event_analytics" in f)
-print("list_faro_seasons:", "def list_faro_seasons" in f)
-print("create_faro_session:", "def create_faro_session" in f)
-print("add_faro_attendance:", "def add_faro_attendance" in f)
-print("get_faro_analytics:", "def get_faro_analytics" in f)
+print("list_ccf_seasons:", "def list_ccf_seasons" in f)
+print("create_ccf_session:", "def create_ccf_session" in f)
+print("add_ccf_attendance:", "def add_ccf_attendance" in f)
+print("get_ccf_analytics:", "def get_ccf_analytics" in f)
 
 # Check for potential N+1 queries
 print("\n=== PERFORMANCE CHECKS ===")

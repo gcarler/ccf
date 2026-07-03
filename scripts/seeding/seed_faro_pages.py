@@ -27,13 +27,13 @@ from backend.core.database import SessionLocal
 from backend.models import PageContent
 
 
-def seed_faro_pages():
+def seed_ccf_pages():
     print("Iniciando Seed de Páginas Públicas de FARO (Actualización de Feeds)...")
     db: Session = SessionLocal()
 
-    faro_blocks = [
+    ccf_blocks = [
         {
-            "key": "faro_home_hero",
+            "key": "ccf_home_hero",
             "title": "Inicio hero",
             "content": json.dumps(
                 {
@@ -41,14 +41,14 @@ def seed_faro_pages():
                     "title_lead": "Somos El Faro,",
                     "title_accent": "Tu Refugio",
                     "title_tail": "Y Tu Guía.",
-                    "description": "Somos un faro de luz que ilumina y guía con amor, que salva vidas y restaura el alma; un puerto seguro que acompaña a cada persona a reencontrarse con su propósito en Dios. Bienvenido a casa.",
+                    "description": "Somos un ccf de luz que ilumina y guía con amor, que salva vidas y restaura el alma; un puerto seguro que acompaña a cada persona a reencontrarse con su propósito en Dios. Bienvenido a casa.",
                     "primary_cta": "Conocer a Jesús",
                     "secondary_cta": "Ver Prédicas",
                 }
             ),
         },
         {
-            "key": "faro_discover_hero",
+            "key": "ccf_discover_hero",
             "title": "Conocer a Jesus hero",
             "content": json.dumps(
                 {
@@ -62,7 +62,7 @@ def seed_faro_pages():
             ),
         },
         {
-            "key": "faro_about_hero",
+            "key": "ccf_about_hero",
             "title": "Nosotros hero",
             "content": json.dumps(
                 {
@@ -74,7 +74,7 @@ def seed_faro_pages():
             ),
         },
         {
-            "key": "faro_testimonios_hero",
+            "key": "ccf_testimonios_hero",
             "title": "Testimonios hero",
             "content": json.dumps(
                 {
@@ -86,7 +86,7 @@ def seed_faro_pages():
             ),
         },
         {
-            "key": "faro_events_hero",
+            "key": "ccf_events_hero",
             "title": "Eventos hero",
             "content": json.dumps(
                 {
@@ -97,7 +97,7 @@ def seed_faro_pages():
             ),
         },
         {
-            "key": "faro_sermons_hero",
+            "key": "ccf_sermons_hero",
             "title": "Predicas hero",
             "content": json.dumps(
                 {
@@ -109,7 +109,7 @@ def seed_faro_pages():
             ),
         },
         {
-            "key": "faro_courses_hero",
+            "key": "ccf_courses_hero",
             "title": "Cursos hero",
             "content": json.dumps(
                 {
@@ -121,7 +121,7 @@ def seed_faro_pages():
             ),
         },
         {
-            "key": "faro_locations_hero",
+            "key": "ccf_locations_hero",
             "title": "Sedes hero",
             "content": json.dumps(
                 {
@@ -133,7 +133,7 @@ def seed_faro_pages():
         },
         # --- NEW FEEDS ---
         {
-            "key": "faro_testimonials_feed",
+            "key": "ccf_testimonials_feed",
             "title": "Testimonios Feed",
             "content": json.dumps(
                 [
@@ -166,7 +166,7 @@ def seed_faro_pages():
             ),
         },
         {
-            "key": "faro_public_events",
+            "key": "ccf_public_events",
             "title": "Eventos Feed",
             "content": json.dumps(
                 [
@@ -201,7 +201,7 @@ def seed_faro_pages():
             ),
         },
         {
-            "key": "faro_sermons_feed",
+            "key": "ccf_sermons_feed",
             "title": "Prédicas Feed",
             "content": json.dumps(
                 [
@@ -234,7 +234,7 @@ def seed_faro_pages():
             ),
         },
         {
-            "key": "faro_courses_feed",
+            "key": "ccf_courses_feed",
             "title": "Cursos Feed",
             "content": json.dumps(
                 [
@@ -256,7 +256,7 @@ def seed_faro_pages():
             ),
         },
         {
-            "key": "faro_locations_feed",
+            "key": "ccf_locations_feed",
             "title": "Sedes Feed",
             "content": json.dumps(
                 [
@@ -282,7 +282,7 @@ def seed_faro_pages():
     try:
         inserted = 0
         updated = 0
-        for block in faro_blocks:
+        for block in ccf_blocks:
             existing = (
                 db.query(PageContent)
                 .filter(PageContent.page_key == block["key"])
@@ -312,4 +312,4 @@ def seed_faro_pages():
 
 
 if __name__ == "__main__":
-    seed_faro_pages()
+    seed_ccf_pages()

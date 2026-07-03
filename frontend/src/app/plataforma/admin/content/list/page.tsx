@@ -139,7 +139,7 @@ export default function AdminContentList() {
             {/* Cinematic Tabs */}
             <div className="flex px-4 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0 relative overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
-                <TabBtn label="Cursos Faro" active={activeTab === 'courses'} onClick={() => setActiveTab('courses')} icon={BookOpen} />
+                <TabBtn label="Cursos CCF" active={activeTab === 'courses'} onClick={() => setActiveTab('courses')} icon={BookOpen} />
                 <TabBtn label="Prédicas HD" active={activeTab === 'sermons'} onClick={() => setActiveTab('sermons')} icon={Video} />
                 <TabBtn label="Guías y Material" active={activeTab === 'resources'} onClick={() => setActiveTab('resources')} icon={FileText} />
             </div>

@@ -120,7 +120,7 @@ export const PASTORS: Pastor[] = [
             <p>Haciendo honor a su nombre, el Pastor Nehemías Morales es un constructor y un restaurador de murallas espirituales. Su ministerio se especializa en cuidar a los que acaban de llegar, garantizando que ninguna vida que se entregue a Cristo quede a la deriva.</p>
             <blockquote>"El momento más frágil de un creyente son sus primeros pasos; ahí es donde la iglesia debe ser más fuerte."</blockquote>
             <p>La propia historia de Nehemías es una de profunda resiliencia y superación de adversidades imposibles mediante la fe. Con esa misma tenacidad lidera a los equipos de consolidación, llamando a cada nuevo creyente, visitando hospitales y organizando las redes de apoyo comunitario.</p>
-            <p>Su vida es un faro de esperanza para aquellos que llegan a la iglesia con las murallas de su vida destruidas, mostrándoles que con Dios, siempre hay oportunidad para reedificar.</p>
+            <p>Su vida es un ccf de esperanza para aquellos que llegan a la iglesia con las murallas de su vida destruidas, mostrándoles que con Dios, siempre hay oportunidad para reedificar.</p>
         `
     },
     {
@@ -161,12 +161,12 @@ export const PASTORS: Pastor[] = [
         isMain: true,
         quote: "La obra de Dios se edifica con fe, obediencia y amor por las almas.",
         verse: "1 Corintios 3:9 - 'Porque nosotros somos colaboradores de Dios, y vosotros sois labranza de Dios, edificio de Dios.'",
-        shortStory: "Pastora fundadora del ministerio Comunidad Cristiana El Faro junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor.",
+        shortStory: "Pastora fundadora del ministerio Comunidad Cristiana CCF junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor.",
         fullStory: `
-            <p>La Pastora Martina Herrera es la pastora fundadora del ministerio Comunidad Cristiana El Faro. Junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor, sembró con fe, oración y perseverancia las bases espirituales de esta casa.</p>
+            <p>La Pastora Martina Herrera es la pastora fundadora del ministerio Comunidad Cristiana CCF. Junto a su esposo, Alejandro Ariza Torres, quien ya partió y está con el Señor, sembró con fe, oración y perseverancia las bases espirituales de esta casa.</p>
             <blockquote>"La obra de Dios se edifica con fe, obediencia y amor por las almas."</blockquote>
             <p>Desde los primeros días del ministerio, la Pastora Martina ha sido un pilar de oración, fidelidad y cuidado pastoral. Su corazón maternal ha acompañado a generaciones de creyentes que encontraron en ella una pastora, una consejera y una madre espiritual.</p>
-            <p>Su legado permanece vivo en la familia espiritual de Comunidad Cristiana El Faro: una iglesia levantada para amar a Dios, servir a las personas y continuar la obra que el Señor puso en sus manos.</p>
+            <p>Su legado permanece vivo en la familia espiritual de Comunidad Cristiana CCF: una iglesia levantada para amar a Dios, servir a las personas y continuar la obra que el Señor puso en sus manos.</p>
         `
     }
 ];

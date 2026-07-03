@@ -806,6 +806,7 @@ def create_cms_section(db: Session, page_id: uuid.UUID, payload: schemas.CmsSect
         sort_order=payload.sort_order,
         is_visible=payload.is_visible,
         status=(payload.status or "active").strip().lower(),
+        is_global=getattr(payload, "is_global", False) or False,
     )
     db.add(row)
     db.commit()
@@ -863,7 +864,8 @@ def reorder_cms_sections(
             continue
         row.sort_order = item.sort_order
     db.commit()
-    return list_cms_sections(db, page_id)
+    items_list, _ = list_cms_sections(db, page_id)
+    return items_list
 
 
 # ── CMS v2 Page Versions ───────────────────────────────
@@ -1057,7 +1059,7 @@ def transition_cms_page_status(
             site_id=page.site_id,
             page_id=page.id,
             entity_type="page",
-            entity_id=page.id,
+            entity_id=str(page.id),
             action=action,
             from_status=previous_status,
             to_status=next_status,

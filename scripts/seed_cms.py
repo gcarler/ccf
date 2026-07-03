@@ -32,23 +32,23 @@ from backend import models
 
 # page_key → (page_slug, sort_order_within_page)
 SECTION_MAP: dict[str, tuple[str, int]] = {
-    "faro_home_hero":        ("inicio",           0),
-    "faro_about_hero":       ("nosotros",          0),
-    "faro_about_feed":       ("nosotros",          1),
-    "faro_pastores_feed":     ("nosotros",          2),
-    "faro_events_hero":      ("eventos",           0),
-    "faro_public_events":    ("eventos",           1),
-    "faro_sermons_hero":     ("predicas",          0),
-    "faro_sermons_feed":     ("predicas",          1),
-    "faro_courses_hero":     ("cursos",            0),
-    "faro_courses_feed":     ("cursos",            1),
-    "faro_locations_hero":   ("sedes",             0),
-    "faro_locations_feed":   ("sedes",             1),
-    "faro_discover_hero":    ("conocer-a-jesus",   0),
-    "faro_discover_feed":    ("conocer-a-jesus",   1),
-    "faro_testimonios_hero": ("testimonios",       0),
-    "faro_privacidad":       ("privacidad",        0),
-    "faro_nav_items":        ("_global",           0),
+    "ccf_home_hero":        ("inicio",           0),
+    "ccf_about_hero":       ("nosotros",          0),
+    "ccf_about_feed":       ("nosotros",          1),
+    "ccf_pastores_feed":     ("nosotros",          2),
+    "ccf_events_hero":      ("eventos",           0),
+    "ccf_public_events":    ("eventos",           1),
+    "ccf_sermons_hero":     ("predicas",          0),
+    "ccf_sermons_feed":     ("predicas",          1),
+    "ccf_courses_hero":     ("cursos",            0),
+    "ccf_courses_feed":     ("cursos",            1),
+    "ccf_locations_hero":   ("sedes",             0),
+    "ccf_locations_feed":   ("sedes",             1),
+    "ccf_discover_hero":    ("conocer-a-jesus",   0),
+    "ccf_discover_feed":    ("conocer-a-jesus",   1),
+    "ccf_testimonios_hero": ("testimonios",       0),
+    "ccf_privacidad":       ("privacidad",        0),
+    "ccf_nav_items":        ("_global",           0),
     "navbar_items":          ("_global",           1),
     "evangelism_events_wiki_notes": ("_platform",  0),
 }
@@ -72,20 +72,20 @@ def run():
     db = SessionLocal()
     try:
         # ── 1. cms_sites ───────────────────────────────────────────
-        site = db.query(models.CmsSite).filter_by(site_key="faro").first()
+        site = db.query(models.CmsSite).filter_by(site_key="ccf").first()
         if not site:
             site = models.CmsSite(
-                site_key="faro",
-                name="FARO",
+                site_key="ccf",
+                name="CCF",
                 base_path="/",
                 is_active=True,
             )
             db.add(site)
             db.commit()
             db.refresh(site)
-            print(f"✓ cms_sites: created 'faro' (id={site.id})")
+            print(f"✓ cms_sites: created 'ccf' (id={site.id})")
         else:
-            print(f"  cms_sites: 'faro' already exists (id={site.id})")
+            print(f"  cms_sites: 'ccf' already exists (id={site.id})")
 
         # ── 2. cms_pages ───────────────────────────────────────────
         page_objs: dict[str, models.CmsPage] = {}
