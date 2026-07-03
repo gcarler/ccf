@@ -4,7 +4,8 @@ Additional API Integration Tests — Admin, Academy, Auth, Projects.
 Focuses on endpoints with lowest coverage to push overall % up.
 """
 import pytest
-from tests.conftest import seed_admin, auth_headers
+
+from tests.conftest import auth_headers, seed_admin
 
 
 @pytest.fixture(scope="function")

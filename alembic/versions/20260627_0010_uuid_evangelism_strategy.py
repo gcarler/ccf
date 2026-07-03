@@ -7,9 +7,9 @@ Revises: 20260627_0009_auth_roles
 from typing import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
 
 revision: str = "20260627_0010_strategy_uuid"
 down_revision: str | None = "20260627_0009_auth_roles"

@@ -80,10 +80,8 @@ from __future__ import annotations
 import json as _json
 import uuid as _uuid
 
-
 from backend import models
 from tests.conftest import auth_headers, seed_admin
-
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -1159,8 +1157,9 @@ def test_assert_actor_still_participant_unit_negative_raises_404(
     falla incluso cuando los integration tests siguen verdes (porque
     la early ``is_participant`` check enmascara el bug).
     """
-    from backend.api import chat as chat_module
     from fastapi import HTTPException
+
+    from backend.api import chat as chat_module
 
     (admin_a, _, sede_a), _ = _seed_two_sedes(db_session)
     persona_local = _persona_in(db_session, sede_a.id, "unit-negative-local")
@@ -1213,8 +1212,9 @@ def test_assert_actor_still_participant_unit_malformed_conv_id_raises_404(
     no es UUID → el helper NO debe propagar el error de parse ni
     permitir DoS / info-leak via el ValueError.
     """
-    from backend.api import chat as chat_module
     from fastapi import HTTPException
+
+    from backend.api import chat as chat_module
 
     (admin_a, _, _), _ = _seed_two_sedes(db_session)
 
@@ -1247,8 +1247,9 @@ def test_assert_actor_still_participant_unit_none_conv_id_raises_404(
     al cliente. Comportamiento correcto = tratar como ``not found``
     (mismo detail uniforme).
     """
-    from backend.api import chat as chat_module
     from fastapi import HTTPException
+
+    from backend.api import chat as chat_module
 
     (admin_a, _, _), _ = _seed_two_sedes(db_session)
 
@@ -1277,8 +1278,9 @@ def test_assert_actor_still_participant_unit_accepts_string_uuid(
     params llegan como str en FastAPI). Verifica que el coerce funciona
     tanto para UUID objects como para strings parseables.
     """
-    from backend.api import chat as chat_module
     from fastapi import HTTPException
+
+    from backend.api import chat as chat_module
 
     (admin_a, _, sede_a), _ = _seed_two_sedes(db_session)
     persona_local = _persona_in(db_session, sede_a.id, "unit-string-conv")

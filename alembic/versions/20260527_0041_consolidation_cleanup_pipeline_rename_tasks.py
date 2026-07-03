@@ -14,6 +14,7 @@ Segura para ejecutar porque todas las tablas de consolidación tienen 0 filas.
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "20260527_0041"

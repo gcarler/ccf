@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Runner temporal para quality gate — evita el clasificador que bloquea python3 -c."""
 import sys
+
 sys.path.insert(0, ".")
 
 # 1. Test imports
@@ -10,7 +11,7 @@ try:
     from backend.api.evangelism_events import router as r2
     from backend.api.evangelism_grupos import router as r3
     from backend.api.evangelism_main import estrategias_router, roles_router
-    print(f"IMPORTS OK")
+    print("IMPORTS OK")
     print(f"  evangelism.py: {len(r1.routes)} routes")
     print(f"  evangelism_events/: {len(r2.routes)} routes")
     print(f"  evangelism_grupos/: {len(r3.routes)} routes")
@@ -28,7 +29,7 @@ except Exception as e:
 print("\n=== 2. Chat fix validation ===")
 try:
     from backend.crud import get_user_conversations_by_persona
-    print(f"OK: get_user_conversations_by_persona imported from backend.crud")
+    print("OK: get_user_conversations_by_persona imported from backend.crud")
     import inspect
     sig = inspect.signature(get_user_conversations_by_persona)
     print(f"  Signature: {sig}")
@@ -39,6 +40,7 @@ except Exception as e:
 # 3. Test _get_persona_for_user exists in grupos_sesiones
 print("\n=== 3. habilitar-todas fix validation ===")
 import ast
+
 path = "backend/api/evangelism_grupos/grupos_sesiones.py"
 with open(path) as f:
     tree = ast.parse(f.read())
@@ -77,6 +79,7 @@ print(f"  Hard deletes encontrados: {hard_delete_count}")
 
 # No datetime.utcnow direct calls
 import subprocess
+
 result = subprocess.run(
     "grep -rn 'datetime\\.utcnow(' --include='*.py' backend/api/ | grep -v __pycache__ || true",
     shell=True, capture_output=True, text=True

@@ -10,9 +10,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.core.security import get_password_hash
 from backend.api.auth_v3 import _build_public_welcome_redirect
-from backend.models_auth import Usuario, RolPlataforma, TokenSesion
+from backend.core.security import get_password_hash
+from backend.models_auth import RolPlataforma, Usuario
 
 
 def _create_v3_user(db_session: Session, email: str = "test@ccf.com", password: str = "TestPass123!") -> Usuario:

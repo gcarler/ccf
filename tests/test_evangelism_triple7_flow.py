@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from backend import models
 from tests.conftest import auth_headers, seed_admin
@@ -8,7 +8,7 @@ def _seed_personas(db_session, sede_id, count=40):
     personas = []
     for idx in range(1, count + 1):
         persona = models.Persona(
-            first_name=f"Triple7",
+            first_name="Triple7",
             last_name=f"Persona {idx:02d}",
             email=f"triple7.persona{idx:02d}@ccf.test",
             phone=f"300777{idx:04d}",

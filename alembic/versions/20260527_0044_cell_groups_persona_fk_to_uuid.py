@@ -13,8 +13,8 @@ so they are cleared (set to NULL) during the migration.
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
-from sqlalchemy.dialects import postgresql
 
 revision: str = "20260527_0044"
 down_revision: Union[str, None] = "8fade299a6f0"

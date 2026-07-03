@@ -15,7 +15,6 @@ from typing import Sequence
 
 from alembic import op
 
-
 revision: str = "20260702_0001_canonical_baseline"
 down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None

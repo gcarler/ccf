@@ -4,7 +4,6 @@ Migrate hardcoded Tailwind colors to semantic CSS tokens.
 Rules based on the project's semantic token mapping.
 """
 import re
-import sys
 from pathlib import Path
 
 # Paths

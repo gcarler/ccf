@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import uuid
 
-import pytest
 from sqlalchemy.orm import Session
 
 from backend import crud, models

@@ -57,6 +57,7 @@ def run_pytest(test_files: list[str]) -> bool:
 
 def check_db_indices():
     from sqlalchemy import text
+
     from backend.core.database import SessionLocal
     logger.info("--- VERIFICANDO ÍNDICES DE BASE DE DATOS ---")
     db = SessionLocal()

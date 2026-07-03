@@ -3,10 +3,9 @@ Service Layer Unit Tests — Pure logic testing without DB or network.
 
 Tests: calculo_sesiones, automation_engine, evangelism_projection, scheduler.
 """
-import pytest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
 
+import pytest
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1. CALCULO SESIONES — Pure Functions
@@ -50,7 +49,6 @@ class TestCalculoSesiones:
 
     def test_generar_fechas_weekly(self):
         from backend.services.calculo_sesiones import _generar_fechas, _IncProvider
-        from datetime import timedelta
         provider = _IncProvider(timedelta(weeks=1))
         inicio = datetime(2026, 1, 1, tzinfo=timezone.utc)
         fin = datetime(2026, 1, 15, tzinfo=timezone.utc)
@@ -58,8 +56,9 @@ class TestCalculoSesiones:
         assert len(fechas) == 3  # Jan 1, Jan 8, Jan 15
 
     def test_generar_fechas_monthly(self):
-        from backend.services.calculo_sesiones import _generar_fechas, _IncProvider
         from dateutil.relativedelta import relativedelta
+
+        from backend.services.calculo_sesiones import _generar_fechas, _IncProvider
         provider = _IncProvider(relativedelta(months=1), dia_original=15)
         inicio = datetime(2026, 1, 15, tzinfo=timezone.utc)
         fin = datetime(2026, 4, 15, tzinfo=timezone.utc)
@@ -68,7 +67,6 @@ class TestCalculoSesiones:
 
     def test_generar_fechas_inicio_after_fin_raises(self):
         from backend.services.calculo_sesiones import _generar_fechas, _IncProvider
-        from datetime import timedelta
         provider = _IncProvider(timedelta(weeks=1))
         inicio = datetime(2026, 2, 1, tzinfo=timezone.utc)
         fin = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -77,7 +75,6 @@ class TestCalculoSesiones:
 
     def test_generar_fechas_evento_unico(self):
         from backend.services.calculo_sesiones import _generar_fechas, _IncProvider
-        from datetime import timedelta
         provider = _IncProvider(timedelta.max)
         inicio = datetime(2026, 1, 15, tzinfo=timezone.utc)
         fin = datetime(2026, 12, 31, tzinfo=timezone.utc)
@@ -85,8 +82,9 @@ class TestCalculoSesiones:
         assert len(fechas) == 1  # Only the start date
 
     def test_inc_provider_saltar_preserves_day(self):
-        from backend.services.calculo_sesiones import _IncProvider
         from dateutil.relativedelta import relativedelta
+
+        from backend.services.calculo_sesiones import _IncProvider
         provider = _IncProvider(relativedelta(months=1), dia_original=31)
         dt = datetime(2026, 1, 31, tzinfo=timezone.utc)
         result = provider.saltar(dt)
@@ -196,10 +194,18 @@ class TestModelsImport:
 
     def test_enterprise_models_import(self):
         from backend.models_enterprise import (
-            AuditLog, ContentPermission, CmsNotification, Webhook, WebhookDelivery,
-            CmsCustomType, CmsCustomEntry, CmsCustomEntryVersion, CmsGlossaryTerm,
-            SearchIndex, SearchPromotion, UserSession, MediaFolder,
-            MediaFileVersion, CmsRedirect, BrokenLinkCheck,
+            AuditLog,
+            BrokenLinkCheck,
+            CmsCustomEntry,
+            CmsCustomType,
+            CmsGlossaryTerm,
+            CmsNotification,
+            CmsRedirect,
+            ContentPermission,
+            MediaFolder,
+            SearchIndex,
+            UserSession,
+            Webhook,
         )
         assert AuditLog is not None
         assert ContentPermission is not None
@@ -216,8 +222,10 @@ class TestModelsImport:
 
     def test_cms_models_import(self):
         from backend.models_cms import (
-            CmsPage, CmsSection, CmsSite, CmsTheme, CmsMenu, CmsMenuItem,
-            PageContent, ContentPublication,
+            CmsPage,
+            CmsSection,
+            CmsSite,
+            CmsTheme,
         )
         assert CmsPage is not None
         assert CmsSection is not None
@@ -225,7 +233,7 @@ class TestModelsImport:
         assert CmsTheme is not None
 
     def test_auth_models_import(self):
-        from backend.models_auth import Usuario, RolPlataforma
+        from backend.models_auth import RolPlataforma, Usuario
         assert Usuario is not None
         assert RolPlataforma is not None
 

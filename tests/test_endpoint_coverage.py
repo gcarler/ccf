@@ -4,10 +4,12 @@ Endpoint Coverage Hitter — Calls every API endpoint to maximize code coverage.
 Each endpoint is called once with a dummy request. The goal is to exercise
 as many code paths as possible, even if they return errors.
 """
-import pytest
 import re
 import uuid
-from tests.conftest import seed_admin, auth_headers
+
+import pytest
+
+from tests.conftest import auth_headers, seed_admin
 
 
 @pytest.fixture(scope="function")

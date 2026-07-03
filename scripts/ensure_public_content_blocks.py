@@ -32,7 +32,6 @@ sys.path.insert(0, str(ROOT))
 from backend import models  # noqa: E402
 from backend.core.database import SessionLocal  # noqa: E402
 
-
 BLOCKS = {
     "ccf_events_feed": {
         "title": "Eventos publico CCF",

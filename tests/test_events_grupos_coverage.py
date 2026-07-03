@@ -3,10 +3,12 @@ EVENTS + GRUPOS COVERAGE — Deep tests for events_main.py (310 stmts, 236 misse
 and evangelism_grupos (grupos_main 383 stmts 290 missed, grupos_sesiones 222 stmts 181 missed)
 """
 import uuid
-import json
+from datetime import date, datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, date, timedelta, timezone
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(s):
@@ -17,10 +19,14 @@ def _ok(s):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import EtapaPipeline, PipelineCRM, TipoPipelineEnum
     from backend.models_evangelism import (
-        EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
-        Asistencia, ParticipanteGrupo, CategoriaEstrategia,
+        Asistencia,
+        CategoriaEstrategia,
+        EstrategiaEvangelismo,
+        GrupoEvangelismo,
+        ParticipanteGrupo,
+        SesionGrupo,
     )
 
     personas = []
@@ -451,7 +457,7 @@ class TestSesionesDeep:
 
     def test_list_sessions_with_filters(self, full):
         c, h, strategy = full["c"], full["h"], full["strategy"]
-        c.get(f"/api/evangelism/grupos/sessions?season_id=1", headers=h)
+        c.get("/api/evangelism/grupos/sessions?season_id=1", headers=h)
         c.get(f"/api/evangelism/grupos/sessions?grupo_id={full['groups'][0].id}", headers=h)
 
     def test_list_my_pending_sessions(self, full):

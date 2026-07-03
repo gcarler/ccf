@@ -1,6 +1,6 @@
-import builtins
 import uuid
-from fastapi import FastAPI, Depends, HTTPException
+
+from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
 # Import the router and helper functions

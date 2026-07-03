@@ -13,6 +13,7 @@ Requiere la extensión btree_gist (ya activa en 0046).
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "20260602_add_gist"

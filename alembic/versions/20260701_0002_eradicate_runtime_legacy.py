@@ -25,8 +25,8 @@ from __future__ import annotations
 from typing import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 revision: str = "20260701_0002_no_legacy"
 down_revision: str | None = "20260701_0001_cms_sede"

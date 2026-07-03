@@ -3,9 +3,11 @@ CRUD Integration Tests — Directly tests CRUD modules with real DB operations.
 
 Goal: Increase coverage by exercising CRUD functions directly.
 """
-import pytest
 import uuid
-from tests.conftest import seed_admin, auth_headers
+
+import pytest
+
+from tests.conftest import auth_headers, seed_admin
 
 
 @pytest.fixture(scope="function")
@@ -234,8 +236,8 @@ class TestEvangelismCrud:
     def test_create_strategy(self, authed_client):
         client, headers, sede, persona, db = authed_client
         from backend.crud.evangelism import create_estrategia
-        from backend.schemas.evangelism import EstrategiaEvangelismoCreate
         from backend.models_evangelism import CategoriaEstrategia
+        from backend.schemas.evangelism import EstrategiaEvangelismoCreate
         # Schema fields are the canonical English shape (see ``EstrategiaEvangelismoBase``
         # in ``backend/schemas/evangelism.py``); Spanish columns on the ORM are
         # exposed via ``synonym`` and translated in ``create_estrategia``.
@@ -341,8 +343,9 @@ class TestAuthCrud:
 class TestCmsV2Crud:
     def test_create_site(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.models_cms import CmsSite
         import uuid
+
+        from backend.models_cms import CmsSite
         site = CmsSite(id=uuid.uuid4(), site_key="test-site", name="Test Site", is_active=True)
         db.add(site)
         db.flush()
@@ -350,8 +353,9 @@ class TestCmsV2Crud:
 
     def test_create_theme(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.models_cms import CmsTheme, CmsSite
         import uuid
+
+        from backend.models_cms import CmsSite, CmsTheme
         site = CmsSite(id=uuid.uuid4(), site_key="theme-test", name="Theme Test", is_active=True)
         db.add(site)
         db.flush()
@@ -362,8 +366,9 @@ class TestCmsV2Crud:
 
     def test_create_menu(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.models_cms import CmsMenu, CmsSite
         import uuid
+
+        from backend.models_cms import CmsMenu, CmsSite
         site = CmsSite(id=uuid.uuid4(), site_key="menu-test", name="Menu Test", is_active=True)
         db.add(site)
         db.flush()
@@ -374,8 +379,9 @@ class TestCmsV2Crud:
 
     def test_create_menu_item(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.models_cms import CmsMenu, CmsMenuItem, CmsSite
         import uuid
+
+        from backend.models_cms import CmsMenu, CmsMenuItem, CmsSite
         site = CmsSite(id=uuid.uuid4(), site_key="menu-item-test", name="Menu Item Test", is_active=True)
         db.add(site)
         db.flush()

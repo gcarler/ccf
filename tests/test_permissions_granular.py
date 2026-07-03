@@ -7,12 +7,10 @@ Cubre:
 
 import uuid
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from backend.core.security import get_password_hash
-
 
 # ──────────────────────────────────────────────
 # HELPERS
@@ -43,7 +41,7 @@ def _create_persona(db_session: Session) -> str:
 
 def _create_auth_user(db_session: Session, persona_id: str) -> str:
     """Create an Auth v3 user linked to a persona and return its UUID."""
-    from backend.models_auth import Usuario, RolPlataforma
+    from backend.models_auth import RolPlataforma, Usuario
     rol = db_session.query(RolPlataforma).first()
     if not rol:
         rol = RolPlataforma(nombre="LECTOR", permisos={"profile:manage": "allow"})

@@ -6,8 +6,9 @@ Create Date: 2026-05-24
 
 Task 3.3: Campaign Attribution System
 """
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 revision = "20260524_0028"
 down_revision = "20260524_0027_strategy_typology"

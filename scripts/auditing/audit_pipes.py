@@ -233,11 +233,11 @@ def main():
             print(f"      File: {c['file']}:{c['line']}")
             print(f"      Resolves to: {m['actual_path']}")
             if m["candidates"]:
-                print(f"      Candidates:")
+                print("      Candidates:")
                 for cand_path, files in m["candidates"]:
                     print(f"        {cand_path} ({', '.join(files)})")
             else:
-                print(f"      NO candidates found")
+                print("      NO candidates found")
 
     print("\n" + "=" * 70)
     if mismatches:

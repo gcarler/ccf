@@ -1,10 +1,9 @@
 """Massive permissions + kernel_rbac + additional core coverage tests."""
-import asyncio
 import uuid
-import pytest
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch, AsyncMock
+from datetime import timedelta
+from unittest.mock import MagicMock, patch
 
+import pytest
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CORE/PERMISSIONS (permissions.py) — 713 stmts, 170 missed

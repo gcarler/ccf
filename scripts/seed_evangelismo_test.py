@@ -22,14 +22,15 @@ Crea:
   - Estrategia 2: "Cultos Dominicales"    (SEMANAL) +  8 grupos
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from datetime import datetime, timezone
-from backend.core.database import SessionLocal
+
 from backend import models
+from backend.core.database import SessionLocal
 
 SEDE_ID = 1
 
@@ -171,7 +172,7 @@ def seed(db):
 
     # Resumen
     total_grupos = db.query(models.GrupoEvangelismo).count()
-    print(f"\nResumen final:")
+    print("\nResumen final:")
     for e in db.query(models.EstrategiaEvangelismo).all():
         n = db.query(models.GrupoEvangelismo).filter_by(estrategia_id=e.id).count()
         print(f"  {e.id}: {e.nombre} — {n} grupos ({e.frecuencia})")

@@ -8,7 +8,6 @@ from typing import Sequence
 
 from alembic import op
 
-
 revision: str = "20260627_0003_academy_access"
 down_revision: str | None = "20260627_0002_drop_academy"
 branch_labels: str | Sequence[str] | None = None

@@ -1,4 +1,3 @@
-import re
 
 with open('d:/ccf/frontend/src/app/evangelism/faro/groups/page.tsx', 'r', encoding='utf-8') as f:
     content = f.read()

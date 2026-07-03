@@ -1,9 +1,9 @@
 import uuid
-from datetime import datetime, date, timezone
 
 import pytest
+
 from backend import models
-from tests.conftest import seed_admin, auth_headers
+from tests.conftest import auth_headers, seed_admin
 
 
 def _seed_sede(db_session):

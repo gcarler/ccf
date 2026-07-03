@@ -6,9 +6,12 @@ projects.py: create_project, phases, comments, tasks, wiki, whiteboard,
 milestones, supplies, attachments, activities, inbox.
 """
 import uuid
+from datetime import date, datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, date, timedelta, timezone
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(s):
@@ -34,10 +37,13 @@ def _create_baptism_persona(db_session, full):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
     from backend.models_evangelism import (
-        EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
-        Asistencia, ParticipanteGrupo, CategoriaEstrategia,
+        Asistencia,
+        CategoriaEstrategia,
+        EstrategiaEvangelismo,
+        GrupoEvangelismo,
+        ParticipanteGrupo,
+        SesionGrupo,
     )
 
     personas = []
@@ -255,7 +261,13 @@ class TestCRMDeep:
         assert isinstance(timeline, list)
 
     def test_families_deep(self, db_session, full):
-        from backend.crud.crm import get_families, get_family, get_family_personas, create_family, update_family, delete_family
+        from backend.crud.crm import (
+            create_family,
+            get_families,
+            get_family,
+            get_family_personas,
+            update_family,
+        )
         families = get_families(db_session)
         assert isinstance(families, list)
         fid = str(full["families"][0].id)
@@ -274,7 +286,9 @@ class TestCRMDeep:
         assert events is not None
 
     def test_counseling_deep(self, db_session, full):
-        from backend.crud.crm import get_counseling_tickets, get_counseling_ticket, create_counseling_ticket, update_counseling_ticket, delete_counseling_ticket
+        from backend.crud.crm import (
+            get_counseling_tickets,
+        )
         tickets = get_counseling_tickets(db_session)
         assert isinstance(tickets, list)
         get_counseling_tickets(db_session, status="open")
@@ -282,43 +296,53 @@ class TestCRMDeep:
         get_counseling_tickets(db_session, sede_id=str(full["sede"].id))
 
     def test_prayer_requests_deep(self, db_session, full):
-        from backend.crud.crm import get_prayer_requests, get_prayer_request, create_prayer_request, update_prayer_request, delete_prayer_request
+        from backend.crud.crm import (
+            get_prayer_requests,
+        )
         reqs = get_prayer_requests(db_session)
         assert isinstance(reqs, list)
         get_prayer_requests(db_session, status="pending")
 
     def test_grupos_deep(self, db_session, full):
-        from backend.crud.crm import get_grupos, get_grupo, delete_grupo
+        from backend.crud.crm import get_grupo, get_grupos
         groups = get_grupos(db_session)
         assert isinstance(groups, list)
         gc = get_grupo(db_session, str(full["groups"][0].id))
         assert gc is not None
 
     def test_volunteer_shifts_deep(self, db_session, full):
-        from backend.crud.crm import get_volunteer_shifts, get_volunteer_shift, update_volunteer_shift, delete_volunteer_shift, create_volunteer_shift
+        from backend.crud.crm import (
+            get_volunteer_shifts,
+        )
         shifts = get_volunteer_shifts(db_session)
         assert isinstance(shifts, list)
 
     def test_communication_logs_deep(self, db_session, full):
-        from backend.crud.crm import get_communication_logs, get_communication_log, create_communication_log, update_communication_log, delete_communication_log
+        from backend.crud.crm import (
+            get_communication_logs,
+        )
         logs = get_communication_logs(db_session)
         assert isinstance(logs, list)
         get_communication_logs(db_session, limit=3)
 
     def test_donations_deep(self, db_session, full):
-        from backend.crud.crm import get_donations, get_donation, get_total_donations_amount, create_donation
+        from backend.crud.crm import get_donations, get_total_donations_amount
         donations = get_donations(db_session)
         assert isinstance(donations, list)
         amount = get_total_donations_amount(db_session)
         assert isinstance(amount, (int, float))
 
     def test_community_cards_deep(self, db_session, full):
-        from backend.crud.crm import get_community_cards, get_community_card, update_community_card, delete_community_card, create_community_card
+        from backend.crud.crm import (
+            get_community_cards,
+        )
         cards = get_community_cards(db_session)
         assert isinstance(cards, list)
 
     def test_support_tickets_deep(self, db_session, full):
-        from backend.crud.crm import get_support_tickets, get_support_ticket, delete_support_ticket, create_support_ticket
+        from backend.crud.crm import (
+            get_support_tickets,
+        )
         tickets = get_support_tickets(db_session)
         assert isinstance(tickets, list)
 
@@ -333,7 +357,7 @@ class TestCRMDeep:
         assert isinstance(cases, list)
 
     def test_notifications_deep(self, db_session, full):
-        from backend.crud.crm import get_user_notifications, mark_notification_as_read, mark_all_notifications_read
+        from backend.crud.crm import get_user_notifications
         pid = str(full["personas"][0].id)
         notifs = get_user_notifications(db_session, pid)
         assert isinstance(notifs, list)

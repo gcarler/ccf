@@ -2,8 +2,9 @@
 
 Faro groups must belong to a Relacional strategy. No standalone groups allowed.
 """
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 revision = "20260524_0030"
 down_revision = "20260524_0029"

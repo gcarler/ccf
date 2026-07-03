@@ -3,10 +3,13 @@ REMAINING GAPS — Tests for the 5 modules with most missed lines.
 Uses populated database to exercise CRUD branches with real data.
 """
 import uuid
+from datetime import date, datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, date, timedelta, timezone
+
 from backend import schemas
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(s):
@@ -21,12 +24,15 @@ def _call(fn, *a, **kw):
 def full(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
     from backend.models_evangelism import (
-        EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
-        Asistencia, ParticipanteGrupo, CategoriaEstrategia,
+        Asistencia,
+        CategoriaEstrategia,
+        EstrategiaEvangelismo,
+        GrupoEvangelismo,
+        ParticipanteGrupo,
+        SesionGrupo,
     )
-    from backend.models_academy_core import Course, Lesson, Assessment
 
     personas = []
     for i in range(20):
@@ -200,7 +206,7 @@ class TestCRMDeep:
 
     def test_crud_with_data(self, db_session, full):
         from backend.crud import crm
-        from backend.schemas import PersonaCreate, PersonaUpdate
+        from backend.schemas import PersonaUpdate
         db = db_session
         pid = str(full["personas"][0].id)
         # get

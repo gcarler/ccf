@@ -31,7 +31,6 @@ from fastapi import HTTPException
 from backend import crud, models, schemas
 from tests.conftest import auth_headers, seed_admin
 
-
 # ── Helpers (re-usan patrón de test_messaging_sede_isolation.py) ───────────
 
 

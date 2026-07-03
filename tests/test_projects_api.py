@@ -10,25 +10,22 @@ from __future__ import annotations
 
 import uuid as _uuid
 
-import pytest
-
-from backend.models_crm import Persona
-from backend.models_crm import ChatMessage  # noqa: F401 — register for import side effects
-from tests.conftest import seed_admin, auth_headers
+from backend.models_crm import (
+    ChatMessage,  # noqa: F401 — register for import side effects
+    Persona,
+)
+from tests.conftest import auth_headers, seed_admin
 from tests.factories_projects import (
-    create_project_factory,
-    create_task_factory,
-    create_subtask_factory,
-    create_milestone_factory,
     create_comment_factory,
-    create_supply_factory,
     create_default_phases_factory,
-    create_activity_log_factory,
-    create_wiki_factory,
-    create_whiteboard_factory,
     create_message_factory,
-    create_attachment_factory,
-    create_inbox_state_factory,
+    create_milestone_factory,
+    create_project_factory,
+    create_subtask_factory,
+    create_supply_factory,
+    create_task_factory,
+    create_whiteboard_factory,
+    create_wiki_factory,
     setup_project_with_all_relations,
 )
 
@@ -248,7 +245,6 @@ class TestTasks:
 
     def test_list_tasks_with_status_filter(self, client, db_session):
         """GET /projects/{id}/tasks?status=completed filters tasks."""
-        from sqlalchemy import func
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
         # Ensure created_at ordering is deterministic

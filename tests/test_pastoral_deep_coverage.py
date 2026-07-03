@@ -5,9 +5,12 @@ Creates comprehensive test data and exercises MORE functions in pastoral.py
 to maximize code execution. Focus on untested paths.
 """
 import uuid
+from datetime import datetime, timezone
+
 import pytest
-from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(status):
@@ -19,7 +22,7 @@ def deep(client, db_session):
     """Create comprehensive test data for pastoral.py deep tests."""
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
     from backend.models_evangelism import GrupoEvangelismo
 
     personas = []

@@ -23,13 +23,14 @@ Uso:
     cd /root/ccf && source venv/bin/activate && python scripts/seed_public_content.py
 """
 import json
-import sys
 import os
+import sys
 
 sys.path.insert(0, "/root/ccf")
 os.environ.setdefault("DATABASE_URL", "")
 
 from sqlalchemy import text
+
 from backend.core.database import engine
 
 # ── Contenido de cada bloque ────────────────────────────────────────────────

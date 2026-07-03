@@ -4,10 +4,12 @@ Tests every endpoint and helper function in pastoral.py.
 Strategy: Create data via API, then test CRUD operations.
 """
 import uuid
+from datetime import datetime, timezone
+from unittest.mock import MagicMock
+
 import pytest
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
-from tests.conftest import seed_admin, auth_headers
+
+from tests.conftest import auth_headers, seed_admin
 
 
 @pytest.fixture
@@ -114,15 +116,17 @@ class TestPastoralHelpers:
         _update_case_field(case, "unknown_field", "value")
 
     def test_get_case_or_404_not_found(self, db_session):
-        from backend.api.crm.pastoral import _get_case_or_404
         from fastapi import HTTPException
+
+        from backend.api.crm.pastoral import _get_case_or_404
         with pytest.raises(HTTPException) as exc_info:
             _get_case_or_404(db_session, str(uuid.uuid4()), None)
         assert exc_info.value.status_code == 404
 
     def test_get_persona_or_404_not_found(self, db_session):
-        from backend.api.crm.pastoral import _get_persona_or_404
         from fastapi import HTTPException
+
+        from backend.api.crm.pastoral import _get_persona_or_404
         with pytest.raises(HTTPException) as exc_info:
             _get_persona_or_404(db_session, str(uuid.uuid4()), None)
         assert exc_info.value.status_code == 404
@@ -204,7 +208,7 @@ class TestConsolidationTasks:
 
     def test_get_task_404(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get(f"/api/crm/tasks/999999", headers=headers)
+        resp = client.get("/api/crm/tasks/999999", headers=headers)
         assert resp.status_code in (404, 400)
 
     def test_my_tasks(self, client_auth):

@@ -1,6 +1,8 @@
 import uuid
+
+from backend import models, schemas
 from backend.api import cms_v2
-from backend import schemas, models
+
 
 # Minimal dummy DB to satisfy CRUD operations used in tests
 class DummyQuery:

@@ -7,8 +7,8 @@ Tests the full CRUD cycle: Create → Read → Update → Delete for each featur
 Validates HTTP status codes, JSON contracts, and database state.
 """
 import pytest
-from tests.conftest import seed_admin, auth_headers
 
+from tests.conftest import auth_headers, seed_admin
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # FIXTURES

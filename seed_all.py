@@ -1,11 +1,15 @@
 """Seed all modules for dashboard demo — single atomic transaction."""
-import os, sys, random, uuid
+import os
+import random
+import sys
+import uuid
 from datetime import datetime, timedelta, timezone
 
 os.environ['ENVIRONMENT'] = 'local'
 os.environ['DATABASE_URL'] = 'sqlite:////root/ccf/ccf_final.db'
 sys.path.insert(0, '/root/ccf')
 from sqlalchemy import text
+
 from backend.core.database import engine
 
 conn = engine.connect()
@@ -143,6 +147,7 @@ conn.close()
 
 # Verify
 from backend.core.database import engine as eng
+
 c=eng.connect()
 for t in ['personas','cell_groups','cell_group_members','cell_group_sessions','cell_group_attendance',
           'consolidation_cases','courses','enrollments','donations','agenda_events','projects','project_tasks',

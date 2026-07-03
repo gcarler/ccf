@@ -50,7 +50,6 @@ from fastapi import HTTPException
 from backend import crud, models
 from tests.conftest import auth_headers, seed_admin
 
-
 # ── Helpers (re-usan patrón de test_crm_sede_isolation.py) ────────────────
 
 

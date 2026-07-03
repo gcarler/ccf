@@ -4,9 +4,11 @@ login, register, refresh, change_password, forgot_password, reset_password,
 verify_email, update_profile, check_email, initialize_password.
 """
 import uuid
+
 import pytest
-from datetime import datetime, timedelta, timezone
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(s):
@@ -153,10 +155,6 @@ class TestInitializePassword:
 def full2(client, db_session):
     admin, admin_persona, sede = _seed_admin(db_session)
     from backend import models
-    from backend.models_evangelism import (
-        EstrategiaEvangelismo, GrupoEvangelismo, SesionGrupo,
-        Asistencia, ParticipanteGrupo, CategoriaEstrategia,
-    )
     personas = []
     for i in range(12):
         p = models.Persona(

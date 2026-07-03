@@ -20,8 +20,8 @@ from __future__ import annotations
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 revision: str = "20260703_0002_rename_faro_site_key"
 down_revision: Union[str, None] = "20260703_0001_add_cms_posts_categories_tags"

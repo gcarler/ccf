@@ -8,7 +8,9 @@ This avoids the brittle-pattern approach that previously broke syntax by
 mismatching comma separators.
 """
 from __future__ import annotations
-import json, re
+
+import json
+import re
 from pathlib import Path
 
 LINT_JSON = Path("/tmp/lint.json")

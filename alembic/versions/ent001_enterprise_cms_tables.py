@@ -6,9 +6,10 @@ Revision ID: ent001
 Revises: ffb57364a038
 Create Date: 2026-06-20
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 revision = "ent001"
 down_revision = "20260617_pastoral_profile"

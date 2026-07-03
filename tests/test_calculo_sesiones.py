@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
 import uuid
+from datetime import datetime, timezone
 
 from backend import models
 from backend.services.calculo_sesiones import calcular_sesiones

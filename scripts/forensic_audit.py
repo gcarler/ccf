@@ -16,7 +16,10 @@ if str(_PROJECT_ROOT) not in sys.path:
 
 #!/usr/bin/env python3.12
 """CCF FORENSIC AUDIT — Full-stack validation against new DB schema."""
-import sys, os, re, json
+import json
+import os
+import re
+import sys
 from collections import defaultdict
 
 sys.path.insert(0, '/root/ccf')
@@ -29,10 +32,12 @@ print("=" * 60)
 print("1. BACKEND ENDPOINTS")
 print("=" * 60)
 
-from backend.app import app
-from backend.core.database import engine, Base
-from sqlalchemy import inspect
 import subprocess
+
+from sqlalchemy import inspect
+
+from backend.app import app
+from backend.core.database import Base, engine
 
 results = defaultdict(list)
 for route in app.routes:
@@ -62,7 +67,7 @@ if critical_500:
     for p, c in critical_500:
         print(f"   {c} → {p}")
 else:
-    print(f"\n✅ All endpoints respond (no 500s)")
+    print("\n✅ All endpoints respond (no 500s)")
 
 # ═══════════════════════════════════════════════════════════════
 # 2. DB SCHEMA vs MODELS

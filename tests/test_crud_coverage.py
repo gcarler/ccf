@@ -3,9 +3,11 @@ CRUD Module Coverage Tests — Imports and basic function calls.
 
 Goal: Cover module-level code by importing and calling functions with minimal data.
 """
-import pytest
 import uuid
-from tests.conftest import seed_admin, auth_headers
+
+import pytest
+
+from tests.conftest import auth_headers, seed_admin
 
 
 @pytest.fixture(scope="function")
@@ -85,7 +87,7 @@ class TestCmsCrudDirect:
 
     def test_create_section(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.models_cms import CmsSection, CmsPage, CmsSite
+        from backend.models_cms import CmsPage, CmsSection, CmsSite
         site = CmsSite(id=uuid.uuid4(), site_key="section-test", name="Section Test", base_path="/", is_active=True)
         db.add(site)
         db.flush()
@@ -99,7 +101,7 @@ class TestCmsCrudDirect:
 
     def test_create_theme(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.models_cms import CmsTheme, CmsSite
+        from backend.models_cms import CmsSite, CmsTheme
         site = CmsSite(id=uuid.uuid4(), site_key="theme-test", name="Theme Test", base_path="/", is_active=True)
         db.add(site)
         db.flush()
@@ -121,7 +123,7 @@ class TestCmsCrudDirect:
 
     def test_create_menu_item(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.models_cms import CmsMenuItem, CmsMenu, CmsSite
+        from backend.models_cms import CmsMenu, CmsMenuItem, CmsSite
         site = CmsSite(id=uuid.uuid4(), site_key="menu-item-test", name="Menu Item Test", base_path="/", is_active=True)
         db.add(site)
         db.flush()
@@ -281,8 +283,9 @@ class TestEnterpriseCrudDirect:
 
     def test_create_user_session(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from backend.models_enterprise import UserSession
         from datetime import datetime, timedelta
+
+        from backend.models_enterprise import UserSession
         session = UserSession(id=uuid.uuid4(), persona_id=persona.id, session_token="test-token", expires_at=datetime.utcnow() + timedelta(hours=1))
         db.add(session)
         db.flush()

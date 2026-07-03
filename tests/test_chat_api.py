@@ -1,8 +1,7 @@
-import uuid
 
 from backend import models
-from tests.conftest import seed_admin as _seed_admin
 from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 from tests.conftest import seed_user_with_role
 
 

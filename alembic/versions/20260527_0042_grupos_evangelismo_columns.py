@@ -12,8 +12,9 @@ anfitrion_persona_id, updated_at.
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects.postgresql import UUID
+
+from alembic import op
 
 revision: str = "20260527_0042"
 down_revision: Union[str, None] = "20260527_0041"

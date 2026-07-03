@@ -8,8 +8,9 @@ Adds soft-delete column deleted_at to auth_user_module_roles
 to replace hard DELETE operations with logical deletion.
 """
 
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 revision = "add_deleted_at_mod"
 down_revision = "20260604_habilitacion_sesiones"

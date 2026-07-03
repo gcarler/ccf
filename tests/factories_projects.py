@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import uuid as _uuid
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Optional
 
 
 def _utcnow():

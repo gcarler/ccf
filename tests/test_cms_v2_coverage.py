@@ -441,8 +441,8 @@ class TestPublicEndpoints:
         assert resp.status_code in (200, 404)
 
         # Track + analytics
-        assert _ok(c.post(f"/api/cms/v2/track/home").status_code)
-        assert _ok(c.get(f"/api/cms/v2/analytics/home", headers=h).status_code)
+        assert _ok(c.post("/api/cms/v2/track/home").status_code)
+        assert _ok(c.get("/api/cms/v2/analytics/home", headers=h).status_code)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

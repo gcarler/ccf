@@ -1,11 +1,9 @@
 """Massive core module + CRUD coverage tests."""
 import asyncio
-import uuid
 import json
-import pytest
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch, AsyncMock
-
+import uuid
+from datetime import timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CORE/EVENTS (events.py) — 108 stmts, 0% coverage
@@ -34,14 +32,14 @@ class TestDomainEvent:
 
 class TestEventBus:
     def test_publish_noop(self):
-        from backend.core.events import EventBus, DomainEvent
+        from backend.core.events import DomainEvent, EventBus
         bus = EventBus()
         bus.publish("topic", DomainEvent("test", {}))  # Should not raise
 
 
 class TestConfigureEventBus:
     def test_no_redis_no_kafka(self):
-        from backend.core.events import configure_event_bus, event_bus, EventBus
+        from backend.core.events import EventBus, configure_event_bus, event_bus
         with patch("backend.core.events.settings") as mock_s:
             mock_s.redis_url = None
             mock_s.kafka_bootstrap_servers = None
@@ -274,7 +272,7 @@ class TestStableCacheKey:
 
 class TestCachedDecorator:
     def test_cached_caches_result(self):
-        from backend.core.cache import cached, MemoryRedis
+        from backend.core.cache import cached
         call_count = 0
 
         @cached(ttl=60)
@@ -320,7 +318,7 @@ class TestRateLimiter:
 
 class TestSecurity:
     def test_encrypt_decrypt(self):
-        from backend.core.security import encrypt_data, decrypt_data
+        from backend.core.security import decrypt_data, encrypt_data
         encrypted = encrypt_data("hello world")
         assert encrypted != "hello world"
         decrypted = decrypt_data(encrypted)

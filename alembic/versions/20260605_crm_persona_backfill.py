@@ -11,9 +11,9 @@ compat users.id columns as compatibility data.
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
 
 revision: str = "20260605_crm_persona_backfill"
 down_revision: Union[str, None] = "20260605_acad_pers_backfill"
