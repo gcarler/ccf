@@ -122,7 +122,7 @@ function NavRow({
                 'relative flex items-center gap-1.5 px-2 py-1.5 mx-1.5 rounded-md transition-all duration-150 group cursor-pointer',
                 isActive
                     ? 'bg-blue-600/10 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300'
-                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]/80 dark:hover:bg-white/[0.04] hover:text-[hsl(222_47%_11%)] dark:hover:text-white'
+                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]/80 dark:hover:bg-white/[0.04] hover:text-navy-dark dark:hover:text-white'
             )}>
                 {/* Active indicator bar */}
                 {isActive && (
