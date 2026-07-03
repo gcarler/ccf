@@ -8,7 +8,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 orm_config: ConfigDict = ConfigDict(from_attributes=True)
 
