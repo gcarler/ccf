@@ -127,6 +127,11 @@ export interface CmsSectionType {
   updated_at: string;
 }
 
+export interface BreadcrumbItem {
+  name: string;
+  item?: string;
+}
+
 export interface CmsPublicPage {
   site_key: string;
   slug: string;
@@ -137,6 +142,10 @@ export interface CmsPublicPage {
   json_ld?: Record<string, unknown> | null;
   /** Canonical URL for this page (auto-generated or overridden). */
   canonical_url?: string | null;
+  /** Derived breadcrumb trail from slug hierarchy. */
+  breadcrumbs?: BreadcrumbItem[] | null;
+  /** Auto-generated JSON-LD BreadcrumbList structured data. */
+  breadcrumb_json_ld?: Record<string, unknown> | null;
   /**
    * Derived map keyed by ``CmsSection.section_key`` (``"hero"``,
    * ``"feed"``, ``"events"``, ``"pastors"`` …). Each entry is the raw
