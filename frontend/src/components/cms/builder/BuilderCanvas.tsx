@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { LayoutPanelTop, Eye, Monitor, Smartphone, Plus, ArrowUp, ArrowDown } from "lucide-react";
+import { LayoutPanelTop, Eye, Monitor, Smartphone, Plus, ArrowUp, ArrowDown, Palette, RefreshCw } from "lucide-react";
 import { SectionPreview, SectionRenderPreview } from "@/components/cms/builder/SectionPreview";
 import { SECTION_TYPES, SECTION_TYPE_LABEL } from "@/components/cms/builder/constants";
 import { safeString } from "@/components/cms/builder/utils";
@@ -35,12 +35,51 @@ export default function BuilderCanvas({
     setNewSectionType,
     addSection,
     token,
+    canvasTokens,
+    canvasThemeName,
+    themeLoading,
+    reloadTheme,
   } = builder;
   return (
         <section className="lg:col-span-6 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">Canvas · {activeSlug ? `/${activeSlug}` : "Selecciona página"}</h2>
             <div className="flex items-center gap-2">
+              {/* Active theme badge + reload + palette hover */}
+              <div className="hidden sm:inline-flex relative group items-center gap-1.5 rounded-full border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-[hsl(var(--text-secondary))] cursor-default" title="Tema activo aplicado al canvas">
+                <Palette size={10} />
+                {canvasThemeName}
+                <button
+                  type="button"
+                  onClick={reloadTheme}
+                  disabled={themeLoading}
+                  className="inline-flex items-center justify-center ml-0.5 disabled:opacity-50"
+                  title="Recargar tema"
+                  aria-label="Recargar tema"
+                >
+                  <RefreshCw size={10} className={themeLoading ? "animate-spin" : ""} />
+                </button>
+                {/* Palette tooltip */}
+                <div role="tooltip" className="absolute top-full mt-1.5 right-0 hidden group-hover:block z-50 w-44">
+                  <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-lg p-2 space-y-1">
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-0.5">Paleta del tema</p>
+                    {Object.entries(canvasTokens)
+                      .filter(([k]) => k.startsWith("--site-"))
+                      .slice(0, 8)
+                      .map(([key, value]) => (
+                        <div key={key} className="flex items-center gap-2">
+                          <div
+                            className="size-4 rounded-sm border border-[hsl(var(--border))] dark:border-white/10 shrink-0"
+                            style={{ backgroundColor: value as string }}
+                          />
+                          <span className="text-[9px] font-mono text-[hsl(var(--text-secondary))] truncate">
+                            {key.replace("--site-", "")}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
               {/* Canvas mode toggle */}
               <div className="inline-flex rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
                 <button
@@ -112,9 +151,11 @@ export default function BuilderCanvas({
                 </div>
                 <div className="relative mt-3">
                   {canvasMode === "render" ? (
-                    <SectionRenderPreview section={section} mobile={previewDevice === "mobile"} />
+                    <SectionRenderPreview section={section} mobile={previewDevice === "mobile"} tokens={canvasTokens} />
                   ) : (
-                    <SectionPreview section={section} />
+                    <div style={canvasTokens}>
+                      <SectionPreview section={section} />
+                    </div>
                   )}
                   {showHeatmap && (
                     <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden rounded-lg">

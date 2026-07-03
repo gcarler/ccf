@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/http";
-import { CmsMenu, CmsMenuItem, CmsPage, CmsPageVersion, CmsPublishLog, CmsPublicMenu, CmsPublicPage, CmsSection, CmsSectionType, CmsSite, CmsTheme } from "@/types/cms-v2";
+import { CmsCategory, CmsMenu, CmsMenuItem, CmsPage, CmsPageVersion, CmsPostWithTaxonomies, CmsPublicPost, CmsPublishLog, CmsPublicMenu, CmsPublicPage, CmsSection, CmsSectionType, CmsSite, CmsTag, CmsTheme } from "@/types/cms-v2";
 
 export async function listCmsSites(token?: string | null) {
   return apiFetch<CmsSite[]>("/cms/v2/sites", { token });
@@ -367,4 +367,153 @@ export async function deleteCmsSectionType(name: string, token?: string | null):
     method: "DELETE",
     token,
   });
+}
+
+// ── Categories ─────────────────────────────────────────────────────────────
+
+export async function listCmsCategories(siteKey: string, token?: string | null) {
+  return apiFetch<CmsCategory[]>(`/cms/v2/sites/${siteKey}/categories`, { token });
+}
+
+export async function createCmsCategory(
+  siteKey: string,
+  payload: { slug: string; name: string; description?: string | null; parent_id?: string | null; is_active?: boolean },
+  token?: string | null,
+) {
+  return apiFetch<CmsCategory>(`/cms/v2/sites/${siteKey}/categories`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function patchCmsCategory(
+  siteKey: string,
+  slug: string,
+  payload: { slug?: string; name?: string; description?: string | null; parent_id?: string | null; is_active?: boolean },
+  token?: string | null,
+) {
+  return apiFetch<CmsCategory>(`/cms/v2/sites/${siteKey}/categories/${slug}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+}
+
+export async function deleteCmsCategory(siteKey: string, slug: string, token?: string | null) {
+  await apiFetch<void>(`/cms/v2/sites/${siteKey}/categories/${slug}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+// ── Tags ───────────────────────────────────────────────────────────────────
+
+export async function listCmsTags(siteKey: string, token?: string | null) {
+  return apiFetch<CmsTag[]>(`/cms/v2/sites/${siteKey}/tags`, { token });
+}
+
+export async function createCmsTag(
+  siteKey: string,
+  payload: { slug: string; name: string; is_active?: boolean },
+  token?: string | null,
+) {
+  return apiFetch<CmsTag>(`/cms/v2/sites/${siteKey}/tags`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function patchCmsTag(
+  siteKey: string,
+  slug: string,
+  payload: { slug?: string; name?: string; is_active?: boolean },
+  token?: string | null,
+) {
+  return apiFetch<CmsTag>(`/cms/v2/sites/${siteKey}/tags/${slug}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+}
+
+export async function deleteCmsTag(siteKey: string, slug: string, token?: string | null) {
+  await apiFetch<void>(`/cms/v2/sites/${siteKey}/tags/${slug}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+// ── Posts ──────────────────────────────────────────────────────────────────
+
+export async function listCmsPosts(siteKey: string, token?: string | null) {
+  return apiFetch<CmsPostWithTaxonomies[]>(`/cms/v2/sites/${siteKey}/posts`, { token });
+}
+
+export async function createCmsPost(
+  siteKey: string,
+  payload: {
+    slug: string;
+    title: string;
+    excerpt?: string | null;
+    content?: string | null;
+    featured_image_url?: string | null;
+    status?: string;
+    seo_json?: Record<string, unknown>;
+    category_ids?: string[];
+    tag_ids?: string[];
+    published_at?: string | null;
+  },
+  token?: string | null,
+) {
+  return apiFetch<CmsPostWithTaxonomies>(`/cms/v2/sites/${siteKey}/posts`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function patchCmsPost(
+  siteKey: string,
+  slug: string,
+  payload: {
+    slug?: string;
+    title?: string;
+    excerpt?: string | null;
+    content?: string | null;
+    featured_image_url?: string | null;
+    status?: string;
+    seo_json?: Record<string, unknown>;
+    category_ids?: string[];
+    tag_ids?: string[];
+    published_at?: string | null;
+  },
+  token?: string | null,
+) {
+  return apiFetch<CmsPostWithTaxonomies>(`/cms/v2/sites/${siteKey}/posts/${slug}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+}
+
+export async function deleteCmsPost(siteKey: string, slug: string, token?: string | null) {
+  await apiFetch<void>(`/cms/v2/sites/${siteKey}/posts/${slug}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export async function getCmsPublicPosts(
+  siteKey: string,
+  options?: { category_slug?: string; tag_slug?: string; skip?: number; limit?: number },
+) {
+  return apiFetch<CmsPublicPost[]>(`/cms/v2/public/sites/${siteKey}/posts`, {
+    query: options,
+  });
+}
+
+export async function getCmsPublicPost(siteKey: string, slug: string) {
+  return apiFetch<CmsPublicPost>(`/cms/v2/public/sites/${siteKey}/posts/${slug}`);
 }

@@ -7,10 +7,11 @@ import { ExternalLink, Loader2, Monitor, RefreshCw } from "lucide-react";
 import PublicSectionRenderer from "@/components/public/cms/PublicSectionRenderer";
 import { useAuth } from "@/context/AuthContext";
 import { getCmsPagePreview } from "@/lib/cms/v2";
+import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
-import { CmsPublicPage } from "@/types/cms-v2";
+import { CmsPublicPage, CmsTheme } from "@/types/cms-v2";
 
-const PREVIEW_TOKENS = {
+const FALLBACK_TOKENS = {
   "--site-background": "#f8f9ff",
   "--site-on-background": "#101828",
   "--site-surface-container": "#ffffff",
@@ -44,6 +45,7 @@ function CmsPreviewInner() {
   const siteKey = params?.get("site") || SITE_KEY;
   const slug = params?.get("page") || "";
   const [page, setPage] = useState<CmsPublicPage | null>(null);
+  const [themeTokens, setThemeTokens] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,6 +53,10 @@ function CmsPreviewInner() {
     const base = siteKey === SITE_KEY ? "/" : `/${siteKey}`;
     return slug ? `${base}/${slug}` : base;
   }, [siteKey, slug]);
+
+  const previewTokens = useMemo(() => {
+    return { ...FALLBACK_TOKENS, ...themeTokens } as React.CSSProperties;
+  }, [themeTokens]);
 
   const loadPreview = async () => {
     if (!token || !slug) {
@@ -61,9 +67,16 @@ function CmsPreviewInner() {
     }
     setLoading(true);
     setError(null);
+    setThemeTokens({});
     try {
-      const data = await getCmsPagePreview(siteKey, slug, token);
+      const [data, theme] = await Promise.all([
+        getCmsPagePreview(siteKey, slug, token),
+        apiFetch<CmsTheme>(`/cms/v2/public/sites/${siteKey}/theme`, { silent: true }).catch(() => null),
+      ]);
       setPage(data);
+      if (theme?.tokens_json) {
+        setThemeTokens(theme.tokens_json);
+      }
     } catch {
       setPage(null);
       setError("No se pudo cargar la vista previa.");
@@ -102,7 +115,7 @@ function CmsPreviewInner() {
           <div className="flex items-center gap-2 border-b border-[hsl(var(--border))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
             <Monitor size={13} /> Draft actual
           </div>
-          <div style={PREVIEW_TOKENS} className="min-h-[70vh] px-3 py-1.5 md:px-4 lg:px-4 space-y-3">
+          <div style={previewTokens} className="min-h-[70vh] px-3 py-1.5 md:px-4 lg:px-4 space-y-3">
             {loading ? (
               <div className="flex min-h-[320px] items-center justify-center gap-3 text-sm font-bold text-[hsl(var(--text-secondary))]">
                 <Loader2 className="animate-spin" size={18} /> Cargando preview...

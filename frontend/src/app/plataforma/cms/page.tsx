@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
+  BookOpen,
   CheckCircle2,
   Clock3,
+  Eye,
   ExternalLink,
   FileText,
   Globe,
@@ -19,6 +21,8 @@ import {
   Palette,
   PanelsTopLeft,
   ShieldCheck,
+  Tag,
+  TrendingUp,
   Users,
   Video,
   Volume2,
@@ -42,6 +46,13 @@ interface CmsStats {
   mediaVideos: number;
   mediaAudio: number;
   mediaWithoutAlt: number;
+  pageViewsTotal: number;
+  pageViews7d: number;
+  pageViews30d: number;
+  postsTotal: number;
+  postsPublished: number;
+  categoriesTotal: number;
+  tagsTotal: number;
 }
 
 interface TestimonialPreview {
@@ -72,6 +83,49 @@ interface CmsMetricsResponse {
   media_audio: number;
 }
 
+interface DashboardTopPage {
+  slug: string;
+  title: string;
+  views: number;
+}
+
+interface DashboardRecentPost {
+  slug: string;
+  title: string;
+  published_at: string;
+  status: string;
+  category_count: number;
+  tag_count: number;
+}
+
+interface DashboardActivity {
+  entity_type: string;
+  action: string;
+  from_status: string | null;
+  to_status: string | null;
+  created_at: string;
+  actor: string;
+  metadata: Record<string, unknown>;
+}
+
+interface CmsDashboardResponse {
+  cards: Array<{ title: string; value: string; trend?: string; tone?: string; icon?: string }>;
+  page_views_total: number;
+  page_views_7d: number;
+  page_views_30d: number;
+  top_pages: DashboardTopPage[];
+  recent_posts: DashboardRecentPost[];
+  recent_activity: DashboardActivity[];
+  posts_total: number;
+  posts_published: number;
+  categories_total: number;
+  tags_total: number;
+  publicaciones_por_mes: Array<{ label: string; value: number }>;
+  contenido_por_tipo: Array<{ label: string; value: number }>;
+  borradores_pendientes: number;
+  last_updated?: string;
+}
+
 type QualityTone = "success" | "warning";
 
 type QualityCheck = {
@@ -96,6 +150,13 @@ const EMPTY_STATS: CmsStats = {
   mediaVideos: 0,
   mediaAudio: 0,
   mediaWithoutAlt: 0,
+  pageViewsTotal: 0,
+  pageViews7d: 0,
+  pageViews30d: 0,
+  postsTotal: 0,
+  postsPublished: 0,
+  categoriesTotal: 0,
+  tagsTotal: 0,
 };
 
 function formatDate(value?: string) {
@@ -110,11 +171,37 @@ function metricValue(value: number | undefined, loading: boolean) {
   return value ?? 0;
 }
 
+function activityLabel(activity: DashboardActivity): string {
+  const entityMap: Record<string, string> = {
+    page: "Página",
+    post: "Post",
+    section: "Sección",
+    media: "Media",
+    theme: "Tema",
+    menu: "Menú",
+  };
+  const actionMap: Record<string, string> = {
+    publish: "publicó",
+    update: "actualizó",
+    create: "creó",
+    delete: "eliminó",
+    rollback: "revirtió",
+  };
+  const entity = entityMap[activity.entity_type] || activity.entity_type;
+  const action = actionMap[activity.action] || activity.action;
+  return `${activity.actor} ${action} ${entity.toLowerCase()}`;
+}
+
 export default function CmsHomePage() {
   const { token, isAuthenticated, user } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<CmsStats>(EMPTY_STATS);
   const [recentTestimonials, setRecentTestimonials] = useState<TestimonialPreview[]>([]);
+  const [topPages, setTopPages] = useState<DashboardTopPage[]>([]);
+  const [recentPosts, setRecentPosts] = useState<DashboardRecentPost[]>([]);
+  const [recentActivity, setRecentActivity] = useState<DashboardActivity[]>([]);
+  const [pubsChart, setPubsChart] = useState<Array<{ label: string; value: number }>>([]);
+  const [contentTypeChart, setContentTypeChart] = useState<Array<{ label: string; value: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [dataIssue, setDataIssue] = useState<string | null>(null);
   const canEdit = canEditCms(user?.role);
@@ -130,10 +217,11 @@ export default function CmsHomePage() {
       setLoading(true);
       setDataIssue(null);
 
-      const [testimonialsResult, metricsResult, mediaResult] = await Promise.allSettled([
+      const [testimonialsResult, metricsResult, mediaResult, dashboardResult] = await Promise.allSettled([
         apiFetch<TestimonialPreview[]>("/admin/testimonials", { token, cache: "no-store" }),
         apiFetch<CmsMetricsResponse>("/cms/metrics", { token, cache: "no-store" }),
         apiFetch<{ items: MediaPreview[]; total: number }>("/cms/media", { token, cache: "no-store", query: { include_archived: true } }),
+        apiFetch<CmsDashboardResponse>("/dashboard/cms", { token, cache: "no-store" }),
       ]);
 
       const loadIssues: string[] = [];
@@ -144,10 +232,12 @@ export default function CmsHomePage() {
       const media = mediaResult.status === "fulfilled" && mediaResult.value?.items
         ? mediaResult.value.items
         : [];
+      const dashboard = dashboardResult.status === "fulfilled" ? dashboardResult.value : null;
 
       if (testimonialsResult.status === "rejected") loadIssues.push("testimonios");
       if (metricsResult.status === "rejected") loadIssues.push("metricas");
       if (mediaResult.status === "rejected") loadIssues.push("media");
+      if (dashboardResult.status === "rejected") loadIssues.push("dashboard");
 
       const visibleMedia = media.filter((item) => item.status !== "archived");
       const missingAlt = visibleMedia.filter(
@@ -155,6 +245,11 @@ export default function CmsHomePage() {
       ).length;
 
       setRecentTestimonials(testimonials.slice(0, 5));
+      setTopPages(dashboard?.top_pages ?? []);
+      setRecentPosts(dashboard?.recent_posts ?? []);
+      setRecentActivity(dashboard?.recent_activity ?? []);
+      setPubsChart(dashboard?.publicaciones_por_mes ?? []);
+      setContentTypeChart(dashboard?.contenido_por_tipo ?? []);
       setStats({
         testimonials: testimonials.length,
         pendingTestimonials: testimonials.filter((testimony) => !testimony.is_approved && testimony.status !== "archived").length,
@@ -168,6 +263,13 @@ export default function CmsHomePage() {
         mediaVideos: metrics?.media_videos ?? visibleMedia.filter((item) => (item.mime_type || "").startsWith("video/")).length,
         mediaAudio: metrics?.media_audio ?? visibleMedia.filter((item) => (item.mime_type || "").startsWith("audio/")).length,
         mediaWithoutAlt: missingAlt,
+        pageViewsTotal: dashboard?.page_views_total ?? 0,
+        pageViews7d: dashboard?.page_views_7d ?? 0,
+        pageViews30d: dashboard?.page_views_30d ?? 0,
+        postsTotal: dashboard?.posts_total ?? 0,
+        postsPublished: dashboard?.posts_published ?? 0,
+        categoriesTotal: dashboard?.categories_total ?? 0,
+        tagsTotal: dashboard?.tags_total ?? 0,
       });
       setDataIssue(loadIssues.length ? `No se pudieron cargar: ${loadIssues.join(", ")}.` : null);
       setLoading(false);
@@ -185,6 +287,9 @@ export default function CmsHomePage() {
   const quickLinks = useMemo(
     () => [
       { label: "Paginas", href: "/cms/pages", description: "Contenido, SEO y estados", icon: FileText, show: canEdit },
+      { label: "Posts / Blog", href: "/cms/posts", description: "Articulos y noticias", icon: BookOpen, show: canEdit },
+      { label: "Categorias", href: "/cms/categories", description: "Taxonomias de posts", icon: Globe, show: canEdit },
+      { label: "Etiquetas", href: "/cms/tags", description: "Tags de posts", icon: Tag, show: canEdit },
       { label: "Menus", href: "/cms/menus", description: "Navegacion publica", icon: Link2, show: canEdit },
       { label: "Testimonios", href: "/cms/testimonials", description: "Aprobacion y portada", icon: MessageCircle, show: canEdit },
       { label: "Builder", href: "/cms/builder", description: "Secciones visuales", icon: PanelsTopLeft, show: canEdit },
@@ -251,7 +356,24 @@ export default function CmsHomePage() {
     { label: "Publicados", value: stats.publishedBlocks, icon: CheckCircle2 },
     { label: "En revision", value: stats.inReviewBlocks, icon: Clock3 },
     { label: "Anuncios activos", value: stats.activeAnnouncements, icon: Megaphone },
+    { label: "Vistas totales", value: stats.pageViewsTotal, icon: Eye },
+    { label: "Vistas 7d", value: stats.pageViews7d, icon: TrendingUp },
+    { label: "Vistas 30d", value: stats.pageViews30d, icon: TrendingUp },
+    { label: "Posts", value: stats.postsTotal, icon: BookOpen },
+    { label: "Posts publicados", value: stats.postsPublished, icon: CheckCircle2 },
+    { label: "Categorías", value: stats.categoriesTotal, icon: Globe },
+    { label: "Etiquetas", value: stats.tagsTotal, icon: Tag },
   ];
+
+  const maxPubValue = useMemo(() => {
+    if (!pubsChart.length) return 1;
+    return Math.max(...pubsChart.map((d) => d.value), 1);
+  }, [pubsChart]);
+
+  const maxTypeValue = useMemo(() => {
+    if (!contentTypeChart.length) return 1;
+    return Math.max(...contentTypeChart.map((d) => d.value), 1);
+  }, [contentTypeChart]);
 
   if (!isAuthenticated) {
     return (
@@ -284,6 +406,7 @@ export default function CmsHomePage() {
           </div>
         )}
 
+        {/* Metric cards */}
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {metricCards.map((metric) => {
             const Icon = metric.icon;
@@ -301,6 +424,58 @@ export default function CmsHomePage() {
           })}
         </section>
 
+        {/* Charts row */}
+        <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+            <div className="mb-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tendencias</p>
+              <h2 className="mt-1 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Publicaciones por mes</h2>
+            </div>
+            {pubsChart.length > 0 ? (
+              <div className="flex items-end gap-2 h-40">
+                {pubsChart.map((d) => (
+                  <div key={d.label} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className="w-full rounded-t bg-[hsl(var(--primary))] opacity-80 hover:opacity-100 transition-all"
+                      style={{ height: `${Math.max((d.value / maxPubValue) * 100, 4)}%` }}
+                      title={`${d.label}: ${Math.round(d.value)}`}
+                    />
+                    <span className="text-[10px] text-[hsl(var(--text-secondary))]">{d.label}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-[hsl(var(--text-secondary))]">Sin datos de publicación.</p>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+            <div className="mb-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contenido</p>
+              <h2 className="mt-1 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Secciones por tipo</h2>
+            </div>
+            {contentTypeChart.length > 0 ? (
+              <div className="space-y-2">
+                {contentTypeChart.map((d) => (
+                  <div key={d.label} className="flex items-center gap-3">
+                    <span className="w-24 text-xs text-[hsl(var(--text-secondary))] truncate">{d.label}</span>
+                    <div className="flex-1 h-4 rounded bg-[hsl(var(--surface-1))] dark:bg-white/5 overflow-hidden">
+                      <div
+                        className="h-full rounded bg-emerald-500/80"
+                        style={{ width: `${Math.max((d.value / maxTypeValue) * 100, 2)}%` }}
+                      />
+                    </div>
+                    <span className="w-8 text-right text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{Math.round(d.value)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-[hsl(var(--text-secondary))]">Sin datos de secciones.</p>
+            )}
+          </div>
+        </section>
+
+        {/* Quality + Role */}
         <section className="grid grid-cols-1 gap-3 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex flex-col gap-3 border-b border-[hsl(var(--border))] pb-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
@@ -383,6 +558,120 @@ export default function CmsHomePage() {
           </div>
         </section>
 
+        {/* Top pages + Recent posts + Activity */}
+        <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+          {/* Top pages */}
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Páginas más vistas</h2>
+                <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Últimos 30 días.</p>
+              </div>
+              <Eye className="h-5 w-5 text-[hsl(var(--primary))]" />
+            </div>
+            <div className="mt-4 space-y-2">
+              {loading ? (
+                <p className="text-sm text-[hsl(var(--text-secondary))]">Cargando...</p>
+              ) : topPages.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
+                  Sin vistas registradas.
+                </p>
+              ) : (
+                topPages.map((page, idx) => (
+                  <div key={page.slug} className="flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-6 w-6 items-center justify-center rounded bg-[hsl(var(--surface-1))] text-[10px] font-bold text-[hsl(var(--text-secondary))] dark:bg-white/5">
+                        {idx + 1}
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate max-w-[140px]">{page.title}</p>
+                        <p className="text-[11px] text-[hsl(var(--text-secondary))]">/{page.slug}</p>
+                      </div>
+                    </div>
+                    <span className="text-sm font-bold text-[hsl(var(--primary))]">{page.views}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Recent posts */}
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Posts recientes</h2>
+                <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Últimos publicados.</p>
+              </div>
+              {canEdit && (
+                <Link href="/cms/posts" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-blue-300 hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
+                  Ver todo
+                </Link>
+              )}
+            </div>
+            <div className="mt-4 space-y-3">
+              {loading ? (
+                <p className="text-sm text-[hsl(var(--text-secondary))]">Cargando posts...</p>
+              ) : recentPosts.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
+                  Sin posts publicados.
+                </p>
+              ) : (
+                recentPosts.map((post) => (
+                  <div key={post.slug} className="rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{post.title}</p>
+                      <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                        {post.status}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center gap-2 text-[11px] text-[hsl(var(--text-secondary))]">
+                      <span>{post.published_at}</span>
+                      {post.category_count > 0 && <span>· {post.category_count} cat</span>}
+                      {post.tag_count > 0 && <span>· {post.tag_count} tags</span>}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Recent activity */}
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Actividad reciente</h2>
+                <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Últimas acciones en el CMS.</p>
+              </div>
+              <Clock3 className="h-5 w-5 text-[hsl(var(--primary))]" />
+            </div>
+            <div className="mt-4 space-y-3">
+              {loading ? (
+                <p className="text-sm text-[hsl(var(--text-secondary))]">Cargando actividad...</p>
+              ) : recentActivity.length === 0 ? (
+                <p className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
+                  Sin actividad reciente.
+                </p>
+              ) : (
+                recentActivity.map((activity, idx) => (
+                  <div key={idx} className="flex items-start gap-3 rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10">
+                    <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--primary))]" />
+                    <div className="min-w-0">
+                      <p className="text-sm text-[hsl(var(--text-primary))] dark:text-white">{activityLabel(activity)}</p>
+                      {activity.from_status && activity.to_status && (
+                        <p className="mt-0.5 text-[11px] text-[hsl(var(--text-secondary))]">
+                          {activity.from_status} → {activity.to_status}
+                        </p>
+                      )}
+                      <p className="mt-1 text-[11px] text-[hsl(var(--text-secondary))]">{activity.created_at}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials + Workflow */}
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
             <div className="flex items-center justify-between gap-3">

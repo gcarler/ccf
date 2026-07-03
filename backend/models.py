@@ -67,16 +67,21 @@ from backend.models_auth import (
 )
 from backend.models_cms import (  # noqa: F401
     Announcement,
+    CmsCategory,
     CmsMediaItem,  # noqa: F401
     CmsMenu,
     CmsMenuItem,
     CmsPage,
     CmsPageVersion,
     CmsPageView,
+    CmsPost,
+    CmsPostCategory,
+    CmsPostTag,
     CmsPublishLog,
     CmsSection,
     CmsSectionType,
     CmsSite,
+    CmsTag,
     CmsTheme,
     SavedView,
     Testimonial,

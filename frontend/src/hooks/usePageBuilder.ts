@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   createCmsPage,
@@ -17,10 +17,11 @@ import {
   workflowCmsPage,
 } from "@/lib/cms/v2";
 import { PAGE_TEMPLATES } from "@/components/cms/builder/constants";
-import type { CmsPage, CmsPageVersion, CmsPublishLog, CmsSection } from "@/types/cms-v2";
+import type { CmsPage, CmsPageVersion, CmsPublishLog, CmsSection, CmsTheme } from "@/types/cms-v2";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
-import { safeString, asObject } from "@/components/cms/builder/utils";
+import { safeString, asObject, CANVAS_PREVIEW_TOKENS } from "@/components/cms/builder/utils";
+import { toast } from "sonner";
 
 export type CanvasMode = "esquema" | "render";
 export type PreviewDevice = "desktop" | "mobile";
@@ -90,6 +91,11 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
   const [aiImagePrompt, setAiImagePrompt] = useState("");
   const [aiImageResult, setAiImageResult] = useState("");
   const [aiImageGenerating, setAiImageGenerating] = useState(false);
+  const [canvasTokens, setCanvasTokens] = useState<React.CSSProperties>(CANVAS_PREVIEW_TOKENS);
+  const [canvasThemeName, setCanvasThemeName] = useState<string>("Por defecto");
+  const [themeLoading, setThemeLoading] = useState(false);
+  const themeLoadingRef = useRef(false);
+  const isMountedRef = useRef(true);
 
   // ── Derived state ────────────────────────────────────────────────────────
   const activePage = useMemo(() => pages.find((p) => p.slug === activeSlug) ?? null, [pages, activeSlug]);
@@ -156,6 +162,40 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
   useEffect(() => {
     loadPages(siteKey).catch(() => undefined);
   }, [siteKey, loadPages]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
+
+  const reloadTheme = useCallback(async () => {
+    if (!siteKey || themeLoadingRef.current) return;
+    themeLoadingRef.current = true;
+    setThemeLoading(true);
+    try {
+      const theme = await apiFetch<CmsTheme>(`/cms/v2/public/sites/${siteKey}/theme`, { method: "GET", silent: true });
+      if (!isMountedRef.current) return;
+      if (theme?.tokens_json) {
+        const vars: Record<string, string> = {};
+        Object.entries(theme.tokens_json).forEach(([k, v]) => {
+          vars[`--site-${k}`] = v;
+        });
+        setCanvasTokens({ ...CANVAS_PREVIEW_TOKENS, ...vars } as React.CSSProperties);
+      }
+      const themeName = theme?.name || "Por defecto";
+      setCanvasThemeName(themeName);
+      toast.success(`Tema "${themeName}" cargado`);
+    } catch {
+      toast.error("No se pudo recargar el tema");
+    } finally {
+      themeLoadingRef.current = false;
+      if (isMountedRef.current) setThemeLoading(false);
+    }
+  }, [siteKey]);
+
+  useEffect(() => {
+    reloadTheme().catch(() => undefined);
+  }, [reloadTheme]);
 
   useEffect(() => {
     loadSectionsAndVersions(activeSlug).catch(() => undefined);
@@ -693,6 +733,9 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     aiImagePrompt, setAiImagePrompt,
     aiImageResult, setAiImageResult,
     aiImageGenerating,
+    canvasTokens,
+    canvasThemeName,
+    themeLoading,
 
     // Derived
     activePage,
@@ -728,6 +771,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     handleReplaceActiveSectionWithAi,
     upsertArrayItem,
     addArrayItem,
+    reloadTheme,
 
     // Direct lib access (for advanced use in child components)
     token,
