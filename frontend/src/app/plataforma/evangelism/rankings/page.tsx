@@ -405,7 +405,7 @@ export default function RankingsPage() {
                       label={`${leader.visitors_this_month} visitantes este mes`}
                     />
                     <span className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">
-                      {leader.personas} miembros
+                      {leader.personas} personas
                     </span>
                   </div>
                 </DSCard>

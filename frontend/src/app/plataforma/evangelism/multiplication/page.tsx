@@ -265,7 +265,7 @@ export default function MultiplicationPage() {
                       )}
                     </div>
                     <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">
-                      {check.lider_nombre || 'Sin líder'} · {check.total_miembros} miembros
+                      {check.lider_nombre || 'Sin líder'} · {check.total_miembros} personas
                     </p>
                     <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5">
                       {check.sugerencia}
@@ -357,10 +357,9 @@ export default function MultiplicationPage() {
                   <div className="shrink-0 text-right">
                     <p className="text-lg font-bold text-[hsl(var(--text-primary))]">
                       {item.miembros_actuales}
-                    </p>
-                    <p className="text-[9px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide">
-                      miembros
-                    </p>
+                    </p>                      <p className="text-[9px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide">
+                        personas
+                      </p>
                   </div>
                 </div>
               ))}
@@ -405,7 +404,7 @@ export default function MultiplicationPage() {
               Acción irreversible
             </p>
             <p className="text-sm text-amber-800 dark:text-amber-200">
-              Esta operación transferirá aproximadamente la mitad de los miembros del grupo{' '}
+              Esta operación transferirá aproximadamente la mitad de las personas del grupo{' '}
               <strong>{selectedGroup?.grupo_nombre}</strong> al nuevo grupo. Asegúrate de que el
               nuevo líder esté preparado.
             </p>
