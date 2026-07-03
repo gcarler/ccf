@@ -77,12 +77,14 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
         return (
             <Tooltip key={id} content={label} side="right">
                 <Link href={href} className="relative" onClick={() => resetSidebarStack()}>
-                    <div className={clsx(
-                        "size-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer",
-                        isActive
-                            ? "bg-blue-600/10 dark:bg-white/10 text-[hsl(var(--primary))] dark:text-white shadow-inner"
-                            : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 hover:text-navy-dark dark:hover:text-white"
-                    )}>
+                    <div
+                        className={clsx(
+                            "size-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer sidebar-nav-item",
+                            isActive
+                                ? "bg-blue-600/10 dark:bg-white/10 text-[hsl(var(--primary))] dark:text-white shadow-inner"
+                                : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
+                        )}
+                    >
                         <Icon size={19} className={clsx(isActive && "text-[hsl(var(--primary))]")} />
                         {badge && (
                             <span className="absolute -top-0.5 -right-0.5 size-4 rounded-full bg-rose-500 text-white font-semibold flex items-center justify-center border-2 border-white dark:border-black">
@@ -127,7 +129,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             <div className="mt-auto flex flex-col items-center gap-1 pb-1">
                 <Tooltip content="Ajustes" side="right">
                     <Link href="/plataforma/settings">
-                        <div className="size-10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 hover:text-navy-dark dark:hover:text-white transition-all duration-200 cursor-pointer">
+                        <div className="size-10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 sidebar-nav-item transition-all duration-200 cursor-pointer">
                             <Settings size={19} />
                         </div>
                     </Link>
