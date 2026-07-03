@@ -73,7 +73,7 @@ interface AttendanceData {
 interface AttendeeRow { persona_id: string; name: string; role?: string; attended?: boolean; absence_reason?: AttendanceReason | null; absence_reason_detail?: string | null; scanned_at?: string; }
 interface Persona { id: string; nombre_completo: string; church_role?: string; }
 
-export default function FaroDetailPage() {
+export default function GroupDetailPage() {
  const params = useParams();
  const id = params?.id as string | undefined;
  const router = useRouter();
@@ -131,14 +131,14 @@ export default function FaroDetailPage() {
  useEffect(() => {
  if (!house) return;
  pushSidebarPanel({
- id: 'faro-sessions-list',
+ id: 'groups-sessions-list',
  title: 'Grupos en Casa',
  replaceAll: true,
  content: (
  <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
  <div className="px-3 pt-4 pb-3 border-b border-[hsl(var(--border-primary))]">
  <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] transition-colors mb-3 text-[10px] font-semibold uppercase tracking-wide">
- <ArrowLeft size={14} /> Volver a Faros
+ <ArrowLeft size={14} /> Volver a Grupos
  </button>
  <p className="text-xs font-semibold text-[hsl(var(--text-primary))] truncate mb-4">{house.name}</p>
  <h2 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
@@ -219,7 +219,7 @@ export default function FaroDetailPage() {
  useEffect(() => {
  if (!token || !activeSession) return;
  setLoadingAtt(true);
- apiFetch<AttendanceData>(`/evangelism/faro/sessions/${activeSession.id}/attendance`, { token })
+ apiFetch<AttendanceData>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, { token })
  .then(data => {
  setAttendance(data);
  
@@ -291,7 +291,7 @@ export default function FaroDetailPage() {
  }
  setSaving(true);
  try {
- const res = await apiFetch<{ processed: number }>(`/evangelism/faro/sessions/${activeSession.id}/attendance`, {
+ const res = await apiFetch<{ processed: number }>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, {
  method: 'POST', body: { persona_ids: Array.from(selectedIds) }, token
  });
  toast.success(`${res.processed} asistente(s) registrados`);
@@ -299,7 +299,7 @@ export default function FaroDetailPage() {
  setSelectedIds(new Set());
  setPersonaQuery('');
  // Reload attendance
- const updated = await apiFetch<AttendanceData>(`/evangelism/faro/sessions/${activeSession.id}/attendance`, { token });
+ const updated = await apiFetch<AttendanceData>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, { token });
  setAttendance(updated);
  // Update session count in list
  if (house) {
@@ -349,7 +349,7 @@ export default function FaroDetailPage() {
  absence_reason: row.attended ? null : row.absence_reason,
  absence_reason_detail: row.attended ? null : row.absence_reason_detail,
  }));
- await apiFetch<{ status: string }>(`/evangelism/faro/sessions/${activeSession.id}/attendance`, {
+ await apiFetch<{ status: string }>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, {
  method: 'POST',
  token,
  body: {
@@ -364,7 +364,7 @@ export default function FaroDetailPage() {
  }
  });
  toast.success('Reporte semanal guardado');
- const updated = await apiFetch<AttendanceData>(`/evangelism/faro/sessions/${activeSession.id}/attendance`, { token });
+ const updated = await apiFetch<AttendanceData>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, { token });
  setAttendance(updated);
  setHouse(prev => prev ? {
  ...prev,
@@ -386,13 +386,13 @@ export default function FaroDetailPage() {
  ];
 
  if (loading) return (
- <EvangelismShell breadcrumbs={[{ label: 'Grupos en Casa', href: '/plataforma/evangelism/faro', icon: Home }, { label: '...', icon: Home }]}>
+ <EvangelismShell breadcrumbs={[{ label: 'Grupos en Casa', href: '/plataforma/evangelism/groups', icon: Home }, { label: '...', icon: Home }]}>
  <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-[hsl(var(--primary))]" size={40} /></div>
  </EvangelismShell>
  );
 
  if (!house) return (
- <EvangelismShell breadcrumbs={[{ label: 'Grupos en Casa', href: '/plataforma/evangelism/faro', icon: Home }]}>
+ <EvangelismShell breadcrumbs={[{ label: 'Grupos en Casa', href: '/plataforma/evangelism/groups', icon: Home }]}>
  <div className="p-4 text-center text-[hsl(var(--text-secondary))]">Grupo no encontrado.</div>
  </EvangelismShell>
  );
@@ -405,7 +405,7 @@ export default function FaroDetailPage() {
 
  return (
  <EvangelismShell breadcrumbs={[
- { label: 'Grupos en Casa', href: '/plataforma/evangelism/faro', icon: Home },
+ { label: 'Grupos en Casa', href: '/plataforma/evangelism/groups', icon: Home },
  { label: house.name, icon: Home }
  ]}>
  <main className="flex-1 overflow-y-auto">

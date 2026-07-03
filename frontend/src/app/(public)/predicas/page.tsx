@@ -63,7 +63,7 @@ function cleanDesc(raw: string) {
 }
 
 /* ── Historial en localStorage ── */
-const LS_KEY = "faro-predicas-watched";
+const LS_KEY = "ccf-predicas-watched";
 function loadWatched(): Record<string, string> {
     if (typeof window === "undefined") return {};
     try { return JSON.parse(localStorage.getItem(LS_KEY) ?? "{}"); } catch { return {}; }
@@ -401,7 +401,7 @@ export default function PredicasPage() {
                         <div className="flex items-center gap-3 mb-4">
                             <span className="w-8 h-0.5 bg-site-primary" />
                             <span className="text-[11px] font-bold uppercase tracking-widest text-site-primary flex items-center gap-2">
-                                <Youtube size={13} /> {feed?.hero_eyebrow || "Ministerios Faro Oficial"}
+                                <Youtube size={13} /> {feed?.hero_eyebrow || "Ministerios de la Comunidad"}
                             </span>
                         </div>
 

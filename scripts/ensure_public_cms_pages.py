@@ -155,9 +155,9 @@ def ensure_page(db, site, slug: str, title: str) -> tuple[bool, bool]:
 
 def main() -> int:
     with SessionLocal() as db:
-        site = db.query(models.CmsSite).filter(models.CmsSite.site_key == "faro").first()
+        site = db.query(models.CmsSite).filter(models.CmsSite.site_key == "ccf").first()
         if site is None:
-            raise RuntimeError("CMS site 'faro' not found")
+            raise RuntimeError("CMS site 'ccf' not found")
 
         created = 0
         published = 0

@@ -29,8 +29,8 @@ router = APIRouter()
 
 
 @router.get("/grupos/sessions/{session_id}/attendance")
-@router.get("/faro/sessions/{session_id}/attendance")
-def get_faro_session_attendance(
+@router.get("/groups/sessions/{session_id}/attendance")
+def get_groups_session_attendance(
     session_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
@@ -111,8 +111,8 @@ def get_faro_session_attendance(
 
 
 @router.post("/grupos/sessions/{session_id}/attendance", response_model=dict)
-@router.post("/faro/sessions/{session_id}/attendance", response_model=dict)
-def add_faro_attendance(
+@router.post("/groups/sessions/{session_id}/attendance", response_model=dict)
+def add_groups_attendance(
     session_id: UUID,
     payload: dict,
     db: Session = Depends(get_db),

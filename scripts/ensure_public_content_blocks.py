@@ -34,7 +34,7 @@ from backend.core.database import SessionLocal  # noqa: E402
 
 
 BLOCKS = {
-    "faro_events_feed": {
+    "ccf_events_feed": {
         "title": "Eventos publico FARO",
         "content": {
             "empty_title": "Esperando agenda desde el CMS",
@@ -53,7 +53,7 @@ BLOCKS = {
             "channel_link_label": "Ver canal",
         },
     },
-    "faro_sermons_feed": {
+    "ccf_sermons_feed": {
         "title": "Prédicas publico FARO",
         "content": {
             "hero_eyebrow": "Ministerios Faro Oficial",
@@ -75,7 +75,7 @@ BLOCKS = {
             "no_results_description": "Intenta con otro término.",
         },
     },
-    "faro_testimonials_hero": {
+    "ccf_testimonials_hero": {
         "title": "Hero testimonios publico FARO",
         "content": {
             "eyebrow": "Impacto Real",
@@ -84,7 +84,7 @@ BLOCKS = {
             "description": "Descubre cómo la fe y la comunidad han iluminado el camino de personas reales.",
         },
     },
-    "faro_testimonials_feed": {
+    "ccf_testimonials_feed": {
         "title": "Testimonios publico FARO",
         "content": {
             "search_placeholder": "Buscar por tema, nombre o palabra clave",
@@ -98,7 +98,7 @@ BLOCKS = {
             "hero_description": "Descubre cómo la fe y la comunidad han iluminado el camino de personas reales.",
         },
     },
-    "faro_boletin_hero": {
+    "ccf_boletin_hero": {
         "title": "Boletín publico FARO",
         "content": {
             "subtitle": "Boletín Semanal FARO",
@@ -107,7 +107,7 @@ BLOCKS = {
             "cta_text": "Suscribirme ahora",
         },
     },
-    "faro_pastores_index": {
+    "ccf_pastores_index": {
         "title": "Pastores publico FARO",
         "content": {
             "hero_badge": "Conoce a nuestro equipo pastoral",
@@ -119,7 +119,7 @@ BLOCKS = {
             "principal_label": "Pastor Principal",
         },
     },
-    "faro_pastores_feed": {
+    "ccf_pastores_feed": {
         "title": "Pastores publico FARO",
         "content": {
             "pastors": [
@@ -201,7 +201,7 @@ BLOCKS = {
             ]
         },
     },
-    "faro_courses_feed": {
+    "ccf_courses_feed": {
         "title": "Cursos publico FARO",
         "content": {
             "library_title": "Nuestra Librería",
@@ -211,7 +211,7 @@ BLOCKS = {
             "courses_description": "Programas estructurados para líderes, estudiantes y buscadores de la verdad. Formación teológica y práctica con estándares de excelencia.",
         },
     },
-    "faro_discover_feed": {
+    "ccf_discover_feed": {
         "title": "Conocer a Jesús publico FARO",
         "content": {
             "intro_title": "Un Encuentro Personal",
@@ -230,7 +230,7 @@ BLOCKS = {
             "submit_label": "Enviar mensaje y conectar",
         },
     },
-    "faro_home_feed": {
+    "ccf_home_feed": {
         "title": "Home publico FARO",
         "content": {
             "eyebrow": "Nuestra esencia",
@@ -269,7 +269,7 @@ BLOCKS = {
             ],
         },
     },
-    "faro_footer": {
+    "ccf_footer": {
         "title": "Footer publico FARO",
         "content": {
             "description": (
@@ -300,7 +300,7 @@ BLOCKS = {
             "newsletter_label": "Boletín semanal",
         },
     },
-    "faro_mobile_nav": {
+    "ccf_mobile_nav": {
         "title": "Navegacion movil publica FARO",
         "content": {
             "items": [
@@ -312,7 +312,7 @@ BLOCKS = {
             ]
         },
     },
-    "faro_welcome": {
+    "ccf_welcome": {
         "title": "Bienvenida publica FARO",
         "content": {
             "eyebrow": "Bienvenida",
@@ -341,7 +341,7 @@ BLOCKS = {
             ],
         },
     },
-    "faro_privacy": {
+    "ccf_privacy": {
         "title": "Política de privacidad FARO",
         "content": {
             "last_update": "12 de junio de 2026",
@@ -369,7 +369,7 @@ BLOCKS = {
 }
 
 MERGE_BLOCKS = {
-    "faro_courses_feed": {
+    "ccf_courses_feed": {
         "title": "Feed — Cursos",
         "content": {
             "hero_image_url": "https://picsum.photos/seed/1481627834876-b7833e8f5570/1920/1080",

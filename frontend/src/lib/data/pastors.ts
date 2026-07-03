@@ -19,7 +19,7 @@ export const PASTORS: PastorProfile[] = [
         name: "Luis Ricardo Meza Gutiérrez",
         role: "Apóstol",
         category: "apostles",
-        description: "Fundador y visionario principal de Comunidad Faro. El Apóstol Luis Ricardo ha dedicado más de tres décadas a la expansión del evangelio, plantando iglesias y levantando generaciones de líderes íntegros. Su ministerio se caracteriza por una enseñanza profunda, una fe inquebrantable y un corazón pastoral genuino. Ha sido instrumento de Dios para transformar miles de vidas, estableciendo un legado de amor, excelencia y servicio incondicional a la comunidad. Es autor, conferencista internacional y un padre espiritual para muchos.",
+        description: "Fundador y visionario principal de Comunidad CCF. El Apóstol Luis Ricardo ha dedicado más de tres décadas a la expansión del evangelio, plantando iglesias y levantando generaciones de líderes íntegros. Su ministerio se caracteriza por una enseñanza profunda, una fe inquebrantable y un corazón pastoral genuino. Ha sido instrumento de Dios para transformar miles de vidas, estableciendo un legado de amor, excelencia y servicio incondicional a la comunidad. Es autor, conferencista internacional y un padre espiritual para muchos.",
         img: "/images/pastores/luis_ricardo_meza.png",
         social: { instagram: "https://instagram.com/comunidadfaro", facebook: "https://facebook.com/comunidadfaro" }
     },

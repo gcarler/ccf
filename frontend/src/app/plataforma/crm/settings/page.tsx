@@ -254,7 +254,7 @@ export default function CrmSettingsPage() {
                                             </motion.div>
                                         )}
                                         <div className="pt-4 mt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
-                                            <SettingInput disabled={!canEditCrm} label="Servidor SMTP Principal" value={config.smtpServer} onChange={(v: string) => setConfig({...config, smtpServer: v})} placeholder="smtp.mail.faro.org" />
+                                            <SettingInput disabled={!canEditCrm} label="Servidor SMTP Principal" value={config.smtpServer} onChange={(v: string) => setConfig({...config, smtpServer: v})} placeholder="smtp.mail.ccf.org" />
                                         </div>
                                     </div>
                                 </motion.div>

@@ -8,7 +8,7 @@ import { MapPin,Menu,Sun,X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect,useState } from "react";
-import { useFaroTheme } from "./FaroThemeProvider";
+import { useCcfTheme } from "./CcfThemeProvider";
 import { useSiteBranding } from "@/lib/site-branding";
 
 const DEFAULT_NAV_LINKS = [
@@ -22,8 +22,8 @@ const DEFAULT_NAV_LINKS = [
     { href: "/sedes", label: "Sedes" },
 ];
 
-export default function FaroNavbar() {
-    const { toggle, themeTokens } = useFaroTheme();
+export default function CcfNavbar() {
+    const { toggle, themeTokens } = useCcfTheme();
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
@@ -33,9 +33,6 @@ export default function FaroNavbar() {
     const ctaLabel = themeTokens["--site-header-cta-label"] || "Quiero conocer a Jesús";
     const ctaHref = themeTokens["--site-header-cta-href"] || "/conocer-a-jesus";
 
-    // Dinamización vía CMS
-    // Archived CMS navigation block removed — using static defaults
-
     const locationTitle = "Nuestras Sedes";
     const themeToggleTitle = "Cambiar tema";
     const fallbackLinks = DEFAULT_NAV_LINKS.map((item: any, index: number) => ({
@@ -44,7 +41,6 @@ export default function FaroNavbar() {
         label: item.label,
         children: [],
     }));
-    // Ensure /pastores is always in the nav, deduped by href
     const _ensurePastores = (links: Array<{ id?: string; href: string; label: string; children?: any[] }>) => {
         const hasPastores = links.some(l => l.href === '/pastores');
         if (!hasPastores) {
@@ -295,3 +291,5 @@ export default function FaroNavbar() {
         </>
     );
 }
+
+export const FaroNavbar = CcfNavbar;

@@ -70,6 +70,8 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
   const [seoTitleDraft, setSeoTitleDraft] = useState("");
   const [seoDescriptionDraft, setSeoDescriptionDraft] = useState("");
   const [seoImageDraft, setSeoImageDraft] = useState("");
+  const [seoCanonicalDraft, setSeoCanonicalDraft] = useState("");
+  const [seoRobotsDraft, setSeoRobotsDraft] = useState("");
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [mediaPickerTarget, setMediaPickerTarget] = useState<"section" | "seo">("section");
   const [activeRightTab, setActiveRightTab] = useState<RightTab>("config");
@@ -147,6 +149,8 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     setSeoTitleDraft(safeString(activePage?.seo_json?.meta_title));
     setSeoDescriptionDraft(safeString(activePage?.seo_json?.meta_description));
     setSeoImageDraft(safeString(activePage?.seo_json?.meta_image));
+    setSeoCanonicalDraft(safeString(activePage?.seo_json?.canonical_url));
+    setSeoRobotsDraft(safeString(activePage?.seo_json?.robots_meta));
   }, [activePage]);
 
   useEffect(() => {
@@ -464,11 +468,13 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
       meta_title: seoTitleDraft.trim(),
       meta_description: seoDescriptionDraft.trim(),
       meta_image: seoImageDraft.trim(),
+      canonical_url: seoCanonicalDraft.trim() || undefined,
+      robots_meta: seoRobotsDraft.trim() || undefined,
     };
     const updated = await patchCmsPage(siteKey, activePage.slug, { title: pageTitleDraft || activePage.title, slug, seo_json }, token);
     await loadPages(siteKey);
     setActiveSlug(updated.slug);
-  }, [token, activePage, canEdit, siteKey, pageSlugDraft, pageTitleDraft, seoTitleDraft, seoDescriptionDraft, seoImageDraft, loadPages]);
+  }, [token, activePage, canEdit, siteKey, pageSlugDraft, pageTitleDraft, seoTitleDraft, seoDescriptionDraft, seoImageDraft, seoCanonicalDraft, seoRobotsDraft, loadPages]);
 
   const togglePageArchive = useCallback(async () => {
     if (!token || !activePage || !canEdit) return;
@@ -519,7 +525,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
         throw new Error("Respuesta vacía de la IA");
       }
     } catch (err) {
-      console.warn("FaroGPT endpoint failed, using fallback:", err);
+      console.warn("CCFGPT endpoint failed, using fallback:", err);
       // Fallback mock content preserved from original implementation
       const toneLabels: Record<string, string> = {
         inspiration: "Inspiracional & Espiritual",
@@ -667,6 +673,8 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     seoTitleDraft, setSeoTitleDraft,
     seoDescriptionDraft, setSeoDescriptionDraft,
     seoImageDraft, setSeoImageDraft,
+    seoCanonicalDraft, setSeoCanonicalDraft,
+    seoRobotsDraft, setSeoRobotsDraft,
     mediaPickerOpen, setMediaPickerOpen,
     mediaPickerTarget, setMediaPickerTarget,
     activeRightTab, setActiveRightTab,

@@ -58,6 +58,12 @@ EXPECTED_SECTION_TYPES: list[tuple[str, str]] = [
     ("document_upload", "Document upload area"),
     ("content_blocks", "Reusable content blocks"),
     ("accordion", "Accordion component"),
+    ("civic_hero_search", "Buscador Hero (Cívico)"),
+    ("civic_convocatoria_cards", "Tarjetas Convocatoria"),
+    ("civic_quick_links", "Enlaces Rápidos (Cívico)"),
+    ("civic_file_downloads", "Descargas de Archivos"),
+    ("civic_data_table", "Tabla de Datos Accesible"),
+    ("civic_alert_banner", "Banner de Alerta / Emergencia"),
 ]
 
 

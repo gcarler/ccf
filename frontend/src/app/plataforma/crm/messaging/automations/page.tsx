@@ -381,7 +381,7 @@ export default function AutomationsPage() {
                             <textarea
                                 value={form.message}
                                 onChange={e => setForm({ ...form, message: e.target.value })}
-                                placeholder="Hola {nombre}, bienvenido a CCF El Faro..."
+                                placeholder="Hola {nombre}, bienvenido a CCF..."
                                 rows={4}
                                 className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
                             />

@@ -138,7 +138,7 @@ export default function CoordinationConsole() {
                             <header className="flex items-center justify-between mb-3">
                                 <div>
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-2">Checklist de alistamiento</p>
-                                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Piloto Academia Faro</h2>
+                                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Piloto Academia CCF</h2>
                                 </div>
                                 <div className="text-right">
                                     <div className="size-8 rounded-full border-4 border-blue-500/20 flex items-center justify-center relative">

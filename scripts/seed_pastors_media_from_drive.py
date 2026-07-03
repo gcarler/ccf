@@ -37,7 +37,7 @@ from backend.core.config import get_settings  # noqa: E402
 
 
 FOLDER_ID = "1Hq9fUDEbyBHoCz_DPnoYNX1fKyhIBpOi"
-SITE_KEY = "faro"
+SITE_KEY = "ccf"
 PAGE_SLUG = "pastors"
 UPLOAD_SUBDIR = "cms/pastores"
 PUBLIC_SUBDIR = "images/pastores"

@@ -113,7 +113,7 @@ def _validate_strategy_group_roles(db: Session, strategy_id: UUID | None, body: 
 
 
 @static_router.get("/grupos", response_model=List[dict])
-@static_router.get("/faro", response_model=List[dict])
+@static_router.get("/groups", response_model=List[dict])
 def list_grupos(
     evangelism_strategy_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
@@ -172,7 +172,7 @@ def _serialize_grupo(g):
 
 
 @static_router.get("/grupos/mine", response_model=List[dict])
-@static_router.get("/faro/mine", response_model=List[dict])
+@static_router.get("/groups/mine", response_model=List[dict])
 def list_my_grupos(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
@@ -198,8 +198,8 @@ def list_my_grupos(
 
 
 @dynamic_router.get("/grupos/assignment-summary", response_model=dict)
-@dynamic_router.get("/faro/assignment-summary", response_model=dict)
-def get_faro_assignment_summary(
+@dynamic_router.get("/groups/assignment-summary", response_model=dict)
+def get_groups_assignment_summary(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -298,7 +298,7 @@ def get_faro_assignment_summary(
 
 
 @dynamic_router.get("/grupos/{grupo_id:uuid}", response_model=dict)
-@dynamic_router.get("/faro/{grupo_id:uuid}", response_model=dict)
+@dynamic_router.get("/groups/{grupo_id:uuid}", response_model=dict)
 @dynamic_router.get("/micro/{grupo_id:uuid}", response_model=dict)
 def get_grupo(
     grupo_id: UUID,
@@ -523,7 +523,7 @@ def get_grupo(
 
 
 @static_router.post("/grupos", response_model=dict)
-@static_router.post("/faro", response_model=dict)
+@static_router.post("/groups", response_model=dict)
 async def create_grupo(
     payload: schemas.GrupoEvangelismoCreate,
     db: Session = Depends(get_db),
@@ -556,7 +556,7 @@ async def create_grupo(
 
 
 @dynamic_router.put("/grupos/{grupo_id:uuid}", response_model=dict)
-@dynamic_router.put("/faro/{grupo_id:uuid}", response_model=dict)
+@dynamic_router.put("/groups/{grupo_id:uuid}", response_model=dict)
 def update_grupo(
     grupo_id: UUID,
     payload: schemas.GrupoEvangelismoUpdate,
@@ -590,7 +590,7 @@ def update_grupo(
 
 
 @dynamic_router.delete("/grupos/{grupo_id:uuid}", status_code=204)
-@dynamic_router.delete("/faro/{grupo_id:uuid}", status_code=204)
+@dynamic_router.delete("/groups/{grupo_id:uuid}", status_code=204)
 def delete_grupo(
     grupo_id: UUID,
     db: Session = Depends(get_db),
@@ -609,7 +609,7 @@ def delete_grupo(
 
 
 @dynamic_router.get("/grupos/seasons")
-@dynamic_router.get("/faro/seasons")
+@dynamic_router.get("/groups/seasons")
 def list_campaign_seasons(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -630,7 +630,7 @@ def list_campaign_seasons(
 
 
 @dynamic_router.post("/grupos/seasons", response_model=dict)
-@dynamic_router.post("/faro/seasons", response_model=dict)
+@dynamic_router.post("/groups/seasons", response_model=dict)
 def create_campaign_season(
     payload: dict,
     db: Session = Depends(get_db),
@@ -666,7 +666,7 @@ def create_campaign_season(
 
 
 @dynamic_router.patch("/grupos/seasons/{season_id:uuid}", response_model=dict)
-@dynamic_router.patch("/faro/seasons/{season_id}", response_model=dict)
+@dynamic_router.patch("/groups/seasons/{season_id}", response_model=dict)
 def update_campaign_season(
     season_id: UUID,
     payload: dict,
@@ -687,8 +687,8 @@ def update_campaign_season(
 
 
 @dynamic_router.get("/grupos/analytics")
-@dynamic_router.get("/faro/analytics")
-def get_faro_analytics(
+@dynamic_router.get("/groups/analytics")
+def get_groups_analytics(
     season_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
@@ -713,14 +713,14 @@ def get_faro_analytics(
     rows = query.group_by(models.SesionGrupo.grupo_id, models.SesionGrupo.season_id).all()
     total_attendance = sum(row.total_attendance or 0 for row in rows)
     total_sessions = sum(row.total_sessions or 0 for row in rows)
-    active_faros = len({row.grupo_id for row in rows})
+    active_groupss = len({row.grupo_id for row in rows})
 
     return {
         "total_attendance": total_attendance,
         "total_sessions": total_sessions,
-        "active_faros": active_faros,
+        "active_groupss": active_groupss,
         "avg_per_session": (round(total_attendance / total_sessions) if total_sessions > 0 else 0),
-        "per_faro": [
+        "per_groups": [
             {
                 "grupo_id": row.grupo_id,
                 "total_attendance": row.total_attendance or 0,
@@ -840,7 +840,7 @@ def get_macro_despliegue(
 # ── FARO Visitor Registration (new guests from session reports) ──
 
 
-class FaroVisitorCreate(BaseModel):
+class GroupVisitorCreate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     phone: Optional[str] = None
@@ -851,7 +851,7 @@ class FaroVisitorCreate(BaseModel):
     session_id: Optional[UUID] = None
 
 
-class FaroVisitorResponse(BaseModel):
+class GroupVisitorResponse(BaseModel):
     status: str           # "created" | "duplicate"
     persona_id: str
     first_name: Optional[str] = None
@@ -883,14 +883,14 @@ def _ensure_group_visitor_link(db: Session, grupo_id: UUID, persona_id: UUID) ->
     )
 
 
-@dynamic_router.post("/grupos/visitors", response_model=FaroVisitorResponse)
-@dynamic_router.post("/faro/visitors", response_model=FaroVisitorResponse)
-def register_faro_visitor(
-    visitor: FaroVisitorCreate,
+@dynamic_router.post("/grupos/visitors", response_model=GroupVisitorResponse)
+@dynamic_router.post("/groups/visitors", response_model=GroupVisitorResponse)
+def register_groups_visitor(
+    visitor: GroupVisitorCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_active_user),
 ):
-    """Register a new guest from a Faro session report as a Persona + CRM lead."""
+    """Register a new guest from a Group session report as a Persona + CRM lead."""
     grupo = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == visitor.grupo_id).first()
     if not grupo:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
@@ -926,7 +926,7 @@ def register_faro_visitor(
     if existing:
         _ensure_group_visitor_link(db, visitor.grupo_id, existing.id)
         db.commit()
-        return FaroVisitorResponse(
+        return GroupVisitorResponse(
             status="duplicate",
             persona_id=str(existing.id),
             first_name=existing.first_name,
@@ -961,7 +961,7 @@ def register_faro_visitor(
         origen_sesion_id=visitor.session_id,
     )
 
-    return FaroVisitorResponse(
+    return GroupVisitorResponse(
         status="created",
         persona_id=str(new_persona.id),
         first_name=new_persona.first_name,

@@ -146,7 +146,7 @@ export default function CursoDetailPage() {
                             className="inline-block px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wide mb-3"
                             style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}
                         >
-                            {course.tag || "Academia FARO"}
+                            {course.tag || "Academia"}
                         </span>
                         <h1 className="text-xl md:text-xl font-bold tracking-tight mb-3 leading-[1.05]" style={{ color: "var(--site-on-surface)" }}>
                             {course.title}

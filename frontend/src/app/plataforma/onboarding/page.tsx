@@ -80,7 +80,7 @@ export default function OnboardingPage() {
                             </div>
 
                             <div className="grid grid-cols-1 gap-4">
-                                <FeatureItem icon={BookOpen} title="Academia Faro" desc="Formación teológica formal y no formal a tu ritmo." />
+                                <FeatureItem icon={BookOpen} title="Academia CCF" desc="Formación teológica formal y no formal a tu ritmo." />
                                 <FeatureItem icon={Users} title="Grupos de Vida" desc="Conéctate con una comunidad cerca de tu hogar." />
                                 <FeatureItem icon={Zap} title="Propósito" desc="Encuentra tu lugar de servicio en el ministerio." />
                             </div>

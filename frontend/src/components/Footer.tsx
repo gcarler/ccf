@@ -21,7 +21,7 @@ const footerLinks: FooterGroup[] = [
         links: [
             { label: 'Inicio', href: '/' },
             { label: 'Login', href: '/login' },
-            { label: 'Sitio Público', href: '/faro' },
+            { label: 'Sitio Público', href: '/' },
         ],
     },
     {

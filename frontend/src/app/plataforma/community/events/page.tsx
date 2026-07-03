@@ -51,7 +51,7 @@ export default function EventsCalendar() {
                 <div className="space-y-1">
                     <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-bold uppercase tracking-wide text-[10px]">
                         <div className="size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></div>
-                        Comunidad El Faro
+                        Comunidad CCF
                     </div>
                     <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tighter">Calendario de Eventos</h1>
                 </div>

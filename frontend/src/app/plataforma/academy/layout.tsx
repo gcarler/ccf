@@ -61,8 +61,8 @@ export default function AcademyLayout({ children }: { children: React.ReactNode 
     const pathname = usePathname();
 
     const getSidebarTitle = () => {
-        if (!pathname) return 'Academia Faro';
-        if (pathname === '/plataforma/academy') return 'Academia Faro';
+        if (!pathname) return 'Academia CCF';
+        if (pathname === '/plataforma/academy') return 'Academia CCF';
         if (pathname.includes('/course/')) return 'Currículo del Curso';
         const segments = pathname.split('/');
         const last = segments[segments.length - 1];

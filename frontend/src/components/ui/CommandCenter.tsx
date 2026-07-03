@@ -52,7 +52,7 @@ export function CommandCenter() {
     const defaultCommands = useMemo<CommandItem[]>(() => ([
         { id: "crm", label: "CRM Pastoral", icon: Users, shortcut: "G C", group: "Acceso Rápido", action: () => router.push('/plataforma/crm') },
         { id: "projects", label: "Gestión de Proyectos", icon: Layers, shortcut: "G P", group: "Acceso Rápido", action: () => router.push('/plataforma/projects') },
-        { id: "academy", label: "Academia Faro", icon: GraduationCap, shortcut: "G A", group: "Acceso Rápido", action: () => router.push('/plataforma/academy') },
+        { id: "academy", label: "Academia CCF", icon: GraduationCap, shortcut: "G A", group: "Acceso Rápido", action: () => router.push('/plataforma/academy') },
         { id: "cms", label: "Panel CMS", icon: Globe, group: "Acceso Rápido", action: () => router.push('/plataforma/cms') },
         { id: "new-task", label: "Nueva Tarea...", icon: Plus, shortcut: "N T", group: "Acciones", action: () => openModal('task') },
         { id: "new-persona", label: "Registrar Persona...", icon: Plus, shortcut: "N M", group: "Acciones", action: () => router.push('/plataforma/crm/personas') },

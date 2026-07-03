@@ -300,6 +300,8 @@ class CmsPublicPageRead(BaseModel):
     title: str
     seo_json: Dict[str, Any] = Field(default_factory=dict)
     sections: List[CmsSectionRead] = Field(default_factory=list)
+    json_ld: Optional[Dict[str, Any]] = None
+    canonical_url: Optional[str] = None
 
 
 # ── Announcements ───────────────────────────────────────

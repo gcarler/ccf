@@ -166,7 +166,7 @@ export default function SessionReportPage() {
  // Register new guests as Personas
  for (const guest of newGuests) {
  if (guest.firstName.trim() || guest.lastName.trim()) {
- await apiFetch('/evangelism/faro/visitors', {
+ await apiFetch('/evangelism/groups/visitors', {
  method: 'POST', token: token,
  body: {
  first_name: guest.firstName.trim(),
@@ -180,7 +180,7 @@ export default function SessionReportPage() {
  }
 
  toast.success(`Reporte: ${stats.present} presentes, ${stats.absent} ausentes, ${stats.firstTime} nuevos`);
- router.push(`/plataforma/evangelism/faro/groups`);
+ router.push(`/plataforma/evangelism/groups/groups`);
  } catch (error: any) {
  toast.error(error?.message || 'Error al guardar');
  } finally {
@@ -197,7 +197,7 @@ export default function SessionReportPage() {
  };
 
  if (loading) return (
- <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos', href: '/plataforma/evangelism/faro/groups' }, { label: 'Reporte' }]}>
+ <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos', href: '/plataforma/evangelism/groups/groups' }, { label: 'Reporte' }]}>
  <div className="space-y-3 p-3">{[1, 2, 3].map(i => <div key={i} className="h-16 bg-[hsl(var(--bg-muted))] rounded-lg animate-pulse" />)}</div>
  </EvangelismShell>
  );
@@ -207,18 +207,18 @@ export default function SessionReportPage() {
  <div className="flex flex-col items-center justify-center py-16 text-center">
  <AlertCircle size={48} className="text-[hsl(var(--text-secondary))] mb-4" />
  <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">Grupo no encontrado</h2>
- <button onClick={() => router.push('/plataforma/evangelism/faro/groups')} className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">Volver</button>
+ <button onClick={() => router.push('/plataforma/evangelism/groups/groups')} className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">Volver</button>
  </div>
  </EvangelismShell>
  );
 
  return (
- <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos', href: '/plataforma/evangelism/faro/groups' }, { label: house.name }, { label: 'Reporte' }]}>
+ <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos', href: '/plataforma/evangelism/groups/groups' }, { label: house.name }, { label: 'Reporte' }]}>
  <div className="p-4 lg:p-3 space-y-3 max-w-4xl mx-auto animate-fade-in">
  {/* Header */}
  <div className="flex items-start justify-between">
  <div className="flex items-start gap-3">
- <button onClick={() => router.push('/plataforma/evangelism/faro/groups')} className="p-1.5 rounded-lg hover:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-white transition-all mt-1"><ArrowLeft size={16} /></button>
+ <button onClick={() => router.push('/plataforma/evangelism/groups/groups')} className="p-1.5 rounded-lg hover:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-white transition-all mt-1"><ArrowLeft size={16} /></button>
  <div>
  <h1 className="text-xl font-bold text-[hsl(var(--text-primary))]">Reportar Sesión</h1>
  <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">{house.name} · {house.zone || 'Sin zona'}</p>
@@ -317,7 +317,7 @@ export default function SessionReportPage() {
 
  {/* Submit */}
  <div className="flex items-center justify-end gap-3 pb-4">
- <button onClick={() => router.push('/plataforma/evangelism/faro/groups')} className="px-4 h-9 rounded-lg border border-[hsl(var(--border-primary))] text-xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5">Cancelar</button>
+ <button onClick={() => router.push('/plataforma/evangelism/groups/groups')} className="px-4 h-9 rounded-lg border border-[hsl(var(--border-primary))] text-xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5">Cancelar</button>
  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSubmit} disabled={saving} className="inline-flex items-center gap-2 px-6 h-10 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold hover:bg-[hsl(var(--primary))] disabled:opacity-60 shadow-sm">
  {saving ? <><Clock size={16} className="animate-spin" /> Guardando...</> : <><Save size={16} /> Guardar Reporte</>}
  </motion.button>

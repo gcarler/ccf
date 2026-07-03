@@ -610,6 +610,32 @@ export default function CmsPagesManagement() {
                     </div>
                   )}
                 </div>
+                <div className="space-y-1.5">
+                  <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Canonical URL (opcional)</span>
+                  <input
+                    type="url"
+                    value={(selectedPage.seo_json?.canonical_url as string) || ""}
+                    onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), canonical_url: e.target.value } })}
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    disabled={!canEdit}
+                    placeholder="https://ejemplo.com/pagina-canonical"
+                  />
+                  <p className="text-[10px] text-[hsl(var(--text-secondary))]">Si se deja vacío, se usa la URL automática de la página.</p>
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Meta Robots (opcional)</span>
+                  <select
+                    value={(selectedPage.seo_json?.robots_meta as string) || ""}
+                    onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), robots_meta: e.target.value || undefined } })}
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    disabled={!canEdit}
+                  >
+                    <option value="">index, follow (por defecto)</option>
+                    <option value="index, nofollow">index, nofollow</option>
+                    <option value="noindex, follow">noindex, follow</option>
+                    <option value="noindex, nofollow">noindex, nofollow</option>
+                  </select>
+                </div>
               </div>
             </section>
 

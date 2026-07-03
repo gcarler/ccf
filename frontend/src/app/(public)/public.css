@@ -203,7 +203,7 @@
 .faro-beam-glow {
     background: radial-gradient(circle at 50% 50%, var(--site-glow-subtle) 0%, transparent 70%);
 }
-.faro-hero-gradient {
+.ccf-hero-gradient {
     background: linear-gradient(135deg, var(--site-primary) 0%, var(--site-primary-container) 100%);
 }
 
@@ -261,7 +261,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   FARO PUBLIC — AMPLITUDE & SOPHISTICATION LAYER
+   CCF PUBLIC — AMPLITUDE & SOPHISTICATION LAYER
    Increases perceived luxury through generous spacing, larger type,
    fluid motion and refined surface treatments.
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -270,13 +270,13 @@
 .theme-light,
 .theme-institutional,
 .theme-dark {
-    --faro-section-py: clamp(5rem, 10vw, 9rem);
-    --faro-hero-min-h: 95svh;
-    --faro-container-max: 92rem;
-    --faro-title-spacing: 1.25em;
-    --faro-body-leading: 1.75;
-    --faro-radius-xl: 1.75rem;
-    --faro-radius-2xl: 2.5rem;
+    --ccf-section-py: clamp(5rem, 10vw, 9rem);
+    --ccf-hero-min-h: 95svh;
+    --ccf-container-max: 92rem;
+    --ccf-title-spacing: 1.25em;
+    --ccf-body-leading: 1.75;
+    --ccf-radius-xl: 1.75rem;
+    --ccf-radius-2xl: 2.5rem;
 }
 
 @media (min-width: 1280px) {
@@ -288,20 +288,20 @@
 }
 
 /* Generous section rhythm */
-.faro-section {
-    padding-top: var(--faro-section-py);
-    padding-bottom: var(--faro-section-py);
+.ccf-section {
+    padding-top: var(--ccf-section-py);
+    padding-bottom: var(--ccf-section-py);
 }
 
-.faro-section-tight {
-    padding-top: calc(var(--faro-section-py) * 0.6);
-    padding-bottom: calc(var(--faro-section-py) * 0.6);
+.ccf-section-tight {
+    padding-top: calc(var(--ccf-section-py) * 0.6);
+    padding-bottom: calc(var(--ccf-section-py) * 0.6);
 }
 
 /* Wide, editorial container */
-.faro-container {
+.ccf-container {
     width: 100%;
-    max-width: var(--faro-container-max);
+    max-width: var(--ccf-container-max);
     margin-left: auto;
     margin-right: auto;
     padding-left: clamp(1.5rem, 5vw, 4rem);
@@ -309,45 +309,45 @@
 }
 
 /* Hero that dominates the viewport */
-.faro-hero {
-    min-height: var(--faro-hero-min-h);
+.ccf-hero {
+    min-height: var(--ccf-hero-min-h);
 }
 
 /* Sophisticated display typography */
-.faro-display {
+.ccf-display {
     letter-spacing: -0.035em;
     line-height: 0.92;
 }
 
-.faro-headline {
+.ccf-headline {
     letter-spacing: -0.025em;
     line-height: 1.05;
 }
 
-.faro-body {
-    line-height: var(--faro-body-leading);
+.ccf-body {
+    line-height: var(--ccf-body-leading);
     max-width: 70ch;
 }
 
 /* Elegant glass cards */
-.faro-card {
+.ccf-card {
     background: var(--site-glass-bg);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border: 1px solid var(--site-glass-border);
-    border-radius: var(--faro-radius-xl);
+    border-radius: var(--ccf-radius-xl);
     box-shadow: var(--site-card-shadow);
     transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
                 box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.faro-card:hover {
+.ccf-card:hover {
     transform: translateY(-6px);
     box-shadow: 0 48px 80px -24px rgba(0, 0, 0, 0.18);
 }
 
 /* Cinematic reveal animation */
-@keyframes faro-fade-up {
+@keyframes ccf-fade-up {
     from {
         opacity: 0;
         transform: translateY(40px);
@@ -358,16 +358,16 @@
     }
 }
 
-.faro-reveal {
-    animation: faro-fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+.ccf-reveal {
+    animation: ccf-fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Soft ambient glow behind focal elements */
-.faro-ambient-glow {
+.ccf-ambient-glow {
     position: relative;
 }
 
-.faro-ambient-glow::before {
+.ccf-ambient-glow::before {
     content: "";
     position: absolute;
     inset: -20%;
@@ -377,7 +377,7 @@
 }
 
 /* Refined buttons */
-.faro-button {
+.ccf-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -392,21 +392,21 @@
                 box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.faro-button:hover {
+.ccf-button:hover {
     transform: translateY(-2px) scale(1.02);
 }
 
 /* Editorial image treatment */
-.faro-image {
-    border-radius: var(--faro-radius-xl);
+.ccf-image {
+    border-radius: var(--ccf-radius-xl);
     overflow: hidden;
     box-shadow: var(--site-card-shadow);
 }
 
-.faro-image img {
+.ccf-image img {
     transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.faro-image:hover img {
+.ccf-image:hover img {
     transform: scale(1.05);
 }

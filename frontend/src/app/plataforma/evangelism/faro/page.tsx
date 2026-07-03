@@ -16,14 +16,14 @@ import { useRouter } from 'next/navigation';
 import { useCallback,useEffect,useState } from 'react';
 import { toast } from 'sonner';
 
-interface FaroSeason { id: number; name: string; start_date: string; end_date: string; periodicity: string; status: string; }
+interface GroupSeason { id: number; name: string; start_date: string; end_date: string; periodicity: string; status: string; }
 interface Grupo { id: string; name: string; leader_name?: string; zone?: string; day_of_week?: string; time?: string; status?: string; }
-interface FaroAnalytics {
- active_faros: number;
+interface GroupAnalytics {
+ active_groups: number;
  total_sessions: number;
  total_attendance: number;
  avg_per_session: number;
- per_faro: Array<{
+ per_group: Array<{
  grupo_id: string;
  total_sessions: number;
  total_attendance: number;
@@ -39,14 +39,14 @@ interface SeasonForm {
 
 const PERIODICITY_LABEL: Record<string, string> = { SEMANAL: 'Semanal', MENSUAL: 'Mensual' };
 
-export default function FaroPage() {
+export default function GroupPage() {
  const { token, user } = useAuth();
  const router = useRouter();
- const { viewType, setViewType } = useViewType('evangelism_faro', 'grid');
- const [seasons, setSeasons] = useState<FaroSeason[]>([]);
+ const { viewType, setViewType } = useViewType('evangelism_groups', 'grid');
+ const [seasons, setSeasons] = useState<GroupSeason[]>([]);
  const [houses, setHouses] = useState<Grupo[]>([]);
- const [analytics, setAnalytics] = useState<FaroAnalytics | null>(null);
- const [activeSeason, setActiveSeason] = useState<FaroSeason | null>(null);
+ const [analytics, setAnalytics] = useState<GroupAnalytics | null>(null);
+ const [activeSeason, setActiveSeason] = useState<GroupSeason | null>(null);
  const [loading, setLoading] = useState(true);
  const [showNewSeason, setShowNewSeason] = useState(false);
  const [showNewSession, setShowNewSession] = useState(false);
@@ -67,8 +67,8 @@ export default function FaroPage() {
  if (!token) return;
  setLoading(true);
  try {
- const [s, h]: [FaroSeason[], Grupo[]] = await Promise.all([
- apiFetch<FaroSeason[]>('/evangelism/faro/seasons', { token }).catch(() => [] as FaroSeason[]),
+ const [s, h]: [GroupSeason[], Grupo[]] = await Promise.all([
+ apiFetch<GroupSeason[]>('/evangelism/groups/seasons', { token }).catch(() => [] as GroupSeason[]),
  apiFetch<Grupo[]>('/evangelism/grupos/mine', { token }).catch(() => [] as Grupo[])
  ]);
  setSeasons(s);
@@ -76,7 +76,7 @@ export default function FaroPage() {
  const active = s.find(x => x.status === 'Activa') || s[0] || null;
  setActiveSeason(active);
  if (active) {
- const a = await apiFetch<FaroAnalytics>(`/evangelism/faro/analytics?season_id=${active.id}`, { token }).catch(() => null);
+ const a = await apiFetch<GroupAnalytics>(`/evangelism/groups/analytics?season_id=${active.id}`, { token }).catch(() => null);
  setAnalytics(a);
  }
  } catch { toast.error('Error al cargar Grupos en Casa'); }
@@ -130,7 +130,7 @@ export default function FaroPage() {
  if (!seasonForm.name || !seasonForm.start_date || !seasonForm.end_date) return toast.error('Completa todos los campos');
  setSavingSeason(true);
  try {
- await apiFetch('/evangelism/faro/seasons', { method: 'POST', body: seasonForm, token });
+ await apiFetch('/evangelism/groups/seasons', { method: 'POST', body: seasonForm, token });
  toast.success('Temporada creada');
  setShowNewSeason(false);
  setSeasonForm({ name: '', start_date: '', end_date: '', periodicity: 'SEMANAL' });
@@ -161,7 +161,7 @@ export default function FaroPage() {
  delete bodyPayload.report_deadline;
  }
 
- const res = await apiFetch<{ message: string, created_count: number }>('/evangelism/faro/sessions', { method: 'POST', body: bodyPayload, token });
+ const res = await apiFetch<{ message: string, created_count: number }>('/evangelism/groups/sessions', { method: 'POST', body: bodyPayload, token });
  toast.success(res.message || 'Sesión registrada');
  setShowNewSession(false);
  setSessionForm({ grupo_id: '', session_date: new Date().toISOString().split('T')[0], topic: 'S1', report_deadline: '' });
@@ -176,7 +176,7 @@ export default function FaroPage() {
  };
 
  const closeSeason = async (id: number) => {
- await apiFetch(`/evangelism/faro/seasons/${id}`, { method: 'PATCH', body: { status: 'Finalizada' }, token });
+ await apiFetch(`/evangelism/groups/seasons/${id}`, { method: 'PATCH', body: { status: 'Finalizada' }, token });
  toast.success('Temporada finalizada');
  load();
  };
@@ -233,7 +233,7 @@ export default function FaroPage() {
 
  {/* KPIs */}
  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
- <DSMetric label="Grupos Activos" value={String(analytics?.active_faros ?? '—')} tone="emerald" trend="Red actual" />
+ <DSMetric label="Grupos Activos" value={String(analytics?.active_groups ?? '—')} tone="emerald" trend="Red actual" />
  <DSMetric label="Sesiones Totales" value={String(analytics?.total_sessions ?? '—')} tone="blue" trend={activeSeason?.name} />
  <DSMetric label="Asistentes Totales" value={String(analytics?.total_attendance ?? '—')} tone="blue" trend="Acumulado" />
  <DSMetric label="Promedio / Sesión" value={String(analytics?.avg_per_session ?? '—')} tone="amber" trend="Por semana" />
@@ -286,7 +286,7 @@ export default function FaroPage() {
  {houses.map((h) => (
  <button
  key={h.id}
- onClick={() => router.push(`/plataforma/evangelism/faro/${h.id}`)}
+ onClick={() => router.push(`/plataforma/evangelism/groups/${h.id}`)}
  className="text-left bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-3 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:border-blue-500/30 transition-all group"
  >
  <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -338,7 +338,7 @@ export default function FaroPage() {
  )}
 
  {/* Desempeño por Grupo */}
- {isPrivileged && Boolean(analytics && analytics.per_faro && analytics.per_faro.length > 0) && (
+ {isPrivileged && Boolean(analytics && analytics.per_group && analytics.per_group.length > 0) && (
  <section>
  <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Desempeño por Grupo · {activeSeason?.name}</h2>
  <DSCard tone="light" className="shadow-2xl overflow-hidden rounded-lg">
@@ -353,10 +353,10 @@ export default function FaroPage() {
  </tr>
  </thead>
  <tbody className="divide-y divide-[hsl(var(--border-primary))]">
- {analytics!.per_faro.map((row) => {
+ {analytics!.per_group.map((row) => {
  const house = houses.find(h => h.id === row.grupo_id);
  return (
- <tr key={row.grupo_id} onClick={() => router.push(`/plataforma/evangelism/faro/${row.grupo_id}`)} className="group hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/[0.01] transition-colors cursor-pointer">
+ <tr key={row.grupo_id} onClick={() => router.push(`/plataforma/evangelism/groups/${row.grupo_id}`)} className="group hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/[0.01] transition-colors cursor-pointer">
  <td className="px-4 py-2">
  <div className="flex items-center gap-4">
  <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Home size={18} /></div>

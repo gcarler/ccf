@@ -84,7 +84,7 @@ export default function PublicHomePage() {
             });
             setNlStatus("sent");
             setNlEmail("");
-            toast.success("¡Suscrito al boletín de FARO!");
+            toast.success(`¡Suscrito al boletín de ${SITE_NAME}!`);
         } catch {
             setNlStatus("idle");
             toast.error("No se pudo suscribir. Intenta de nuevo.");
@@ -99,8 +99,8 @@ export default function PublicHomePage() {
         
             <main>
             {/* ─── HERO ─────────────────────────────────────────────── */}
-            <section className="relative faro-hero flex items-center justify-center overflow-hidden">
-                {/* Background: imagen faro con overlay */}
+            <section className="relative ccf-hero flex items-center justify-center overflow-hidden">
+                {/* Background: imagen ccf con overlay */}
                 <div
                     className="absolute inset-0 bg-cover bg-center"
                     style={{
@@ -126,7 +126,7 @@ export default function PublicHomePage() {
                 />
 
                 {/* Content */}
-                <div className="relative z-10 text-center w-full faro-container pt-24">
+                <div className="relative z-10 text-center w-full ccf-container pt-24">
                     <span
                         className="inline-block text-xs font-bold uppercase tracking-wide mb-3"
                         style={{ color: "var(--site-hero-badge-color)" }}
@@ -134,7 +134,7 @@ export default function PublicHomePage() {
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="mx-auto max-w-5xl font-bold faro-display mb-3 text-5xl sm:text-6xl lg:text-8xl"
+                        className="mx-auto max-w-5xl font-bold ccf-display mb-3 text-5xl sm:text-6xl lg:text-8xl"
                         style={{ color: "var(--site-on-hero)" }}
                     >
                         {heroTitleLead}{" "}
@@ -159,7 +159,7 @@ export default function PublicHomePage() {
                         </span>
                     </h1>
                     <p
-                        className="faro-body text-base sm:text-lg max-w-2xl mx-auto mb-8"
+                        className="ccf-body text-base sm:text-lg max-w-2xl mx-auto mb-8"
                         style={{ color: "var(--site-on-hero)", opacity: 0.8 }}
                     >
                         {heroDescription}
@@ -167,7 +167,7 @@ export default function PublicHomePage() {
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Link
                             href="/conocer-a-jesus"
-                            className="faro-button group"
+                            className="ccf-button group"
                             style={{
                                 background: "var(--site-hero-cta-gradient)",
                                 boxShadow: "var(--site-hero-cta-shadow)",
@@ -182,7 +182,7 @@ export default function PublicHomePage() {
                         </Link>
                         <Link
                             href="/predicas"
-                            className="faro-button"
+                            className="ccf-button"
                             style={{
                                 background: "var(--site-hero-bg-light)",
                                 border: "2px solid var(--site-hero-border-light)",
@@ -212,10 +212,10 @@ export default function PublicHomePage() {
 
             {/* ─── BENTO: Bienvenidos a Casa ────────────────────────── */}
             <section
-                className="faro-section overflow-hidden"
+                className="ccf-section overflow-hidden"
                 style={{ background: "var(--site-surface-container-low)" }}
             >
-                <div className="faro-container">
+                <div className="ccf-container">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -229,12 +229,12 @@ export default function PublicHomePage() {
                             {homeEyebrow}
                         </span>
                         <h2
-                            className="font-black faro-headline text-4xl sm:text-5xl lg:text-6xl"
+                            className="font-black ccf-headline text-4xl sm:text-5xl lg:text-6xl"
                             style={{ color: "var(--site-on-background)" }}
                         >
                             {homeSectionTitle}
                         </h2>
-                        <p className="faro-body mt-6 text-base sm:text-lg max-w-3xl" style={{ color: "var(--site-on-surface-variant)" }}>
+                        <p className="ccf-body mt-6 text-base sm:text-lg max-w-3xl" style={{ color: "var(--site-on-surface-variant)" }}>
                             {homeSectionDescription}
                         </p>
                     </motion.div>
@@ -251,7 +251,7 @@ export default function PublicHomePage() {
                             {homeFeaturedCard?.img ? (
                                 <Image
                                     src={homeFeaturedCard.img as string}
-                                    alt={(homeFeaturedCard?.alt as string) || "Equipo pastoral de FARO"}
+                                    alt={(homeFeaturedCard?.alt as string) || "Equipo pastoral de la comunidad"}
                                     fill
                                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 66vw"
                                     className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -265,7 +265,7 @@ export default function PublicHomePage() {
                                     {(homeFeaturedCard?.title as string) || "Conocer a Jesús"}
                                 </h3>
                                 <p className="text-white/80 leading-relaxed max-w-md mb-5 text-base">
-                                    {(homeFeaturedCard?.desc as string) || "Descubre la base de nuestra fe a través de un viaje personal y transformador. En FARO, te acompañamos en cada paso."}
+                                    {(homeFeaturedCard?.desc as string) || "Descubre la base de nuestra fe a través de un viaje personal y transformador. Te acompañamos en cada paso."}
                                 </p>
                                 <Link
                                     href={(homeFeaturedCard?.href as string) || "/conocer-a-jesus"}
@@ -321,10 +321,10 @@ export default function PublicHomePage() {
 
             {/* ─── ACTIVIDADES RECIENTES ────────────────────────────── */}
             <section
-                className="faro-section-tight overflow-hidden"
+                className="ccf-section-tight overflow-hidden"
                 style={{ background: "var(--site-surface)" }}
             >
-                <div className="faro-container">
+                <div className="ccf-container">
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}
@@ -339,7 +339,7 @@ export default function PublicHomePage() {
                                 {activitiesEyebrow}
                             </span>
                             <h2
-                                className="font-bold faro-headline text-2xl md:text-3xl"
+                                className="font-bold ccf-headline text-2xl md:text-3xl"
                                 style={{ color: "var(--site-on-background)" }}
                             >
                                 {activitiesTitle}
@@ -357,7 +357,7 @@ export default function PublicHomePage() {
                         </Link>
                     </motion.div>
                     {publicEvents.length === 0 ? (
-                        <p className="faro-body text-center py-2" style={{ color: "var(--site-on-surface-variant)" }}>
+                        <p className="ccf-body text-center py-2" style={{ color: "var(--site-on-surface-variant)" }}>
                             {activitiesEmpty}
                         </p>
                     ) : (
@@ -424,23 +424,23 @@ export default function PublicHomePage() {
             </section>
 
             {/* ─── CTA NEWSLETTER ───────────────────────────────────── */}
-            <section className="faro-section" style={{ background: "var(--site-surface-container-low)" }}>
+            <section className="ccf-section" style={{ background: "var(--site-surface-container-low)" }}>
                 <motion.div
                     initial={{ opacity: 0, y: 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="faro-container max-w-3xl mx-auto text-center"
+                    className="ccf-container max-w-3xl mx-auto text-center"
                 >
                     <span className="inline-block text-xs font-bold uppercase tracking-widest mb-5 px-4 py-1.5 rounded-full" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
                         {newsletterEyebrow}
                     </span>
                     <h2
-                        className="font-black faro-headline mb-5 text-3xl sm:text-4xl lg:text-5xl"
+                        className="font-black ccf-headline mb-5 text-3xl sm:text-4xl lg:text-5xl"
                         style={{ color: "var(--site-on-background)" }}
                     >
                         {newsletterTitle}
                     </h2>
-                    <p className="faro-body text-base sm:text-lg mb-10 mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>
+                    <p className="ccf-body text-base sm:text-lg mb-10 mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>
                         {newsletterDescription.split('\n').map((line, i) => (
                             <React.Fragment key={i}>
                                 {i > 0 && <br />}
@@ -454,7 +454,7 @@ export default function PublicHomePage() {
                     {nlStatus === "sent" ? (
                         <div className="py-6">
                             <p className="text-2xl font-black mb-2" style={{ color: "var(--site-on-background)" }}>{newsletterSuccessTitle}</p>
-                            <p className="faro-body text-base mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>{newsletterSuccessDesc}</p>
+                            <p className="ccf-body text-base mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>{newsletterSuccessDesc}</p>
                         </div>
                     ) : (
                         <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto">
@@ -475,7 +475,7 @@ export default function PublicHomePage() {
                             <button
                                 type="submit"
                                 disabled={nlStatus === "sending"}
-                                className="faro-button shrink-0"
+                                className="ccf-button shrink-0"
                                 style={{
                                     background: "var(--site-cta-gradient)",
                                     boxShadow: "var(--site-cta-shadow)",

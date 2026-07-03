@@ -4,25 +4,23 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 
-export type FaroTheme = "institutional" | "light" | "dark";
+export type CcfTheme = "institutional" | "light" | "dark";
 
-export type CcfTheme = FaroTheme;
-
-interface FaroThemeContextType {
-    theme: FaroTheme;
-    setTheme: (theme: FaroTheme) => void;
+interface CcfThemeContextType {
+    theme: CcfTheme;
+    setTheme: (theme: CcfTheme) => void;
     toggle: () => void;
     themeTokens: Record<string, string>;
 }
 
-const ThemeContext = createContext<FaroThemeContextType>({
+const ThemeContext = createContext<CcfThemeContextType>({
     theme: "institutional",
     setTheme: () => {},
     toggle: () => {},
     themeTokens: {},
 });
 
-function inferThemeMode(themeName?: string, tokens?: Record<string, unknown>): FaroTheme {
+function inferThemeMode(themeName?: string, tokens?: Record<string, unknown>): CcfTheme {
     const raw = `${themeName || ""} ${String(tokens?.["--site-theme-mode"] ?? tokens?.theme_mode ?? tokens?.mode ?? "")}`
         .toLowerCase()
         .trim();
@@ -39,12 +37,14 @@ const CMS_TOKEN_ALLOWLIST = new Set([
     "--site-header-cta-href",
 ]);
 
-export function useFaroTheme() {
+export function useCcfTheme() {
     return useContext(ThemeContext);
 }
 
-export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setTheme] = useState<FaroTheme>("institutional");
+export const useFaroTheme = useCcfTheme;
+
+export function CcfThemeProvider({ children }: { children: React.ReactNode }) {
+    const [theme, setTheme] = useState<CcfTheme>("institutional");
     const [remoteTokens, setRemoteTokens] = useState<Record<string, string>>({});
     const [hasManualOverride, setHasManualOverride] = useState(false);
 
@@ -61,7 +61,6 @@ export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
 
         root.classList.remove("theme-institutional", "theme-light", "theme-dark", "dark");
         root.classList.add(`theme-${theme}`);
-        // Tailwind dark: prefix requires the "dark" class on <html>
         if (theme === "dark") root.classList.add("dark");
 
         localStorage.setItem("site-theme-v2", theme);
@@ -146,6 +145,4 @@ export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
     );
 }
 
-export const CcfThemeProvider = FaroThemeProvider;
-
-export const useCcfTheme = useFaroTheme;
+export const FaroThemeProvider = CcfThemeProvider;

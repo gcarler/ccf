@@ -133,6 +133,10 @@ export interface CmsPublicPage {
   title: string;
   seo_json: Record<string, unknown>;
   sections: CmsSection[];
+  /** Auto-generated JSON-LD Schema.org structured data. */
+  json_ld?: Record<string, unknown> | null;
+  /** Canonical URL for this page (auto-generated or overridden). */
+  canonical_url?: string | null;
   /**
    * Derived map keyed by ``CmsSection.section_key`` (``"hero"``,
    * ``"feed"``, ``"events"``, ``"pastors"`` …). Each entry is the raw

@@ -121,7 +121,7 @@ export default function EventosPage() {
 
     return (
         <main className="pt-[88px] pb-4 overflow-hidden">
-            <header className="faro-section-tight faro-container">
+            <header className="ccf-section-tight ccf-container">
                 <div className="md:grid md:grid-cols-12 gap-3 items-end">
                     <div className="md:col-span-8">
                         <span
@@ -131,19 +131,19 @@ export default function EventosPage() {
                             {heroEyebrow}
                         </span>
                         <h1
-                            className="max-w-3xl font-bold faro-display text-4xl sm:text-5xl lg:text-6xl"
+                            className="max-w-3xl font-bold ccf-display text-4xl sm:text-5xl lg:text-6xl"
                             style={{ color: "var(--site-on-surface)" }}
                         >
                             {heroTitle}
                         </h1>
                     </div>
                     <div className="md:col-span-4 mt-3 md:mt-0">
-                        <RichText html={heroDescription} className="faro-body" />
+                        <RichText html={heroDescription} className="ccf-body" />
                     </div>
                 </div>
             </header>
 
-            <section className="faro-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 mb-16">
+            <section className="ccf-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 mb-16">
                 <div
                     className="sm:col-span-2 md:col-span-2 relative min-h-[300px] md:h-[440px] rounded-lg overflow-hidden group"
                     style={{ background: "var(--site-surface-container)" }}
@@ -333,7 +333,7 @@ export default function EventosPage() {
                 </div>
             </section>
 
-            <div className="faro-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 mb-20">
+            <div className="ccf-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 mb-20">
                 {hasEvents ? (
                     upcomingCards.map((event) => {
                         const { month, day } = formatMonthDay(event.date);
@@ -434,7 +434,7 @@ export default function EventosPage() {
                 )}
             </div>
 
-            <section className="faro-section-tight faro-container">
+            <section className="ccf-section-tight ccf-container">
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                     <div>
                         <h2
@@ -636,7 +636,7 @@ export default function EventosPage() {
                             </div>
                             <button
                                 onClick={() => {
-                                    const ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//FARO//ES\n" +
+                                    const ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//CCF//ES\n" +
                                         filteredEvents.map((e) => `BEGIN:VEVENT\nSUMMARY:${e.title || "Evento"}\nDESCRIPTION:${e.excerpt || ""}\nEND:VEVENT`).join("\n") +
                                         "\nEND:VCALENDAR";
                                     const blob = new Blob([ics], { type: "text/calendar" });

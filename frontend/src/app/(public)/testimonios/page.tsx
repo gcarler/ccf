@@ -209,14 +209,14 @@ export default function TestimoniosPage() {
     return (
         <main className="pt-[88px] pb-4 overflow-hidden">
             {/* ── HERO ──────────────────────────────────────────── */}
-            <header className="faro-section relative flex flex-col items-center text-center">
+            <header className="ccf-section relative flex flex-col items-center text-center">
                 <div className="absolute inset-0 bg-beam-gradient pointer-events-none opacity-60" />
 
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="faro-container relative z-10 max-w-4xl"
+                    className="ccf-container relative z-10 max-w-4xl"
                 >
                     <span
                         className="text-xs font-semibold uppercase tracking-wide block mb-3"
@@ -225,7 +225,7 @@ export default function TestimoniosPage() {
                         {heroEyebrow}
                     </span>
                     <h1
-                        className="mx-auto max-w-4xl font-bold faro-display text-5xl sm:text-6xl lg:text-7xl mb-3"
+                        className="mx-auto max-w-4xl font-bold ccf-display text-5xl sm:text-6xl lg:text-7xl mb-3"
                         style={{ color: "var(--site-on-background)" }}
                     >
                         {heroTitleLead} <br/>
@@ -242,13 +242,13 @@ export default function TestimoniosPage() {
                     </h1>
                     <RichText
                         html={heroDescription}
-                        className="faro-body text-base sm:text-lg max-w-2xl mx-auto"
+                        className="ccf-body text-base sm:text-lg max-w-2xl mx-auto"
                     />
                 </motion.div>
             </header>
 
             {/* ── SEARCH & CALL TO ACTION BANNER ────────────────── */}
-            <section className="faro-section-tight faro-container">
+            <section className="ccf-section-tight ccf-container">
                 <div className="flex flex-col lg:flex-row gap-4">
                     {/* Search Bar */}
                     <div className="flex-1 rounded-lg p-4 flex items-center gap-4 border transition-all focus-within:shadow-2xl focus-within:-translate-y-1"
@@ -283,7 +283,7 @@ export default function TestimoniosPage() {
                         </div>
                         <Link
                             href="/conocer-a-jesus"
-                            className="faro-button w-full justify-center md:w-auto"
+                            className="ccf-button w-full justify-center md:w-auto"
                             style={{
                                 background: "var(--site-primary)",
                                 color: "var(--site-on-primary)",
@@ -296,7 +296,7 @@ export default function TestimoniosPage() {
             </section>
 
             {/* ── MASONRY GRID ───────────────────────────────────── */}
-            <section className="faro-section-tight faro-container min-h-[50vh]">
+            <section className="ccf-section-tight ccf-container min-h-[50vh]">
                 <AnimatePresence mode="popLayout">
                     {filteredTestimonials.length === 0 ? (
                         <motion.div
@@ -307,7 +307,7 @@ export default function TestimoniosPage() {
                         >
                             <Users size={64} className="mb-3 opacity-20" style={{ color: "var(--site-primary)" }} />
                             <h3 className="text-xl font-bold mb-4" style={{ color: "var(--site-on-surface)" }}>{emptyTitle}</h3>
-                            <p className="faro-body text-lg opacity-80 max-w-md mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>
+                            <p className="ccf-body text-lg opacity-80 max-w-md mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>
                                 {emptyDescription}
                             </p>
                         </motion.div>

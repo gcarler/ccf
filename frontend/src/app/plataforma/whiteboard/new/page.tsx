@@ -103,7 +103,7 @@ export default function NewWhiteboardPage() {
               <input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                placeholder="Ej: Planeacion Faro Q2"
+                placeholder="Ej: Planeacion CCF Q2"
                 className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-3 text-sm font-bold outline-none focus:border-blue-400 dark:border-white/10 dark:bg-black/20"
               />
             </label>

@@ -34,10 +34,10 @@ from backend import models  # noqa: E402
 from backend.core.database import SessionLocal  # noqa: E402
 
 
-SITE_KEY = "faro"
+SITE_KEY = "ccf"
 PAGE_SLUG = "pastors"
 MENU_KEY = "main"
-THEME_NAME = "Tema institucional Faro"
+THEME_NAME = "Tema institucional CCF"
 THEME_TOKENS = {
     "--site-background": "#f8f9ff",
     "--site-on-background": "#101828",
@@ -92,7 +92,7 @@ def _section_payload(section_key: str, section_type: str, props: dict[str, Any],
 def _public_menu_items(nav_payload: dict[str, Any]) -> list[dict[str, Any]]:
     items = nav_payload.get("items")
     if not isinstance(items, list):
-        raise RuntimeError("faro_nav_items.content.items must be a list")
+        raise RuntimeError("ccf_nav_items.content.items must be a list")
 
     normalized: list[dict[str, Any]] = []
     for index, item in enumerate(items):
@@ -209,10 +209,10 @@ def _ensure_theme(db, site: models.CmsSite) -> tuple[bool, bool]:
 
 
 def _ensure_page(db, site: models.CmsSite) -> tuple[bool, bool]:
-    meta_title, meta = _load_page_content(db, "faro_pastores_meta")
-    hero_title, hero = _load_page_content(db, "faro_pastores_hero")
-    feed_title, feed = _load_page_content(db, "faro_pastores_index")
-    pastors_title, pastors = _load_page_content(db, "faro_pastores_feed")
+    meta_title, meta = _load_page_content(db, "ccf_pastores_meta")
+    hero_title, hero = _load_page_content(db, "ccf_pastores_hero")
+    feed_title, feed = _load_page_content(db, "ccf_pastores_index")
+    pastors_title, pastors = _load_page_content(db, "ccf_pastores_feed")
 
     desired_sections = [
         _section_payload(
@@ -363,7 +363,7 @@ def main() -> int:
         if site is None:
             raise RuntimeError(f"CMS site {SITE_KEY!r} not found")
 
-        menu_title, nav_payload = _load_page_content(db, "faro_nav_items")
+        menu_title, nav_payload = _load_page_content(db, "ccf_nav_items")
         menu_created, menu_changed = _ensure_menu(db, site, nav_payload)
         theme_created, theme_changed = _ensure_theme(db, site)
         page_created, page_changed = _ensure_page(db, site)

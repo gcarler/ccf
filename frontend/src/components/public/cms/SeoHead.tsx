@@ -9,6 +9,9 @@ interface SeoHeadProps {
     fallbackDescription?: string;
     fallbackImage?: string;
     fallbackType?: string;
+    canonicalUrl?: string;
+    robotsMeta?: string;
+    jsonLd?: Record<string, unknown> | null;
 }
 
 function setMeta(attr: string, key: string, content: string) {
@@ -33,18 +36,34 @@ function setLink(rel: string, href: string) {
     el.setAttribute("href", href);
 }
 
+function removeJsonLdScripts() {
+    const existing = document.querySelectorAll('script[type="application/ld+json"]');
+    existing.forEach((el) => el.remove());
+}
+
+function injectJsonLd(data: Record<string, unknown>) {
+    removeJsonLdScripts();
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(data);
+    document.head.appendChild(script);
+}
+
 export default function SeoHead({
     fallbackTitle,
     fallbackDescription,
     fallbackImage,
     fallbackType = "website",
+    canonicalUrl,
+    robotsMeta,
+    jsonLd,
 }: SeoHeadProps) {
     useEffect(() => {
         const title = fallbackTitle || SITE_NAME;
         const description = fallbackDescription || "";
         const image = fallbackImage || "";
-        const canonical = typeof window !== "undefined" ? window.location.href : "";
-        const robots = "index, follow";
+        const canonical = canonicalUrl || (typeof window !== "undefined" ? window.location.href : "");
+        const robots = robotsMeta || "index, follow";
         const author = SITE_NAME;
         const twitterCard = "summary_large_image";
         const locale = "es_CO";
@@ -77,9 +96,16 @@ export default function SeoHead({
         // Canonical
         if (canonical) setLink("canonical", canonical);
 
+        // JSON-LD
+        if (jsonLd) {
+            injectJsonLd(jsonLd);
+        } else {
+            removeJsonLdScripts();
+        }
+
         // Additional SEO meta
         setMeta("name", "theme-color", "var(--site-primary)");
-    }, [fallbackTitle, fallbackDescription, fallbackImage, fallbackType]);
+    }, [fallbackTitle, fallbackDescription, fallbackImage, fallbackType, canonicalUrl, robotsMeta, jsonLd]);
 
     return null;
 }

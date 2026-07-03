@@ -59,7 +59,7 @@ export default function GrupoAdmin() {
         setSelectedGrupo(grupo);
         try {
             const [seasonData, detail] = await Promise.all([
-                apiFetch<Season[]>("/evangelism/faro/seasons", { token }),
+                apiFetch<Season[]>("/evangelism/groups/seasons", { token }),
                 apiFetch<any>(`/evangelism/grupos/${grupo.id}`, { token }),
             ]);
             const nextSeasons = Array.isArray(seasonData) ? seasonData : [];
@@ -80,12 +80,12 @@ export default function GrupoAdmin() {
         }
         setSubmitting(true);
         try {
-            const session = await apiFetch<any>("/evangelism/faro/sessions", {
+            const session = await apiFetch<any>("/evangelism/groups/sessions", {
                 method: "POST",
                 token,
                 body: { season_id: seasonId, grupo_id: selectedGrupo.id, session_date: reportDate },
             });
-            await apiFetch(`/evangelism/faro/sessions/${session.id}/attendance`, {
+            await apiFetch(`/evangelism/groups/sessions/${session.id}/attendance`, {
                 method: "POST",
                 token,
                 body: { persona_ids: selectedIds },

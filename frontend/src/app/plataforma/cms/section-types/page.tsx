@@ -270,7 +270,7 @@ export default function SectionTypesPage() {
           eyebrow="CMS"
           title="Tipos de Seccion"
           description="Catalogo global que define los bloques que un editor puede usar al construir paginas. Los seeds en deploy preservan las desactivaciones administrativas."
-          tags={["Catalog", "FARO", "Plataforma"]}
+          tags={["Catalog", "Secciones", "Plataforma"]}
           watchers={["Comunicaciones", "Web"]}
           primaryAction={
             canPublish

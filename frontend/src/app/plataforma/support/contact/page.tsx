@@ -10,7 +10,7 @@ import { apiFetch } from '@/lib/http';
 
 const CHANNELS = [
     { icon: MessageSquare, label: 'Chat en Vivo', desc: 'Lun-Vie 8am-6pm', color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10', badge: 'En linea' },
-    { icon: Mail, label: 'Correo Electronico', desc: 'soporte@ccfaro.org', color: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10', badge: 'Responde en 24h' },
+    { icon: Mail, label: 'Correo Electronico', desc: 'soporte@ccf.org', color: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10', badge: 'Responde en 24h' },
     { icon: Phone, label: 'Linea Directa', desc: '+57 (8) 420 0000', color: 'text-sky-500 bg-sky-50 dark:bg-sky-500/10', badge: 'Horario habil' },
 ];
 

@@ -3,12 +3,14 @@ from __future__ import annotations
 import logging
 import os
 import re
+import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -22,6 +24,11 @@ from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access
 from backend.models_shared import _utcnow
 from backend.schemas._common import PaginatedResponse
+from backend.core.seo import (
+    auto_json_ld_for_page,
+    build_sitemap_xml,
+    build_robots_txt,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +177,7 @@ def get_allowed_section_types(db: Session) -> set[str]:
     except Exception:
         # If table missing or any error, fall back
         pass
-    # Fallback hardcoded list (same as previous ALLOWED_SECTION_TYPES)
+    # Fallback hardcoded list (kept in sync with scripts/seed_cms_section_types.py)
     return {
         "hero",
         "video_hero",
@@ -202,6 +209,12 @@ def get_allowed_section_types(db: Session) -> set[str]:
         "document_upload",
         "content_blocks",
         "accordion",
+        "civic_hero_search",
+        "civic_convocatoria_cards",
+        "civic_quick_links",
+        "civic_file_downloads",
+        "civic_data_table",
+        "civic_alert_banner",
     }
 CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "pastor"}
 CMS_PUBLISHER_ROLES = {"admin", "coordinador", "pastor"}
@@ -390,6 +403,20 @@ def list_themes(
 ):
     site = _get_site_or_404(db, site_key)
     return crud.list_cms_themes(db, site.id)
+
+
+@router.get("/sites/{site_key}/themes/{theme_id}", response_model=schemas.CmsThemeRead)
+def get_theme(
+    site_key: str,
+    theme_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_module_access("cms", "read")),
+):
+    site = _get_site_or_404(db, site_key)
+    row = crud.get_cms_theme(db, site.id, theme_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="theme not found")
+    return row
 
 
 @router.post(
@@ -883,6 +910,17 @@ def preview_page(
         for section in sections_list
         if section.is_visible and getattr(section, "status", "active") != "archived"
     ]
+    settings = get_settings()
+    base_url = settings.frontend_url.rstrip("/")
+    page_url = f"{base_url}/{page.slug.lstrip('/')}"
+    canonical = (page.seo_json or {}).get("canonical_url") if isinstance(page.seo_json, dict) else None
+    json_ld_data = auto_json_ld_for_page(
+        page, site, sections=sections, base_url=base_url,
+        site_name=_get_system_var(db, site_key, "church_name", site.name),
+    )
+    # Allow manual override of JSON-LD from seo_json
+    if isinstance(page.seo_json, dict) and page.seo_json.get("json_ld"):
+        json_ld_data = page.seo_json["json_ld"]
     return schemas.CmsPublicPageRead(
         site_key=site.site_key,
         slug=page.slug,
@@ -891,6 +929,8 @@ def preview_page(
         sections=[
             schemas.CmsSectionRead.model_validate(section) for section in sections
         ],
+        json_ld=json_ld_data,
+        canonical_url=canonical or page_url,
     )
 
 
@@ -987,8 +1027,6 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
         "items": serialized,
     }
 
-
-import time
 
 _system_var_cache: dict[str, tuple[float, str]] = {}
 _SYSTEM_VAR_TTL = 300  # 5 minutes
@@ -1243,13 +1281,62 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
         sr = schemas.CmsSectionRead.model_validate(section)
         sr.props_json = _build_section_defaults(db, site_key, sr.type, sr.props_json)
         section_reads.append(sr)
+
+    settings = get_settings()
+    base_url = settings.frontend_url.rstrip("/")
+    page_url = f"{base_url}/{page.slug.lstrip('/')}"
+    canonical = (page.seo_json or {}).get("canonical_url") if isinstance(page.seo_json, dict) else None
+    json_ld_data = auto_json_ld_for_page(
+        page, site, sections=sections, base_url=base_url,
+        site_name=_get_system_var(db, site_key, "church_name", site.name),
+    )
+    # Allow manual override of JSON-LD from seo_json
+    if isinstance(page.seo_json, dict) and page.seo_json.get("json_ld"):
+        json_ld_data = page.seo_json["json_ld"]
+
     return schemas.CmsPublicPageRead(
         site_key=site.site_key,
         slug=page.slug,
         title=page.title,
         seo_json=page.seo_json or {},
         sections=section_reads,
+        json_ld=json_ld_data,
+        canonical_url=canonical or page_url,
     )
+
+
+@router.get(
+    "/public/sites/{site_key}/sitemap.xml",
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))],
+)
+@cached_public(ttl=300)
+def public_sitemap(site_key: str, db: Session = Depends(get_db)):
+    """Public endpoint: generate sitemap.xml for all published pages."""
+    site = _get_public_site_or_404(db, site_key)
+    pages, _ = crud.list_cms_pages(db, site.id, skip=0, limit=500, status="published")
+    settings = get_settings()
+    base_url = settings.frontend_url.rstrip("/")
+    xml = build_sitemap_xml(pages, base_url, include_images=True)
+    return Response(content=xml, media_type="application/xml")
+
+
+@router.get(
+    "/public/sites/{site_key}/robots.txt",
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))],
+)
+@cached_public(ttl=300)
+def public_robots(site_key: str, db: Session = Depends(get_db)):
+    """Public endpoint: generate robots.txt for the site."""
+    site = _get_public_site_or_404(db, site_key)
+    settings = get_settings()
+    base_url = settings.frontend_url.rstrip("/")
+    sitemap_url = f"{base_url.rstrip('/')}/api/cms/v2/public/sites/{site_key}/sitemap.xml"
+    # Allow site-level robots override from seo_json on the site if any
+    robots_rules = None
+    if isinstance(site.seo_json, dict) and site.seo_json.get("robots_rules"):
+        robots_rules = site.seo_json["robots_rules"]
+    txt = build_robots_txt(base_url, sitemap_url=sitemap_url, rules=robots_rules)
+    return Response(content=txt, media_type="text/plain")
 
 
 # ── Pastoral Team (public + CMS-managed) ───────────────────────────────────
@@ -1468,9 +1555,9 @@ def create_global_block(
         db.add(page)
         db.flush()
     payload.is_global = True
+    payload.is_visible = True if payload.is_visible is None else payload.is_visible
     payload.section_key = payload.section_key or f"global_{uuid.uuid4().hex[:8]}"
     block = crud.create_cms_section(db, page.id, payload)
-    db.commit()
     db.refresh(block)
     return schemas.CmsSectionRead.model_validate(block)
 
@@ -1541,9 +1628,6 @@ def get_page_analytics(
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     """Get page view analytics."""
-    from datetime import timedelta
-
-    from sqlalchemy import func
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     page = db.query(models.CmsPage).join(models.CmsSite).filter(
         models.CmsPage.slug == page_key,
@@ -1613,7 +1697,7 @@ def get_resized_image(
     """Get a resized version of an uploaded image. Returns base64 or URL.
 
     Defense-in-depth (Axioma 3): aunque este endpoint es público (la URL
-    retornada puede ser consumida por el frontend faro), filtramos los
+    retornada puede ser consumida por el frontend publico), filtramos los
     media archivados — un media archivado no debe ser público vía API. La
     URL es por defecto del asset original, así que el caller puede
     servirlo desde CDN con ``<img width=...>`` sin pasar por aquí, pero
