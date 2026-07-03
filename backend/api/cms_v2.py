@@ -27,10 +27,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
 
-from backend.core.rate_limit import rate_limiter
-
-from sqlalchemy.orm import Session
 from backend import models as cms_models
+from backend.core.rate_limit import rate_limiter
 
 # ── Section Types (platform-wide catalog admin endpoints) ─────────────────
 #
@@ -991,7 +989,6 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
 
 
 import time
-
 
 _system_var_cache: dict[str, tuple[float, str]] = {}
 _SYSTEM_VAR_TTL = 300  # 5 minutes

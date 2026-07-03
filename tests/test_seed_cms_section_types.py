@@ -12,6 +12,7 @@ Hardening contract:
 
 from __future__ import annotations
 
+from backend.models_cms import CmsSectionType
 from scripts.seed_cms_section_types import (
     EXPECTED_SECTION_TYPES,
     SeedResult,
@@ -20,8 +21,6 @@ from scripts.seed_cms_section_types import (
     main,
     verify_section_types,
 )
-from backend.models_cms import CmsSectionType
-
 
 CANONICAL_NAMES = {name for name, _ in EXPECTED_SECTION_TYPES}
 CANONICAL_DESCRIPTIONS = dict(EXPECTED_SECTION_TYPES)
