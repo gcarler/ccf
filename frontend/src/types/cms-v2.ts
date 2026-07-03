@@ -109,6 +109,24 @@ export interface CmsPublishLog {
   created_at: string;
 }
 
+/**
+ * Catalog entry for the global platform-wide ``CmsSectionType`` table.
+ * Section types are not site-scoped — they define which ``type`` strings
+ * a CMS editor can use when building pages.
+ *
+ * The associated Pydantic backend shape (see
+ * ``backend.schemas.cms.CmsSectionTypeRead``) is alphabetized, so the
+ * frontend reads them in name-ascending order.
+ */
+export interface CmsSectionType {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CmsPublicPage {
   site_key: string;
   slug: string;
