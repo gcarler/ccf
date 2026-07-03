@@ -16,7 +16,8 @@ import uuid as _uuid
 import pytest
 
 from backend import models
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(s):
@@ -258,11 +259,12 @@ class TestAuthOnWrites:
     """
 
     def _seed_non_publisher(self, db_session):
-        from backend.models_auth import Usuario, RolPlataforma
-        from backend.models_crm import Persona
+        import uuid as _u
+
         from backend import models as _models
         from backend.core.security import get_password_hash
-        import uuid as _u
+        from backend.models_auth import RolPlataforma, Usuario
+        from backend.models_crm import Persona
 
         persona = Persona(
             id=_u.uuid4(),

@@ -81,7 +81,6 @@ from backend.models_cms import (  # noqa: F401
     SavedView,
     Testimonial,
 )
-from backend.models_wiki import WikiPage  # noqa: F401
 
 # Conversation Memory
 from backend.models_conversation import AgentConversation, AgentMessage
@@ -220,3 +219,4 @@ from backend.models_projects import (
     ProjectWhiteboard,
     TaskSupply,
 )
+from backend.models_wiki import WikiPage  # noqa: F401
