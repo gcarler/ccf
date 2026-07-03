@@ -949,7 +949,7 @@ function GroupsContent() {
  } as Partial<Grupo>)
  }
  className={inputCls}
- placeholder="FARO-001 o dejar vacío"
+ placeholder="CCF-001 o dejar vacío"
  />
  </div>
  <div>

@@ -29,7 +29,7 @@ class EventType(str, Enum):
     ANNUAL = "ANNUAL"
     ONCE = "ONCE"
     SPECIAL = "SPECIAL"
-    FARO = "FARO"
+    GROUPS = "GROUPS"
     ONLINE = "ONLINE"
     CULTURE = "CULTURE"
     CONFERENCE = "CONFERENCE"

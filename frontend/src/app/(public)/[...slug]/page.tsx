@@ -6,7 +6,7 @@ import { Metadata } from "next";
 import { getCmsPublicPage } from "@/lib/cms/v2";
 import { CmsPublicPage } from "@/types/cms-v2";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://faro.ccf.org";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ccf.org";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string[] }> }): Promise<Metadata> {
   const resolvedParams = await params;
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
               images: metaImage ? [metaImage] : undefined,
               type: "website",
               locale: "es_CO",
-              siteName: "FARO",
+              siteName: "CCF",
             },
             twitter: {
               card: "summary_large_image",
@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-export default async function FaroDynamicPage({ params }: { params: Promise<{ slug: string[] }> }) {
+export default async function CcfDynamicPage({ params }: { params: Promise<{ slug: string[] }> }) {
   const resolvedParams = await params;
   const slugValue = Array.isArray(resolvedParams?.slug) ? resolvedParams.slug.join("/") : "";
 

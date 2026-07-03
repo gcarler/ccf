@@ -143,7 +143,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title="CCF Mesh API",
-    description="Sistema de Inteligencia Ministerial El Faro",
+    description="Sistema de Inteligencia Ministerial CCF",
     version="3.0.0-PRO",
     lifespan=lifespan,
 )
@@ -222,7 +222,7 @@ def read_root():
     return {
         "status": "online",
         "message": "CCF Mesh API is running",
-        "ministerio": "CCF El Faro",
+        "ministerio": "CCF",
         "engine": "Optimus 3.0-Quality",
         "uptime": True,
     }

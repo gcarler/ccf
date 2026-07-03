@@ -21,7 +21,7 @@ Patrón consistente con ``backend/api/crm/_shared.py``:
 Caso especial:
 
   - **CmsSite / CmsPage / CmsTheme / CmsMenu / CmsSection** son entidades
-    globales del site ("faro"). NO reciben scope check multi-tenant:
+    globales del site ("ccf"). NO reciben scope check multi-tenant:
     permanecen accesibles para editoriales cross-sede. Esto preserva el
     diseño del frontend único y la consistencia de la home pública.
     Los User-Generated Content (Testimonial/Announcement/Media) sí son

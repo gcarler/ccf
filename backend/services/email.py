@@ -93,7 +93,7 @@ _BRAND_HEADER = """\
       </td>
     </tr>
   </table>
-  <h1 style="font-size:52px;font-weight:900;letter-spacing:-2px;line-height:0.88;color:#ffffff;margin:0 0 6px 0;">EL<br/>FARO</h1>
+  <h1 style="font-size:52px;font-weight:900;letter-spacing:-2px;line-height:0.88;color:#ffffff;margin:0 0 6px 0;">CCF</h1>
   <p style="font-size:18px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:{blue};margin:16px 0 0 0;line-height:1.4;">Comunidad<br/>Cristiana</p>
   <div style="width:64px;height:4px;background:#ffffff;border-radius:4px;margin-top:24px;"></div>
 </table>"""
@@ -121,7 +121,7 @@ _BRAND_FOOTER = """\
         Guiando a las naciones hacia la luz de la verdad.
       </p>
       <p style="font-size:11px;color:rgba(255,255,255,0.4);margin:12px 0 0 0;">
-        &copy; 2026 Comunidad Cristiana El Faro &mdash; Todos los derechos reservados.
+        &copy; 2026 Comunidad Cristiana CCF &mdash; Todos los derechos reservados.
       </p>
     </td>
   </tr>
@@ -165,7 +165,7 @@ def render_verify_email(code: str, frontend_url: str | None = None) -> tuple[str
     """Renderiza el email de verificación con diseño corporativo."""
     base = (frontend_url or settings.frontend_url).rstrip("/")
     verify_link = f"{base}/verify-email?token={code}"
-    subject = "🔵 Bienvenido a El Faro — Verifica tu correo"
+    subject = "🔵 Bienvenido a CCF — Verifica tu correo"
 
     body = f"""\
 <h2 style="font-size:22px;font-weight:800;color:{_CCF_DARK};margin:0 0 6px 0;letter-spacing:-0.3px;">
@@ -175,7 +175,7 @@ def render_verify_email(code: str, frontend_url: str | None = None) -> tuple[str
   Verificaci&oacute;n de cuenta
 </p>
 <p style="font-size:16px;color:#374151;line-height:1.7;margin:0 0 20px 0;">
-  Nos alegra que formes parte de <strong style="color:{_CCF_DARK};">El Faro</strong>.
+  Nos alegra que formes parte de <strong style="color:{_CCF_DARK};">CCF</strong>.
   Para completar tu registro y comenzar a disfrutar de todos los recursos de nuestra plataforma,
   por favor confirma tu direcci&oacute;n de correo haciendo clic en el bot&oacute;n:
 </p>
@@ -214,7 +214,7 @@ def render_reset_password(
   Restablecimiento de acceso
 </p>
 <p style="font-size:16px;color:#374151;line-height:1.7;margin:0 0 20px 0;">
-  Hemos recibido una solicitud para restablecer la contrase&ntilde;a de tu cuenta en <strong style="color:{_CCF_DARK};">El Faro</strong>.
+  Hemos recibido una solicitud para restablecer la contrase&ntilde;a de tu cuenta en <strong style="color:{_CCF_DARK};">CCF</strong>.
   Si fuiste t&uacute;, haz clic en el bot&oacute;n para crear una nueva contrase&ntilde;a:
 </p>
 <table cellpadding="0" cellspacing="0" style="margin:28px 0 32px 0;">
@@ -290,7 +290,7 @@ def render_task_assignment_email(
 </p>
 <p style="font-size:16px;color:#374151;line-height:1.7;margin:0 0 20px 0;">
   Se te ha asignado la tarea <strong style="color:{_CCF_DARK};">{escape(task_title)}</strong>
-  dentro de la plataforma de El Faro.
+  dentro de la plataforma de CCF.
 </p>
 {project_html}
 {assignee_html}

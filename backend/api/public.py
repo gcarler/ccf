@@ -274,7 +274,7 @@ class WishlistCreate(BaseModel):
 
 @router.post("/wishlist", response_model=dict)
 def public_wishlist(payload: WishlistCreate, db: Session = Depends(get_db)):
-    """Cuando un visitante muestra interes en un libro de la libreria FARO."""
+    """Cuando un visitante muestra interes en un libro de la libreria CCF."""
     email = (payload.email or "").strip().lower()
     phone = (payload.phone or "").strip()
 
