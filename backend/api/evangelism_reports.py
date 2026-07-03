@@ -202,7 +202,7 @@ def _generate_attendance_pdf(
     story.append(Paragraph("_" * 50, normal_style))
     story.append(Paragraph(f"<b>Firma del Líder:</b> {leader_name}", normal_style))
     story.append(Spacer(1, 0.3 * cm))
-    story.append(Paragraph("CCF El Faro — Sistema de Inteligencia Ministerial", normal_style))
+    story.append(Paragraph("CCF — Sistema de Inteligencia Ministerial", normal_style))
 
     doc.build(story)
     buf.seek(0)
@@ -309,7 +309,7 @@ def _generate_attendance_excel(
     ws[f"A{sig_row}"].font = Font(italic=True)
     sig_row2 = sig_row + 1
     ws.merge_cells(f"A{sig_row2}:G{sig_row2}")
-    ws[f"A{sig_row2}"] = "CCF El Faro — Sistema de Inteligencia Ministerial"
+    ws[f"A{sig_row2}"] = "CCF — Sistema de Inteligencia Ministerial"
 
     buf = io.BytesIO()
     wb.save(buf)

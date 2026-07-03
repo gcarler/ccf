@@ -16,7 +16,7 @@ from fastapi import APIRouter
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-YOUTUBE_HANDLE = "@Ministeriosfarooficial"
+YOUTUBE_HANDLE = "@MinisteriosCCF"
 YOUTUBE_CHANNEL_ID = os.getenv("YOUTUBE_CHANNEL_ID", "")
 _HTTP_TIMEOUT = httpx.Timeout(5.0, connect=3.0, read=5.0, write=3.0, pool=3.0)
 

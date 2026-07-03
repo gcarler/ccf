@@ -53,9 +53,9 @@ export default function CcfFooter() {
     ];
 
     const fallbackSocialLinks: PublicLink[] = [
-        { href: "https://facebook.com/comunidadfaro", label: "Facebook", kind: "facebook" },
-        { href: "https://instagram.com/comunidadfaro", label: "Instagram", kind: "instagram" },
-        { href: "https://youtube.com/comunidadfaro", label: "YouTube", kind: "youtube" },
+        { href: "https://facebook.com/comunidadccf", label: "Facebook", kind: "facebook" },
+        { href: "https://instagram.com/comunidadccf", label: "Instagram", kind: "instagram" },
+        { href: "https://youtube.com/comunidadccf", label: "YouTube", kind: "youtube" },
     ];
 
     const navLinks = fallbackNavLinks;

@@ -487,7 +487,7 @@ export default function PredicasPage() {
                                     <div className="mb-8">
                                         <div className="flex items-center justify-between mb-4">
                                             <h2 className="text-sm font-bold uppercase tracking-widest text-site-primary">{feed?.featured_label || "Último mensaje"}</h2>
-                                            <a href="https://www.youtube.com/@Ministeriosfarooficial" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-site-outline hover:text-site-primary transition-colors">
+                                            <a href="https://www.youtube.com/@MinisteriosCCF" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-site-outline hover:text-site-primary transition-colors">
                                                 {feed?.channel_link_label || "Ver canal"} <ExternalLink size={11} />
                                             </a>
                                         </div>
@@ -539,7 +539,7 @@ export default function PredicasPage() {
                                 {/* CTA */}
                                 <div className="mt-14 text-center">
                                     <a
-                                        href="https://www.youtube.com/@Ministeriosfarooficial"
+                                        href="https://www.youtube.com/@MinisteriosCCF"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-white font-bold text-sm uppercase tracking-wider hover:scale-105 transition-all"

@@ -837,7 +837,7 @@ def get_macro_despliegue(
     }
 
 
-# ── FARO Visitor Registration (new guests from session reports) ──
+# ── Group Visitor Registration (new guests from session reports) ──
 
 
 class GroupVisitorCreate(BaseModel):

@@ -36,7 +36,7 @@ def create_grupo(db: Session, payload: schemas.GrupoEvangelismoCreate, sede_id: 
     if sede_id and not data.get("sede_id"):
         data["sede_id"] = sede_id
     if not str(data.get("code") or "").strip():
-        base = (str(data.get("name") or data.get("address") or "FARO").strip().upper().replace(" ", "-"))[
+        base = (str(data.get("name") or data.get("address") or "CCF").strip().upper().replace(" ", "-"))[
             :12
         ]  # truncate to leave room for suffix
         suffix = _utcnow().strftime("%m%d%H%M")  # 8 chars
@@ -84,7 +84,7 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
         exclude={"base_attendee_ids", "base_attendees_with_roles"},
     )
     if "code" in update_data and not str(update_data["code"] or "").strip():
-        update_data["code"] = house.code or f"FARO-{house.id}"
+        update_data["code"] = house.code or f"GRP-{house.id}"
     for key, value in update_data.items():
         setattr(house, key, value)
 
