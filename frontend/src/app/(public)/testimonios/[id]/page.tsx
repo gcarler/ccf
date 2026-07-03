@@ -53,7 +53,7 @@ export default function TestimonioDetailPage() {
                 <main className="pt-[120px] pb-4 min-h-screen flex items-center justify-center">
                     <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--site-primary) transparent transparent transparent" }} />
                 </main>
-                <Footer />
+                <Footer_Simple />
             </div>
         );
     }
@@ -76,7 +76,7 @@ export default function TestimonioDetailPage() {
                         <ArrowLeft size={16} /> Ver más testimonios
                     </button>
                 </main>
-                <Footer />
+                <Footer_Simple />
             </div>
         );
     }
@@ -331,7 +331,7 @@ export default function TestimonioDetailPage() {
                 </AnimatePresence>
             </article>
             </main>
-            <Footer />
+            <Footer_Simple />
         </div>
     );
 }

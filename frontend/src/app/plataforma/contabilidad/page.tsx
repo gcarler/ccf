@@ -18,7 +18,7 @@ import {
   Search,
   Send,
   Settings,
-  Signature,
+  PenTool,
   Wallet,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -41,7 +41,7 @@ const SECTIONS = [
       { id: "facturacion", label: "Facturación", href: "/plataforma/facturacion", icon: Receipt },
       { id: "gastos", label: "Gastos", href: "/plataforma/gastos", icon: Wallet },
       { id: "documentos", label: "Documentos", href: "/plataforma/documentos", icon: FileText },
-      { id: "firma", label: "Firma Digital", href: "/plataforma/firma", icon: Signature },
+      { id: "firma", label: "Firma Digital", href: "/plataforma/firma", icon: PenTool },
     ],
   },
 ];
@@ -89,7 +89,7 @@ export default function ContabilidadPage() {
     { label: "Saldo Bancario", value: fmtCOP(totalBalance), icon: Building2, color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" },
     { label: "Facturas Pendientes", value: String(pendingInvoices), icon: Receipt, color: "text-amber-600 bg-amber-50 dark:bg-amber-900/20" },
     { label: "Gastos por Aprobar", value: String(pendingExpenses), icon: Wallet, color: "text-rose-600 bg-rose-50 dark:bg-rose-900/20" },
-    { label: "Firmas Pendientes", value: String(pendingSign), icon: Signature, color: "text-blue-600 bg-blue-50 dark:bg-blue-900/20" },
+    { label: "Firmas Pendientes", value: String(pendingSign), icon: PenTool, color: "text-blue-600 bg-blue-50 dark:bg-blue-900/20" },
   ];
 
   const modules = [
@@ -128,7 +128,7 @@ export default function ContabilidadPage() {
     {
       title: "Firma Digital",
       description: "Contratos y documentos con validez legal internacional.",
-      icon: Signature,
+      icon: PenTool,
       href: "/plataforma/firma",
       stats: `${signRequests.length} solicitudes`,
       color: "from-rose-500 to-pink-600",
