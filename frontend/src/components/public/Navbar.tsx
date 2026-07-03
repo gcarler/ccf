@@ -8,7 +8,7 @@ import { MapPin,Menu,Sun,X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect,useState } from "react";
-import { useCcfTheme } from "./CcfThemeProvider";
+import { useTheme } from "./ThemeProvider";
 import { useSiteBranding } from "@/lib/site-branding";
 
 const DEFAULT_NAV_LINKS = [
@@ -22,8 +22,8 @@ const DEFAULT_NAV_LINKS = [
     { href: "/sedes", label: "Sedes" },
 ];
 
-export default function CcfNavbar() {
-    const { toggle, themeTokens } = useCcfTheme();
+export default function Navbar() {
+    const { toggle, themeTokens } = useTheme();
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
@@ -292,4 +292,4 @@ export default function CcfNavbar() {
     );
 }
 
-export const FaroNavbar = CcfNavbar;
+export const Navbar_compat = Navbar;

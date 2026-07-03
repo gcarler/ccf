@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Church } from 'lucide-react';
 import { SITE_NAME } from "@/lib/site-config";
 
-export function CcfHeader() {
+export function Header() {
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-[#1E1F21]/80 backdrop-blur-xl border-b border-[hsl(var(--border))]/50 dark:border-white/5">
             <div className="container mx-auto px-4 py-2 flex items-center justify-between">
@@ -22,7 +22,7 @@ export function CcfHeader() {
     );
 }
 
-export function CcfFooter() {
+export function Footer_Simple() {
     return (
         <footer className="bg-[hsl(var(--bg-muted))] dark:bg-[#0f1117] text-white py-8 mt-auto">
             <div className="container mx-auto px-4 text-center text-sm text-[hsl(var(--text-secondary))]">
@@ -32,5 +32,5 @@ export function CcfFooter() {
     );
 }
 
-export const FAROHeader = CcfHeader;
-export const FAROFooter = CcfFooter;
+export const Header_compat = Header;
+export const Footer_compat_simple = Footer_Simple;

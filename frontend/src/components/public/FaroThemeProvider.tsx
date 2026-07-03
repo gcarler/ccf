@@ -6,7 +6,7 @@ import { SITE_KEY } from "@/lib/site-config";
 
 export type FaroTheme = "institutional" | "light" | "dark";
 
-export type CcfTheme = FaroTheme;
+export type Theme = FaroTheme;
 
 interface FaroThemeContextType {
     theme: FaroTheme;
@@ -146,6 +146,6 @@ export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
     );
 }
 
-export const CcfThemeProvider = FaroThemeProvider;
+export const ThemeProvider = FaroThemeProvider;
 
-export const useCcfTheme = useFaroTheme;
+export const useTheme = useFaroTheme;
