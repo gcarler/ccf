@@ -268,6 +268,37 @@ def _get_site_or_404(db: Session, site_key: str) -> models.CmsSite:
     return row
 
 
+def _actor_sede_from_user(db: Session, current_user: models.User) -> uuid.UUID | None:
+    """Resolve la sede del actor autenticado desde su persona.
+
+    Retorna ``None`` si el actor no tiene persona o no tiene sede
+    asignada (superadmin / anterior path).
+    """
+    persona_id = crud.resolve_persona_id_for_user(db, getattr(current_user, "id", None))
+    if not persona_id:
+        return None
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    if not persona:
+        return None
+    return persona.sede_id
+
+
+def _assert_site_sede_scope(
+    site: models.CmsSite,
+    actor_sede: uuid.UUID | None,
+) -> None:
+    """Axioma 3 — Multi-Tenant: validar que el site pertenece a la sede
+    del actor. Si ``actor_sede`` es ``None`` (superadmin sin sede) se
+    considera acceso global y no se rechaza. Cualquier otro actor sólo
+    puede interactuar con sites de su propia sede o sites sin sede
+    asignada (legacy pre-migration).
+    """
+    if actor_sede is None:
+        return
+    if site.sede_id is not None and site.sede_id != actor_sede:
+        raise HTTPException(status_code=404, detail="site not found")
+
+
 def _get_public_site_or_404(db: Session, site_key: str) -> models.CmsSite:
     """Fetch a public‑active CMS site or raise 404.
 
@@ -342,9 +373,13 @@ def _snapshot_section_read(
 def list_sites(
     only_active: bool = Query(default=False),
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    return crud.list_cms_sites(db, only_active=only_active)
+    """Listar sites CMS. Axioma 3 — Multi-Tenant: staff con sede solo
+    ve sites de su sede; superadmin sin sede ve todos."""
+    actor_sede = _actor_sede_from_user(db, current_user)
+    sites = crud.list_cms_sites(db, only_active=only_active, sede_id=actor_sede)
+    return sites
 
 
 @router.post("/sites", response_model=schemas.CmsSiteRead, status_code=201)
@@ -360,6 +395,16 @@ def create_site(
         raise HTTPException(status_code=422, detail="base_path must start with '/'")
     if crud.get_cms_site_by_key(db, payload.site_key.strip().lower()):
         raise HTTPException(status_code=409, detail="site_key already exists")
+    # Axioma 3 — Multi-Tenant: si el actor tiene sede asignada, se fuerza
+    # su sede_id (ignorando cualquier valor cross-sede del cliente). Si
+    # el actor NO tiene sede (superadmin / anterior path), se respeta el
+    # sede_id opcional del payload para permitir asignación administrativa.
+    actor_sede = _actor_sede_from_user(db, current_user)
+    if actor_sede is not None:
+        if payload.sede_id is not None and payload.sede_id != actor_sede:
+            payload.sede_id = actor_sede
+        elif payload.sede_id is None:
+            payload.sede_id = actor_sede
     return crud.create_cms_site(db, payload)
 
 
@@ -367,9 +412,11 @@ def create_site(
 def get_site(
     site_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    return _get_site_or_404(db, site_key)
+    site = _get_site_or_404(db, site_key)
+    _assert_site_sede_scope(site, _actor_sede_from_user(db, current_user))
+    return site
 
 
 @router.patch("/sites/{site_key}", response_model=schemas.CmsSiteRead)
@@ -381,6 +428,15 @@ def patch_site(
 ):
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     row = _get_site_or_404(db, site_key)
+    _assert_site_sede_scope(row, _actor_sede_from_user(db, current_user))
+    # Axioma 3 — Multi-Tenant: bloquear movimiento cross-sede. El
+    # sede_id de un site no debe cambiar via API para evitar que un
+    # editor de sede_a "adopte" o "mueva" un site de sede_b.
+    if payload.sede_id is not None:
+        raise HTTPException(
+            status_code=422,
+            detail="sede_id cannot be changed via site update; create a new site instead",
+        )
     return crud.update_cms_site(db, row, payload)
 
 
@@ -393,6 +449,7 @@ def delete_site(
     """Desactiva un sitio CMS sin eliminar su contenido."""
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     row = _get_site_or_404(db, site_key)
+    _assert_site_sede_scope(row, _actor_sede_from_user(db, current_user))
     crud.archive_cms_site(db, row)
     return None
 
@@ -912,6 +969,13 @@ def preview_page(
         for section in sections_list
         if section.is_visible and getattr(section, "status", "active") != "archived"
     ]
+    # ── Inject default props for empty sections (same as public_page) ──
+    section_reads = []
+    for section in sections:
+        sr = schemas.CmsSectionRead.model_validate(section)
+        sr.props_json = _build_section_defaults(db, site_key, sr.type, sr.props_json)
+        section_reads.append(sr)
+
     settings = get_settings()
     base_url = settings.frontend_url.rstrip("/")
     page_url = f"{base_url}/{page.slug.lstrip('/')}"
@@ -935,9 +999,7 @@ def preview_page(
         slug=page.slug,
         title=page.title,
         seo_json=page.seo_json or {},
-        sections=[
-            schemas.CmsSectionRead.model_validate(section) for section in sections
-        ],
+        sections=section_reads,
         json_ld=json_ld_data,
         canonical_url=canonical or page_url,
         breadcrumbs=breadcrumb_items,
@@ -1628,6 +1690,338 @@ def delete_global_block(
     block.deleted_at = _utcnow()
     db.commit()
     return {"ok": True, "deleted": section_id}
+
+
+# ── Posts & Taxonomías ─────────────────────────────────────────────────────
+
+
+def _get_category_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsCategory:
+    row = crud.get_cms_category(db, site_id, _slugify(slug))
+    if not row:
+        raise HTTPException(status_code=404, detail="category not found")
+    return row
+
+
+def _get_tag_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsTag:
+    row = crud.get_cms_tag(db, site_id, _slugify(slug))
+    if not row:
+        raise HTTPException(status_code=404, detail="tag not found")
+    return row
+
+
+def _get_post_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsPost:
+    row = crud.get_cms_post(db, site_id, _slugify(slug))
+    if not row:
+        raise HTTPException(status_code=404, detail="post not found")
+    return row
+
+
+# ── Categories ────────────────────────────────────────────────────────────
+
+@router.get("/sites/{site_key}/categories", response_model=list[schemas.CmsCategoryRead])
+def list_categories(
+    site_key: str,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_module_access("cms", "read")),
+):
+    site = _get_site_or_404(db, site_key)
+    return crud.list_cms_categories(db, site.id)
+
+
+@router.post("/sites/{site_key}/categories", response_model=schemas.CmsCategoryRead, status_code=201)
+def create_category(
+    site_key: str,
+    payload: schemas.CmsCategoryCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_site_or_404(db, site_key)
+    payload.slug = _slugify(payload.slug)
+    if not payload.slug:
+        raise HTTPException(status_code=422, detail="slug is required")
+    if crud.get_cms_category(db, site.id, payload.slug):
+        raise HTTPException(status_code=409, detail="category slug already exists")
+    return crud.create_cms_category(db, site.id, payload)
+
+
+@router.get("/sites/{site_key}/categories/{slug}", response_model=schemas.CmsCategoryRead)
+def get_category(
+    site_key: str,
+    slug: str,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_module_access("cms", "read")),
+):
+    site = _get_site_or_404(db, site_key)
+    return _get_category_or_404(db, site.id, slug)
+
+
+@router.patch("/sites/{site_key}/categories/{slug}", response_model=schemas.CmsCategoryRead)
+def patch_category(
+    site_key: str,
+    slug: str,
+    payload: schemas.CmsCategoryUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_site_or_404(db, site_key)
+    row = _get_category_or_404(db, site.id, slug)
+    return crud.update_cms_category(db, row, payload)
+
+
+@router.delete("/sites/{site_key}/categories/{slug}", status_code=204)
+def delete_category(
+    site_key: str,
+    slug: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_site_or_404(db, site_key)
+    row = _get_category_or_404(db, site.id, slug)
+    crud.delete_cms_category(db, row)
+
+
+# ── Tags ──────────────────────────────────────────────────────────────────
+
+@router.get("/sites/{site_key}/tags", response_model=list[schemas.CmsTagRead])
+def list_tags(
+    site_key: str,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_module_access("cms", "read")),
+):
+    site = _get_site_or_404(db, site_key)
+    return crud.list_cms_tags(db, site.id)
+
+
+@router.post("/sites/{site_key}/tags", response_model=schemas.CmsTagRead, status_code=201)
+def create_tag(
+    site_key: str,
+    payload: schemas.CmsTagCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_site_or_404(db, site_key)
+    payload.slug = _slugify(payload.slug)
+    if not payload.slug:
+        raise HTTPException(status_code=422, detail="slug is required")
+    if crud.get_cms_tag(db, site.id, payload.slug):
+        raise HTTPException(status_code=409, detail="tag slug already exists")
+    return crud.create_cms_tag(db, site.id, payload)
+
+
+@router.get("/sites/{site_key}/tags/{slug}", response_model=schemas.CmsTagRead)
+def get_tag(
+    site_key: str,
+    slug: str,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_module_access("cms", "read")),
+):
+    site = _get_site_or_404(db, site_key)
+    return _get_tag_or_404(db, site.id, slug)
+
+
+@router.patch("/sites/{site_key}/tags/{slug}", response_model=schemas.CmsTagRead)
+def patch_tag(
+    site_key: str,
+    slug: str,
+    payload: schemas.CmsTagUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_site_or_404(db, site_key)
+    row = _get_tag_or_404(db, site.id, slug)
+    return crud.update_cms_tag(db, row, payload)
+
+
+@router.delete("/sites/{site_key}/tags/{slug}", status_code=204)
+def delete_tag(
+    site_key: str,
+    slug: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_site_or_404(db, site_key)
+    row = _get_tag_or_404(db, site.id, slug)
+    crud.delete_cms_tag(db, row)
+
+
+# ── Posts (Admin) ─────────────────────────────────────────────────────────
+
+@router.get(
+    "/sites/{site_key}/posts",
+    response_model=PaginatedResponse[schemas.CmsPostReadWithTaxonomies],
+)
+def list_posts(
+    site_key: str,
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    status: str | None = Query(None),
+    category_id: uuid.UUID | None = Query(None),
+    tag_id: uuid.UUID | None = Query(None),
+    _: models.User = Depends(require_module_access("cms", "read")),
+):
+    site = _get_site_or_404(db, site_key)
+    items, total = crud.list_cms_posts(
+        db, site.id, skip=skip, limit=limit, status=status,
+        category_id=category_id, tag_id=tag_id,
+    )
+    enriched = []
+    for post in items:
+        p = schemas.CmsPostReadWithTaxonomies.model_validate(post)
+        p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, post.id)]
+        p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, post.id)]
+        enriched.append(p)
+    return PaginatedResponse[schemas.CmsPostReadWithTaxonomies](
+        items=enriched, total=total, skip=skip, limit=limit
+    )
+
+
+@router.post("/sites/{site_key}/posts", response_model=schemas.CmsPostReadWithTaxonomies, status_code=201)
+def create_post(
+    site_key: str,
+    payload: schemas.CmsPostCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    if payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
+        raise HTTPException(status_code=422, detail="invalid status")
+    site = _get_site_or_404(db, site_key)
+    payload.slug = _slugify(payload.slug)
+    if not payload.slug:
+        raise HTTPException(status_code=422, detail="slug is required")
+    if crud.get_cms_post(db, site.id, payload.slug):
+        raise HTTPException(status_code=409, detail="slug already exists")
+    row = crud.create_cms_post(db, site.id, payload, current_user.id)
+    p = schemas.CmsPostReadWithTaxonomies.model_validate(row)
+    p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, row.id)]
+    p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, row.id)]
+    return p
+
+
+@router.get("/sites/{site_key}/posts/{slug}", response_model=schemas.CmsPostReadWithTaxonomies)
+def get_post(
+    site_key: str,
+    slug: str,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_module_access("cms", "read")),
+):
+    site = _get_site_or_404(db, site_key)
+    row = _get_post_or_404(db, site.id, slug)
+    p = schemas.CmsPostReadWithTaxonomies.model_validate(row)
+    p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, row.id)]
+    p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, row.id)]
+    return p
+
+
+@router.patch("/sites/{site_key}/posts/{slug}", response_model=schemas.CmsPostReadWithTaxonomies)
+def patch_post(
+    site_key: str,
+    slug: str,
+    payload: schemas.CmsPostUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_site_or_404(db, site_key)
+    row = _get_post_or_404(db, site.id, slug)
+    if payload.status is not None and payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
+        raise HTTPException(status_code=422, detail="invalid status")
+    updated = crud.update_cms_post(db, row, payload, current_user.id)
+    p = schemas.CmsPostReadWithTaxonomies.model_validate(updated)
+    p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, updated.id)]
+    p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, updated.id)]
+    return p
+
+
+@router.delete("/sites/{site_key}/posts/{slug}", status_code=204)
+def delete_post(
+    site_key: str,
+    slug: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_site_or_404(db, site_key)
+    row = _get_post_or_404(db, site.id, slug)
+    crud.delete_cms_post(db, row)
+
+
+# ── Posts (Public) ────────────────────────────────────────────────────────
+
+@router.get(
+    "/public/sites/{site_key}/posts",
+    response_model=PaginatedResponse[schemas.CmsPublicPostRead],
+    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+)
+@cached_public(ttl=300)
+def public_posts_list(
+    site_key: str,
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    category_slug: str | None = Query(None),
+    tag_slug: str | None = Query(None),
+):
+    site = _get_public_site_or_404(db, site_key)
+    items, total = crud.get_public_cms_posts(
+        db, site.id, skip=skip, limit=limit,
+        category_slug=category_slug, tag_slug=tag_slug,
+    )
+    enriched = []
+    for post in items:
+        p = schemas.CmsPublicPostRead.model_validate(post)
+        p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, post.id)]
+        p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, post.id)]
+        author_name = None
+        if post.author_persona_id:
+            author = db.query(models.Persona).filter(models.Persona.id == post.author_persona_id).first()
+            if author:
+                author_name = author.nombre_completo
+        p.author_name = author_name
+        settings = get_settings()
+        base_url = settings.frontend_url.rstrip("/")
+        p.canonical_url = f"{base_url}/blog/{post.slug}"
+        enriched.append(p)
+    return PaginatedResponse[schemas.CmsPublicPostRead](
+        items=enriched, total=total, skip=skip, limit=limit
+    )
+
+
+@router.get(
+    "/public/sites/{site_key}/posts/{slug}",
+    response_model=schemas.CmsPublicPostRead,
+    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+)
+@cached_public(ttl=300)
+def public_post(
+    site_key: str,
+    slug: str,
+    db: Session = Depends(get_db),
+):
+    site = _get_public_site_or_404(db, site_key)
+    post = crud.get_public_cms_post(db, site.id, _slugify(slug))
+    if not post:
+        raise HTTPException(status_code=404, detail="published post not found")
+    p = schemas.CmsPublicPostRead.model_validate(post)
+    p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, post.id)]
+    p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, post.id)]
+    author_name = None
+    if post.author_persona_id:
+        author = db.query(models.Persona).filter(models.Persona.id == post.author_persona_id).first()
+        if author:
+            author_name = author.nombre_completo
+    p.author_name = author_name
+    settings = get_settings()
+    base_url = settings.frontend_url.rstrip("/")
+    p.canonical_url = f"{base_url}/blog/{post.slug}"
+    return p
 
 
 # ── PAGE VIEWS TRACKING (Phase 6 Analytics) ────────────────────────────────────

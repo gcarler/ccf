@@ -34,6 +34,12 @@ class CmsSite(Base):
     name = Column(String(120), nullable=False)
     base_path = Column(String(120), unique=True, nullable=False, index=True, default="/")
     is_active = Column(Boolean, default=True, index=True)
+    # Axioma 3 — Multi-Tenant: cms_sites necesita sede_id para que el
+    # dashboard CMS pueda filtrar métricas por sede. Todos los objetos
+    # CMS v2 (pages, posts, categories, tags) tienen site_id FK; con
+    # sede_id en el site, el scope por sede se resuelve vía JOIN sin
+    # necesidad de agregar sede_id a cada tabla hija.
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -292,3 +298,109 @@ class Testimonial(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     author = relationship("Persona", foreign_keys=[author_persona_id], lazy="joined")
+
+
+# ── Posts & Taxonomías (Blog/Noticias) ─────────────────────────────────────
+
+class CmsCategory(Base):
+    __tablename__ = "cms_categories"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_sites.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    parent_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_categories.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    slug = Column(String(160), nullable=False, index=True)
+    name = Column(String(120), nullable=False)
+    description = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("site_id", "slug", name="uq_cms_category_site_slug"),
+    )
+
+
+class CmsTag(Base):
+    __tablename__ = "cms_tags"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_sites.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    slug = Column(String(160), nullable=False, index=True)
+    name = Column(String(120), nullable=False)
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("site_id", "slug", name="uq_cms_tag_site_slug"),
+    )
+
+
+class CmsPost(Base):
+    __tablename__ = "cms_posts"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_sites.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    slug = Column(String(160), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    excerpt = Column(Text, nullable=True)
+    content = Column(Text, nullable=True)
+    featured_image_url = Column(String(500), nullable=True)
+    status = Column(String(30), default="draft", index=True)
+    seo_json = Column(JSON, default={})
+    locale = Column(String(5), default="es", server_default="es", index=True)
+    published_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("site_id", "slug", name="uq_cms_post_site_slug"),
+    )
+
+
+class CmsPostCategory(Base):
+    __tablename__ = "cms_post_categories"
+    post_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_posts.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    category_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_categories.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+
+class CmsPostTag(Base):
+    __tablename__ = "cms_post_tags"
+    post_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_posts.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    tag_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_tags.id", ondelete="CASCADE"),
+        primary_key=True,
+    )

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import OptimizedImage from "@/components/ui/OptimizedImage";
-import { Archive, Calendar, FileText, Globe, Plus, RotateCcw, Search, Zap, PenTool, Check } from "lucide-react";
+import { Archive, Calendar, Eye, FileText, Globe, Plus, RotateCcw, Search, Zap, PenTool, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
 import clsx from "clsx";
@@ -217,6 +217,10 @@ export default function CmsPagesManagement() {
 
   const openPage = (page: CmsPage) => router.push(`/cms/pages/${page.slug}`);
 
+  const openPreview = (page: CmsPage) => {
+    window.open(`/plataforma/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(page.slug)}`, "_blank");
+  };
+
   const renderPageList = () => (
  <div className="space-y-3 w-full">
       {visiblePages.map((page, index) => {
@@ -242,13 +246,18 @@ export default function CmsPagesManagement() {
                 <span className="flex items-center gap-1"><Globe size={11} />/{page.slug}</span>
                 <span className="flex items-center gap-1"><Calendar size={11} />{page.updated_at ? new Date(page.updated_at).toLocaleDateString() : "Sin fecha"}</span>
               </div>
-            </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); router.push(`/cms/builder?site=${siteKey}&page=${page.slug}`); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide hover:bg-blue-100 transition-all"
-            >
-              <PenTool size={11} /> Editar
-            </button>
+            </div>                    <button
+                      onClick={(e) => { e.stopPropagation(); openPreview(page); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[9px] font-semibold uppercase tracking-wide hover:bg-emerald-100 transition-all"
+                    >
+                      <Eye size={11} /> Preview
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); router.push(`/cms/builder?site=${siteKey}&page=${page.slug}`); }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide hover:bg-blue-100 transition-all"
+                    >
+                      <PenTool size={11} /> Editar
+                    </button>
           </motion.div>
         );
       })}
@@ -406,6 +415,12 @@ export default function CmsPagesManagement() {
                   {/* Actions */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
+                      onClick={() => openPreview(page)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[9px] font-semibold uppercase tracking-wide hover:bg-emerald-100 transition-all"
+                    >
+                      <Eye size={11} /> Preview
+                    </button>
+                    <button
                       onClick={() => router.push(`/cms/builder?site=${siteKey}&page=${page.slug}`)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide hover:bg-blue-100 transition-all"
                     >
@@ -512,6 +527,12 @@ export default function CmsPagesManagement() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => openPreview(page)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[9px] font-semibold uppercase hover:bg-emerald-100 transition-all"
+                          >
+                            <Eye size={10} /> Preview
+                          </button>
                           <button
                             onClick={() => router.push(`/cms/builder?site=${siteKey}&page=${page.slug}`)}
                             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase hover:bg-blue-100 transition-all"

@@ -3,7 +3,6 @@ import type { CmsSection } from "@/types/cms-v2";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import PublicSectionRenderer from "@/components/public/cms/PublicSectionRenderer";
 import {
-  SECTION_TYPE_COLORS,
   SECTION_TYPE_LABEL,
 } from "@/components/cms/builder/constants";
 import {
@@ -41,13 +40,15 @@ class SectionRenderErrorBoundary extends React.Component<
 export function SectionRenderPreview({
   section,
   mobile,
+  tokens,
 }: {
   section: CmsSection;
   mobile: boolean;
+  tokens?: React.CSSProperties;
 }) {
   return (
     <div
-      style={CANVAS_PREVIEW_TOKENS}
+      style={tokens ?? CANVAS_PREVIEW_TOKENS}
       className={`rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))]${mobile ? " max-w-[420px] mx-auto" : ""}`}
     >
       <SectionRenderErrorBoundary>
@@ -64,12 +65,12 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   const body = safeString(section.props_json?.body);
   const imageUrl = safeString(section.props_json?.image_url);
   const ctaLabel = safeString(section.props_json?.cta_label);
-  const typeColor = SECTION_TYPE_COLORS[section.type] ?? "bg-[hsl(var(--surface-2))]";
   const typeLabel = SECTION_TYPE_LABEL[section.type] ?? section.type;
 
   const TypeBadge = () => (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wide text-white ${typeColor}`}
+      className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wide"
+      style={{ backgroundColor: 'var(--site-primary)', color: 'var(--site-on-primary)' }}
     >
       {typeLabel}
     </span>
@@ -148,14 +149,14 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   }
   if (section.type === "cta_banner") {
     return (
-      <div className="rounded-lg border border-dashed border-emerald-300 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-900/10 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-primary)', backgroundColor: 'var(--site-primary-container)' }}>
         <TypeBadge />
         <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Llamado a la Acción"}
         </p>
         <p className="text-xs text-[hsl(var(--text-secondary))] line-clamp-1">{body || "Subtítulo"}</p>
         {ctaLabel && (
-          <span className="inline-block px-3 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-semibold uppercase">
+          <span className="inline-block px-3 py-1 text-white rounded-lg text-[10px] font-semibold uppercase" style={{ backgroundColor: 'var(--site-primary)' }}>
             {ctaLabel}
           </span>
         )}
@@ -164,7 +165,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   }
   if (section.type === "testimonials") {
     return (
-      <div className="rounded-lg border border-dashed border-rose-300 dark:border-rose-500/30 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-outline-variant)' }}>
         <TypeBadge />
         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Sección de Testimonios"}
@@ -185,14 +186,14 @@ export function SectionPreview({ section }: { section: CmsSection }) {
       ? (section.props_json.items as Array<Record<string, unknown>>)
       : [];
     return (
-      <div className="rounded-lg border border-dashed border-teal-300 dark:border-teal-500/30 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-primary)' }}>
         <TypeBadge />
         <div className="grid grid-cols-3 gap-2">
           {(stats.length > 0 ? stats : [{ value: "—", label: "Métrica" }])
             .slice(0, 3)
             .map((s, i) => (
               <div key={i} className="text-center">
-                <p className="text-base font-semibold text-teal-600">
+                <p className="text-base font-semibold" style={{ color: 'var(--site-primary)' }}>
                   {safeString(s.value) || "—"}
                 </p>
                 <p className="text-[9px] text-[hsl(var(--text-secondary))] font-bold uppercase">
@@ -206,7 +207,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   }
   if (section.type === "team") {
     return (
-      <div className="rounded-lg border border-dashed border-orange-300 dark:border-orange-500/30 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-secondary)' }}>
         <TypeBadge />
         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Nuestro Equipo"}
@@ -215,7 +216,8 @@ export function SectionPreview({ section }: { section: CmsSection }) {
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="size-8 rounded-full bg-orange-100 dark:bg-orange-900/20 border-2 border-white dark:border-[hsl(var(--border))]"
+              className="size-8 rounded-full border-2 border-white dark:border-[hsl(var(--border))]"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--site-secondary) 25%, transparent)' }}
             />
           ))}
         </div>
@@ -225,7 +227,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   if (section.type === "countdown") {
     const target = safeString(section.props_json?.target_date);
     return (
-      <div className="rounded-lg border border-dashed border-red-300 dark:border-red-500/30 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-primary)' }}>
         <TypeBadge />
         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Cuenta Regresiva"}
@@ -255,14 +257,14 @@ export function SectionPreview({ section }: { section: CmsSection }) {
         )
       : [];
     return (
-      <div className="rounded-lg border border-dashed border-amber-300 dark:border-amber-500/30 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-secondary)' }}>
         <TypeBadge />
         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Preguntas Frecuentes"}
         </p>
         {faqs.slice(0, 2).map((f, i) => (
           <div key={i} className="flex items-start gap-2 text-xs">
-            <span className="text-amber-500 font-semibold mt-0.5">Q</span>
+            <span className="font-semibold mt-0.5" style={{ color: 'var(--site-secondary)' }}>Q</span>
             <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] line-clamp-1">
               {safeString(f.q) || "Pregunta"}
             </span>
@@ -274,7 +276,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   if (section.type === "embed") {
     const embedUrl = safeString(section.props_json?.embed_url);
     return (
-      <div className="rounded-lg border border-dashed border-cyan-300 dark:border-cyan-500/30 p-4 space-y-2">
+      <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-primary)' }}>
         <TypeBadge />
         {embedUrl ? (
           <p className="text-[10px] text-[hsl(var(--text-secondary))] font-mono truncate">

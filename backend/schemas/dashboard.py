@@ -143,6 +143,17 @@ class CmsDashboard(BaseModel):
     publicaciones_por_mes: List[ChartDataPoint] = []
     contenido_por_tipo: List[ChartDataPoint] = []
     borradores_pendientes: int = 0
+    # Métricas reales de page views, posts y actividad
+    page_views_total: int = 0
+    page_views_7d: int = 0
+    page_views_30d: int = 0
+    top_pages: List[Dict[str, Any]] = []
+    recent_posts: List[Dict[str, Any]] = []
+    recent_activity: List[Dict[str, Any]] = []
+    posts_total: int = 0
+    posts_published: int = 0
+    categories_total: int = 0
+    tags_total: int = 0
     filters: Optional[List[DashboardFilter]] = None
     last_updated: Optional[str] = None
     model_config = orm_config

@@ -562,30 +562,212 @@ def get_agenda_dashboard(db: Session) -> AgendaDashboard:
 # 6. CMS DASHBOARD
 # ═══════════════════════════════════════════════════════════════════
 
-def get_cms_dashboard(db: Session) -> CmsDashboard:
+def get_cms_dashboard(db: Session, sede_id: Optional[str] = None) -> CmsDashboard:
     from sqlalchemy import text as sqlt
 
-    total = db.execute(sqlt("SELECT COUNT(*) FROM cms_pages")).scalar() or 0
+    # Multi-tenant scope via cms_sites.sede_id. All CMS v2 entities
+    # (pages, posts, categories, tags, sections, versions, publish_logs)
+    # are scoped through their site_id → cms_sites.sede_id.
+    site_where = ""
+    params = {}
+    if sede_id:
+        site_where = "AND s.sede_id = :sede_id"
+        params["sede_id"] = sede_id
+
+    # ── Basic page counts ──
+    total = db.execute(sqlt(
+        f"SELECT COUNT(*) FROM cms_pages p JOIN cms_sites s ON p.site_id = s.id WHERE 1=1 {site_where}"
+    ), params).scalar() or 0
     published = db.execute(sqlt(
-        "SELECT COUNT(*) FROM cms_pages WHERE status = 'published'"
-    )).scalar() or 0
+        f"SELECT COUNT(*) FROM cms_pages p JOIN cms_sites s ON p.site_id = s.id WHERE p.status = 'published' {site_where}"
+    ), params).scalar() or 0
     drafts = db.execute(sqlt(
-        "SELECT COUNT(*) FROM cms_pages WHERE status = 'draft'"
-    )).scalar() or 0
-    versions = db.execute(sqlt("SELECT COUNT(*) FROM cms_page_versions")).scalar() or 0
+        f"SELECT COUNT(*) FROM cms_pages p JOIN cms_sites s ON p.site_id = s.id WHERE p.status = 'draft' {site_where}"
+    ), params).scalar() or 0
+    in_review = db.execute(sqlt(
+        f"SELECT COUNT(*) FROM cms_pages p JOIN cms_sites s ON p.site_id = s.id WHERE p.status = 'review' {site_where}"
+    ), params).scalar() or 0
+    versions = db.execute(sqlt(
+        f"""SELECT COUNT(*) FROM cms_page_versions v
+        JOIN cms_pages p ON v.page_id = p.id
+        JOIN cms_sites s ON p.site_id = s.id
+        WHERE 1=1 {site_where}"""
+    ), params).scalar() or 0
+
+    # ── Page Views ──
+    now = _utcnow()
+    cutoff_7d = now - timedelta(days=7)
+    cutoff_30d = now - timedelta(days=30)
+
+    page_views_total = db.execute(sqlt(
+        f"""SELECT COUNT(*) FROM cms_page_views pv
+        JOIN cms_pages p ON pv.page_id = p.id
+        JOIN cms_sites s ON p.site_id = s.id
+        WHERE 1=1 {site_where}"""
+    ), params).scalar() or 0
+
+    page_views_7d = db.execute(sqlt(
+        f"""SELECT COUNT(*) FROM cms_page_views pv
+        JOIN cms_pages p ON pv.page_id = p.id
+        JOIN cms_sites s ON p.site_id = s.id
+        WHERE pv.created_at >= :cutoff {site_where}"""
+    ), {"cutoff": cutoff_7d, **params}).scalar() or 0
+
+    page_views_30d = db.execute(sqlt(
+        f"""SELECT COUNT(*) FROM cms_page_views pv
+        JOIN cms_pages p ON pv.page_id = p.id
+        JOIN cms_sites s ON p.site_id = s.id
+        WHERE pv.created_at >= :cutoff {site_where}"""
+    ), {"cutoff": cutoff_30d, **params}).scalar() or 0
+
+    # Top pages ( últimos 30 días )
+    top_pages_rows = db.execute(sqlt(
+        f"""SELECT p.slug, p.title, COUNT(pv.id) as views
+        FROM cms_page_views pv
+        JOIN cms_pages p ON pv.page_id = p.id
+        JOIN cms_sites s ON p.site_id = s.id
+        WHERE pv.created_at >= :cutoff {site_where}
+        GROUP BY p.id, p.slug, p.title
+        ORDER BY views DESC
+        LIMIT 5"""
+    ), {"cutoff": cutoff_30d, **params}).all()
+
+    top_pages = [
+        {"slug": r[0], "title": r[1] or r[0], "views": r[2]}
+        for r in top_pages_rows
+    ]
+
+    # ── Posts & Taxonomías ──
+    posts_total = db.execute(sqlt(
+        f"SELECT COUNT(*) FROM cms_posts p JOIN cms_sites s ON p.site_id = s.id WHERE 1=1 {site_where}"
+    ), params).scalar() or 0
+    posts_published = db.execute(sqlt(
+        f"SELECT COUNT(*) FROM cms_posts p JOIN cms_sites s ON p.site_id = s.id WHERE p.status = 'published' {site_where}"
+    ), params).scalar() or 0
+
+    recent_posts_rows = db.execute(sqlt(
+        f"""SELECT p.slug, p.title, p.published_at, p.status,
+               (SELECT COUNT(*) FROM cms_post_categories pc WHERE pc.post_id = p.id) as cat_count,
+               (SELECT COUNT(*) FROM cms_post_tags pt WHERE pt.post_id = p.id) as tag_count
+        FROM cms_posts p
+        JOIN cms_sites s ON p.site_id = s.id
+        WHERE p.status = 'published' {site_where}
+        ORDER BY p.published_at DESC, p.created_at DESC
+        LIMIT 5"""
+    ), params).all()
+
+    recent_posts = []
+    for r in recent_posts_rows:
+        pub = r[2]
+        pub_str = pub.strftime("%d %b %Y") if hasattr(pub, "strftime") else str(pub or "")[:10]
+        recent_posts.append({
+            "slug": r[0],
+            "title": r[1] or r[0],
+            "published_at": pub_str,
+            "status": r[3],
+            "category_count": r[4],
+            "tag_count": r[5],
+        })
+
+    categories_total = db.execute(sqlt(
+        f"SELECT COUNT(*) FROM cms_categories c JOIN cms_sites s ON c.site_id = s.id WHERE 1=1 {site_where}"
+    ), params).scalar() or 0
+    tags_total = db.execute(sqlt(
+        f"SELECT COUNT(*) FROM cms_tags t JOIN cms_sites s ON t.site_id = s.id WHERE 1=1 {site_where}"
+    ), params).scalar() or 0
+
+    # ── Publicaciones por mes (páginas + posts publicados) ──
+    publicaciones_por_mes = []
+    for i in range(5, -1, -1):
+        start, end = _month_range(i)
+        pub_params = {"s": start, "e": end, **params}
+        page_pub = db.execute(sqlt(
+            f"""SELECT COUNT(*) FROM cms_pages p
+            JOIN cms_sites s ON p.site_id = s.id
+            WHERE p.status = 'published' AND p.updated_at BETWEEN :s AND :e {site_where}"""
+        ), pub_params).scalar() or 0
+        post_pub = db.execute(sqlt(
+            f"""SELECT COUNT(*) FROM cms_posts p
+            JOIN cms_sites s ON p.site_id = s.id
+            WHERE p.status = 'published' AND p.published_at BETWEEN :s AND :e {site_where}"""
+        ), pub_params).scalar() or 0
+        publicaciones_por_mes.append(ChartDataPoint(
+            label=start.strftime("%b"),
+            value=float(page_pub + post_pub),
+        ))
+
+    # ── Contenido por tipo ──
+    sections_by_type = db.execute(sqlt(
+        f"""SELECT sec.type, COUNT(*) as cnt
+        FROM cms_sections sec
+        JOIN cms_pages p ON sec.page_id = p.id
+        JOIN cms_sites s ON p.site_id = s.id
+        WHERE sec.deleted_at IS NULL {site_where}
+        GROUP BY sec.type ORDER BY cnt DESC LIMIT 8"""
+    ), params).all()
+    contenido_por_tipo = [ChartDataPoint(label=r[0], value=float(r[1])) for r in sections_by_type]
+
+    # ── Actividad reciente (publish logs) ──
+    activity_rows = db.execute(sqlt(
+        f"""SELECT pl.entity_type, pl.action, pl.from_status, pl.to_status,
+               pl.created_at, pl.metadata_json,
+               per.first_name, per.last_name
+        FROM cms_publish_logs pl
+        JOIN cms_sites s ON pl.site_id = s.id
+        LEFT JOIN personas per ON pl.actor_persona_id = per.id
+        WHERE 1=1 {site_where}
+        ORDER BY pl.created_at DESC
+        LIMIT 10"""
+    ), params).all()
+
+    recent_activity = []
+    for r in activity_rows:
+        actor = f"{r[6] or ''} {r[7] or ''}".strip() or "Sistema"
+        created = r[4]
+        created_str = created.strftime("%d %b %H:%M") if hasattr(created, "strftime") else str(created or "")[:16]
+        recent_activity.append({
+            "entity_type": r[0],
+            "action": r[1],
+            "from_status": r[2],
+            "to_status": r[3],
+            "created_at": created_str,
+            "actor": actor,
+            "metadata": r[5] or {},
+        })
+
+    # ── Versiones por página ──
+    version_rows = db.execute(sqlt(
+        f"""SELECT p.title, COUNT(v.id) as cnt
+        FROM cms_page_versions v
+        JOIN cms_pages p ON v.page_id = p.id
+        JOIN cms_sites s ON p.site_id = s.id
+        WHERE 1=1 {site_where}
+        GROUP BY p.id, p.title ORDER BY cnt DESC LIMIT 5"""
+    ), params).all()
+    versiones_por_pagina = [ChartDataPoint(label=r[0] or "Sin título", value=float(r[1])) for r in version_rows]
 
     return CmsDashboard(
         cards=[
             MetricCard(title="Páginas", value=str(total), trend=f"{published} publicadas", tone="blue", icon="FileText"),
-            MetricCard(title="Versiones", value=str(versions), tone="emerald", icon="GitBranch"),
-            MetricCard(title="Borradores", value=str(drafts), tone="amber", icon="Edit3"),
-            MetricCard(title="Publicación", value=f"{round(published/max(total,1)*100)}%", tone="blue", icon="TrendingUp"),
+            MetricCard(title="Posts", value=str(posts_total), trend=f"{posts_published} publicados", tone="emerald", icon="BookOpen"),
+            MetricCard(title="Vistas (30d)", value=str(page_views_30d), trend=f"{page_views_7d} últimos 7 días", tone="blue", icon="Eye"),
+            MetricCard(title="Borradores", value=str(drafts + in_review), trend=f"{in_review} en revisión", tone="amber", icon="Edit3"),
         ],
-        versiones_por_pagina=[],
-        publicaciones_por_mes=[],
-        contenido_por_tipo=[],
-        borradores_pendientes=drafts,
-        filters=[],
+        versiones_por_pagina=versiones_por_pagina,
+        publicaciones_por_mes=publicaciones_por_mes,
+        contenido_por_tipo=contenido_por_tipo,
+        borradores_pendientes=drafts + in_review,
+        page_views_total=page_views_total,
+        page_views_7d=page_views_7d,
+        page_views_30d=page_views_30d,
+        top_pages=top_pages,
+        recent_posts=recent_posts,
+        recent_activity=recent_activity,
+        posts_total=posts_total,
+        posts_published=posts_published,
+        categories_total=categories_total,
+        tags_total=tags_total,
+        filters=_sede_filters(db),
         last_updated=_utcnow().isoformat(),
     )
 

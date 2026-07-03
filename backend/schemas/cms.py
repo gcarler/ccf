@@ -68,12 +68,14 @@ class CmsSiteCreate(BaseModel):
     name: str
     base_path: str
     is_active: bool = True
+    sede_id: Optional[UUID] = None
 
 
 class CmsSiteUpdate(BaseModel):
     name: Optional[str] = None
     base_path: Optional[str] = None
     is_active: Optional[bool] = None
+    sede_id: Optional[UUID] = None
 
 
 class CmsSiteRead(BaseModel):
@@ -82,6 +84,7 @@ class CmsSiteRead(BaseModel):
     name: str
     base_path: str
     is_active: bool
+    sede_id: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
     model_config = orm_config
@@ -503,3 +506,125 @@ class CmsSectionTypeRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     model_config = orm_config
+
+
+# ── Posts & Taxonomías ─────────────────────────────────────────────────────
+
+
+class CmsCategoryCreate(BaseModel):
+    slug: str
+    name: str
+    description: Optional[str] = None
+    parent_id: Optional[UUID] = None
+    is_active: bool = True
+
+
+class CmsCategoryUpdate(BaseModel):
+    slug: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    parent_id: Optional[UUID] = None
+    is_active: Optional[bool] = None
+
+
+class CmsCategoryRead(BaseModel):
+    id: UUID
+    site_id: UUID
+    parent_id: Optional[UUID] = None
+    slug: str
+    name: str
+    description: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    model_config = orm_config
+
+
+class CmsTagCreate(BaseModel):
+    slug: str
+    name: str
+    is_active: bool = True
+
+
+class CmsTagUpdate(BaseModel):
+    slug: Optional[str] = None
+    name: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class CmsTagRead(BaseModel):
+    id: UUID
+    site_id: UUID
+    slug: str
+    name: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    model_config = orm_config
+
+
+class CmsPostCreate(BaseModel):
+    slug: str
+    title: str
+    excerpt: Optional[str] = None
+    content: Optional[str] = None
+    featured_image_url: Optional[str] = None
+    status: str = "draft"
+    seo_json: Dict[str, Any] = Field(default_factory=dict)
+    category_ids: List[UUID] = Field(default_factory=list)
+    tag_ids: List[UUID] = Field(default_factory=list)
+    published_at: Optional[datetime] = None
+
+
+class CmsPostUpdate(BaseModel):
+    slug: Optional[str] = None
+    title: Optional[str] = None
+    excerpt: Optional[str] = None
+    content: Optional[str] = None
+    featured_image_url: Optional[str] = None
+    status: Optional[str] = None
+    seo_json: Optional[Dict[str, Any]] = None
+    category_ids: Optional[List[UUID]] = None
+    tag_ids: Optional[List[UUID]] = None
+    published_at: Optional[datetime] = None
+
+
+class CmsPostRead(BaseModel):
+    id: UUID
+    site_id: UUID
+    slug: str
+    title: str
+    excerpt: Optional[str] = None
+    content: Optional[str] = None
+    featured_image_url: Optional[str] = None
+    status: str
+    seo_json: Dict[str, Any] = Field(default_factory=dict)
+    locale: str
+    published_at: Optional[datetime] = None
+    author_persona_id: Optional[UUID] = None
+    created_by_persona_id: Optional[UUID] = None
+    updated_by_persona_id: Optional[UUID] = None
+    created_at: datetime
+    updated_at: datetime
+    model_config = orm_config
+
+
+class CmsPostReadWithTaxonomies(CmsPostRead):
+    categories: List[CmsCategoryRead] = Field(default_factory=list)
+    tags: List[CmsTagRead] = Field(default_factory=list)
+
+
+class CmsPublicPostRead(BaseModel):
+    site_key: str
+    slug: str
+    title: str
+    excerpt: Optional[str] = None
+    content: Optional[str] = None
+    featured_image_url: Optional[str] = None
+    seo_json: Dict[str, Any] = Field(default_factory=dict)
+    published_at: Optional[datetime] = None
+    author_name: Optional[str] = None
+    categories: List[CmsCategoryRead] = Field(default_factory=list)
+    tags: List[CmsTagRead] = Field(default_factory=list)
+    json_ld: Optional[Dict[str, Any]] = None
+    canonical_url: Optional[str] = None

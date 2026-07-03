@@ -127,6 +127,70 @@ export interface CmsSectionType {
   updated_at: string;
 }
 
+export interface CmsCategory {
+  id: string;
+  site_id: string;
+  parent_id: string | null;
+  slug: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CmsTag {
+  id: string;
+  site_id: string;
+  slug: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CmsPost {
+  id: string;
+  site_id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  content: string | null;
+  featured_image_url: string | null;
+  status: "draft" | "in_review" | "approved" | "published" | "archived" | string;
+  seo_json: Record<string, unknown>;
+  locale: string;
+  published_at: string | null;
+  author_persona_id: string | null;
+  created_by_persona_id: string | null;
+  updated_by_persona_id: string | null;
+  created_at: string;
+  updated_at: string;
+  categories?: CmsCategory[];
+  tags?: CmsTag[];
+}
+
+export interface CmsPostWithTaxonomies extends CmsPost {
+  categories: CmsCategory[];
+  tags: CmsTag[];
+}
+
+export interface CmsPublicPost {
+  site_key: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  content: string | null;
+  featured_image_url: string | null;
+  seo_json: Record<string, unknown>;
+  published_at: string | null;
+  author_name: string | null;
+  categories: CmsCategory[];
+  tags: CmsTag[];
+  json_ld?: Record<string, unknown> | null;
+  canonical_url?: string | null;
+}
+
 export interface BreadcrumbItem {
   name: string;
   item?: string;
