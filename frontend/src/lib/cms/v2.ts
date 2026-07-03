@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/http";
-import { CmsMenu, CmsMenuItem, CmsPage, CmsPageVersion, CmsPublishLog, CmsPublicMenu, CmsPublicPage, CmsSection, CmsSite, CmsTheme } from "@/types/cms-v2";
+import { CmsMenu, CmsMenuItem, CmsPage, CmsPageVersion, CmsPublishLog, CmsPublicMenu, CmsPublicPage, CmsSection, CmsSectionType, CmsSite, CmsTheme } from "@/types/cms-v2";
 
 export async function listCmsSites(token?: string | null) {
   return apiFetch<CmsSite[]>("/cms/v2/sites", { token });
@@ -320,5 +320,51 @@ export async function updateCmsPastoralProfile(personaId: string, payload: Parti
     method: "PATCH",
     token,
     body: payload,
+  });
+}
+
+// ── Section Types (platform-wide catalog) ─────────────────────────────────
+//
+// Endpoints are global (no site scoping). Read endpoints require cms:read;
+// write endpoints require CMS_PUBLISHER_ROLES server-side. Client-side we
+// let ``canPublishCms(user.role)`` decide whether to render write controls.
+
+export async function listCmsSectionTypes(
+  onlyActive?: boolean,
+  token?: string | null,
+): Promise<CmsSectionType[]> {
+  return apiFetch<CmsSectionType[]>("/cms/v2/section-types", {
+    query: onlyActive ? { only_active: true } : undefined,
+    token,
+  });
+}
+
+export async function createCmsSectionType(
+  payload: { name: string; description?: string | null; is_active?: boolean },
+  token?: string | null,
+): Promise<CmsSectionType> {
+  return apiFetch<CmsSectionType>("/cms/v2/section-types", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function patchCmsSectionType(
+  name: string,
+  payload: { description?: string | null; is_active?: boolean },
+  token?: string | null,
+): Promise<CmsSectionType> {
+  return apiFetch<CmsSectionType>(`/cms/v2/section-types/${name}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+}
+
+export async function deleteCmsSectionType(name: string, token?: string | null): Promise<void> {
+  await apiFetch<void>(`/cms/v2/section-types/${name}`, {
+    method: "DELETE",
+    token,
   });
 }
