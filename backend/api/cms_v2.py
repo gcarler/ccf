@@ -20,6 +20,7 @@ from backend.api._cms_helpers import (
     _scope_cms_pastoral_team_by_user_sede,
 )
 from backend.core.cache_v2 import cached_public
+from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access
 from backend.core.seo import (
@@ -1340,17 +1341,34 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
         )
         breadcrumb_json_ld = build_breadcrumb_list_json_ld(breadcrumb_items, base_url=base_url)
 
+        page_url = f"{base_url}/{slug_val.lstrip('/')}"
+        canonical = (
+            page_snapshot.get("canonical_url")
+            if isinstance(page_snapshot, dict) and page_snapshot.get("canonical_url")
+            else None
+        )
+        json_ld_data = auto_json_ld_for_page(
+            page, site, sections=section_rows, base_url=base_url,
+            site_name=_get_system_var(db, site_key, "church_name", site.name),
+        )
+        # Allow manual override of JSON-LD from seo_json in snapshot
+        snapshot_seo = (
+            page_snapshot.get("seo_json")
+            if isinstance(page_snapshot, dict)
+            and isinstance(page_snapshot.get("seo_json"), dict)
+            else {}
+        )
+        if snapshot_seo.get("json_ld"):
+            json_ld_data = snapshot_seo["json_ld"]
+
         return schemas.CmsPublicPageRead(
             site_key=site.site_key,
             slug=slug_val,
             title=title_val,
-            seo_json=(
-                page_snapshot.get("seo_json")
-                if isinstance(page_snapshot, dict)
-                and isinstance(page_snapshot.get("seo_json"), dict)
-                else {}
-            ),
+            seo_json=snapshot_seo,
             sections=section_rows,
+            json_ld=json_ld_data,
+            canonical_url=canonical or page_url,
             breadcrumbs=breadcrumb_items,
             breadcrumb_json_ld=breadcrumb_json_ld,
         )

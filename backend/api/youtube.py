@@ -1,8 +1,9 @@
 """
 YouTube RSS proxy para el canal de CCF.
 Sin API key — usa el feed RSS público de YouTube + resolución automática de channel ID.
-Caché en memoria de 1 hora para no martillar YouTube en cada request.
+Caché en memoria de 15 min con background refresh para detectar videos nuevos rápido.
 """
+import asyncio
 import logging
 import os
 import re
@@ -16,7 +17,7 @@ from fastapi import APIRouter
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-YOUTUBE_HANDLE = "@MinisteriosCCF"
+YOUTUBE_HANDLE = "@Ministeriosfarooficial"
 YOUTUBE_CHANNEL_ID = os.getenv("YOUTUBE_CHANNEL_ID", "")
 _HTTP_TIMEOUT = httpx.Timeout(5.0, connect=3.0, read=5.0, write=3.0, pool=3.0)
 
@@ -29,7 +30,9 @@ _NS = {
 _channel_id_cache: Optional[str] = None
 _videos_cache: Optional[dict] = None
 _cache_ts: float = 0
-_CACHE_TTL = 3600  # 1 hora
+_CACHE_TTL = 900  # 15 minutos
+_BG_REFRESH_INTERVAL = 900  # 15 minutos
+_bg_task_started = False
 
 
 def _external_http_disabled() -> bool:
@@ -59,7 +62,6 @@ async def _resolve_channel_id(handle: str) -> Optional[str]:
         if resp.status_code != 200:
             logger.warning("YouTube channel page returned %s", resp.status_code)
             return None
-        # channelId aparece varias veces en el HTML como JSON embebido
         for pattern in (
             r'"channelId":"(UC[A-Za-z0-9_-]{22})"',
             r'"externalId":"(UC[A-Za-z0-9_-]{22})"',
@@ -114,39 +116,85 @@ async def _fetch_rss(channel_id: str) -> list[dict]:
     return videos
 
 
-@router.get("/youtube/videos")
-async def get_youtube_videos():
-    """
-    Devuelve los últimos videos del canal de YouTube de CCF.
-    Caché de 1 hora en memoria — sin API key requerida.
-    """
+async def _refresh_cache() -> bool:
+    """Refresca la caché de videos. Devuelve True si se actualizaron datos."""
     global _channel_id_cache, _videos_cache, _cache_ts
 
-    now = time.time()
-    if _videos_cache and (now - _cache_ts) < _CACHE_TTL:
-        return _videos_cache
-
     if _external_http_disabled():
-        return _empty_response("external_http_disabled")
+        return False
 
     if not _channel_id_cache:
         _channel_id_cache = YOUTUBE_CHANNEL_ID or await _resolve_channel_id(YOUTUBE_HANDLE)
         if not _channel_id_cache:
-            return _empty_response("canal_no_resuelto")
+            logger.warning("YouTube: no se pudo resolver channel ID para %s", YOUTUBE_HANDLE)
+            return False
 
     try:
         videos = await _fetch_rss(_channel_id_cache)
     except Exception as exc:
-        logger.error("Error fetching YouTube RSS: %s", exc)
-        if _videos_cache:
-            return _videos_cache  # sirve caché vieja si hay error transitorio
-        return _empty_response("rss_error")
+        logger.error("YouTube background refresh error: %s", exc)
+        return False
+
+    now = time.time()
+    prev_count = _videos_cache["total"] if _videos_cache else 0
+    new_count = len(videos)
 
     _videos_cache = {
-        "videos":  videos,
-        "total":   len(videos),
-        "channel": YOUTUBE_HANDLE,
+        "videos":    videos,
+        "total":     new_count,
+        "channel":   YOUTUBE_HANDLE,
         "cached_at": int(now),
     }
     _cache_ts = now
-    return _videos_cache
+
+    if new_count > prev_count and prev_count > 0:
+        logger.info("YouTube: %d videos nuevos detectados (%d → %d)", new_count - prev_count, prev_count, new_count)
+    elif prev_count == 0:
+        logger.info("YouTube: cache inicial con %d videos", new_count)
+
+    return True
+
+
+async def _background_refresh():
+    """Tarea periódica que mantiene la caché fresca."""
+    while True:
+        try:
+            await _refresh_cache()
+        except Exception as exc:
+            logger.error("YouTube background task error: %s", exc)
+        await asyncio.sleep(_BG_REFRESH_INTERVAL)
+
+
+def start_background_refresh():
+    """Inicia la tarea de refresh periódico. Llamar una vez al startup."""
+    global _bg_task_started
+    if _bg_task_started or _external_http_disabled():
+        return
+    _bg_task_started = True
+    asyncio.create_task(_background_refresh())
+    logger.info("YouTube background refresh iniciado (cada %ds)", _BG_REFRESH_INTERVAL)
+
+
+@router.on_event("startup")
+async def _youtube_startup():
+    start_background_refresh()
+    # Warm-up: cargar la caché en el arranque para que la primera request sea rápida
+    asyncio.create_task(_refresh_cache())
+
+
+@router.get("/youtube/videos")
+async def get_youtube_videos():
+    """
+    Devuelve los últimos videos del canal de YouTube de CCF.
+    Caché de 15 min con refresh automático — sin API key.
+    """
+    global _channel_id_cache, _videos_cache, _cache_ts
+
+    now = time.time()
+    # Si la caché es reciente, servirla directo
+    if _videos_cache and (now - _cache_ts) < _CACHE_TTL:
+        return _videos_cache
+
+    # Caché expirada o vacía — refrescar
+    await _refresh_cache()
+    return _videos_cache or _empty_response("init")
