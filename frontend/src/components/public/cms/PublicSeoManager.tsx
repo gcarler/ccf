@@ -1,15 +1,18 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { SITE_KEY } from "@/lib/site-config";
 import SeoHead from "./SeoHead";
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "Mi Comunidad";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 const ROUTE_META_MAP: Record<string, { slug: string; fallbackTitle: string; fallbackDescription: string }> = {
     "/":                  { slug: "home",      fallbackTitle: `${SITE_NAME} | Inicio`,           fallbackDescription: "Una comunidad de fe viva y en crecimiento que existe para conectar corazones con Dios y entre sí." },
     "/nosotros":          { slug: "nosotros",  fallbackTitle: `${SITE_NAME} | Quiénes Somos`,    fallbackDescription: "Conoce la historia, visión, misión y valores de la comunidad." },
     "/pastores":          { slug: "pastores",  fallbackTitle: `${SITE_NAME} | Liderazgo Pastoral`, fallbackDescription: "Conoce a los pastores y líderes que guían la comunidad." },
-    "/conocer-a-jesus":   { slug: "conocer",   fallbackTitle: `${SITE_NAME} | Conocer a Jesús`,  fallbackDescription: "El comienzo de una relación que transforma la oscuridad en un propósito eterno." },
+    "/conocer-a-jesus":   { slug: "conocer-a-jesus", fallbackTitle: `${SITE_NAME} | Conocer a Jesús`,  fallbackDescription: "El comienzo de una relación que transforma la oscuridad en un propósito eterno." },
     "/eventos":           { slug: "eventos",   fallbackTitle: `${SITE_NAME} | Eventos`,         fallbackDescription: "Calendario de eventos comunitarios, conferencias y cursos." },
     "/predicas":          { slug: "predicas",  fallbackTitle: `${SITE_NAME} | Prédicas`,        fallbackDescription: "Alimento para el alma. Prédicas y mensajes que iluminan el camino." },
     "/cursos":            { slug: "cursos",    fallbackTitle: `${SITE_NAME} | Cursos y Librería`, fallbackDescription: "Academia de cursos especializados y selección literaria." },
@@ -27,17 +30,58 @@ function matchRoute(pathname: string): { slug: string; fallbackTitle: string; fa
     return null;
 }
 
+interface CmsSeoData {
+    title?: string;
+    description?: string;
+    robots_meta?: string;
+    canonical_url?: string;
+    json_ld?: Record<string, unknown> | null;
+    breadcrumb_json_ld?: Record<string, unknown> | null;
+}
+
 export default function PublicSeoManager() {
     const pathname = usePathname() || "/";
     const match = matchRoute(pathname);
+    const [cmsSeo, setCmsSeo] = useState<CmsSeoData | null>(null);
+
+    useEffect(() => {
+        if (!match) return;
+
+        const controller = new AbortController();
+        const url = `${API_BASE}/api/cms/v2/public/sites/${SITE_KEY}/pages/${match.slug}`;
+
+        fetch(url, { signal: controller.signal })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+                if (!data) return;
+                const seo = data.seo_json && typeof data.seo_json === "object" ? data.seo_json : {};
+                setCmsSeo({
+                    title: typeof seo.meta_title === "string" ? seo.meta_title : undefined,
+                    description: typeof seo.meta_description === "string" ? seo.meta_description : undefined,
+                    robots_meta: typeof seo.robots_meta === "string" ? seo.robots_meta : undefined,
+                    canonical_url: data.canonical_url ?? undefined,
+                    json_ld: data.json_ld ?? null,
+                    breadcrumb_json_ld: data.breadcrumb_json_ld ?? null,
+                });
+            })
+            .catch(() => {});
+
+        return () => controller.abort();
+    }, [match?.slug]);
 
     if (!match) return null;
+
+    const fallbackTitle = cmsSeo?.title || match.fallbackTitle;
+    const fallbackDescription = cmsSeo?.description || match.fallbackDescription;
 
     return (
         <SeoHead
             slug={match.slug}
-            fallbackTitle={match.fallbackTitle}
-            fallbackDescription={match.fallbackDescription}
+            fallbackTitle={fallbackTitle}
+            fallbackDescription={fallbackDescription}
+            robotsMeta={cmsSeo?.robots_meta}
+            canonicalUrl={cmsSeo?.canonical_url}
+            jsonLd={cmsSeo?.json_ld}
         />
     );
 }

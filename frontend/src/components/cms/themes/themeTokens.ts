@@ -143,7 +143,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       "--site-secondary": "#80d0ff",
       "--site-background": "#001134",
       "--site-on-background": "#d9e2ff",
-      "--site-on-primary": "#00315e",
+      "--site-on-primary": "#ffffff",
       "--site-surface": "#001134",
       "--site-on-surface": "#d9e2ff",
       "--site-on-surface-variant": "#c2c6d1",

@@ -29,12 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       alternates: {
         canonical,
       },
-      robots: robotsMeta
-        ? undefined
-        : {
-            index: true,
-            follow: true,
-          },
+      robots: robotsMeta || "index, follow",
       ...(robotsMeta
         ? {}
         : {

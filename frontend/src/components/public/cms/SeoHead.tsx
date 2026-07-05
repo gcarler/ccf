@@ -36,16 +36,20 @@ function setLink(rel: string, href: string) {
     el.setAttribute("href", href);
 }
 
-function removeJsonLdScripts() {
-    const existing = document.querySelectorAll('script[type="application/ld+json"]');
-    existing.forEach((el) => el.remove());
-}
+function upsertJsonLd(data: Record<string, unknown>) {
+    // Remove any previous client-injected JSON-LD scripts
+    document.querySelectorAll('script[data-seo-head]').forEach((el) => el.remove());
 
-function injectJsonLd(data: Record<string, unknown>) {
-    removeJsonLdScripts();
+    const dataStr = JSON.stringify(data);
+    // Check if identical script already exists (server-rendered)
+    const existing = document.querySelectorAll('script[type="application/ld+json"]');
+    for (const el of existing) {
+        if (el.textContent === dataStr) return;
+    }
     const script = document.createElement("script");
     script.type = "application/ld+json";
-    script.textContent = JSON.stringify(data);
+    script.setAttribute("data-seo-head", "1");
+    script.textContent = dataStr;
     document.head.appendChild(script);
 }
 
@@ -63,7 +67,6 @@ export default function SeoHead({
         const description = fallbackDescription || "";
         const image = fallbackImage || "";
         const canonical = canonicalUrl || (typeof window !== "undefined" ? window.location.href : "");
-        const robots = robotsMeta || "index, follow";
         const author = SITE_NAME;
         const twitterCard = "summary_large_image";
         const locale = "es_CO";
@@ -75,7 +78,13 @@ export default function SeoHead({
         // Basic meta
         setMeta("name", "description", description);
         setMeta("name", "author", author);
-        setMeta("name", "robots", robots);
+        // Robots — set or remove to avoid stale values between navigations
+        const robotsEl = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+        if (robotsMeta) {
+            setMeta("name", "robots", robotsMeta);
+        } else if (robotsEl) {
+            robotsEl.remove();
+        }
 
         // Open Graph
         setMeta("property", "og:title", title);
@@ -96,11 +105,9 @@ export default function SeoHead({
         // Canonical
         if (canonical) setLink("canonical", canonical);
 
-        // JSON-LD
+        // JSON-LD — upsert without destroying server-rendered scripts (e.g. breadcrumb)
         if (jsonLd) {
-            injectJsonLd(jsonLd);
-        } else {
-            removeJsonLdScripts();
+            upsertJsonLd(jsonLd);
         }
 
         // Additional SEO meta
