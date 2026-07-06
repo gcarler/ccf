@@ -1143,9 +1143,7 @@ function GroupsContent() {
  >
  <UserPlus size={14} /> {isAddingPersonas ? 'Ocultar catálogo' : 'Añadir personas'}
  </button>
- </div>
-
- {/* CURRENT MEMBERS LIST */}
+ </div>                            {/* CURRENT PERSONAS LIST */}
  {selectedPersonaIds.size > 0 ? (
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
  {personas.filter(m => selectedPersonaIds.has(m.id)).map(persona => (
@@ -1212,9 +1210,7 @@ function GroupsContent() {
                                     </button>
                                   </div>
                                 </div>
-                              </div>
-
- {/* ADD MEMBERS CATALOG */}
+                              </div>                            {/* ADD PERSONAS CATALOG */}
  {isAddingPersonas && (
  <div className="mt-3 pt-6 border-t border-[hsl(var(--border-primary))] space-y-4">
  <div className="flex flex-col md:flex-row items-center gap-2 w-full">
