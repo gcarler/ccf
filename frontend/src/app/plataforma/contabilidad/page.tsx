@@ -107,7 +107,7 @@ export default function ContabilidadPage() {
       icon: Receipt,
       href: "/plataforma/facturacion",
       stats: `${invoices.length} facturas`,
-      color: "from-blue-500 to-indigo-600",
+      color: "from-sky-500 to-blue-700",
     },
     {
       title: "Gastos",
@@ -123,7 +123,7 @@ export default function ContabilidadPage() {
       icon: FileText,
       href: "/plataforma/documentos",
       stats: `${documents.length} documentos`,
-      color: "from-violet-500 to-purple-600",
+      color: "from-blue-500 to-blue-700",
     },
     {
       title: "Firma Digital",

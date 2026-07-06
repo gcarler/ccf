@@ -34,7 +34,7 @@ export const SECTION_TYPE_COLORS: Record<string, string> = {
   timeline:          "bg-lime-600",
   icon_grid:         "bg-yellow-600",
   newsletter:        "bg-[hsl(var(--primary))]",
-  popup_banner:      "bg-fuchsia-500",
+  popup_banner:      "bg-blue-500",
   button:            "bg-[hsl(var(--primary))]",
   toc:               "bg-[hsl(var(--text-secondary))]",
   divider:           "bg-[hsl(var(--border))]",

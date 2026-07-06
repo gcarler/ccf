@@ -367,7 +367,7 @@ export default function CmsPostsManagement() {
 
                   <div
                     onClick={() => openPost(post)}
-                    className="size-7 rounded-md bg-violet-50 dark:bg-violet-500/10 text-violet-600 flex items-center justify-center shrink-0 cursor-pointer"
+                    className="size-7 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 cursor-pointer"
                   >
                     <FileText size={20} />
                   </div>
@@ -391,8 +391,7 @@ export default function CmsPostsManagement() {
                         </div>
                       </>}
                       {post.tags && post.tags.length > 0 && <>
-                        <div className="size-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full" />
-                        <div className="flex items-center gap-1 text-[11px] text-violet-600 dark:text-violet-400">
+                        <div className="size-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full" />                          <div className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400">
                           <Tag size={11} />
                           {post.tags.map((t) => t.name).join(", ")}
                         </div>
@@ -457,7 +456,7 @@ export default function CmsPostsManagement() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="size-8 rounded-md bg-violet-50 dark:bg-violet-900/20 text-violet-600 flex items-center justify-center shrink-0">
+                          <div className="size-8 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0">
                             <FileText size={14} />
                           </div>
                           <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate max-w-[200px]">{post.title}</span>
@@ -515,7 +514,7 @@ export default function CmsPostsManagement() {
                   onClick={() => openPost(post)}
                   className="group bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer flex items-center gap-4"
                 >
-                  <div className="size-6 rounded-md bg-violet-50 dark:bg-violet-500/10 text-violet-600 flex items-center justify-center shrink-0 group-hover:bg-violet-600 group-hover:text-white transition-all">
+                  <div className="size-6 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all">
                     <FileText size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -672,8 +671,8 @@ export default function CmsPostsManagement() {
                           className={clsx(
                             "px-3 py-1.5 rounded-md text-[11px] font-medium transition-all disabled:opacity-50",
                             isSelected
-                              ? "bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-300 border border-violet-200 dark:border-violet-500/30"
-                              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-violet-300"
+                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30"
+                              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-blue-300"
                           )}
                         >
                           {tag.name}

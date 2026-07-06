@@ -39,7 +39,7 @@ const TEAM_COLORS: Record<string, string> = {
     'Evangelismo': 'from-amber-500 to-yellow-600',
     'Limpieza': 'from-[hsl(var(--surface-3))] to-[hsl(var(--bg-muted))]',
     'Logística': 'from-sky-500 to-blue-600',
-    'Otro': 'from-fuchsia-500 to-pink-600',
+    'Otro': 'from-blue-500 to-blue-700',
 };
 
 function getTeamColor(team: string) {

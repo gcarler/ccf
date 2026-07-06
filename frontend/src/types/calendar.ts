@@ -65,8 +65,8 @@ export const EVENT_TYPE_META: Record<CalEventType, { label: string; chip: string
   },
   consolidation_task: {
     label: 'Tarea CRM',
-    chip: 'bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-500/10 dark:text-fuchsia-300',
-    color: '#d946ef',
+    chip: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300',
+    color: '#06b6d4',
   },
   project_milestone: {
     label: 'Hito',
@@ -131,7 +131,7 @@ export const CALENDAR_VIEW_META: Record<CalendarView, { label: string; descripti
   proyectos: {
     label: 'Proyectos',
     description: 'Tareas e hitos de proyectos',
-    color: '#7c3aed',
+    color: '#0d9488',
   },
   personal: {
     label: 'Personal',
