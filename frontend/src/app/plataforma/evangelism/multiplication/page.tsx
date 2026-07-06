@@ -21,7 +21,7 @@ interface MultiplicationCheckItem {
   grupo_id: string;
   grupo_nombre: string;
   lider_nombre: string | null;
-  total_miembros: number;
+  total_personas: number;
   excede_umbral: boolean;
   sugerencia: string;
 }
@@ -33,7 +33,7 @@ interface MultiplicationHistoryItem {
   parent_group_nombre: string | null;
   notes_historial: string | null;
   created_at: string | null;
-  miembros_actuales: number;
+  personas_actuales: number;
   lider_nombre: string | null;
 }
 
@@ -43,19 +43,52 @@ interface SplitResponse {
   grupo_original: {
     id: string;
     nombre: string;
-    total_miembros: number;
+    total_personas: number;
   };
   nuevo_grupo: {
     id: string;
     nombre: string;
-    total_miembros: number;
+    total_personas: number;
   };
-  miembros_transferidos: number;
+  personas_transferidas: number;
 }
 
 interface PersonaOption {
   id: string;
   nombre_completo: string;
+}
+
+// Adapter layer: translate backend field names (miembros) to frontend canonical
+// names (personas). The backend API for /evangelism/multiplication/* still
+// returns the legacy field names; remove these helpers once the backend is
+// updated to use the canonical 'personas' vocabulary in:
+//   - GET  /evangelism/multiplication/check
+//   - GET  /evangelism/multiplication/history
+//   - POST /evangelism/multiplication/split
+// TODO(backend-migration): delete this adapter layer when backend returns
+// {total_personas, personas_actuales, personas_transferidas} instead of
+// the legacy {total_miembros, miembros_actuales, miembros_transferidos}.
+type GrupoSummary = { id: string; nombre: string; total_personas: number };
+function dropLegacyTotalPersonas(g: any): GrupoSummary {
+  const { total_miembros, ...rest } = g;
+  return { ...rest, total_personas: total_miembros };
+}
+function adaptCheckItem(raw: any): MultiplicationCheckItem {
+  const { total_miembros, ...rest } = raw;
+  return { ...rest, total_personas: total_miembros };
+}
+function adaptHistoryItem(raw: any): MultiplicationHistoryItem {
+  const { miembros_actuales, ...rest } = raw;
+  return { ...rest, personas_actuales: miembros_actuales };
+}
+function adaptSplitResponse(res: any): SplitResponse {
+  const { grupo_original, nuevo_grupo, miembros_transferidos, ...rest } = res;
+  return {
+    ...rest,
+    grupo_original: dropLegacyTotalPersonas(grupo_original),
+    nuevo_grupo: dropLegacyTotalPersonas(nuevo_grupo),
+    personas_transferidas: miembros_transferidos,
+  };
 }
 
 export default function MultiplicationPage() {
@@ -78,11 +111,12 @@ export default function MultiplicationPage() {
       if (!token) return;
       setLoadingChecks(true);
       try {
-        const result = await apiFetch<MultiplicationCheckItem[]>('/evangelism/multiplication/check', {
+        const raw = await apiFetch<any[]>('/evangelism/multiplication/check', {
           token,
           query: { umbral: String(threshold) },
         });
-        setChecks(Array.isArray(result) ? result : []);
+        const result = Array.isArray(raw) ? raw.map(adaptCheckItem) : [];
+        setChecks(result);
       } catch (e: any) {
         toast.error(e?.message || 'Error al cargar análisis de multiplicación');
       } finally {
@@ -96,10 +130,11 @@ export default function MultiplicationPage() {
     if (!token) return;
     setLoadingHistory(true);
     try {
-      const result = await apiFetch<MultiplicationHistoryItem[]>('/evangelism/multiplication/history', {
+      const raw = await apiFetch<any[]>('/evangelism/multiplication/history', {
         token,
       });
-      setHistory(Array.isArray(result) ? result : []);
+      const result = Array.isArray(raw) ? raw.map(adaptHistoryItem) : [];
+      setHistory(result);
     } catch (e: any) {
       toast.error(e?.message || 'Error al cargar historial de multiplicaciones');
     } finally {
@@ -153,7 +188,7 @@ export default function MultiplicationPage() {
     }
     setSavingSplit(true);
     try {
-      const result = await apiFetch<SplitResponse>('/evangelism/multiplication/split', {
+      const raw = await apiFetch<any>('/evangelism/multiplication/split', {
         method: 'POST',
         token,
         body: {
@@ -162,6 +197,7 @@ export default function MultiplicationPage() {
           nuevo_lider_id: nuevoLiderId,
         },
       });
+      const result = adaptSplitResponse(raw);
       toast.success(result.mensaje);
       setSplitDrawerOpen(false);
       fetchChecks(umbral);
@@ -265,7 +301,7 @@ export default function MultiplicationPage() {
                       )}
                     </div>
                     <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">
-                      {check.lider_nombre || 'Sin líder'} · {check.total_miembros} personas
+                      {check.lider_nombre || 'Sin líder'} · {check.total_personas} personas
                     </p>
                     <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5">
                       {check.sugerencia}
@@ -356,7 +392,7 @@ export default function MultiplicationPage() {
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="text-lg font-bold text-[hsl(var(--text-primary))]">
-                      {item.miembros_actuales}
+                      {item.personas_actuales}
                     </p>                      <p className="text-[9px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide">
                         personas
                       </p>
