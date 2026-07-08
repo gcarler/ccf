@@ -426,9 +426,11 @@ def optimize_cms_media(
     if not row.mime_type or not row.mime_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only images can be optimized")
 
-    # Read original file from storage
+    # Read original file from storage (path traversal guard)
     original_path = row.url.lstrip("/")
-    full_path = os.path.join("/root/ccf", original_path)
+    full_path = os.path.normpath(os.path.join("/root/ccf/uploads", original_path.replace("uploads/", "")))
+    if not full_path.startswith("/root/ccf/uploads"):
+        raise HTTPException(status_code=400, detail="Invalid file path")
     if not os.path.exists(full_path):
         raise HTTPException(status_code=404, detail="Original file not found")
 

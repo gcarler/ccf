@@ -16,9 +16,7 @@ import {
   Sparkles,
   Pencil,
   ImageIcon,
-  Copy,
 } from "lucide-react";
-import AdminHero from "@/components/admin/AdminHero";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import {
@@ -28,7 +26,6 @@ import {
 } from "@/lib/cms/v2";
 import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
 import MediaPicker from "@/components/cms/builder/MediaPicker";
-import { toast } from "sonner";
 
 type DrawerMode = "edit" | "add" | null;
 
@@ -117,7 +114,8 @@ export default function PastoralTeamPage() {
 
     const data: Record<string, any> = {};
 
-    if (photoUrl !== editing.photo_url) data.photo_url = photoUrl || null;
+    // Always send photo_url from editing state (MediaPicker updates it directly)
+    if (editing.photo_url) data.photo_url = editing.photo_url;
     if (bioShort !== (editing.bio_short || ""))
       data.bio_short = bioShort || null;
     if (bioFull !== (editing.bio_full || "")) data.bio_full = bioFull || null;
@@ -199,11 +197,6 @@ export default function PastoralTeamPage() {
 
   return (
     <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[var(--bg-primary)]">
-      <AdminHero
-        title="Equipo Pastoral"
-        description="Gestiona los perfiles del equipo pastoral visibles en la página pública."
-      />
-
       {/* ── Actions Bar ── */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 py-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -510,9 +503,10 @@ export default function PastoralTeamPage() {
                     />
                     <input
                       name="photo_url"
-                      type="url"
-                      defaultValue={editing.photo_url || ""}
-                      placeholder="https://ejemplo.com/foto.jpg"
+                      type="text"
+                      value={editing.photo_url || ""}
+                      onChange={(e) => setEditing({ ...editing, photo_url: e.target.value })}
+                      placeholder="URL de la foto"
                       className="w-full pl-9 pr-4 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                     />
                   </div>

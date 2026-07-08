@@ -397,6 +397,8 @@ class Persona(Base):
     social_twitter = Column(String(200), nullable=True)
     is_pastoral_leader = Column(Boolean, default=False, index=True)
     is_main_pastor = Column(Boolean, default=False)
+    pastoral_sort_order = Column(Integer, default=0)
+    is_pastoral_published = Column(Boolean, default=True)
 
     tags = Column(JSON, nullable=True, default=list)
     origen_estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
