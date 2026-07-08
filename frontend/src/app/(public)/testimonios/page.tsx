@@ -7,6 +7,7 @@ import { Quote, ArrowRight, Sparkles, Search, Users, Headphones, ImageIcon, Play
 import { motion, AnimatePresence } from "framer-motion";
 import RichText from "@/components/public/RichText";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
+import PublicHeroWithSlides from "@/components/public/PublicHeroWithSlides";
 
 import { apiFetch } from "@/lib/http";
 import { Testimonial } from "@/lib/data/testimonios";
@@ -173,16 +174,36 @@ export default function TestimoniosPage() {
             .finally(() => setLoading(false));
     }, []);
 
-    const heroEyebrow = heroContent?.eyebrow || "Impacto Real";
-    const heroTitleLead = heroContent?.title_lead || "Historias de";
-    const heroTitleAccent = heroContent?.title_accent || "Transformación";
-    const heroDescription = heroContent?.description || "Descubre cómo la fe y la comunidad han iluminado el camino de personas reales.";
-    const feed = feedContent?.content ? JSON.parse(feedContent.content) : null;
-    const searchPlaceholder = feed?.search_placeholder || "Buscar por tema, nombre o palabra clave (ej. Restauración, Sanidad)...";
-    const loadingLabel = feed?.loading_label || "Cargando...";
-    const emptyTitle = feed?.empty_title || "Todavía no hay testimonios publicados";
-    const emptyDescription = feed?.empty_description || "Cuando el CMS publique testimonios, aparecerán aquí.";
-    const storyCta = feed?.cta_label || "Compartir";
+    const heroEyebrow = typeof heroContent?.eyebrow === "string" ? heroContent.eyebrow : "";
+    const heroTitleLead = typeof heroContent?.title_lead === "string" ? heroContent.title_lead : "";
+    const heroTitleAccent = typeof heroContent?.title_accent === "string" ? heroContent.title_accent : "";
+    const heroDescription = typeof heroContent?.description === "string" ? heroContent.description : "";
+    const feed = feedContent?.parsed && typeof feedContent.parsed === "object" && !Array.isArray(feedContent.parsed)
+        ? feedContent.parsed as Record<string, unknown>
+        : {};
+    const searchPlaceholder = typeof feed.search_placeholder === "string" ? feed.search_placeholder : "";
+    const loadingLabel = typeof feed.loading_label === "string" ? feed.loading_label : "";
+    const emptyTitle = typeof feed.empty_title === "string" ? feed.empty_title : "";
+    const emptyDescription = typeof feed.empty_description === "string" ? feed.empty_description : "";
+    const storyCta = typeof feed.cta_label === "string" ? feed.cta_label : "";
+    const ctaTitle = typeof feed.cta_title === "string" ? feed.cta_title : "";
+    const ctaDescription = typeof feed.cta_description === "string" ? feed.cta_description : "";
+
+    const hasHero = heroTitleLead || heroTitleAccent || heroDescription || heroEyebrow;
+    const hasCtaBanner = ctaTitle || ctaDescription || storyCta;
+    const heroSlides = testimonials
+        .map((testimonial) => {
+            const mediaUrl = getTestimonialMediaUrl(testimonial);
+            if (!mediaUrl || testimonial.media_type !== "image") return null;
+            return {
+                src: mediaUrl,
+                alt: testimonial.author?.username || testimonial.author?.role || "Testimonio",
+                title: testimonial.author?.username || "Testimonio",
+                caption: testimonial.content.slice(0, 120),
+            };
+        })
+        .filter((slide): slide is { src: string; alt: string; title: string; caption: string } => Boolean(slide))
+        .slice(0, 4);
 
     const filteredTestimonials = useMemo(() => {
         if (!searchQuery.trim()) return testimonials;
@@ -209,43 +230,15 @@ export default function TestimoniosPage() {
     return (
         <main className="pt-[88px] pb-4 overflow-hidden">
             {/* ── HERO ──────────────────────────────────────────── */}
-            <header className="ccf-section relative flex flex-col items-center text-center">
-                <div className="absolute inset-0 bg-beam-gradient pointer-events-none opacity-60" />
-
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="ccf-container relative z-10 max-w-4xl"
-                >
-                    <span
-                        className="text-xs font-semibold uppercase tracking-wide block mb-3"
-                        style={{ color: "var(--site-primary)" }}
-                    >
-                        {heroEyebrow}
-                    </span>
-                    <h1
-                        className="mx-auto max-w-4xl font-bold ccf-display text-5xl sm:text-6xl lg:text-7xl mb-3"
-                        style={{ color: "var(--site-on-background)" }}
-                    >
-                        {heroTitleLead} <br/>
-                        <span
-                            className="italic"
-                            style={{
-                                background: "linear-gradient(135deg, var(--site-primary), var(--site-secondary))",
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent"
-                            }}
-                        >
-                            {heroTitleAccent}.
-                        </span>
-                    </h1>
-                    <RichText
-                        html={heroDescription}
-                        className="ccf-body text-base sm:text-lg max-w-2xl mx-auto"
-                    />
-                </motion.div>
-            </header>
+            {hasHero && (
+                <PublicHeroWithSlides
+                    eyebrow={heroEyebrow}
+                    titleLead={heroTitleLead}
+                    titleAccent={heroTitleAccent}
+                    description={heroDescription}
+                    slides={heroSlides}
+                />
+            )}
 
             {/* ── SEARCH & CALL TO ACTION BANNER ────────────────── */}
             <section className="ccf-section-tight ccf-container">
@@ -268,30 +261,37 @@ export default function TestimoniosPage() {
                     </div>
 
                     {/* CTA */}
-                    <div className="rounded-lg p-4 flex items-center justify-between gap-3 border"
-                         style={{
-                             background: "var(--site-surface-container)",
-                             borderColor: "var(--site-outline-variant)"
-                         }}>
-                        <div className="flex items-center gap-4 hidden md:flex">
-                            <div className="w-12 h-8 rounded-lg flex items-center justify-center" style={{ background: "var(--site-hero-cta-gradient)", boxShadow: "0 8px 32px var(--site-hero-cta-shadow)" }}>
-                                <Sparkles size={20} style={{ color: "var(--site-on-hero)" }} />
+                    {hasCtaBanner && (
+                        <div className="rounded-lg p-4 flex items-center justify-between gap-3 border"
+                             style={{
+                                 background: "var(--site-surface-container)",
+                                 borderColor: "var(--site-outline-variant)"
+                             }}>
+                            <div className="flex items-center gap-4 hidden md:flex">
+                                <div className="w-12 h-8 rounded-lg flex items-center justify-center" style={{ background: "var(--site-hero-cta-gradient)", boxShadow: "0 8px 32px var(--site-hero-cta-shadow)" }}>
+                                    <Sparkles size={20} style={{ color: "var(--site-on-hero)" }} />
+                                </div>
+                                {ctaTitle && (
+                                    <div className="mr-4">
+                                        <h3 className="font-black" style={{ color: "var(--site-on-surface)" }}>{ctaTitle}</h3>
+                                        {ctaDescription && <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>{ctaDescription}</p>}
+                                    </div>
+                                )}
                             </div>
-                            <div className="mr-4">
-                                <h3 className="font-black" style={{ color: "var(--site-on-surface)" }}>¿Tienes una historia?</h3>
-                            </div>
+                            {storyCta && (
+                                <Link
+                                    href="/conocer-a-jesus"
+                                    className="ccf-button w-full justify-center md:w-auto"
+                                    style={{
+                                        background: "var(--site-primary)",
+                                        color: "var(--site-on-primary)",
+                                    }}
+                                >
+                                    {storyCta} <ArrowRight size={16} />
+                                </Link>
+                            )}
                         </div>
-                        <Link
-                            href="/conocer-a-jesus"
-                            className="ccf-button w-full justify-center md:w-auto"
-                            style={{
-                                background: "var(--site-primary)",
-                                color: "var(--site-on-primary)",
-                            }}
-                        >
-                            {storyCta} <ArrowRight size={16} />
-                        </Link>
-                    </div>
+                    )}
                 </div>
             </section>
 

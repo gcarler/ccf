@@ -16,6 +16,7 @@ import {
   Sparkles,
   Pencil,
   ImageIcon,
+  Copy,
 } from "lucide-react";
 import AdminHero from "@/components/admin/AdminHero";
 import { useAuth } from "@/context/AuthContext";
@@ -25,6 +26,9 @@ import {
   getCmsPastoralTeam,
   updateCmsPastoralProfile,
 } from "@/lib/cms/v2";
+import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
+import MediaPicker from "@/components/cms/builder/MediaPicker";
+import { toast } from "sonner";
 
 type DrawerMode = "edit" | "add" | null;
 
@@ -34,6 +38,7 @@ export default function PastoralTeamPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [viewType, setViewType] = useState<ViewType>("grid");
   const [drawerMode, setDrawerMode] = useState<DrawerMode>(null);
   const [editing, setEditing] = useState<PastoralProfile | null>(null);
   const [saving, setSaving] = useState(false);
@@ -42,6 +47,7 @@ export default function PastoralTeamPage() {
   const [addSearch, setAddSearch] = useState("");
   const [addResults, setAddResults] = useState<any[]>([]);
   const [searchingAdd, setSearchingAdd] = useState(false);
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
 
   const PER_PAGE = 12;
 
@@ -106,6 +112,8 @@ export default function PastoralTeamPage() {
     const socialFacebook = formData.get("social_facebook") as string;
     const socialTwitter = formData.get("social_twitter") as string;
     const isMainPastor = formData.get("is_main_pastor") === "on";
+    const isPastoralPublished = formData.get("is_pastoral_published") === "on";
+    const pastoralSortOrder = parseInt(formData.get("pastoral_sort_order") as string) || 0;
 
     const data: Record<string, any> = {};
 
@@ -121,6 +129,10 @@ export default function PastoralTeamPage() {
       data.social_twitter = socialTwitter || null;
     if (isMainPastor !== editing.is_main_pastor)
       data.is_main_pastor = isMainPastor;
+    if (isPastoralPublished !== (editing.is_pastoral_published !== false))
+      data.is_pastoral_published = isPastoralPublished;
+    if (pastoralSortOrder !== (editing.pastoral_sort_order || 0))
+      data.pastoral_sort_order = pastoralSortOrder;
 
     if (Object.keys(data).length === 0) {
       closeDrawer();
@@ -190,7 +202,6 @@ export default function PastoralTeamPage() {
       <AdminHero
         title="Equipo Pastoral"
         description="Gestiona los perfiles del equipo pastoral visibles en la página pública."
-        eyebrow="CMS"
       />
 
       {/* ── Actions Bar ── */}
@@ -216,6 +227,12 @@ export default function PastoralTeamPage() {
             <span className="text-xs text-[hsl(var(--text-secondary))]">
               {filtered.length} líderes
             </span>
+            <ViewSwitcher
+              viewType={viewType}
+              setViewType={setViewType}
+              availableViews={["grid", "list", "table"]}
+              storageKey="pastoral-team-view"
+            />
             <button
               onClick={() => setDrawerMode("add")}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all"
@@ -247,88 +264,159 @@ export default function PastoralTeamPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {paginated.map((profile) => (
-                <div
-                  key={profile.id}
-                  className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] rounded-xl border border-[hsl(var(--border))]/70 dark:border-white/[0.06] p-4 flex items-start gap-4 hover:shadow-lg hover:-translate-y-0.5 transition-all"
-                >
-                  {/* Avatar */}
-                  <div className="relative w-14 h-14 rounded-full overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[#0a0c12] shrink-0 ring-2 ring-[hsl(var(--border))]/50 dark:ring-white/[0.06]">
-                    {profile.photo_url ? (
-                      <Image
-                        src={profile.photo_url}
-                        alt={profile.name}
-                        fill
-                        className="object-cover"
-                        sizes="56px"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[hsl(var(--primary))/0.1] to-[hsl(var(--secondary))/0.05]">
-                        <span className="text-lg font-bold text-[hsl(var(--primary))/0.3]">
-                          {profile.name.charAt(0)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-sm text-[hsl(var(--text-primary))] dark:text-white truncate">
-                        {profile.name}
-                      </h3>
-                      {profile.is_main_pastor && (
-                        <Sparkles
-                          size={12}
-                          className="text-[hsl(var(--primary))] shrink-0"
-                        />
-                      )}
-                    </div>
-                    <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">
-                      {profile.role || "Pastor"}
-                    </p>
-                    {/* Social indicators */}
-                    <div className="flex items-center gap-2 mt-2">
-                      {profile.social_instagram && (
-                        <Instagram
-                          size={12}
-                          className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
-                        />
-                      )}
-                      {profile.social_facebook && (
-                        <Facebook
-                          size={12}
-                          className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
-                        />
-                      )}
-                      {profile.social_twitter && (
-                        <Twitter
-                          size={12}
-                          className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
-                        />
-                      )}
-                      {!profile.social_instagram &&
-                        !profile.social_facebook &&
-                        !profile.social_twitter && (
-                          <span className="text-[9px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-                            Sin redes
-                          </span>
-                        )}
-                    </div>
-                  </div>
-
-                  {/* Edit button */}
-                  <button
-                    onClick={() => openDrawer(profile)}
-                    className="absolute top-3 right-3 w-7 h-7 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.1] opacity-0 group-hover:opacity-100 transition-all"
-                    aria-label="Editar"
+            {/* Grid View */}
+            {viewType === "grid" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paginated.map((profile) => (
+                  <div
+                    key={profile.id}
+                    className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] rounded-xl border border-[hsl(var(--border))]/70 dark:border-white/[0.06] p-4 flex items-start gap-4 hover:shadow-lg hover:-translate-y-0.5 transition-all"
                   >
-                    <Pencil size={12} />
-                  </button>
-                </div>
-              ))}
-            </div>
+                    <div className="relative w-14 h-14 rounded-full overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[#0a0c12] shrink-0 ring-2 ring-[hsl(var(--border))]/50 dark:ring-white/[0.06]">
+                      {profile.photo_url ? (
+                        <Image src={profile.photo_url} alt={profile.name} fill className="object-cover" sizes="56px" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[hsl(var(--primary))/0.1] to-[hsl(var(--secondary))/0.05]">
+                          <span className="text-lg font-bold text-[hsl(var(--primary))/0.3]">{profile.name.charAt(0)}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-sm text-[hsl(var(--text-primary))] dark:text-white truncate">{profile.name}</h3>
+                        {profile.is_main_pastor && <Sparkles size={12} className="text-[hsl(var(--primary))] shrink-0" />}
+                      </div>
+                      <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">{profile.role || "Pastor"}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        {profile.social_instagram && <Instagram size={12} className="text-[hsl(var(--text-secondary))]" />}
+                        {profile.social_facebook && <Facebook size={12} className="text-[hsl(var(--text-secondary))]" />}
+                        {profile.social_twitter && <Twitter size={12} className="text-[hsl(var(--text-secondary))]" />}
+                        {!profile.social_instagram && !profile.social_facebook && !profile.social_twitter && (
+                          <span className="text-[9px] text-[hsl(var(--text-secondary))]">Sin redes</span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => openDrawer(profile)}
+                      className="absolute top-3 right-3 w-7 h-7 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.1] opacity-0 group-hover:opacity-100 transition-all"
+                      aria-label="Editar"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* List View */}
+            {viewType === "list" && (
+              <div className="space-y-2">
+                {paginated.map((profile) => (
+                  <div
+                    key={profile.id}
+                    className="group flex items-center gap-4 p-3 rounded-xl border border-[hsl(var(--border))]/70 dark:border-white/[0.06] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] hover:shadow-md transition-all cursor-pointer"
+                    onClick={() => openDrawer(profile)}
+                  >
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[#0a0c12] shrink-0">
+                      {profile.photo_url ? (
+                        <Image src={profile.photo_url} alt={profile.name} fill className="object-cover" sizes="40px" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[hsl(var(--primary))/0.1] to-[hsl(var(--secondary))/0.05]">
+                          <span className="text-sm font-bold text-[hsl(var(--primary))/0.3]">{profile.name.charAt(0)}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{profile.name}</p>
+                        {profile.is_main_pastor && <Sparkles size={10} className="text-[hsl(var(--primary))]" />}
+                      </div>
+                      <p className="text-[11px] text-[hsl(var(--text-secondary))]">{profile.role || "Pastor"}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {profile.social_instagram && <Instagram size={12} className="text-[hsl(var(--text-secondary))]" />}
+                      {profile.social_facebook && <Facebook size={12} className="text-[hsl(var(--text-secondary))]" />}
+                      {profile.social_twitter && <Twitter size={12} className="text-[hsl(var(--text-secondary))]" />}
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openDrawer(profile); }}
+                      className="p-2 rounded-lg hover:bg-[hsl(var(--primary))/0.1] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Table View */}
+            {viewType === "table" && (
+              <div className="overflow-x-auto rounded-xl border border-[hsl(var(--border))]/70 dark:border-white/[0.06]">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[hsl(var(--border))] dark:border-white/[0.06] bg-[hsl(var(--surface-1))] dark:bg-white/[0.02]">
+                      <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Foto</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Nombre</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Rol</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Redes</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Principal</th>
+                      <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginated.map((profile) => (
+                      <tr key={profile.id} className="border-b border-[hsl(var(--border))]/50 dark:border-white/[0.03] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[#0a0c12]">
+                            {profile.photo_url ? (
+                              <Image src={profile.photo_url} alt={profile.name} fill className="object-cover" sizes="32px" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[hsl(var(--primary))/0.1] to-[hsl(var(--secondary))/0.05]">
+                                <span className="text-xs font-bold text-[hsl(var(--primary))/0.3]">{profile.name.charAt(0)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white">{profile.name}</span>
+                            {profile.is_main_pastor && <Sparkles size={10} className="text-[hsl(var(--primary))]" />}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-[hsl(var(--text-secondary))]">{profile.role || "Pastor"}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1">
+                            {profile.social_instagram && <Instagram size={12} className="text-[hsl(var(--text-secondary))]" />}
+                            {profile.social_facebook && <Facebook size={12} className="text-[hsl(var(--text-secondary))]" />}
+                            {profile.social_twitter && <Twitter size={12} className="text-[hsl(var(--text-secondary))]" />}
+                            {!profile.social_instagram && !profile.social_facebook && !profile.social_twitter && (
+                              <span className="text-[10px] text-[hsl(var(--text-secondary))]">—</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {profile.is_main_pastor ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--primary))/0.1 text-[hsl(var(--primary))] text-[10px] font-semibold">
+                              <Check size={10} /> Sí
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-[hsl(var(--text-secondary))]">No</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => openDrawer(profile)}
+                            className="p-1.5 rounded-lg hover:bg-[hsl(var(--primary))/0.1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -363,7 +451,7 @@ export default function PastoralTeamPage() {
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={closeDrawer}
           />
-          <div className="relative w-full max-w-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0a0c12] border-l border-[hsl(var(--border))] dark:border-white/[0.06] shadow-2xl overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-[hsl(var(--bg-primary))] dark:bg-[#0a0c12] border-l border-[hsl(var(--border))] dark:border-white/[0.06] shadow-2xl overflow-y-auto">
             <div className="sticky top-0 bg-[hsl(var(--bg-primary))] dark:bg-[#0a0c12] border-b border-[hsl(var(--border))] dark:border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
               <h2 className="text-sm font-bold uppercase tracking-wider">
                 Editar perfil
@@ -412,21 +500,35 @@ export default function PastoralTeamPage() {
               {/* Photo URL */}
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
-                  URL de foto
+                  Foto del perfil
                 </label>
-                <div className="relative">
-                  <ImageIcon
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]"
-                  />
-                  <input
-                    name="photo_url"
-                    type="url"
-                    defaultValue={editing.photo_url || ""}
-                    placeholder="https://ejemplo.com/foto.jpg"
-                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
-                  />
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <ImageIcon
+                      size={14}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]"
+                    />
+                    <input
+                      name="photo_url"
+                      type="url"
+                      defaultValue={editing.photo_url || ""}
+                      placeholder="https://ejemplo.com/foto.jpg"
+                      className="w-full pl-9 pr-4 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMediaPickerOpen(true)}
+                    className="px-3 py-2 rounded-xl bg-[hsl(var(--primary))/0.1 text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))/0.2 transition-colors text-xs font-semibold"
+                  >
+                    <ImageIcon size={14} />
+                  </button>
                 </div>
+                {editing.photo_url && (
+                  <div className="mt-2 relative w-20 h-20 rounded-xl overflow-hidden border border-[hsl(var(--border))] dark:border-white/10">
+                    <Image src={editing.photo_url} alt="Preview" fill className="object-cover" sizes="80px" />
+                  </div>
+                )}
               </div>
 
               {/* Bio short */}
@@ -514,6 +616,41 @@ export default function PastoralTeamPage() {
                   </p>
                 </div>
               </label>
+
+              {/* Toggle is_pastoral_published */}
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  name="is_pastoral_published"
+                  type="checkbox"
+                  defaultChecked={editing.is_pastoral_published !== false}
+                  className="w-4 h-4 rounded border-[hsl(var(--border))] dark:border-white/20 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))/0.3]"
+                />
+                <div>
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">
+                    Publicado
+                  </span>
+                  <p className="text-[10px] text-[hsl(var(--text-secondary))]">
+                    Visible en el sitio público
+                  </p>
+                </div>
+              </label>
+
+              {/* Sort Order */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
+                  Orden de aparición
+                </label>
+                <input
+                  name="pastoral_sort_order"
+                  type="number"
+                  defaultValue={editing.pastoral_sort_order || 0}
+                  min="0"
+                  className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
+                />
+                <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-1">
+                  Menor número = aparece primero
+                </p>
+              </div>
 
               {/* Actions */}
               <div className="flex items-center gap-3 pt-4 border-t border-[hsl(var(--border))] dark:border-white/[0.06]">
@@ -637,6 +774,23 @@ export default function PastoralTeamPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Media Picker */}
+      {mediaPickerOpen && (
+        <MediaPicker
+          open
+          token={token}
+          selectedUrl={editing?.photo_url || undefined}
+          onClose={() => setMediaPickerOpen(false)}
+          onSelect={(item) => {
+            const url = typeof item === "string" ? item : (item as { url?: string }).url || "";
+            if (url && editing) {
+              setEditing({ ...editing, photo_url: url });
+            }
+            setMediaPickerOpen(false);
+          }}
+        />
       )}
     </div>
   );

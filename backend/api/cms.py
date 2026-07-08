@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import uuid
 from datetime import datetime, timezone
 
@@ -25,6 +26,7 @@ from backend.core.uploads import (
     validate_mime_extension_alignment,
 )
 from backend.schemas import PaginatedResponse
+from backend.services.image_optimizer import ImageOptimizer
 
 # CMS endpoints — preferir /cms/v2/* en integraciones nuevas.
 router = APIRouter(tags=["cms"])
@@ -386,14 +388,68 @@ def patch_cms_media(
 @router.delete("/cms/media/{item_id}", status_code=204)
 def delete_cms_media(
     item_id: uuid.UUID,
+    permanent: bool = Query(default=False),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """Axioma 3 — Multi-Tenant: 404 cross-sede antes de soft-delete."""
+    """Delete media item. If permanent=true, deletes the file and DB record entirely.
+    Otherwise soft-deletes (archives)."""
     row = _get_scoped_cms_media(db, current_user, item_id)
-    crud.delete_cms_media_item(
+    if permanent:
+        # Delete physical file
+        if row.url:
+            file_path = row.url.lstrip("/")
+            full_path = os.path.join("/root/ccf", file_path)
+            if os.path.exists(full_path):
+                os.remove(full_path)
+        # Delete DB record
+        db.delete(row)
+        db.commit()
+    else:
+        crud.delete_cms_media_item(
+            db,
+            row.id,
+            actor_user_id=str(current_user.id),
+        )
+
+
+@router.post("/cms/media/{item_id}/optimize", response_model=schemas.CmsMediaRead)
+def optimize_cms_media(
+    item_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """Optimize an existing image: re-encode to WebP, resize, compress.
+    Returns updated media item with new URL and file_size."""
+    row = _get_scoped_cms_media(db, current_user, item_id)
+
+    if not row.mime_type or not row.mime_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only images can be optimized")
+
+    # Read original file from storage
+    original_path = row.url.lstrip("/")
+    full_path = os.path.join("/root/ccf", original_path)
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="Original file not found")
+
+    with open(full_path, "rb") as f:
+        content = f.read()
+
+    optimizer = ImageOptimizer()
+    optimized_bytes, output_ext, width, height = optimizer.optimize(content, row.filename or "image.jpg")
+
+    # Save optimized version (overwrite or new file)
+    optimized_name = os.path.splitext(row.filename or "image.jpg")[0] + output_ext
+    new_url = storage_service.save_file(optimized_bytes, optimized_name, subfolder="cms")
+
+    # Update media item
+    return crud.update_cms_media_item(
         db,
         row.id,
+        url=new_url,
+        mime_type=f"image/{output_ext.lstrip('.')}",
+        file_size=len(optimized_bytes),
+        filename=optimized_name,
         actor_user_id=str(current_user.id),
     )
 
@@ -404,6 +460,7 @@ async def upload_cms_media(
     section: str = Form(default="general"),
     alt_text: str = Form(default=""),
     tags: str = Form(default=""),
+    optimize: bool = Form(default=True),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
@@ -423,7 +480,9 @@ async def upload_cms_media(
        aceptaría (extensión válida), pero el alignment check lo rechaza.
     4. **Filename sanitization** — ``sanitize_filename`` remueve chars
        no-seguros y previene path traversal antes de persistir.
-    5. **Axioma 3** — ``actor_user_id`` se propaga al CRUD layer, donde
+    5. **Image optimization** — images are auto-optimized to WebP (max 1920px, quality 82%)
+       unless optimize=false. Dramatically reduces file size.
+    6. **Axioma 3** — ``actor_user_id`` se propaga al CRUD layer, donde
        ``create_cms_media_item`` resuelve ``sede_id`` server-side desde
        el actor (no del body) y previene cross-sede injection.
     """
@@ -447,6 +506,20 @@ async def upload_cms_media(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    # 4) Image optimization (convert to WebP, resize, compress)
+    mime_type = file.content_type
+    if optimize:
+        try:
+            optimizer = ImageOptimizer()
+            optimized_bytes, output_ext, width, height = optimizer.optimize(content, original_name)
+            if output_ext != os.path.splitext(original_name)[1].lower():
+                # Extension changed (e.g. .jpg → .webp)
+                original_name = os.path.splitext(original_name)[0] + output_ext
+                mime_type = f"image/{output_ext.lstrip('.')}"
+            content = optimized_bytes
+        except Exception:
+            pass  # Fall back to original if optimization fails
+
     url = storage_service.save_file(content, original_name, subfolder="cms")
     parsed_tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
     return crud.create_cms_media_item(
@@ -457,7 +530,7 @@ async def upload_cms_media(
         tags=parsed_tags,
         created_by=current_user.id,
         filename=file.filename,
-        mime_type=file.content_type,
+        mime_type=mime_type,
         file_size=len(content),
         actor_user_id=str(current_user.id),
     )

@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import time
+import unicodedata
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
@@ -18,6 +19,7 @@ from backend.api._cms_helpers import (
     _get_scoped_cms_media,
     _get_scoped_persona,
     _scope_cms_pastoral_team_by_user_sede,
+    seo_audit as _seo_audit,
 )
 from backend.core.cache_v2 import cached_public
 from backend.core.config import get_settings
@@ -246,11 +248,18 @@ def _assert_role(
 def _slugify(value: str) -> str:
     """Normalize a string into a URL‑safe slug.
 
+    - NFKD decomposition so accented characters collapse to their ASCII
+      base (``í`` → ``i``, ``á`` → ``a``, ``ó`` → ``o``, ``ü`` → ``u``).
+      This keeps the alphabetic base character so ``Nehemías`` slugifies
+      to ``nehemias`` (not ``nehemas`` like a naive ``[^a-z0-9]`` strip
+      would do) and aligns with the canonical rule used by
+      ``scripts/fix_pastor_photos.py`` and ``crud/cms_pastors_sync.py``.
     - Trims whitespace, lower‑cases, replaces internal whitespace with hyphens.
     - Removes characters that are not alphanumeric, hyphen, underscore or slash.
     - Strips leading/trailing hyphens.
     """
-    value = value.strip().lower()
+    value = (value or "").strip().lower()
+    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
     value = re.sub(r"\s+", "-", value)
     value = re.sub(r"[^a-z0-9\-_/]", "", value)
     return value.strip("-")
@@ -292,7 +301,7 @@ def _assert_site_sede_scope(
     del actor. Si ``actor_sede`` es ``None`` (superadmin sin sede) se
     considera acceso global y no se rechaza. Cualquier otro actor sólo
     puede interactuar con sites de su propia sede o sites sin sede
-    asignada (legacy pre-migration).
+    asignada (sitios previos a la migración).
     """
     if actor_sede is None:
         return
@@ -775,9 +784,38 @@ def patch_page(
         raise HTTPException(
             status_code=422, detail="use workflow endpoint to change status"
         )
+    # Scheduled publish + auto-archive (2026-07-06): validaciones del
+    # scheduling window. La regla estricta es ``expires_at >= publish_at``
+    # sólo si ambos están presentes; ``null`` representa el reset (sin
+    # programación). ``publish_at`` no necesita ser futuro aquí — el
+    # cliente puede dejar una fecha pasada para cancelar flujo. Pero
+    # ``expires_at`` < ``publish_at`` es claramente un error de typo.
+    if (
+        payload.publish_at is not None
+        and payload.expires_at is not None
+        and payload.expires_at < payload.publish_at
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="expires_at must be >= publish_at",
+        )
     site = _get_site_or_404(db, site_key)
     row = _get_page_or_404(db, site.id, slug)
-    return crud.update_cms_page(db, row, payload, current_user.id)
+    updated = crud.update_cms_page(db, row, payload, current_user.id)
+    # Workflow parity gap fix (2026-07-06): when an editor sets
+    # ``publish_at`` via PATCH on a non-terminal page, auto-flip the
+    # status to ``scheduled`` so the cron scheduler picks it up
+    # (``find_pages_due_for_publish`` filters require ``status='scheduled'``).
+    # The previous POST endpoint already does this; we mirror it here for
+    # the modern PATCH path so the recommended flow isn't inert.
+    if (
+        payload.publish_at is not None
+        and updated.status in {"draft", "in_review", "approved"}
+    ):
+        updated.status = "scheduled"
+        db.commit()
+        db.refresh(updated)
+    return updated
 
 
 @router.delete("/sites/{site_key}/pages/{slug}", status_code=204)
@@ -953,6 +991,73 @@ def list_publish_log(
 
 
 @router.get(
+    "/sites/{site_key}/seo-audit",
+    response_model=schemas.SeoAuditResponse,
+)
+def seo_audit(
+    site_key: str,
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    status: str | None = Query(None),
+    min_score: int | None = Query(None, ge=0, le=100),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """Audit SEO sobre las páginas de un sitio.
+
+    CmsSite y CmsPage son globales del faro (Axioma 3) — el audit
+    opera cross-sede por diseño para preservar la coherencia editorial
+    del site público. Sólo se restringe por ``site_key`` + ``status``.
+    Requiere rol editorial (CMS_EDITOR_ROLES) — un lector sin acceso
+    de edición recibe 403.
+
+    Implementación: 3 ORM queries para evitar N+1 (``pages`` paginadas,
+    ``sections`` por ``page_id IN (...)``, y ``media_alt_lookup`` por
+    los UUIDs referenciados en props_json). Scoring y findings corren
+    en memoria sobre data materializada.
+    """
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_site_or_404(db, site_key)
+
+    pages_query = db.query(models.CmsPage).filter(models.CmsPage.site_id == site.id)
+    if status:
+        pages_query = pages_query.filter(models.CmsPage.status == status)
+    pages = (
+        pages_query.order_by(models.CmsPage.updated_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    page_ids = [page.id for page in pages]
+    sections_by_page = _seo_audit.group_sections_by_page([])
+    if page_ids:
+        sections_rows = (
+            db.query(models.CmsSection)
+            .filter(models.CmsSection.page_id.in_(page_ids))
+            .order_by(models.CmsSection.sort_order.asc())
+            .all()
+        )
+        sections_by_page = _seo_audit.group_sections_by_page(sections_rows)
+
+    media_ids = _seo_audit.collect_section_media_ids(
+        section for rows in sections_by_page.values() for section in rows
+    )
+    media_alt_lookup = _seo_audit.build_media_alt_lookup(db, media_ids)
+
+    audits, aggregate = _seo_audit.audit_pages(
+        pages, sections_by_page, media_alt_lookup,
+    )
+    if min_score is not None:
+        audits = [audit for audit in audits if audit.score >= min_score]
+
+    return schemas.SeoAuditResponse(
+        site_key=site.site_key,
+        aggregate=aggregate,
+        pages=audits,
+    )
+
+
+@router.get(
     "/sites/{site_key}/pages/{slug}/preview", response_model=schemas.CmsPublicPageRead
 )
 def preview_page(
@@ -1064,7 +1169,18 @@ def public_theme(site_key: str, db: Session = Depends(get_db)):
     row = crud.get_active_cms_theme(db, site.id)
     if not row:
         raise HTTPException(status_code=404, detail="active theme not found")
-    return row
+    return {
+        "id": row.id,
+        "site_id": row.site_id,
+        "name": row.name,
+        "tokens_json": row.tokens_json or {},
+        "is_active": row.is_active,
+        "status": row.status,
+        "version": row.version,
+        "created_by_persona_id": row.created_by_persona_id,
+        "created_at": row.created_at,
+        "updated_at": row.updated_at,
+    }
 
 
 @router.get(
@@ -1132,7 +1248,7 @@ def _build_section_defaults(
     # If the section already has meaningful content, skip defaults
     if props and any(
         key in props
-        for key in ("title", "subtitle", "body", "content", "items", "personas", "stats", "testimonials", "faqs", "embed_url", "map_url")
+        for key in ("title", "subtitle", "body", "content", "items", "personas", "pastors", "stats", "testimonials", "faqs", "embed_url", "map_url")
     ):
         return props or {}
 
@@ -1480,15 +1596,13 @@ def public_pastoral_team(site_key: str, db: Session = Depends(get_db)):
     # Verify site exists (no auth required for public)
     _get_public_site_or_404(db, site_key)
     base_query = db.query(models.Persona).filter(
-        models.Persona.is_pastoral_leader.is_(True)
+        models.Persona.is_pastoral_leader.is_(True),
+        models.Persona.is_pastoral_published.is_(True),
     )
-    # Para endpoints públicos no se aplica scope (anónimo). El caller
-    # autenticado via Authorization header puede recibir respuesta
-    # scoped (vía ``get_user_sede_id``); sin embargo, este endpoint no
-    # extrae el token actualmente (no existe dep auth en endpoints
-    # públicos). El scope aplica al flujo CMS-admin en su contraparte.
     leaders = base_query.order_by(
-        models.Persona.is_main_pastor.desc(), models.Persona.nombre_completo.asc()
+        models.Persona.pastoral_sort_order.asc(),
+        models.Persona.is_main_pastor.desc(),
+        models.Persona.nombre_completo.asc()
     ).all()
     result = []
     for p in leaders:
@@ -1506,6 +1620,8 @@ def public_pastoral_team(site_key: str, db: Session = Depends(get_db)):
                 social_facebook=p.social_facebook,
                 social_twitter=p.social_twitter,
                 is_main_pastor=p.is_main_pastor or False,
+                pastoral_sort_order=getattr(p, 'pastoral_sort_order', 0) or 0,
+                is_pastoral_published=getattr(p, 'is_pastoral_published', True),
             )
         )
     return result
@@ -1533,7 +1649,9 @@ def cms_pastoral_team_list(
     )
     base_query = _scope_cms_pastoral_team_by_user_sede(db, current_user, base_query)
     leaders = base_query.order_by(
-        models.Persona.is_main_pastor.desc(), models.Persona.nombre_completo.asc()
+        models.Persona.pastoral_sort_order.asc(),
+        models.Persona.is_main_pastor.desc(),
+        models.Persona.nombre_completo.asc()
     ).all()
     result = []
     for p in leaders:
@@ -1551,6 +1669,8 @@ def cms_pastoral_team_list(
                 social_facebook=p.social_facebook,
                 social_twitter=p.social_twitter,
                 is_main_pastor=p.is_main_pastor or False,
+                pastoral_sort_order=getattr(p, 'pastoral_sort_order', 0) or 0,
+                is_pastoral_published=getattr(p, 'is_pastoral_published', True),
             )
         )
     return result
@@ -1604,6 +1724,8 @@ def cms_pastoral_profile_update(
         social_facebook=persona.social_facebook,
         social_twitter=persona.social_twitter,
         is_main_pastor=persona.is_main_pastor or False,
+        pastoral_sort_order=getattr(persona, 'pastoral_sort_order', 0) or 0,
+        is_pastoral_published=getattr(persona, 'is_pastoral_published', True),
     )
 
 
@@ -1951,6 +2073,10 @@ def patch_post(
     row = _get_post_or_404(db, site.id, slug)
     if payload.status is not None and payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
         raise HTTPException(status_code=422, detail="invalid status")
+    # Scheduled publish + auto-archive (2026-07-06): posts manejan
+    # ``expires_at`` opcional; no tienen pre-condition con ``published_at``
+    # aquí porque ``published_at`` puede ser None (auto-published por
+    # ``publish`` workflow). Sin validación extra.
     updated = crud.update_cms_post(db, row, payload, current_user.id)
     p = schemas.CmsPostReadWithTaxonomies.model_validate(updated)
     p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, updated.id)]
@@ -2098,30 +2224,40 @@ def get_page_analytics(
 
 # ── SCHEDULED PUBLISHING (Phase 4) ─────────────────────────────────────────────
 
-@router.post("/pages/{page_id}/schedule", response_model=dict)
+@router.post("/pages/{page_id}/schedule", response_model=Dict[str, Any])
 def schedule_page_publish(
     site_key: str, page_id: uuid.UUID, payload: Dict[str, Any],
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """Schedule a page for future publication."""
+    """Schedule a page for future publication (compatibility wrapper).
+
+    Superseded (2026-07-06) — prefer ``PATCH /sites/{site_key}/pages/{slug}``
+    with ``publish_at`` and ``expires_at`` fields. This endpoint is
+    kept as a thin wrapper for existing integrations; it now persists
+    the timestamp to ``CmsPage.publish_at`` instead of the stale
+    ``seo_json['_scheduled_at']``. ``scheduled_at`` is required.
+    """
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     scheduled_at = payload.get("scheduled_at")
     if not scheduled_at:
         raise HTTPException(status_code=400, detail="scheduled_at is required")
     try:
-        datetime.fromisoformat(scheduled_at.replace("Z", "+00:00"))
-    except Exception:
+        parsed = datetime.fromisoformat(str(scheduled_at).replace("Z", "+00:00"))
+    except (ValueError, TypeError, AttributeError):
         raise HTTPException(status_code=400, detail="Invalid datetime format")
     page = db.query(models.CmsPage).filter(models.CmsPage.id == page_id).first()
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
-    page.status = "scheduled"
-    seo = page.seo_json or {}
-    seo["_scheduled_at"] = scheduled_at
-    page.seo_json = seo
+    page.publish_at = parsed
+    # Defensa in-depth: borrar datos residuales si quedó algo en seo_json.
+    seo = page.seo_json if isinstance(page.seo_json, dict) else {}
+    if isinstance(seo, dict) and "_scheduled_at" in seo:
+        seo.pop("_scheduled_at", None)
+        page.seo_json = seo
     db.commit()
-    return {"ok": True, "scheduled_at": scheduled_at}
+    db.refresh(page)
+    return {"ok": True, "publish_at": parsed.isoformat()}
 
 
 # ── IMAGE OPTIMIZATION (Phase 7) ───────────────────────────────────────────────

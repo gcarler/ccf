@@ -2,15 +2,15 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   BookOpen,
   CheckCircle2,
   Clock3,
-  Eye,
   ExternalLink,
+  Eye,
   FileText,
+  Gauge,
   Globe,
   ImageIcon,
   Layers3,
@@ -27,7 +27,6 @@ import {
   Video,
   Volume2,
 } from "lucide-react";
-import AdminHero from "@/components/admin/AdminHero";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { SITE_BLOCKS } from "@/lib/cms/blocks";
@@ -194,7 +193,6 @@ function activityLabel(activity: DashboardActivity): string {
 
 export default function CmsHomePage() {
   const { token, isAuthenticated, user } = useAuth();
-  const router = useRouter();
   const [stats, setStats] = useState<CmsStats>(EMPTY_STATS);
   const [recentTestimonials, setRecentTestimonials] = useState<TestimonialPreview[]>([]);
   const [topPages, setTopPages] = useState<DashboardTopPage[]>([]);
@@ -277,7 +275,7 @@ export default function CmsHomePage() {
 
     fetchData().catch((error) => {
       console.error("CMS home fetch", error);
-      setDataIssue("No se pudo cargar el resumen del CMS.");
+      setDataIssue("No se pudo cargar el resumen del sitio.");
       setRecentTestimonials([]);
       setStats(EMPTY_STATS);
       setLoading(false);
@@ -297,6 +295,7 @@ export default function CmsHomePage() {
       { label: "Temas", href: "/cms/themes", description: "Tokens por sitio", icon: Palette, show: canEdit },
       { label: "Equipo Pastoral", href: "/cms/pastoral-team", description: "Perfiles y redes sociales", icon: Users, show: canEdit },
       { label: "Sitios", href: "/cms/sites", description: "Portales y dominios", icon: Globe, show: canManage },
+      { label: "Auditoría SEO", href: "/cms/seo-audit", description: "Score y hallazgos por página", icon: Gauge, show: canEdit },
     ].filter((link) => link.show),
     [canEdit, canManage],
   );
@@ -346,23 +345,23 @@ export default function CmsHomePage() {
   }, [loading, qualityChecks]);
 
   const metricCards = [
-    { label: "Testimonios publicados", value: stats.approvedTestimonials, icon: MessageCircle },
-    { label: "Pendientes", value: stats.pendingTestimonials, icon: AlertCircle },
-    { label: "Media total", value: stats.mediaTotal, icon: ImageIcon },
-    { label: "Imagenes", value: stats.mediaImages, icon: ImageIcon },
-    { label: "Videos", value: stats.mediaVideos, icon: Video },
-    { label: "Podcasts", value: stats.mediaAudio, icon: Volume2 },
-    { label: "Bloques CMS", value: stats.sections, icon: Layers3 },
-    { label: "Publicados", value: stats.publishedBlocks, icon: CheckCircle2 },
-    { label: "En revision", value: stats.inReviewBlocks, icon: Clock3 },
-    { label: "Anuncios activos", value: stats.activeAnnouncements, icon: Megaphone },
-    { label: "Vistas totales", value: stats.pageViewsTotal, icon: Eye },
-    { label: "Vistas 7d", value: stats.pageViews7d, icon: TrendingUp },
-    { label: "Vistas 30d", value: stats.pageViews30d, icon: TrendingUp },
-    { label: "Posts", value: stats.postsTotal, icon: BookOpen },
-    { label: "Posts publicados", value: stats.postsPublished, icon: CheckCircle2 },
-    { label: "Categorías", value: stats.categoriesTotal, icon: Globe },
-    { label: "Etiquetas", value: stats.tagsTotal, icon: Tag },
+    { label: "Testimonios publicados", value: stats.approvedTestimonials, icon: MessageCircle, href: "/cms/testimonials" },
+    { label: "Pendientes", value: stats.pendingTestimonials, icon: AlertCircle, href: "/cms/testimonials" },
+    { label: "Media total", value: stats.mediaTotal, icon: ImageIcon, href: "/cms/media" },
+    { label: "Imagenes", value: stats.mediaImages, icon: ImageIcon, href: "/cms/media" },
+    { label: "Videos", value: stats.mediaVideos, icon: Video, href: "/cms/media" },
+    { label: "Podcasts", value: stats.mediaAudio, icon: Volume2, href: "/cms/media" },
+    { label: "Bloques del sitio", value: stats.sections, icon: Layers3, href: "/cms/builder" },
+    { label: "Publicados", value: stats.publishedBlocks, icon: CheckCircle2, href: "/cms/pages" },
+    { label: "En revision", value: stats.inReviewBlocks, icon: Clock3, href: "/cms/pages" },
+    { label: "Anuncios activos", value: stats.activeAnnouncements, icon: Megaphone, href: "/cms/pages" },
+    { label: "Vistas totales", value: stats.pageViewsTotal, icon: Eye, href: "/cms/audit" },
+    { label: "Vistas 7d", value: stats.pageViews7d, icon: TrendingUp, href: "/cms/audit" },
+    { label: "Vistas 30d", value: stats.pageViews30d, icon: TrendingUp, href: "/cms/audit" },
+    { label: "Posts", value: stats.postsTotal, icon: BookOpen, href: "/cms/posts" },
+    { label: "Posts publicados", value: stats.postsPublished, icon: CheckCircle2, href: "/cms/posts" },
+    { label: "Categorías", value: stats.categoriesTotal, icon: Globe, href: "/cms/categories" },
+    { label: "Etiquetas", value: stats.tagsTotal, icon: Tag, href: "/cms/tags" },
   ];
 
   const maxPubValue = useMemo(() => {
@@ -380,7 +379,7 @@ export default function CmsHomePage() {
       <div className="h-full overflow-y-auto">
         <div className="mx-auto max-w-3xl px-4 py-1.5 text-center">
           <h1 className="text-xl font-semibold">Inicia sesion</h1>
-          <p className="mt-3 text-[hsl(var(--text-secondary))]">Necesitas una sesion valida para administrar el CMS.</p>
+          <p className="mt-3 text-[hsl(var(--text-secondary))]">Necesitas una sesion valida para administrar el sitio.</p>
         </div>
       </div>
     );
@@ -389,16 +388,6 @@ export default function CmsHomePage() {
   return (
     <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]/60 dark:bg-[#141517]">
       <div className="space-y-3 px-4 py-2 lg:px-3">
-        <AdminHero
-          eyebrow="CMS"
-          title="Administracion del sitio web"
-          description="Control editorial para paginas, bloques, media, testimonios, eventos y publicacion multisitio."
-          tags={["Calidad web", "Publicacion", "CMS"]}
-          watchers={["Comunicaciones", "Pastoral", "Web"]}
-          primaryAction={{ label: "Abrir sitio", icon: ExternalLink, onClick: () => window.open("/", "_blank") }}
-          secondaryAction={canEdit ? { label: "Ir al builder", icon: PanelsTopLeft, onClick: () => router.push("/cms/builder") } : undefined}
-        />
-
         {dataIssue && (
           <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -406,12 +395,25 @@ export default function CmsHomePage() {
           </div>
         )}
 
+        {/* Public site shortcut */}
+        <div className="flex items-center justify-end gap-2">
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-blue-300 hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
+          >
+            Ver sitio público
+            <ExternalLink size={14} />
+          </a>
+        </div>
+
         {/* Metric cards */}
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {metricCards.map((metric) => {
             const Icon = metric.icon;
             return (
-              <div key={metric.label} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+              <Link key={metric.label} href={metric.href} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[#111418] transition-colors hover:border-blue-300 dark:hover:border-blue-500/50">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric.label}</p>
                   <Icon size={15} className="text-[hsl(var(--text-secondary))]" />
@@ -419,7 +421,7 @@ export default function CmsHomePage() {
                 <p className="mt-3 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">
                   {metricValue(metric.value, loading)}
                 </p>
-              </div>
+              </Link>
             );
           })}
         </section>
@@ -723,18 +725,23 @@ export default function CmsHomePage() {
                 { label: "Editar estructura", detail: "Paginas, menus y secciones del builder.", href: "/cms/pages" },
                 { label: "Completar media", detail: "Alt text, etiquetas y archivos reutilizables.", href: "/cms/media" },
                 { label: "Revisar contenido", detail: "Testimonios, bloques en revision y eventos.", href: "/cms/pages" },
-                { label: "Publicar", detail: "Aprobar, publicar y revisar el sitio en vivo.", href: "/" },
+                { label: "Publicar", detail: "Aprobar, publicar y revisar el sitio en vivo.", href: "/", external: true },
               ].map((step, index) => (
                 <Link
                   key={step.label}
                   href={step.href}
+                  target={step.external ? "_blank" : undefined}
+                  rel={step.external ? "noopener noreferrer" : undefined}
                   className="flex items-start gap-3 rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/50"
                 >
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--bg-muted))] text-xs font-semibold text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))]">
                     {index + 1}
                   </span>
-                  <span>
-                    <span className="block text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{step.label}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="flex items-center gap-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">
+                      {step.label}
+                      {step.external && <ExternalLink size={14} className="text-[hsl(var(--text-secondary))]" />}
+                    </span>
                     <span className="mt-1 block text-xs text-[hsl(var(--text-secondary))]">{step.detail}</span>
                   </span>
                 </Link>
