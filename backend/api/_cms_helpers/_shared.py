@@ -107,14 +107,15 @@ def _scope_cms_pastoral_team_by_user_sede(
     user_sede``. Si el actor canónico no tiene sede (superadmin), retorna el
     query sin modificar y conserva el alcance administrativo global.
 
-    Política STRICT (no permisiva con NULL): las Personas sin sede son
-    tratadas como orphan y NO se exponen a editoriales cross-sede. Esto
-    cierra el vector donde un líder con ``sede_id=NULL`` sería visible para
-    todas las sedes. El acceso global queda reservado al superadmin canónico.
+    Incluye personas con sede_id NULL (sin sede asignada) para que aparezcan
+    en todas las sedes. Esto permite que pastores sin sede específica sean
+    visibles globalmente.
     """
     user_sede = _actor_sede_or_none(db, current_user)
     if user_sede:
-        query = query.filter(models.Persona.sede_id == user_sede)
+        query = query.filter(
+            (models.Persona.sede_id == user_sede) | (models.Persona.sede_id.is_(None))
+        )
     return query
 
 

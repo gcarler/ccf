@@ -168,12 +168,20 @@ export async function getCmsPublicMenu(siteKey: string, menuKey: string) {
 }
 
 export async function listCmsPages(siteKey: string, token?: string | null) {
-  return apiFetch<CmsPage[]>(`/cms/v2/sites/${siteKey}/pages`, { token });
+  const res = await apiFetch<{ items: CmsPage[]; total: number } | CmsPage[]>(`/cms/v2/sites/${siteKey}/pages`, { token });
+  return Array.isArray(res) ? res : res?.items ?? [];
 }
 
 export async function createCmsPage(
   siteKey: string,
-  payload: { slug: string; title: string; status?: string; seo_json?: Record<string, unknown> },
+  payload: {
+    slug: string;
+    title: string;
+    status?: string;
+    seo_json?: Record<string, unknown>;
+    publish_at?: string | null;
+    expires_at?: string | null;
+  },
   token?: string | null,
 ) {
   return apiFetch<CmsPage>(`/cms/v2/sites/${siteKey}/pages`, {
@@ -186,7 +194,14 @@ export async function createCmsPage(
 export async function patchCmsPage(
   siteKey: string,
   slug: string,
-  payload: { slug?: string; title?: string; status?: string; seo_json?: Record<string, unknown> },
+  payload: {
+    slug?: string;
+    title?: string;
+    status?: string;
+    seo_json?: Record<string, unknown>;
+    publish_at?: string | null;
+    expires_at?: string | null;
+  },
   token?: string | null,
 ) {
   return apiFetch<CmsPage>(`/cms/v2/sites/${siteKey}/pages/${slug}`, {
@@ -203,8 +218,11 @@ export async function deleteCmsPage(siteKey: string, slug: string, token?: strin
   });
 }
 
-export async function listCmsSections(siteKey: string, slug: string, token?: string | null) {
-  return apiFetch<CmsSection[]>(`/cms/v2/sites/${siteKey}/pages/${slug}/sections`, { token });
+export async function listCmsSections(siteKey: string, slug: string, token?: string | null): Promise<CmsSection[]> {
+  const res = await apiFetch<{ items: CmsSection[]; total: number; skip: number; limit: number }>(
+    `/cms/v2/sites/${siteKey}/pages/${slug}/sections`, { token }
+  );
+  return res.items ?? [];
 }
 
 export async function createCmsSection(
@@ -268,12 +286,18 @@ export async function workflowCmsPage(
   });
 }
 
-export async function listCmsPageVersions(siteKey: string, slug: string, token?: string | null) {
-  return apiFetch<CmsPageVersion[]>(`/cms/v2/sites/${siteKey}/pages/${slug}/versions`, { token });
+export async function listCmsPageVersions(siteKey: string, slug: string, token?: string | null): Promise<CmsPageVersion[]> {
+  const res = await apiFetch<{ items: CmsPageVersion[]; total: number; skip: number; limit: number }>(
+    `/cms/v2/sites/${siteKey}/pages/${slug}/versions`, { token }
+  );
+  return res.items ?? [];
 }
 
-export async function listCmsPagePublishLog(siteKey: string, slug: string, token?: string | null) {
-  return apiFetch<CmsPublishLog[]>(`/cms/v2/sites/${siteKey}/pages/${slug}/publish-log`, { token });
+export async function listCmsPagePublishLog(siteKey: string, slug: string, token?: string | null): Promise<CmsPublishLog[]> {
+  const res = await apiFetch<{ items: CmsPublishLog[]; total: number; skip: number; limit: number }>(
+    `/cms/v2/sites/${siteKey}/pages/${slug}/publish-log`, { token }
+  );
+  return res.items ?? [];
 }
 
 export async function rollbackCmsPageVersion(siteKey: string, slug: string, versionId: string, token?: string | null) {
@@ -305,6 +329,8 @@ export interface PastoralProfile {
   social_facebook?: string | null;
   social_twitter?: string | null;
   is_main_pastor: boolean;
+  pastoral_sort_order?: number;
+  is_pastoral_published?: boolean;
 }
 
 export async function getPublicPastoralTeam(siteKey: string): Promise<PastoralProfile[]> {
@@ -448,7 +474,8 @@ export async function deleteCmsTag(siteKey: string, slug: string, token?: string
 // ── Posts ──────────────────────────────────────────────────────────────────
 
 export async function listCmsPosts(siteKey: string, token?: string | null) {
-  return apiFetch<CmsPostWithTaxonomies[]>(`/cms/v2/sites/${siteKey}/posts`, { token });
+  const res = await apiFetch<{ items: CmsPostWithTaxonomies[]; total: number } | CmsPostWithTaxonomies[]>(`/cms/v2/sites/${siteKey}/posts`, { token });
+  return Array.isArray(res) ? res : res?.items ?? [];
 }
 
 export async function createCmsPost(
@@ -464,6 +491,7 @@ export async function createCmsPost(
     category_ids?: string[];
     tag_ids?: string[];
     published_at?: string | null;
+    expires_at?: string | null;
   },
   token?: string | null,
 ) {
@@ -488,6 +516,7 @@ export async function patchCmsPost(
     category_ids?: string[];
     tag_ids?: string[];
     published_at?: string | null;
+    expires_at?: string | null;
   },
   token?: string | null,
 ) {
@@ -516,4 +545,140 @@ export async function getCmsPublicPosts(
 
 export async function getCmsPublicPost(siteKey: string, slug: string) {
   return apiFetch<CmsPublicPost>(`/cms/v2/public/sites/${siteKey}/posts/${slug}`);
+}
+
+// ── Scheduled publish + auto-archive helpers (2026-07-06) ────────────────
+//
+// Helper UI utilities for the calendar + detail views. Formatters convert
+// ISO datetime strings (UTC, returned by the API) into local form for
+// display. The page object now carries ``publish_at`` and ``expires_at``
+// optional fields (typed in ``@/types/cms-v2``).
+
+export interface ScheduleDraftPayload {
+  publish_at?: string | null;
+  expires_at?: string | null;
+}
+
+export function isScheduledPage(page: { status?: string | null; publish_at?: string | null } | null | undefined): boolean {
+  if (!page) return false;
+  if (page.status === "scheduled") return true;
+  return Boolean(page.publish_at);
+}
+
+export function isExpiringPage(page: { status?: string | null; expires_at?: string | null } | null | undefined): boolean {
+  if (!page) return false;
+  if (page.status === "published" && page.expires_at) return true;
+  return Boolean(page.expires_at);
+}
+
+export type ScheduleCalendarColor = "blue" | "emerald" | "amber" | "rose";
+
+export function scheduleEventColor(
+  status: string | null | undefined,
+  kind: "publish" | "expiry",
+): ScheduleCalendarColor {
+  if (kind === "expiry") {
+    // Auto-archive pending.
+    if (status === "published") return "amber";
+    return "rose";
+  }
+  // Publishing event.
+  if (status === "scheduled") return "blue";
+  if (status === "published") return "emerald";
+  if (status === "approved") return "blue";
+  return "rose";
+}
+
+export function toLocalDateTimeInputValue(iso: string | null | undefined): string {
+  if (!iso) return "";
+  // ``<input type="datetime-local">`` wants ``YYYY-MM-DDTHH:mm`` (no TZ).
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return "";
+  }
+}
+
+export function fromLocalDateTimeInputValue(localStr: string | null | undefined): string | null {
+  if (!localStr) return null;
+  // Treat as local time, serialize to UTC ISO for the backend. The browser
+  // Date constructor interprets ``YYYY-MM-DDTHH:mm`` as local time which
+  // is what we want here (``datetime-local`` input is local).
+  try {
+    const d = new Date(localStr);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toISOString();
+  } catch {
+    return null;
+  }
+}
+
+
+// ── SEO Audit (Faro global) ───────────────────────────────────────────────────
+//
+// Endpoint GET /cms/v2/sites/{site_key}/seo-audit (CMS_EDITOR_ROLES).
+// Devuelve aggregate + hallazgos por página (Pydantic: SeoAuditResponse).
+
+export type SeoFindingCode =
+  | "meta_description_missing"
+  | "meta_description_too_short"
+  | "meta_description_too_long"
+  | "title_length_out_of_range"
+  | "noindex_on_published"
+  | "nofollow_on_published"
+  | "no_visible_sections"
+  | "thin_content_sections"
+  | "thin_content_text"
+  | "image_missing_alt"
+  | "image_url_missing_alt"
+  | "og_image_missing";
+
+export type SeoSeverity = "info" | "warning" | "error";
+
+export interface SeoFinding {
+  code: SeoFindingCode | string;
+  severity: SeoSeverity;
+  message: string;
+  impact_points: number;
+  hint: string;
+  field_ref: string | null;
+  section_id: string | null;
+}
+
+export interface PageSeoAudit {
+  page_id: string;
+  slug: string;
+  title: string;
+  status: string;
+  score: number;
+  findings: SeoFinding[];
+}
+
+export interface SiteSeoStats {
+  average_score: number;
+  total_pages: number;
+  pages_with_errors: number;
+  critical_issues: number;
+  by_severity: Record<string, number>;
+}
+
+export interface SeoAuditResponse {
+  site_key: string;
+  aggregate: SiteSeoStats;
+  pages: PageSeoAudit[];
+}
+
+export async function getSeoAudit(
+  siteKey: string,
+  options?: { status?: string; min_score?: number; skip?: number; limit?: number },
+  token?: string | null,
+): Promise<SeoAuditResponse> {
+  return apiFetch<SeoAuditResponse>(`/cms/v2/sites/${siteKey}/seo-audit`, {
+    token,
+    cache: "no-store",
+    query: options,
+  });
 }

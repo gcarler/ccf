@@ -44,6 +44,7 @@ ROLE_ALIASES: Dict[str, str] = {
     "lider": "coordinador",
     "staff": "docente",
     "pastor": "pastor",
+    "administrador": "admin",
 }
 
 VALID_ROLES: set[str] = {

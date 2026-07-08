@@ -12,9 +12,11 @@ import {
   Plus,
   Search,
   RotateCcw,
+  Trash2,
   Upload,
   Check,
   Headphones,
+  Zap,
 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
@@ -92,6 +94,7 @@ export default function CmsMediaLibrary() {
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [optimizingId, setOptimizingId] = useState<number | null>(null);
   const [_metadataSaving, setMetadataSaving] = useState(false);
   const [tagsText, setTagsText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -204,6 +207,38 @@ export default function CmsMediaLibrary() {
       toast.error("Error al archivar medio");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const deleteItem = async (item: MediaItem) => {
+    if (!token || !confirm("¿Eliminar permanentemente este archivo? Esta acción no se puede deshacer.")) return;
+    setDeletingId(item.id);
+    try {
+      await apiFetch(`/cms/media/${item.id}?permanent=true`, { method: "DELETE", token });
+      setItems(prev => prev.filter(i => i.id !== item.id));
+      if (selectedItem?.id === item.id) setSelectedItem(null);
+      toast.success("Archivo eliminado permanentemente");
+    } catch (err) {
+      console.error("Delete media error", err);
+      toast.error("Error al eliminar archivo");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const optimizeItem = async (item: MediaItem) => {
+    if (!token) return;
+    setOptimizingId(item.id);
+    try {
+      const updated = await apiFetch<MediaItem>(`/cms/media/${item.id}/optimize`, { method: "POST", token });
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, ...updated } : i));
+      if (selectedItem?.id === item.id) setSelectedItem(prev => prev ? { ...prev, ...updated } : prev);
+      toast.success("Imagen optimizada para web");
+    } catch (err) {
+      console.error("Optimize media error", err);
+      toast.error("Error al optimizar imagen");
+    } finally {
+      setOptimizingId(null);
     }
   };
 
@@ -461,6 +496,16 @@ export default function CmsMediaLibrary() {
                         {copiedId === item.id ? <Check size={10} className="text-emerald-600" /> : <Copy size={10} />}
                         {copiedId === item.id ? "¡Copiado!" : "Copiar URL"}
                       </button>
+                      {isImage(item.mime_type) && item.status !== "archived" && (
+                        <button
+                          onClick={e => { e.stopPropagation(); optimizeItem(item); }}
+                          disabled={optimizingId === item.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
+                        >
+                          {optimizingId === item.id ? <Loader2 size={10} className="animate-spin" /> : <Zap size={10} />}
+                          Optimizar
+                        </button>
+                      )}
                       <button
                         onClick={e => { e.stopPropagation(); toggleArchiveItem(item); }}
                         disabled={deletingId === item.id}
@@ -472,6 +517,16 @@ export default function CmsMediaLibrary() {
                         {deletingId === item.id ? <Loader2 size={10} className="animate-spin" /> : item.status === "archived" ? <RotateCcw size={10} /> : <Archive size={10} />}
                         {item.status === "archived" ? "Restaurar" : "Archivar"}
                       </button>
+                      {item.status !== "archived" && (
+                        <button
+                          onClick={e => { e.stopPropagation(); deleteItem(item); }}
+                          disabled={deletingId === item.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
+                        >
+                          {deletingId === item.id ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
+                          Eliminar
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 );
@@ -545,6 +600,16 @@ export default function CmsMediaLibrary() {
                       >
                         {copiedId === item.id ? <Check size={14} /> : <Copy size={14} />}
                       </button>
+                      {isImage(item.mime_type) && item.status !== "archived" && (
+                        <button
+                          onClick={e => { e.stopPropagation(); optimizeItem(item); }}
+                          disabled={optimizingId === item.id}
+                          className="p-2 rounded-md hover:bg-violet-50 text-[hsl(var(--text-secondary))] hover:text-violet-600 transition-colors disabled:opacity-60"
+                          aria-label="Optimizar"
+                        >
+                          {optimizingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
+                        </button>
+                      )}
                       <button
                         onClick={e => { e.stopPropagation(); toggleArchiveItem(item); }}
                         disabled={deletingId === item.id}
@@ -553,6 +618,16 @@ export default function CmsMediaLibrary() {
                       >
                         {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : item.status === "archived" ? <RotateCcw size={14} /> : <Archive size={14} />}
                       </button>
+                      {item.status !== "archived" && (
+                        <button
+                          onClick={e => { e.stopPropagation(); deleteItem(item); }}
+                          disabled={deletingId === item.id}
+                          className="p-2 rounded-md hover:bg-red-50 text-[hsl(var(--text-secondary))] hover:text-red-600 transition-colors disabled:opacity-60"
+                          aria-label="Eliminar"
+                        >
+                          {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 );

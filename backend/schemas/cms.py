@@ -196,6 +196,11 @@ class CmsPageCreate(BaseModel):
     title: str
     status: str = "draft"
     seo_json: Dict[str, Any] = Field(default_factory=dict)
+    # Scheduled publish + auto-archive (2026-07-06): una página puede
+    # crearse directamente con ``publish_at`` o ``expires_at`` futuros,
+    # que el scheduler externo (cron cada minuto) materializa.
+    publish_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
 
 
 class CmsPageUpdate(BaseModel):
@@ -203,6 +208,11 @@ class CmsPageUpdate(BaseModel):
     title: Optional[str] = None
     status: Optional[str] = None
     seo_json: Optional[Dict[str, Any]] = None
+    # Scheduled publish + auto-archive (2026-07-06): desde update también
+    # se pueden programar/reprogramar fechas futuras. ``status`` sigue
+    # siendo manejado por el workflow endpoint (consistente).
+    publish_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
 
 
 class CmsPageRead(BaseModel):
@@ -213,6 +223,9 @@ class CmsPageRead(BaseModel):
     status: str
     seo_json: Dict[str, Any] = Field(default_factory=dict)
     published_version_id: Optional[UUID] = None
+    # Scheduled publish + auto-archive read-only fields (2026-07-06).
+    publish_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
     created_by_persona_id: Optional[UUID] = None
     updated_by_persona_id: Optional[UUID] = None
     created_at: datetime
@@ -452,6 +465,8 @@ class PastoralProfileRead(BaseModel):
     social_facebook: Optional[str] = None
     social_twitter: Optional[str] = None
     is_main_pastor: bool = False
+    pastoral_sort_order: int = 0
+    is_pastoral_published: bool = True
 
 
 class PastoralProfileUpdate(BaseModel):
@@ -463,6 +478,8 @@ class PastoralProfileUpdate(BaseModel):
     social_twitter: Optional[str] = None
     is_main_pastor: Optional[bool] = None
     is_pastoral_leader: Optional[bool] = None
+    pastoral_sort_order: Optional[int] = None
+    is_pastoral_published: Optional[bool] = None
 
 
 # ── Section Types (platform-wide catalog) ────────────────────────
@@ -574,6 +591,8 @@ class CmsPostCreate(BaseModel):
     category_ids: List[UUID] = Field(default_factory=list)
     tag_ids: List[UUID] = Field(default_factory=list)
     published_at: Optional[datetime] = None
+    # Auto-archive (2026-07-06): al expirar el post se auto-archiva.
+    expires_at: Optional[datetime] = None
 
 
 class CmsPostUpdate(BaseModel):
@@ -587,6 +606,8 @@ class CmsPostUpdate(BaseModel):
     category_ids: Optional[List[UUID]] = None
     tag_ids: Optional[List[UUID]] = None
     published_at: Optional[datetime] = None
+    # Auto-archive (2026-07-06): reprogramable.
+    expires_at: Optional[datetime] = None
 
 
 class CmsPostRead(BaseModel):
@@ -601,6 +622,8 @@ class CmsPostRead(BaseModel):
     seo_json: Dict[str, Any] = Field(default_factory=dict)
     locale: str
     published_at: Optional[datetime] = None
+    # Auto-archive (2026-07-06): read-only.
+    expires_at: Optional[datetime] = None
     author_persona_id: Optional[UUID] = None
     created_by_persona_id: Optional[UUID] = None
     updated_by_persona_id: Optional[UUID] = None
@@ -628,3 +651,66 @@ class CmsPublicPostRead(BaseModel):
     tags: List[CmsTagRead] = Field(default_factory=list)
     json_ld: Optional[Dict[str, Any]] = None
     canonical_url: Optional[str] = None
+
+
+# ── SEO Audit (faro CMS — global, sin scope por sede) ───────────────────────────
+# CmsSite y CmsPage son globales por dise\u00f1o (Axioma 3: el faro CMS es
+# cross-sede para preservar coherencia visual). Los modelos a continuaci\u00f3n
+# describen el resultado del endpoint
+# GET /api/cms/v2/sites/{site_key}/seo-audit. El endpoint ejecuta 3 queries
+# (pages \u2192 sections \u2192 media items referenciados) y agrega hallazgos in-memory.
+
+SeoFindingSeverity = Literal["info", "warning", "error"]
+
+
+class SeoFinding(BaseModel):
+    """Hallazgo unitario del audit SEO de una p\u00e1gina.
+
+    ``code`` es la llave estable que el frontend usa para localizar el issue
+    en pantalla; ``field_ref`` y ``section_id`` son deep-links opcionales que
+    el panel UI traduce a acciones ``Ir al builder`` / ``Ir a la p\u00e1gina``.
+    """
+
+    code: str
+    severity: SeoFindingSeverity
+    message: str
+    impact_points: int = Field(
+        ge=0,
+        description="Puntos que se restan al score del p\u00e1gina (0-100).",
+    )
+    hint: str = Field(description="Acci\u00f3n sugerida que el editor puede ejecutar.")
+    field_ref: Optional[str] = Field(
+        default=None,
+        description="Ruta l\u00f3gica al campo afectado (ej: seo_json.meta_description ).",
+    )
+    section_id: Optional[UUID] = Field(
+        default=None,
+        description="Si el hallazgo apunta a una secci\u00f3n, el UUID para",
+    )
+
+
+class PageSeoAudit(BaseModel):
+    """Audit consolidado de una p\u00e1gina individual."""
+
+    page_id: UUID
+    slug: str
+    title: str
+    status: str
+    score: int = Field(ge=0, le=100)
+    findings: List[SeoFinding] = Field(default_factory=list)
+
+
+class SiteSeoStats(BaseModel):
+    """Aggregate a nivel de site para alimentar el dashboard del editor."""
+
+    average_score: int = Field(ge=0, le=100)
+    total_pages: int = Field(ge=0)
+    pages_with_errors: int = Field(ge=0)
+    critical_issues: int = Field(ge=0)
+    by_severity: Dict[str, int] = Field(default_factory=dict)
+
+
+class SeoAuditResponse(BaseModel):
+    site_key: str
+    aggregate: SiteSeoStats
+    pages: List[PageSeoAudit] = Field(default_factory=list)
