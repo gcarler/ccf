@@ -62,7 +62,7 @@ export interface Activity {
 }
 
 interface Comment {
-    id: number;
+    id: string;
     author: string;
     authorColor?: string;
     text: string;
@@ -353,7 +353,10 @@ export default function TaskDetailPanel({
     const [newSupplyName, setNewSupplyName] = useState('');
     const [newSupplyQuantity, setNewSupplyQuantity] = useState(1);
     const [creatingSupply, setCreatingSupply] = useState(false);
-    const [savingSupplyId, setSavingSupplyId] = useState<number | null>(null);
+    // ``supply.id`` is a UUID string from types/projects.ts; tracking which
+    // row is currently saving needs the matching ``string | null`` shape.
+    // ``null`` is the "no row saving" sentinel state.
+    const [savingSupplyId, setSavingSupplyId] = useState<string | null>(null);
 
     // ── Labels / Etiquetas ─────────────────────────────────────────
     const [labels, setLabels]         = useState<string[]>((task as any)?.labels ?? []);

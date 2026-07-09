@@ -46,17 +46,11 @@ def isolated_workspace_storage(monkeypatch):
             path.unlink(missing_ok=True)
 
 
-def seed_admin(
-    db_session, email: str = "admin@example.com", password: str = "secret123"
-):
-    user_obj, _, _ = seed_admin(db_session, email, password)
-    return user_obj
-
-
-def auth_headers(
-    client, email: str = "admin@example.com", password: str = "secret123"
-) -> dict[str, str]:
-    return auth_headers(client, email, password)
+# NOTE: ``seed_admin`` and ``auth_headers`` are already imported from
+# ``tests.conftest``. Earlier this file shadowed them with locally defined
+# helpers that recursively called themselves (RecursionError). The conftest
+# implementation satisfies every callsite here, so the duplicates were
+# removed.
 
 
 def test_workspace_config_returns_resolved_features(client: TestClient, db_session):
