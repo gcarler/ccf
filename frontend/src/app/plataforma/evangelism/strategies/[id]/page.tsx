@@ -1386,7 +1386,7 @@ export default function StrategyDetailPage() {
  e.stopPropagation();
  const accion = item.estado_habilitacion === 'HABILITADO' ? 'DESHABILITAR' : 'HABILITAR';
  try {
- await apiFetch(`/evangelism/sessions/${item.id}/habilitacion`, { method: 'PATCH', token, body: JSON.stringify({ accion }) });
+ await apiFetch(`/evangelism/sessions/${item.id}/habilitacion`, { method: 'PATCH', token, body: { accion } });
  fetchSessions();
  } catch { toast.error('Error al cambiar estado'); }
  }}

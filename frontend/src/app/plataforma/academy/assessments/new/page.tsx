@@ -70,7 +70,7 @@ export default function NewAssessmentPage() {
             await (await import('@/lib/http')).apiFetch('/academy/admin/assessments', {
                 method: 'POST',
                 token,
-                body: JSON.stringify({
+                body: {
                     title,
                     passing_score: passingScore,
                     course_id: courseId,
@@ -81,7 +81,7 @@ export default function NewAssessmentPage() {
                         correct_option: q.correct_option ?? 0,
                         points: q.points,
                     })),
-                }),
+                },
             });
             toast.success('Evaluacion creada correctamente');
             router.back();

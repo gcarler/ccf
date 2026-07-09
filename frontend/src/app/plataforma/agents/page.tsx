@@ -119,7 +119,7 @@ export default function AgentsPage() {
             const res = await apiFetch('/agents/ask', {
                 token,
                 method: 'POST',
-                body: JSON.stringify({ query: chatInput, conversation_id: activeConversation }),
+                body: { query: chatInput, conversation_id: activeConversation },
             }) as any;
             if (res?.answer) {
                 setChatMessages(prev => [...prev, { role: 'assistant', content: res.answer }]);
@@ -138,7 +138,7 @@ export default function AgentsPage() {
             const res = await apiFetch('/agents/conversations', {
                 token,
                 method: 'POST',
-                body: JSON.stringify({ agent_name: 'Optimus' }),
+                body: { agent_name: 'Optimus' },
             }) as any;
             if (res?.id) {
                 setActiveConversation(res.id);

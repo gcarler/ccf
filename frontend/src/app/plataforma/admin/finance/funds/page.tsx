@@ -101,10 +101,10 @@ export default function FundsPage() {
                 target_amount: fTarget ? Number(fTarget) : undefined,
             };
             if (drawerMode === "create") {
-                await apiFetch("/finance/admin/funds", { method: "POST", token, body: JSON.stringify(body) });
+                await apiFetch("/finance/admin/funds", { method: "POST", token, body });
                 toast.success("Fondo creado correctamente");
             } else if (selected) {
-                await apiFetch(`/finance/admin/funds/${selected.id}`, { method: "PATCH", token, body: JSON.stringify(body) });
+                await apiFetch(`/finance/admin/funds/${selected.id}`, { method: "PATCH", token, body });
                 toast.success("Fondo actualizado");
             }
             setDrawerMode(null);

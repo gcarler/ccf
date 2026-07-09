@@ -244,14 +244,14 @@ function PlanificadorInner() {
       const endAt = addDays(startOfDay(data.date), 1).toISOString();
       await apiFetch<void>('/agenda/events', {
         method: 'POST',
-        body: JSON.stringify({
+        body: {
           title: data.title,
           description: data.description,
           location: data.location,
           start_at: startAt,
           end_at: endAt,
           is_all_day: true,
-        }),
+        },
         token,
       });
       await fetchCalendar();
