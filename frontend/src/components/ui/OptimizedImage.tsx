@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { getCmsMediaUrl } from "@/lib/cms/media";
 
 /**
  * OptimizedImage — replaces raw <img> tags and unoptimized next/image.
@@ -73,7 +74,7 @@ export default function OptimizedImage({
 
   return (
     <Image
-      src={src}
+      src={getCmsMediaUrl(src)}
       alt={alt}
       fill={fill}
       width={!fill ? width : undefined}

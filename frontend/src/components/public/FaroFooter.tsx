@@ -1,12 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import React from "react";
-import { SITE_EMAIL, SITE_NAME } from "@/lib/site-config";
+import React, { useEffect, useState } from "react";
+import { SITE_EMAIL, SITE_KEY, SITE_NAME } from "@/lib/site-config";
+import { getCmsPublicPage } from "@/lib/cms/v2";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import { useSiteBranding } from "@/lib/site-branding";
 
 type PublicLink = { href: string; label: string; kind?: string };
+
+type FooterConfig = {
+  description?: string;
+  nav_links?: unknown;
+  resource_links?: unknown;
+  social_links?: unknown;
+  section_titles?: Record<string, unknown>;
+  contact?: Record<string, unknown>;
+  copyright?: Record<string, unknown>;
+  privacy_label?: string;
+};
 
 function socialIcon(kindOrLabel: string) {
     const key = kindOrLabel.toLowerCase();
@@ -34,44 +46,68 @@ function socialIcon(kindOrLabel: string) {
     );
 }
 
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+}
+
+function asPublicLinks(value: unknown): PublicLink[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is PublicLink => {
+    if (!item || typeof item !== "object") return false;
+    const candidate = item as PublicLink;
+    return typeof candidate.href === "string" && typeof candidate.label === "string";
+  });
+}
+
 export default function FaroFooter() {
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
-    const fallbackNavLinks: PublicLink[] = [
-        { href: "/", label: "Inicio" },
-        { href: "/nosotros", label: "Sobre Nosotros" },
-        { href: "/pastores", label: "Pastores" },
-        { href: "/eventos", label: "Eventos" },
-        { href: "/predicas", label: "Prédicas" },
-        { href: "/cursos", label: "Cursos" },
-    ];
+    const [footerConfig, setFooterConfig] = useState<FooterConfig | null>(null);
 
-    const fallbackResourceLinks: PublicLink[] = [
-        { href: "/conocer-a-jesus", label: "Conocer a Jesús" },
-        { href: "/testimonios", label: "Testimonios" },
-        { href: "/sedes", label: "Sedes" },
-        { href: "/boletin", label: "Boletín" },
-    ];
+    useEffect(() => {
+        let mounted = true;
+        const loadFooter = async () => {
+            try {
+                const page = await getCmsPublicPage(SITE_KEY, "footer", { silent: true });
+                const section = page?.sections?.find((s) => s.type === "footer_config");
+                const props = section?.props_json ? asRecord(section.props_json) : {};
+                if (mounted) {
+                    setFooterConfig(props as FooterConfig);
+                }
+            } catch {
+                // Ignore; empty defaults render a minimal footer.
+            }
+        };
+        loadFooter();
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
-    const fallbackSocialLinks: PublicLink[] = [
-        { href: "https://facebook.com/comunidadfaro", label: "Facebook", kind: "facebook" },
-        { href: "https://instagram.com/comunidadfaro", label: "Instagram", kind: "instagram" },
-        { href: "https://youtube.com/comunidadfaro", label: "YouTube", kind: "youtube" },
-    ];
-
-    const navLinks = fallbackNavLinks;
-    const resourceLinks = fallbackResourceLinks;
-    const socialLinks = fallbackSocialLinks;
-    const description = "Iluminando el camino hacia una conexión profunda con lo divino a través de la comunidad y la guía espiritual. Una casa de fe abierta para toda la familia.";
+    const cfg = footerConfig ?? {};
     const brandName = logoName || SITE_NAME;
-    const navSectionTitle = "Navegación";
-    const resourceSectionTitle = "Recursos";
-    const contactSectionTitle = "Contáctanos";
-    const locationLabel = "Cartagena, Colombia";
-    const newsletterLabel = "Boletín semanal";
-    const copyrightCompany = "PLES SAS";
-    const copyrightCompanyUrl = "https://ples.com.co";
-    const copyrightText = "El uso inteligente de la experiencia. Todos los derechos reservados.";
-    const privacyLabel = "Política de Privacidad";
+    const description = asString(cfg.description);
+    const sectionTitles = asRecord(cfg.section_titles);
+    const navSectionTitle = asString(sectionTitles.nav);
+    const resourceSectionTitle = asString(sectionTitles.resources);
+    const contactSectionTitle = asString(sectionTitles.contact);
+    const contact = asRecord(cfg.contact);
+    const locationLabel = asString(contact.location_label);
+    const newsletterLabel = asString(contact.newsletter_label);
+    const copyright = asRecord(cfg.copyright);
+    const copyrightCompany = asString(copyright.company);
+    const copyrightCompanyUrl = asString(copyright.company_url);
+    const copyrightText = asString(copyright.text);
+    const privacyLabel = asString(cfg.privacy_label);
+    const navLinks = asPublicLinks(cfg.nav_links);
+    const resourceLinks = asPublicLinks(cfg.resource_links);
+    const socialLinks = asPublicLinks(cfg.social_links);
 
     return (
         <footer

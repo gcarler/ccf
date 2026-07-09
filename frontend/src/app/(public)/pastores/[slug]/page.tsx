@@ -5,11 +5,25 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Quote, BookOpen, Cross, Sparkles, Instagram, Heart } from 'lucide-react';
-import { PASTORS } from '@/data/pastors';
 import { SITE_NAME } from '@/lib/site-config';
 import ShareButtons from '@/components/public/ShareButtons';
 import { useCmsV2Page } from '@/hooks/useCmsV2Page';
 import { sanitizeCmsHtml } from '@/lib/cms/sanitize';
+
+function getString(props: Record<string, unknown> | undefined, key: string): string {
+    const value = props?.[key];
+    return typeof value === "string" ? value : "";
+}
+
+function getStringArray(props: Record<string, unknown> | undefined, key: string): string[] {
+    const value = props?.[key];
+    if (!Array.isArray(value)) return [];
+    return value.filter((item): item is string => typeof item === "string");
+}
+
+function applyTemplate(template: string, vars: Record<string, string>): string {
+    return template.replace(/\{(\w+)\}/g, (_, name) => vars[name] ?? "");
+}
 
 type CmsPastor = {
     id?: string;
@@ -34,13 +48,12 @@ export default function PastorDetailPage() {
 
     const pastorsPage = useCmsV2Page('pastors');
     const pastorsCms = pastorsPage?.blocks?.pastors;
+    const cms = pastorsPage?.blocks?.detail_template as Record<string, unknown> | undefined;
     const pastor = useMemo(() => {
         const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
         if (!Array.isArray(list)) return null;
         return list.find(p => p.slug === slug) || null;
     }, [pastorsCms, slug]);
-    const localPastor = useMemo(() => PASTORS.find(p => p.id === slug) || null, [slug]);
-
     if (!pastorsCms) {
         return (
             <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] flex items-center justify-center pt-[88px]">
@@ -132,15 +145,17 @@ export default function PastorDetailPage() {
                             <div className="w-full lg:w-7/12 space-y-8">
                                 {/* Badge */}
                                 <div>
-                                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[hsl(var(--primary))/0.1] to-[hsl(var(--secondary))/0.05] border border-[hsl(var(--primary))/0.15] text-[hsl(var(--primary))] text-[10px] font-bold uppercase tracking-[0.2em] mb-5 shadow-lg shadow-[hsl(var(--primary))/0.03]">
-                                        <Sparkles size={11} className="animate-pulse" /> Liderazgo Pastoral
-                                    </div>
+                                    {getString(cms, "badge_label") && (
+                                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[hsl(var(--primary))/0.1] to-[hsl(var(--secondary))/0.05] border border-[hsl(var(--primary))/0.15] text-[hsl(var(--primary))] text-[10px] font-bold uppercase tracking-[0.2em] mb-5 shadow-lg shadow-[hsl(var(--primary))/0.03]">
+                                            <Sparkles size={11} className="animate-pulse" /> {getString(cms, "badge_label")}
+                                        </div>
+                                    )}
                                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-[hsl(var(--text-primary))] dark:text-white tracking-tight leading-[1.05] mb-3">
                                         {pastor.name}
                                     </h1>
                                     <div className="h-1 w-16 rounded-full bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))] mb-4" />
                                     <p className="text-lg md:text-xl font-bold text-[hsl(var(--primary))] tracking-wide">
-                                        {pastor.role || 'Pastor'}
+                                        {pastor.role || getString(cms, "role_fallback")}
                                     </p>
                                 </div>
 
@@ -148,29 +163,38 @@ export default function PastorDetailPage() {
                                 <div className="relative p-6 md:p-7 bg-gradient-to-br from-[hsl(var(--surface-1))] to-white dark:from-white/[0.03] dark:to-white/[0.01] rounded-[1.25rem] border border-[hsl(var(--border))]/50 dark:border-white/[0.05] shadow-lg shadow-black/10/30 dark:shadow-none">
                                     <Quote className="absolute top-5 left-5 text-[hsl(var(--primary))/0.1]" size={40} />
                                     <p className="relative z-10 text-base md:text-lg text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium italic leading-relaxed pt-8 pl-1">
-                                        &ldquo;{pastor.bio_short || pastor.story || localPastor?.shortStory || 'El amor de Cristo nos impulsa a servir con alegría y dedicación.'}&rdquo;
+                                        &ldquo;{pastor.bio_short || pastor.story || ''}&rdquo;
                                     </p>
                                     <div className="flex items-center gap-3 mt-5 pl-1">
                                         <div className="h-px flex-1 bg-gradient-to-r from-[hsl(var(--primary))/0.3] to-transparent max-w-[80px]" />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Filosofía de vida</span>
+                                        {getString(cms, "quote_subtitle") && (
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{getString(cms, "quote_subtitle")}</span>
+                                        )}
                                     </div>
                                 </div>
 
                                 {/* ── Stats / Tags ── */}
-                                <div className="flex flex-wrap gap-3">
-                                    {[
-                                        { label: 'Pastor', color: 'from-blue-500/10 to-blue-500/5 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border-blue-200/50 dark:border-blue-500/10' },
-                                        { label: 'Líder', color: 'from-emerald-500/10 to-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-500/10' },
-                                        { label: 'Consejero', color: 'from-amber-500/10 to-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-200/50 dark:border-amber-500/10' },
-                                    ].map((tag, i) => (
-                                        <span
-                                            key={i}
-                                            className={`px-3 py-1.5 rounded-lg bg-gradient-to-r ${tag.color} border text-[10px] font-bold uppercase tracking-wider`}
-                                        >
-                                            {tag.label}
-                                        </span>
-                                    ))}
-                                </div>
+                                {(() => {
+                                    const tagLabels = getStringArray(cms, "tags");
+                                    const tagColors = [
+                                        'from-blue-500/10 to-blue-500/5 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border-blue-200/50 dark:border-blue-500/10',
+                                        'from-emerald-500/10 to-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-500/10',
+                                        'from-amber-500/10 to-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-200/50 dark:border-amber-500/10',
+                                    ];
+                                    if (tagLabels.length === 0) return null;
+                                    return (
+                                        <div className="flex flex-wrap gap-3">
+                                            {tagLabels.map((label, i) => (
+                                                <span
+                                                    key={i}
+                                                    className={`px-3 py-1.5 rounded-lg bg-gradient-to-r ${tagColors[i % tagColors.length]} border text-[10px] font-bold uppercase tracking-wider`}
+                                                >
+                                                    {label}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    );
+                                })()}
 
                                 {/* ── Redes Sociales ── siempre visibles, monocromáticas */}
                                 <div className="flex items-center gap-3">
@@ -221,9 +245,11 @@ export default function PastorDetailPage() {
                                         <BookOpen size={18} className="text-[hsl(var(--primary))]" />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1.5">Versículo Lema</p>
+                                        {getString(cms, "motto_label") && (
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1.5">{getString(cms, "motto_label")}</p>
+                                        )}
                                         <p className="text-base md:text-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed">
-                                            {pastor.bio_short || pastor.story || localPastor?.shortStory || 'Porque de tal manera amó Dios al mundo, que ha dado a su Hijo unigénito, para que todo aquel que en él cree no se pierda, sino que tenga vida eterna. — Juan 3:16'}
+                                            {pastor.bio_short || pastor.story || ''}
                                         </p>
                                     </div>
                                 </div>
@@ -247,12 +273,16 @@ export default function PastorDetailPage() {
                                     <Cross size={16} className="text-[hsl(var(--primary))]" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl md:text-3xl font-black text-[hsl(var(--text-primary))] dark:text-white tracking-tight leading-tight">
-                                        Su Historia
-                                    </h2>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5">
-                                        Testimonio de vida y ministerio
-                                    </p>
+                                    {getString(cms, "story_title") && (
+                                        <h2 className="text-2xl md:text-3xl font-black text-[hsl(var(--text-primary))] dark:text-white tracking-tight leading-tight">
+                                            {getString(cms, "story_title")}
+                                        </h2>
+                                    )}
+                                    {getString(cms, "story_subtitle") && (
+                                        <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5">
+                                            {getString(cms, "story_subtitle")}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="flex-1 h-px bg-gradient-to-r from-[hsl(var(--primary))/0.15] to-transparent ml-4" />
                             </div>
@@ -279,7 +309,7 @@ export default function PastorDetailPage() {
                                 "
                             >
                                 {/* Renderizar bio_full como HTML seguro */}
-                                <div dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(pastor.bio_full || localPastor?.fullStory || pastor.bio_short || pastor.story || 'Próximamente compartiremos más sobre su historia y ministerio.') }} />
+                                <div dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(pastor.bio_full || pastor.bio_short || pastor.story || '') }} />
                             </div>
 
                             {/* ── Footer decorativo ── */}
@@ -300,26 +330,34 @@ export default function PastorDetailPage() {
                 <section className="relative py-16 md:py-20">
                     <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
                         <div className="max-w-2xl mx-auto text-center">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[hsl(var(--primary))/0.06] border border-[hsl(var(--primary))/0.1] text-[hsl(var(--primary))] text-[10px] font-bold uppercase tracking-[0.2em] mb-5">
-                                <Heart size={11} /> Comunidad de Fe
-                            </div>
-                            <p className="text-lg md:text-xl text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed mb-8 max-w-lg mx-auto">
-                                ¿Deseas conectar con el Pastor {pastor.name.split(' ')[0]} o saber más sobre su ministerio?
-                            </p>
+                            {getString(cms, "cta_eyebrow") && (
+                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[hsl(var(--primary))/0.06] border border-[hsl(var(--primary))/0.1] text-[hsl(var(--primary))] text-[10px] font-bold uppercase tracking-[0.2em] mb-5">
+                                    <Heart size={11} /> {getString(cms, "cta_eyebrow")}
+                                </div>
+                            )}
+                            {getString(cms, "cta_description") && (
+                                <p className="text-lg md:text-xl text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed mb-8 max-w-lg mx-auto">
+                                    {applyTemplate(getString(cms, "cta_description"), { first_name: pastor.name.split(' ')[0] })}
+                                </p>
+                            )}
                             <div className="flex flex-wrap items-center justify-center gap-3">
-                                <Link
-                                    href="/pastores"
-                                    className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wider hover:scale-105 transition-all shadow-xl shadow-[hsl(var(--primary))/0.25]"
-                                >
-                                    <ArrowLeft size={14} />
-                                    Conocer al equipo
-                                </Link>
-                                <Link
-                                    href="/sedes"
-                                    className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-[hsl(var(--surface-2))] dark:bg-white/[0.05] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs font-bold uppercase tracking-wider hover:scale-105 transition-all border border-[hsl(var(--border))] dark:border-white/[0.06]"
-                                >
-                                    Nuestras sedes
-                                </Link>
+                                {getString(cms, "cta_primary_label") && (
+                                    <Link
+                                        href="/pastores"
+                                        className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wider hover:scale-105 transition-all shadow-xl shadow-[hsl(var(--primary))/0.25]"
+                                    >
+                                        <ArrowLeft size={14} />
+                                        {getString(cms, "cta_primary_label")}
+                                    </Link>
+                                )}
+                                {getString(cms, "cta_secondary_label") && (
+                                    <Link
+                                        href="/sedes"
+                                        className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-[hsl(var(--surface-2))] dark:bg-white/[0.05] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs font-bold uppercase tracking-wider hover:scale-105 transition-all border border-[hsl(var(--border))] dark:border-white/[0.06]"
+                                    >
+                                        {getString(cms, "cta_secondary_label")}
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     </div>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo,useState } from "react";
+import { useMemo, useState } from "react";
 
 import RichText from "@/components/public/RichText";
+import PublicHeroWithSlides from "@/components/public/PublicHeroWithSlides";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
-import { Bell,ChevronLeft,ChevronRight,MapPin,Star } from "lucide-react";
+import { Bell, ChevronLeft, ChevronRight, MapPin, Star } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 
@@ -25,14 +26,6 @@ interface CalendarDay {
     event?: boolean;
 }
 
-const CATEGORY_FILTERS = [
-    "Todos",
-    "Conferencias",
-    "Grupos de Conexión",
-    "Cursos & Talleres",
-    "Especiales",
-];
-
 function formatMonthDay(date?: string) {
     if (!date) return { month: "", day: "" };
     const parts = date.trim().split(/\s+/);
@@ -46,30 +39,40 @@ export default function EventosPage() {
     const heroPage = useCmsV2Page('events');
     const heroContent = heroPage?.blocks?.hero;
     const feedContent = heroPage?.blocks?.feed;
-    const eventsPage = useCmsV2Page('events');
-    const eventsContent = eventsPage?.blocks?.events;
+    const eventsContent = feedContent;
     const [activeFilter, setActiveFilter] = useState("Todos");
     const [calendarView, setCalendarView] = useState<"Semanal" | "Mensual" | "Anual">("Mensual");
     const [currentMonth, setCurrentMonth] = useState(5); // June (0-indexed)
     const [currentYear, setCurrentYear] = useState(2026);
 
-    const heroEyebrow = heroContent?.eyebrow || "Calendario de Comunidad";
-    const heroTitle = heroContent?.title || "Nuestra Agenda";
-    const heroDescription =
-        heroContent?.description ||
-        "Espacios diseñados para el crecimiento, la conexión y la guía espiritual.";
-    const feed = feedContent?.content ? JSON.parse(feedContent.content) : null;
-    const categoryFilters = Array.isArray(feed?.filters) && feed.filters.length > 0 ? (feed.filters as string[]) : CATEGORY_FILTERS;
-    const filtersTitle = feed?.filters_title || "Filtrar por tipo";
-    const syncCalendarCta = feed?.sync_calendar_cta || "Sincronizar Calendario";
-    const syncCalendarToast = feed?.sync_calendar_toast || "Calendario descargado — impórtalo en Google Calendar o Outlook";
-    const notificationsTitle = feed?.notifications_title || "Quieres recordatorios?";
-    const notificationsDesc = feed?.notifications_desc || "Recibe avisos de tus eventos favoritos.";
-    const notificationsToast = feed?.notifications_toast || "Notificaciones de eventos próximamente — te avisaremos";
-    const highlightsTitle = feed?.highlights_title || "Destacados";
-    const highlightsEmpty = feed?.highlights_empty || "Sin destacados publicados todavia.";
-    const noUpcomingLabel = feed?.no_upcoming_label || "Sin eventos proximos publicados.";
-    const noLocation = feed?.no_location || "Sin ubicacion publicada";
+    const heroEyebrow = typeof heroContent?.eyebrow === "string" ? heroContent.eyebrow : "";
+    const heroTitle = typeof heroContent?.title === "string" ? heroContent.title : "";
+    const heroDescription = typeof heroContent?.description === "string" ? heroContent.description : "";
+    const feed = eventsContent?.parsed && typeof eventsContent.parsed === "object" && !Array.isArray(eventsContent.parsed)
+        ? eventsContent.parsed as Record<string, unknown>
+        : {};
+    const categoryFilters = Array.isArray(feed.filters) ? (feed.filters as string[]) : [];
+    const filtersTitle = typeof feed.filters_title === "string" ? feed.filters_title : "";
+    const syncCalendarCta = typeof feed.sync_calendar_cta === "string" ? feed.sync_calendar_cta : "";
+    const syncCalendarToast = typeof feed.sync_calendar_toast === "string" ? feed.sync_calendar_toast : "";
+    const notificationsTitle = typeof feed.notifications_title === "string" ? feed.notifications_title : "";
+    const notificationsDesc = typeof feed.notifications_desc === "string" ? feed.notifications_desc : "";
+    const notificationsToast = typeof feed.notifications_toast === "string" ? feed.notifications_toast : "";
+    const highlightsTitle = typeof feed.highlights_title === "string" ? feed.highlights_title : "";
+    const highlightsEmpty = typeof feed.highlights_empty === "string" ? feed.highlights_empty : "";
+    const noUpcomingLabel = typeof feed.no_upcoming_label === "string" ? feed.no_upcoming_label : "";
+    const noLocation = typeof feed.no_location === "string" ? feed.no_location : "";
+    const emptyTitle = typeof feed.empty_title === "string" ? feed.empty_title : "";
+    const emptyDescription = typeof feed.empty_description === "string" ? feed.empty_description : "";
+    const upcomingLabel = typeof feed.upcoming_label === "string" ? feed.upcoming_label : "";
+    const calendarTitle = typeof feed.calendar_title === "string" ? feed.calendar_title : "";
+    const calendarDescription = typeof feed.calendar_description === "string" ? feed.calendar_description : "";
+    const todayLabel = typeof feed.today_label === "string" ? feed.today_label : "";
+    const noEventsTitle = typeof feed.no_events_title === "string" ? feed.no_events_title : "";
+    const noEventsDescription = typeof feed.no_events_description === "string" ? feed.no_events_description : "";
+    const featuredLabel = typeof feed.featured_label === "string" ? feed.featured_label : "";
+
+    const hasHero = Boolean(heroTitle || heroDescription || heroEyebrow);
 
     const parsedEvents = useMemo(
         () =>
@@ -77,6 +80,19 @@ export default function EventosPage() {
                 ? (eventsContent?.parsed as PublicEventItem[]).filter((event) => event.status !== "archived")
                 : [],
         [eventsContent?.parsed],
+    );
+    const heroSlides = useMemo(
+        () =>
+            parsedEvents
+                .filter((event) => Boolean(event.img))
+                .slice(0, 4)
+                .map((event) => ({
+                    src: String(event.img),
+                    alt: event.title || "Evento",
+                    title: event.title || undefined,
+                    caption: event.location || event.category || undefined,
+                })),
+        [parsedEvents],
     );
 
     const filteredEvents = useMemo(() => {
@@ -121,33 +137,22 @@ export default function EventosPage() {
 
     return (
         <main className="pt-[88px] pb-4 overflow-hidden">
-            <header className="ccf-section-tight ccf-container">
-                <div className="md:grid md:grid-cols-12 gap-3 items-end">
-                    <div className="md:col-span-8">
-                        <span
-                            className="text-xs font-semibold uppercase tracking-wide mb-4 block"
-                            style={{ color: "var(--site-secondary)" }}
-                        >
-                            {heroEyebrow}
-                        </span>
-                        <h1
-                            className="max-w-3xl font-bold ccf-display text-4xl sm:text-5xl lg:text-6xl"
-                            style={{ color: "var(--site-on-surface)" }}
-                        >
-                            {heroTitle}
-                        </h1>
-                    </div>
-                    <div className="md:col-span-4 mt-3 md:mt-0">
-                        <RichText html={heroDescription} className="ccf-body" />
-                    </div>
-                </div>
-            </header>
+            {hasHero && (
+                <PublicHeroWithSlides
+                    eyebrow={heroEyebrow}
+                    title={heroTitle}
+                    description={heroDescription}
+                    slides={heroSlides}
+                />
+            )}
 
-            <section className="ccf-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 mb-16">
-                <div
-                    className="sm:col-span-2 md:col-span-2 relative min-h-[300px] md:h-[440px] rounded-lg overflow-hidden group"
-                    style={{ background: "var(--site-surface-container)" }}
-                >
+            {(hasEvents || categoryFilters.length > 0) && (
+                <section className="ccf-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 mb-16">
+                    {featuredEvent && (
+                        <div
+                            className="sm:col-span-2 md:col-span-2 relative min-h-[300px] md:h-[440px] rounded-lg overflow-hidden group"
+                            style={{ background: "var(--site-surface-container)" }}
+                        >
                     {featuredEvent?.img ? (
                         <Image
                             src={featuredEvent.img}
@@ -175,15 +180,17 @@ export default function EventosPage() {
                     {featuredEvent ? (
                         <div className="absolute bottom-0 p-4 w-full">
                             <div className="flex items-center gap-2 mb-4">
-                                <span
-                                    className="px-3 py-1 rounded-full font-semibold tracking-wide uppercase"
-                                    style={{
-                                        background: "var(--site-primary-container)",
-                                        color: "var(--site-primary)",
-                                    }}
-                                >
-                                    Destacado
-                                </span>
+                                {featuredLabel && (
+                                    <span
+                                        className="px-3 py-1 rounded-full font-semibold tracking-wide uppercase"
+                                        style={{
+                                            background: "var(--site-primary-container)",
+                                            color: "var(--site-primary)",
+                                        }}
+                                    >
+                                        {featuredLabel}
+                                    </span>
+                                )}
                                 {featuredEvent.date ? (
                                     <span
                                         className="text-xs font-bold"
@@ -193,129 +200,129 @@ export default function EventosPage() {
                                     </span>
                                 ) : null}
                             </div>
-                            <h2
-                                className="text-xl font-bold mb-4"
-                                style={{ color: "var(--site-on-surface)" }}
-                            >
-                                {featuredEvent.title || "Evento destacado"}
-                            </h2>
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => {
-                                        if (featuredEvent) {
-                                            toast.success(`Reserva iniciada para "${featuredEvent.title}"`);
-                                        }
-                                    }}
-                                    className="px-4 py-1.5 rounded-md font-black text-sm uppercase tracking-wide text-white transition-all hover:scale-105"
-                                    style={{
-                                        background: "var(--site-cta-gradient)",
-                                    }}
+                            {featuredEvent.title && (
+                                <h2
+                                    className="text-xl font-bold mb-4"
+                                    style={{ color: "var(--site-on-surface)" }}
                                 >
-                                    Reservar lugar
-                                </button>
-                                {featuredEvent.location ? (
+                                    {featuredEvent.title}
+                                </h2>
+                            )}
+                            <div className="flex items-center gap-3">
+                                {featuredEvent.location && (
                                     <span
                                         className="flex items-center gap-2 text-sm font-bold"
                                         style={{ color: "var(--site-primary)" }}
                                     >
                                         <MapPin size={16} /> {featuredEvent.location}
                                     </span>
-                                ) : null}
+                                )}
                             </div>
                         </div>
                     ) : (
-                        <div className="absolute inset-0 flex items-center justify-center p-4">
-                            <div
-                                className="max-w-md rounded-lg p-4 text-center"
-                                style={{ background: "var(--site-overlay-bg)", backdropFilter: "blur(12px)" }}
-                            >
-                                <p
-                                    className="text-[10px] font-semibold uppercase tracking-wide mb-3"
-                                    style={{ color: "var(--site-on-surface-variant)" }}
+                        (emptyTitle || emptyDescription) && (
+                            <div className="absolute inset-0 flex items-center justify-center p-4">
+                                <div
+                                    className="max-w-md rounded-lg p-4 text-center"
+                                    style={{ background: "var(--site-overlay-bg)", backdropFilter: "blur(12px)" }}
                                 >
-                                    {feed?.empty_title || "Sin eventos publicados"}
-                                </p>
-                                <h2
-                                    className="text-xl font-bold mb-3"
-                                    style={{ color: "var(--site-on-surface)" }}
-                                >
-                                    {feed?.empty_title || "Esperando agenda desde el CMS"}
-                                </h2>
-                                <p
-                                    className="text-sm"
-                                    style={{ color: "var(--site-on-surface-variant)" }}
-                                >
-                                    {feed?.empty_description || "Cuando haya eventos reales publicados, apareceran aqui sin contenido simulado."}
-                                </p>
+                                    {emptyTitle && (
+                                        <h2
+                                            className="text-xl font-bold mb-3"
+                                            style={{ color: "var(--site-on-surface)" }}
+                                        >
+                                            {emptyTitle}
+                                        </h2>
+                                    )}
+                                    {emptyDescription && (
+                                        <p
+                                            className="text-sm"
+                                            style={{ color: "var(--site-on-surface-variant)" }}
+                                        >
+                                            {emptyDescription}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        )
                     )}
                 </div>
+                    )}
 
                 <div
                     className="rounded-lg p-4 flex flex-col justify-between"
                     style={{ background: "var(--site-surface-container-low)" }}
                 >
-                    <div>
-                        <h3
-                            className="text-xl font-bold mb-3"
-                            style={{ color: "var(--site-on-surface)" }}
-                        >
-                            {filtersTitle}
-                        </h3>
-                        <div className="space-y-2">
-                            {categoryFilters.map((cat) => (
-                                <button
-                                    key={cat}
-                                    onClick={() => setActiveFilter(cat)}
-                                    className="w-full px-4 py-1.5 rounded-md flex items-center justify-between text-sm font-bold transition-all text-left"
-                                    style={{
-                                        background:
-                                            activeFilter === cat
-                                                ? "var(--site-primary-container)"
-                                                : "var(--site-surface-container)",
-                                        color:
-                                            activeFilter === cat
-                                                ? "var(--site-primary)"
-                                                : "var(--site-on-surface-variant)",
-                                    }}
+                    {categoryFilters.length > 0 && (
+                        <div>
+                            {filtersTitle && (
+                                <h3
+                                    className="text-xl font-bold mb-3"
+                                    style={{ color: "var(--site-on-surface)" }}
                                 >
-                                    {cat}
-                                    {activeFilter === cat ? (
-                                        <Star size={14} style={{ color: "var(--site-primary)" }} />
-                                    ) : null}
-                                </button>
-                            ))}
+                                    {filtersTitle}
+                                </h3>
+                            )}
+                            <div className="space-y-2">
+                                {categoryFilters.map((cat) => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => setActiveFilter(cat)}
+                                        className="w-full px-4 py-1.5 rounded-md flex items-center justify-between text-sm font-bold transition-all text-left"
+                                        style={{
+                                            background:
+                                                activeFilter === cat
+                                                    ? "var(--site-primary-container)"
+                                                    : "var(--site-surface-container)",
+                                            color:
+                                                activeFilter === cat
+                                                    ? "var(--site-primary)"
+                                                    : "var(--site-on-surface-variant)",
+                                        }}
+                                    >
+                                        {cat}
+                                        {activeFilter === cat ? (
+                                            <Star size={14} style={{ color: "var(--site-primary)" }} />
+                                        ) : null}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
                     <div
                         className="mt-3 pt-6"
                         style={{ borderTop: "1px solid var(--site-outline-variant)" }}
                     >
-                        <p
-                            className="text-[10px] font-semibold uppercase tracking-wide mb-3"
-                            style={{ color: "var(--site-on-surface-variant)" }}
-                        >
-                            {feed?.upcoming_label || "Proximo en 48 horas"}
-                        </p>
+                        {upcomingLabel && (
+                            <p
+                                className="text-[10px] font-semibold uppercase tracking-wide mb-3"
+                                style={{ color: "var(--site-on-surface-variant)" }}
+                            >
+                                {upcomingLabel}
+                            </p>
+                        )}
                         {upcomingEvent ? (
                             <div className="flex items-center gap-4">
-                                <div
-                                    className="w-12 h-8 rounded-lg flex items-center justify-center font-black text-lg shrink-0"
-                                    style={{
-                                        background: "var(--site-primary-container)",
-                                        color: "var(--site-primary)",
-                                    }}
-                                >
-                                    {upcomingEvent.date || "!"}
-                                </div>
-                                <div>
-                                    <p
-                                        className="text-sm font-semibold"
-                                        style={{ color: "var(--site-on-surface)" }}
+                                {upcomingEvent.date && (
+                                    <div
+                                        className="w-12 h-8 rounded-lg flex items-center justify-center font-black text-lg shrink-0"
+                                        style={{
+                                            background: "var(--site-primary-container)",
+                                            color: "var(--site-primary)",
+                                        }}
                                     >
-                                        {upcomingEvent.title || "Proximo evento"}
-                                    </p>
+                                        {upcomingEvent.date}
+                                    </div>
+                                )}
+                                <div>
+                                    {upcomingEvent.title && (
+                                        <p
+                                            className="text-sm font-semibold"
+                                            style={{ color: "var(--site-on-surface)" }}
+                                        >
+                                            {upcomingEvent.title}
+                                        </p>
+                                    )}
                                     <p
                                         className="text-xs italic"
                                         style={{ color: "var(--site-on-surface-variant)" }}
@@ -325,17 +332,20 @@ export default function EventosPage() {
                                 </div>
                             </div>
                         ) : (
-                            <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                                {noUpcomingLabel}
-                            </p>
+                            noUpcomingLabel && (
+                                <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    {noUpcomingLabel}
+                                </p>
+                            )
                         )}
                     </div>
                 </div>
             </section>
+            )}
 
-            <div className="ccf-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 mb-20">
-                {hasEvents ? (
-                    upcomingCards.map((event) => {
+            {hasEvents && (
+                <div className="ccf-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 mb-20">
+                    {upcomingCards.map((event) => {
                         const { month, day } = formatMonthDay(event.date);
                         return (
                             <article
@@ -347,7 +357,7 @@ export default function EventosPage() {
                                     {event.img ? (
                                         <Image
                                             src={event.img}
-                                            alt={event.title || "Evento"}
+                                            alt={event.title || ""}
                                             fill
                                             className="object-cover transition-transform duration-500 group-hover:scale-110"
                                         />
@@ -360,7 +370,7 @@ export default function EventosPage() {
                                             }}
                                         />
                                     )}
-                                    {month || day ? (
+                                    {(month || day) && (
                                         <div
                                             className="absolute top-4 right-4 p-3 rounded-lg text-center min-w-[64px]"
                                             style={{
@@ -368,329 +378,362 @@ export default function EventosPage() {
                                                 backdropFilter: "blur(12px)",
                                             }}
                                         >
-                                            {month ? (
+                                            {month && (
                                                 <p
                                                     className="text-[9px] font-semibold uppercase tracking-wider"
                                                     style={{ color: "var(--site-on-surface-variant)" }}
                                                 >
                                                     {month}
                                                 </p>
-                                            ) : null}
-                                            {day ? (
+                                            )}
+                                            {day && (
                                                 <p
                                                     className="text-xl font-bold"
                                                     style={{ color: "var(--site-primary)" }}
                                                 >
                                                     {day}
                                                 </p>
-                                            ) : null}
+                                            )}
                                         </div>
-                                    ) : null}
+                                    )}
                                 </div>
                                 <div className="p-8">
-                                    <span
-                                        className="text-[10px] font-semibold uppercase tracking-wide mb-2 block"
-                                        style={{ color: "var(--site-secondary)" }}
-                                    >
-                                        {event.category || "Evento"}
-                                    </span>
-                                    <h4
-                                        className="font-black text-lg mb-3 group-hover:opacity-80 transition-opacity"
-                                        style={{ color: "var(--site-on-surface)" }}
-                                    >
-                                        {event.title || "Evento publicado"}
-                                    </h4>
-                                    <p
-                                        className="text-sm leading-relaxed line-clamp-2"
-                                        style={{ color: "var(--site-on-surface-variant)" }}
-                                    >
-                                        {event.excerpt || event.location || "Contenido real desde el CMS"}
-                                    </p>
+                                    {event.category && (
+                                        <span
+                                            className="text-[10px] font-semibold uppercase tracking-wide mb-2 block"
+                                            style={{ color: "var(--site-secondary)" }}
+                                        >
+                                            {event.category}
+                                        </span>
+                                    )}
+                                    {event.title && (
+                                        <h4
+                                            className="font-black text-lg mb-3 group-hover:opacity-80 transition-opacity"
+                                            style={{ color: "var(--site-on-surface)" }}
+                                        >
+                                            {event.title}
+                                        </h4>
+                                    )}
+                                    {(event.excerpt || event.location) && (
+                                        <p
+                                            className="text-sm leading-relaxed line-clamp-2"
+                                            style={{ color: "var(--site-on-surface-variant)" }}
+                                        >
+                                            {event.excerpt || event.location}
+                                        </p>
+                                    )}
                                 </div>
                             </article>
                         );
-                    })
-                ) : (
+                    })}
+                </div>
+            )}
+            {!hasEvents && (noEventsTitle || noEventsDescription) && (
+                <div className="ccf-container grid grid-cols-1 mb-20">
                     <div
-                        className="md:col-span-3 rounded-lg p-4 text-center"
+                        className="rounded-lg p-4 text-center"
                         style={{ background: "var(--site-surface-container-low)" }}
                     >
-                        <p
-                            className="text-[10px] font-semibold uppercase tracking-wide mb-3"
-                            style={{ color: "var(--site-on-surface-variant)" }}
-                        >
-                            {feed?.no_events_title || "Sin eventos publicados"}
-                        </p>
-                        <h3
-                            className="text-lg font-bold mb-2"
-                            style={{ color: "var(--site-on-surface)" }}
-                        >
-                            {feed?.no_events_title || "El calendario aun no tiene contenido real"}
-                        </h3>
-                        <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                            {feed?.no_events_description || "Cuando el CMS publique eventos, apareceran aqui sin tarjetas inventadas."}
-                        </p>
-                    </div>
-                )}
-            </div>
-
-            <section className="ccf-section-tight ccf-container">
-                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                    <div>
-                        <h2
-                            className="text-xl font-bold tracking-tight"
-                            style={{ color: "var(--site-on-surface)" }}
-                        >
-                            {feed?.calendar_title || "Explora nuestro Calendario"}
-                        </h2>
-                        <p
-                            className="text-sm mt-1"
-                            style={{ color: "var(--site-on-surface-variant)" }}
-                        >
-                            {feed?.calendar_description || "Organiza tu tiempo con nuestras actividades comunitarias."}
-                        </p>
-                    </div>
-                    <div
-                        className="inline-flex p-1 rounded-lg"
-                        style={{ background: "var(--site-surface-container-high)" }}
-                    >
-                        {(["Semanal", "Mensual", "Anual"] as const).map((value) => (
-                            <button
-                                key={value}
-                                onClick={() => setCalendarView(value)}
-                                className="px-3 py-2 rounded-lg text-xs font-bold tracking-wide uppercase transition-all"
-                                style={
-                                    calendarView === value
-                                        ? {
-                                              background: "var(--site-primary)",
-                                              color: "var(--site-on-primary)",
-                                          }
-                                        : { color: "var(--site-on-surface-variant)" }
-                                }
+                        {noEventsTitle && (
+                            <h3
+                                className="text-lg font-bold mb-2"
+                                style={{ color: "var(--site-on-surface)" }}
                             >
-                                {value}
-                            </button>
-                        ))}
+                                {noEventsTitle}
+                            </h3>
+                        )}
+                        {noEventsDescription && (
+                            <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+                                {noEventsDescription}
+                            </p>
+                        )}
                     </div>
                 </div>
+            )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-                    <div
-                        className="lg:col-span-8 rounded-lg p-3 md:p-4"
-                        style={{
-                            background: "var(--site-surface-container-low)",
-                            border: "1px solid var(--site-outline-variant)",
-                        }}
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-4">
-                                <h3
-                                    className="text-lg font-bold"
+            {(calendarTitle || calendarDescription) && (
+                <section className="ccf-section-tight ccf-container">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                        <div>
+                            {calendarTitle && (
+                                <h2
+                                    className="text-xl font-bold tracking-tight"
                                     style={{ color: "var(--site-on-surface)" }}
                                 >
-                                    {monthNames[currentMonth]} {currentYear}
-                                </h3>
-                                <div className="flex gap-1">
-                                    <button
-                                        onClick={() => {
-                                            if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear((y) => y - 1); }
-                                            else setCurrentMonth((m) => m - 1);
-                                        }}
-                                        className="w-8 h-8 rounded-md flex items-center justify-center transition-colors hover:scale-110"
-                                        style={{
-                                            background: "var(--site-surface-container)",
-                                            color: "var(--site-on-surface)",
-                                        }}
-                                    >
-                                        <ChevronLeft size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear((y) => y + 1); }
-                                            else setCurrentMonth((m) => m + 1);
-                                        }}
-                                        className="w-8 h-8 rounded-md flex items-center justify-center transition-colors hover:scale-110"
-                                        style={{
-                                            background: "var(--site-surface-container)",
-                                            color: "var(--site-on-surface)",
-                                        }}
-                                    >
-                                        <ChevronRight size={16} />
-                                    </button>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => { setCurrentMonth(new Date().getMonth()); setCurrentYear(new Date().getFullYear()); }}
-                                className="text-xs font-semibold uppercase tracking-wide"
-                                style={{ color: "var(--site-primary)" }}
-                                >
-                                {feed?.today_label || "HOY"}
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-7 gap-1 mb-2">
-                            {[["D","Dom"], ["L","Lun"], ["M","Mar"], ["X","Mie"], ["J","Jue"], ["V","Vie"], ["S","Sab"]].map(([short, full]) => (
-                                <div
-                                    key={full}
-                                    className="text-center py-2 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide"
+                                    {calendarTitle}
+                                </h2>
+                            )}
+                            {calendarDescription && (
+                                <p
+                                    className="text-sm mt-1"
                                     style={{ color: "var(--site-on-surface-variant)" }}
                                 >
-                                    <span className="sm:hidden">{short}</span>
-                                    <span className="hidden sm:inline">{full}</span>
-                                </div>
-                            ))}
+                                    {calendarDescription}
+                                </p>
+                            )}
                         </div>
-
-                        <div className="grid grid-cols-7 gap-1">
-                            {calendarDays.map((day, index) => (
-                                <div
-                                    key={index}
-                                    className="aspect-square p-1 flex flex-col items-center justify-between rounded-md cursor-pointer transition-all hover:scale-105"
+                        <div
+                            className="inline-flex p-1 rounded-lg"
+                            style={{ background: "var(--site-surface-container-high)" }}
+                        >
+                            {(["Semanal", "Mensual", "Anual"] as const).map((value) => (
+                                <button
+                                    key={value}
+                                    onClick={() => setCalendarView(value)}
+                                    className="px-3 py-2 rounded-lg text-xs font-bold tracking-wide uppercase transition-all"
                                     style={
-                                        day.n === 24 && !day.prev
+                                        calendarView === value
                                             ? {
-                                                  background: "var(--site-card-highlight)",
-                                                  border: "2px solid var(--site-primary)",
+                                                  background: "var(--site-primary)",
+                                                  color: "var(--site-on-primary)",
                                               }
-                                            : day.prev
-                                            ? { opacity: 0.2 }
-                                            : { background: "transparent" }
+                                            : { color: "var(--site-on-surface-variant)" }
                                     }
                                 >
-                                    <span
-                                        className="text-sm font-bold"
-                                        style={{
-                                            color:
-                                                day.n === 24 && !day.prev
-                                                    ? "var(--site-primary)"
-                                                    : "var(--site-on-surface)",
-                                        }}
-                                    >
-                                        {day.n}
-                                    </span>
-                                    {day.event ? (
-                                        <div
-                                            className="w-1.5 h-1.5 rounded-full"
-                                            style={{ background: "var(--site-primary)" }}
-                                        />
-                                    ) : null}
-                                </div>
+                                    {value}
+                                </button>
                             ))}
                         </div>
                     </div>
 
-                    <div className="lg:col-span-4 space-y-5">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                         <div
-                            className="rounded-lg p-4"
+                            className="lg:col-span-8 rounded-lg p-3 md:p-4"
                             style={{
                                 background: "var(--site-surface-container-low)",
                                 border: "1px solid var(--site-outline-variant)",
                             }}
                         >
-                            <h3
-                                className="text-xl font-bold mb-3 flex items-center gap-2"
-                                style={{ color: "var(--site-on-surface)" }}
-                            >
-                                <Star size={18} style={{ color: "var(--site-primary)" }} />
-                                {highlightsTitle}
-                            </h3>
-                            <div className="space-y-5">
-                                {hasEvents ? (
-                                    parsedEvents.slice(0, 3).map((event) => (
-                                        <div
-                                            key={`${event.title || "event"}-${event.date || "date"}`}
-                                            className="flex gap-3 group cursor-pointer"
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-4">
+                                    <h3
+                                        className="text-lg font-bold"
+                                        style={{ color: "var(--site-on-surface)" }}
+                                    >
+                                        {monthNames[currentMonth]} {currentYear}
+                                    </h3>
+                                    <div className="flex gap-1">
+                                        <button
+                                            onClick={() => {
+                                                if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear((y) => y - 1); }
+                                                else setCurrentMonth((m) => m - 1);
+                                            }}
+                                            className="w-8 h-8 rounded-md flex items-center justify-center transition-colors hover:scale-110"
+                                            style={{
+                                                background: "var(--site-surface-container)",
+                                                color: "var(--site-on-surface)",
+                                            }}
                                         >
-                                            <div
-                                                className="w-2 shrink-0 rounded-full mt-1"
-                                                style={{ background: "var(--site-primary)", minHeight: "12px" }}
-                                            />
-                                            <div>
-                                                <p
-                                                    className="text-[10px] font-semibold uppercase tracking-wide mb-0.5"
-                                                    style={{ color: "var(--site-primary)" }}
-                                                >
-                                                    {event.category || "Evento"}
-                                                    {event.date ? ` • ${event.date}` : ""}
-                                                </p>
-                                                <h4
-                                                    className="text-sm font-semibold group-hover:opacity-70 transition-opacity"
-                                                    style={{ color: "var(--site-on-surface)" }}
-                                                >
-                                                    {event.title || "Evento publicado"}
-                                                </h4>
-                                                <p
-                                                    className="text-xs line-clamp-1"
-                                                    style={{ color: "var(--site-on-surface-variant)" }}
-                                                >
-                                                    {event.excerpt || event.location || "Contenido real desde el CMS"}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                                        {highlightsEmpty}
-                                    </p>
+                                            <ChevronLeft size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear((y) => y + 1); }
+                                                else setCurrentMonth((m) => m + 1);
+                                            }}
+                                            className="w-8 h-8 rounded-md flex items-center justify-center transition-colors hover:scale-110"
+                                            style={{
+                                                background: "var(--site-surface-container)",
+                                                color: "var(--site-on-surface)",
+                                            }}
+                                        >
+                                            <ChevronRight size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                                {todayLabel && (
+                                    <button
+                                        onClick={() => { setCurrentMonth(new Date().getMonth()); setCurrentYear(new Date().getFullYear()); }}
+                                        className="text-xs font-semibold uppercase tracking-wide"
+                                        style={{ color: "var(--site-primary)" }}
+                                    >
+                                        {todayLabel}
+                                    </button>
                                 )}
                             </div>
-                            <button
-                                onClick={() => {
-                                    const ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//CCF//ES\n" +
-                                        filteredEvents.map((e) => `BEGIN:VEVENT\nSUMMARY:${e.title || "Evento"}\nDESCRIPTION:${e.excerpt || ""}\nEND:VEVENT`).join("\n") +
-                                        "\nEND:VCALENDAR";
-                                    const blob = new Blob([ics], { type: "text/calendar" });
-                                    const url = URL.createObjectURL(blob);
-                                    const a = document.createElement("a");
-                                    a.href = url; a.download = `eventos.ics`; a.click();
-                                    URL.revokeObjectURL(url);
-                                    toast.success(syncCalendarToast);
-                                }}
-                                className="w-full mt-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border transition-all hover:scale-105"
-                                style={{
-                                    borderColor: "var(--site-primary)",
-                                    color: "var(--site-primary)",
-                                }}
-                            >
-                                {syncCalendarCta}
-                            </button>
+
+                            <div className="grid grid-cols-7 gap-1 mb-2">
+                                {[["D","Dom"], ["L","Lun"], ["M","Mar"], ["X","Mie"], ["J","Jue"], ["V","Vie"], ["S","Sab"]].map(([short, full]) => (
+                                    <div
+                                        key={full}
+                                        className="text-center py-2 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide"
+                                        style={{ color: "var(--site-on-surface-variant)" }}
+                                    >
+                                        <span className="sm:hidden">{short}</span>
+                                        <span className="hidden sm:inline">{full}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-7 gap-1">
+                                {calendarDays.map((day, index) => (
+                                    <div
+                                        key={index}
+                                        className="aspect-square p-1 flex flex-col items-center justify-between rounded-md cursor-pointer transition-all hover:scale-105"
+                                        style={
+                                            day.n === 24 && !day.prev
+                                                ? {
+                                                      background: "var(--site-card-highlight)",
+                                                      border: "2px solid var(--site-primary)",
+                                                  }
+                                                : day.prev
+                                                ? { opacity: 0.2 }
+                                                : { background: "transparent" }
+                                        }
+                                    >
+                                        <span
+                                            className="text-sm font-bold"
+                                            style={{
+                                                color:
+                                                    day.n === 24 && !day.prev
+                                                        ? "var(--site-primary)"
+                                                        : "var(--site-on-surface)",
+                                            }}
+                                        >
+                                            {day.n}
+                                        </span>
+                                        {day.event ? (
+                                            <div
+                                                className="w-1.5 h-1.5 rounded-full"
+                                                style={{ background: "var(--site-primary)" }}
+                                            />
+                                        ) : null}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
-                        <div
-                            onClick={() => toast.info(notificationsToast)}
-                            className="rounded-lg p-3 flex items-center gap-4 cursor-pointer transition-all hover:scale-[1.02]"
-                            style={{
-                                background: "var(--site-primary-container)",
-                                border: "1px solid var(--site-outline-variant)",
-                            }}
-                        >
-                            <div
-                                className="w-12 h-8 rounded-lg flex items-center justify-center shrink-0"
-                                style={{
-                                    background: "var(--site-primary)",
-                                    color: "var(--site-on-primary)",
-                                }}
-                            >
-                                <Bell size={20} />
-                            </div>
-                            <div>
-                                <h4
-                                    className="font-black text-sm"
-                                    style={{ color: "var(--site-on-surface)" }}
+                        <div className="lg:col-span-4 space-y-5">
+                            {(highlightsTitle || hasEvents || syncCalendarCta) && (
+                                <div
+                                    className="rounded-lg p-4"
+                                    style={{
+                                        background: "var(--site-surface-container-low)",
+                                        border: "1px solid var(--site-outline-variant)",
+                                    }}
                                 >
-                                    {notificationsTitle}
-                                </h4>
-                                <p
-                                    className="text-xs"
-                                    style={{ color: "var(--site-on-surface-variant)" }}
+                                    {highlightsTitle && (
+                                        <h3
+                                            className="text-xl font-bold mb-3 flex items-center gap-2"
+                                            style={{ color: "var(--site-on-surface)" }}
+                                        >
+                                            <Star size={18} style={{ color: "var(--site-primary)" }} />
+                                            {highlightsTitle}
+                                        </h3>
+                                    )}
+                                    <div className="space-y-5">
+                                        {hasEvents ? (
+                                            parsedEvents.slice(0, 3).map((event) => (
+                                                <div
+                                                    key={`${event.title || "event"}-${event.date || "date"}`}
+                                                    className="flex gap-3 group cursor-pointer"
+                                                >
+                                                    <div
+                                                        className="w-2 shrink-0 rounded-full mt-1"
+                                                        style={{ background: "var(--site-primary)", minHeight: "12px" }}
+                                                    />
+                                                    <div>
+                                                        <p
+                                                            className="text-[10px] font-semibold uppercase tracking-wide mb-0.5"
+                                                            style={{ color: "var(--site-primary)" }}
+                                                        >
+                                                            {event.category}
+                                                            {event.date ? ` • ${event.date}` : ""}
+                                                        </p>
+                                                        {event.title && (
+                                                            <h4
+                                                                className="text-sm font-semibold group-hover:opacity-70 transition-opacity"
+                                                                style={{ color: "var(--site-on-surface)" }}
+                                                            >
+                                                                {event.title}
+                                                            </h4>
+                                                        )}
+                                                        {(event.excerpt || event.location) && (
+                                                            <p
+                                                                className="text-xs line-clamp-1"
+                                                                style={{ color: "var(--site-on-surface-variant)" }}
+                                                            >
+                                                                {event.excerpt || event.location}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            highlightsEmpty && (
+                                                <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+                                                    {highlightsEmpty}
+                                                </p>
+                                            )
+                                        )}
+                                    </div>
+                                    {syncCalendarCta && (
+                                        <button
+                                            onClick={() => {
+                                                const ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//CCF//ES\n" +
+                                                    filteredEvents.map((e) => `BEGIN:VEVENT\nSUMMARY:${e.title || "Evento"}\nDESCRIPTION:${e.excerpt || ""}\nEND:VEVENT`).join("\n") +
+                                                    "\nEND:VCALENDAR";
+                                                const blob = new Blob([ics], { type: "text/calendar" });
+                                                const url = URL.createObjectURL(blob);
+                                                const a = document.createElement("a");
+                                                a.href = url; a.download = `eventos.ics`; a.click();
+                                                URL.revokeObjectURL(url);
+                                                toast.success(syncCalendarToast);
+                                            }}
+                                            className="w-full mt-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border transition-all hover:scale-105"
+                                            style={{
+                                                borderColor: "var(--site-primary)",
+                                                color: "var(--site-primary)",
+                                            }}
+                                        >
+                                            {syncCalendarCta}
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
+                            {(notificationsTitle || notificationsDesc) && (
+                                <div
+                                    onClick={() => toast.info(notificationsToast)}
+                                    className="rounded-lg p-3 flex items-center gap-4 cursor-pointer transition-all hover:scale-[1.02]"
+                                    style={{
+                                        background: "var(--site-primary-container)",
+                                        border: "1px solid var(--site-outline-variant)",
+                                    }}
                                 >
-                                    {notificationsDesc}
-                                </p>
-                            </div>
+                                    <div
+                                        className="w-12 h-8 rounded-lg flex items-center justify-center shrink-0"
+                                        style={{
+                                            background: "var(--site-primary)",
+                                            color: "var(--site-on-primary)",
+                                        }}
+                                    >
+                                        <Bell size={20} />
+                                    </div>
+                                    <div>
+                                        {notificationsTitle && (
+                                            <h4
+                                                className="font-black text-sm"
+                                                style={{ color: "var(--site-on-surface)" }}
+                                            >
+                                                {notificationsTitle}
+                                            </h4>
+                                        )}
+                                        {notificationsDesc && (
+                                            <p
+                                                className="text-xs"
+                                                style={{ color: "var(--site-on-surface-variant)" }}
+                                            >
+                                                {notificationsDesc}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            )}
         </main>
     );
 }

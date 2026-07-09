@@ -4,6 +4,7 @@ import PublicSectionRenderer from "@/components/public/cms/PublicSectionRenderer
 import BreadcrumbNav from "@/components/public/cms/BreadcrumbNav";
 import { Metadata } from "next";
 import { getCmsPublicPage } from "@/lib/cms/v2";
+import { SITE_KEY } from "@/lib/site-config";
 import { CmsPublicPage } from "@/types/cms-v2";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ccf.org";
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!slugValue) return {};
 
   try {
-    const page = await getCmsPublicPage("default", slugValue);
+    const page = await getCmsPublicPage(SITE_KEY, slugValue);
     if (!page) return {};
     const seo = page.seo_json || {};
     const metaTitle = typeof seo.meta_title === "string" && seo.meta_title.trim() ? seo.meta_title : page.title;
@@ -65,7 +66,7 @@ export default async function CcfDynamicPage({ params }: { params: Promise<{ slu
 
   let page: CmsPublicPage | null = null;
   try {
-    page = await getCmsPublicPage("default", slugValue);
+    page = await getCmsPublicPage(SITE_KEY, slugValue);
   } catch {
     notFound();
   }

@@ -3,9 +3,10 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronRight, Cross, Sparkles } from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import RichText from "@/components/public/RichText";
 import { useCmsV2Page } from '@/hooks/useCmsV2Page';
+import PublicHeroWithSlides from '@/components/public/PublicHeroWithSlides';
 
 import { sanitizeCmsHtml } from '@/lib/cms/sanitize';
 
@@ -23,11 +24,10 @@ type CmsPastor = {
 };
 
 export default function PastoresIndexPage() {
-    const heroPage = useCmsV2Page('pastors');
-    const heroCms = heroPage?.blocks?.hero;
-    const feedCms = heroPage?.blocks?.feed;
-    const pastorsPage = useCmsV2Page('pastors');
-    const pastorsCms = pastorsPage?.blocks?.pastors;
+    const page = useCmsV2Page('pastors');
+    const heroCms = page?.blocks?.hero;
+    const feedCms = page?.blocks?.feed;
+    const pastorsCms = page?.blocks?.pastors;
 
     const heroContent = heroCms?.content ? JSON.parse(heroCms.content) : null;
     const feedContent = feedCms?.content ? JSON.parse(feedCms.content) : null;
@@ -35,57 +35,28 @@ export default function PastoresIndexPage() {
         const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
         return Array.isArray(list) ? list : [];
     }, [pastorsCms]);
-    const heroBadge = feedContent?.hero_badge || "Conoce a nuestro equipo pastoral";
-    const heroTitle = heroContent?.title || feedContent?.hero_title || "Liderazgo Pastoral";
-    const heroDescription = heroContent?.description || feedContent?.hero_description || "Hombres y mujeres llamados por Dios para servir, guiar y amar a esta casa.";
-    const heroBgImage = heroContent?.bg_image || null;
-    const loadingLabel = feedContent?.loading_label || "Cargando...";
-    const emptyTitle = feedContent?.empty_title || "No hay líderes pastorales registrados aún.";
-    const cardCta = feedContent?.card_cta || "Conocer más";
-    const principalLabel = feedContent?.principal_label || "Pastor Principal";
+    const heroBadge = typeof feedContent?.hero_badge === "string" ? feedContent.hero_badge : "";
+    const heroTitle = typeof heroContent?.title === "string" ? heroContent.title : "";
+    const heroDescription = typeof heroContent?.description === "string" ? heroContent.description : "";
+    const heroBgImage = heroContent?.bg_image ?? null;
+    const loadingLabel = typeof feedContent?.loading_label === "string" ? feedContent.loading_label : "";
+    const emptyTitle = typeof feedContent?.empty_title === "string" ? feedContent.empty_title : "";
+    const cardCta = typeof feedContent?.card_cta === "string" ? feedContent.card_cta : "";
+    const principalLabel = typeof feedContent?.principal_label === "string" ? feedContent.principal_label : "";
+
+    const hasHero = heroTitle || heroDescription || heroBadge;
 
     return (
         <main className="pt-24 pb-4 overflow-hidden">
             {/* ── Hero Section ── */}
-            <section className="relative ccf-hero flex flex-col">
-                {heroBgImage ? (
-                    <>
-                        <div
-                            className="absolute inset-0 bg-cover"
-                            style={{ backgroundImage: `url('${heroBgImage}')`, backgroundPosition: "center 20%", backgroundAttachment: "fixed", filter: "brightness(0.28) saturate(0.5)" }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[hsl(var(--bg-primary))]" />
-                    </>
-                ) : (
-                    <div className="absolute inset-0 pointer-events-none">
-                        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[hsl(var(--primary))/0.08] to-transparent blur-3xl" />
-                        <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full bg-gradient-to-tr from-[hsl(var(--secondary))/0.06] to-transparent blur-3xl" />
-                    </div>
-                )}
-
-                <div className="ccf-container mt-auto text-center relative z-10 pb-12 md:pb-16">
-                    <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white/70 text-xs font-bold uppercase tracking-widest mb-5 border border-white/20 shadow-lg">
-                        <Sparkles size={12} className="animate-pulse" /> {heroBadge}
-                    </div>
-                    <h1 className={`ccf-display text-4xl md:text-5xl lg:text-6xl font-black mb-5 ${heroBgImage ? "text-white" : "text-[hsl(var(--text-primary))] dark:text-white"}`}>
-                        {heroTitle}
-                    </h1>
-                    {heroBgImage ? (
-                        <p className="ccf-body text-base md:text-lg max-w-2xl mx-auto font-medium" style={{ color: 'white' }}
-                            dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(heroDescription) }} />
-                    ) : (
-                        <RichText
-                            html={heroDescription}
-                            className="ccf-body text-base md:text-lg max-w-2xl mx-auto font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
-                        />
-                    )}
-                    <div className="flex items-center justify-center gap-3 mt-8">
-                        <div className="h-px w-12 bg-gradient-to-r from-transparent to-white/20" />
-                        <Cross size={14} className="text-white/30" />
-                        <div className="h-px w-12 bg-gradient-to-l from-transparent to-white/20" />
-                    </div>
-                </div>
-            </section>
+            {hasHero && (
+                <PublicHeroWithSlides
+                    eyebrow={heroBadge}
+                    title={heroTitle}
+                    description={heroDescription}
+                    slides={heroBgImage ? [{ src: String(heroBgImage), alt: heroTitle || "Hero pastoral" }] : []}
+                />
+            )}
 
             {/* ── Pastors Grid ── */}
             <section className="ccf-section ccf-container pt-[3cm]">
@@ -95,7 +66,7 @@ export default function PastoresIndexPage() {
                         <span className="sr-only">{loadingLabel}</span>
                     </div>
                 ) : pastors.length === 0 ? (
-                    <p className="text-center text-[hsl(var(--text-secondary))] py-20">{emptyTitle}</p>
+                    emptyTitle && <p className="text-center text-[hsl(var(--text-secondary))] py-20">{emptyTitle}</p>
                 ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                     {pastors.map((pastor, idx) => (
@@ -119,7 +90,7 @@ export default function PastoresIndexPage() {
                                     </div>
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0c12]/90 via-black/30 to-transparent" />
-                                {pastor.is_main_pastor && (
+                                {pastor.is_main_pastor && principalLabel && (
                                     <div className="absolute top-3 left-3 z-20">
                                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--primary))] text-white text-[9px] font-bold uppercase tracking-wider shadow-lg">
                                             <Sparkles size={8} /> {principalLabel}
@@ -141,9 +112,11 @@ export default function PastoresIndexPage() {
 
                                 {/* CTA */}
                                 <Link href={`/pastores/${pastor.slug}`} className="flex items-center justify-between pt-3 border-t border-[hsl(var(--border))] dark:border-white/[0.06]">
-                                    <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--primary))] group-hover:tracking-[0.15em] transition-all duration-300">
-                                        {cardCta}
-                                    </span>
+                                    {cardCta && (
+                                        <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--primary))] group-hover:tracking-[0.15em] transition-all duration-300">
+                                            {cardCta}
+                                        </span>
+                                    )}
                                     <div className="w-9 h-9 rounded-xl bg-[hsl(var(--primary))/0.08] dark:bg-[hsl(var(--primary))/0.12] flex items-center justify-center group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-300 group-hover:shadow-lg group-hover:shadow-[hsl(var(--primary))/0.3]">
                                         <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform duration-300" />
                                     </div>
