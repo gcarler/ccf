@@ -265,7 +265,7 @@ def list_projects(
 def create_project(
     project: schemas.ProjectCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     owner_persona_id = get_user_persona_id(db, current_user.id)
     user_sede = get_user_sede_id(db, current_user.id)
@@ -390,7 +390,7 @@ def create_project_task(
     project_id: str,
     task: schemas.ProjectTaskCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     _ensure_project(db, project_id)
     project = db.query(models.Project).filter(models.Project.id == _to_uuid(project_id)).first()
@@ -555,7 +555,7 @@ def update_task(
     task_id: str,
     payload: schemas.ProjectTaskUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Actualiza una tarea usando ruta plana (sin project_id)."""
     task = _ensure_task(db, task_id)
@@ -641,7 +641,7 @@ def list_inbox(
 def mark_inbox_read(
     item_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Marca un item del inbox como leído."""
     persona = _resolve_persona(db, current_user.id)
@@ -703,7 +703,7 @@ def update_project_wiki(
     project_id: str,
     payload: schemas.ProjectDocumentUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     _ensure_project(db, project_id)  # Validates project exists
     doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.project_id == project_id).first()
@@ -771,7 +771,7 @@ def update_project_whiteboard(
     project_id: str,
     payload: schemas.ProjectWhiteboardUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     _ensure_project(db, project_id)
     board = (
@@ -824,7 +824,7 @@ async def upload_task_attachment(
     task_id: str,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     task = _ensure_task_in_project(db, project_id, task_id)
     filename = sanitize_filename(file.filename or "file")
@@ -860,7 +860,7 @@ def update_project_task(
     task_id: str,
     payload: schemas.ProjectTaskUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Actualiza una tarea con auditoría ministerial automática."""
     task = _ensure_task_in_project(db, project_id, task_id)
@@ -909,7 +909,7 @@ def create_task_supply(
     task_id: str,
     payload: schemas.TaskSupplyCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Crea un insumo requerido para una tarea."""
     task = _ensure_task_in_project(db, project_id, task_id)
@@ -937,7 +937,7 @@ def update_task_supply(
     supply_id: str,
     payload: schemas.TaskSupplyUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Actualiza nombre, cantidad o estado de un insumo."""
     task = _ensure_task_in_project(db, project_id, task_id)
@@ -963,7 +963,7 @@ def delete_task_supply(
     task_id: str,
     supply_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Elimina un insumo de una tarea."""
     task = _ensure_task_in_project(db, project_id, task_id)
@@ -993,7 +993,7 @@ def create_subtask(
     task_id: str,
     subtask: schemas.ProjectTaskCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Crea una subtarea (nivel 2 o 3) bajo una tarea existente."""
     _ensure_project(db, project_id)
@@ -1036,7 +1036,7 @@ def update_subtask(
     subtask_id: str,
     payload: schemas.ProjectTaskUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Actualiza una subtarea."""
     _ensure_project(db, project_id)
@@ -1066,7 +1066,7 @@ def delete_subtask(
     task_id: str,
     subtask_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Elimina una subtarea."""
     _ensure_project(db, project_id)
@@ -1086,7 +1086,7 @@ def delete_subtask(
 def create_comment(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Crea un comentario usando project_id en el body."""
     project_id = payload.get("project_id")
@@ -1130,7 +1130,7 @@ def create_project_comment(
     project_id: str,
     payload: schemas.ProjectCommentCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Crea un comentario en un proyecto."""
     _ensure_project(db, project_id)
@@ -1169,7 +1169,7 @@ def update_project_comment(
     comment_id: str,
     payload: schemas.ProjectCommentUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Actualiza un comentario (contenido o estado de resolución)."""
     comment = db.query(models.ProjectComment).filter(models.ProjectComment.id == comment_id).first()
@@ -1254,7 +1254,7 @@ def update_project(
     project_id: str,
     payload: schemas.ProjectUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Actualiza los metadatos de un proyecto."""
     project = _ensure_project(db, project_id)
@@ -1286,7 +1286,7 @@ def delete_project_task(
     project_id: str,
     task_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Elimina una tarea de un proyecto."""
     _ensure_project(db, project_id)
@@ -1300,7 +1300,7 @@ def delete_project_task(
 def delete_project_comment(
     comment_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Elimina un comentario."""
     comment = db.query(models.ProjectComment).filter(models.ProjectComment.id == comment_id).first()
@@ -1356,7 +1356,7 @@ def send_project_message(
     project_id: str,
     payload: schemas.ProjectMessageCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Send a message to the project chat room."""
     _ensure_project(db, project_id)
@@ -1459,7 +1459,7 @@ def create_project_milestone(
     project_id: str,
     payload: schemas.ProjectMilestoneBase,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Crea un hito en un proyecto."""
     _ensure_project(db, project_id)
@@ -1484,7 +1484,7 @@ def update_project_milestone(
     milestone_id: str,
     payload: schemas.ProjectMilestoneUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Actualiza un hito y registra cambios relevantes en la bitacora."""
     _ensure_project(db, project_id)

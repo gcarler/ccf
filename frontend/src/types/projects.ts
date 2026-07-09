@@ -24,15 +24,15 @@ export interface ProjectMilestoneRecord {
 }
 
 export interface ProjectAttachment {
-  id: number;
+  id: string;
   task_id: string;
   filename: string;
   file_url: string;
   file_size?: number | null;
   file_type?: string | null;
   content_type?: string | null;
-  uploader_id?: number | null;
-  uploaded_by?: number | null;
+  uploader_id?: string | null;
+  uploaded_by?: string | null;
   created_at?: string;
 }
 
@@ -57,7 +57,7 @@ export interface ProjectTaskRecord {
 }
 
 export interface TaskSupplyRecord {
-  id: number;
+  id: string;
   task_id: string;
   item_name: string;
   quantity: number;
@@ -89,7 +89,7 @@ export interface ProjectActivityItem {
 }
 
 export interface ProjectCommentItem {
-  id: number;
+  id: string;
   project_id: string;
   task_id?: string | null;
   content: string;

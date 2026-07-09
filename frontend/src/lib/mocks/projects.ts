@@ -66,12 +66,12 @@ const MOCK_MILESTONES: Record<string, ProjectMilestoneRecord[]> = {
 const SUPPLIES_BY_TASK: Record<string, TaskSupplyRecord[]> = {
   // task T1 (project 1)
   "11111111-1111-1111-1111-111111111001": [
-    { id: 1, task_id: "11111111-1111-1111-1111-111111111001", item_name: "Hosting mensual", quantity: 3, status: "purchased" },
-    { id: 2, task_id: "11111111-1111-1111-1111-111111111001", item_name: "Dominio .com", quantity: 1, status: "pending" },
+    { id: "11111111-aaaa-4000-8000-000000000001", task_id: "11111111-1111-1111-1111-111111111001", item_name: "Hosting mensual", quantity: 3, status: "purchased" },
+    { id: "11111111-aaaa-4000-8000-000000000002", task_id: "11111111-1111-1111-1111-111111111001", item_name: "Dominio .com", quantity: 1, status: "pending" },
   ],
   // task T3 (project 1)
   "11111111-1111-1111-1111-111111111003": [
-    { id: 3, task_id: "11111111-1111-1111-1111-111111111003", item_name: "Cuenta Figma Pro", quantity: 1, status: "purchased" },
+    { id: "11111111-aaaa-4000-8000-000000000003", task_id: "11111111-1111-1111-1111-111111111003", item_name: "Cuenta Figma Pro", quantity: 1, status: "purchased" },
   ],
 };
 
@@ -175,9 +175,20 @@ const MOCK_TASKS: ProjectTaskRecord[] = [
 
 // ── Comments ─────────────────────────────────────────────────────────
 
+// SPR1: real UUID4 layout (8-4-4-4-12 hex) so these parse with
+// ``uuid.UUID(s)`` if ever used as e2e seeds. The middle ``4000`` is the
+// UUIDv4 version marker (RFC 4122) and the trailing ``8`` in segment 4
+// is the RFC 4122 variant marker.
+const C1 = "22222222-aaaa-4000-8000-000000000101";
+const C2 = "22222222-aaaa-4000-8000-000000000102";
+const C3 = "22222222-aaaa-4000-8000-000000000103";
+const C4 = "22222222-aaaa-4000-8000-000000000104";
+const C5 = "22222222-aaaa-4000-8000-000000000105";
+const C6 = "22222222-aaaa-4000-8000-000000000106";
+
 const MOCK_COMMENTS: ProjectCommentItem[] = [
   {
-    id: 101,
+    id: C1,
     project_id: P1_ID,
     task_id: "11111111-1111-1111-1111-111111111001",
     content: "Me gusta el diseño propuesto. Revisemos los colores con el equipo de comunicaciones.",
@@ -189,7 +200,7 @@ const MOCK_COMMENTS: ProjectCommentItem[] = [
     updated_at: daysAgo(1),
   },
   {
-    id: 102,
+    id: C2,
     project_id: P1_ID,
     task_id: "11111111-1111-1111-1111-111111111001",
     content: "Ya compartí los archivos en la carpeta compartida de Drive.",
@@ -201,7 +212,7 @@ const MOCK_COMMENTS: ProjectCommentItem[] = [
     updated_at: daysAgo(2),
   },
   {
-    id: 103,
+    id: C3,
     project_id: P1_ID,
     task_id: null,
     content: "El cronograma general necesita ajustes, hablemos en la reunión del viernes.",
@@ -213,7 +224,7 @@ const MOCK_COMMENTS: ProjectCommentItem[] = [
     updated_at: daysAgo(0),
   },
   {
-    id: 104,
+    id: C4,
     project_id: P2_ID,
     task_id: "22222222-2222-2222-2222-222222222001",
     content: "Confirmé con 8 voluntarios. Pendiente el transporte.",
@@ -225,7 +236,7 @@ const MOCK_COMMENTS: ProjectCommentItem[] = [
     updated_at: daysAgo(0),
   },
   {
-    id: 105,
+    id: C5,
     project_id: P2_ID,
     task_id: null,
     content: "Recordatorio: la vigilia es el sábado a las 7pm.",
@@ -237,7 +248,7 @@ const MOCK_COMMENTS: ProjectCommentItem[] = [
     updated_at: daysAgo(2),
   },
   {
-    id: 106,
+    id: C6,
     project_id: P3_ID,
     task_id: null,
     content: "La última cotización llegó por $12.5M. Esperando la de los acabados.",

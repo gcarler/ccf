@@ -35,9 +35,22 @@ def notify_task_assigned(
     assigned_by_user_id: Any | None = None,
     previous_assignee_id: Any | None = None,
 ) -> bool:
-    """Crea la trazabilidad de una asignación de tarea y dispara correo.
+    """Create the audit + notification trail for a task assignment and dispatch the
+    email — all in **one atomic transaction**.
 
-    Returns True when a notification/email attempt was recorded.
+    Atomicity contract (Sprint 1 — PR 1.2):
+
+    * Activity log + NotificacionUsuario + CommunicationLog are staged in a single
+      ``try`` block.
+    * A single ``db.commit()`` at the end flushes the whole batch.
+    * Any exception (validation, SMTP failure, transient error) trips
+      ``db.rollback()`` so we NEVER leave an orphan ``NotificacionUsuario`` row
+      behind. The pre-fix code used two commits: activity+notification were
+      flushed first, then email was attempted. On email failure the second
+      commit didn't happen but the first had already leaked the notification.
+
+    Returns ``True`` when the audit + email path completed; ``False`` when the
+    transaction was rolled back.
     """
     assignee = (
         db.query(models.Persona)
@@ -58,6 +71,10 @@ def notify_task_assigned(
         if assigned_by_persona_id
         else None
     )
+    # NOTE: with Axiom 2 (Auth v3) auth_users.id == personas.id, this matches
+    # the assignee's own auth row when one exists; for non-login personas
+    # (system actors) recipient_id may be None and the inbox notification
+    # step is skipped.
     recipient_id = db.query(models.User.id).filter(models.User.id == assignee.id).scalar()
     task_url = f"/plataforma/tasks/{task.id}"
     project_title = getattr(project, "title", None)
@@ -67,15 +84,6 @@ def notify_task_assigned(
     description = getattr(task, "description", None) or ""
     action_type = "task_reassigned" if previous_assignee_id else "task_assigned"
     action_label = "reasignada" if previous_assignee_id else "asignada"
-
-    db.add(
-        models.ProjectActivityLog(
-            project_id=task.project_id,
-            persona_id=assigned_by_persona_id,
-            action_type=action_type,
-            description=f"Tarea '{task.title}' {action_label} a {assignee_name}",
-        )
-    )
 
     notification_title = f"Nueva tarea asignada: {task.title}"
     notification_content = " ".join(
@@ -90,65 +98,99 @@ def notify_task_assigned(
         if part
     )
 
-    if recipient_id:
-        existing = (
-            db.query(models.NotificacionUsuario)
-            .filter(
-                models.NotificacionUsuario.user_id == recipient_id,
-                models.NotificacionUsuario.title == notification_title,
-                models.NotificacionUsuario.content == notification_content,
-                models.NotificacionUsuario.is_read.is_(False),
+    # ── Atomic transaction: one commit for the whole side-effect batch ──
+    try:
+        db.add(
+            models.ProjectActivityLog(
+                project_id=task.project_id,
+                persona_id=assigned_by_persona_id,
+                action_type=action_type,
+                description=f"Tarea '{task.title}' {action_label} a {assignee_name}",
             )
-            .first()
         )
-        if not existing:
+
+        if recipient_id:
+            existing = (
+                db.query(models.NotificacionUsuario)
+                .filter(
+                    models.NotificacionUsuario.user_id == recipient_id,
+                    models.NotificacionUsuario.title == notification_title,
+                    models.NotificacionUsuario.content == notification_content,
+                    models.NotificacionUsuario.is_read.is_(False),
+                )
+                .first()
+            )
+            if not existing:
+                db.add(
+                    models.NotificacionUsuario(
+                        user_id=recipient_id,
+                        title=notification_title,
+                        content=notification_content,
+                        is_read=False,
+                    )
+                )
+
+        # Decide outcome, attach the CommunicationLog audit row, then commit
+        # exactly once. Branches here are the three legal leaf states of a
+        # task assignment; the absence of any return until after the commit
+        # is what makes the operation atomic.
+        if not getattr(assignee, "email", None):
             db.add(
-                models.NotificacionUsuario(
-                    user_id=recipient_id,
-                    title=notification_title,
+                models.CommunicationLog(
+                    persona_id=assignee.id,
+                    channel="Email",
+                    campaign_name="Asignación de tarea",
                     content=notification_content,
-                    is_read=False,
+                    leader_id=assigned_by_persona_id,
+                    outcome="no_email",
                 )
             )
+            db.commit()
+            logger.info(
+                "Task assignment logged without email: %s", task.id,
+            )
+            return True
 
-    db.commit()
-
-    if not getattr(assignee, "email", None):
+        subject, html, text = render_task_assignment_email(
+            task_title=task.title,
+            task_url=task_url,
+            project_title=project_title,
+            assignee_name=assignee_name,
+            assigned_by_name=sender_name,
+            priority=getattr(task, "priority", None),
+            due_date=due_text,
+            description=description,
+        )
+        sent = send_email(to=assignee.email, subject=subject, html=html, text=text)
+        outcome = "email_sent" if sent else "email_failed"
         db.add(
             models.CommunicationLog(
                 persona_id=assignee.id,
                 channel="Email",
                 campaign_name="Asignación de tarea",
-                content=notification_content,
+                content=text,
                 leader_id=assigned_by_persona_id,
-                outcome="no_email",
+                outcome=outcome,
             )
         )
+        # Single atomic commit for activity log + notification + audit row
         db.commit()
-        logger.info("Task assignment notification logged without email: %s", task.id)
+        if not sent:
+            # Outcome already recorded; surface observability without raising
+            # (caller path was request-driven, not a critical path).
+            logger.warning(
+                "Task assignment email failed: task_id=%s assignee_id=%s",
+                task.id, assignee.id,
+            )
         return True
-
-    subject, html, text = render_task_assignment_email(
-        task_title=task.title,
-        task_url=task_url,
-        project_title=project_title,
-        assignee_name=assignee_name,
-        assigned_by_name=sender_name,
-        priority=getattr(task, "priority", None),
-        due_date=due_text,
-        description=description,
-    )
-    sent = send_email(to=assignee.email, subject=subject, html=html, text=text)
-    outcome = "email_sent" if sent else "email_failed"
-    db.add(
-        models.CommunicationLog(
-            persona_id=assignee.id,
-            channel="Email",
-            campaign_name="Asignación de tarea",
-            content=text,
-            leader_id=assigned_by_persona_id,
-            outcome=outcome,
+    except Exception as exc:
+        # Atomic rollback: drops the entire batch so we never persist a row
+        # without its accompanying audit log. This is the pivotal Sprint 1
+        # PR 1.2 contract that fixes the orphan-NotificacionUsuario pattern.
+        db.rollback()
+        logger.exception(
+            "notify_task_assigned failed; rolled back atomic transaction: "
+            "task_id=%s assignee_id=%s",
+            str(task.id), str(assignee.id),
         )
-    )
-    db.commit()
-    return True
+        return False
