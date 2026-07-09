@@ -370,7 +370,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     const applyChange = useCallback(async (taskId: number, field: string, value: any) => {
         setOverrides(prev => ({ ...prev, [taskId]: { ...prev[taskId], [field]: value } }));
         try {
-            await apiFetch(`/projects/tasks/${taskId}`, { method: 'PATCH', body: JSON.stringify({ [field]: value }), token: token ?? undefined });
+            await apiFetch(`/projects/tasks/${taskId}`, { method: 'PATCH', body: { [field]: value }, token: token ?? undefined });
             onTaskUpdated?.(taskId, field, value);
         } catch {
             setOverrides(prev => { const n = { ...prev }; delete n[taskId]; return n; });
@@ -452,7 +452,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     // Quick add task
     const handleQuickAdd = async (status: string, title: string) => {
         try {
-            await apiFetch(`/projects/${projectId}/tasks`, { method: 'POST', body: JSON.stringify({ title, status, priority: 'medium' }), token: token ?? undefined });
+            await apiFetch(`/projects/${projectId}/tasks`, { method: 'POST', body: { title, status, priority: 'medium' }, token: token ?? undefined });
             onAddTask(status);
         } catch { /* silently fail */ }
         setQuickAddGroup(null);

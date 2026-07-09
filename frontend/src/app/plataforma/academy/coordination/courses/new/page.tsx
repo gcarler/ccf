@@ -47,7 +47,7 @@ export default function NewCoursePage() {
             await apiFetch('/academy/admin/courses', {
                 method: 'POST',
                 token,
-                body: JSON.stringify(formData)
+                body: formData
             });
             toast.success('¡Programa creado con éxito!');
             router.push('/plataforma/academy/coordination');

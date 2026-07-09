@@ -470,7 +470,7 @@ function PlantillaDrawer({
             const method = editing ? 'PATCH' : 'POST';
             const res = await apiFetch<PlantillaMensaje>(url, {
                 token, method,
-                body: JSON.stringify(body),
+                body,
                 headers: { 'Content-Type': 'application/json' },
             });
             if (res) { onSaved(res); onClose(); }
@@ -667,7 +667,7 @@ function CatDrawer({
         try {
             const res = await apiFetch<CategoriaRecurso>('/crm/resources/categorias', {
                 token, method: 'POST',
-                body: JSON.stringify({ nombre: nombre.trim(), descripcion: descripcion.trim() || null, color_ui_hex: color }),
+                body: { nombre: nombre.trim(), descripcion: descripcion.trim() || null, color_ui_hex: color },
                 headers: { 'Content-Type': 'application/json' },
             });
             if (res) { onSaved(res); onClose(); }
@@ -800,11 +800,11 @@ function SendDrawer({
                 if (selectedSegments.length === 0) return;
                 const res = await apiFetch<CampaignResult>(`/crm/resources/plantillas/${plantilla.id}/campaign`, {
                     token, method: 'POST',
-                    body: JSON.stringify({
+                    body: {
                         campaign_name: campaignName || plantilla.titulo,
                         target_segments: selectedSegments,
                         default_variables: vars,
-                    }),
+                    },
                     headers: { 'Content-Type': 'application/json' },
                 });
                 if (res) setCampResult(res);
@@ -812,7 +812,7 @@ function SendDrawer({
                 if (!destinatario) return;
                 const res = await apiFetch<BitacoraEnvio>(`/crm/resources/plantillas/${plantilla.id}/enviar`, {
                     token, method: 'POST',
-                    body: JSON.stringify({ destinatario_id: destinatario.id, variables: vars }),
+                    body: { destinatario_id: destinatario.id, variables: vars },
                     headers: { 'Content-Type': 'application/json' },
                 });
                 if (res) { onSent(res); onClose(); }
