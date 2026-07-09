@@ -17,7 +17,6 @@ import {
   Zap,
 }from 'lucide-react';
 import React,{ useCallback,useEffect,useState } from 'react';
-import { toast } from 'sonner';
 
 export interface BreadcrumbOption {
     label: string;
@@ -80,11 +79,7 @@ export default function EvangelismShell({
             const result = await apiFetch<StrategyItem[]>('/evangelism/strategies', { token });
             setStrategies(Array.isArray(result) ? result : []);
         } catch (error) {
-            // Antes: fallo silencioso — el sidebar quedaba mudo sin feedback al
-            // usuario. Ahora informamos vía toast para que el operador sepa
-            // que el backend rechazo la peticion (ej. 500 / 401 / timeout).
             console.error('Error fetching evangelism strategies:', error);
-            toast.error('No se pudieron cargar las estrategias del modulo');
         }
     }, [token]);
 

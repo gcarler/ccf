@@ -133,8 +133,8 @@ export default function StrategyCreationDrawer({
                         : null,
                     niche_objective: data.typology === 'sectorial' ? data.nicheObjective : null,
                     strategy_type: data.strategyType,
-                    start_date: data.startDate ? new Date(data.startDate).toISOString() : null,
-                    end_date: data.endDate ? new Date(data.endDate).toISOString() : null,
+                    start_date: data.startDate || null,
+                    end_date: data.endDate || null,
                     status: 'active',
                     activa: true
                 }

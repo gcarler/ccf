@@ -438,7 +438,7 @@ export default function EventsPage() {
 
  if (['PERMANENT', 'GROUPS', 'ONLINE'].includes(newEvent.event_type)) payload.day_of_week = parseInt(newEvent.day_of_week);
  if (['ANNUAL', 'MONTHLY'].includes(newEvent.event_type)) payload.month_day = newEvent.month_day;
- if (['ONCE', 'SPECIAL'].includes(newEvent.event_type)) payload.fixed_date = new Date(newEvent.fixed_date).toISOString();
+ if (['ONCE', 'SPECIAL'].includes(newEvent.event_type)) payload.fixed_date = newEvent.fixed_date;
 
  try {
  setSavingCreateEvent(true);
@@ -640,6 +640,13 @@ export default function EventsPage() {
  setAttendedPersonaIds((prev) => prev.filter((personaId) => !filteredIds.has(personaId)));
  };
 
+ const formatLocalDate = (date: Date) => {
+ const year = date.getFullYear();
+ const month = String(date.getMonth() + 1).padStart(2, '0');
+ const day = String(date.getDate()).padStart(2, '0');
+ return `${year}-${month}-${day}`;
+ };
+
  const getVisualDate = (event: MinistryEvent) => {
  if (event.fixed_date) return event.fixed_date;
  const current = new Date();
@@ -647,7 +654,7 @@ export default function EventsPage() {
  const next = new Date(current);
  const offset = (targetDay - current.getDay() + 7) % 7;
  next.setDate(current.getDate() + offset);
- return next.toISOString().split('T')[0];
+ return formatLocalDate(next);
  };
 
  const calendarEvents = events.map((event) => ({

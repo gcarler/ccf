@@ -690,7 +690,7 @@ export default function StrategyDetailPage() {
  method: 'POST', token,
  body: {
  grupo_id: sessionForm.grupo_id,
- session_date: new Date(sessionForm.session_date + 'T00:00:00').toISOString(),
+ session_date: `${sessionForm.session_date}T12:00:00`,
  topic: sessionForm.topic || null,
  offering_amount: sessionForm.offering_amount ? parseFloat(sessionForm.offering_amount) : null,
  report_notes: sessionForm.report_notes || null,
@@ -871,8 +871,8 @@ export default function StrategyDetailPage() {
  clase_raiz: editClaseRaiz || null,
  default_role_id: editDefaultRoleId ?? null,
  recurrence: editRecurrence,
- start_date: editStartDate ? new Date(editStartDate).toISOString() : null,
- end_date: editEndDate ? new Date(editEndDate).toISOString() : null,
+ start_date: editStartDate ? `${editStartDate}T12:00:00` : null,
+ end_date: editEndDate ? `${editEndDate}T12:00:00` : null,
  },
  });
  toast.success('Estrategia actualizada');
@@ -1827,7 +1827,8 @@ export default function StrategyDetailPage() {
  const accion = s.estado_habilitacion === 'HABILITADO' ? 'DESHABILITAR' : 'HABILITAR';
  try {
  await apiFetch(`/evangelism/sessions/${s.id}/habilitacion`, {
- method: 'PATCH', token,
+ method: 'PATCH',
+ token,
  body: { accion },
  });
  fetchSessions();

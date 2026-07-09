@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -93,6 +93,14 @@ export default function GroupDetailPage() {
  const [personas, setPersonas] = useState<Persona[]>([]);
  const [showAddAttendee, setShowAddAttendee] = useState(false);
  const [personaQuery, setPersonaQuery] = useState('');
+ // R2 fix (residual audit): el formulario ahora soporta búsqueda REMOTA
+ // con debounce 300ms + AbortController. Las variables de abajo son los
+ // artefactos del efecto: query, resultados remotos, marcador de carga
+ // y AbortController por ciclo.
+ const [remoteResults, setRemoteResults] = useState<Persona[]>([]);
+ const [remoteQuery, setRemoteQuery] = useState('');
+ const [remoteLoading, setRemoteLoading] = useState(false);
+ const remoteAbortRef = useRef<AbortController | null>(null);
  const [saving, setSaving] = useState(false);
  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
  const [reportTopic, setReportTopic] = useState('');
@@ -148,14 +156,14 @@ export default function GroupDetailPage() {
  {isPrivileged && <button 
  onClick={async () => {
  try {
- const session = await apiFetch<{ id: number }>(`/evangelism/sessions`, {
- method: 'POST',
- body: {
- grupo_id: house.id,
- session_date: new Date(new Date().toISOString().split('T')[0] + 'T00:00:00').toISOString(),
- status: 'Realizada',
- },
- token
+	 const session = await apiFetch<{ id: number }>(`/evangelism/sessions`, {
+	 method: 'POST',
+	 body: {
+	 grupo_id: house.id,
+	 session_date: `${new Date().toISOString().split('T')[0]}T12:00:00`,
+	 status: 'Realizada',
+	 },
+	 token
  });
  await apiFetch(`/evangelism/sessions/${session.id}/habilitacion`, {
  method: 'PATCH',
@@ -274,14 +282,67 @@ export default function GroupDetailPage() {
  apiFetch<Persona[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(setPersonas).catch(() => { toast.error('Error al cargar personas'); });
  }, [showAddAttendee, token]);
 
+ // R2 fix: búsqueda remota con debounce + AbortController.
+ // Solo se dispara si el query tiene >=3 caracteres; antes de eso el
+ // dropdown sigue usando el pool local pre-cargado para no martillar el
+ // backend con cada keystroke.
+ useEffect(() => {
+ if (!token || !showAddAttendee) return;
+ const q = remoteQuery.trim();
+ if (q.length < 3) {
+ setRemoteResults([]);
+ if (remoteAbortRef.current) {
+ remoteAbortRef.current.abort();
+ remoteAbortRef.current = null;
+ }
+ return;
+ }
+ if (remoteAbortRef.current) {
+ remoteAbortRef.current.abort();
+ }
+ const controller = new AbortController();
+ remoteAbortRef.current = controller;
+ setRemoteLoading(true);
+ const handle = setTimeout(() => {
+ apiFetch<{ results: Persona[] }>('/evangelism/personas/search', {
+ token,
+ query: { q, limit: 10 },
+ signal: controller.signal,
+ })
+ .then(res => {
+ if (controller.signal.aborted) return;
+ setRemoteResults(res.results || []);
+ })
+ .catch(err => {
+ if (controller.signal.aborted) return;
+ setRemoteResults([]);
+ })
+ .finally(() => {
+ if (!controller.signal.aborted) setRemoteLoading(false);
+ });
+ }, 300);
+ return () => {
+ clearTimeout(handle);
+ controller.abort();
+ };
+ }, [remoteQuery, showAddAttendee, token]);
+
  const filteredPersonas = useMemo(() => {
  const q = personaQuery.toLowerCase();
  const attendedIds = new Set(attendance?.attendees.map(a => a.persona_id) || []);
- return personas
+ // R2: si la búsqueda remota está activa (>=3 chars y hay resultados),
+ // mezclamos primero los hits remotos; después el pool local para no
+ // perder contactos no-precargados. Esto complementa la búsqueda local.
+ const remoteMatches = remoteQuery.trim().length >= 3
+ ? remoteResults.filter(m => !attendedIds.has(m.id))
+ : [];
+ const localPool = personas
  .filter(m => !attendedIds.has(m.id))
  .filter(m => !q || (m.nombre_completo || '').toLowerCase().includes(q))
- .slice(0, 30);
- }, [personas, personaQuery, attendance]);
+ // Excluir las que ya aparecieron en remoteResults.
+ .filter(m => !remoteMatches.some(r => r.id === m.id));
+ return [...remoteMatches, ...localPool].slice(0, 30);
+ }, [personas, personaQuery, attendance, remoteQuery, remoteResults]);
 
  const handleSaveAttendance = async () => {
  if (!activeSession || selectedIds.size === 0) return;
@@ -825,10 +886,16 @@ export default function GroupDetailPage() {
  <input
  autoFocus
  value={personaQuery}
- onChange={e => setPersonaQuery(e.target.value)}
- placeholder="Buscar por nombre..."
+ onChange={e => {
+ setPersonaQuery(e.target.value);
+ setRemoteQuery(e.target.value);
+ }}
+ placeholder="Buscar por nombre (>=3 letras)..."
  className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 pl-10 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
  />
+ {remoteLoading && (
+ <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] animate-spin" size={14} />
+ )}
  </div>
  <button
  onClick={() => setIsCreatingPersona(true)}
