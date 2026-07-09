@@ -803,7 +803,7 @@ def list_cms_sections(
 ):
     query = db.query(models.CmsSection).filter(models.CmsSection.page_id == page_id)
     if section_type:
-        query = query.filter(models.CmsSection.section_type == section_type)
+        query = query.filter(models.CmsSection.type == section_type)
     total = query.count()
     items = (
         query
