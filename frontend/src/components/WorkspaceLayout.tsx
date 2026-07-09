@@ -576,30 +576,32 @@ function WorkspaceLayoutInner({
                         </div>
                     </main>
 
-                    {!s1Visible && !isCompactViewport && (
-                        <motion.button
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            onClick={() => openLayer('S1')}
-                            className="fixed left-8 bottom-[88px] z-[60] size-8 bg-[hsl(var(--bg-muted))] text-white rounded-md shadow-md hover:bg-[hsl(var(--surface-2))] hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
-                            aria-label="Mostrar navegación principal"
-                        >
-                            <ChevronRight size={16} strokeWidth={2.5} />
-                        </motion.button>
-                    )}
-
-                    {!layers.S2 && !isCompactViewport && (
-                        <Tooltip content="Mostrar panel de módulo" side="right">
-                            <motion.button
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                onClick={cycleS2}
-                                className="fixed left-8 bottom-6 z-[60] size-8 bg-[hsl(var(--bg-muted))] text-white rounded-md shadow-md hover:bg-[hsl(var(--surface-2))] hover:-translate-y-1 active:scale-95 active:translate-y-0 transition-all flex items-center justify-center border border-white/10 dark:border-[#111213]"
-                                aria-label="Mostrar panel de módulo"
-                            >
-                                <ChevronRight size={16} strokeWidth={2.5} />
-                            </motion.button>
-                        </Tooltip>
+                    {!isCompactViewport && (
+                        <div className="fixed left-2 z-[60] flex flex-col gap-1" style={{ top: '66%' }}>
+                            {!s1Visible && (
+                                <motion.button
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    onClick={() => openLayer('S1')}
+                                    className="size-10 bg-black text-white rounded-lg shadow-lg hover:bg-black/80 hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
+                                    aria-label="Mostrar navegación principal"
+                                >
+                                    <ChevronRight size={20} strokeWidth={2.5} />
+                                </motion.button>
+                            )}
+                            {(!layers.S2 || (layers.S2 && resolvedS2Width <= snapThreshold)) && (
+                                <motion.button
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.1 }}
+                                    onClick={() => { if (!layers.S2) openLayer('S2'); else setS2WidthNum(280); }}
+                                    className="size-10 bg-black text-white rounded-lg shadow-lg hover:bg-black/80 hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
+                                    aria-label="Expandir panel de módulo"
+                                >
+                                    <ChevronRight size={20} strokeWidth={2.5} />
+                                </motion.button>
+                            )}
+                        </div>
                     )}
                 </div>
 

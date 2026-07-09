@@ -19,6 +19,7 @@ import {
     BookOpen,
     Shield,
     Flame,
+    Home,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -45,7 +46,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
         { id: 'academy',       icon: GraduationCap, href: '/plataforma/academy',        label: 'Academia' },
         { id: 'crm',           icon: Users,         href: '/plataforma/crm',            label: 'Consolidación' },
         { id: 'evangelism',    icon: Flame,         href: '/plataforma/evangelism',     label: 'Evangelismo' },
-        { id: 'community',     icon: Globe,         href: '/plataforma/community',      label: 'Comunidad' },
+        { id: 'community',     icon: Home,          href: '/plataforma/community',      label: 'Comunidad' },
         { id: 'finances',      icon: DollarSign,    href: '/plataforma/finances',       label: 'Finanzas' },
         { id: 'cms',           icon: Globe,         href: '/plataforma/cms',            label: 'Sitio Web' },
         { id: 'wiki',          icon: BookOpen,      href: '/plataforma/wiki',           label: 'Wiki' },
