@@ -80,6 +80,7 @@ from backend.models_cms import (  # noqa: F401
     CmsPublishLog,
     CmsSection,
     CmsSectionType,
+    CmsSeoSnapshot,
     CmsSite,
     CmsTag,
     CmsTheme,

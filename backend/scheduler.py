@@ -1,4 +1,4 @@
-"""Cron-friendly scheduler that publishes CMS pages whose scheduled_at has passed.
+"""Cron-friendly scheduler for CMS scheduled publish + auto-archive.
 
 Usage:
     python -m backend.scheduler              # runs once, logs to stdout
@@ -6,6 +6,22 @@ Usage:
 
 Designed for crontab (every minute):
     * * * * * cd /root/ccf && .venv/bin/python -m backend.scheduler >> /root/ccf/logs/scheduler.log 2>&1
+
+Behavior (2026-07-06 refactor):
+  - ``CmsPage.publish_at`` + ``status='scheduled'`` → transiciona a
+    ``published`` cuando llega el momento.
+  - ``CmsPage.expires_at`` + ``status='published'`` → transiciona a
+    ``archived`` cuando llega el momento.
+  - ``CmsPost.expires_at`` + ``status='published'`` → transiciona a
+    ``archived`` (posts no tienen ``scheduled`` como estado intermedio
+    porque ``published_at`` opera como publish).
+
+El cruft legacy ``seo_json['_scheduled_at']`` (eliminado por la migration
+``20260706_0001_cms_schedule``) ya no se lee aquí.
+
+Cada transición se registra en ``CmsPublishLog`` con
+``actor_persona_id=None`` por convención (automatización). El heartbeat
+final loggea counts para visibilidad operacional y métricas básicas.
 """
 
 from __future__ import annotations
@@ -13,7 +29,6 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -54,59 +69,45 @@ def _get_db_session(settings: Any):
     return Session(engine), engine
 
 
-def _find_scheduled_pages(db_session) -> list[Any]:
-    """Find all pages with status='scheduled' whose scheduled_at <= now."""
-    from backend import models
+def _run_scheduling_pass(db_session, dry_run: bool) -> dict[str, int | dict]:
+    """Delega a ``crud.process_due_content`` + ``capture_daily_seo_snapshots``.
 
-    rows = (
-        db_session.query(models.CmsPage)
-        .filter(models.CmsPage.status == "scheduled")
-        .all()
+    La capa CRUD centraliza las queries + transiciones + audit logging;
+    esta función es un orquestador thin que sólo materializa el contexto
+    standalone (sin request) e imprime un heartbeat legible.
+
+    Returns a dict shaped like::
+
+        {
+          "pages_published": int, "pages_archived": int, "posts_archived": int,
+          "seo": {"snapshots": int, "skipped": int, "sites_visited": int},
+        }
+
+    El dict anidado ``seo`` se separa del flat-list de counts
+    scheduler para que el short-circuit ``all(value == 0)`` de
+    ``main()`` no considere ruido a las snapshots idempotentes (el
+    día siguiente a uno con captura, ``skipped`` vale N>0 y un flat
+    check lo consideraría "trabajo realizado").
+    """
+    from backend.crud.cms import process_due_content, capture_daily_seo_snapshots
+
+    counts = process_due_content(db_session, dry_run=dry_run)
+    snapshot_counts = capture_daily_seo_snapshots(
+        db_session, dry_run=dry_run
     )
-    due: list[Any] = []
-    for page in rows:
-        seo = page.seo_json or {}
-        raw = seo.get("_scheduled_at")
-        if not raw:
-            continue
-        try:
-            scheduled = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-            if scheduled <= datetime.now(timezone.utc):
-                due.append(page)
-        except (ValueError, TypeError):
-            log.warning("Page %s (%s) has invalid _scheduled_at: %r", page.id, page.slug, raw)
-            continue
-    return due
-
-
-def _publish_page(db_session, page, dry_run: bool) -> bool:
-    """Publish a single scheduled page. Returns True on success."""
-    from backend.crud.cms import transition_cms_page_status
-
-    slug = page.slug or "(no slug)"
-    if dry_run:
-        log.info("[DRY-RUN] Would publish page %s (%s)", page.id, slug)
-        return True
-
-    try:
-        # user_id=None because this is an automated action (system)
-        result = transition_cms_page_status(
-            db_session, page, action="publish", user_id=None,
-            notes="Auto-published by scheduler",
-        )
-        if result:
-            log.info("Published page %s (%s)", page.id, slug)
-            return True
-        log.error("Failed to publish page %s (%s) — transition returned None", page.id, slug)
-        return False
-    except Exception as exc:
-        log.error("Error publishing page %s (%s): %s", page.id, slug, exc)
-        return False
+    if not dry_run:
+        db_session.commit()
+    counts["seo"] = {
+        "snapshots": snapshot_counts["snapshots_count"],
+        "skipped": snapshot_counts["skipped_count"],
+        "sites_visited": snapshot_counts["sites_captured"],
+    }
+    return counts
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="CMS scheduled-publishing worker")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would be published")
+    parser = argparse.ArgumentParser(description="CMS scheduled-publishing + auto-archive worker")
+    parser.add_argument("--dry-run", action="store_true", help="Show what would be published/archived")
     args = parser.parse_args()
 
     _setup_logging()
@@ -121,23 +122,32 @@ def main() -> int:
     session = None
     try:
         session, engine = _get_db_session(settings)
-        due = _find_scheduled_pages(session)
+        counts = _run_scheduling_pass(session, dry_run=args.dry_run)
 
-        if not due:
-            log.info("No due pages found")
+        # Quiet check: solo se considera "trabajo realizado" si al menos
+        # uno de los counts planos o el sub-conteo ``seo.snapshots`` es
+        # positivo. ``seo.skipped`` es idempotente (el día siguiente a
+        # una captura) y no debe disparar el heartbeat ni cada minuto.
+        seo = counts.get("seo") or {}
+        work_done = (
+            counts.get("pages_published", 0) > 0
+            or counts.get("pages_archived", 0) > 0
+            or counts.get("posts_archived", 0) > 0
+            or seo.get("snapshots", 0) > 0
+        )
+        if not work_done:
+            log.info("No due content found")
             return 0
 
-        log.info("Found %d due page(s)", len(due))
-        success = 0
-        for page in due:
-            if _publish_page(session, page, dry_run=args.dry_run):
-                success += 1
-
-        if not args.dry_run:
-            session.commit()
-
-        log.info("Done: %d/%d published", success, len(due))
-        return 0 if success == len(due) else 1
+        log.info(
+            "Scheduler run: pages_published=%d pages_archived=%d "
+            "posts_archived=%d seo_snapshots=%d",
+            counts["pages_published"],
+            counts["pages_archived"],
+            counts["posts_archived"],
+            seo.get("snapshots", 0),
+        )
+        return 0
     except Exception as exc:
         log.error("Unhandled error: %s", exc)
         if session:
