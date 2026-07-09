@@ -13,7 +13,7 @@ from backend import models
 from backend.crud._utils import _coerce_uuid_or_404, _utcnow
 from backend.crud.crm import (
     get_user_sede_id,
-    resolve_persona_uuid_for_user,
+    resolve_persona_id_for_user,
 )
 from backend.models_evangelism import (
     Asistencia,
@@ -58,7 +58,7 @@ def _actor_sede_or_none_evangelismo(
         actor_uuid = uuid.UUID(str(actor_user_id))
     except (TypeError, ValueError, AttributeError):
         raise HTTPException(status_code=401, detail="Authenticated actor required")
-    if resolve_persona_uuid_for_user(db, actor_uuid) is None:
+    if resolve_persona_id_for_user(db, actor_uuid) is None:
         raise HTTPException(status_code=401, detail="Authenticated actor required")
     return get_user_sede_id(db, str(actor_uuid))
 

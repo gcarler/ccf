@@ -121,6 +121,20 @@ interface AttendancePersona {
  notes?: string;
 }
 
+interface AttendanceSaveResult {
+ evento_integracion?: {
+ estado?: string;
+ grupo_id?: string;
+ sesion_id?: string;
+ crm_consolidacion?: {
+ caso_id?: string;
+ } | null;
+ } | null;
+ metadata?: {
+ trazabilidad?: string;
+ } | null;
+}
+
 type TabId = 'overview' | 'groups' | 'sessions' | 'attendance' | 'metrics';
 
 const STATUS_COLORS = {
@@ -163,6 +177,13 @@ const ROLE_COLORS: Record<string, string> = {
  visitante: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
  asistente: 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',
  personalizado: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
+};
+
+const formatLocalDate = (date: Date) => {
+ const year = date.getFullYear();
+ const month = String(date.getMonth() + 1).padStart(2, '0');
+ const day = String(date.getDate()).padStart(2, '0');
+ return `${year}-${month}-${day}`;
 };
 
 const normalizeRoleText = (value: string) =>
@@ -330,7 +351,7 @@ export default function StrategyDetailPage() {
  const [isNewSessionDrawerOpen, setIsNewSessionDrawerOpen] = useState(false);
  const [sessionForm, setSessionForm] = useState({
  grupo_id: '' as string | number,
- session_date: new Date().toISOString().split('T')[0],
+ session_date: formatLocalDate(new Date()),
  topic: '',
  offering_amount: '',
  report_notes: '',
@@ -603,7 +624,7 @@ export default function StrategyDetailPage() {
  const requestDeleteGroup = (groupId: string, groupName: string) => {
  setConfirmAction({
  title: 'Eliminar grupo',
- description: `Se eliminara "${groupName}" y todo su historial de asistencia.`,
+ description: `Se eliminará "${groupName}" y todo su historial de asistencia.`,
  confirmLabel: 'Eliminar',
  destructive: true,
  onConfirm: () => handleDeleteGroup(groupId),
@@ -699,7 +720,7 @@ export default function StrategyDetailPage() {
  });
  toast.success('Sesión registrada');
  setIsNewSessionDrawerOpen(false);
- setSessionForm({ grupo_id: '', session_date: new Date().toISOString().split('T')[0], topic: '', offering_amount: '', report_notes: '' });
+ setSessionForm({ grupo_id: '', session_date: formatLocalDate(new Date()), topic: '', offering_amount: '', report_notes: '' });
  fetchSessions();
  } catch (e: any) {
  toast.error('Error al guardar: ' + (e.message || 'Intente de nuevo'));
@@ -761,7 +782,7 @@ export default function StrategyDetailPage() {
  if (!attendanceSession) return;
  setAttendanceSaving(true);
  try {
- await apiFetch(`/evangelism/sessions/${attendanceSession.id}/attendance`, {
+ const res = await apiFetch<AttendanceSaveResult>(`/evangelism/sessions/${attendanceSession.id}/attendance`, {
  method: 'POST', token,
  body: attendancePersonas.map(m => ({
  session_id: attendanceSession.id,
@@ -770,7 +791,13 @@ export default function StrategyDetailPage() {
  notes: m.notes || null,
  })),
  });
- toast.success('Asistencia guardada');
+ toast.success('Asistencia registrada');
+ if (res?.evento_integracion) {
+ const integrationLabel = res.evento_integracion.crm_consolidacion?.caso_id
+ ? ` caso ${res.evento_integracion.crm_consolidacion.caso_id}`
+ : '';
+ toast.info(`Integración CRM activada${integrationLabel}`.trim());
+ }
  setIsAttendanceDrawerOpen(false);
  fetchSessions();
  } catch (e: any) {
@@ -850,8 +877,8 @@ export default function StrategyDetailPage() {
 
  const requestDeleteSession = (sessionId: number) => {
  setConfirmAction({
- title: 'Eliminar sesion',
- description: 'Se eliminara esta sesion y su asistencia registrada.',
+ title: 'Eliminar sesión',
+ description: 'Se eliminará esta sesión y su asistencia registrada.',
  confirmLabel: 'Eliminar',
  destructive: true,
  onConfirm: () => handleDeleteSession(sessionId),
@@ -901,7 +928,7 @@ export default function StrategyDetailPage() {
  if (!strategy) return;
  setConfirmAction({
  title: 'Eliminar estrategia',
- description: `Se eliminara "${strategy.name}" con sus grupos, sesiones y registros de asistencia.`,
+ description: `Se eliminará "${strategy.name}" con sus grupos, sesiones y registros de asistencia.`,
  confirmLabel: 'Eliminar',
  destructive: true,
  onConfirm: handleDelete,
@@ -911,7 +938,7 @@ export default function StrategyDetailPage() {
  const requestBlockAllSessions = () => {
  setConfirmAction({
  title: 'Bloquear sesiones',
- description: 'Se bloquearan todas las sesiones para reporte.',
+ description: 'Se bloquearán todas las sesiones para reporte.',
  confirmLabel: 'Bloquear',
  destructive: true,
  onConfirm: async () => {
@@ -927,7 +954,7 @@ export default function StrategyDetailPage() {
  const requestDeleteRole = (role: CustomRole) => {
  setConfirmAction({
  title: 'Eliminar rol',
- description: `Se eliminara el rol "${role.nombre_rol}".`,
+ description: `Se eliminará el rol "${role.nombre_rol}".`,
  confirmLabel: 'Eliminar',
  destructive: true,
  onConfirm: async () => {
@@ -1119,7 +1146,8 @@ export default function StrategyDetailPage() {
  items={[
  ...groups.map(g => ({
  id: String(g.id), name: g.name, title: g.name,
- start_date: new Date().toISOString(), end_date: new Date(Date.now() + 30 * 86400000).toISOString(),
+ start_date: formatLocalDate(new Date()),
+ end_date: formatLocalDate(new Date(Date.now() + 30 * 86400000)),
  progress: Math.min(g.personas_count * 20, 100),
  color: 'blue' as const, subtitle: `${g.personas_count} personas`,
  })),
@@ -1696,14 +1724,14 @@ export default function StrategyDetailPage() {
  } catch (e: any) { toast.error('Error al habilitar sesiones'); }
  }}
  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
- <CheckCircle2 size={14} />Habilitar todas
+ <CheckCircle2 size={14} />Habilitar sesiones
  </button>
  <button onClick={requestBlockAllSessions}
  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 text-xs font-semibold hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors">
- <AlertCircle size={14} />Bloquear todas
+ <AlertCircle size={14} />Bloquear sesiones
  </button>
  <button onClick={() => {
- setSessionForm({ grupo_id: groups[0]?.id || '', session_date: new Date().toISOString().split('T')[0], topic: '', offering_amount: '', report_notes: '' });
+ setSessionForm({ grupo_id: groups[0]?.id || '', session_date: formatLocalDate(new Date()), topic: '', offering_amount: '', report_notes: '' });
  setIsNewSessionDrawerOpen(true);
  }}
  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:opacity-90 transition-colors">
@@ -1766,7 +1794,7 @@ export default function StrategyDetailPage() {
  <span className="ml-auto text-[11px] text-[hsl(var(--text-secondary))]">
  {filteredSessions.length !== sessions.length
  ? `${filteredSessions.length} de ${sessions.length} sesiones`
- : `${sessions.length} sesion${sessions.length !== 1 ? 'es' : ''}`}
+  : `${sessions.length} sesión${sessions.length !== 1 ? 'es' : ''}`}
  </span>
  </div>
  </div>
@@ -1888,7 +1916,7 @@ export default function StrategyDetailPage() {
     <div className="flex flex-col items-center gap-2 py-10 border-2 border-dashed border-[hsl(var(--border-primary))] rounded-xl text-center">
      <ClipboardList size={28} className="text-[hsl(var(--text-secondary))] opacity-40" />
      <p className="text-sm font-semibold text-[hsl(var(--text-secondary))]">Sin sesiones registradas</p>
-     <p className="text-xs text-[hsl(var(--text-secondary))] opacity-70">Crea sesiones en el tab Sesiones para poder reportar asistencia</p>
+ <p className="text-xs text-[hsl(var(--text-secondary))] opacity-70">Crea sesiones en la pestaña Sesiones para poder reportar asistencia</p>
     </div>
    ) : (
     <div className="space-y-3">
@@ -1975,7 +2003,7 @@ export default function StrategyDetailPage() {
  <BarChart3 size={36} className="text-[hsl(var(--primary))]" />
  </div>
  <div>
- <h3 className="text-base font-bold text-[hsl(var(--text-primary))] mb-1">Dashboard de métricas</h3>
+ <h3 className="text-base font-bold text-[hsl(var(--text-primary))] mb-1">Panel de métricas</h3>
  <p className="text-sm text-[hsl(var(--text-secondary))] max-w-sm">
  Tendencias de asistencia, embudo de roles, mapa de calor, alertas tempranas y velocidad ministerial en tiempo real.
  </p>
@@ -2303,7 +2331,7 @@ export default function StrategyDetailPage() {
  Personas ({groupPersonas.length})
  </label>
  {groupPersonas.length === 0 ? (
- <p className="text-xs text-[hsl(var(--text-secondary))] italic py-2">Sin personas asignados</p>
+ <p className="text-xs text-[hsl(var(--text-secondary))] italic py-2">Sin personas asignadas</p>
  ) : (
  <div className="space-y-1.5">
  {groupPersonas.map(m => (
@@ -2396,7 +2424,7 @@ export default function StrategyDetailPage() {
 
  {/* ── New Session Drawer ── */}
  <WorkspaceDrawer isOpen={isNewSessionDrawerOpen} onClose={() => setIsNewSessionDrawerOpen(false)}
- title="Registrar Sesión" subtitle={`Estrategia: ${strategy?.name}`}
+ title="Registrar sesión" subtitle={`Estrategia: ${strategy?.name}`}
  actions={<>
  <button onClick={() => setIsNewSessionDrawerOpen(false)}
  className="px-4 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
@@ -2456,7 +2484,7 @@ export default function StrategyDetailPage() {
  {attendancePersonas.length === 0 && !showVisitorSearch ? (
  <div className="text-center py-8">
  <Users size={32} className="text-[hsl(var(--text-secondary))] mx-auto mb-2" />
- <p className="text-xs text-[hsl(var(--text-secondary))]">Este grupo no tiene personas asignados</p>
+ <p className="text-xs text-[hsl(var(--text-secondary))]">Este grupo no tiene personas asignadas</p>
  <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-1">Agrega personas desde la pestaña Grupos</p>
  </div>
  ) : (

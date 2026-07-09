@@ -408,6 +408,7 @@ export const MODULE_CONFIGS: Record<string, any> = {
       {
         title: 'Configuración',
         items: [
+          { id: 'cms-branding', label: 'Logo & Branding', href: '/plataforma/cms/branding', icon: Palette },
           { id: 'cms-themes', label: 'Temas', href: '/plataforma/cms/themes', icon: Palette },
           { id: 'cms-sites', label: 'Sitios', href: '/plataforma/cms/sites', icon: Globe },
           { id: 'cms-pastoral-team', label: 'Equipo Pastoral', href: '/plataforma/cms/pastoral-team', icon: Users },

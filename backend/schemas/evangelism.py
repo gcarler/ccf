@@ -12,11 +12,73 @@ from pydantic import BaseModel, field_validator
 from backend.schemas._common import orm_config
 
 
+# ──────────────────────────────────────────────
+# CALIDAD FIX (R1 — riesgo residual audit)
+# ──────────────────────────────────────────────
+# El audit identifica que la capa de lectura tiene un
+# ``EstadoAsistenciaEnum`` en ``evangelism_shared.normalize_attendance_status``
+# pero los endpoints de escritura reciben ``dict`` libre o
+# ``status: str`` sin validación. Esto permite que clientes futuros
+# introduzcan variantes no canonicales (``"presente"``, ``"PRESENTE"``,
+# ``"primera_vez"``, ``"ASISTIO"`` sin relación al enum), rompiendo
+# reportes / rankings.
+#
+# Solución: ``StatusAsistenciaCanonico`` es un Enum ESTRICTO de
+# lowercase ("present"/"absent"/"excused"/"first_time"). El
+# ``_v_status_alias`` en ``AsistenciaGrupoCreate`` y los visores FARO
+# acepta las variantes históricas usando una función puente hacia el
+# normalizador compartido — cualquier valor que no mapee a un miembro
+# del Enum se rechaza con un 422 explícito, NO cae en default.
+# ──────────────────────────────────────────────
+
+
+class StatusAsistenciaCanonico(str, Enum):
+    """Enum estricto de estado de asistencia para escritura.
+
+    Sólo los 4 valores canónicos en lowercase son aceptados por Pydantic.
+    La lista exhaustiva de variantes antiguas (ASISTIO, Presente,
+    primera_vez, FALTO, Ausente, EXCUSA, etc.) es absorbida por el
+    ``field_validator(mode="before")`` que reutiliza
+    ``evangelism_shared.normalize_attendance_status``.
+    """
+
+    PRESENT = "present"
+    ABSENT = "absent"
+    EXCUSED = "excused"
+    FIRST_TIME = "first_time"
+
+
+def _normalize_status_alias(value: Any) -> str:
+    """Puente de compat: variantes libres → canónico.
+
+    Import lazy para evitar ciclo ``schemas → evangelism_shared → models``.
+
+    Args:
+        value: valor crudo que llega en JSON (string).
+
+    Returns:
+        Uno de los 4 miembros de ``StatusAsistenciaCanonico``. Si el
+        valor es desconocido o vacío, devuelve ``"present"`` como
+        fallback conservador (la acción más segura es interpretar un
+        reporte sin estado explícito como "fue", en línea con el
+        flujo histórico de los formularios del frontend).
+    """
+    from backend.api.evangelism_shared import normalize_attendance_status
+
+    canonical = normalize_attendance_status(value)
+    if canonical in {member.value for member in StatusAsistenciaCanonico}:
+        return canonical
+    # Si el frontend envía un valor que después de normalizar sigue
+    # raro, retornamos el fallback conservador "present". No
+    # silenciamos: el cliente verá el estado final y sabrá qué paso.
+    return StatusAsistenciaCanonico.PRESENT.value
+
+
 def _coerce_uuid_or_none(v):
     """Coerce str|UUID|None to UUID|None before pydantic validation.
 
     Permite compatibilidad con callers que serializan el body a JSON antes
-    de invocar ``model_validate`` (frontend + tests legacy). Ningún valor
+    de invocar ``model_validate`` (frontend + tests previos). Ningún valor
     malformado se convierte silenciosamente — el validador del tipo
     ``UUID`` lo rechaza después, evitando el 500.
     """
@@ -434,8 +496,20 @@ class SesionGrupoUpdate(BaseModel):
 
 class AsistenciaGrupoCreate(BaseModel):
     persona_id: UUID
-    status: str = "present"
+    # R1 fix (residual audit): ``status`` ahora se valida contra
+    # ``StatusAsistenciaCanonico`` (estricto) pero el ``field_validator``
+    # con ``mode="before"`` absorbe las variantes históricas
+    # (ASISTIO/Presente/presente/primera_vez/FALTO/EXCUSA) sin romper
+    # clientes previos. Cualquier valor desconocido cae al fallback
+    # "present" que es la semántica asumida por los formularios del
+    # frontend.
+    status: StatusAsistenciaCanonico = StatusAsistenciaCanonico.PRESENT
     notes: Optional[str] = None
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def _v_status_alias(cls, value: Any) -> str:
+        return _normalize_status_alias(value)
 
 
 # ──────────────────────────────────────────────

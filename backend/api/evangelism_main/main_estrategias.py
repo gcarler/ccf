@@ -20,7 +20,7 @@ from backend.crud.evangelism import (
 from backend.crud.evangelism import (
     update_estrategia as update_evangelism_strategy,
 )
-from backend.schemas.crm import (
+from backend.schemas.crm.base import (
     EvangelismStrategy,
     EvangelismStrategyCreate,
     EvangelismStrategyUpdate,
@@ -201,6 +201,7 @@ def update_strategy(
 @estrategias_router.post("/strategies/{strategy_id}/generate-sessions", response_model=dict)
 def generate_strategy_sessions(
     strategy_id: UUID,
+    habilitar_inmediatamente: bool = True,
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -209,6 +210,15 @@ def generate_strategy_sessions(
     Si la estrategia tiene ``dia_reunion`` configurado, la fecha de inicio se ajusta
     automáticamente al primer día de reunión — así las sesiones siempre caen en el
     día correcto de la semana aunque la fecha_inicio esté en otro día.
+
+    Quality fix (R3 — riesgo residual audit): por defecto
+    ``habilitar_inmediatamente=True`` para eliminar la fricción "generar → habilitar
+    manualmente → recién entonces reportar". Las sesiones recién creadas ya nacen
+    en ``HABILITADO`` para que los líderes puedan reportar asistencia sin paso
+    intermedio. Tests de regresión sensibles a la regla histórica "nacen
+    DESHABILITADO" pueden pasar ``habilitar_inmediatamente=False`` y conservar el
+    bloqueo como flujo canónico de seguridad (ver
+    ``test_evangelism_triple7_flow.py``).
     """
     from datetime import timedelta
 
@@ -262,6 +272,14 @@ def generate_strategy_sessions(
                     strat.fecha_inicio, fecha_inicio, strat.dia_reunion,
                 )
 
+    # Capturar timestamp ANTES de calcular_sesiones. Sirve como umbral
+    # para que el update posterior habilite SOLO las sesiones recién
+    # creadas (``created_at > _before_call``). Sin este desplazamiento
+    # el filtro no encuentra nada porque ``calcular_sesiones`` ya hizo
+    # su propio ``db.commit()`` con ``created_at = now()`` previo.
+    from datetime import datetime as _dt_now
+    _before_call = _dt_now.utcnow()
+
     try:
         created = calcular_sesiones(
             db=db,
@@ -276,6 +294,34 @@ def generate_strategy_sessions(
         raise HTTPException(status_code=400, detail=str(e))
 
     sessions_per_group = created // len(groups) if groups else 0
+
+    sesiones_habilitadas = 0
+    if habilitar_inmediatamente and created > 0:
+        from backend.models_evangelism import HabilitacionSesionEnum, SesionGrupo
+
+        # Auto-habilitar SOLO las sesiones creadas en este call.
+        # ``_before_call`` se tomó arriba antes de ``calcular_sesiones``
+        # para usar ``created_at > _before_call`` como filtro preciso.
+        # Esto evita pisar cualquier sesión que el admin haya
+        # deshabilitado manualmente en el mismo rango de fechas
+        # (escenario pastoral común: líder solicita bloqueo temporal
+        # por duelo, etc.).
+        sesiones_habilitadas = (
+            db.query(SesionGrupo)
+            .filter(
+                SesionGrupo.grupo_id.in_([g.id for g in groups]),
+                SesionGrupo.fecha_sesion >= fecha_inicio,
+                SesionGrupo.fecha_sesion <= strat.fecha_fin,
+                SesionGrupo.deleted_at.is_(None),
+                SesionGrupo.created_at > _before_call,
+            )
+            .update(
+                {SesionGrupo.estado_habilitacion: HabilitacionSesionEnum.HABILITADO.value},
+                synchronize_session=False,
+            )
+        )
+        db.commit()
+
     return {
         "strategy": strat.nombre,
         "recurrence": strat.frecuencia,
@@ -284,6 +330,8 @@ def generate_strategy_sessions(
         "sessions_per_group": sessions_per_group,
         "groups": len(groups),
         "total_sessions_created": created,
+        "sesiones_habilitadas": sesiones_habilitadas,
+        "habilitar_inmediatamente": habilitar_inmediatamente,
     }
 
 

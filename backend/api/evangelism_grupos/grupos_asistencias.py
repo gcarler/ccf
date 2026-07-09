@@ -41,7 +41,10 @@ def get_groups_session_attendance(
     ).first()
     if not session:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
-    house = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == session.grupo_id).first()
+    house = db.query(GrupoEvangelismo).filter(
+        models.GrupoEvangelismo.id == session.grupo_id,
+        models.GrupoEvangelismo.deleted_at.is_(None),
+    ).first()
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house):
@@ -49,7 +52,10 @@ def get_groups_session_attendance(
 
     attendances = (
         db.query(Asistencia)
-        .filter(models.Asistencia.sesion_id == session_id)
+        .filter(
+            models.Asistencia.sesion_id == session_id,
+            models.Asistencia.deleted_at.is_(None),
+        )
         .options(joinedload(models.Asistencia.persona))
         .all()
     )
@@ -121,13 +127,30 @@ def add_groups_attendance(
     persona_ids = payload.get("persona_ids") or payload.get("persona_ids", [])
     attendees = payload.get("attendees")
 
+    # R1 fix (residual audit): si clientes futuros empiezan a enviar
+    # ``status`` (string) en lugar de ``attended`` (bool), absorbemos la
+    # variante usando el normalizador compartido. Cualquier valor
+    # no-mapeado cae a ``True`` como fallback conservador.
+    from backend.schemas.evangelism import _normalize_status_alias
+
+    if isinstance(attendees, list):
+        for item in attendees:
+            if not isinstance(item, dict):
+                continue
+            if "status" in item and "attended" not in item:
+                canonical_status = _normalize_status_alias(item.get("status"))
+                item["attended"] = canonical_status in {"present", "first_time"}
+
     session = db.query(SesionGrupo).filter(
         models.SesionGrupo.id == session_id,
         models.SesionGrupo.deleted_at.is_(None),
     ).first()
     if not session:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
-    house = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == session.grupo_id).first()
+    house = db.query(GrupoEvangelismo).filter(
+        models.GrupoEvangelismo.id == session.grupo_id,
+        models.GrupoEvangelismo.deleted_at.is_(None),
+    ).first()
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house):
@@ -293,18 +316,22 @@ def submit_attendance(
     )
 
     submitted = []
+    trigger_candidates: list[dict] = []
     for att in attendance_data:
+        raw_status = getattr(att.status, "value", att.status)
+        is_first_time = raw_status == "first_time"
+        requires_follow_up = bool(getattr(att, "requiere_seguimiento", False))
         # Map schema fields (status/notes) to model fields
         absence_reason_detail = None
-        if att.status == "absent":
+        if raw_status == "absent":
             absence_reason_detail = att.notes
 
         # Mapear estado nuevo (EstadoAsistenciaEnum)
         from backend.models_evangelism import EstadoAsistenciaEnum
         nuevo_estado = "presente"
-        if att.status == "absent":
+        if raw_status == "absent":
             nuevo_estado = EstadoAsistenciaEnum.FALTO.value
-        elif att.status == "first_time":
+        elif raw_status == "first_time":
             nuevo_estado = "primera_vez"
 
         import uuid as _uuid
@@ -318,10 +345,18 @@ def submit_attendance(
             persona_id=persona_uuid,
             detalle_excusa=absence_reason_detail,
             estado=nuevo_estado,
-            es_primera_vez=(att.status == "first_time"),
+            es_primera_vez=is_first_time,
+            requiere_seguimiento=requires_follow_up,
         )
         db.add(db_att)
         submitted.append(db_att)
+        trigger_candidates.append(
+            {
+                "persona_id": persona_uuid,
+                "is_first_time": is_first_time,
+                "requires_follow_up": requires_follow_up,
+            }
+        )
 
     session.reported_at = utc_now()
 
@@ -342,9 +377,9 @@ def submit_attendance(
     from backend.services.evangelism_crm_bridge import crear_caso_desde_asistencia
 
     evento = None
-    for att in submitted:
-        if att.es_primera_vez or att.requiere_seguimiento:
-            persona = db.query(Persona).filter(Persona.id == att.persona_id).first()
+    for att, candidate in zip(submitted, trigger_candidates):
+        if candidate["is_first_time"] or candidate["requires_follow_up"]:
+            persona = db.query(Persona).filter(Persona.id == candidate["persona_id"]).first()
             if not persona:
                 continue
             grupo = session.grupo
@@ -354,36 +389,38 @@ def submit_attendance(
             if not sede_id:
                 continue
             caso = crear_caso_desde_asistencia(db, att, persona, grupo, session, sede_id)
-            if caso:
-                estrategia = grupo.estrategia
-                tags_nuevos = [
-                    f"VISITANTE_ESTRATEGIA_{estrategia.id}" if estrategia else "VISITANTE_ESTRATEGIA_NONE",
-                    f"GRUPO_{grupo.nombre}",
-                    f"SESION_{session.fecha_sesion.date().isoformat()}"
-                    if session.fecha_sesion
-                    else f"SESION_{session.id}",
-                ]
-                persona.tags = list(set((persona.tags or []) + tags_nuevos))
-                if estrategia:
-                    persona.origen_estrategia_id = estrategia.id
-                persona.origen_grupo_id = grupo.id
-                persona.origen_fecha = _datetime.now(_timezone.utc)
-                persona.spiritual_status = "VISITANTE_EVANGELISMO"
-                db.commit()
-                db.refresh(persona)
+            estrategia = grupo.estrategia
+            tags_nuevos = [
+                f"VISITANTE_ESTRATEGIA_{estrategia.id}" if estrategia else "VISITANTE_ESTRATEGIA_NONE",
+                f"GRUPO_{grupo.nombre}",
+                f"SESION_{session.fecha_sesion.date().isoformat()}"
+                if session.fecha_sesion
+                else f"SESION_{session.id}",
+            ]
+            persona.tags = list(set((persona.tags or []) + tags_nuevos))
+            if estrategia:
+                persona.origen_estrategia_id = estrategia.id
+            persona.origen_grupo_id = grupo.id
+            persona.origen_fecha = _datetime.now(_timezone.utc)
+            persona.spiritual_status = "VISITANTE_EVANGELISMO"
+            db.commit()
+            db.refresh(persona)
+            if caso is not None:
                 db.refresh(caso)
 
-                evento = {
-                    "origen_modulo": "EVANGELISMO",
-                    "grupo_id": str(grupo.id),
-                    "sesion_id": str(session.id),
-                    "visitante_kernel": {
-                        "persona_id": str(persona.id),
-                        "nombre": f"{persona.first_name} {persona.last_name}",
-                        "rol_iglesia": persona.spiritual_status,
-                        "tags_aplicados": persona.tags,
-                    },
-                    "crm_consolidacion": {
+            evento = {
+                "origen_modulo": "EVANGELISMO",
+                "grupo_id": str(grupo.id),
+                "sesion_id": str(session.id),
+                "estado": "CREADO" if caso else "TRIGGERED_SIN_CASO",
+                "visitante_kernel": {
+                    "persona_id": str(persona.id),
+                    "nombre": f"{persona.first_name} {persona.last_name}",
+                    "rol_iglesia": persona.spiritual_status,
+                    "tags_aplicados": persona.tags,
+                },
+                "crm_consolidacion": (
+                    {
                         "caso_id": str(caso.id),
                         "pipeline": "NUEVOS_VISITANTES",
                         "etapa_inicial": caso.etapa_actual.nombre if caso.etapa_actual else "NUEVO_CONTACTO",
@@ -391,9 +428,12 @@ def submit_attendance(
                         "sla_deadline": caso.sla_vencimiento_contacto.isoformat()
                         if caso.sla_vencimiento_contacto
                         else None,
-                    },
-                }
-                break
+                    }
+                    if caso
+                    else None
+                ),
+            }
+            break
 
     return {
         "evento_integracion": evento,

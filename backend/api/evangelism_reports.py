@@ -43,7 +43,8 @@ router = APIRouter()
 
 def _get_group_or_404(db: Session, grupo_id: UUID) -> models.GrupoEvangelismo:
     grupo = db.query(models.GrupoEvangelismo).filter(
-        models.GrupoEvangelismo.id == grupo_id
+        models.GrupoEvangelismo.id == grupo_id,
+        models.GrupoEvangelismo.deleted_at.is_(None),
     ).first()
     if not grupo:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
@@ -74,7 +75,10 @@ def _build_session_rows(
     """Return one dict per session with attendance stats."""
     sessions = (
         db.query(models.SesionGrupo)
-        .filter(models.SesionGrupo.grupo_id == grupo_id)
+        .filter(
+            models.SesionGrupo.grupo_id == grupo_id,
+            models.SesionGrupo.deleted_at.is_(None),
+        )
         .order_by(models.SesionGrupo.fecha_sesion.asc())
         .all()
     )
@@ -85,7 +89,10 @@ def _build_session_rows(
     if session_ids:
         for asistencia in (
             db.query(models.Asistencia)
-            .filter(models.Asistencia.sesion_id.in_(session_ids))
+            .filter(
+                models.Asistencia.sesion_id.in_(session_ids),
+                models.Asistencia.deleted_at.is_(None),
+            )
             .all()
         ):
             asistencia_by_session[asistencia.sesion_id].append(asistencia)

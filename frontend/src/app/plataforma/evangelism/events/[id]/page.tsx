@@ -65,7 +65,7 @@ export default function EventDetailPage() {
             <div>
               <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] uppercase">{event.name}</h1>
               <p className="text-[hsl(var(--text-secondary))] font-medium text-sm flex items-center gap-2 mt-1">
-                <MapPin size={14}/> {event.location || 'Sin ubicacion'}
+                <MapPin size={14}/> {event.location || 'Sin ubicación'}
               </p>
             </div>
             <div className="flex flex-col items-stretch gap-3">
@@ -91,11 +91,11 @@ export default function EventDetailPage() {
                 <button
                   onClick={() => setActiveTab('session')}
                   className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'session' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
-                >Configurar Sesion</button>
+                >Configurar sesión</button>
                 <button
                   onClick={() => setActiveTab('analytics')}
                   className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'analytics' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
-                >Analitica</button>
+                >Analítica</button>
               </div>
             </div>
           </div>
@@ -104,8 +104,8 @@ export default function EventDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 space-y-3">
                 <DSCard>
-                  <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Descripcion</h3>
-                  <p className="text-[hsl(var(--text-secondary))] font-medium">{event.description || "Sin descripcion."}</p>
+                  <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Descripción</h3>
+                  <p className="text-[hsl(var(--text-secondary))] font-medium">{event.description || "Sin descripción."}</p>
                 </DSCard>
               </div>
               <div className="space-y-3">

@@ -296,7 +296,10 @@ def get_grupo(
 ):
     from backend.models_evangelism import Asistencia, GrupoEvangelismo, SesionGrupo
 
-    house = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.id == grupo_id).first()
+    house = db.query(GrupoEvangelismo).filter(
+        GrupoEvangelismo.id == grupo_id,
+        GrupoEvangelismo.deleted_at.is_(None),
+    ).first()
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house):
@@ -350,7 +353,10 @@ def get_grupo(
         from sqlalchemy import func as sqlfunc
 
         session_ids = [session.id for session in sessions]
-        attendance_rows = db.query(Asistencia).filter(models.Asistencia.sesion_id.in_(session_ids)).all()
+        attendance_rows = db.query(Asistencia).filter(
+            models.Asistencia.sesion_id.in_(session_ids),
+            models.Asistencia.deleted_at.is_(None),
+        ).all()
         for row in attendance_rows:
             attendance_by_session[row.sesion_id].append(row)
             if not row.attended and row.persona_id:
@@ -368,7 +374,10 @@ def get_grupo(
                 models.Asistencia.sesion_id.label("sesion_id"),
                 sqlfunc.count(models.Asistencia.id).label("cnt"),
             )
-            .filter(models.Asistencia.sesion_id.in_(session_ids))
+            .filter(
+                models.Asistencia.sesion_id.in_(session_ids),
+                models.Asistencia.deleted_at.is_(None),
+            )
             .group_by(models.Asistencia.sesion_id)
             .all()
         )

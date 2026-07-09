@@ -165,7 +165,7 @@ export default function RankingsPage() {
     <EvangelismShell
       breadcrumbs={[
         { label: 'Evangelismo', href: '/plataforma/evangelism' },
-        { label: 'Rankings' },
+        { label: 'Ranking' },
       ]}
     >
       <div className="p-4 space-y-5">
@@ -177,12 +177,12 @@ export default function RankingsPage() {
             </p>
             <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight flex items-center gap-2">
               <Trophy size={22} className="text-amber-500" />
-              Rankings de Grupos
+              Ranking de grupos
             </h1>
           </div>
           <div className="w-full md:w-64">
             <label htmlFor="strategy-filter" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-1.5">
-              Filtrar por Estrategia
+              Filtrar por estrategia
             </label>
             <select
               id="strategy-filter"
@@ -216,19 +216,19 @@ export default function RankingsPage() {
               tone="blue"
             />
             <DSMetric
-              label="Asistencia Total"
+              label="Asistencia total"
               value={String(monthlyComparison.current_month.total_attendance)}
               trend={`${diffPct(monthlyComparison.current_month.total_attendance, monthlyComparison.previous_month.total_attendance)}% vs mes pasado`}
               tone="emerald"
             />
             <DSMetric
-              label="Tasa Promedio"
+              label="Tasa promedio"
               value={`${monthlyComparison.current_month.avg_rate}%`}
               trend={`vs ${monthlyComparison.previous_month.avg_rate}% mes pasado`}
               tone="amber"
             />
             <DSMetric
-              label="Nuevos Visitantes"
+              label="Nuevos visitantes"
               value={String(monthlyComparison.current_month.new_visitors)}
               trend={`vs ${monthlyComparison.previous_month.new_visitors} mes pasado`}
               tone="blue"
@@ -236,7 +236,7 @@ export default function RankingsPage() {
           </div>
         ) : null}
 
-        {/* Group Rankings Tabs */}
+        {/* Pestañas de rankings por grupo */}
         <GroupRankingsPanel
           groupRankings={groupRankings}
           loadingGroups={loadingGroups}
@@ -244,7 +244,7 @@ export default function RankingsPage() {
           onTabChange={setActiveTab}
         />
 
-        {/* Leaders Dashboard */}
+        {/* Panel de líderes */}
         <LeadersPanel leaders={leaders} loadingLeaders={loadingLeaders} />
       </div>
     </EvangelismShell>

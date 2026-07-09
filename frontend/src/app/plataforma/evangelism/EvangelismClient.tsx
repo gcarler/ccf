@@ -64,7 +64,7 @@ export default function EvangelismClient() {
  };
  }, [fetchStrategies]);
 
- // Handle closing RightPanel (removed — now navigates to detail page)
+ // El cierre del panel lateral ahora navega a la vista de detalle
 
  const filteredData = useMemo(() => {
  if (!search) return data;
@@ -123,7 +123,7 @@ export default function EvangelismClient() {
  className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-[7px] transition-all shadow-sm"
  >
  <Plus size={12} />
- Crear Estrategia
+ Crear estrategia
  </button>
  }
  >
@@ -138,7 +138,7 @@ export default function EvangelismClient() {
  description="Las estrategias te permiten planificar campañas de alcance, consolidación y discipulado en tu comunidad."
  icon={Flame}
  onAction={handleAddItem}
- actionLabel="Crear Estrategia"
+ actionLabel="Crear estrategia"
  />
  ) : (
  <div className="pb-16 flex-1">
