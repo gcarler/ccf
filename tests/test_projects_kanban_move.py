@@ -17,8 +17,7 @@ Targets (Sprint 1/2 of the Projects-node debt roadmap):
 from __future__ import annotations
 
 import uuid as _uuid
-
-from sqlalchemy import text as _sql_text
+from datetime import datetime, timezone
 
 from backend import models as _models
 from backend.models_projects import ProjectTask
@@ -80,12 +79,11 @@ class TestKanbanStatusValidation:
         phases = create_default_phases_factory(db_session, proj.id)
         task = create_task_factory(db_session, proj.id)
 
-        # Soft-delete the 'review' phase row
-        from sqlalchemy import text as _sql_text
+        # Soft-delete the 'review' phase row. Use Python datetime because
+        # the test DB is SQLite (no NOW() builtin) — keeping the test
+        # portable across Postgres + SQLite.
         review_phase = next(p for p in phases if p.slug == "review")
-        review_phase.deleted_at = db_session.execute(
-            _sql_text("SELECT NOW()")
-        ).scalar()
+        review_phase.deleted_at = datetime.now(timezone.utc)
         db_session.commit()
         headers = auth_headers(client)
 

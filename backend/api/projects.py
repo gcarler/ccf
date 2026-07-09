@@ -163,6 +163,76 @@ def _ensure_milestone_in_project(db: Session, project_id: str, milestone_id: str
     return milestone
 
 
+def _assert_status_in_project_phases(
+    db: Session, project_id: Any, status_value: Any
+) -> None:
+    """Reject a task ``status`` that does not match any active ``ProjectPhase.slug``.
+
+    Contract (test_projects_kanban_move.py RED suite, Sprint 1/2):
+
+    * **400** (not 422): business-rule violation tied to DB state, not a
+      Pydantic schema issue — distinct from FastAPI's 422 reserved for
+      schema validation. FastAPI returns 422 only when static schema
+      constraints are violated; kanban membership is a runtime concept.
+    * Soft-deleted phases (``deleted_at IS NOT NULL``) are filtered out
+      by :func:`crud.get_project_phases`, so they cannot be assigned —
+      this satisfies ``test_patch_status_to_soft_deleted_phase_rejected``.
+    * Empty / None ``status`` is treated as "not in payload" — callers
+      that don't touch ``status`` should not be forced to send a value.
+    * **Canonical fallback**: when the project has no active phases
+      (e.g. test fixtures that create a project directly without calling
+      ``create_default_phases_factory``) the canonical 4-phase set is
+      accepted. Production always bootstraps default phases via the
+      ``create_project`` endpoint so this path is guard-only — it keeps
+      ``test_create_task`` from breaking under strict validation while
+      still rejecting garbage slugs like ``"not_a_real_phase"``. Note:
+      it is not a free-string fallback; only the 4 canonical phases are
+      allowed.
+    * Race window: there is an inherent race between this snapshot read
+      and the subsequent ``setattr(task, "status", ...)`` if another
+      request calls ``set_project_phases`` between them. Mitigations
+      (SELECT … FOR SHARE, optimistic locking) are deferred until the
+      drag-and-drop kanban endpoints need higher-throughput safety.
+
+    The detail string intentionally contains both words "status" and
+    "phase" so the test envelope assertion passes and consumers can
+    pinpoint the offending axis.
+    """
+    if status_value is None:
+        return
+    # Normalize whitespace defensively without forbidding slugs that
+    # legitimately contain spaces (none currently exist, but be safe).
+    candidate = str(status_value).strip()
+    if not candidate:
+        return
+    project_uuid = _to_uuid(project_id)
+    phase_rows = crud.get_project_phases(db, project_uuid)
+    if phase_rows:
+        valid_slugs = {p.slug for p in phase_rows}
+        source = "project phases"
+    else:
+        valid_slugs = _CANONICAL_PHASE_SLUGS
+        source = "canonical defaults (project has no phases configured)"
+    if candidate in valid_slugs:
+        return
+    pretty = ", ".join(sorted(valid_slugs))
+    raise HTTPException(
+        status_code=400,
+        detail=(
+            f"status '{candidate}' is not a valid phase. "
+            f"Active phases for this {source}: [{pretty}]"
+        ),
+    )
+
+
+# Canonical 4-phase set used when a project has no active Phase rows
+# configured (most often in tests that bypass ``create_default_phases``).
+# This is intentionally a tight allow-list, not a free-string fallback.
+_CANONICAL_PHASE_SLUGS: frozenset[str] = frozenset(
+    {"todo", "in_progress", "review", "completed"}
+)
+
+
 def _serialize_task_attachments(task: models.ProjectTask) -> models.ProjectTask:
     task.__dict__["attachments"] = [
         {
@@ -394,13 +464,14 @@ def create_project_task(
 ):
     _ensure_project(db, project_id)
     project = db.query(models.Project).filter(models.Project.id == _to_uuid(project_id)).first()
+    payload = task.model_dump()
+    _assert_status_in_project_phases(db, project_id, payload.get("status"))
     max_order = (
         db.query(func.max(models.ProjectTask.order_index))
         .filter(models.ProjectTask.project_id == _to_uuid(project_id))
         .scalar()
         or 0
     )
-    payload = task.model_dump()
     payload["project_id"] = _to_uuid(project_id)
     payload["order_index"] = max_order + 1
     db_task = models.ProjectTask(**payload)
@@ -559,8 +630,10 @@ def update_task(
 ):
     """Actualiza una tarea usando ruta plana (sin project_id)."""
     task = _ensure_task(db, task_id)
-    previous_assignee_id = getattr(task, "assignee_id", None)
     update_data = payload.model_dump(exclude_unset=True)
+    if "status" in update_data:
+        _assert_status_in_project_phases(db, task.project_id, update_data["status"])
+    previous_assignee_id = getattr(task, "assignee_id", None)
     for key, value in update_data.items():
         setattr(task, key, value)
     task.updated_at = _utcnow()
@@ -864,8 +937,10 @@ def update_project_task(
 ):
     """Actualiza una tarea con auditoría ministerial automática."""
     task = _ensure_task_in_project(db, project_id, task_id)
-    previous_assignee_id = getattr(task, "assignee_id", None)
     update_data = payload.model_dump(exclude_unset=True)
+    if "status" in update_data:
+        _assert_status_in_project_phases(db, project_id, update_data["status"])
+    previous_assignee_id = getattr(task, "assignee_id", None)
 
     for key, value in update_data.items():
         setattr(task, key, value)
@@ -998,10 +1073,11 @@ def create_subtask(
     """Crea una subtarea (nivel 2 o 3) bajo una tarea existente."""
     _ensure_project(db, project_id)
     parent_task = _ensure_task_in_project(db, project_id, task_id)
+    payload = subtask.model_dump()
+    _assert_status_in_project_phases(db, project_id, payload.get("status"))
     max_order = (
         db.query(func.max(models.ProjectTask.order_index)).filter(models.ProjectTask.parent_id == task_id).scalar() or 0
     )
-    payload = subtask.model_dump()
     payload["project_id"] = project_id
     payload["parent_id"] = task_id
     payload["order_index"] = max_order + 1
@@ -1044,8 +1120,10 @@ def update_subtask(
     subtask = _ensure_task_in_project(db, project_id, subtask_id)
     if str(subtask.parent_id) != str(task_id):
         raise HTTPException(status_code=404, detail="Subtask not found under task")
-    previous_assignee_id = getattr(subtask, "assignee_id", None)
     update_data = payload.model_dump(exclude_unset=True)
+    if "status" in update_data:
+        _assert_status_in_project_phases(db, project_id, update_data["status"])
+    previous_assignee_id = getattr(subtask, "assignee_id", None)
     for key, value in update_data.items():
         setattr(subtask, key, value)
     db.commit()
