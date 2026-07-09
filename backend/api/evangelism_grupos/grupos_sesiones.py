@@ -49,7 +49,11 @@ def list_groups_sessions(
         query = query.filter(models.SesionGrupo.season_id == season_id)
     if grupo_id:
         query = query.filter(models.SesionGrupo.grupo_id == grupo_id)
-    query = query.filter(models.GrupoEvangelismo.sede_id == user_sede)
+    query = query.filter(
+        models.GrupoEvangelismo.sede_id == user_sede,
+        models.GrupoEvangelismo.deleted_at.is_(None),
+        models.SesionGrupo.deleted_at.is_(None),
+    )
     sessions = query.order_by(models.SesionGrupo.fecha_sesion.desc()).all()
 
     # Single query: get attendance counts for all sessions at once
@@ -62,7 +66,10 @@ def list_groups_sessions(
                 models.Asistencia.sesion_id,
                 func.count(models.Asistencia.id),
             )
-            .filter(models.Asistencia.sesion_id.in_(session_ids))
+            .filter(
+                models.Asistencia.sesion_id.in_(session_ids),
+                models.Asistencia.deleted_at.is_(None),
+            )
             .group_by(models.Asistencia.sesion_id)
             .all()
         )
@@ -127,7 +134,10 @@ def list_my_pending_groups_sessions(
     sessions = (
         db.query(SesionGrupo)
         .options(joinedload(models.SesionGrupo.grupo))
-        .filter(models.SesionGrupo.grupo_id.in_(house_ids))
+        .filter(
+            models.SesionGrupo.grupo_id.in_(house_ids),
+            models.SesionGrupo.deleted_at.is_(None),
+        )
         .order_by(models.SesionGrupo.fecha_sesion.desc())
         .limit(40)
         .all()
@@ -145,7 +155,10 @@ def list_my_pending_groups_sessions(
                 models.Asistencia.sesion_id,
                 func.count(models.Asistencia.id),
             )
-            .filter(models.Asistencia.sesion_id.in_(session_ids))
+            .filter(
+                models.Asistencia.sesion_id.in_(session_ids),
+                models.Asistencia.deleted_at.is_(None),
+            )
             .group_by(models.Asistencia.sesion_id)
             .all()
         )
@@ -646,6 +659,93 @@ def deshabilitar_todas_sesiones(
     return {"strategy_id": strategy_id, "sesiones_deshabilitadas": updated}
 
 
-# Strategy D: static routes BEFORE dynamic ones (avoid FastAPI shadow matching)
+# Strategy D: el include_router(static_router/dynamic_router) está
+# al FINAL del archivo (después de R2 /personas/search) para que
+# TODAS las rutas estáticas —incluyendo las definidas luego— sean
+# registradas antes del mount. Moverlo aquí antes causa 404 en
+# FastAPI para las rutas posteriores.
+
+
+# ─────────────────────────────────────────────────────
+# R2 — Riesgo residual audit: búsqueda remota de personas
+# ─────────────────────────────────────────────────────
+# El formulario de registrar asistencia de un Grupo en Casa pre-carga
+# los participantes del grupo (esperados) pero NO permite buscar
+# visitantes/contactos fuera del grupo. Para volumen alto, conviene
+# una búsqueda remota con debounce desde el campo de texto del frontend.
+# Este endpoint es consumido por ``groups/[id]/page.tsx`` vía
+# ``apiFetch('/evangelism/personas/search', { params })`` con AbortController.
+
+
+@static_router.get("/personas/search", response_model=dict)
+def search_personas_for_attendance(
+    q: str = "",
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """Búsqueda remota con debounce de personas para el formulario de asistencia.
+
+    Args:
+        q: texto de búsqueda (mínimo 3 caracteres para evitar storm).
+        limit: tope razonable (default 10).
+
+    Returns:
+        ``{"results": [{id, nombre_completo, church_role, phone, email}, ...]}``
+        filtrado por la sede del usuario actual y por el texto.
+    """
+    lowered_query = (q or "").strip().lower()
+    if len(lowered_query) < 3:
+        return {"results": []}
+
+    # Limit defensivo para no pegar a la DB completa.
+    bounded_limit = max(1, min(int(limit or 10), 25))
+    user_sede = require_user_sede_id(db, current_user)
+
+    # ``Persona`` no tiene columna ``deleted_at`` (su borrado se gestiona
+    # vía ``soft_delete`` con otro mecanismo), así que filtramos solo
+    # por sede. Si en el futuro se agrega ``deleted_at`` a ``Persona``
+    # este filtro debe re-introducirse.
+    rows = (
+        db.query(models.Persona)
+        .filter(models.Persona.sede_id == user_sede)
+        .order_by(models.Persona.nombre_completo.asc())
+        .all()
+    )
+
+    def _matches(persona) -> bool:
+        haystack = " ".join(
+            [
+                str(getattr(persona, "nombre_completo", "") or ""),
+                str(getattr(persona, "first_name", "") or ""),
+                str(getattr(persona, "last_name", "") or ""),
+                str(getattr(persona, "email", "") or ""),
+                str(getattr(persona, "phone", "") or ""),
+                str(getattr(persona, "documento", "") or ""),
+                str(getattr(persona, "church_role", "") or ""),
+            ]
+        ).lower()
+        return lowered_query in haystack
+
+    return {
+        "results": [
+            {
+                "id": str(p.id),
+                "nombre_completo": p.nombre_completo,
+                "church_role": getattr(p, "church_role_effective", "") or getattr(p, "church_role", "") or "Miembro",
+                "phone": getattr(p, "phone", "") or "",
+                "email": getattr(p, "email", "") or "",
+            }
+            for p in rows
+            if _matches(p)
+        ][:bounded_limit]
+    }
+
+
+# Strategy D: static routes BEFORE dynamic ones (avoid FastAPI shadow matching).
+# CRÍTICO: este include_router debe estar al FINAL del archivo para que
+# las rutas definidas luego (ej. R2 /personas/search) sean registradas.
+# FastAPI ``include_router`` solo monta las rutas que existen en el
+# sub-router en el momento de la llamada.
 router.include_router(static_router)
 router.include_router(dynamic_router)

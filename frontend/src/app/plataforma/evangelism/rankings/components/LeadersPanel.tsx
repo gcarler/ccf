@@ -25,7 +25,7 @@ export default function LeadersPanel({ leaders, loadingLeaders }: Props) {
     <section>
       <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
         <User size={14} />
-        Tablero de Líderes
+        Panel de líderes
       </h2>
       {loadingLeaders ? (
         <div className="space-y-2">
@@ -53,7 +53,7 @@ export default function LeadersPanel({ leaders, loadingLeaders }: Props) {
                       {leader.leader_name}
                     </p>
                     <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">
-                      {leader.group_name} · {leader.personas} personas
+                    {leader.group_name} · {leader.personas} personas
                     </p>
                   </div>
                 </div>
@@ -62,7 +62,7 @@ export default function LeadersPanel({ leaders, loadingLeaders }: Props) {
                     {leader.attendance_pct}%
                   </p>
                   <p className="text-[9px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide">
-                    asistencia
+                    Asistencia
                   </p>
                 </div>
               </div>

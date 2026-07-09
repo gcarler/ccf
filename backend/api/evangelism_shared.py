@@ -26,6 +26,8 @@ FIRST_TIME_STATES = {"primera_vez", "first_time"}
 
 def normalize_attendance_status(value) -> str:
     normalized = str(value or "").strip().lower()
+    if normalized in {state.lower() for state in FIRST_TIME_STATES}:
+        return "first_time"
     if normalized in {state.lower() for state in ATTENDED_STATES}:
         return "present"
     if normalized in {state.lower() for state in ABSENT_STATES}:
@@ -36,7 +38,7 @@ def normalize_attendance_status(value) -> str:
 
 
 def is_attended_status(value) -> bool:
-    return normalize_attendance_status(value) == "present"
+    return normalize_attendance_status(value) in {"present", "first_time"}
 
 
 def is_absent_status(value) -> bool:

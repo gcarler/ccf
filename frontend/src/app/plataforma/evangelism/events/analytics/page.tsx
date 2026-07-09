@@ -46,10 +46,10 @@ export default function GlobalEventAnalyticsPage() {
  ];
 
  const typeOptions = [
- { value: 'ALL', label: 'Todos los Eventos' },
+ { value: 'ALL', label: 'Todos los eventos' },
  { value: 'PERMANENT', label: 'Servicios Fijos' },
  { value: 'SPECIAL', label: 'Especiales' },
- { value: 'GROUPS', label: 'Grupos en Casa' }
+ { value: 'GROUPS', label: 'Grupos en casa' }
  ];
 
  return (
@@ -57,12 +57,12 @@ export default function GlobalEventAnalyticsPage() {
  breadcrumbs={[
  { label: 'Evangelismo', icon: Users },
  { label: 'Eventos', href: '/plataforma/evangelism/events', icon: Calendar },
- { label: 'Dashboard Eventos', icon: BarChart3 }
+ { label: 'Dashboard de eventos', icon: BarChart3 }
  ]}
  >
  <AdminHero
  eyebrow="Analítica"
- title="Dashboard Global de Evangelismo"
+ title="Panel global de evangelismo"
  description="Cruza los datos de asistencia de la iglesia entera. Filtra por tiempo y tipo de evento para identificar tendencias."
  tags={['Data Science', 'Crecimiento', 'Asistencia']}
  watchers={['Sistema Optimus', 'Módulo Analítico']}
@@ -104,7 +104,7 @@ export default function GlobalEventAnalyticsPage() {
  {loading ? (
  <div className="py-1.5 text-center">
  <div className="size-8 border-4 border-[hsl(var(--primary)/0.3)] border-t-[hsl(var(--primary))] rounded-full animate-spin mx-auto mb-4"></div>
- <p className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] animate-pulse">Procesando cubos de datos...</p>
+ <p className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] animate-pulse">Cargando analítica...</p>
  </div>
  ) : !data ? (
  <div className="text-center py-1.5 text-[hsl(var(--text-secondary))]">Error al cargar datos.</div>
@@ -117,7 +117,7 @@ export default function GlobalEventAnalyticsPage() {
  <Users size={24} />
  </div>
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asistencia Total</p>
+ <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asistencia total</p>
  <p className="text-xl font-bold text-[hsl(var(--text-primary))] mt-1">{data.kpis.total_attendance}</p>
  </div>
  </div>
@@ -127,7 +127,7 @@ export default function GlobalEventAnalyticsPage() {
  <TrendingUp size={24} />
  </div>
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Promedio por Sesión</p>
+ <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Promedio por sesión</p>
  <p className="text-xl font-bold text-[hsl(var(--text-primary))] mt-1">{data.kpis.avg_per_session}</p>
  </div>
  </div>
@@ -137,7 +137,7 @@ export default function GlobalEventAnalyticsPage() {
  <Award size={24} />
  </div>
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Período Pico</p>
+ <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Período pico</p>
  <p className="text-base font-bold text-[hsl(var(--text-primary))] mt-1">{data.kpis.peak_period?.label}</p>
  <p className="text-xs text-success font-bold mt-1">{data.kpis.peak_period?.total} asistencias</p>
  </div>
@@ -149,7 +149,7 @@ export default function GlobalEventAnalyticsPage() {
  <TrendingUp size={24} className={data.kpis.trend_percentage < 0 ? 'rotate-180' : ''} />
  </div>
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Crecimiento Cierre</p>
+ <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Variación de cierre</p>
  <div className="flex items-end gap-2 mt-1">
  <p className="text-xl font-bold text-[hsl(var(--text-primary))]">
  {data.kpis.trend_percentage > 0 ? '+' : ''}{data.kpis.trend_percentage}%
@@ -163,11 +163,11 @@ export default function GlobalEventAnalyticsPage() {
  {/* GRÁFICO MOTOR CSS */}
  <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm">
  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
- <BarChart3 size={16} /> Tendencia en el Tiempo
+ <BarChart3 size={16} /> Tendencia en el tiempo
  </h3>
  
  {data.series.length === 0 ? (
- <div className="text-center py-1.5 text-[hsl(var(--text-secondary))] text-sm font-bold">No hay datos de asistencia para mostrar en este filtro.</div>
+ <div className="text-center py-1.5 text-[hsl(var(--text-secondary))] text-sm font-bold">No hay datos de asistencia para mostrar con este filtro.</div>
  ) : (
  <div className="flex items-end gap-3 h-80 mt-4 w-full overflow-x-auto pb-6 scrollbar-thin">
  {data.series.map((d) => {
@@ -180,7 +180,7 @@ export default function GlobalEventAnalyticsPage() {
  {/* Tooltip */}
  <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-4 bg-[hsl(var(--bg-primary))] text-white text-[10px] font-bold px-3 py-2 rounded-md whitespace-nowrap z-10 flex flex-col items-center shadow-xl">
  <span className="text-[hsl(var(--primary))] mb-1">{d.label}</span>
- <span>{d.total} Asistentes</span>
+ <span>{d.total} asistentes</span>
  <span className="text-[hsl(var(--text-secondary))] text-[8px]">{d.sessions} sesiones</span>
  </div>
  

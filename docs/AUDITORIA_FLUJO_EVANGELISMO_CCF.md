@@ -48,6 +48,7 @@ Auditoria de continuidad de datos del componente Evangelismo, desde base de dato
 - Las sesiones FARO creadas desde temporada quedan habilitadas para reporte y retornan `session_ids`.
 - La vista FARO bloquea acciones de asistencia cuando la sesion no esta `HABILITADO`, evitando 403 esperables en runtime.
 - El detalle de grupo devuelve `estado_habilitacion` y excluye participantes/sesiones soft-deleted.
+- Los listados de sesiones, el detalle de grupo y los reportes PDF/Excel excluyen grupos, sesiones y asistencias soft-deleted de forma consistente.
 
 ## Deudas Cerradas
 
@@ -86,6 +87,7 @@ La busqueda estatica no encuentra `window.confirm` ni `confirm(` bajo `frontend/
 - La normalizacion canonica de escritura podria reforzarse mas adelante con un enum unico en esquemas para impedir variantes de clientes futuros.
 - La busqueda de personas en asistencia sigue siendo local sobre la primera pagina; para volumen alto conviene evolucionarla a busqueda remota por texto con debounce.
 - Las sesiones generadas por frecuencia nacen `DESHABILITADO`; el flujo correcto exige habilitarlas antes de reportar asistencia. La prueba valida que el bloqueo ocurra y que luego la asistencia se pueda guardar al habilitar.
+- Los exports de reporte siguen calculando sobre sesiones reales del grupo; si se necesita analitica historica de registros eliminados, debe definirse como un flujo separado, no mezclado con la vista activa.
 
 ## Validaciones Ejecutadas
 

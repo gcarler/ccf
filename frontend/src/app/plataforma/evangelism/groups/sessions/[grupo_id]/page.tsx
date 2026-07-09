@@ -50,6 +50,20 @@ interface NewGuest {
  phone: string;
 }
 
+interface AttendanceSaveResult {
+ evento_integracion?: {
+ estado?: string;
+ grupo_id?: string;
+ sesion_id?: string;
+ crm_consolidacion?: {
+ caso_id?: string;
+ } | null;
+ } | null;
+ metadata?: {
+ trazabilidad?: string;
+ } | null;
+}
+
 export default function SessionReportPage() {
  const params = useParams();
  const router = useRouter();
@@ -158,9 +172,14 @@ export default function SessionReportPage() {
  session_id: sessionId, persona_id: p.persona_id, status: p.status, notes: null,
  }));
 
- await apiFetch(`/evangelism/sessions/${sessionId}/attendance`, {
+ const attendanceResult = await apiFetch<AttendanceSaveResult>(`/evangelism/sessions/${sessionId}/attendance`, {
  method: 'POST', token: token, body: attPayload,
  });
+
+ if (attendanceResult?.evento_integracion) {
+ const caseId = attendanceResult.evento_integracion.crm_consolidacion?.caso_id;
+ toast.info(caseId ? `Integración CRM activada para caso ${caseId}` : 'Integración CRM activada');
+ }
 
  // Register new guests as Personas
  for (const guest of newGuests) {
@@ -179,7 +198,7 @@ export default function SessionReportPage() {
  }
 
  toast.success(`Reporte: ${stats.present} presentes, ${stats.absent} ausentes, ${stats.firstTime} nuevos`);
- router.push(`/plataforma/evangelism/groups/groups`);
+  router.push(`/plataforma/evangelism/groups`);
  } catch (error: any) {
  toast.error(error?.message || 'Error al guardar');
  } finally {
@@ -196,7 +215,7 @@ export default function SessionReportPage() {
  };
 
  if (loading) return (
- <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos', href: '/plataforma/evangelism/groups/groups' }, { label: 'Reporte' }]}>
+ <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos', href: '/plataforma/evangelism/groups' }, { label: 'Reporte' }]}>
  <div className="space-y-3 p-3">{[1, 2, 3].map(i => <div key={i} className="h-16 bg-[hsl(var(--bg-muted))] rounded-lg animate-pulse" />)}</div>
  </EvangelismShell>
  );
@@ -206,18 +225,18 @@ export default function SessionReportPage() {
  <div className="flex flex-col items-center justify-center py-16 text-center">
  <AlertCircle size={48} className="text-[hsl(var(--text-secondary))] mb-4" />
  <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">Grupo no encontrado</h2>
- <button onClick={() => router.push('/plataforma/evangelism/groups/groups')} className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">Volver</button>
+ <button onClick={() => router.push('/plataforma/evangelism/groups')} className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">Volver</button>
  </div>
  </EvangelismShell>
  );
 
  return (
- <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos', href: '/plataforma/evangelism/groups/groups' }, { label: house.name }, { label: 'Reporte' }]}>
+ <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos', href: '/plataforma/evangelism/groups' }, { label: house.name }, { label: 'Reporte' }]}>
  <div className="p-4 lg:p-3 space-y-3 max-w-4xl mx-auto animate-fade-in">
  {/* Header */}
  <div className="flex items-start justify-between">
  <div className="flex items-start gap-3">
- <button onClick={() => router.push('/plataforma/evangelism/groups/groups')} className="p-1.5 rounded-lg hover:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-white transition-all mt-1"><ArrowLeft size={16} /></button>
+ <button onClick={() => router.push('/plataforma/evangelism/groups')} className="p-1.5 rounded-lg hover:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-white transition-all mt-1"><ArrowLeft size={16} /></button>
  <div>
  <h1 className="text-xl font-bold text-[hsl(var(--text-primary))]">Reportar Sesión</h1>
  <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">{house.name} · {house.zone || 'Sin zona'}</p>
@@ -316,7 +335,7 @@ export default function SessionReportPage() {
 
  {/* Submit */}
  <div className="flex items-center justify-end gap-3 pb-4">
- <button onClick={() => router.push('/plataforma/evangelism/groups/groups')} className="px-4 h-9 rounded-lg border border-[hsl(var(--border-primary))] text-xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5">Cancelar</button>
+ <button onClick={() => router.push('/plataforma/evangelism/groups')} className="px-4 h-9 rounded-lg border border-[hsl(var(--border-primary))] text-xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5">Cancelar</button>
  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSubmit} disabled={saving} className="inline-flex items-center gap-2 px-6 h-10 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold hover:bg-[hsl(var(--primary))] disabled:opacity-60 shadow-sm">
  {saving ? <><Clock size={16} className="animate-spin" /> Guardando...</> : <><Save size={16} /> Guardar Reporte</>}
  </motion.button>

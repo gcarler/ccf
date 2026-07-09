@@ -221,7 +221,7 @@ export default function StrategyAnalyticsPage() {
   const breadcrumbs: BreadcrumbOption[] = [
     { label: "Evangelismo", href: "/plataforma/evangelism" },
     { label: "Estrategias", href: `/plataforma/evangelism/strategies/${id}` },
-    { label: "Analytics" },
+    { label: "Analítica" },
   ];
 
   const fetchData = useCallback(async () => {
@@ -316,7 +316,7 @@ export default function StrategyAnalyticsPage() {
             <div>
               <h1 className="text-lg font-black text-[hsl(var(--text-primary))] flex items-center gap-2">
                 <BarChart3 size={18} className="text-[hsl(var(--primary))]" />
-                Dashboard Analítico
+                Panel analítico
               </h1>
               <p className="text-[11px] text-[hsl(var(--text-secondary))]">
                 {resumen.fecha_desde} → {resumen.fecha_hasta} · {resumen.total_grupos} grupos · {resumen.total_participantes} participantes
@@ -360,7 +360,7 @@ export default function StrategyAnalyticsPage() {
           <SectionHeader icon={MapPin} title="1. Dimensión Territorial" sub="Densidad de cobertura por zona geográfica (IDC)" />
           <div className="grid md:grid-cols-3 gap-4">
             <div className={`rounded-lg border p-4 text-center ${semBg(dim1_territorial.semaforo)}`}>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">IDC Global</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">IDC global</p>
               <p className={`text-4xl font-black ${sem(dim1_territorial.semaforo)}`}>{dim1_territorial.idc}</p>
               <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-1">grupos / zona</p>
               <span className={`text-[10px] font-bold ${sem(dim1_territorial.semaforo)}`}>{dim1_territorial.semaforo}</span>

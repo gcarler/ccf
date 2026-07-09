@@ -53,6 +53,13 @@ const EVENT_TYPE_COLOR: Record<string, string> = {
 
 const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
+const formatLocalDate = (date: Date) => {
+ const year = date.getFullYear();
+ const month = String(date.getMonth() + 1).padStart(2, '0');
+ const day = String(date.getDate()).padStart(2, '0');
+ return `${year}-${month}-${day}`;
+};
+
 interface AudiencePreset {
  id: string;
  name: string;
@@ -121,7 +128,7 @@ export default function EventsPage() {
  }, [token]);
 
  // Attendance State
- const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
+ const [attendanceDate, setAttendanceDate] = useState(() => formatLocalDate(new Date()));
  const [attendedPersonaIds, setAttendedPersonaIds] = useState<string[]>([]);
  const [attendanceSearch, setAttendanceSearch] = useState('');
  const [attendanceLoading, setAttendanceLoading] = useState(false);
@@ -443,7 +450,7 @@ export default function EventsPage() {
  try {
  setSavingCreateEvent(true);
  await apiFetch('/evangelism/events/', { method: 'POST', token, body: payload });
- addToast("Evento creado exitosamente", "success");
+ addToast("Evento creado con éxito", "success");
  setIsCreateDrawerOpen(false);
  setNewEvent({ name: '', description: '', event_type: 'PERMANENT', target_audience: 'ALL', target_role_id: '', target_role_ids: [], target_persona_ids: [], day_of_week: '0', month_day: '', fixed_date: '', start_time: '', end_time: '' });
  fetchData();
@@ -516,7 +523,7 @@ export default function EventsPage() {
  const openAttendance = (ev: MinistryEvent) => {
  setSelectedEvent(ev);
  setIsAttendanceDrawerOpen(true);
- setAttendanceDate(new Date().toISOString().split('T')[0]);
+ setAttendanceDate(formatLocalDate(new Date()));
  setAttendedPersonaIds([]);
  setShowScanner(false);
  setAttendanceSearch('');
@@ -699,7 +706,7 @@ export default function EventsPage() {
  try {
  await apiFetch(`/evangelism/events/${evId}`, { method: 'DELETE', token });
  setEvents(prev => prev.filter(e => e.id !== evId));
- toast.success('Evento eliminado correctamente');
+ toast.success('Evento eliminado con éxito');
  } catch {
  toast.error('Error al eliminar el evento');
  } finally {
@@ -758,7 +765,7 @@ export default function EventsPage() {
  try {
  await apiFetch(`/evangelism/events/${evId}`, { method: 'PUT', body: payload, token });
  setEvents(prev => prev.map(e => e.id === evId ? { ...e, ...payload } : e));
- toast.success('Evento actualizado');
+ toast.success('Evento actualizado con éxito');
  setEditingEvent(null);
  } catch (error: any) {
  const msg = error?.message || 'Error al actualizar el evento';
@@ -1035,7 +1042,7 @@ export default function EventsPage() {
  )}
  </div>
 
- {/* â"€â"€â"€ Drawer: Crear Evento â"€â"€â"€ */}
+ {/* Drawer: Crear evento */}
  <WorkspaceDrawer
  isOpen={isCreateDrawerOpen}
  onClose={() => setIsCreateDrawerOpen(false)}
@@ -1297,7 +1304,7 @@ export default function EventsPage() {
  )}
 
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">descripción</label>
+ <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Descripción</label>
  <textarea
  value={newEvent.description}
  onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
@@ -1309,7 +1316,7 @@ export default function EventsPage() {
  </form>
  </WorkspaceDrawer>
 
- {/* â”€â”€â”€ Drawer: Registrar Asistencia â”€â”€â”€ */}
+ {/* Drawer: Registrar asistencia */}
  <WorkspaceDrawer
  isOpen={isAttendanceDrawerOpen}
  onClose={() => setIsAttendanceDrawerOpen(false)}
@@ -1334,7 +1341,7 @@ export default function EventsPage() {
  disabled={savingAttendance || attendanceLoading || String(selectedEvent?.status || '').toUpperCase() === 'CANCELLED' || String(selectedEvent?.status || '').toUpperCase() === 'CANCELED'}
  className="px-3 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-60 disabled:active:scale-100"
  >
- {savingAttendance ? 'Guardando...' : 'Guardar Registro'}
+ {savingAttendance ? 'Guardando...' : 'Guardar asistencia'}
  </button>
  </>
  }
@@ -1481,11 +1488,11 @@ export default function EventsPage() {
  </div>
  </WorkspaceDrawer>
 
- {/* ─── Drawer: Generar QR ─── */}
+ {/* Drawer: Generar QR */}
  <WorkspaceDrawer
  isOpen={isQrDrawerOpen}
  onClose={() => setIsQrDrawerOpen(false)}
- title="código QR de Registro"
+ title="Código QR de registro"
  subtitle={selectedEvent?.name ?? 'Evento'}
  actions={
  <button
@@ -1516,12 +1523,12 @@ export default function EventsPage() {
  </div>
  </WorkspaceDrawer>
 
- {/* DELETE CONFIRM DRAWER */}
+ {/* Drawer de confirmación de eliminación */}
  <WorkspaceDrawer
  isOpen={!!deletingEventId}
  onClose={() => setDeletingEventId(null)}
- title="¿Eliminar Evento?"
- subtitle="Atención: Acción destructiva irreversible"
+ title="¿Eliminar evento?"
+ subtitle="Atención: acción destructiva irreversible"
  actions={
  <>
  <button disabled={deletingEventLoadingId === deletingEventId} onClick={() => setDeletingEventId(null)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
@@ -1537,7 +1544,7 @@ export default function EventsPage() {
  <div className="size-8 bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger)/0.4)] text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] rounded-full flex items-center justify-center mb-4">
  <Trash2 size={24} />
  </div>
- <p className="text-sm text-danger dark:text-danger font-bold mb-2">Se eliminará todo el historial</p>
+ <p className="text-sm text-danger dark:text-danger font-bold mb-2">Se eliminará todo el historial del evento</p>
  <p className="text-xs text-[hsl(var(--destructive))] dark:text-danger">Esta acción también borrará los registros de asistencia asociados. No podrás recuperar esta información.</p>
  </div>
  </WorkspaceDrawer>

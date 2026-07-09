@@ -112,7 +112,7 @@ export default function GroupDetailPage() {
  const [reportStatus, setReportStatus] = useState<'Realizada' | 'Cancelada' | 'No realizada'>('Realizada');
  const [reportPersonas, setReportPersonas] = useState<AttendeeRow[]>([]);
 
- // Se eliminÃ³ la dependencia de layers.RIGHT para showAddAttendee porque ahora usamos WorkspaceDrawer
+ // Se eliminó la dependencia de layers.RIGHT para showAddAttendee porque ahora usamos WorkspaceDrawer
 
  const [isCreatingPersona, setIsCreatingPersona] = useState(false);
  const [newPersonaForm, setNewPersonaForm] = useState({ first_name: '', last_name: '', phone: '', email: '' });
@@ -384,7 +384,7 @@ export default function GroupDetailPage() {
  token,
  body: { ...newPersonaForm, church_role: 'Visitante' }
  });
- toast.success('Invitado creado con Ã©xito');
+ toast.success('Invitado creado con éxito');
  setPersonas(prev => [res, ...prev]);
  setSelectedIds(prev => new Set(prev).add(res.id));
  setNewPersonaForm({ first_name: '', last_name: '', phone: '', email: '' });
@@ -480,8 +480,8 @@ export default function GroupDetailPage() {
  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Grupos en Casa</p>
  <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight">{house.name}</h1>
  <div className="flex flex-wrap gap-4 text-xs text-[hsl(var(--text-secondary))] font-medium mt-1.5">
- {house.code && <span className="flex items-center gap-1.5"><Activity size={12} /> CÃ³digo: {house.code}</span>}
- {house.leader_name && <span className="flex items-center gap-1.5"><Users size={12} /> LÃ­der: {house.leader_name}</span>}
+ {house.code && <span className="flex items-center gap-1.5"><Activity size={12} /> Código: {house.code}</span>}
+ {house.leader_name && <span className="flex items-center gap-1.5"><Users size={12} /> Líder: {house.leader_name}</span>}
  {house.address && <span className="flex items-center gap-1.5"><MapPin size={12} /> {house.address}</span>}
  {house.day_of_week && <span className="flex items-center gap-1.5"><Clock size={12} /> {house.day_of_week} {house.time || ''}</span>}
  </div>
@@ -510,7 +510,7 @@ export default function GroupDetailPage() {
  <div className="h-full flex items-center justify-center py-1.5 text-[hsl(var(--text-secondary))]">
  <div className="text-center">
  <Activity size={40} className="mx-auto mb-4 opacity-30" />
- <p className="font-bold">Selecciona una sesiÃ³n para ver la asistencia</p>
+ <p className="font-bold">Selecciona una sesión para ver la asistencia</p>
  </div>
  </div>
  ) : (
@@ -528,7 +528,7 @@ export default function GroupDetailPage() {
  disabled={!activeSessionEnabled}
  className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20"
  >
- <UserPlus size={14} /> AÃ±adir Asistentes
+ <UserPlus size={14} /> Añadir Asistentes
  </button>
  </div>
 
@@ -546,7 +546,7 @@ export default function GroupDetailPage() {
  <p className="text-lg font-bold text-emerald-600 dark:emerald-400">
  {house.capacity && attendance ? `${Math.round(attendance.total / house.capacity * 100)}%` : 'â€”'}
  </p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">OcupaciÃ³n</p>
+ <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">Ocupación</p>
  </div>
  </div>
 
@@ -583,7 +583,7 @@ export default function GroupDetailPage() {
  </div>
  <div className="space-y-3">
  {trendRows.length === 0 ? (
- <p className="text-sm text-[hsl(var(--text-secondary))]">No hay datos de tendencia todavÃ­a.</p>
+ <p className="text-sm text-[hsl(var(--text-secondary))]">No hay datos de tendencia todavía.</p>
  ) : trendRows.map((row) => (
  <div key={row.session_id} className="flex items-center justify-between gap-4 rounded-lg bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5">
  <div className="min-w-0">
@@ -644,7 +644,7 @@ export default function GroupDetailPage() {
  value={reportTopic}
  onChange={(e) => setReportTopic(e.target.value)}
  className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
- placeholder="Unidad familiar, fe, oraciÃ³n..."
+ placeholder="Unidad familiar, fe, oración..."
  />
  </div>
  <div>
@@ -701,16 +701,16 @@ export default function GroupDetailPage() {
  value={reportNoveltyDetail}
  onChange={(e) => setReportNoveltyDetail(e.target.value)}
  className="w-full min-h-24 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
- placeholder="Explica la novedad o la razÃ³n del ajuste..."
+ placeholder="Explica la novedad o la razón del ajuste..."
  />
  </div>
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Motivo de cancelaciÃ³n</label>
+ <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Motivo de cancelación</label>
  <textarea
  value={reportCancellationReason}
  onChange={(e) => setReportCancellationReason(e.target.value)}
  className="w-full min-h-24 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
- placeholder="Si no se realizÃ³, explica la causa..."
+ placeholder="Si no se realizó, explica la causa..."
  />
  </div>
  </div>
@@ -762,7 +762,7 @@ export default function GroupDetailPage() {
  {!attended && (
  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">RazÃ³n</label>
+ <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Razón</label>
  <select
  value={row.absence_reason || 'other'}
  onChange={(e) => setReportPersonas(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason: e.target.value as AttendanceReason } : item))}
@@ -814,7 +814,7 @@ export default function GroupDetailPage() {
  <div className="py-1.5 text-center bg-[hsl(var(--bg-muted))] rounded-lg text-[hsl(var(--text-secondary))]">
  <Users size={32} className="mx-auto mb-3 opacity-30" />
  <p className="font-bold text-sm">Sin asistentes registrados</p>
- <p className="text-xs mt-1">Usa el botÃ³n &ldquo;AÃ±adir Asistentes&rdquo; para marcar presentes</p>
+ <p className="text-xs mt-1">Usa el botón &ldquo;Añadir Asistentes&rdquo; para marcar presentes</p>
  </div>
  ) : (
  <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-[hsl(var(--border-primary))] overflow-hidden shadow-sm">
@@ -920,14 +920,14 @@ export default function GroupDetailPage() {
  </div>
  <div>
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Apellidos *</label>
- <input value={newPersonaForm.last_name} onChange={e => setNewPersonaForm(p => ({ ...p, last_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. PÃ©rez" />
+ <input value={newPersonaForm.last_name} onChange={e => setNewPersonaForm(p => ({ ...p, last_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. Pérez" />
  </div>
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">TelÃ©fono</label>
+ <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Teléfono</label>
  <input value={newPersonaForm.phone} onChange={e => setNewPersonaForm(p => ({ ...p, phone: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Opcional" />
  </div>
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Correo ElectrÃ³nico</label>
+ <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Correo Electrónico</label>
  <input type="email" value={newPersonaForm.email} onChange={e => setNewPersonaForm(p => ({ ...p, email: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Opcional" />
  </div>
  <div className="flex gap-3 pt-4">
