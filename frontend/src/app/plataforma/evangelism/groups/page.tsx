@@ -150,16 +150,15 @@ export default function GroupPage() {
  if (!sessionForm.grupo_id || !sessionForm.session_date || !activeSeason) return toast.error('Selecciona el grupo y la fecha');
  setSavingSession(true);
  try {
- const bodyPayload: any = { ...sessionForm, season_id: activeSeason.id };
- if (sessionForm.grupo_id !== 'all') {
- bodyPayload.grupo_id = sessionForm.grupo_id;
- } else {
- delete bodyPayload.grupo_id;
- }
+ const bodyPayload: any = {
+   season_id: activeSeason.id,
+   grupo_id: sessionForm.grupo_id === 'all' ? null : sessionForm.grupo_id,
+   session_date: sessionForm.session_date,
+   topic: sessionForm.topic || null,
+   report_deadline: sessionForm.report_deadline || null,
+ };
  if (sessionForm.report_deadline) {
- bodyPayload.report_deadline = sessionForm.report_deadline + ':00Z';
- } else {
- delete bodyPayload.report_deadline;
+   bodyPayload.report_deadline = `${sessionForm.report_deadline}:00Z`;
  }
 
  const res = await apiFetch<{ message: string, created_count: number }>('/evangelism/groups/sessions', { method: 'POST', body: bodyPayload, token });

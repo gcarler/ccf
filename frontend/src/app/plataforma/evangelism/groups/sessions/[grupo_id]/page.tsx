@@ -136,14 +136,14 @@ export default function SessionReportPage() {
  if (!house) return;
  setSaving(true);
  try {
- const sessionData = await apiFetch<any>('/evangelism/sessions', {
- method: 'POST', token: token || '',
- body: {
- grupo_id: grupoId,
- session_date: new Date(sessionDate + 'T00:00:00').toISOString(),
- topic: topic || null,
- offering_amount: offering ? parseFloat(offering) : null,
- report_notes: reportNotes || null,
+  const sessionData = await apiFetch<any>('/evangelism/sessions', {
+  method: 'POST', token: token || '',
+  body: {
+  grupo_id: grupoId,
+  session_date: `${sessionDate}T12:00:00`,
+  topic: topic || null,
+  offering_amount: offering ? parseFloat(offering) : null,
+  report_notes: reportNotes || null,
  status: 'Realizada',
  },
  });
