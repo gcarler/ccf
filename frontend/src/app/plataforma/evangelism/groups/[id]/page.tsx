@@ -152,7 +152,7 @@ export default function GroupDetailPage() {
  method: 'POST',
  body: {
  grupo_id: house.id,
- session_date: new Date().toISOString(),
+ session_date: new Date(new Date().toISOString().split('T')[0] + 'T00:00:00').toISOString(),
  status: 'Realizada',
  },
  token

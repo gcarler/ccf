@@ -140,7 +140,7 @@ export default function SessionReportPage() {
  method: 'POST', token: token || '',
  body: {
  grupo_id: grupoId,
- session_date: new Date(sessionDate).toISOString(),
+ session_date: new Date(sessionDate + 'T00:00:00').toISOString(),
  topic: topic || null,
  offering_amount: offering ? parseFloat(offering) : null,
  report_notes: reportNotes || null,
