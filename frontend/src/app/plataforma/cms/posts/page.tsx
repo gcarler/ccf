@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { SITE_KEY } from "@/lib/site-config";
-import { useRouter } from "next/navigation";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -18,16 +18,13 @@ import {
   Check,
   Tag,
   FolderOpen,
-  ImageIcon,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
 import clsx from "clsx";
 import {
   createCmsPost,
-  deleteCmsPost,
   listCmsCategories,
-  listCmsPages,
   listCmsPosts,
   listCmsSites,
   listCmsTags,
@@ -52,7 +49,6 @@ function slugify(value: string) {
 }
 
 export default function CmsPostsManagement() {
-  const router = useRouter();
   const { token, user } = useAuth();
   const [siteKey, setSiteKey] = useState(SITE_KEY);
   const [sites, setSites] = useState<CmsSite[]>([]);
@@ -367,7 +363,7 @@ export default function CmsPostsManagement() {
 
                   <div
                     onClick={() => openPost(post)}
-                    className="size-7 rounded-md bg-violet-50 dark:bg-violet-500/10 text-violet-600 flex items-center justify-center shrink-0 cursor-pointer"
+                    className="size-7 rounded-md bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 flex items-center justify-center shrink-0 cursor-pointer"
                   >
                     <FileText size={20} />
                   </div>
@@ -392,7 +388,7 @@ export default function CmsPostsManagement() {
                       </>}
                       {post.tags && post.tags.length > 0 && <>
                         <div className="size-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full" />
-                        <div className="flex items-center gap-1 text-[11px] text-violet-600 dark:text-violet-400">
+                        <div className="flex items-center gap-1 text-[11px] text-fuchsia-600 dark:text-fuchsia-400">
                           <Tag size={11} />
                           {post.tags.map((t) => t.name).join(", ")}
                         </div>
@@ -457,7 +453,7 @@ export default function CmsPostsManagement() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="size-8 rounded-md bg-violet-50 dark:bg-violet-900/20 text-violet-600 flex items-center justify-center shrink-0">
+                          <div className="size-8 rounded-md bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 flex items-center justify-center shrink-0">
                             <FileText size={14} />
                           </div>
                           <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate max-w-[200px]">{post.title}</span>
@@ -515,7 +511,7 @@ export default function CmsPostsManagement() {
                   onClick={() => openPost(post)}
                   className="group bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer flex items-center gap-4"
                 >
-                  <div className="size-6 rounded-md bg-violet-50 dark:bg-violet-500/10 text-violet-600 flex items-center justify-center shrink-0 group-hover:bg-violet-600 group-hover:text-white transition-all">
+                  <div className="size-6 rounded-md bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 flex items-center justify-center shrink-0 group-hover:bg-fuchsia-600 group-hover:text-white transition-all">
                     <FileText size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -672,8 +668,8 @@ export default function CmsPostsManagement() {
                           className={clsx(
                             "px-3 py-1.5 rounded-md text-[11px] font-medium transition-all disabled:opacity-50",
                             isSelected
-                              ? "bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-300 border border-violet-200 dark:border-violet-500/30"
-                              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-violet-300"
+                              ? "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/20 dark:text-fuchsia-300 border border-fuchsia-200 dark:border-fuchsia-500/30"
+                              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-fuchsia-300"
                           )}
                         >
                           {tag.name}

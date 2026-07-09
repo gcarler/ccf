@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import React,{ useCallback,useEffect,useMemo,useRef,useState } from "react";
 import { sanitizeCmsHtml } from "@/lib/cms/sanitize";
 import { apiFetch } from "@/lib/http";
+import PublicHeroWithSlides, { type PublicSlide } from "@/components/public/PublicHeroWithSlides";
 
 function val(props: Record<string, unknown>, key: string, fallback = "") {
   const value = props?.[key];
@@ -65,60 +66,37 @@ function HeroSection({ section }: { section: CmsSection }) {
   const ctaHref = val(props, "cta_href", "/");
   const imageUrl = val(props, "image_url", "");
   const imageAlt = val(props, "image_alt", title);
-
-  if (imageUrl) {
-    return (
-      <section className="relative overflow-hidden rounded-2xl min-h-[520px] flex items-end">
-        <OptimizedImage src={imageUrl} alt={imageAlt} fill sizes="100vw" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.3) 55%, transparent 100%)" }} />
-        <div className="relative z-10 w-full p-6 md:p-10 lg:p-14">
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight max-w-3xl">
-            {title}
-          </h1>
-          {body && (
-            <p className="mt-4 text-base md:text-xl text-white/85 max-w-2xl leading-relaxed">
-              {body}
-            </p>
-          )}
-          {ctaLabel && (
-            <Link
-              href={ctaHref}
-              className="inline-flex mt-6 items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-lg transition-transform hover:scale-105"
-              style={{ background: "var(--site-cta-gradient)" }}
-            >
-              {ctaLabel}
-            </Link>
-          )}
-        </div>
-      </section>
-    );
-  }
+  const items = asItems(props) as Array<{ url?: string; src?: string; alt?: string; caption?: string; title?: string; href?: string }>;
+  const rawSlides = Array.isArray(props.slides)
+    ? (props.slides as Array<Record<string, unknown>>)
+    : [];
+  const slidesFromProps = rawSlides.map((item) => ({
+    src: String(item.src || item.url || ""),
+    alt: String(item.alt || item.title || title),
+    title: String(item.title || title),
+    caption: String(item.caption || body || ""),
+    href: typeof item.href === "string" ? item.href : undefined,
+  })).filter((slide) => slide.src);
+  const slides: PublicSlide[] = [
+    ...slidesFromProps,
+    ...(imageUrl ? [{ src: imageUrl, alt: imageAlt, title, caption: body || undefined }] : []),
+    ...items
+      .filter((item) => item.url)
+      .map((item) => ({
+        src: String(item.url),
+        alt: String(item.alt || item.title || title),
+        title: String(item.title || title),
+        caption: String(item.caption || body || ""),
+      })),
+  ];
 
   return (
-    <section
-      className="rounded-2xl p-8 md:p-12 lg:p-16 min-h-[380px] flex items-center"
-      style={{ background: "var(--site-cta-gradient)" }}
-    >
-      <div className="max-w-3xl">
-        <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
-          {title}
-        </h1>
-        {body && (
-          <p className="mt-5 text-base md:text-xl text-white/85 max-w-2xl leading-relaxed">
-            {body}
-          </p>
-        )}
-        {ctaLabel && (
-          <Link
-            href={ctaHref}
-            className="inline-flex mt-8 items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest bg-[hsl(var(--bg-primary))] shadow-lg transition-transform hover:scale-105"
-            style={{ color: "var(--site-primary)" }}
-          >
-            {ctaLabel}
-          </Link>
-        )}
-      </div>
-    </section>
+    <PublicHeroWithSlides
+      title={title}
+      description={body}
+      primaryCta={ctaLabel ? { label: ctaLabel, href: ctaHref } : undefined}
+      slides={slides}
+    />
   );
 }
 
@@ -1861,6 +1839,238 @@ function CivicQuickLinksSection({ section }: { section: CmsSection }) {
   );
 }
 
+// ─── Events Calendar (config-only shell; data comes from events API) ───────────
+
+function EventsCalendarSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Próximos Eventos");
+  const subtitle = val(props, "subtitle", "");
+  return (
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+      {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
+      <div className="mt-6 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
+        <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+          El calendario de eventos se renderiza desde el módulo de eventos.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ─── Video Grid (config-only shell; data comes from YouTube API) ───────────────
+
+function VideoGridSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Prédicas & Mensajes");
+  const subtitle = val(props, "subtitle", "");
+  return (
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+      {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
+      <div className="mt-6 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
+        <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+          La biblioteca de videos se renderiza desde el canal de YouTube.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ─── Locations List (config-only shell; data comes from sedes API) ─────────────
+
+function LocationsListSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Nuestras Sedes");
+  const subtitle = val(props, "subtitle", "");
+  return (
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+      {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
+      <div className="mt-6 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
+        <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+          El listado de sedes se renderiza desde el módulo de ubicaciones.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ─── Contact Form ──────────────────────────────────────────────────────────────
+
+function ContactFormSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Hablemos de Tu Caminar");
+  const subtitle = val(props, "subtitle", "");
+  const [sent, setSent] = useState(false);
+
+  return (
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+      {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
+      {sent ? (
+        <p className="mt-6 font-bold" style={{ color: "var(--site-on-surface)" }}>{val(props, "success_message", "Gracias. Te contactaremos pronto.")}</p>
+      ) : (
+        <form
+          onSubmit={(e) => { e.preventDefault(); setSent(true); }}
+          className="mt-6 space-y-4 max-w-xl"
+        >
+          <input required type="text" placeholder={val(props, "name_placeholder", "Tu nombre")} className="w-full rounded-xl px-4 py-3 text-sm border" style={{ background: "var(--site-surface-container)", borderColor: "var(--site-outline-variant)", color: "var(--site-on-surface)" }} />
+          <input required type="tel" placeholder={val(props, "phone_placeholder", "+57 300...")} className="w-full rounded-xl px-4 py-3 text-sm border" style={{ background: "var(--site-surface-container)", borderColor: "var(--site-outline-variant)", color: "var(--site-on-surface)" }} />
+          <textarea required rows={4} placeholder={val(props, "message_placeholder", "Cuéntanos un poco sobre ti...")} className="w-full rounded-xl px-4 py-3 text-sm border" style={{ background: "var(--site-surface-container)", borderColor: "var(--site-outline-variant)", color: "var(--site-on-surface)" }} />
+          <button type="submit" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest text-white" style={{ background: "var(--site-cta-gradient)" }}>
+            {val(props, "submit_label", "Enviar mensaje y conectar")}
+          </button>
+        </form>
+      )}
+    </section>
+  );
+}
+
+// ─── Prayer Form ───────────────────────────────────────────────────────────────
+
+function PrayerFormSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Pedir oración");
+  const subtitle = val(props, "subtitle", "");
+  const [sent, setSent] = useState(false);
+
+  return (
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+      {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
+      {sent ? (
+        <p className="mt-6 font-bold" style={{ color: "var(--site-on-surface)" }}>{val(props, "success_message", "Tu petición ha sido enviada.")}</p>
+      ) : (
+        <form onSubmit={(e) => { e.preventDefault(); setSent(true); }} className="mt-6 space-y-4 max-w-xl">
+          <input required type="text" placeholder={val(props, "name_placeholder", "Tu nombre")} className="w-full rounded-xl px-4 py-3 text-sm border" style={{ background: "var(--site-surface-container)", borderColor: "var(--site-outline-variant)", color: "var(--site-on-surface)" }} />
+          <textarea required rows={4} placeholder={val(props, "request_placeholder", "Comparte tu necesidad...")} className="w-full rounded-xl px-4 py-3 text-sm border" style={{ background: "var(--site-surface-container)", borderColor: "var(--site-outline-variant)", color: "var(--site-on-surface)" }} />
+          <button type="submit" className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest text-white" style={{ background: "var(--site-cta-gradient)" }}>
+            {val(props, "submit_label", "Enviar al equipo pastoral")}
+          </button>
+        </form>
+      )}
+    </section>
+  );
+}
+
+// ─── Course Grid (config-only shell; data comes from academy API) ──────────────
+
+function CourseGridSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Cursos & Academia");
+  const subtitle = val(props, "subtitle", "");
+  return (
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+      {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
+      <div className="mt-6 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
+        <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+          El listado de cursos se renderiza desde la Academia.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ─── Book Shop (config-only shell; data comes from academy API) ─────────────────
+
+function BookShopSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Nuestra Librería");
+  const subtitle = val(props, "subtitle", "");
+  return (
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+      {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
+      <div className="mt-6 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
+        <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+          La librería se renderiza desde la Academia.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ─── Testimonials Masonry (config-only shell; data comes from testimonials API) ─
+
+function TestimonialsMasonrySection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Historias de Transformación");
+  const subtitle = val(props, "subtitle", "");
+  return (
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+      {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
+      <div className="mt-6 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
+        <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+          Los testimonios se renderizan desde el módulo de testimonios.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ─── Policy Document ───────────────────────────────────────────────────────────
+
+function PolicyDocumentSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const title = val(props, "title", "Política de Privacidad");
+  const lastUpdate = val(props, "last_update", "");
+  const summary = val(props, "summary", "");
+  const items = asItems(props).slice(0, 50) as Array<{ id?: string; title?: string; content?: string }>;
+
+  return (
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h1 className="text-3xl md:text-4xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h1>}
+      {lastUpdate && <p className="mt-2 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>Última actualización: {lastUpdate}</p>}
+      {summary && <p className="mt-4 text-base leading-relaxed" style={{ color: "var(--site-on-surface)" }}>{summary}</p>}
+      {items.length > 0 && (
+        <div className="mt-8 space-y-6">
+          {items.map((item, i) => (
+            <div key={i} id={item.id || `section-${i}`} className="rounded-xl p-5" style={{ background: "var(--site-surface-container)" }}>
+              <h2 className="text-lg font-bold" style={{ color: "var(--site-on-surface)" }}>{item.title || `Sección ${i + 1}`}</h2>
+              <div className="mt-2 text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--site-on-surface-variant)" }}>{item.content}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ─── Footer Config (rendered as a regular section when used inside a page) ─────
+
+function FooterConfigSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const description = val(props, "brand_description", "");
+  const copyright = val(props, "copyright", "");
+  return (
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      {description && <p className="text-sm leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>{description}</p>}
+      {copyright && <p className="mt-4 text-xs" style={{ color: "var(--site-on-surface-variant)" }}>{copyright}</p>}
+    </section>
+  );
+}
+
+// ─── Mobile Menu Config (rendered as a regular section when used inside a page) ─
+
+function MobileMenuConfigSection({ section }: { section: CmsSection }) {
+  const props = section.props_json || {};
+  const items = asItems(props).slice(0, 8) as Array<{ label?: string; href?: string; icon?: string }>;
+  return (
+    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {items.map((item, i) => (
+          <Link key={i} href={item.href || "/"} className="rounded-xl p-4 text-center text-sm font-bold" style={{ background: "var(--site-surface-container)", color: "var(--site-on-surface)" }}>
+            {item.label || `Item ${i + 1}`}
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ─── Main Dispatcher ───────────────────────────────────────────────────────────
 
 export default function PublicSectionRenderer({ section }: { section: CmsSection }) {
@@ -1903,6 +2113,17 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
     case "civic_convocatoria_cards": return <CivicConvocatoriaCardsSection section={section} />;
     case "civic_hero_search":      return <CivicHeroSearchSection section={section} />;
     case "civic_quick_links":      return <CivicQuickLinksSection section={section} />;
+    case "events_calendar":        return <EventsCalendarSection section={section} />;
+    case "video_grid":             return <VideoGridSection section={section} />;
+    case "locations_list":         return <LocationsListSection section={section} />;
+    case "contact_form":           return <ContactFormSection section={section} />;
+    case "prayer_form":            return <PrayerFormSection section={section} />;
+    case "course_grid":            return <CourseGridSection section={section} />;
+    case "book_shop":              return <BookShopSection section={section} />;
+    case "testimonials_masonry":   return <TestimonialsMasonrySection section={section} />;
+    case "policy_document":        return <PolicyDocumentSection section={section} />;
+    case "footer_config":          return <FooterConfigSection section={section} />;
+    case "mobile_menu_config":     return <MobileMenuConfigSection section={section} />;
     default:                       return <RichTextSection section={section} />;
   }
 }

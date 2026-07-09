@@ -6,18 +6,14 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft,
   CheckCircle,
-  Camera,
   Check,
-  Clock,
   DollarSign,
   FileText,
   Landmark,
   Plus,
   Search,
   Trash2,
-  Upload,
   Send,
-  Wallet,
   XCircle,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -43,7 +39,7 @@ function fmtCOP(n: number) {
 }
 
 export default function GastosPage() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const router = useRouter();
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

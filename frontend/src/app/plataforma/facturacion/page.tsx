@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft,
   CheckCircle,
-  ChevronRight,
   DollarSign,
   FileText,
   Landmark,
@@ -14,7 +13,6 @@ import {
   Search,
   Send,
   Trash2,
-  XCircle,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";

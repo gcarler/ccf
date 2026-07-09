@@ -41,6 +41,20 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     }
   },
   {
+    key: `${SITE_KEY}_home_hero_gallery`,
+    label: "Inicio — Hero Galería",
+    description: "Banco de fotos para el hero principal del home.",
+    page: "/",
+    sample: {
+      title: "Momento de comunidad",
+      items: [
+        { url: "/api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp", alt: "Comunidad reunida", caption: "Casa llena de vida" },
+        { url: "https://images.unsplash.com/photo-1504051771394-dd2e66b2e08f?auto=format&fit=crop&w=1800&q=80", alt: "Servicio congregacional", caption: "Adoración y enseñanza" },
+        { url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&q=80", alt: "Encuentro pastoral", caption: "Acompañamiento cercano" }
+      ]
+    }
+  },
+  {
     key: `${SITE_KEY}_home_feed`,
     label: "Inicio — Contenido",
     description: "Tarjetas editoriales e imágenes de entrada del home.",
@@ -54,7 +68,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
         desc: "Descubre la base de nuestra fe a través de un viaje personal y transformador.",
         href: "/conocer-a-jesus",
         cta: "Empezar el camino",
-        img: "/images/pastores-banner.jpg",
+        img: "/api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp",
         alt: "Equipo pastoral de la comunidad"
       },
       cards: [
@@ -396,7 +410,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
           slug: "martina-herrera",
           name: "Martina Herrera",
           role: "Pastora Fundadora",
-          image: "/images/pastores/martina_herrera.webp",
+          image: "/api/static/cms/pastores/f1233104623743879e328ffdd94abee5.webp",
           story: "Pastora fundadora del ministerio de la comunidad junto a su esposo, Alejandro Ariza Torres.",
           bio_short: "Pastora fundadora del ministerio de la comunidad junto a su esposo, Alejandro Ariza Torres.",
         }

@@ -254,7 +254,7 @@ export default function ThemePreview({ tokens }: Props) {
             className="opacity-30 mb-3"
           />
           <p className="text-sm leading-relaxed opacity-90 italic relative z-10">
-            "Este tema se ve increíble. La glassmorphism y los glows le dan un toque moderno y profesional a toda la plataforma."
+            &ldquo;Este tema se ve increíble. La glassmorphism y los glows le dan un toque moderno y profesional a toda la plataforma.&rdquo;
           </p>
           <div className="flex items-center gap-3 mt-4 pt-4 border-t" style={{ borderColor: t("--site-outline-variant", "#424750") }}>
             <div
@@ -268,7 +268,7 @@ export default function ThemePreview({ tokens }: Props) {
             </div>
             <div>
               <p className="text-xs font-bold">Juan Díaz</p>
-              <p className="text-[10px] opacity-60">Miembro desde 2023</p>
+              <p className="text-[10px] opacity-60">Persona desde 2023</p>
             </div>
             <div className="ml-auto flex gap-0.5">
               {[1, 2, 3, 4, 5].map((s) => (

@@ -7,12 +7,11 @@ import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import {
  ArrowLeft, Calendar, Users, CheckCircle2, XCircle, UserPlus,
- Save, DollarSign, FileText, FileSpreadsheet, Clock, Plus, Search,
+ Save, DollarSign, FileText, Clock, Plus, Search,
  Home, User, Shield, AlertCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
-import { downloadGroupAttendanceExcel, downloadGroupAttendancePdf } from '@/lib/evangelism-downloads';
 
 interface Grupo {
  id: string;

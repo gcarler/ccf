@@ -200,6 +200,170 @@ class PopupProps(BaseModel):
         return max(1, min(int(v), 3650))
 
 
+class EventsCalendarProps(BaseModel):
+    title: str = "Próximos Eventos"
+    subtitle: str = ""
+    show_filters: bool = True
+    filters: List[str] = ["Todos", "Conferencias", "Grupos de Conexión", "Cursos & Talleres", "Especiales"]
+    max_events: int = 50
+    show_ics_export: bool = True
+    empty_title: str = "Sin eventos publicados"
+    empty_description: str = "Cuando el CMS publique eventos, aparecerán aquí."
+    featured_badge: str = "Destacado"
+    reserve_cta: str = "Reservar lugar"
+
+
+class VideoGridProps(BaseModel):
+    title: str = "Prédicas & Mensajes"
+    subtitle: str = ""
+    channel_url: str = ""
+    channel_label: str = "Ver canal"
+    max_videos: int = 12
+    search_placeholder: str = "Buscar por título o predicador…"
+    empty_title: str = "No se pudieron cargar los videos"
+    empty_description: str = "Verifica tu conexión o intenta nuevamente."
+
+
+class LocationItem(BaseModel):
+    name: str = "Sede"
+    address: str = ""
+    city: str = ""
+    phone: str = ""
+    schedule: str = ""
+    embed_url: str = ""
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    is_main: bool = False
+
+
+class LocationsListProps(BaseModel):
+    title: str = "Nuestras Sedes"
+    subtitle: str = ""
+    search_placeholder: str = "Buscar ciudad o dirección..."
+    show_map: bool = True
+    locations: List[LocationItem] = []
+
+
+class ContactFormProps(BaseModel):
+    title: str = "Hablemos de Tu Caminar"
+    subtitle: str = ""
+    name_label: str = "Nombre completo"
+    name_placeholder: str = "Tu nombre"
+    phone_label: str = "WhatsApp"
+    phone_placeholder: str = "+57 300..."
+    message_label: str = "¿En qué podemos ayudarte?"
+    message_placeholder: str = "Cuéntanos un poco sobre ti o tu petición de oración..."
+    submit_label: str = "Enviar mensaje y conectar"
+    success_message: str = "Gracias. Te contactaremos pronto."
+    action_url: str = "/public/contact"
+
+
+class PrayerFormProps(BaseModel):
+    title: str = "Pedir oración"
+    subtitle: str = ""
+    name_label: str = "Nombre"
+    name_placeholder: str = "Tu nombre"
+    request_label: str = "Petición de oración"
+    request_placeholder: str = "Comparte tu necesidad..."
+    submit_label: str = "Enviar al equipo pastoral"
+    success_message: str = "Tu petición ha sido enviada."
+    action_url: str = "/crm/prayer-requests/public"
+
+
+class CourseItem(BaseModel):
+    id: str = ""
+    title: str = ""
+    description: str = ""
+    instructor: str = ""
+    modality: str = ""
+    lessons: int = 0
+    image_url: Optional[str] = None
+    cta_label: str = "Quiero Inscribirme"
+
+
+class CourseGridProps(BaseModel):
+    title: str = "Cursos & Academia"
+    subtitle: str = ""
+    courses_title: str = "Cursos & Academia"
+    courses_description: str = ""
+    featured_course_id: Optional[str] = None
+    show_free_only: bool = False
+    courses: List[CourseItem] = []
+    empty_title: str = "No hay cursos disponibles"
+    empty_description: str = "Próximamente publicaremos nuevos cursos."
+
+
+class BookItem(BaseModel):
+    id: str = ""
+    title: str = ""
+    author: str = ""
+    price: str = ""
+    description: str = ""
+    image_url: Optional[str] = None
+
+
+class BookShopProps(BaseModel):
+    title: str = "Nuestra Librería"
+    subtitle: str = ""
+    books: List[BookItem] = []
+    empty_message: str = "Próximamente tendremos libros disponibles."
+
+
+class TestimonialItem(BaseModel):
+    author: str = ""
+    role: str = ""
+    content: str = ""
+    image_url: Optional[str] = None
+    stars: int = 5
+
+
+class TestimonialsMasonryProps(BaseModel):
+    title: str = "Historias de Transformación"
+    subtitle: str = ""
+    testimonials: List[TestimonialItem] = []
+    cta_label: str = "Compartir mi historia"
+    cta_href: str = "#"
+    empty_title: str = "Próximamente compartiremos historias de transformación."
+
+
+class PolicySectionItem(BaseModel):
+    id: str = ""
+    title: str = ""
+    content: str = ""
+
+
+class PolicyDocumentProps(BaseModel):
+    title: str = "Política de Privacidad"
+    last_update: str = ""
+    summary: str = ""
+    sections: List[PolicySectionItem] = []
+
+
+class FooterLinkGroup(BaseModel):
+    title: str = ""
+    links: List[SocialLinkItem] = []
+
+
+class FooterConfigProps(BaseModel):
+    brand_description: str = ""
+    location_label: str = ""
+    newsletter_label: str = ""
+    copyright: str = ""
+    copyright_url: str = ""
+    nav_groups: List[FooterLinkGroup] = []
+    social_links: List[SocialLinkItem] = []
+
+
+class MobileMenuItem(BaseModel):
+    label: str = ""
+    href: str = ""
+    icon: str = ""
+
+
+class MobileMenuConfigProps(BaseModel):
+    items: List[MobileMenuItem] = []
+
+
 # Union schema for validation dispatch
 SECTION_PROPS_SCHEMAS: Dict[str, type[BaseModel]] = {
     "button": ButtonProps,
@@ -214,6 +378,17 @@ SECTION_PROPS_SCHEMAS: Dict[str, type[BaseModel]] = {
     "content_blocks": ContentBlocksProps,
     "accordion": AccordionProps,
     "popup_banner": PopupProps,
+    "events_calendar": EventsCalendarProps,
+    "video_grid": VideoGridProps,
+    "locations_list": LocationsListProps,
+    "contact_form": ContactFormProps,
+    "prayer_form": PrayerFormProps,
+    "course_grid": CourseGridProps,
+    "book_shop": BookShopProps,
+    "testimonials_masonry": TestimonialsMasonryProps,
+    "policy_document": PolicyDocumentProps,
+    "footer_config": FooterConfigProps,
+    "mobile_menu_config": MobileMenuConfigProps,
 }
 
 

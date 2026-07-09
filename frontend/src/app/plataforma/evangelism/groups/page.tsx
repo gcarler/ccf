@@ -12,6 +12,8 @@ import { MINIMAL_VIEWS,useViewType } from '@/hooks/useViewType';
 import { ApiError,apiFetch } from '@/lib/http';
 import clsx from 'clsx';
 import { Award,CheckCircle2,ChevronRight,Clock,FileText,Home,Loader2 } from 'lucide-react';
+
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback,useEffect,useState } from 'react';
 import { toast } from 'sonner';
@@ -252,7 +254,7 @@ export default function GroupPage() {
      <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">Notifica a líderes sobre sesiones de mañana y reportes atrasados.</p>
     </div>
    </button>
-   <a href="/plataforma/crm?counseling=open"
+   <Link href="/plataforma/crm?counseling=open"
     className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-amber-300 dark:hover:border-amber-500 hover:shadow-md transition-all">
     <div className="size-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
      <Award size={18} />
@@ -267,7 +269,7 @@ export default function GroupPage() {
      </p>
      <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">Tickets abiertos esperando respuesta pastoral.</p>
     </div>
-   </a>
+   </Link>
   </div>
  )}
 

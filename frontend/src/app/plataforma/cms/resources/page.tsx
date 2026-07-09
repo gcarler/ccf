@@ -95,6 +95,30 @@ const RESOURCES: CmsResource[] = [
     },
   },
   {
+    id: "home-hero-gallery",
+    title: "Home Hero Gallery",
+    category: "Media",
+    description: "Banco de fotos exclusivo para el hero principal del home. Se publica como gallery con section_key home_hero_gallery.",
+    flow: "publish",
+    sectionType: "gallery",
+    publicSurface: "Home principal",
+    platformSource: "CMS Media",
+    readiness: "available",
+    icon: GalleryHorizontalEnd,
+    fields: ["items[].url", "items[].alt", "items[].caption"],
+    safeguards: ["Usar esta clave solo para el hero del home", "Publicar al menos una imagen", "Mantener orden visual fuerte en desktop"],
+    example: {
+      type: "gallery",
+      props_json: {
+        title: "Hero del home",
+        items: [
+          { url: "/api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp", alt: "Comunidad reunida", caption: "Casa llena de vida" },
+          { url: "https://images.unsplash.com/photo-1504051771394-dd2e66b2e08f?auto=format&fit=crop&w=1800&q=80", alt: "Servicio congregacional", caption: "Adoración y enseñanza" },
+        ],
+      },
+    },
+  },
+  {
     id: "gallery",
     title: "Galeria de imagenes",
     category: "Media",
