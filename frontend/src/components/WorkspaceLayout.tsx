@@ -577,7 +577,7 @@ function WorkspaceLayoutInner({
                     </main>
 
                     {!isCompactViewport && (
-                        <div className="fixed left-2 z-[60] flex flex-col gap-1" style={{ top: '66%' }}>
+                        <div className="fixed left-2 z-[60] flex flex-col gap-0.5" style={{ bottom: '2rem' }}>
                             {!s1Visible && (
                                 <motion.button
                                     initial={{ opacity: 0, x: -20 }}
