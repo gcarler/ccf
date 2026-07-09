@@ -174,14 +174,18 @@ class TestWikiAuditTrail:
         create_wiki_factory(db_session, proj.id, title="Audit")
         headers = auth_headers(client)
 
-        # Mark soft-deleted directly (no DELETE endpoint exists yet for wiki)
+        # Mark soft-deleted directly (no DELETE endpoint exists yet for wiki).
+        # Use Python datetime as a bind var instead of SQL NOW() so the
+        # test is portable between Postgres test DBs and SQLite dev DBs
+        # (SQLite has no NOW() builtin).
         from sqlalchemy import text as _text
+        _now = datetime.now(timezone.utc)
         db_session.execute(
             _text(
-                "UPDATE project_documents SET deleted_at = NOW() "
+                "UPDATE project_documents SET deleted_at = :ts "
                 "WHERE project_id = :pid"
             ),
-            {"pid": str(proj.id)},
+            {"pid": str(proj.id), "ts": _now},
         )
         db_session.commit()
 
