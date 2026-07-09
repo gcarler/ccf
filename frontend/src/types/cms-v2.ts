@@ -66,9 +66,12 @@ export interface CmsPage {
   site_id: string;
   slug: string;
   title: string;
-  status: "draft" | "in_review" | "approved" | "published" | "archived" | string;
+  status: "draft" | "in_review" | "approved" | "scheduled" | "published" | "archived" | string;
   seo_json: Record<string, unknown>;
   published_version_id: string | null;
+  // Scheduled publish + auto-archive (2026-07-06).
+  publish_at: string | null;
+  expires_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -157,10 +160,12 @@ export interface CmsPost {
   excerpt: string | null;
   content: string | null;
   featured_image_url: string | null;
-  status: "draft" | "in_review" | "approved" | "published" | "archived" | string;
+  status: "draft" | "in_review" | "approved" | "scheduled" | "published" | "archived" | string;
   seo_json: Record<string, unknown>;
   locale: string;
   published_at: string | null;
+  // Auto-archive (2026-07-06).
+  expires_at: string | null;
   author_persona_id: string | null;
   created_by_persona_id: string | null;
   updated_by_persona_id: string | null;

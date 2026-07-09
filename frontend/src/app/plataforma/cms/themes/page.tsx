@@ -6,7 +6,6 @@ import {
   Archive,
   CheckCircle2,
   ChevronDown,
-  ChevronRight,
   Copy,
   Download,
   ExternalLink,

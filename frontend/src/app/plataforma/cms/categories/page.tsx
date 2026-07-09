@@ -11,11 +11,7 @@ import {
   Plus,
   RotateCcw,
   Search,
-  Tag,
-  X,
   Zap,
-  ChevronRight,
-  Save,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";

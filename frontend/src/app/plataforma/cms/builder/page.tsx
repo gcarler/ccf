@@ -44,9 +44,10 @@ export default function CmsBuilderPage() {
           onSelect={(item) => {
             const url = typeof item === "string" ? item : (item as { url?: string }).url || "";
             if (builder.mediaPickerTarget === "section" && builder.activeSection) {
+              const field = builder.activeSection.type === "hero" ? "bg_image" : "image_url";
               const nextProps = {
                 ...((builder.activeSection.props_json as Record<string, unknown>) || {}),
-                image_url: url,
+                [field]: url,
               };
               builder.updateSectionPropsLocal(nextProps);
               builder.saveSectionProps(nextProps);

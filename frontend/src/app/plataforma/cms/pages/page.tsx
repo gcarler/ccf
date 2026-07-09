@@ -10,7 +10,7 @@ import { Archive, Calendar, Eye, FileText, Globe, Plus, RotateCcw, Search, Zap, 
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
 import clsx from "clsx";
-import { createCmsPage, listCmsPages, listCmsSites, patchCmsPage, workflowCmsPage } from "@/lib/cms/v2";
+import { createCmsPage, listCmsPages, listCmsSites, patchCmsPage, workflowCmsPage, scheduleEventColor, isScheduledPage, isExpiringPage } from "@/lib/cms/v2";
 import { CmsPage } from "@/types/cms-v2";
 import { canEditCms } from "@/lib/cms/permissions";
 import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
@@ -89,13 +89,75 @@ export default function CmsPagesManagement() {
     }));
   }, [visiblePages]);
 
-  const calendarEvents = useMemo(() => visiblePages.map((page) => ({
-    id: page.id,
-    title: page.title,
-    date: (page.updated_at || page.created_at || new Date().toISOString()).split("T")[0],
-    color: page.status === "published" ? "emerald" as const : page.status === "in_review" ? "amber" as const : page.status === "archived" ? "rose" as const : "blue" as const,
-    location: `/${page.slug}`,
-  })), [visiblePages]);
+  const calendarEvents = useMemo(() => {
+    const events: Array<{
+      id: string;
+      title: string;
+      date: string;
+      color: "blue" | "emerald" | "amber" | "rose";
+      location: string;
+      meta?: Record<string, string>;
+    }> = [];
+    for (const page of visiblePages) {
+      const slugHref = `/${page.slug}`;
+      // 1) Publish event: scheduled.publish_at OR a published page's first seen date.
+      if (isScheduledPage(page) && page.publish_at) {
+        const iso = page.publish_at;
+        events.push({
+          id: `${page.id}::publish`,
+          title: `📅 ${page.title}`,
+          date: iso.split("T")[0],
+          color: scheduleEventColor(page.status, "publish"),
+          location: slugHref,
+          meta: { kind: "publish", pageId: page.id, slug: page.slug, status: page.status || "draft" },
+        });
+      }
+      // 2) Expiry event: published pages with expires_at.
+      if (isExpiringPage(page) && page.expires_at) {
+        events.push({
+          id: `${page.id}::expire`,
+          title: `⏳ ${page.title}`,
+          date: page.expires_at.split("T")[0],
+          color: scheduleEventColor(page.status, "expiry"),
+          location: slugHref,
+          meta: { kind: "expire", pageId: page.id, slug: page.slug, status: page.status || "draft" },
+        });
+      }
+    }
+    // 3) Fallback: pages without schedule metadata use updated_at so the
+    //    calendar still shows them. Last-write-wins semantics preserved.
+    for (const page of visiblePages) {
+      if ((page as { publish_at?: string | null }).publish_at || (page as { expires_at?: string | null }).expires_at) {
+        continue;
+      }
+      events.push({
+        id: `${page.id}::updated`,
+        title: page.title,
+        date: (page.updated_at || page.created_at || new Date().toISOString()).split("T")[0],
+        color: page.status === "published" ? "emerald" as const : page.status === "in_review" ? "amber" as const : page.status === "archived" ? "rose" as const : "blue" as const,
+        location: `/${page.slug}`,
+      });
+    }
+    return events;
+  }, [visiblePages]);
+
+  const upcomingSchedules = useMemo(() => {
+    const now = Date.now();
+    const horizonMs = 7 * 24 * 60 * 60 * 1000;
+    return visiblePages
+      .filter((page) => (page.publish_at || page.expires_at) && (page.status !== "archived"))
+      .map((page) => ({
+        page,
+        publishTs: page.publish_at ? new Date(page.publish_at).getTime() : Infinity,
+        expireTs: page.expires_at ? new Date(page.expires_at).getTime() : Infinity,
+        soonestTs: Math.min(
+          page.publish_at ? new Date(page.publish_at).getTime() : Infinity,
+          page.expires_at ? new Date(page.expires_at).getTime() : Infinity,
+        ),
+      }))
+      .filter((row) => row.soonestTs >= now && row.soonestTs <= now + horizonMs)
+      .sort((a, b) => a.soonestTs - b.soonestTs);
+  }, [visiblePages]);
 
   const ganttItems = useMemo(() => visiblePages.map((page) => {
     const start = page.created_at || page.updated_at || new Date().toISOString();
@@ -455,14 +517,64 @@ export default function CmsPagesManagement() {
         ) : viewType === "board" || viewType === "kanban" ? (
           renderBoard()
         ) : viewType === "calendar" ? (
-          <UniversalCalendarView
-            title="Calendario de paginas"
-            events={calendarEvents}
-            onEventClick={(event) => {
-              const page = visiblePages.find((item) => item.id === event.id);
-              if (page) openPage(page);
-            }}
-          />
+          <div className="space-y-4">
+            <UniversalCalendarView
+              title="Calendario de paginas"
+              events={calendarEvents}
+              onEventClick={(event) => {
+                const meta = (event as { meta?: { pageId?: string; slug?: string } }).meta;
+                const page = meta?.pageId
+                  ? visiblePages.find((item) => item.id === meta.pageId)
+                  : visiblePages.find((item) => `${item.id}::updated` === event.id || item.id === event.id);
+                if (page) openPage(page);
+              }}
+            />
+            {upcomingSchedules.length > 0 && (
+              <motion.section
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-4 space-y-3"
+              >
+                <header className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar size={14} className="text-[hsl(var(--primary))]" />
+                    <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Próximos 7 días</h3>
+                  </div>
+                  <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{upcomingSchedules.length} eventos</span>
+                </header>
+                <div className="space-y-2">
+                  {upcomingSchedules.map((row) => {
+                    const isPublish = row.publishTs < row.expireTs && Number.isFinite(row.publishTs);
+                    const target = isPublish ? row.page.publish_at : row.page.expires_at;
+                    if (!target) return null;
+                    const color = scheduleEventColor(row.page.status, isPublish ? "publish" : "expiry");
+                    return (
+                      <button
+                        key={row.page.id}
+                        onClick={() => openPage(row.page)}
+                        className="w-full flex items-center gap-3 p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#141517] border border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--primary))] transition-all group text-left"
+                      >
+                        <div className={clsx(
+                          "size-2 rounded-full shrink-0",
+                          color === "blue" && "bg-[hsl(var(--primary))]",
+                          color === "emerald" && "bg-emerald-500",
+                          color === "amber" && "bg-amber-500",
+                          color === "rose" && "bg-rose-500",
+                        )} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{row.page.title}</p>
+                          <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5">
+                            {isPublish ? "📅 Publicación" : "⏳ Auto-archivado"} · {new Date(target).toLocaleString()}
+                          </p>
+                        </div>
+                        <span className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors">Abrir →</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.section>
+            )}
+          </div>
         ) : viewType === "gantt" ? (
           <UniversalGanttView
             moduleName="CMS Pages"

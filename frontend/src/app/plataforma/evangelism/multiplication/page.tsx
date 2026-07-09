@@ -60,16 +60,16 @@ interface PersonaOption {
 
 // Adapter layer: translate backend field names (miembros) to frontend canonical
 // names (personas). The backend API for /evangelism/multiplication/* still
-// returns the legacy field names; remove these helpers once the backend is
+// returns the previous field names; remove these helpers once the backend is
 // updated to use the canonical 'personas' vocabulary in:
 //   - GET  /evangelism/multiplication/check
 //   - GET  /evangelism/multiplication/history
 //   - POST /evangelism/multiplication/split
 // TODO(backend-migration): delete this adapter layer when backend returns
 // {total_personas, personas_actuales, personas_transferidas} instead of
-// the legacy {total_miembros, miembros_actuales, miembros_transferidos}.
+// the previous {total_miembros, miembros_actuales, miembros_transferidos}.
 type GrupoSummary = { id: string; nombre: string; total_personas: number };
-function dropLegacyTotalPersonas(g: any): GrupoSummary {
+function dropPreviousTotalPersonas(g: any): GrupoSummary {
   const { total_miembros, ...rest } = g;
   return { ...rest, total_personas: total_miembros };
 }
@@ -85,8 +85,8 @@ function adaptSplitResponse(res: any): SplitResponse {
   const { grupo_original, nuevo_grupo, miembros_transferidos, ...rest } = res;
   return {
     ...rest,
-    grupo_original: dropLegacyTotalPersonas(grupo_original),
-    nuevo_grupo: dropLegacyTotalPersonas(nuevo_grupo),
+    grupo_original: dropPreviousTotalPersonas(grupo_original),
+    nuevo_grupo: dropPreviousTotalPersonas(nuevo_grupo),
     personas_transferidas: miembros_transferidos,
   };
 }

@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   CheckCircle,
   FileText,
-  Image,
   Landmark,
   Plus,
   Search,
@@ -183,7 +182,7 @@ export default function DocumentosPage() {
                     <h3 className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate mb-1">{doc.title}</h3>
                     <p className="text-[10px] text-[hsl(var(--text-secondary))] line-clamp-2 mb-2">{doc.description || "Sin descripción"}</p>
                     {doc.ai_summary && (
-                      <div className="mb-2 p-1.5 rounded-md bg-purple-50 dark:bg-purple-900/10 text-[10px] text-purple-700 dark:text-purple-300">
+                      <div className="mb-2 p-1.5 rounded-md bg-fuchsia-50 dark:bg-fuchsia-900/10 text-[10px] text-fuchsia-700 dark:text-fuchsia-300">
                         <span className="font-bold">IA:</span> {doc.ai_summary}
                       </div>
                     )}
@@ -192,7 +191,7 @@ export default function DocumentosPage() {
                         <span key={t.id} className="px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white" style={{ backgroundColor: t.color }}>{t.name}</span>
                       ))}
                       {doc.ai_tags?.map((tag: string, idx: number) => (
-                        <span key={idx} className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300">{tag}</span>
+                        <span key={idx} className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/20 dark:text-fuchsia-300">{tag}</span>
                       ))}
                     </div>
                     <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="mt-2 block text-[10px] font-bold text-[hsl(var(--primary))] hover:underline">Abrir archivo →</a>

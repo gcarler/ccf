@@ -12,6 +12,10 @@ const SIDEBAR_SECTIONS = [
     ]},
 ];
 
+// The "SEO score trend" widget is rendered by ``DashboardShell`` itself
+// when ``data.seo_trend.has_data`` is true. This keeps the widget
+// data-driven (no duplicate fetch) and keeps the client component thin.
+// See: components/DashboardShell → SeoTrendCard.
 export function CmsDashboardClient() {
     return (
         <WorkspaceLayout sidebarTitle="Dashboards" sidebarSections={SIDEBAR_SECTIONS}>
@@ -19,3 +23,4 @@ export function CmsDashboardClient() {
         </WorkspaceLayout>
     );
 }
+

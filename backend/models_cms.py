@@ -133,6 +133,14 @@ class CmsPage(Base):
         nullable=True,
     )
     locale = Column(String(5), default="es", server_default="es", index=True)
+    # Scheduled publish + auto-archive (added 2026-07-06 via alembic migration):
+    # ``publish_at`` es el momento futuro en que el scheduler automático
+    # transiciona ``draft|in_review|approved|scheduled`` → ``published``.
+    # ``expires_at`` es el momento en que un ``published`` debe auto-
+    # archivar. Ambas columnas nullable — el control es 100% lógico y
+    # compatible con el workflow API existente.
+    publish_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
@@ -367,6 +375,11 @@ class CmsPost(Base):
     seo_json = Column(JSON, default={})
     locale = Column(String(5), default="es", server_default="es", index=True)
     published_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    # Auto-archive (added 2026-07-06 via alembic migration): ``expires_at``
+    # indica el momento en que un ``published`` debe auto-archivarse.
+    # ``publish_at`` ya existe como ``published_at`` (semánticamente
+    # equivalente; alineamos nomenclatura en próximos refactors).
+    expires_at = Column(DateTime(timezone=True), nullable=True, index=True)
     author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
@@ -403,4 +416,56 @@ class CmsPostTag(Base):
         UUID(as_uuid=True),
         ForeignKey("cms_tags.id", ondelete="CASCADE"),
         primary_key=True,
+    )
+
+
+class CmsSeoSnapshot(Base):
+    """Daily SEO score snapshot per ``CmsSite`` (faro global model).
+
+    Captured by ``backend.scheduler`` (cron) to power the "SEO score trend"
+    widget on ``/plataforma/dashboard/cms``. Today the audit is computed
+    on-the-fly by ``GET /api/cms/v2/sites/{site_key}/seo-audit`` — that
+    means there is no historical data unless we record daily snapshots
+    ourselves. This table is the source of truth for *historical* widget
+    data.
+
+    Notes:
+      * ``UNIQUE(site_id, captured_date)`` guarantees idempotency: even
+        if the cron retries twice in the same day, ``INSERT ... ON
+        CONFLICT DO NOTHING`` keeps exactly one row per site/per day.
+      * ``sede_id`` mirrors ``cms_sites.sede_id`` at capture time so the
+        widget can be filtered Axioma 3-style without re-joining.
+      * ``by_severity_json`` snapshots the per-severity counts so we
+        don't have to recompute the distribution on every chart render.
+      * ``captured_at`` (tz-aware ``DateTime``) is the wall-clock time
+        when the snapshot was recorded; ``captured_date`` is the calendar
+        day (UTC) used as the dedupe key.
+    """
+
+    __tablename__ = "cms_seo_snapshots"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_sites.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    sede_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("sedes.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    captured_date = Column(Date, nullable=False, index=True)
+    captured_at = Column(
+        DateTime(timezone=True), nullable=False, default=lambda: dt.datetime.now(dt.timezone.utc)
+    )
+    average_score = Column(Integer, nullable=False, default=0)
+    total_pages = Column(Integer, nullable=False, default=0)
+    pages_with_errors = Column(Integer, nullable=False, default=0)
+    critical_issues = Column(Integer, nullable=False, default=0)
+    by_severity_json = Column(JSON, default=dict)
+
+    __table_args__ = (
+        UniqueConstraint("site_id", "captured_date", name="uq_cms_seo_snapshot_site_date"),
     )

@@ -7,8 +7,8 @@ const SITE_KEY = process.env.NEXT_PUBLIC_SITE_KEY || "ccf";
 
 type PublicCmsHeadProps = {
   slug: string;
-  fallbackTitle: string;
-  fallbackDescription: string;
+  fallbackTitle?: string;
+  fallbackDescription?: string;
 };
 
 function renderMeta(name: string, content?: string) {
@@ -38,11 +38,11 @@ export default async function PublicCmsHead({
   const title =
     typeof seo.meta_title === "string" && seo.meta_title.trim()
       ? seo.meta_title
-      : fallbackTitle;
+      : fallbackTitle || page?.title || SITE_NAME;
   const description =
     typeof seo.meta_description === "string" && seo.meta_description.trim()
       ? seo.meta_description
-      : fallbackDescription;
+      : fallbackDescription || "";
   const image =
     typeof seo.meta_image === "string" && seo.meta_image.trim()
       ? seo.meta_image

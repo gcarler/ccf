@@ -4,23 +4,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  Banknote,
   Calculator,
-  ClipboardList,
-  FileCheck,
   FileText,
-  Landmark,
-  LandmarkIcon,
   Landmark as Building2,
-  Pencil,
-  Plus,
   Receipt,
-  Search,
-  Send,
-  Settings,
   PenTool,
   Wallet,
-} from "lucide-react";
+}from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
@@ -107,7 +97,7 @@ export default function ContabilidadPage() {
       icon: Receipt,
       href: "/plataforma/facturacion",
       stats: `${invoices.length} facturas`,
-      color: "from-blue-500 to-indigo-600",
+      color: "from-blue-500 to-blue-700",
     },
     {
       title: "Gastos",
@@ -123,7 +113,7 @@ export default function ContabilidadPage() {
       icon: FileText,
       href: "/plataforma/documentos",
       stats: `${documents.length} documentos`,
-      color: "from-violet-500 to-purple-600",
+      color: "from-fuchsia-500 to-pink-600",
     },
     {
       title: "Firma Digital",
