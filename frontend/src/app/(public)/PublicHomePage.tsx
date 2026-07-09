@@ -171,8 +171,8 @@ export default function PublicHomePage() {
                         titleAccent={heroTitleAccent}
                         titleTail={heroTitleTail}
                         description={heroDescription}
-                        primaryCta={heroPrimaryCta ? { label: heroPrimaryCta, href: "/conocer-a-jesus" } : undefined}
-                        secondaryCta={heroSecondaryCta ? { label: heroSecondaryCta, href: "/predicas" } : undefined}
+                        primaryCta={heroPrimaryCta ? { label: heroPrimaryCta, href: (heroContent?.primary_cta_href as string) || "/conocer-a-jesus" } : undefined}
+                        secondaryCta={heroSecondaryCta ? { label: heroSecondaryCta, href: (heroContent?.secondary_cta_href as string) || "/predicas" } : undefined}
                         slides={homeSlides}
                     />
                     {scrollIndicator && (
