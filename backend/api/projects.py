@@ -438,10 +438,10 @@ def list_all_comments(
         result.append(
             schemas.ProjectCommentItem(
                 id=row.id,
-                project_id=row.project_id,
-                task_id=row.task_id,
+                project_id=str(row.project_id) if row.project_id is not None else None,
+                task_id=str(row.task_id) if row.task_id is not None else None,
                 content=row.content,
-                author_id=row.author_id,
+                author_id=str(row.author_id) if row.author_id is not None else None,
                 author_name=authors_map.get(row.author_id, "Usuario"),
                 is_resolved=row.is_resolved,
                 created_at=row.created_at,
@@ -600,7 +600,7 @@ def list_activities(
             schemas.ProjectActivityItem(
                 id=str(log.id),
                 kind=log.action_type,
-                project_id=log.project_id,
+                project_id=str(log.project_id) if log.project_id is not None else None,
                 project_title=project.title if project else "Proyecto",
                 description=log.description or "",
                 created_at=log.created_at or _utcnow(),
@@ -700,8 +700,8 @@ def list_inbox(
                 user=_author_name(author),
                 content=comment.content[:120],
                 project=project.title,
-                project_id=project.id,
-                task_id=comment.task_id,
+                project_id=str(project.id) if project.id is not None else None,
+                task_id=str(comment.task_id) if comment.task_id is not None else None,
                 is_read=is_read,
                 created_at=comment.created_at,
             )
@@ -1192,10 +1192,10 @@ def create_comment(
     db.refresh(comment)
     return schemas.ProjectCommentItem(
         id=comment.id,
-        project_id=comment.project_id,
-        task_id=comment.task_id,
+        project_id=str(commit.project_id) if comment.project_id is not None else None,
+        task_id=str(comment.task_id) if comment.task_id is not None else None,
         content=comment.content,
-        author_id=comment.author_id,
+        author_id=str(comment.author_id) if comment.author_id is not None else None,
         author_name=_author_name(db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()),
         is_resolved=comment.is_resolved,
         created_at=comment.created_at,
@@ -1262,10 +1262,10 @@ def update_project_comment(
     author = db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()
     return schemas.ProjectCommentItem(
         id=comment.id,
-        project_id=comment.project_id,
-        task_id=comment.task_id,
+        project_id=str(comment.project_id) if comment.project_id is not None else None,
+        task_id=str(comment.task_id) if comment.task_id is not None else None,
         content=comment.content,
-        author_id=comment.author_id,
+        author_id=str(comment.author_id) if comment.author_id is not None else None,
         author_name=_author_name(author),
         is_resolved=comment.is_resolved,
         created_at=comment.created_at,
@@ -1415,7 +1415,7 @@ def list_project_messages(
     return [
         schemas.ProjectMessageItem(
             id=r.id,
-            sender_id=r.sender_id,
+            sender_id=str(r.sender_id),
             sender_name=users_map.get(r.sender_id, "Usuario"),
             content=r.content,
             created_at=r.created_at,

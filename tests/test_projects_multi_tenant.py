@@ -266,10 +266,10 @@ class TestSoftDeleteRespectsTenantScope:
         proj = create_project_factory(db_session, sede_id=s_a.id)
         create_task_factory(db_session, proj.id, title="Dead task")
 
-        # Soft delete directly (the route layer does this on DELETE)
-        proj.deleted_at = db_session.execute(
-            _sql_text("SELECT NOW()")
-        ).scalar()
+        # Soft delete directly (the route layer does this on DELETE).
+        # Use Python datetime instead of SQL NOW() so the test is portable
+        # between Postgres test DBs and SQLite dev DBs (which has no NOW() builtin).
+        proj.deleted_at = datetime.now(timezone.utc)
         db_session.commit()
 
         # Use the API of the admin whose sede matches sede_A
