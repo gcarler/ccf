@@ -24,11 +24,11 @@ import type {
 // ── Seed IDs ──────────────────────────────────────────────────────────
 // Fixed UUIDs so mock data is deterministic across reloads.
 
-const P1_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
-const P2_ID = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
-const P3_ID = "c3d4e5f6-a7b8-9012-cdef-123456789012";
-const PERSONA_A = "d4e5f6a7-b8c9-0123-def1-234567890123";
-const PERSONA_B = "e5f6a7b8-c9d0-1234-ef12-345678901234";
+const P1_ID = "a1b2c3d4-e5f6-4890-abcd-ef1234567890";
+const P2_ID = "b2c3d4e5-f6a7-4901-bcde-f12345678901";
+const P3_ID = "c3d4e5f6-a7b8-4012-bdef-123456789012";
+const PERSONA_A = "d4e5f6a7-b8c9-4123-bef1-234567890123";
+const PERSONA_B = "e5f6a7b8-c9d0-4234-bf12-345678901234";
 
 // ── Timeline helper ───────────────────────────────────────────────────
 
@@ -48,16 +48,16 @@ function daysFromNow(n: number): string {
 
 const MOCK_MILESTONES: Record<string, ProjectMilestoneRecord[]> = {
   [P1_ID]: [
-    { id: "f1a2b3c4-d5e6-7890-abcd-ef1234567890", project_id: P1_ID, title: "MVP v1.0", target_date: daysFromNow(14), is_completed: false },
-    { id: "f2a3b4c5-e6f7-8901-bcde-f12345678901", project_id: P1_ID, title: "Diseño aprobado", target_date: daysAgo(3), is_completed: true },
-    { id: "f3a4b5c6-f7a8-9012-cdef-123456789012", project_id: P1_ID, title: "Lanzamiento", target_date: daysFromNow(45), is_completed: false },
+    { id: "f1a2b3c4-d5e6-4890-abcd-ef1234567890", project_id: P1_ID, title: "MVP v1.0", target_date: daysFromNow(14), is_completed: false },
+    { id: "f2a3b4c5-e6f7-4901-bcde-f12345678901", project_id: P1_ID, title: "Diseño aprobado", target_date: daysAgo(3), is_completed: true },
+    { id: "f3a4b5c6-f7a8-4012-bdef-123456789012", project_id: P1_ID, title: "Lanzamiento", target_date: daysFromNow(45), is_completed: false },
   ],
   [P2_ID]: [
-    { id: "f4a5b6c7-a8b9-0123-def1-234567890123", project_id: P2_ID, title: "Ronda oración 2025-Q3", target_date: daysFromNow(7), is_completed: false },
-    { id: "f5a6b7c8-b9c0-1234-ef12-345678901234", project_id: P2_ID, title: "Logística lista", target_date: daysAgo(1), is_completed: true },
+    { id: "f4a5b6c7-a8b9-4123-bef1-234567890123", project_id: P2_ID, title: "Ronda oración 2025-Q3", target_date: daysFromNow(7), is_completed: false },
+    { id: "f5a6b7c8-b9c0-4234-bf12-345678901234", project_id: P2_ID, title: "Logística lista", target_date: daysAgo(1), is_completed: true },
   ],
   [P3_ID]: [
-    { id: "f6a7b8c9-c0d1-2345-f123-456789012345", project_id: P3_ID, title: "Retrospectiva final", target_date: daysFromNow(90), is_completed: false },
+    { id: "f6a7b8c9-c0d1-4345-b123-456789012345", project_id: P3_ID, title: "Retrospectiva final", target_date: daysFromNow(90), is_completed: false },
   ],
 };
 
@@ -65,13 +65,13 @@ const MOCK_MILESTONES: Record<string, ProjectMilestoneRecord[]> = {
 
 const SUPPLIES_BY_TASK: Record<string, TaskSupplyRecord[]> = {
   // task T1 (project 1)
-  "11111111-1111-1111-1111-111111111001": [
-    { id: "11111111-aaaa-4000-8000-000000000001", task_id: "11111111-1111-1111-1111-111111111001", item_name: "Hosting mensual", quantity: 3, status: "purchased" },
-    { id: "11111111-aaaa-4000-8000-000000000002", task_id: "11111111-1111-1111-1111-111111111001", item_name: "Dominio .com", quantity: 1, status: "pending" },
+  "11111111-1111-4111-8111-111111111001": [
+    { id: "11111111-aaaa-4000-8000-000000000001", task_id: "11111111-1111-4111-8111-111111111001", item_name: "Hosting mensual", quantity: 3, status: "purchased" },
+    { id: "11111111-aaaa-4000-8000-000000000002", task_id: "11111111-1111-4111-8111-111111111001", item_name: "Dominio .com", quantity: 1, status: "pending" },
   ],
   // task T3 (project 1)
-  "11111111-1111-1111-1111-111111111003": [
-    { id: "11111111-aaaa-4000-8000-000000000003", task_id: "11111111-1111-1111-1111-111111111003", item_name: "Cuenta Figma Pro", quantity: 1, status: "purchased" },
+  "11111111-1111-4111-8111-111111111003": [
+    { id: "11111111-aaaa-4000-8000-000000000003", task_id: "11111111-1111-4111-8111-111111111003", item_name: "Cuenta Figma Pro", quantity: 1, status: "purchased" },
   ],
 };
 
@@ -80,7 +80,7 @@ const SUPPLIES_BY_TASK: Record<string, TaskSupplyRecord[]> = {
 const MOCK_TASKS: ProjectTaskRecord[] = [
   // ── Project 1: Campaña Redes Sociales ──
   {
-    id: "11111111-1111-1111-1111-111111111001",
+    id: "11111111-1111-4111-8111-111111111001",
     project_id: P1_ID,
     title: "Diseñar piezas gráficas para Instagram",
     description: "Crear 5 diseños de tarjetas con versículos para la campaña de redes.",
@@ -91,10 +91,10 @@ const MOCK_TASKS: ProjectTaskRecord[] = [
     created_at: daysAgo(5),
     labels: ["diseño", "redes"],
     order_index: 0,
-    supplies: SUPPLIES_BY_TASK["11111111-1111-1111-1111-111111111001"],
+    supplies: SUPPLIES_BY_TASK["11111111-1111-4111-8111-111111111001"],
   },
   {
-    id: "11111111-1111-1111-1111-111111111002",
+    id: "11111111-1111-4111-8111-111111111002",
     project_id: P1_ID,
     title: "Programar publicaciones en Meta Business",
     description: "Usar el calendario de Meta para agendar 15 posts.",
@@ -107,7 +107,7 @@ const MOCK_TASKS: ProjectTaskRecord[] = [
     order_index: 1,
   },
   {
-    id: "11111111-1111-1111-1111-111111111003",
+    id: "11111111-1111-4111-8111-111111111003",
     project_id: P1_ID,
     title: "Diseñar logo para la campaña",
     description: "Logo temporal mientras se define la identidad visual.",
@@ -118,10 +118,10 @@ const MOCK_TASKS: ProjectTaskRecord[] = [
     created_at: daysAgo(10),
     labels: ["diseño"],
     order_index: 2,
-    supplies: SUPPLIES_BY_TASK["11111111-1111-1111-1111-111111111003"],
+    supplies: SUPPLIES_BY_TASK["11111111-1111-4111-8111-111111111003"],
   },
   {
-    id: "11111111-1111-1111-1111-111111111004",
+    id: "11111111-1111-4111-8111-111111111004",
     project_id: P1_ID,
     title: "Revisar métricas de alcance semanal",
     status: "review",
@@ -135,7 +135,7 @@ const MOCK_TASKS: ProjectTaskRecord[] = [
 
   // ── Project 2: Vigilia de Oración ──
   {
-    id: "22222222-2222-2222-2222-222222222001",
+    id: "22222222-2222-4222-8222-222222222001",
     project_id: P2_ID,
     title: "Coordinar voluntarios para la vigilia",
     status: "in_progress",
@@ -147,7 +147,7 @@ const MOCK_TASKS: ProjectTaskRecord[] = [
     order_index: 0,
   },
   {
-    id: "22222222-2222-2222-2222-222222222002",
+    id: "22222222-2222-4222-8222-222222222002",
     project_id: P2_ID,
     title: "Preparar guía de oración impresa",
     status: "todo",
@@ -161,7 +161,7 @@ const MOCK_TASKS: ProjectTaskRecord[] = [
 
   // ── Project 3: Construcción Salón ──
   {
-    id: "33333333-3333-3333-3333-333333333001",
+    id: "33333333-3333-4333-8333-333333333001",
     project_id: P3_ID,
     title: "Cotizar materiales de construcción",
     status: "todo",
@@ -190,7 +190,7 @@ const MOCK_COMMENTS: ProjectCommentItem[] = [
   {
     id: C1,
     project_id: P1_ID,
-    task_id: "11111111-1111-1111-1111-111111111001",
+    task_id: "11111111-1111-4111-8111-111111111001",
     content: "Me gusta el diseño propuesto. Revisemos los colores con el equipo de comunicaciones.",
     author_id: PERSONA_B,
     author_name: "María García",
@@ -202,7 +202,7 @@ const MOCK_COMMENTS: ProjectCommentItem[] = [
   {
     id: C2,
     project_id: P1_ID,
-    task_id: "11111111-1111-1111-1111-111111111001",
+    task_id: "11111111-1111-4111-8111-111111111001",
     content: "Ya compartí los archivos en la carpeta compartida de Drive.",
     author_id: PERSONA_A,
     author_name: "Carlos López",
@@ -226,7 +226,7 @@ const MOCK_COMMENTS: ProjectCommentItem[] = [
   {
     id: C4,
     project_id: P2_ID,
-    task_id: "22222222-2222-2222-2222-222222222001",
+    task_id: "22222222-2222-4222-8222-222222222001",
     content: "Confirmé con 8 voluntarios. Pendiente el transporte.",
     author_id: PERSONA_B,
     author_name: "María García",
@@ -271,7 +271,7 @@ const MOCK_INBOX_ITEMS: ProjectInboxItem[] = [
     content: "Me gusta el diseño propuesto. Revisemos los colores...",
     project: "Campaña Redes Sociales",
     project_id: P1_ID,
-    task_id: "11111111-1111-1111-1111-111111111001",
+    task_id: "11111111-1111-4111-8111-111111111001",
     is_read: false,
     created_at: daysAgo(1),
   },
@@ -293,7 +293,7 @@ const MOCK_INBOX_ITEMS: ProjectInboxItem[] = [
     content: "Confirmé con 8 voluntarios. Pendiente el transporte.",
     project: "Vigilia de Oración",
     project_id: P2_ID,
-    task_id: "22222222-2222-2222-2222-222222222001",
+    task_id: "22222222-2222-4222-8222-222222222001",
     is_read: true,
     created_at: daysAgo(0),
   },
@@ -303,8 +303,8 @@ const MOCK_INBOX_ITEMS: ProjectInboxItem[] = [
 
 const MOCK_ACTIVITIES: ProjectActivityItem[] = [
   { id: "act-001", kind: "project_created", project_id: P1_ID, project_title: "Campaña Redes Sociales", description: "Proyecto 'Campaña Redes Sociales' creado", created_at: daysAgo(10) },
-  { id: "act-002", kind: "task_created", project_id: P1_ID, project_title: "Campaña Redes Sociales", task_id: "11111111-1111-1111-1111-111111111001", task_title: "Diseñar piezas gráficas", description: "Tarea 'Diseñar piezas gráficas para Instagram' creada", created_at: daysAgo(8) },
-  { id: "act-003", kind: "task_completed", project_id: P1_ID, project_title: "Campaña Redes Sociales", task_id: "11111111-1111-1111-1111-111111111003", task_title: "Diseñar logo", description: "Tarea 'Diseñar logo para la campaña' completada", created_at: daysAgo(2) },
+  { id: "act-002", kind: "task_created", project_id: P1_ID, project_title: "Campaña Redes Sociales", task_id: "11111111-1111-4111-8111-111111111001", task_title: "Diseñar piezas gráficas", description: "Tarea 'Diseñar piezas gráficas para Instagram' creada", created_at: daysAgo(8) },
+  { id: "act-003", kind: "task_completed", project_id: P1_ID, project_title: "Campaña Redes Sociales", task_id: "11111111-1111-4111-8111-111111111003", task_title: "Diseñar logo", description: "Tarea 'Diseñar logo para la campaña' completada", created_at: daysAgo(2) },
   { id: "act-004", kind: "comment_added", project_id: P1_ID, project_title: "Campaña Redes Sociales", description: "María García comentó en 'Diseñar piezas gráficas'", created_at: daysAgo(1) },
   { id: "act-005", kind: "milestone_completed", project_id: P1_ID, project_title: "Campaña Redes Sociales", description: "Hito 'Diseño aprobado' completado", created_at: daysAgo(3) },
 ];
