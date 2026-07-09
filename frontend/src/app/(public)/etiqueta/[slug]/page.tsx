@@ -7,10 +7,20 @@ import { motion } from "framer-motion";
 import { Calendar, ArrowRight, ArrowLeft, Tag, FileText } from "lucide-react";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import { getCmsPublicPosts } from "@/lib/cms/v2";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { CmsPublicPost } from "@/types/cms-v2";
 import { SITE_KEY } from "@/lib/site-config";
 
+function applyTemplate(template: string, name: string) {
+  return template.replace(/{\s*tagName\s*}/g, name);
+}
+
 export default function TagArchivePage() {
+  const cmsPage = useCmsV2Page("blog");
+  const archiveContent = cmsPage?.blocks?.archive_template;
+  const tagTitlePrefix = (archiveContent?.tag_title_prefix as string) ?? "";
+  const tagDescriptionTemplate = (archiveContent?.tag_description_template as string) ?? "";
+
   const params = useParams();
   const slug = params?.slug && typeof params.slug === "string" ? params.slug : "";
   const [posts, setPosts] = useState<CmsPublicPost[]>([]);
@@ -44,15 +54,19 @@ export default function TagArchivePage() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="ccf-container relative z-10 max-w-4xl"
         >
-          <span className="text-xs font-semibold uppercase tracking-wide block mb-3" style={{ color: "var(--site-primary)" }}>
-            Etiqueta
-          </span>
+          {tagTitlePrefix && (
+            <span className="text-xs font-semibold uppercase tracking-wide block mb-3" style={{ color: "var(--site-primary)" }}>
+              {tagTitlePrefix} {tagName}
+            </span>
+          )}
           <h1 className="mx-auto max-w-4xl font-bold ccf-display text-4xl sm:text-5xl lg:text-6xl mb-3" style={{ color: "var(--site-on-background)" }}>
             #{tagName}
           </h1>
-          <p className="ccf-body text-base sm:text-lg max-w-2xl mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>
-            Artículos etiquetados con &quot;{tagName}&quot;.
-          </p>
+          {tagDescriptionTemplate && (
+            <p className="ccf-body text-base sm:text-lg max-w-2xl mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>
+              {applyTemplate(tagDescriptionTemplate, tagName)}
+            </p>
+          )}
         </motion.div>
       </section>
 

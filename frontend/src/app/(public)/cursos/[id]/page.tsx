@@ -10,6 +10,16 @@ import { ArrowLeft, CheckCircle2, Clock, User, BookOpen, Share2 } from "lucide-r
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
 import { Header, Footer_Simple } from "@/components/public/Shared";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
+
+function getString(props: Record<string, unknown> | undefined, key: string): string {
+    const value = props?.[key];
+    return typeof value === "string" ? value : "";
+}
+
+function applyTemplate(template: string, vars: Record<string, string>): string {
+    return template.replace(/\{(\w+)\}/g, (_, name) => vars[name] ?? "");
+}
 
 export default function CursoDetailPage() {
     const params = useParams();
@@ -23,6 +33,9 @@ export default function CursoDetailPage() {
     const [showEnrollModal, setShowEnrollModal] = useState(false);
     const [enrollForm, setEnrollForm] = useState({ fullName: "", email: "", phone: "" });
     const [enrollSubmitting, setEnrollSubmitting] = useState(false);
+
+    const cmsPage = useCmsV2Page("courses");
+    const cms = cmsPage?.blocks?.detail_template as Record<string, unknown> | undefined;
 
     useEffect(() => {
         // First try the API
@@ -62,9 +75,13 @@ export default function CursoDetailPage() {
             setEnrolled(true);
             setShowEnrollModal(false);
             setEnrollForm({ fullName: "", email: "", phone: "" });
-            toast.success(`Inscrito en "${course?.title}". Revisa tu correo.`);
+            const successToast = getString(cms, "enroll_success_toast");
+            if (successToast) {
+                toast.success(applyTemplate(successToast, { title: course?.title ?? "" }));
+            }
         } catch {
-            toast.error("No se pudo completar la inscripción. Intenta de nuevo.");
+            const errorToast = getString(cms, "enroll_error_toast");
+            if (errorToast) toast.error(errorToast);
         } finally {
             setEnrollSubmitting(false);
         }
@@ -178,10 +195,13 @@ export default function CursoDetailPage() {
                                     color: enrolled ? "var(--site-on-surface)" : "var(--site-on-primary)"
                                 }}
                             >
-                                {enrolled ? "Inscrito" : course.cta || "Inscribirme al Curso"}
+                                {enrolled ? getString(cms, "enrolled_label") : course.cta || getString(cms, "enroll_button_default")}
                             </button>
                             <button
-                                onClick={() => navigator.clipboard.writeText(window.location.href).then(() => showToast("Enlace copiado"))}
+                                onClick={() => navigator.clipboard.writeText(window.location.href).then(() => {
+                                    const msg = getString(cms, "share_toast_success");
+                                    if (msg) showToast(msg);
+                                })}
                                 className="w-14 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-black/5"
                                 style={{ color: "var(--site-on-surface)", border: "2px solid var(--site-outline-variant)" }}
                             >
@@ -215,21 +235,23 @@ export default function CursoDetailPage() {
             {/* ── SYLLABUS & DETAILS ──────────────────────────────── */}
             <section className="px-3 md:px-6 lg:px-8 xl:px-12 py-8 md:py-12 lg:py-16" style={{ background: "var(--site-surface-container-lowest)" }}>
                 <div>
-                    <h2 className="text-lg font-bold mb-3" style={{ color: "var(--site-on-surface)" }}>Acerca de este programa</h2>
+                    {getString(cms, "about_title") && (
+                        <h2 className="text-lg font-bold mb-3" style={{ color: "var(--site-on-surface)" }}>{getString(cms, "about_title")}</h2>
+                    )}
                     <p className="text-xl leading-relaxed mb-16" style={{ color: "var(--site-on-surface-variant)" }}>
                         {course.desc}
                     </p>
 
-                    {course.instructor && (
+                    {course.instructor && getString(cms, "instructor_label") && (
                         <div className="mb-16 p-4 rounded-lg" style={{ background: "var(--site-surface-container-low)" }}>
-                            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--site-primary)" }}>Instructor Principal</p>
+                            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "var(--site-primary)" }}>{getString(cms, "instructor_label")}</p>
                             <p className="text-lg font-bold" style={{ color: "var(--site-on-surface)" }}>{course.instructor}</p>
                         </div>
                     )}
 
-                    {course.syllabus && course.syllabus.length > 0 && (
+                    {course.syllabus && course.syllabus.length > 0 && getString(cms, "syllabus_title") && (
                         <div>
-                            <h3 className="text-lg font-bold mb-3" style={{ color: "var(--site-on-surface)" }}>Temario del Curso</h3>
+                            <h3 className="text-lg font-bold mb-3" style={{ color: "var(--site-on-surface)" }}>{getString(cms, "syllabus_title")}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {course.syllabus.map((item, idx) => (
                                     <div 
@@ -275,12 +297,16 @@ export default function CursoDetailPage() {
                             <div className="flex h-full flex-col">
                                 <div className="flex items-start justify-between gap-4 border-b px-5 py-5" style={{ borderColor: "var(--site-outline-variant)" }}>
                                     <div className="min-w-0">
-                                        <h3 className="text-lg font-bold leading-tight" style={{ color: "var(--site-on-surface)" }}>
-                                            Inscribirme en {course?.title}
-                                        </h3>
-                                        <p className="mt-1 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                                            Déjanos tus datos para crear tu acceso al curso.
-                                        </p>
+                                        {getString(cms, "enroll_drawer_title") && (
+                                            <h3 className="text-lg font-bold leading-tight" style={{ color: "var(--site-on-surface)" }}>
+                                                {applyTemplate(getString(cms, "enroll_drawer_title"), { title: course?.title ?? "" })}
+                                            </h3>
+                                        )}
+                                        {getString(cms, "enroll_drawer_description") && (
+                                            <p className="mt-1 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+                                                {getString(cms, "enroll_drawer_description")}
+                                            </p>
+                                        )}
                                     </div>
                                     <button
                                         type="button"
@@ -297,64 +323,74 @@ export default function CursoDetailPage() {
                                 </div>
 
                                 <form id="course-enroll-form" onSubmit={submitEnroll} className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-                                    <div>
-                                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
-                                            Nombre completo
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={enrollForm.fullName}
-                                            onChange={(e) => setEnrollForm(f => ({ ...f, fullName: e.target.value }))}
-                                            required
-                                            className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                                            style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
-                                            Email
-                                        </label>
-                                        <input
-                                            type="email"
-                                            value={enrollForm.email}
-                                            onChange={(e) => setEnrollForm(f => ({ ...f, email: e.target.value }))}
-                                            required
-                                            className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                                            style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
-                                            WhatsApp (opcional)
-                                        </label>
-                                        <input
-                                            type="tel"
-                                            value={enrollForm.phone}
-                                            onChange={(e) => setEnrollForm(f => ({ ...f, phone: e.target.value }))}
-                                            className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                                            style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
-                                        />
-                                    </div>
+                                    {getString(cms, "enroll_name_label") && (
+                                        <div>
+                                            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                                                {getString(cms, "enroll_name_label")}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={enrollForm.fullName}
+                                                onChange={(e) => setEnrollForm(f => ({ ...f, fullName: e.target.value }))}
+                                                required
+                                                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                                                style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
+                                            />
+                                        </div>
+                                    )}
+                                    {getString(cms, "enroll_email_label") && (
+                                        <div>
+                                            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                                                {getString(cms, "enroll_email_label")}
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={enrollForm.email}
+                                                onChange={(e) => setEnrollForm(f => ({ ...f, email: e.target.value }))}
+                                                required
+                                                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                                                style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
+                                            />
+                                        </div>
+                                    )}
+                                    {getString(cms, "enroll_phone_label") && (
+                                        <div>
+                                            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                                                {getString(cms, "enroll_phone_label")}
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                value={enrollForm.phone}
+                                                onChange={(e) => setEnrollForm(f => ({ ...f, phone: e.target.value }))}
+                                                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                                                style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
+                                            />
+                                        </div>
+                                    )}
                                 </form>
 
                                 <div className="flex gap-3 border-t px-5 py-4" style={{ borderColor: "var(--site-outline-variant)" }}>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowEnrollModal(false)}
-                                        className="flex-1 rounded-lg py-2 text-sm font-bold transition-all"
-                                        style={{ background: "var(--site-surface-container)", color: "var(--site-on-surface-variant)" }}
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        form="course-enroll-form"
-                                        disabled={enrollSubmitting}
-                                        className="flex-1 rounded-lg py-2 text-sm font-bold text-white transition-all disabled:opacity-60"
-                                        style={{ background: "var(--site-cta-gradient)" }}
-                                    >
-                                        {enrollSubmitting ? "Inscribiendo..." : "Inscribirme"}
-                                    </button>
+                                    {getString(cms, "enroll_cancel_label") && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowEnrollModal(false)}
+                                            className="flex-1 rounded-lg py-2 text-sm font-bold transition-all"
+                                            style={{ background: "var(--site-surface-container)", color: "var(--site-on-surface-variant)" }}
+                                        >
+                                            {getString(cms, "enroll_cancel_label")}
+                                        </button>
+                                    )}
+                                    {getString(cms, "enroll_submit_label") && (
+                                        <button
+                                            type="submit"
+                                            form="course-enroll-form"
+                                            disabled={enrollSubmitting}
+                                            className="flex-1 rounded-lg py-2 text-sm font-bold text-white transition-all disabled:opacity-60"
+                                            style={{ background: "var(--site-cta-gradient)" }}
+                                        >
+                                            {enrollSubmitting ? getString(cms, "enroll_submitting_label") : getString(cms, "enroll_submit_label")}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </motion.aside>

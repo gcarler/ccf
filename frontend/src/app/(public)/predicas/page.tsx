@@ -334,13 +334,33 @@ export default function PredicasPage() {
 
     const feed = feedContent?.content ? JSON.parse(feedContent.content) : null;
 
-    const featuredBadge = feed?.featured_badge || "Más reciente";
-    const retryLabel = feed?.retry_label || "Reintentar";
-    const shareWhatsapp = feed?.share_whatsapp || "WhatsApp";
-    const copyLinkLabel = feed?.copy_link || "Copiar";
-    const copiedLabel = feed?.copied_label || "¡Copiado!";
-    const viewOnYoutube = feed?.view_on_youtube || "Ver en YouTube";
-    const _closeLabel = feed?.close || "Cerrar";
+    const youtubeChannelUrl =
+        typeof feedContent?.youtube_channel_url === "string"
+            ? feedContent.youtube_channel_url
+            : (feed?.youtube_channel_url as string) ?? "";
+
+    const heroEyebrow = feed?.hero_eyebrow ?? "";
+    const heroTitleLead = feed?.hero_title_lead ?? "";
+    const heroTitleAccent = feed?.hero_title_accent ?? "";
+    const heroDescription = feed?.hero_description ?? "";
+    const featuredBadge = feed?.featured_badge ?? "";
+    const retryLabel = feed?.retry_label ?? "";
+    const shareWhatsapp = feed?.share_whatsapp ?? "";
+    const copyLinkLabel = feed?.copy_link ?? "";
+    const copiedLabel = feed?.copied_label ?? "";
+    const viewOnYoutube = feed?.view_on_youtube ?? "";
+    const watchedLabel = feed?.watched_label ?? "";
+    const searchPlaceholder = feed?.search_placeholder ?? "";
+    const featuredLabel = feed?.featured_label ?? "";
+    const channelLinkLabel = feed?.channel_link_label ?? "";
+    const gridLabel = feed?.grid_label ?? "";
+    const resultsLabel = feed?.results_label ?? "";
+    const moreVideosLabel = feed?.more_videos_label ?? "";
+    const ctaLabel = feed?.cta_label ?? "";
+    const emptyTitle = feed?.empty_title ?? "";
+    const emptyDescription = feed?.empty_description ?? "";
+
+    const hasHero = heroTitleLead || heroTitleAccent || heroDescription || heroEyebrow;
 
     /* Marcar visto + abrir reproductor */
     const openPlayer = useCallback((video: YTVideo) => {
@@ -392,60 +412,70 @@ export default function PredicasPage() {
         <main className="min-h-screen bg-site-background pt-[88px]">
 
                 {/* ── HERO ── */}
-                <section className="relative px-4 sm:px-6 md:px-8 xl:px-12 pt-14 pb-10 overflow-hidden">
-                    <div
-                        className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full blur-3xl pointer-events-none"
-                        style={{ background: "radial-gradient(ellipse, var(--site-glow-subtle) 0%, transparent 70%)" }}
-                    />
-                    <div className="max-w-7xl mx-auto">
-                        <div className="flex items-center gap-3 mb-4">
-                            <span className="w-8 h-0.5 bg-site-primary" />
-                            <span className="text-[11px] font-bold uppercase tracking-widest text-site-primary flex items-center gap-2">
-                                <Youtube size={13} /> {feed?.hero_eyebrow || "Ministerios de la Comunidad"}
-                            </span>
-                        </div>
-
-                        <h1
-                            className="max-w-4xl font-black tracking-tight text-site-on-surface leading-[0.92] mb-3 text-4xl sm:text-5xl lg:text-6xl"
-                        >
-                            {feed?.hero_title_lead || "Prédicas &"} <br />
-                            <span className="italic" style={{ background: "var(--site-hero-cta-gradient)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                                {feed?.hero_title_accent || "Mensajes"}
-                            </span>
-                        </h1>
-
-                        <p className="text-base sm:text-lg text-site-on-surface-variant max-w-xl leading-relaxed mb-4">
-                            {feed?.hero_description || "Alimento para el alma — explora los mensajes más recientes de nuestro canal de YouTube."}
-                        </p>
-
-                        {/* Contador de vistas del mes */}
-                        {viewedThisMonth > 0 && (
-                            <div className="inline-flex items-center gap-2 text-xs font-semibold text-site-primary mb-2">
-                                <BookOpen size={13} />
-                                {viewedThisMonth} mensaje{viewedThisMonth !== 1 ? "s" : ""} {feed?.watched_label || "visto"}{viewedThisMonth !== 1 ? "s" : ""} este mes
-                            </div>
-                        )}
-
-                        {/* Buscador */}
-                        <div className="relative max-w-md mt-2">
-                            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-site-outline pointer-events-none" />
-                            <input
-                                ref={searchRef}
-                                type="text"
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                                placeholder={feed?.search_placeholder || "Buscar por título o predicador…"}
-                                className="w-full rounded-xl pl-10 pr-9 py-2.5 text-sm text-site-on-surface placeholder:text-site-outline outline-none focus:ring-2 focus:ring-site-primary/30 transition-all"
-                                style={{ background: "var(--site-surface-container)", border: "1px solid var(--site-outline-variant)" }}
-                            />
-                            {search && (
-                                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-site-outline hover:text-site-on-surface transition-colors">
-                                    <X size={14} />
-                                </button>
+                {hasHero && (
+                    <section className="relative px-4 sm:px-6 md:px-8 xl:px-12 pt-14 pb-10 overflow-hidden">
+                        <div
+                            className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full blur-3xl pointer-events-none"
+                            style={{ background: "radial-gradient(ellipse, var(--site-glow-subtle) 0%, transparent 70%)" }}
+                        />
+                        <div className="max-w-7xl mx-auto">
+                            {heroEyebrow && (
+                                <div className="flex items-center gap-3 mb-4">
+                                    <span className="w-8 h-0.5 bg-site-primary" />
+                                    <span className="text-[11px] font-bold uppercase tracking-widest text-site-primary flex items-center gap-2">
+                                        <Youtube size={13} /> {heroEyebrow}
+                                    </span>
+                                </div>
                             )}
+
+                            {(heroTitleLead || heroTitleAccent) && (
+                                <h1
+                                    className="max-w-4xl font-black tracking-tight text-site-on-surface leading-[0.92] mb-3 text-4xl sm:text-5xl lg:text-6xl"
+                                >
+                                    {heroTitleLead && <>{heroTitleLead} <br /></>}
+                                    {heroTitleAccent && (
+                                        <span className="italic" style={{ background: "var(--site-hero-cta-gradient)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                                            {heroTitleAccent}
+                                        </span>
+                                    )}
+                                </h1>
+                            )}
+
+                            {heroDescription && (
+                                <p className="text-base sm:text-lg text-site-on-surface-variant max-w-xl leading-relaxed mb-4">
+                                    {heroDescription}
+                                </p>
+                            )}
+
+                            {/* Contador de vistas del mes */}
+                            {viewedThisMonth > 0 && watchedLabel && (
+                                <div className="inline-flex items-center gap-2 text-xs font-semibold text-site-primary mb-2">
+                                    <BookOpen size={13} />
+                                    {viewedThisMonth} mensaje{viewedThisMonth !== 1 ? "s" : ""} {watchedLabel}{viewedThisMonth !== 1 ? "s" : ""} este mes
+                                </div>
+                            )}
+
+                            {/* Buscador */}
+                            <div className="relative max-w-md mt-2">
+                                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-site-outline pointer-events-none" />
+                                <input
+                                    ref={searchRef}
+                                    type="text"
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    placeholder={searchPlaceholder}
+                                    className="w-full rounded-xl pl-10 pr-9 py-2.5 text-sm text-site-on-surface placeholder:text-site-outline outline-none focus:ring-2 focus:ring-site-primary/30 transition-all"
+                                    style={{ background: "var(--site-surface-container)", border: "1px solid var(--site-outline-variant)" }}
+                                />
+                                {search && (
+                                    <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-site-outline hover:text-site-on-surface transition-colors">
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                )}
 
                 {/* ── CONTENIDO ── */}
                 <section className="px-4 sm:px-6 md:px-8 xl:px-12 pb-24">
@@ -462,11 +492,13 @@ export default function PredicasPage() {
                         {!loading && error && (
                             <div className="text-center py-20">
                                 <Youtube size={52} className="mx-auto mb-4 text-site-primary/30" />
-                                <h2 className="text-lg font-bold text-site-on-surface mb-2">{feed?.empty_title || "No se pudieron cargar los videos"}</h2>
-                                <p className="text-sm text-site-on-surface-variant mb-6">{feed?.empty_description || "Verifica tu conexión o intenta nuevamente."}</p>
-                                <button onClick={load} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold" style={{ background: "var(--site-cta-gradient)" }}>
-                                    <RefreshCw size={15} /> {retryLabel}
-                                </button>
+                                {emptyTitle && <h2 className="text-lg font-bold text-site-on-surface mb-2">{emptyTitle}</h2>}
+                                {emptyDescription && <p className="text-sm text-site-on-surface-variant mb-6">{emptyDescription}</p>}
+                                {retryLabel && (
+                                    <button onClick={load} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold" style={{ background: "var(--site-cta-gradient)" }}>
+                                        <RefreshCw size={15} /> {retryLabel}
+                                    </button>
+                                )}
                             </div>
                         )}
 
@@ -475,7 +507,6 @@ export default function PredicasPage() {
                             <div className="text-center py-16">
                                 <Search size={40} className="mx-auto mb-4 text-site-primary/30" />
                                 <h2 className="text-base font-bold text-site-on-surface mb-1">Sin resultados para &quot;{search}&quot;</h2>
-                                <p className="text-sm text-site-on-surface-variant">Intenta con otro término.</p>
                             </div>
                         )}
 
@@ -486,10 +517,12 @@ export default function PredicasPage() {
                                 {featured && (
                                     <div className="mb-8">
                                         <div className="flex items-center justify-between mb-4">
-                                            <h2 className="text-sm font-bold uppercase tracking-widest text-site-primary">{feed?.featured_label || "Último mensaje"}</h2>
-                                            <a href="https://www.youtube.com/@Ministeriosfarooficial" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-site-outline hover:text-site-primary transition-colors">
-                                                {feed?.channel_link_label || "Ver canal"} <ExternalLink size={11} />
-                                            </a>
+                                            {featuredLabel && <h2 className="text-sm font-bold uppercase tracking-widest text-site-primary">{featuredLabel}</h2>}
+                                            {channelLinkLabel && youtubeChannelUrl && (
+                                                <a href={youtubeChannelUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-site-outline hover:text-site-primary transition-colors">
+                                                    {channelLinkLabel} <ExternalLink size={11} />
+                                                </a>
+                                            )}
                                         </div>
                                         <VideoCard
                                             video={featured}
@@ -510,11 +543,13 @@ export default function PredicasPage() {
                                 {rest.length > 0 && (
                                     <>
                                         <div className="flex items-center justify-between mb-4">
-                                            <h2 className="text-sm font-bold uppercase tracking-widest text-site-primary">
-                                                {search ? `${feed?.results_label || "Resultados"} (${filtered.length})` : (feed?.grid_label || "Más mensajes")}
-                                            </h2>
-                                            {!search && (
-                                                <span className="text-[11px] text-site-outline">{rest.length} {feed?.more_videos_label || "videos"}</span>
+                                            {(search ? resultsLabel : gridLabel) && (
+                                                <h2 className="text-sm font-bold uppercase tracking-widest text-site-primary">
+                                                    {search ? `${resultsLabel} (${filtered.length})` : gridLabel}
+                                                </h2>
+                                            )}
+                                            {!search && moreVideosLabel && (
+                                                <span className="text-[11px] text-site-outline">{rest.length} {moreVideosLabel}</span>
                                             )}
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -537,17 +572,19 @@ export default function PredicasPage() {
                                 )}
 
                                 {/* CTA */}
-                                <div className="mt-14 text-center">
-                                    <a
-                                        href="https://www.youtube.com/@Ministeriosfarooficial"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-white font-bold text-sm uppercase tracking-wider hover:scale-105 transition-all"
-                                        style={{ background: "var(--site-cta-gradient)", boxShadow: "var(--site-cta-shadow)" }}
-                                    >
-                                        <Youtube size={18} /> {feed?.cta_label || "Ver todos en YouTube"}
-                                    </a>
-                                </div>
+                                {ctaLabel && youtubeChannelUrl && (
+                                    <div className="mt-14 text-center">
+                                        <a
+                                            href={youtubeChannelUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-white font-bold text-sm uppercase tracking-wider hover:scale-105 transition-all"
+                                            style={{ background: "var(--site-cta-gradient)", boxShadow: "var(--site-cta-shadow)" }}
+                                        >
+                                            <Youtube size={18} /> {ctaLabel}
+                                        </a>
+                                    </div>
+                                )}
                             </>
                         )}
                     </div>

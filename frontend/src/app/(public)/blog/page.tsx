@@ -6,10 +6,22 @@ import { motion } from "framer-motion";
 import { Calendar, ArrowRight, Tag, FolderOpen, Search, FileText } from "lucide-react";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import { getCmsPublicPosts } from "@/lib/cms/v2";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { CmsPublicPost } from "@/types/cms-v2";
 import { SITE_KEY } from "@/lib/site-config";
 
 export default function BlogPage() {
+  const cmsPage = useCmsV2Page("blog");
+  const heroContent = cmsPage?.blocks?.hero;
+  const feedContent = cmsPage?.blocks?.feed;
+
+  const heroEyebrow = (heroContent?.eyebrow as string) ?? "";
+  const heroTitle = (heroContent?.title as string) ?? "";
+  const heroDescription = (heroContent?.description as string) ?? "";
+  const searchPlaceholder = (feedContent?.search_placeholder as string) ?? "";
+  const emptyTitle = (feedContent?.empty_title as string) ?? "";
+  const emptyDescription = (feedContent?.empty_description as string) ?? "";
+
   const [posts, setPosts] = useState<CmsPublicPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -37,18 +49,21 @@ export default function BlogPage() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="ccf-container relative z-10 max-w-4xl"
         >
-          <span className="text-xs font-semibold uppercase tracking-wide block mb-3" style={{ color: "var(--site-primary)" }}>
-            Blog
-          </span>
-          <h1 className="mx-auto max-w-4xl font-bold ccf-display text-5xl sm:text-6xl lg:text-7xl mb-3" style={{ color: "var(--site-on-background)" }}>
-            Artículos y <br />
-            <span className="italic" style={{ background: "linear-gradient(135deg, var(--site-primary), var(--site-secondary))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              Noticias.
+          {heroEyebrow && (
+            <span className="text-xs font-semibold uppercase tracking-wide block mb-3" style={{ color: "var(--site-primary)" }}>
+              {heroEyebrow}
             </span>
-          </h1>
-          <p className="ccf-body text-base sm:text-lg max-w-2xl mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>
-            Reflexiones, enseñanzas y actualizaciones de nuestra comunidad.
-          </p>
+          )}
+          {heroTitle && (
+            <h1 className="mx-auto max-w-4xl font-bold ccf-display text-5xl sm:text-6xl lg:text-7xl mb-3" style={{ color: "var(--site-on-background)" }}>
+              {heroTitle}
+            </h1>
+          )}
+          {heroDescription && (
+            <p className="ccf-body text-base sm:text-lg max-w-2xl mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>
+              {heroDescription}
+            </p>
+          )}
         </motion.div>
       </section>
 
@@ -59,7 +74,7 @@ export default function BlogPage() {
           <Search size={24} style={{ color: "var(--site-primary)" }} className="opacity-70 ml-2" />
           <input
             type="text"
-            placeholder="Buscar artículos..."
+            placeholder={searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-transparent border-none outline-none text-lg font-medium"
@@ -77,10 +92,8 @@ export default function BlogPage() {
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center py-1.5">
             <FileText size={64} className="mb-3 opacity-20" style={{ color: "var(--site-primary)" }} />
-            <h3 className="text-xl font-bold mb-4" style={{ color: "var(--site-on-surface)" }}>Sin artículos publicados</h3>
-            <p className="ccf-body text-lg opacity-80 max-w-md mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>
-              Cuando se publiquen posts en el CMS, aparecerán aquí.
-            </p>
+            {emptyTitle && <h3 className="text-xl font-bold mb-4" style={{ color: "var(--site-on-surface)" }}>{emptyTitle}</h3>}
+            {emptyDescription && <p className="ccf-body text-lg opacity-80 max-w-md mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>{emptyDescription}</p>}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

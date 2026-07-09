@@ -1,38 +1,60 @@
 import type { Metadata } from "next";
-import { PASTORS } from "@/data/pastors";
+import { getCmsPublicPage } from "@/lib/cms/v2";
+import { SITE_KEY, SITE_NAME, SITE_URL } from "@/lib/site-config";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+type CmsPastor = {
+  slug: string;
+  name?: string;
+  role?: string;
+  photo_url?: string;
+  image?: string;
+  bio_short?: string;
+  story?: string;
+};
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-    const resolvedParams = await params;
-    const localPastor = PASTORS.find(p => p.id === resolvedParams.slug);
-    const name = localPastor?.name ?? "Pastor";
-    const title = localPastor?.title ?? "Liderazgo Pastoral";
-    const description = localPastor?.shortStory ?? `Conoce al ${title} de la ${process.env.NEXT_PUBLIC_SITE_NAME ?? "Mi Comunidad"}.`;
-    const localImage = localPastor?.image;
-    const image = localImage ? `${BASE_URL}${localImage}` : `${BASE_URL}/og-default.png`;
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug;
+  const baseUrl = SITE_URL || "";
 
-    return {
-        title: `${name} | ${process.env.NEXT_PUBLIC_SITE_NAME ?? "Mi Comunidad"}`,
-        description,
-        openGraph: {
-            title: `${name} — ${title}`,
-            description,
-            url: `${BASE_URL}/pastores/${resolvedParams.slug}`,
-            siteName: process.env.NEXT_PUBLIC_SITE_NAME ?? "Mi Comunidad",
-            images: [{ url: image, width: 400, height: 500, alt: name }],
-            type: "profile",
-            locale: "es_CO",
-        },
-        twitter: {
-            card: "summary_large_image",
-            title: `${name} — ${title}`,
-            description,
-            images: [image],
-        },
-    };
+  let pastor: CmsPastor | null = null;
+  let page: Awaited<ReturnType<typeof getCmsPublicPage>> | null = null;
+  try {
+    page = await getCmsPublicPage(SITE_KEY, "pastors", { silent: true });
+    const pastors = (page?.blocks?.pastors as { pastors?: CmsPastor[] } | undefined)?.pastors;
+    pastor = pastors?.find((p) => p.slug === slug) || null;
+  } catch {
+    pastor = null;
+  }
+
+  const detailTemplate = page?.blocks?.detail_template as Record<string, unknown> | undefined;
+  const roleFallback = typeof detailTemplate?.role_fallback === "string" ? detailTemplate.role_fallback : "";
+  const name = pastor?.name || "Pastor";
+  const role = pastor?.role || roleFallback;
+  const description = pastor?.bio_short || pastor?.story || `Conoce al ${role || name} de la ${SITE_NAME}.`;
+  const image = pastor?.photo_url || pastor?.image || `${baseUrl}/og-default.png`;
+
+  return {
+    title: `${name} | ${SITE_NAME}`,
+    description,
+    openGraph: {
+      title: `${name} — ${role}`,
+      description,
+      url: `${baseUrl}/pastores/${slug}`,
+      siteName: SITE_NAME,
+      images: [{ url: image, width: 400, height: 500, alt: name }],
+      type: "profile",
+      locale: "es_CO",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${name} — ${role}`,
+      description,
+      images: [image],
+    },
+  };
 }
 
 export default function PastorSlugLayout({ children }: { children: React.ReactNode }) {
-    return <>{children}</>;
+  return <>{children}</>;
 }

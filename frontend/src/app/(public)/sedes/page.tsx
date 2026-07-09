@@ -6,9 +6,6 @@ import { AnimatePresence,motion } from "framer-motion";
 import { Calendar,Clock,Home,Navigation,Phone,Search } from "lucide-react";
 import { useEffect,useState } from "react";
 
-const DEFAULT_MAP_EMBED_URL =
-    "https://www.google.com/maps/d/embed?mid=1VDNpplw_9z1tcEhx25wEFRR5gQmnHgM&ehbc=2E312F";
-
 interface LocationItem {
     id: number;
     name: string;
@@ -21,49 +18,29 @@ interface LocationItem {
     services?: string[];
 }
 
-const fallbackLocations: LocationItem[] = [
-    {
-        id: 1,
-        name: "Sede Central",
-        address: "Av. Esperanza 124, Centro Financiero",
-        phone: "+57 320 000 0000",
-        schedule: "Domingos 9 AM y 11 AM",
-        midweek: "Lunes 7 PM",
-        isMain: true,
-    },
-    {
-        id: 2,
-        name: "Campus Norte",
-        address: "Calle 170 #54-12, Sector Universitario",
-        phone: "+57 310 111 2222",
-        schedule: "Domingos 10 AM",
-        midweek: "Sábados 6 PM",
-    },
-];
-
 export default function SedesPage() {
     const heroPage = useCmsV2Page('locations');
     const heroContent = heroPage?.blocks?.hero;
     const locationsContent = heroPage?.blocks?.feed;
-    const mapEmbedUrl = heroContent?.map_embed_url || DEFAULT_MAP_EMBED_URL;
-    const mainBadge = heroContent?.main_badge || "Principal";
-    const directionsCta = heroContent?.directions_cta || "Cómo llegar";
-    const emptyLocations = heroContent?.empty_locations || "No hay sedes configuradas para mostrar.";
-    const emptySearch = heroContent?.empty_search || "No se encontraron sedes con ese criterio.";
+    const mapEmbedUrl = typeof heroContent?.map_embed_url === "string" ? heroContent.map_embed_url : "";
+    const mainBadge = typeof heroContent?.main_badge === "string" ? heroContent.main_badge : "";
+    const directionsCta = typeof heroContent?.directions_cta === "string" ? heroContent.directions_cta : "";
+    const emptyLocations = typeof heroContent?.empty_locations === "string" ? heroContent.empty_locations : "";
+    const emptySearch = typeof heroContent?.empty_search === "string" ? heroContent.empty_search : "";
+    const eyebrow = typeof heroContent?.eyebrow === "string" ? heroContent.eyebrow : "";
+    const title = typeof heroContent?.title === "string" ? heroContent.title : "";
+    const searchPlaceholder = typeof heroContent?.search_placeholder === "string" ? heroContent.search_placeholder : "";
 
     const parsedLocations: LocationItem[] = Array.isArray(locationsContent?.parsed)
         ? (locationsContent.parsed as LocationItem[])
         : [];
 
-    const locations: LocationItem[] =
-        parsedLocations.length > 0
-            ? parsedLocations.map((loc, i) => ({
-                  ...loc,
-                  id: loc.id ?? i + 1,
-                  isMain: loc.isMain ?? i === 0,
-                  schedule: loc.services?.join(" • ") || loc.schedule || "Domingos 9 AM",
-              }))
-            : fallbackLocations;
+    const locations: LocationItem[] = parsedLocations.map((loc, i) => ({
+        ...loc,
+        id: loc.id ?? i + 1,
+        isMain: loc.isMain ?? i === 0,
+        schedule: loc.services?.join(" • ") || loc.schedule || "",
+    }));
 
     const [selected, setSelected] = useState<LocationItem | null>(locations[0] || null);
     const [search, setSearch] = useState("");
@@ -88,19 +65,23 @@ export default function SedesPage() {
             {/* ── LISTADO DE SEDES ──────────────────────────── */}
             <aside className="w-full md:w-[340px] lg:w-[420px] xl:w-[480px] flex flex-col max-h-[60vh] md:max-h-none md:h-[calc(100vh-88px)] md:sticky md:top-[88px] bg-site-surface-container-lowest border-r border-site-outline-variant/10 overflow-hidden">
                 <div className="p-4 border-b border-site-outline-variant/10">
-                    <span className="font-semibold text-[10px] tracking-wide uppercase block mb-4">
-                        {heroContent?.eyebrow || "Nuestra Presencia"}
-                    </span>
-                    <h1 className="text-lg font-bold tracking-tight text-site-on-surface mb-3">
-                        {heroContent?.title || "Nuestras Sedes"}
-                    </h1>
+                    {eyebrow && (
+                        <span className="font-semibold text-[10px] tracking-wide uppercase block mb-4">
+                            {eyebrow}
+                        </span>
+                    )}
+                    {title && (
+                        <h1 className="text-lg font-bold tracking-tight text-site-on-surface mb-3">
+                            {title}
+                        </h1>
+                    )}
                     <div className="relative">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-site-outline w-4 h-4" />
                         <input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="w-full bg-site-surface-container-highest rounded-lg py-1.5 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-site-primary/30 transition-all"
-                            placeholder={heroContent?.search_placeholder || "Buscar ciudad o dirección..."}
+                            placeholder={searchPlaceholder}
                         />
                     </div>
                 </div>
@@ -109,9 +90,11 @@ export default function SedesPage() {
                     <div className="flex-1 flex items-center justify-center p-4 text-center">
                         <div>
                             <Home size={40} className="mx-auto mb-4 opacity-20" style={{ color: "var(--site-primary)" }} />
-                            <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                                {emptyLocations}
-                            </p>
+                            {emptyLocations && (
+                                <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    {emptyLocations}
+                                </p>
+                            )}
                         </div>
                     </div>
                 ) : (
@@ -137,7 +120,7 @@ export default function SedesPage() {
                                     >
                                         <Home size={20} />
                                     </div>
-                                    {loc.isMain && (
+                                    {loc.isMain && mainBadge && (
                                         <span className="text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full" style={{ background: "var(--site-cta-gradient)", color: "white" }}>
                                             {mainBadge}
                                         </span>
@@ -156,10 +139,12 @@ export default function SedesPage() {
                                             exit={{ height: 0, opacity: 0 }}
                                             className="space-y-3 pt-4 border-t border-site-outline-variant/10 overflow-hidden"
                                         >
-                                            <div className="flex items-center gap-3 text-site-on-surface-variant text-xs">
-                                                <Clock size={14} className="text-site-primary" />
-                                                <span>{loc.schedule}</span>
-                                            </div>
+                                            {loc.schedule && (
+                                                <div className="flex items-center gap-3 text-site-on-surface-variant text-xs">
+                                                    <Clock size={14} className="text-site-primary" />
+                                                    <span>{loc.schedule}</span>
+                                                </div>
+                                            )}
                                             {loc.midweek && (
                                                 <div className="flex items-center gap-3 text-site-on-surface-variant text-xs">
                                                     <Calendar size={14} className="text-site-primary" />
@@ -172,27 +157,29 @@ export default function SedesPage() {
                                                     <span>{loc.phone}</span>
                                                 </div>
                                             )}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    window.open(
-                                                        loc.mapsUrl ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}`,
-                                                        "_blank",
-                                                        "noopener,noreferrer"
-                                                    );
-                                                }}
-                                                className="mt-1 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
-                                                style={{ background: "var(--site-cta-gradient)", color: "white" }}
-                                            >
-                                                <Navigation size={13} />
-                                                {directionsCta}
-                                            </button>
+                                            {directionsCta && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(
+                                                            loc.mapsUrl ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}`,
+                                                            "_blank",
+                                                            "noopener,noreferrer"
+                                                        );
+                                                    }}
+                                                    className="mt-1 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+                                                    style={{ background: "var(--site-cta-gradient)", color: "white" }}
+                                                >
+                                                    <Navigation size={13} />
+                                                    {directionsCta}
+                                                </button>
+                                            )}
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
                             </motion.div>
                         ))}
-                        {filtered.length === 0 && (
+                        {filtered.length === 0 && emptySearch && (
                             <div className="rounded-lg border border-dashed border-site-outline-variant/20 p-3 text-center text-sm text-site-on-surface-variant">
                                 {emptySearch}
                             </div>
@@ -202,17 +189,19 @@ export default function SedesPage() {
             </aside>
 
             {/* ── MAPA GOOGLE MY MAPS ────────────────────────────── */}
-            <section className="flex-1 min-h-[50vh] md:h-[calc(100vh-88px)] md:sticky md:top-[88px]">
-                <iframe
-                    src={mapEmbedUrl}
-                    className="w-full h-full border-0 block"
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Mapa de sedes"
-                    style={{ minHeight: "50vh" }}
-                />
-            </section>
+            {mapEmbedUrl && (
+                <section className="flex-1 min-h-[50vh] md:h-[calc(100vh-88px)] md:sticky md:top-[88px]">
+                    <iframe
+                        src={mapEmbedUrl}
+                        className="w-full h-full border-0 block"
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title="Mapa de sedes"
+                        style={{ minHeight: "50vh" }}
+                    />
+                </section>
+            )}
         </main>
     );
 }

@@ -11,17 +11,6 @@ import { useEffect,useState } from "react";
 import { useTheme } from "./ThemeProvider";
 import { useSiteBranding } from "@/lib/site-branding";
 
-const DEFAULT_NAV_LINKS = [
-    { href: "/", label: "Inicio" },
-    { href: "/nosotros", label: "Sobre Nosotros" },
-    { href: "/pastores", label: "Pastores" },
-    { href: "/testimonios", label: "Testimonios" },
-    { href: "/eventos", label: "Eventos" },
-    { href: "/predicas", label: "Prédicas" },
-    { href: "/cursos", label: "Cursos" },
-    { href: "/sedes", label: "Sedes" },
-];
-
 export default function Navbar() {
     const { toggle, themeTokens } = useTheme();
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
@@ -35,20 +24,7 @@ export default function Navbar() {
 
     const locationTitle = "Nuestras Sedes";
     const themeToggleTitle = "Cambiar tema";
-    const fallbackLinks = DEFAULT_NAV_LINKS.map((item: any, index: number) => ({
-        id: `fallback_${index}`,
-        href: item.href,
-        label: item.label,
-        children: [],
-    }));
-    const _ensurePastores = (links: Array<{ id?: string; href: string; label: string; children?: any[] }>) => {
-        const hasPastores = links.some(l => l.href === '/pastores');
-        if (!hasPastores) {
-            return [...links, { id: 'pastores', href: '/pastores', label: 'Pastores', children: [] }];
-        }
-        return links;
-    };
-    const navLinks = _ensurePastores(menuItemsV2.length > 0 ? menuItemsV2 : fallbackLinks);
+    const navLinks = menuItemsV2;
 
     useEffect(() => {
         let mounted = true;
@@ -76,7 +52,7 @@ export default function Navbar() {
                     }));
                     return { id: item.id, href: item.href, label: item.label, children };
                 });
-                if (mounted && next.length > 0) {
+                if (mounted) {
                     setMenuItemsV2(next);
                 }
             } catch {

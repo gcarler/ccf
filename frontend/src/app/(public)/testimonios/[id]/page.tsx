@@ -9,7 +9,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Testimonial } from "@/lib/data/testimonios";
 import { apiFetch } from "@/lib/http";
 import { Header, Footer_Simple } from "@/components/public/Shared";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { toast } from "sonner";
+
+function getString(props: Record<string, unknown> | undefined, key: string): string {
+    const value = props?.[key];
+    return typeof value === "string" ? value : "";
+}
 
 function getTestimonialMediaUrl(t: Testimonial): string {
     if (t.media_type === "image") return t.image_url || t.media_url || "";
@@ -32,6 +38,9 @@ export default function TestimonioDetailPage() {
     const [prayerText, setPrayerText] = useState("");
     const [prayerSubmitting, setPrayerSubmitting] = useState(false);
     const [prayerSent, setPrayerSent] = useState(false);
+
+    const cmsPage = useCmsV2Page("testimonials");
+    const cms = cmsPage?.blocks?.detail_template as Record<string, unknown> | undefined;
 
     useEffect(() => {
         if (!Number.isFinite(id)) {
@@ -188,40 +197,52 @@ export default function TestimonioDetailPage() {
                     className="mt-24 pt-12 border-t flex flex-col sm:flex-row items-center justify-between gap-3"
                     style={{ borderColor: "var(--site-outline-variant)" }}
                 >
-                    <p className="text-sm font-bold uppercase tracking-wide opacity-50" style={{ color: "var(--site-on-surface)" }}>
-                        Historia de impacto
-                    </p>
+                    {getString(cms, "footer_label") && (
+                        <p className="text-sm font-bold uppercase tracking-wide opacity-50" style={{ color: "var(--site-on-surface)" }}>
+                            {getString(cms, "footer_label")}
+                        </p>
+                    )}
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => {
-                                setShowPrayerForm(true);
-                                setPrayerSent(false);
-                            }}
-                            className="flex items-center gap-2 px-3 py-3 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:scale-105"
-                            style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
-                        >
-                            <Heart size={16} /> Pedir oración
-                        </button>
-                        <button
-                            onClick={() => {
-                                const shareUrl = window.location.href;
-                                if (navigator.share) {
-                                    navigator.share({
-                                        title: `Testimonio de ${testimonial.author?.username}`,
-                                        text: `Lee el testimonio de ${testimonial.author?.username} en la comunidad.`,
-                                        url: shareUrl,
-                                    });
-                                } else {
-                                    navigator.clipboard.writeText(shareUrl)
-                                        .then(() => toast.success("Enlace copiado al portapapeles"))
-                                        .catch(() => toast.error("No pudimos copiar el enlace"));
-                                }
-                            }}
-                            className="flex items-center gap-2 px-3 py-3 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:scale-105"
-                            style={{ background: "var(--site-surface-container-high)", color: "var(--site-on-surface)" }}
-                        >
-                            <Share2 size={16} /> Compartir historia
-                        </button>
+                        {getString(cms, "prayer_action_label") && (
+                            <button
+                                onClick={() => {
+                                    setShowPrayerForm(true);
+                                    setPrayerSent(false);
+                                }}
+                                className="flex items-center gap-2 px-3 py-3 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:scale-105"
+                                style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
+                            >
+                                <Heart size={16} /> {getString(cms, "prayer_action_label")}
+                            </button>
+                        )}
+                        {getString(cms, "share_action_label") && (
+                            <button
+                                onClick={() => {
+                                    const shareUrl = window.location.href;
+                                    if (navigator.share) {
+                                        navigator.share({
+                                            title: `Testimonio de ${testimonial.author?.username}`,
+                                            text: `Lee el testimonio de ${testimonial.author?.username} en la comunidad.`,
+                                            url: shareUrl,
+                                        });
+                                    } else {
+                                        navigator.clipboard.writeText(shareUrl)
+                                            .then(() => {
+                                                const msg = getString(cms, "share_toast_success");
+                                                if (msg) toast.success(msg);
+                                            })
+                                            .catch(() => {
+                                                const msg = getString(cms, "share_toast_error");
+                                                if (msg) toast.error(msg);
+                                            });
+                                    }
+                                }}
+                                className="flex items-center gap-2 px-3 py-3 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:scale-105"
+                                style={{ background: "var(--site-surface-container-high)", color: "var(--site-on-surface)" }}
+                            >
+                                <Share2 size={16} /> {getString(cms, "share_action_label")}
+                            </button>
+                        )}
                     </div>
                 </motion.div>
 
@@ -243,18 +264,23 @@ export default function TestimonioDetailPage() {
                                     className="text-center py-8 space-y-4"
                                 >
                                     <CheckCircle2 size={56} className="mx-auto" style={{ color: "var(--site-primary)" }} />
-                                    <h3 className="text-lg font-bold" style={{ color: "var(--site-on-background)" }}>Petición recibida</h3>
-                                    <p className="text-base opacity-70 max-w-md mx-auto leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
-                                        Tu solicitud de oración ha sido enviada a nuestro equipo de consolidación.
-                                        No se publica en la página — es confidencial.
-                                    </p>
-                                    <button
-                                        onClick={() => { setShowPrayerForm(false); setPrayerSent(false); }}
-                                        className="px-3 py-3 rounded-full text-xs font-semibold uppercase tracking-wide transition-all hover:opacity-80"
-                                        style={{ background: "var(--site-surface-container-high)", color: "var(--site-on-surface)" }}
-                                    >
-                                        Cerrar
-                                    </button>
+                                    {getString(cms, "prayer_success_title") && (
+                                        <h3 className="text-lg font-bold" style={{ color: "var(--site-on-background)" }}>{getString(cms, "prayer_success_title")}</h3>
+                                    )}
+                                    {getString(cms, "prayer_success_description") && (
+                                        <p className="text-base opacity-70 max-w-md mx-auto leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
+                                            {getString(cms, "prayer_success_description")}
+                                        </p>
+                                    )}
+                                    {getString(cms, "prayer_success_close") && (
+                                        <button
+                                            onClick={() => { setShowPrayerForm(false); setPrayerSent(false); }}
+                                            className="px-3 py-3 rounded-full text-xs font-semibold uppercase tracking-wide transition-all hover:opacity-80"
+                                            style={{ background: "var(--site-surface-container-high)", color: "var(--site-on-surface)" }}
+                                        >
+                                            {getString(cms, "prayer_success_close")}
+                                        </button>
+                                    )}
                                 </motion.div>
                             ) : (
                                 <>
@@ -267,21 +293,27 @@ export default function TestimonioDetailPage() {
                                     </button>
 
                                     <div className="space-y-2 mb-3">
-                                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wide" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
-                                            <Heart size={14} /> Oración confidencial
-                                        </div>
-                                        <h3 className="text-xl font-bold tracking-tight" style={{ color: "var(--site-on-background)" }}>
-                                            ¿Este testimonio tocó tu corazón?
-                                        </h3>
-                                        <p className="text-base opacity-70 leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
-                                            Si deseas que oremos por ti, déjanos tu petición. Llega directo a nuestro equipo pastoral, sin publicarse en el sitio.
-                                        </p>
+                                        {getString(cms, "prayer_form_badge") && (
+                                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wide" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
+                                                <Heart size={14} /> {getString(cms, "prayer_form_badge")}
+                                            </div>
+                                        )}
+                                        {getString(cms, "prayer_form_title") && (
+                                            <h3 className="text-xl font-bold tracking-tight" style={{ color: "var(--site-on-background)" }}>
+                                                {getString(cms, "prayer_form_title")}
+                                            </h3>
+                                        )}
+                                        {getString(cms, "prayer_form_description") && (
+                                            <p className="text-base opacity-70 leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
+                                                {getString(cms, "prayer_form_description")}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-5">
                                         <input
                                             type="text"
-                                            placeholder="Tu nombre"
+                                            placeholder={getString(cms, "prayer_name_placeholder")}
                                             value={prayerName}
                                             onChange={e => setPrayerName(e.target.value)}
                                             className="w-full px-3 py-1.5 rounded-lg text-sm font-medium outline-none transition-all border"
@@ -289,40 +321,42 @@ export default function TestimonioDetailPage() {
                                         />
                                         <textarea
                                             rows={4}
-                                            placeholder="Cuéntanos tu petición de oración..."
+                                            placeholder={getString(cms, "prayer_request_placeholder")}
                                             value={prayerText}
                                             onChange={e => setPrayerText(e.target.value)}
                                             className="w-full px-3 py-1.5 rounded-lg text-sm font-medium outline-none transition-all border resize-none"
                                             style={{ background: "var(--site-surface)", borderColor: "var(--site-outline-variant)", color: "var(--site-on-surface)" }}
                                         />
-                                        <button
-                                            onClick={async () => {
-                                                if (!prayerName.trim() || !prayerText.trim()) return;
-                                                setPrayerSubmitting(true);
-                                                try {
-                                                    await apiFetch('/crm/prayer-requests/public', {
-                                                        method: 'POST',
-                                                        body: {
-                                                            requester_name: prayerName.trim(),
-                                                            request_text: prayerText.trim(),
-                                                            category: 'Testimonio',
-                                                        },
-                                                    });
-                                                    setPrayerSent(true);
-                                                } catch {
-                                                    // Silently handle — the prayer goes to CRM regardless
-                                                    setPrayerSent(true);
-                                                } finally {
-                                                    setPrayerSubmitting(false);
-                                                }
-                                            }}
-                                            disabled={!prayerName.trim() || !prayerText.trim() || prayerSubmitting}
-                                            className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-semibold uppercase tracking-wide transition-all disabled:opacity-40 hover:scale-[1.02]"
-                                            style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
-                                        >
-                                            {prayerSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-                                            Enviar al equipo pastoral
-                                        </button>
+                                        {getString(cms, "prayer_submit_label") && (
+                                            <button
+                                                onClick={async () => {
+                                                    if (!prayerName.trim() || !prayerText.trim()) return;
+                                                    setPrayerSubmitting(true);
+                                                    try {
+                                                        await apiFetch('/crm/prayer-requests/public', {
+                                                            method: 'POST',
+                                                            body: {
+                                                                requester_name: prayerName.trim(),
+                                                                request_text: prayerText.trim(),
+                                                                category: 'Testimonio',
+                                                            },
+                                                        });
+                                                        setPrayerSent(true);
+                                                    } catch {
+                                                        // Silently handle — the prayer goes to CRM regardless
+                                                        setPrayerSent(true);
+                                                    } finally {
+                                                        setPrayerSubmitting(false);
+                                                    }
+                                                }}
+                                                disabled={!prayerName.trim() || !prayerText.trim() || prayerSubmitting}
+                                                className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-semibold uppercase tracking-wide transition-all disabled:opacity-40 hover:scale-[1.02]"
+                                                style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
+                                            >
+                                                {prayerSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                                                {getString(cms, "prayer_submit_label")}
+                                            </button>
+                                        )}
                                     </div>
                                 </>
                             )}
