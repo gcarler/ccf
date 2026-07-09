@@ -1248,7 +1248,7 @@ def _build_section_defaults(
     # If the section already has meaningful content, skip defaults
     if props and any(
         key in props
-        for key in ("title", "subtitle", "body", "content", "items", "personas", "pastors", "stats", "testimonials", "faqs", "embed_url", "map_url")
+        for key in ("title", "subtitle", "body", "content", "items", "personas", "pastors", "stats", "testimonials", "faqs", "embed_url", "map_url", "eyebrow", "title_lead", "primary_cta", "bg_image")
     ):
         return props or {}
 
