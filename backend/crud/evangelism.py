@@ -6,16 +6,24 @@ import uuid
 from typing import List, Optional
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.crud._utils import _utcnow
+from backend.crud._utils import _coerce_uuid_or_404, _utcnow
+from backend.crud.crm import (
+    get_user_sede_id,
+    resolve_persona_uuid_for_user,
+)
 from backend.models_evangelism import (
     Asistencia,
     EstrategiaEvangelismo,
+    GrupoEvangelismo,
+    MotivoExcusa,
     ParticipanteGrupo,
     RegistroSeguimiento,
     RolPersonalizadoEstrategia,
+    SesionGrupo,
 )
 from backend.schemas.evangelism import (
     AsistenciaSesionCreate,
@@ -27,6 +35,105 @@ from backend.schemas.evangelism import (
     RegistroSeguimientoUpdate,
     RolPersonalizadoEstrategiaCreate,
 )
+
+# ============================================================
+# Axioma 3 — Multi-Tenant defense-in-depth helpers (evangelismo)
+# ============================================================
+# Patrón idéntico al canon backend/crud/cms.py. Red de seguridad
+# contra callers no-API (workers, scripts/seed_*, pytest) y TOCTOU
+# entre fetch y commit. La API-layer (cuando exista el paquete
+# backend/api/_evangelism_helpers/_shared.py) hará el primer
+# filtro; el CRUD re-valida pre-commit.
+
+
+def _actor_sede_or_none_evangelismo(
+    db: Session, actor_user_id: str | uuid.UUID
+) -> str | None:
+    """Resuelve la sede del actor.
+
+    ``None`` solo representa un superadministrador canonico sin sede.
+    Actor ausente, malformado o sin persona asociada -> 401.
+    """
+    try:
+        actor_uuid = uuid.UUID(str(actor_user_id))
+    except (TypeError, ValueError, AttributeError):
+        raise HTTPException(status_code=401, detail="Authenticated actor required")
+    if resolve_persona_uuid_for_user(db, actor_uuid) is None:
+        raise HTTPException(status_code=401, detail="Authenticated actor required")
+    return get_user_sede_id(db, str(actor_uuid))
+
+
+def _resolve_persona_sede(db: Session, persona_id) -> str | None:
+    """Sede de una persona target, o None si no existe o sin sede."""
+    if persona_id is None:
+        return None
+    try:
+        persona_uuid = uuid.UUID(str(persona_id))
+    except (TypeError, ValueError, AttributeError):
+        return None
+    row = (
+        db.query(models.Persona.sede_id)
+        .filter(models.Persona.id == persona_uuid)
+        .first()
+    )
+    if not row or row[0] is None:
+        return None
+    return str(row[0])
+
+
+def _crud_scope_re_check_evangelism_create(
+    db: Session,
+    actor_user_id,
+    *,
+    actor_sede: str | None,
+    target_sede: str | None,
+    target_persona_id=None,
+) -> str:
+    """Defense-in-depth para creates.
+
+    Politica:
+      - Actor sin sede o target sin sede -> REJECT 409.
+      - target_sede != actor_sede -> REJECT 404 (existence-leak safe).
+      - target_persona_id resuelve a sede distinta -> REJECT 404.
+    """
+    if not actor_sede or not target_sede:
+        raise HTTPException(
+            status_code=409,
+            detail="Evangelism content requires an attributed persona and sede",
+        )
+    if str(target_sede) != str(actor_sede):
+        raise HTTPException(
+            status_code=404, detail="Evangelism create cross-sede blocked"
+        )
+    if target_persona_id is not None:
+        target_persona_sede = _resolve_persona_sede(db, target_persona_id)
+        if target_persona_sede is None or str(target_persona_sede) != str(actor_sede):
+            raise HTTPException(
+                status_code=404, detail="Evangelism create FK cross-sede blocked"
+            )
+    return target_sede
+
+
+def _crud_scope_re_check_evangelism_update(
+    db: Session,
+    actor_user_id,
+    *,
+    actor_sede: str | None,
+    current_row_sede: str | None,
+    incoming_fk_sede: str | None = None,
+) -> None:
+    """Defense-in-depth para updates/deletes."""
+    if not actor_sede:
+        return  # superadmin bypass (consistente con API-layer + crud/cms)
+    if current_row_sede is None or str(current_row_sede) != str(actor_sede):
+        raise HTTPException(
+            status_code=404, detail="Evangelism update row cross-sede blocked"
+        )
+    if incoming_fk_sede is not None and str(incoming_fk_sede) != str(actor_sede):
+        raise HTTPException(
+            status_code=404, detail="Evangelism update FK cross-sede blocked"
+        )
+
 
 # ──────────────────────────────────────────────
 # ESTRATEGIAS
@@ -84,8 +191,15 @@ def get_estrategia(db: Session, strategy_id: UUID) -> Optional[EstrategiaEvangel
 
 
 def create_estrategia(
-    db: Session, data: EstrategiaEvangelismoCreate, sede_id: str | None = None, categoria_id: UUID | None = None
+    db: Session,
+    data: EstrategiaEvangelismoCreate,
+    *,
+    actor_user_id: str | uuid.UUID,
+    sede_id: str | None = None,
+    categoria_id: UUID | None = None,
 ) -> EstrategiaEvangelismo:
+    # ── Axioma 3 — Multi-Tenant: resolve actor ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     valid_cols = {c.key for c in EstrategiaEvangelismo.__table__.columns}
     dump = data.model_dump()
     # Mapear clase_raiz a string si viene como enum; normalizar a mayúsculas
@@ -103,10 +217,19 @@ def create_estrategia(
     # Campos que no existen como columnas directas: descartar
     row_data = {k: v for k, v in dump.items() if k in valid_cols}
     # Asignar sede_id y categoria_id al objeto
+    if sede_id is None and actor_sede is not None:
+        sede_id = actor_sede
     if sede_id is not None:
         row_data["sede_id"] = sede_id
     if categoria_id is not None:
         row_data["categoria_id"] = categoria_id
+    # ── Axioma 3 — Multi-Tenant: defense-in-depth pre-construction ──
+    _crud_scope_re_check_evangelism_create(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        target_sede=row_data.get("sede_id"),
+    )
     db_obj = EstrategiaEvangelismo(**row_data)
     db.add(db_obj)
     db.flush()  # Obtener el ID
@@ -122,8 +245,14 @@ def create_estrategia(
 
 
 def update_estrategia(
-    db: Session, strategy_id: UUID, data: EstrategiaEvangelismoUpdate
+    db: Session,
+    strategy_id: UUID,
+    data: EstrategiaEvangelismoUpdate,
+    *,
+    actor_user_id: str | uuid.UUID,
 ) -> Optional[EstrategiaEvangelismo]:
+    # ── Axioma 3 — Multi-Tenant: resolve actor ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = (
         db.query(EstrategiaEvangelismo)
         .filter(EstrategiaEvangelismo.id == strategy_id)
@@ -157,6 +286,13 @@ def update_estrategia(
     for syn_key, col_name in synonym_map.items():
         if syn_key in dump and col_name not in update_data:
             update_data[col_name] = dump[syn_key]
+    # ── Axioma 3 — Multi-Tenant: defense-in-depth pre-commit ──
+    _crud_scope_re_check_evangelism_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=str(db_obj.sede_id) if db_obj.sede_id else None,
+    )
     for key, value in update_data.items():
         setattr(db_obj, key, value)
     db.commit()
@@ -164,7 +300,14 @@ def update_estrategia(
     return db_obj
 
 
-def delete_estrategia(db: Session, strategy_id: UUID) -> bool:
+def delete_estrategia(
+    db: Session,
+    strategy_id: UUID,
+    *,
+    actor_user_id: str | uuid.UUID,
+) -> bool:
+    # ── Axioma 3 — Multi-Tenant: resolve actor ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = (
         db.query(EstrategiaEvangelismo)
         .filter(EstrategiaEvangelismo.id == strategy_id)
@@ -172,6 +315,13 @@ def delete_estrategia(db: Session, strategy_id: UUID) -> bool:
     )
     if not db_obj:
         return False
+    # ── Axioma 3 — Multi-Tenant: defense-in-depth pre-soft-delete ──
+    _crud_scope_re_check_evangelism_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=str(db_obj.sede_id) if db_obj.sede_id else None,
+    )
     db_obj.deleted_at = _utcnow()
     db.commit()
     return True
@@ -196,8 +346,39 @@ def get_roles_personalizados(
 
 
 def create_rol_personalizado(
-    db: Session, data: RolPersonalizadoEstrategiaCreate
+    db: Session,
+    data: RolPersonalizadoEstrategiaCreate,
+    *,
+    actor_user_id: str | uuid.UUID,
 ) -> RolPersonalizadoEstrategia:
+    """Crea un rol personalizado asociado a una estrategia.
+
+    Axioma 3: defense-in-depth — valida que ``data.estrategia_id``
+    pertenece a la sede del actor. Si el rol se crea sin estrategia
+    (estrategia_id=None) se rechaza con 409: un rol sin estrategia
+    es un huérfano no apto para multi-tenant.
+    """
+    # ── Axioma 3 — Multi-Tenant: resolve actor + estrategia → sede ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
+    target_sede: str | None = None
+    if data.estrategia_id is not None:
+        strategy_uuid = _coerce_uuid_or_404(
+            data.estrategia_id, "Estrategia no encontrada"
+        )
+        strategy_row = (
+            db.query(EstrategiaEvangelismo.sede_id)
+            .filter(EstrategiaEvangelismo.id == strategy_uuid)
+            .first()
+        )
+        target_sede = (
+            str(strategy_row[0]) if strategy_row and strategy_row[0] else None
+        )
+    _crud_scope_re_check_evangelism_create(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        target_sede=target_sede,
+    )
     db_obj = RolPersonalizadoEstrategia(**data.model_dump())
     db.add(db_obj)
     db.commit()
@@ -205,7 +386,14 @@ def create_rol_personalizado(
     return db_obj
 
 
-def delete_rol_personalizado(db: Session, role_id: UUID) -> bool:
+def delete_rol_personalizado(
+    db: Session,
+    role_id: UUID,
+    *,
+    actor_user_id: str | uuid.UUID,
+) -> bool:
+    # ── Axioma 3 — Multi-Tenant: resolve actor ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = (
         db.query(RolPersonalizadoEstrategia)
         .filter(RolPersonalizadoEstrategia.id == role_id)
@@ -220,6 +408,15 @@ def delete_rol_personalizado(db: Session, role_id: UUID) -> bool:
             .filter(EstrategiaEvangelismo.id == db_obj.estrategia_id)
             .first()
         )
+    # ── Axioma 3 — Multi-Tenant: defense-in-depth pre-soft-delete ──
+    _crud_scope_re_check_evangelism_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=(
+            str(strategy.sede_id) if strategy and strategy.sede_id else None
+        ),
+    )
     if strategy and strategy.default_role_id == db_obj.id:
         strategy.default_role_id = None
     db_obj.deleted_at = _utcnow()
@@ -246,8 +443,26 @@ def get_participantes(
 
 
 def agregar_participante(
-    db: Session, data: ParticipanteGrupoCreate
+    db: Session,
+    data: ParticipanteGrupoCreate,
+    *,
+    actor_user_id: str | uuid.UUID,
 ) -> ParticipanteGrupo:
+    # ── Axioma 3 — Multi-Tenant: validate grupo + persona FK against actor's sede ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
+    grupo_row = (
+        db.query(GrupoEvangelismo.sede_id)
+        .filter(GrupoEvangelismo.id == data.grupo_id)
+        .first()
+    )
+    grupo_sede = str(grupo_row[0]) if grupo_row and grupo_row[0] else None
+    _crud_scope_re_check_evangelism_create(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        target_sede=grupo_sede,
+        target_persona_id=data.persona_id,
+    )
     db_obj = ParticipanteGrupo(
         grupo_id=data.grupo_id,
         persona_id=data.persona_id,
@@ -263,8 +478,14 @@ def agregar_participante(
 
 
 def actualizar_participante(
-    db: Session, participante_id: UUID, data: ParticipanteGrupoUpdate
+    db: Session,
+    participante_id: UUID,
+    data: ParticipanteGrupoUpdate,
+    *,
+    actor_user_id: str | uuid.UUID,
 ) -> Optional[ParticipanteGrupo]:
+    # ── Axioma 3 — Multi-Tenant: resolve actor ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = (
         db.query(ParticipanteGrupo)
         .filter(ParticipanteGrupo.id == participante_id)
@@ -273,6 +494,23 @@ def actualizar_participante(
     if not db_obj:
         return None
     update_data = data.model_dump(exclude_unset=True)
+    # ── Axioma 3 — Multi-Tenant: defense-in-depth pre-commit ──
+    grupo_row = (
+        db.query(GrupoEvangelismo.sede_id)
+        .filter(GrupoEvangelismo.id == db_obj.grupo_id)
+        .first()
+    )
+    current_grupo_sede = str(grupo_row[0]) if grupo_row and grupo_row[0] else None
+    _crud_scope_re_check_evangelism_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=current_grupo_sede,
+        incoming_fk_sede=(
+            _resolve_persona_sede(db, update_data.get("persona_id"))
+            if update_data.get("persona_id") else None
+        ),
+    )
     for key, value in update_data.items():
         setattr(db_obj, key, value)
     db.commit()
@@ -280,8 +518,15 @@ def actualizar_participante(
     return db_obj
 
 
-def remover_participante(db: Session, participante_id: UUID) -> bool:
+def remover_participante(
+    db: Session,
+    participante_id: UUID,
+    *,
+    actor_user_id: str | uuid.UUID,
+) -> bool:
     """Soft-delete: marca como inactivo en lugar de borrar."""
+    # ── Axioma 3 — Multi-Tenant: resolve actor ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = (
         db.query(ParticipanteGrupo)
         .filter(ParticipanteGrupo.id == participante_id)
@@ -289,6 +534,19 @@ def remover_participante(db: Session, participante_id: UUID) -> bool:
     )
     if not db_obj:
         return False
+    # ── Axioma 3 — Multi-Tenant: defense-in-depth pre-soft-delete ──
+    grupo_row = (
+        db.query(GrupoEvangelismo.sede_id)
+        .filter(GrupoEvangelismo.id == db_obj.grupo_id)
+        .first()
+    )
+    grupo_sede = str(grupo_row[0]) if grupo_row and grupo_row[0] else None
+    _crud_scope_re_check_evangelism_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=grupo_sede,
+    )
     db_obj.activo = False
     db.commit()
     return True
@@ -299,12 +557,34 @@ def remover_participante(db: Session, participante_id: UUID) -> bool:
 # ──────────────────────────────────────────────
 
 def submit_asistencia(
-    db: Session, data: AsistenciaSesionCreate
+    db: Session,
+    data: AsistenciaSesionCreate,
+    *,
+    actor_user_id: str | uuid.UUID,
 ) -> Asistencia:
     """Crea o actualiza un registro de asistencia.
 
     El valor es_primera_vez se toma del payload.
+    Axioma 3: defense-in-depth — valida que sesion y persona estan en sede del actor.
     """
+    # ── Axioma 3 ─ Multi-Tenant: resolve actor + sesion ─ grupo ─ sede ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
+    # Existence-leak safe 404 antes del query para cerrar vector 500.
+    sesion_uuid = _coerce_uuid_or_404(data.sesion_id, "Sesión no encontrada")
+    sesion_row = (
+        db.query(SesionGrupo.id, GrupoEvangelismo.sede_id)
+        .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
+        .filter(SesionGrupo.id == sesion_uuid)
+        .first()
+    )
+    sesion_sede = str(sesion_row[1]) if sesion_row and sesion_row[1] else None
+    _crud_scope_re_check_evangelism_create(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        target_sede=sesion_sede,
+        target_persona_id=data.persona_id,
+    )
     # Verificar si ya existe
     existing = (
         db.query(Asistencia)
@@ -359,8 +639,31 @@ def get_seguimientos(
 
 
 def create_seguimiento(
-    db: Session, data: RegistroSeguimientoCreate
+    db: Session,
+    data: RegistroSeguimientoCreate,
+    *,
+    actor_user_id: str | uuid.UUID,
 ) -> RegistroSeguimiento:
+    # ── Axioma 3 — Multi-Tenant: validate seguimiento -> asistencia -> sesion -> grupo ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
+    target_sede: str | None = None
+    if data.asistencia_id:
+        # Existence-leak safe 404 antes del query para cerrar vector 500.
+        asist_uuid = _coerce_uuid_or_404(data.asistencia_id, "Asistencia no encontrada")
+        asist_row = (
+            db.query(Asistencia.id, GrupoEvangelismo.sede_id)
+            .join(SesionGrupo, SesionGrupo.id == Asistencia.sesion_id)
+            .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
+            .filter(Asistencia.id == asist_uuid)
+            .first()
+        )
+        target_sede = str(asist_row[1]) if asist_row and asist_row[1] else None
+    _crud_scope_re_check_evangelism_create(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        target_sede=target_sede,
+    )
     dump = data.model_dump()
     # Mapear tipo enum a string
     if "tipo" in dump and dump["tipo"] is not None:
@@ -384,8 +687,14 @@ def create_seguimiento(
 
 
 def update_seguimiento(
-    db: Session, seguimiento_id: UUID, data: RegistroSeguimientoUpdate
+    db: Session,
+    seguimiento_id: UUID,
+    data: RegistroSeguimientoUpdate,
+    *,
+    actor_user_id: str | uuid.UUID,
 ) -> Optional[RegistroSeguimiento]:
+    # ── Axioma 3 — Multi-Tenant: resolve actor ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = (
         db.query(RegistroSeguimiento)
         .filter(RegistroSeguimiento.id == seguimiento_id)
@@ -394,6 +703,25 @@ def update_seguimiento(
     if not db_obj:
         return None
     update_data = data.model_dump(exclude_unset=True)
+    # ── Axioma 3 — Multi-Tenant: defense-in-depth pre-commit ──
+    asist_row = (
+        db.query(Asistencia.id, GrupoEvangelismo.sede_id)
+        .join(SesionGrupo, SesionGrupo.id == Asistencia.sesion_id)
+        .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
+        .filter(Asistencia.id == db_obj.asistencia_id)
+        .first()
+    )
+    current_sede = str(asist_row[1]) if asist_row and asist_row[1] else None
+    _crud_scope_re_check_evangelism_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=current_sede,
+        incoming_fk_sede=(
+            _resolve_persona_sede(db, update_data.get("responsable_id"))
+            if update_data.get("responsable_id") else None
+        ),
+    )
     for key, value in update_data.items():
         setattr(db_obj, key, value)
     db.commit()
@@ -431,8 +759,19 @@ def get_motivos_excusa(
 
 
 def create_motivo_excusa(
-    db: Session, descripcion: str, es_del_sistema: bool = False
+    db: Session,
+    descripcion: str,
+    es_del_sistema: bool = False,
+    *,
+    actor_user_id: str | uuid.UUID,
 ) -> models.MotivoExcusa:
+    # ── Axioma 3 — Multi-Tenant: motivos del sistema solo superadmin ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
+    if es_del_sistema and actor_sede is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="Solo superadmin sin sede puede crear motivo del sistema",
+        )
     db_obj = models.MotivoExcusa(
         descripcion=descripcion.upper(),
         es_del_sistema=es_del_sistema,
@@ -445,8 +784,18 @@ def create_motivo_excusa(
 
 
 def update_motivo_excusa(
-    db: Session, excusa_id: UUID, descripcion: str | None = None, activo: bool | None = None
+    db: Session,
+    excusa_id: UUID,
+    descripcion: str | None = None,
+    activo: bool | None = None,
+    *,
+    actor_user_id: str | uuid.UUID,
 ) -> models.MotivoExcusa | None:
+    # ── Axioma 3 — Multi-Tenant: requiere autenticacion. Mutaciones a
+    # MotivoExcusa son cross-sede por naturaleza (lookup table global);
+    # el actor debe estar autenticado (401 si no). Las reglas de
+    # sistema (es_del_sistema=True) se refuerzan abajo. ──
+    _ = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = db.query(models.MotivoExcusa).filter(models.MotivoExcusa.id == excusa_id).first()
     if not db_obj:
         return None
@@ -461,7 +810,14 @@ def update_motivo_excusa(
     return db_obj
 
 
-def delete_motivo_excusa(db: Session, excusa_id: UUID) -> bool:
+def delete_motivo_excusa(
+    db: Session,
+    excusa_id: UUID,
+    *,
+    actor_user_id: str | uuid.UUID,
+) -> bool:
+    # ── Axioma 3 — Multi-Tenant: requiere autenticacion. ──
+    _ = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = db.query(models.MotivoExcusa).filter(models.MotivoExcusa.id == excusa_id).first()
     if not db_obj or db_obj.es_del_sistema:
         return False
@@ -470,8 +826,26 @@ def delete_motivo_excusa(db: Session, excusa_id: UUID) -> bool:
     return True
 
 
-def seed_motivos_excusa(db: Session) -> list[models.MotivoExcusa]:
-    """Inserta las excusas base del sistema si no existen."""
+def seed_motivos_excusa(
+    db: Session, *, actor_user_id: str | uuid.UUID
+) -> list[models.MotivoExcusa]:
+    """Inserta las excusas base del sistema si no existen.
+
+    Axioma 3 — ``MotivoExcusa`` es lookup-table global (cross-sede por
+    naturaleza). Por tanto solo un actor sin sede (``actor_sede is None``
+    → superadmin) puede ejecutar el seed. Cualquier pastor o admin
+    con sede queda bloqueado con 403, evitando que una sede personalizada
+    cree ``MotivoExcusa.es_del_sistema=True``.
+    """
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
+    if actor_sede is not None:
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "seed_motivos_excusa solo lo puede ejecutar superadmin "
+                "sin sede (MotivoExcusa es lookup-table cross-sede)"
+            ),
+        )
     base = ["SALUD", "TRABAJO", "FAMILIA", "OTRA (VER DETALLE)"]
     created = []
     for desc in base:
@@ -479,5 +853,12 @@ def seed_motivos_excusa(db: Session) -> list[models.MotivoExcusa]:
             models.MotivoExcusa.descripcion == desc
         ).first()
         if not existing:
-            created.append(create_motivo_excusa(db, desc, es_del_sistema=True))
+            created.append(
+                create_motivo_excusa(
+                    db,
+                    desc,
+                    es_del_sistema=True,
+                    actor_user_id=actor_user_id,
+                )
+            )
     return created

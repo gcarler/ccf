@@ -9,10 +9,12 @@ import type {
  StrategyMetrics,
 } from '../../types';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
-import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
-import UniversalGanttView from '@/components/ui/UniversalGanttView';
-import UniversalTableView from '@/components/ui/UniversalTableView';
-import UniversalWikiView from '@/components/ui/UniversalWikiView';
+import dynamic from 'next/dynamic';
+
+const UniversalCalendarView = dynamic(() => import('@/components/ui/UniversalCalendarView'), { ssr: false });
+const UniversalGanttView = dynamic(() => import('@/components/ui/UniversalGanttView'), { ssr: false });
+const UniversalTableView = dynamic(() => import('@/components/ui/UniversalTableView'), { ssr: false });
+const UniversalWikiView = dynamic(() => import('@/components/ui/UniversalWikiView'), { ssr: false });
 import ViewSwitcher from '@/components/ViewSwitcher';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { useAuth } from '@/context/AuthContext';

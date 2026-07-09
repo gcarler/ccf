@@ -391,6 +391,19 @@ class SesionGrupo(Base):
     # ``20260702_reported_at_tz``: ahora es columna real.
     reported_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Campos que antes eran @property stubs sin persistencia (Sprint 3.6).
+    # Ahora son columnas reales para que los endpoints que los asignan
+    # (create_session, add_groups_attendance, submit_attendance) persistan
+    # los valores en db.commit() en lugar de perderlos silenciosamente.
+    novelty_type = Column(String(50), nullable=True)
+    novelty_detail = Column(Text, nullable=True)
+    reported_by_persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    report_deadline = Column(DateTime(timezone=True), nullable=True)
+
     grupo = relationship("GrupoEvangelismo", back_populates="sesiones")
     asistencias = relationship("Asistencia", back_populates="sesion", cascade="all, delete-orphan")
 
@@ -404,65 +417,13 @@ class SesionGrupo(Base):
     def season(self):
         return None
 
-    @property
-    def novelty_type(self):
-        return getattr(self, '_novelty_type', None)
-
-    @novelty_type.setter
-    def novelty_type(self, value):
-        self._novelty_type = value
-
-    @property
-    def novelty_detail(self):
-        return getattr(self, '_novelty_detail', None)
-
-    @novelty_detail.setter
-    def novelty_detail(self, value):
-        self._novelty_detail = value
-
-    @property
-    def reported_by_persona_id(self):
-        return getattr(self, '_reported_by_persona_id', None)
-
-    @reported_by_persona_id.setter
-    def reported_by_persona_id(self, value):
-        self._reported_by_persona_id = value
-
-    # ``reported_at`` ya NO es ``@property`` stub: es columna real
-    # ``Column(DateTime(timezone=True), nullable=True)``. El fix en
-    # ``20260702_reported_at_tz`` cierra el bug por el cual los
-    # endpoints siempre emitían ``null`` aunque el handler seteara
-    # el timestamp con ``_datetime.now(_timezone.utc)``.
-
-    @property
-    def report_deadline(self):
-        return getattr(self, "_report_deadline", None)
-
-    @report_deadline.setter
-    def report_deadline(self, value):
-        self._report_deadline = value
-
     def __init__(self, **kwargs):
-        kwargs.pop("reported_by_persona_id", None)
-        # ``reported_at`` y ``offering_amount`` son columnas reales (``Column``)
-        # y deben llegar a ``super().__init__`` para que SQLAlchemy las persista.
-        # Antes ambos eran ``kwargs.pop``+@property-stub:
-        #   * reported_at: fix Sprint 3 vía columna real + migración
-        #     ``20260702_reported_at_tz``.
-        #   * offering_amount: idéntico anti-pattern — el pop descartaba el valor
-        #     y se asignaba a un ``_offering_amount`` privado que NUNCA se leía.
-        #     Si el caller hacía ``SesionGrupo(offering_amount=N, ...)`` la
-        #     ``Column(Numeric(12, 2))`` quedaba en NULL y todos los readers
-        #     (``evangelism_analytics`` sums, ``get_grupo``, weekly aggregates)
-        #     devolvían None/0. Fix Sprint 3.5: dejar fluir a la columna.
-        # Los atributos virtuales restantes (``novelty_type``/``detail`` y
-        # ``report_deadline``) sí son campos computados via @property + setter.
-        kwargs.pop("novelty_type", None)
-        kwargs.pop("novelty_detail", None)
-        report_deadline = kwargs.pop("report_deadline", None)
+        # ``offering_amount`` es columna real (``Column``) y debe llegar a
+        # ``super().__init__`` para que SQLAlchemy la persista. Antes era
+        # ``kwargs.pop``+@property-stub: el pop descartaba el valor y se
+        # asignaba a un ``_offering_amount`` privado que NUNCA se leía.
+        # Fix Sprint 3.5: dejar fluir a la columna.
         super().__init__(**kwargs)
-        if report_deadline is not None:
-            self._report_deadline = report_deadline
 
 
 class Asistencia(Base):

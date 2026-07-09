@@ -17,6 +17,7 @@ from backend.api.evangelism_shared import (
     _get_persona_for_user,
     _is_crm_admin_or_pastor,
     is_absent_status,
+    utc_now,
 )
 from backend.core.database import get_db
 from backend.core.permissions import get_current_user, require_active_user, require_pastor_or_admin
@@ -108,6 +109,12 @@ def _validate_strategy_group_roles(db: Session, strategy_id: UUID | None, body: 
             if custom_role_id not in allowed_custom_ids:
                 raise HTTPException(status_code=400, detail="El rol del participante no pertenece a esta estrategia")
             continue
+        # Tolerancia: aceptar el marcador legado 'personalizado' sin
+        # ``rol_personalizado_id``. La capa CRUD rehidratara el UUID desde
+        # la fila existente del participante, evitando perdida de datos y
+        # el ciclo de reprocesamiento que rompia el PUT.
+        if role == "personalizado":
+            continue
         if _slug_role_name(role) not in base_roles:
             raise HTTPException(status_code=400, detail=f"Rol no configurado en la estrategia: {role}")
 
@@ -127,25 +134,7 @@ def list_grupos(
     if evangelism_strategy_id:
         q = q.filter(GrupoEvangelismo.estrategia_id == evangelism_strategy_id)
     groups = q.order_by(GrupoEvangelismo.nombre.asc()).all()
-    return [
-        {
-            "id": g.id,
-            "name": g.nombre,
-            "zone": g.ubicacion,
-            "address": g.direccion,
-            "leader_name": g.lider.nombre_completo if g.lider else "",
-            "leader_id": str(g.lider_persona_id) if g.lider_persona_id else None,
-            "assistant_id": str(g.asistente_persona_id) if g.asistente_persona_id else None,
-            "host_id": str(g.anfitrion_persona_id) if g.anfitrion_persona_id else None,
-            "personas_count": sum(1 for p in (g.participantes or []) if p.activo and p.deleted_at is None),
-            "capacity": g.capacidad,
-            "day_of_week": g.dia_reunion,
-            "start_time": g.hora_reunion,
-            "status": "Activo" if g.activo else "Inactivo",
-            "evangelism_strategy_id": str(g.estrategia_id) if g.estrategia_id else None,
-        }
-        for g in groups
-    ]
+    return [_serialize_grupo(g) for g in groups]
 
 
 def _serialize_grupo(g):
@@ -568,25 +557,57 @@ def update_grupo(
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house_db):
         raise HTTPException(status_code=403, detail="No autorizado para este grupo")
-    _validate_strategy_group_roles(
-        db,
-        str(house_db.estrategia_id) if house_db.estrategia_id else None,
-        payload.model_dump(exclude_unset=True),
-    )
+    body_dict = payload.model_dump(exclude_unset=True)
+    # Solo validar roles de estrategia para admins o cuando se gestionan
+    # participantes con roles custom. Líderes/asistentes que solo reasignan
+    # leader_id/assistant_id/host_id directamente no necesitan roles custom.
+    if _is_crm_admin_or_pastor(current_user) or body_dict.get("base_attendees_with_roles"):
+        _validate_strategy_group_roles(
+            db,
+            str(house_db.estrategia_id) if house_db.estrategia_id else None,
+            body_dict,
+        )
     if not _is_crm_admin_or_pastor(current_user):
-        allowed_fields = {"base_attendee_ids", "base_attendees_with_roles"}
-        incoming_fields = set(payload.model_dump(exclude_unset=True).keys())
+        allowed_fields = {
+            "base_attendee_ids",
+            "base_attendees_with_roles",
+            "leader_id",
+            "assistant_id",
+            "host_id",
+        }
+        incoming_fields = set(body_dict.keys())
         if not incoming_fields:
             raise HTTPException(status_code=400, detail="No hay campos para actualizar")
         if not incoming_fields.issubset(allowed_fields):
             raise HTTPException(
                 status_code=403,
-                detail="Lideres y colideres solo pueden gestionar asistentes del grupo",
+                detail="Lideres y colideres solo pueden gestionar asistentes y roles del grupo",
             )
+    # Validar que leader_id/assistant_id/host_id apunten a personas existentes
+    # en la misma sede que el grupo.
+    for field in ("leader_id", "assistant_id", "host_id"):
+        pid = body_dict.get(field)
+        if pid is not None:
+            try:
+                persona_uuid = UUID(str(pid))
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=400, detail=f"{field} no es un UUID válido")
+            persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
+            if not persona:
+                raise HTTPException(status_code=400, detail=f"La persona de {field} no existe")
+            if persona.sede_id != house_db.sede_id:
+                raise HTTPException(status_code=400, detail=f"La persona de {field} pertenece a otra sede")
     house = crud.update_grupo(db, grupo_id, payload)
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
-    return {"id": house.id, "name": house.name, "personas_count": house.personas_count}
+    return {
+        "id": house.id,
+        "name": house.name,
+        "personas_count": house.personas_count,
+        "leader_id": str(house.lider_persona_id) if house.lider_persona_id else None,
+        "assistant_id": str(house.asistente_persona_id) if house.asistente_persona_id else None,
+        "host_id": str(house.anfitrion_persona_id) if house.anfitrion_persona_id else None,
+    }
 
 
 @dynamic_router.delete("/grupos/{grupo_id:uuid}", status_code=204)
@@ -597,10 +618,16 @@ def delete_grupo(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     """Desactiva un grupo de evangelismo (soft-delete)."""
-    house = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.id == grupo_id).first()
+    user_sede = require_user_sede_id(db, current_user)
+    house = db.query(GrupoEvangelismo).filter(
+        GrupoEvangelismo.id == grupo_id,
+        GrupoEvangelismo.sede_id == user_sede,
+        GrupoEvangelismo.deleted_at.is_(None),
+    ).first()
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     house.activo = False
+    house.deleted_at = utc_now()
     db.commit()
     return None
 

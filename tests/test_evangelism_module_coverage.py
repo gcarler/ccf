@@ -765,10 +765,6 @@ class TestGruposEndpoints:
         assert resp.status_code == 200, resp.text
         assert len(resp.json()) >= 2
 
-    def test_list_grupos_faro_alias(self, full):
-        resp = full["c"].get("/api/evangelism/faro", headers=full["h"])
-        assert resp.status_code == 200, resp.text
-
     def test_list_grupos_filtro_estrategia(self, full):
         est = full["estrategia"]
         resp = full["c"].get(
@@ -782,20 +778,12 @@ class TestGruposEndpoints:
         assert resp.status_code == 200, resp.text
         assert len(resp.json()) >= 2
 
-    def test_list_my_grupos_faro_alias(self, full):
-        resp = full["c"].get("/api/evangelism/faro/mine", headers=full["h"])
-        assert resp.status_code == 200, resp.text
-
     def test_faro_assignment_summary(self, full):
         resp = full["c"].get("/api/evangelism/grupos/assignment-summary", headers=full["h"])
         assert resp.status_code == 200, resp.text
         data = resp.json()
         assert "houses_total" in data
         assert "personas_total" in data
-
-    def test_faro_assignment_summary_alias_faro(self, full):
-        resp = full["c"].get("/api/evangelism/faro/assignment-summary", headers=full["h"])
-        assert resp.status_code == 200, resp.text
 
     def test_get_grupo_detallado(self, full):
         g = full["grupos"][0]
@@ -806,11 +794,6 @@ class TestGruposEndpoints:
         assert "sessions" in data
         assert "monitoring" in data
 
-    def test_get_grupo_faro_alias(self, full):
-        g = full["grupos"][0]
-        resp = full["c"].get(f"/api/evangelism/faro/{g.id}", headers=full["h"])
-        assert resp.status_code == 200, resp.text
-
     def test_get_grupo_404(self, full):
         resp = full["c"].get(
             f"/api/evangelism/grupos/{uuid.uuid4()}", headers=full["h"],
@@ -820,12 +803,6 @@ class TestGruposEndpoints:
     def test_create_grupo_minimo(self, full):
         resp = full["c"].post("/api/evangelism/grupos", json={
             "nombre": "Grupo Nuevo", "lugar": "Centro",
-        }, headers=full["h"])
-        assert resp.status_code == 200, resp.text
-
-    def test_create_grupo_faro_alias(self, full):
-        resp = full["c"].post("/api/evangelism/faro", json={
-            "nombre": "Grupo Faro", "lugar": "Sur",
         }, headers=full["h"])
         assert resp.status_code == 200, resp.text
 
@@ -867,13 +844,6 @@ class TestGruposEndpoints:
         assert "summary" in data
         assert "weekly" in data
 
-    def test_get_faro_analytics(self, full):
-        resp = full["c"].get("/api/evangelism/faro/analytics", headers=full["h"])
-        assert resp.status_code == 200, resp.text
-        data = resp.json()
-        assert "total_attendance" in data
-        assert "per_faro" in data
-
     def test_get_macro_despliegue(self, full):
         resp = full["c"].get("/api/evangelism/macro-despliegue", headers=full["h"])
         assert resp.status_code == 200, resp.text
@@ -892,24 +862,12 @@ class TestCampaignSeasons:
         assert resp.status_code == 200, resp.text
         assert isinstance(resp.json(), list)
 
-    def test_list_seasons_faro_alias(self, full):
-        resp = full["c"].get("/api/evangelism/faro/seasons", headers=full["h"])
-        assert resp.status_code == 200, resp.text
-
     def test_create_season(self, full):
         resp = full["c"].post("/api/evangelism/grupos/seasons", json={
             "name": "Temporada Q3",
             "start_date": "2026-07-01",
             "end_date": "2026-09-30",
             "periodicity": "QUINCENAL",
-        }, headers=full["h"])
-        assert resp.status_code == 200, resp.text
-
-    def test_create_season_faro_alias(self, full):
-        resp = full["c"].post("/api/evangelism/faro/seasons", json={
-            "name": "Temporada Faro",
-            "start_date": "2026-07-01",
-            "end_date": "2026-09-30",
         }, headers=full["h"])
         assert resp.status_code == 200, resp.text
 
@@ -959,10 +917,6 @@ class TestSessions:
         resp = full["c"].get("/api/evangelism/grupos/sessions", headers=full["h"])
         assert resp.status_code == 200, resp.text
         assert len(resp.json()) >= 6
-
-    def test_list_faro_sessions_faro_alias(self, full):
-        resp = full["c"].get("/api/evangelism/faro/sessions", headers=full["h"])
-        assert resp.status_code == 200, resp.text
 
     def test_list_faro_sessions_filtro_grupo(self, full):
         g = full["grupos"][0]
@@ -1260,13 +1214,6 @@ class TestAttendanceFaro:
         assert "attendees" in data
         assert "absentees" in data
 
-    def test_get_faro_session_attendance_faro_alias(self, full):
-        s = full["sesiones"][1]
-        resp = full["c"].get(
-            f"/api/evangelism/faro/sessions/{s.id}/attendance", headers=full["h"],
-        )
-        assert resp.status_code == 200, resp.text
-
     def test_get_faro_session_attendance_404_session(self, full):
         resp = full["c"].get(
             f"/api/evangelism/grupos/sessions/{uuid.uuid4()}/attendance",
@@ -1543,15 +1490,6 @@ class TestFaroVisitors:
         }, headers=full["h"])
         assert resp.status_code == 404
 
-    def test_register_visitor_faro_alias(self, full):
-        g = full["grupos"][0]
-        resp = full["c"].post("/api/evangelism/faro/visitors", json={
-            "first_name": "Far", "last_name": "Alias",
-            "phone": "+573005555555",
-            "grupo_id": str(g.id),
-        }, headers=full["h"])
-        assert resp.status_code == 200, resp.text
-
 
 # ════════════════════════════════════════════════════════════════════
 # 11. MULTIPLICATION
@@ -1583,86 +1521,6 @@ class TestMultiplication:
         )
         assert resp.status_code == 200, resp.text
         assert any(item["excede_umbral"] for item in resp.json())
-
-    def test_split_group_ok(self, full):
-        g = full["grupos"][0]
-        nuevo_lider = full["personas"][6]
-        resp = full["c"].post("/api/evangelism/multiplication/split", json={
-            "grupo_id": str(g.id),
-            "nuevo_nombre": "Grupo derivado",
-            "nuevo_lider_id": str(nuevo_lider.id),
-        }, headers=full["h"])
-        assert resp.status_code == 200, resp.text
-        body = resp.json()
-        assert body["ok"] is True
-        assert body["miembros_transferidos"] >= 1
-
-    def test_split_group_404(self, full):
-        resp = full["c"].post("/api/evangelism/multiplication/split", json={
-            "grupo_id": str(uuid.uuid4()),
-            "nuevo_nombre": "X",
-            "nuevo_lider_id": str(full["personas"][3].id),
-        }, headers=full["h"])
-        assert resp.status_code == 404
-
-    def test_split_group_inactivo(self, full):
-        g = full["grupos"][1]
-        g.activo = False
-        _sa_object_session(g).commit()
-        resp = full["c"].post("/api/evangelism/multiplication/split", json={
-            "grupo_id": str(g.id),
-            "nuevo_nombre": "X",
-            "nuevo_lider_id": str(full["personas"][3].id),
-        }, headers=full["h"])
-        assert resp.status_code == 400
-
-    def test_split_group_uuid_invalido_lider(self, full):
-        g = full["grupos"][0]
-        resp = full["c"].post("/api/evangelism/multiplication/split", json={
-            "grupo_id": str(g.id),
-            "nuevo_nombre": "X",
-            "nuevo_lider_id": "not-a-uuid",
-        }, headers=full["h"])
-        assert resp.status_code == 400
-
-    def test_split_group_lider_404(self, full):
-        g = full["grupos"][0]
-        resp = full["c"].post("/api/evangelism/multiplication/split", json={
-            "grupo_id": str(g.id),
-            "nuevo_nombre": "X",
-            "nuevo_lider_id": str(uuid.uuid4()),
-        }, headers=full["h"])
-        assert resp.status_code == 404
-
-    def test_split_group_muy_pocos_participantes(self, full, db_session):
-        g = full["grupos"][1]
-        for pg in db_session.query(ParticipanteGrupo).filter(
-            ParticipanteGrupo.grupo_id == g.id,
-            ParticipanteGrupo.activo == True,  # noqa: E712
-        ).all():
-            pg.activo = False
-        db_session.commit()
-        resp = full["c"].post("/api/evangelism/multiplication/split", json={
-            "grupo_id": str(g.id),
-            "nuevo_nombre": "X",
-            "nuevo_lider_id": str(full["personas"][3].id),
-        }, headers=full["h"])
-        assert resp.status_code == 400
-
-    def test_multiplication_history(self, full):
-        """Tras una división, el nuevo grupo aparece en history."""
-        g = full["grupos"][0]
-        nuevo_lider = full["personas"][7]
-        if full["c"].post("/api/evangelism/multiplication/split", json={
-            "grupo_id": str(g.id),
-            "nuevo_nombre": "Deriva Hist",
-            "nuevo_lider_id": str(nuevo_lider.id),
-        }, headers=full["h"]).status_code == 200:
-            resp = full["c"].get(
-                "/api/evangelism/multiplication/history", headers=full["h"],
-            )
-            assert resp.status_code == 200, resp.text
-            assert len(resp.json()) >= 1
 
 
 # ════════════════════════════════════════════════════════════════════

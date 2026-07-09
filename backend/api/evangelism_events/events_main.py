@@ -37,8 +37,6 @@ from backend.core.tenant import require_user_sede_id
 router = APIRouter()
 static_router = APIRouter()
 dynamic_router = APIRouter()
-static_router = APIRouter()
-dynamic_router = APIRouter()
 
 
 class RoleDefinitionCreate(BaseModel):
