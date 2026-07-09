@@ -690,7 +690,7 @@ export default function StrategyDetailPage() {
  method: 'POST', token,
  body: {
  grupo_id: sessionForm.grupo_id,
- session_date: sessionForm.session_date + 'T12:00:00',
+ session_date: new Date(sessionForm.session_date + 'T00:00:00').toISOString(),
  topic: sessionForm.topic || null,
  offering_amount: sessionForm.offering_amount ? parseFloat(sessionForm.offering_amount) : null,
  report_notes: sessionForm.report_notes || null,
@@ -1209,7 +1209,7 @@ export default function StrategyDetailPage() {
  try {
  await apiFetch(`/evangelism/grupos/${rowId}`, {
  method: 'PUT', token,
- body: JSON.stringify({ [field]: value }),
+ body: { [field]: value },
  });
  fetchGroups();
  toast.success('Grupo actualizado');
@@ -1320,7 +1320,7 @@ export default function StrategyDetailPage() {
  try {
  await apiFetch(`/evangelism/sessions/${rowId}`, {
  method: 'PUT', token,
- body: JSON.stringify({ [actualField]: value }),
+ body: { [actualField]: value },
  });
  fetchSessions();
  toast.success('Sesión actualizada');
@@ -1828,7 +1828,7 @@ export default function StrategyDetailPage() {
  try {
  await apiFetch(`/evangelism/sessions/${s.id}/habilitacion`, {
  method: 'PATCH', token,
- body: JSON.stringify({ accion }),
+ body: { accion },
  });
  fetchSessions();
  } catch { toast.error('Error al cambiar estado'); }

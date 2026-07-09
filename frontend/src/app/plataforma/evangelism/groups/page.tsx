@@ -154,9 +154,8 @@ export default function GroupPage() {
  if (sessionForm.grupo_id !== 'all') {
  bodyPayload.grupo_id = sessionForm.grupo_id;
  } else {
- bodyPayload.grupo_id = 'all';
- }
  delete bodyPayload.grupo_id;
+ }
  if (sessionForm.report_deadline) {
  bodyPayload.report_deadline = sessionForm.report_deadline + ':00Z';
  } else {
