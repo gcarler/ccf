@@ -99,7 +99,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
     };
 
     return (
-        <aside className="w-16 h-full bg-[hsl(var(--bg-primary))] dark:bg-black border-r border-[hsl(var(--border))] dark:border-white/5 rounded-lg flex flex-col items-center py-2 gap-1 shadow-2xl relative overflow-hidden" style={{ paddingBottom: '3.5rem' }}>
+        <aside className="w-16 h-full bg-[hsl(var(--bg-primary))] dark:bg-black border-r border-[hsl(var(--border))] dark:border-white/5 rounded-lg flex flex-col items-center py-2 gap-1 shadow-2xl relative overflow-hidden" style={{ paddingBottom: '2.5rem' }}>
             {/* Global Add Button */}
             <button
                 onClick={() => openModal('task')}
@@ -127,7 +127,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             <NavItem id="inbox" icon={Inbox} href="/plataforma/inbox" label="Bandeja" badge={3} />
 
             {/* ── Footer: solo Settings + Collapse (SIN ThemeToggle — ya está en el header) */}
-            <div className="flex flex-col items-center gap-1 mb-4">
+            <div className="flex flex-col items-center gap-1 mb-2">
                 <Tooltip content="Ajustes" side="right">
                     <Link href="/plataforma/settings">
                         <div className="size-10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 sidebar-nav-item transition-all duration-200 cursor-pointer">
