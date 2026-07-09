@@ -35,6 +35,29 @@ logger = logging.getLogger(__name__)
 
 
 @estrategias_router.get("/strategies", response_model=List[EvangelismStrategy])
+def _hydrate_strategy_synonyms(obj: EvangelismStrategy, source) -> EvangelismStrategy:
+    """Asegura synonyms de SQLAlchemy que Pydantic v2 puede omitir."""
+    if obj.recurrence is None and source.frecuencia is not None:
+        obj.recurrence = source.frecuencia
+    if obj.day_of_week is None and source.dia_reunion is not None:
+        obj.day_of_week = source.dia_reunion
+    if obj.start_time is None and source.hora_reunion is not None:
+        obj.start_time = source.hora_reunion
+    if obj.start_date is None and source.fecha_inicio is not None:
+        obj.start_date = source.fecha_inicio
+    if obj.end_date is None and source.fecha_fin is not None:
+        obj.end_date = source.fecha_fin
+    return obj
+
+
+def _count_strategy_groups(db: Session, strategy_id: UUID) -> int:
+    from backend.models_evangelism import GrupoEvangelismo
+    return db.query(GrupoEvangelismo).filter(
+        GrupoEvangelismo.estrategia_id == strategy_id,
+        GrupoEvangelismo.deleted_at.is_(None),
+    ).count()
+
+
 def read_evangelism_strategies(
     skip: int = 0,
     limit: int = 100,
@@ -58,21 +81,8 @@ def read_evangelism_strategies(
     result = []
     for s in strategies:
         obj = EvangelismStrategy.model_validate(s)
-        # Asegurar synonyms: Pydantic v2 puede fallar con synonyms de SQLAlchemy
-        if obj.recurrence is None and s.frecuencia is not None:
-            obj.recurrence = s.frecuencia
-        if obj.day_of_week is None and s.dia_reunion is not None:
-            obj.day_of_week = s.dia_reunion
-        if obj.start_time is None and s.hora_reunion is not None:
-            obj.start_time = s.hora_reunion
-        if obj.start_date is None and s.fecha_inicio is not None:
-            obj.start_date = s.fecha_inicio
-        if obj.end_date is None and s.fecha_fin is not None:
-            obj.end_date = s.fecha_fin
-        obj.group_count = db.query(GrupoEvangelismo).filter(
-            GrupoEvangelismo.estrategia_id == s.id,
-            GrupoEvangelismo.deleted_at.is_(None),
-        ).count()
+        obj = _hydrate_strategy_synonyms(obj, s)
+        obj.group_count = _count_strategy_groups(db, s.id)
         result.append(obj)
     return result
 
@@ -90,21 +100,8 @@ def read_strategy(
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
     result = EvangelismStrategy.model_validate(db_obj)
-    # Asegurar synonyms
-    if result.recurrence is None and db_obj.frecuencia is not None:
-        result.recurrence = db_obj.frecuencia
-    if result.day_of_week is None and db_obj.dia_reunion is not None:
-        result.day_of_week = db_obj.dia_reunion
-    if result.start_time is None and db_obj.hora_reunion is not None:
-        result.start_time = db_obj.hora_reunion
-    if result.start_date is None and db_obj.fecha_inicio is not None:
-        result.start_date = db_obj.fecha_inicio
-    if result.end_date is None and db_obj.fecha_fin is not None:
-        result.end_date = db_obj.fecha_fin
-    result.group_count = db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.estrategia_id == strategy_id,
-        GrupoEvangelismo.deleted_at.is_(None),
-    ).count()
+    result = _hydrate_strategy_synonyms(result, db_obj)
+    result.group_count = _count_strategy_groups(db, strategy_id)
     return result
 
 
@@ -132,7 +129,7 @@ def create_strategy(
             primera_categoria = CategoriaEstrategia(nombre="General")
             db.add(primera_categoria)
             db.flush()
-        result = create_evangelism_strategy(db=db, data=strategy, sede_id=sede_id, categoria_id=primera_categoria.id)
+        result = create_evangelism_strategy(db=db, data=strategy, sede_id=sede_id, categoria_id=primera_categoria.id, actor_user_id=str(current_user.id))
     except HTTPException:
         raise
     except Exception:
@@ -144,7 +141,7 @@ def create_strategy(
             _project_phases_as_tasks(db, result.id, result.name, strategy.phases, strategy.start_date)
         except Exception:
             db.rollback()
-            if not delete_evangelism_strategy(db=db, strategy_id=result.id):
+            if not delete_evangelism_strategy(db=db, strategy_id=result.id, actor_user_id=str(current_user.id)):
                 logger.error(
                     "Failed to clean up strategy after phase generation error",
                     extra={"strategy_id": str(result.id)},
@@ -181,7 +178,7 @@ def update_strategy(
                     status_code=400,
                     detail="El rol por defecto debe pertenecer a esta estrategia",
                 )
-        db_obj = update_evangelism_strategy(db=db, strategy_id=strategy_id, data=strategy)
+        db_obj = update_evangelism_strategy(db=db, strategy_id=strategy_id, data=strategy, actor_user_id=str(_user.id))
     except Exception:
         db.rollback()
         raise
@@ -296,7 +293,7 @@ def delete_strategy(
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
-    if not delete_evangelism_strategy(db=db, strategy_id=strategy_id):
+    if not delete_evangelism_strategy(db=db, strategy_id=strategy_id, actor_user_id=str(_user.id)):
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
 
 

@@ -50,7 +50,7 @@ class SplitResponse(BaseModel):
     mensaje: str
     grupo_original: dict
     nuevo_grupo: dict
-    miembros_transferidos: int
+    personas_transferidas: int
 
 
 class MultiplicationHistoryItem(BaseModel):
@@ -60,7 +60,7 @@ class MultiplicationHistoryItem(BaseModel):
     parent_group_nombre: Optional[str] = None
     notes_historial: Optional[str] = None
     created_at: Optional[str] = None
-    miembros_actuales: int = 0
+    personas_actuales: int = 0
     lider_nombre: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -70,7 +70,7 @@ class MultiplicationCheckItem(BaseModel):
     grupo_id: UUID
     grupo_nombre: str
     lider_nombre: Optional[str] = None
-    total_miembros: int
+    total_personas: int
     excede_umbral: bool
     sugerencia: str
 
@@ -100,7 +100,7 @@ def _serialize_grupo(grupo: models.GrupoEvangelismo, db: Session) -> dict:
         "lider_nombre": f"{grupo.lider.first_name} {grupo.lider.last_name}" if grupo.lider else None,
         "sede_id": grupo.sede_id,
         "activo": grupo.activo,
-        "total_miembros": miembros_total,
+        "total_personas": miembros_total,
         "parent_group_id": grupo.parent_group_id,
         "parent_group_nombre": grupo.parent_group.nombre if grupo.parent_group else None,
         "notes_historial": grupo.notes_historial,
@@ -148,7 +148,7 @@ def check_multiplication(
             "grupo_id": grupo.id,
             "grupo_nombre": grupo.nombre,
             "lider_nombre": lider_nombre,
-            "total_miembros": total,
+            "total_personas": total,
             "excede_umbral": excede,
             "sugerencia": sugerencia,
         })
@@ -266,7 +266,7 @@ def split_group(
         f"{transferidos} personas transferidas al nuevo grupo '{nuevo_grupo.nombre}'.",
         grupo_original=_serialize_grupo(grupo_original, db),
         nuevo_grupo=_serialize_grupo(nuevo_grupo, db),
-        miembros_transferidos=transferidos,
+        personas_transferidas=transferidos,
     )
 
 
@@ -297,7 +297,7 @@ def multiplication_history(
             "parent_group_nombre": grupo.parent_group.nombre if grupo.parent_group else None,
             "notes_historial": grupo.notes_historial,
             "created_at": grupo.created_at.isoformat() if grupo.created_at else None,
-            "miembros_actuales": _count_personas(db, grupo.id),
+            "personas_actuales": _count_personas(db, grupo.id),
             "lider_nombre": (
                 f"{grupo.lider.first_name} {grupo.lider.last_name}"
                 if grupo.lider

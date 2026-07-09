@@ -96,7 +96,10 @@ def list_my_pending_groups_sessions(
         house_ids = [
             row[0] for row in
             db.query(models.GrupoEvangelismo.id)
-            .filter(models.GrupoEvangelismo.sede_id == sede_id)
+            .filter(
+                models.GrupoEvangelismo.sede_id == sede_id,
+                models.GrupoEvangelismo.deleted_at.is_(None),
+            )
             .all()
         ]
     else:
@@ -107,6 +110,7 @@ def list_my_pending_groups_sessions(
             row[0]
             for row in db.query(models.GrupoEvangelismo.id)
             .filter(
+                models.GrupoEvangelismo.deleted_at.is_(None),
                 (models.GrupoEvangelismo.lider_persona_id == persona.id)
                 | (models.GrupoEvangelismo.asistente_persona_id == persona.id)
             )
@@ -337,6 +341,10 @@ def list_sessions(
             "topic": s.topic,
             "offering_amount": float(s.offering_amount) if s.offering_amount else None,
             "report_notes": s.report_notes,
+            "novelty_type": s.novelty_type,
+            "novelty_detail": s.novelty_detail,
+            "reported_by_persona_id": str(s.reported_by_persona_id) if s.reported_by_persona_id else None,
+            "report_deadline": s.report_deadline.isoformat() if s.report_deadline else None,
         }
         for s in rows
     ]
@@ -449,6 +457,10 @@ def get_session_detail(
             "offering_amount": float(session.offering_amount) if session.offering_amount else None,
             "status": session.status,
             "report_notes": session.report_notes,
+            "novelty_type": session.novelty_type,
+            "novelty_detail": session.novelty_detail,
+            "reported_by_persona_id": str(session.reported_by_persona_id) if session.reported_by_persona_id else None,
+            "report_deadline": session.report_deadline.isoformat() if session.report_deadline else None,
         },
         "attendance": attendance_list,
         "grupo": {

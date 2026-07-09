@@ -323,6 +323,8 @@ def submit_attendance(
         db.add(db_att)
         submitted.append(db_att)
 
+    session.reported_at = utc_now()
+
     try:
         db.commit()
     except Exception:
@@ -463,7 +465,7 @@ def create_seguimiento(
         raise HTTPException(status_code=404, detail="Asistencia no encontrada")
 
     payload.asistencia_id = asistencia_id
-    return _serialize_seguimiento(create_seguimiento(db, payload))
+    return _serialize_seguimiento(create_seguimiento(db, payload, actor_user_id=str(_user.id)))
 
 
 @router.patch("/follow-up/{seguimiento_id}", response_model=schemas.RegistroSeguimientoResponse)
@@ -476,7 +478,7 @@ def update_seguimiento(
     """Actualiza un seguimiento (marcar completado, agregar resultado, etc.)."""
     from backend.crud.evangelism import update_seguimiento
 
-    result = update_seguimiento(db, seguimiento_id, payload)
+    result = update_seguimiento(db, seguimiento_id, payload, actor_user_id=str(_user.id))
     if not result:
         raise HTTPException(status_code=404, detail="Seguimiento no encontrado")
     return _serialize_seguimiento(result)

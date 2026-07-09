@@ -11,6 +11,23 @@ from pydantic import BaseModel, field_validator
 
 from backend.schemas._common import orm_config
 
+
+def _coerce_uuid_or_none(v):
+    """Coerce str|UUID|None to UUID|None before pydantic validation.
+
+    Permite compatibilidad con callers que serializan el body a JSON antes
+    de invocar ``model_validate`` (frontend + tests legacy). Ningún valor
+    malformado se convierte silenciosamente — el validador del tipo
+    ``UUID`` lo rechaza después, evitando el 500.
+    """
+    if v is None or isinstance(v, UUID):
+        return v
+    try:
+        return UUID(str(v))
+    except (ValueError, AttributeError, TypeError):
+        return v
+
+
 # ──────────────────────────────────────────────
 # ENUMS (re-exportados para uso en endpoints)
 # ──────────────────────────────────────────────
@@ -191,8 +208,14 @@ class AsistenciaSesionBase(BaseModel):
 
 
 class AsistenciaSesionCreate(AsistenciaSesionBase):
-    sesion_id: str
+    sesion_id: UUID
     persona_id: UUID
+
+    @field_validator("sesion_id", mode="before")
+    @classmethod
+    def _v_sesion_id(cls, v):
+        """Acepta str o UUID; emite UUID antes de la validación."""
+        return _coerce_uuid_or_none(v)
 
 
 class AsistenciaSesionUpdate(BaseModel):
@@ -206,7 +229,7 @@ class AsistenciaSesionUpdate(BaseModel):
 
 class AsistenciaSesionResponse(AsistenciaSesionBase):
     id: UUID
-    sesion_id: str
+    sesion_id: UUID
     persona_id: UUID
     attended: Optional[bool] = None
     status: Optional[str] = None
@@ -227,16 +250,26 @@ class RegistroSeguimientoBase(BaseModel):
 
 class RegistroSeguimientoCreate(RegistroSeguimientoBase):
     # El handler asigna asistencia_id desde path-param; no requiere del body.
-    asistencia_id: Optional[str] = None
-    responsable_id: Optional[str] = None
+    asistencia_id: Optional[UUID] = None
+    responsable_id: Optional[UUID] = None
+
+    @field_validator("asistencia_id", "responsable_id", mode="before")
+    @classmethod
+    def _v_uuids(cls, v):
+        return _coerce_uuid_or_none(v)
 
 
 class RegistroSeguimientoUpdate(BaseModel):
     observaciones: Optional[str] = None
     estado_completado: Optional[bool] = None
     fecha_seguimiento: Optional[datetime] = None
-    responsable_id: Optional[str] = None
+    responsable_id: Optional[UUID] = None
     tipo: Optional[TipoSeguimientoEnum] = None
+
+    @field_validator("responsable_id", mode="before")
+    @classmethod
+    def _v_responsable_id(cls, v):
+        return _coerce_uuid_or_none(v)
 
 class RegistroSeguimientoResponse(BaseModel):
     id: UUID
@@ -305,8 +338,21 @@ class AsistenciaBulkItem(BaseModel):
 
 
 class AsistenciaBulkCreate(BaseModel):
-    sesion_id: str
+    sesion_id: UUID
     registros: List[AsistenciaBulkItem]
+
+    @field_validator("sesion_id", mode="before")
+    @classmethod
+    def _v_sesion_id_bulk(cls, v):
+        """Acepta str o UUID; emite UUID antes de la validación.
+
+        Coherente con ``AsistenciaSesionCreate.sesion_id`` — el flujo
+        bulk termina llamando a ``crud.submit_asistencia(AsistenciaSesionCreate(...))``
+        ya validado por ``_coerce_uuid_or_404``, así que el filtro del
+        JOIN (``SesionGrupo.id == sesion_uuid``) no recibe nunca un str
+        ni un None.
+        """
+        return _coerce_uuid_or_none(v)
 
 
 # ──────────────────────────────────────────────
@@ -369,6 +415,7 @@ class SesionGrupoCreate(BaseModel):
     novelty_detail: Optional[str] = None
     cancellation_reason: Optional[str] = None
     reported_by_persona_id: Optional[str] = None
+    report_deadline: Optional[datetime] = None
     status: str = "Realizada"
 
 
@@ -381,6 +428,7 @@ class SesionGrupoUpdate(BaseModel):
     novelty_detail: Optional[str] = None
     cancellation_reason: Optional[str] = None
     reported_by_persona_id: Optional[str] = None
+    report_deadline: Optional[datetime] = None
     status: Optional[str] = None
 
 
@@ -421,17 +469,20 @@ class SesionGrupoResponse(BaseModel):
     cancellation_reason: Optional[str] = None
     novelty_type: Optional[str] = None
     novelty_detail: Optional[str] = None
+    reported_by_persona_id: Optional[str] = None
+    report_deadline: Optional[datetime] = None
     reported_at: Optional[datetime] = None
 
     model_config = orm_config
 
-    @field_validator("id", "grupo_id", mode="before")
+    @field_validator("id", "grupo_id", "reported_by_persona_id", mode="before")
     @classmethod
     def _coerce_uuid_to_str(cls, v):
         """Acepta ``UUID`` o ``str`` y siempre emite ``str``.
 
         Esencial para mantener el contrato historico con el frontend
-        (donde ``session_id`` y ``grupo_id`` se reciben como string).
+        (donde ``session_id``, ``grupo_id`` y ``reported_by_persona_id``
+        se reciben como string).
         """
         if v is None:
             return v

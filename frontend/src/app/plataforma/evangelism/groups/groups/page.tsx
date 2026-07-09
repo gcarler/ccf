@@ -476,7 +476,7 @@ function GroupsContent() {
  }, [personas, personaSearchQuery, personaRoleFilter, personaAssignmentFilter, selectedPersonaIds, summary]);
 
  const inputCls =
- 'w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md px-4 py-1.5 text-sm font-medium focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all placeholder:text-[hsl(var(--text-secondary))]';
+ 'w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md px-4 py-1.5 text-sm font-medium focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] outline-none transition-all placeholder:text-[hsl(var(--text-secondary))]';
 
  const showPanel = selectedHouse !== null || isCreating || mode === 'personas';
 
@@ -506,7 +506,7 @@ function GroupsContent() {
  setSelectedHouse(h); setFormData(h); setSelectedPersonaIds(new Set());
  }
  }}
- className="w-full text-left flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-blue-300 dark:hover:border-blue-600 transition-all group"
+ className="w-full text-left flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-[hsl(var(--primary)/0.3)] dark:hover:border-[hsl(var(--primary)/0.4)] transition-all group"
  >
  <div className="min-w-0 flex-1">
  <div className="flex items-center gap-2 flex-wrap">
@@ -518,9 +518,9 @@ function GroupsContent() {
  {h.leader_id ? (
  <span><Users size={11} className="inline mr-1" />{getPersonaName(h.leader_id)}</span>
  ) : (
- <span className="text-amber-500 font-semibold">Sin líder</span>
+ <span className="text-warning font-semibold">Sin líder</span>
  )}
- <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-[hsl(var(--secondary))] bg-green-50 dark:text-[hsl(var(--secondary))] dark:bg-green-500/10' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
+ <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
  {h.status}
  </span>
  </div>
@@ -557,20 +557,20 @@ function GroupsContent() {
  setSelectedHouse(h); setFormData(h); setSelectedPersonaIds(new Set());
  }
  }}
- className="text-left w-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-4 hover:border-blue-300 dark:hover:border-blue-600 transition-all hover:shadow-md space-y-3"
+ className="text-left w-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-4 hover:border-[hsl(var(--primary)/0.3)] dark:hover:border-[hsl(var(--primary)/0.4)] transition-all hover:shadow-md space-y-3"
  >
  <div className="flex items-start justify-between gap-2">
  <div className="min-w-0">
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{h.name}</p>
  {h.code && <p className="text-[10px] font-mono text-[hsl(var(--text-secondary))]">{h.code}</p>}
  </div>
- <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-[hsl(var(--secondary))] bg-green-50 dark:text-[hsl(var(--secondary))] dark:bg-green-500/10' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
+ <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
  {h.status}
  </span>
  </div>
  <div className="space-y-1.5 text-xs text-[hsl(var(--text-secondary))]">
  {h.zone && <p><MapPin size={12} className="inline mr-1.5" />{h.zone}</p>}
- <p><Users size={12} className="inline mr-1.5" />{h.leader_id ? getPersonaName(h.leader_id) : <span className="text-amber-500 font-semibold">Sin líder</span>}</p>
+ <p><Users size={12} className="inline mr-1.5" />{h.leader_id ? getPersonaName(h.leader_id) : <span className="text-warning font-semibold">Sin líder</span>}</p>
  {h.address && <p className="truncate opacity-60">{h.address}</p>}
  </div>
  <div className="flex items-center gap-2 pt-2 border-t border-[hsl(var(--border-primary))]">
@@ -626,16 +626,16 @@ function GroupsContent() {
  setSelectedHouse(h); setFormData(h); setSelectedPersonaIds(new Set());
  }
  }}
- className="text-left w-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-3 hover:border-blue-300 dark:hover:border-blue-500 transition-all space-y-2"
+ className="text-left w-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-3 hover:border-[hsl(var(--primary)/0.3)] dark:hover:border-[hsl(var(--primary)/0.4)] transition-all space-y-2"
  >
  <div className="flex items-start justify-between gap-1">
  <p className="text-xs font-bold text-[hsl(var(--text-primary))] truncate">{h.name}</p>
- <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold ${h.status === 'Activo' ? 'text-[hsl(var(--secondary))] bg-green-50 dark:text-[hsl(var(--secondary))] dark:bg-green-500/10' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
+ <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold ${h.status === 'Activo' ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
  {h.status}
  </span>
  </div>
  <div className="text-[10px] text-[hsl(var(--text-secondary))] space-y-1">
- <p><Users size={10} className="inline mr-1" />{h.leader_id ? getPersonaName(h.leader_id) : <span className="text-amber-500">Sin líder</span>}</p>
+ <p><Users size={10} className="inline mr-1" />{h.leader_id ? getPersonaName(h.leader_id) : <span className="text-warning">Sin líder</span>}</p>
  {h.address && <p className="truncate opacity-60">{h.address}</p>}
  </div>
  <div className="flex items-center gap-2 text-[9px] text-[hsl(var(--text-secondary))]">
@@ -691,24 +691,24 @@ function GroupsContent() {
  setSelectedHouse(h); setFormData(h); setSelectedPersonaIds(new Set());
  }
  }}
- className="border-b border-[hsl(var(--border-primary))] hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-colors cursor-pointer"
+ className="border-b border-[hsl(var(--border-primary))] hover:bg-info-soft/50 dark:hover:bg-[hsl(var(--info)/0.05)] transition-colors cursor-pointer"
  >
  <td className="px-4 py-2.5 font-medium text-[hsl(var(--text-primary))] whitespace-nowrap">{h.name}</td>
  <td className="px-4 py-2.5 text-[hsl(var(--text-secondary))] font-mono">{h.code || '—'}</td>
  <td className="px-4 py-2.5 text-[hsl(var(--text-secondary))]">{h.zone || '—'}</td>
- <td className="px-4 py-2.5 text-[hsl(var(--text-secondary))]">{h.leader_id ? getPersonaName(h.leader_id) : <span className="text-amber-500 font-semibold">Sin líder</span>}</td>
+ <td className="px-4 py-2.5 text-[hsl(var(--text-secondary))]">{h.leader_id ? getPersonaName(h.leader_id) : <span className="text-warning font-semibold">Sin líder</span>}</td>
  <td className="px-4 py-2.5 text-[hsl(var(--text-secondary))] max-w-[200px] truncate">{h.address || '—'}</td>
  <td className="px-4 py-2.5 text-center text-[hsl(var(--text-secondary))]">{h.capacity || '—'}</td>
  <td className="px-4 py-2.5 text-center text-[hsl(var(--text-secondary))]">{h.day_of_week || '—'}</td>
  <td className="px-4 py-2.5 text-center">
- <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-[hsl(var(--secondary))] bg-green-50 dark:text-[hsl(var(--secondary))] dark:bg-green-500/10' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
+ <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
  {h.status}
  </span>
  </td>
  <td className="px-4 py-2.5 text-right">
  <button
  onClick={(e) => { e.stopPropagation(); requestDeleteHouse(h); }}
- className="p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+ className="p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-danger-soft transition-colors"
  title="Eliminar"
  >
  <Trash2 size={13} />
@@ -758,7 +758,7 @@ function GroupsContent() {
  value={searchQuery}
  onChange={e => setSearchQuery(e.target.value)}
  placeholder="Buscar por nombre o zona..."
- className="w-full bg-[hsl(var(--bg-muted))] border border-transparent rounded-md py-2 pl-9 pr-3 text-xs font-medium focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 outline-none transition-all"
+ className="w-full bg-[hsl(var(--bg-muted))] border border-transparent rounded-md py-2 pl-9 pr-3 text-xs font-medium focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] outline-none transition-all"
  />
  </div>
  </div>
@@ -782,7 +782,7 @@ function GroupsContent() {
  key={h.id}
  className={`flex items-start gap-1 px-2 py-1.5 rounded-md border transition-all duration-200 ${
  isActive
- ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 shadow-sm'
+ ? 'bg-info-soft border-info-muted shadow-sm'
  : 'bg-transparent border-transparent hover:bg-[hsl(var(--bg-muted))]'
  }`}
  >
@@ -821,7 +821,7 @@ function GroupsContent() {
  {h.zone || 'Sin zona'}
  </p>
  {h.leader_id && (
- <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-blue-100/50 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] shrink-0">
+ <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-info-soft text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] shrink-0">
  {getPersonaName(h.leader_id).split(' ')[0]}
  </span>
  )}
@@ -829,7 +829,7 @@ function GroupsContent() {
  </button>
  <button
  onClick={(e) => { e.stopPropagation(); requestDeleteHouse(h); }}
- className="shrink-0 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] dark:hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+ className="shrink-0 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] dark:hover:text-[hsl(var(--destructive))] hover:bg-danger-soft transition-colors"
  title="Eliminar grupo"
  >
  <Trash2 size={13} />
@@ -872,10 +872,10 @@ function GroupsContent() {
  viewOptions={['list', 'kanban', 'grid', 'table']}
  onSearch={setSearchQuery}
  >
- <div className="flex h-full p-4 lg:p-4 bg-[hsl(var(--bg-muted))]/50 dark:bg-[#252528]/50">
+ <div className="flex h-full p-4 lg:p-4 bg-[hsl(var(--bg-muted))]/50 dark:bg-surface-card/50">
  {/* Detail/Edit Panel */}
  {showPanel ? (
- <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border-primary))] shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
+ <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-surface-card rounded-lg border border-[hsl(var(--border-primary))] shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
  <div className="px-3 py-2 border-b border-[hsl(var(--border-primary))]/80 flex items-center justify-between shrink-0 bg-[hsl(var(--bg-secondary))]">
  <h2 className="text-base font-bold text-[hsl(var(--text-primary))]">
  {isCreating ? 'Nuevo Grupo' : MODE_CONFIG[mode].title}
@@ -884,7 +884,7 @@ function GroupsContent() {
  {!isCreating && selectedHouse && (
  <button
  onClick={() => router.push(`/plataforma/evangelism/groups/sessions/${selectedHouse.id}`)}
- className="size-8 rounded-lg bg-green-50 dark:bg-green-500/10 flex items-center justify-center text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))] hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors"
+ className="size-8 rounded-lg bg-success-soft flex items-center justify-center text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))] dark:hover:bg-[hsl(var(--success)/0.15)] transition-colors"
  title="Reportar sesión"
  >
  <Calendar size={15} />
@@ -893,7 +893,7 @@ function GroupsContent() {
  {!isCreating && selectedHouse && (
  <button
  onClick={() => requestDeleteHouse(selectedHouse)}
- className="size-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-[hsl(var(--destructive))] hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
+ className="size-8 rounded-lg bg-danger-soft flex items-center justify-center text-[hsl(var(--destructive))] dark:hover:bg-[hsl(var(--danger)/0.15)] transition-colors"
  title="Eliminar grupo"
  >
  <Trash2 size={15} />
@@ -1138,7 +1138,7 @@ function GroupsContent() {
  className={`px-4 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-colors flex items-center gap-2 ${
  isAddingPersonas
  ? 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/20'
- : 'bg-blue-50 text-[hsl(var(--primary))] hover:bg-blue-100 dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]'
+ : 'bg-info-soft text-[hsl(var(--primary))] hover:bg-info-muted dark:bg-[hsl(var(--info)/0.1)] dark:text-[hsl(var(--primary))]'
  }`}
  >
  <UserPlus size={14} /> {isAddingPersonas ? 'Ocultar catálogo' : 'Añadir personas'}
@@ -1147,7 +1147,7 @@ function GroupsContent() {
  {selectedPersonaIds.size > 0 ? (
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
  {personas.filter(m => selectedPersonaIds.has(m.id)).map(persona => (
- <div key={persona.id} className="flex items-center justify-between gap-3 rounded-lg border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-900/10 px-4 py-1.5">
+ <div key={persona.id} className="flex items-center justify-between gap-3 rounded-lg border border-info-muted dark:border-[hsl(var(--info)/0.3)] bg-info-soft px-4 py-1.5">
  <div className="min-w-0">
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
  {persona.nombre_completo}
@@ -1163,7 +1163,7 @@ function GroupsContent() {
  next.delete(persona.id);
  return next;
  })}
- className="text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors shrink-0"
+ className="text-[hsl(var(--text-secondary))] hover:text-danger transition-colors shrink-0"
  title="Remover del Grupo"
  >
  <X size={16} />
@@ -1178,16 +1178,16 @@ function GroupsContent() {
  )}
 
  {/* QUICK ACTION TO ATTENDANCE PANEL */}
- <div className="mt-3 pt-6 border-t border-[hsl(var(--border-primary))] flex items-center justify-between bg-blue-50/50 dark:bg-blue-900/10 rounded-lg px-4 py-2">
+ <div className="mt-3 pt-6 border-t border-[hsl(var(--border-primary))] flex items-center justify-between bg-info-soft rounded-lg px-4 py-2">
  <div>
- <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">Registrar Asistencia Semanal</h3>
- <p className="text-xs font-medium text-blue-700/70 dark:text-blue-300/70">
+ <h3 className="text-sm font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] mb-1">Registrar Asistencia Semanal</h3>
+ <p className="text-xs font-medium text-info-text/70 dark:text-info/70">
  Ir al panel dedicado para registrar la asistencia, ofrendas y novedades de las reuniones semanales de este grupo.
  </p>
  </div>                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
                                   <a
                                     href={`/plataforma/evangelism/groups/${selectedHouse.id}`}
-                                    className="px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2"
+                                    className="px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-primary flex items-center gap-2"
                                   >
                                     <Calendar size={14} /> Registrar Asistencia
                                   </a>
@@ -1196,7 +1196,7 @@ function GroupsContent() {
                                       type="button"
                                       onClick={() => downloadGroupAttendancePdf(selectedHouse.id)}
                                       title="Descargar reporte de asistencia (PDF)"
-                                      className="px-2.5 py-2.5 bg-rose-50 dark:bg-rose-500/10 text-[hsl(var(--destructive))] dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 hover:bg-rose-100 dark:hover:bg-rose-500/20 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5"
+                                      className="px-2.5 py-2.5 bg-danger-soft text-[hsl(var(--destructive))] dark:text-danger border border-danger-muted dark:border-[hsl(var(--danger)/0.3)] hover:bg-danger-muted dark:hover:bg-[hsl(var(--danger)/0.15)] rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5"
                                     >
                                       <FileText size={13} /> PDF
                                     </button>
@@ -1204,7 +1204,7 @@ function GroupsContent() {
                                       type="button"
                                       onClick={() => downloadGroupAttendanceExcel(selectedHouse.id)}
                                       title="Descargar reporte de asistencia (Excel)"
-                                      className="px-2.5 py-2.5 bg-emerald-50 dark:bg-emerald-500/10 text-[hsl(var(--secondary))] dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5"
+                                      className="px-2.5 py-2.5 bg-success-soft text-[hsl(var(--secondary))] dark:text-success border border-success-muted dark:border-[hsl(var(--success)/0.3)] hover:bg-success-soft dark:hover:bg-[hsl(var(--success)/0.15)] rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5"
                                     >
                                       <FileSpreadsheet size={13} /> XLSX
                                     </button>
@@ -1252,7 +1252,7 @@ function GroupsContent() {
  return (
  <label
  key={persona.id}
- className="flex items-start gap-3 rounded-lg border px-4 py-1.5 cursor-pointer transition-all bg-[hsl(var(--bg-primary))] border-[hsl(var(--border-primary))] hover:border-blue-300/40"
+ className="flex items-start gap-3 rounded-lg border px-4 py-1.5 cursor-pointer transition-all bg-[hsl(var(--bg-primary))] border-[hsl(var(--border-primary))] hover:border-[hsl(var(--primary)/0.3)]"
  >
  <input
  type="checkbox"
@@ -1266,7 +1266,7 @@ function GroupsContent() {
  return next;
  })
  }
- className="mt-1 size-4 accent-blue-600 shrink-0"
+ className="mt-1 size-4 accent-[hsl(var(--primary))] shrink-0"
  />
  <div className="min-w-0">
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
@@ -1306,7 +1306,7 @@ function GroupsContent() {
  type="submit"
  form="groups-form"
  disabled={saving}
- className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+ className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-primary active:scale-95 disabled:opacity-50 flex items-center gap-2"
  >
  {saving ? (
  <Activity className="animate-spin" size={13} />
@@ -1318,7 +1318,7 @@ function GroupsContent() {
  </div>
  </>
  ) : (
- <div className="flex-1 overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
+ <div className="flex-1 overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-surface-card">
  {mode === 'personas' && summary ? (
  <div className="p-4 space-y-3">
  <div className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5">
@@ -1360,7 +1360,7 @@ function GroupsContent() {
  [persona.id]: Number(e.target.value),
  }))
  }
- className="w-full md:w-72 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500/30"
+ className="w-full md:w-72 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
  >
  <option value="">Selecciona una casa</option>
  {houses.map(h => (

@@ -83,7 +83,7 @@ export default function GlobalEventAnalyticsPage() {
  <select 
  value={period}
  onChange={e => setPeriod(e.target.value)}
- className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+ className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
  >
  {periodOptions.map(o => <option key={o.value} value={o.value} className="dark:bg-[hsl(var(--bg-primary))]">{o.label}</option>)}
  </select>
@@ -93,7 +93,7 @@ export default function GlobalEventAnalyticsPage() {
  <select 
  value={eventType}
  onChange={e => setEventType(e.target.value)}
- className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+ className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
  >
  {typeOptions.map(o => <option key={o.value} value={o.value} className="dark:bg-[hsl(var(--bg-primary))]">{o.label}</option>)}
  </select>
@@ -103,7 +103,7 @@ export default function GlobalEventAnalyticsPage() {
 
  {loading ? (
  <div className="py-1.5 text-center">
- <div className="size-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+ <div className="size-8 border-4 border-[hsl(var(--primary)/0.3)] border-t-[hsl(var(--primary))] rounded-full animate-spin mx-auto mb-4"></div>
  <p className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] animate-pulse">Procesando cubos de datos...</p>
  </div>
  ) : !data ? (
@@ -113,7 +113,7 @@ export default function GlobalEventAnalyticsPage() {
  {/* KPIs */}
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
  <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm flex flex-col justify-between">
- <div className="size-9 rounded-lg bg-blue-500/10 text-[hsl(var(--primary))] flex items-center justify-center mb-3">
+ <div className="size-9 rounded-lg bg-info-muted text-[hsl(var(--primary))] flex items-center justify-center mb-3">
  <Users size={24} />
  </div>
  <div>
@@ -123,7 +123,7 @@ export default function GlobalEventAnalyticsPage() {
  </div>
 
  <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm flex flex-col justify-between">
- <div className="size-9 rounded-lg bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] flex items-center justify-center mb-3">
+ <div className="size-9 rounded-lg bg-info-muted text-[hsl(var(--primary))] flex items-center justify-center mb-3">
  <TrendingUp size={24} />
  </div>
  <div>
@@ -133,19 +133,19 @@ export default function GlobalEventAnalyticsPage() {
  </div>
 
  <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm flex flex-col justify-between">
- <div className="size-9 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
+ <div className="size-9 rounded-lg bg-success-muted text-success flex items-center justify-center mb-3">
  <Award size={24} />
  </div>
  <div>
  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Período Pico</p>
  <p className="text-base font-bold text-[hsl(var(--text-primary))] mt-1">{data.kpis.peak_period?.label}</p>
- <p className="text-xs text-emerald-500 font-bold mt-1">{data.kpis.peak_period?.total} asistencias</p>
+ <p className="text-xs text-success font-bold mt-1">{data.kpis.peak_period?.total} asistencias</p>
  </div>
  </div>
 
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm flex flex-col justify-between relative overflow-hidden group">
- <div className={`absolute top-0 inset-x-0 h-1 ${data.kpis.trend_percentage >= 0 ? 'bg-emerald-500' : 'bg-[hsl(var(--destructive))]'}`}></div>
- <div className={`size-9 rounded-lg flex items-center justify-center mb-3 ${data.kpis.trend_percentage >= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-[hsl(var(--destructive))]'}`}>
+ <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm flex flex-col justify-between relative overflow-hidden group">
+ <div className={`absolute top-0 inset-x-0 h-1 ${data.kpis.trend_percentage >= 0 ? 'bg-[hsl(var(--success))]' : 'bg-[hsl(var(--destructive))]'}`}></div>
+ <div className={`size-9 rounded-lg flex items-center justify-center mb-3 ${data.kpis.trend_percentage >= 0 ? 'bg-success-muted text-success' : 'bg-danger-muted text-danger'}`}>
  <TrendingUp size={24} className={data.kpis.trend_percentage < 0 ? 'rotate-180' : ''} />
  </div>
  <div>
@@ -186,7 +186,7 @@ export default function GlobalEventAnalyticsPage() {
  
  {/* Barra */}
  <div 
- className="w-full bg-gradient-to-t from-blue-600/20 to-blue-500/80 hover:from-blue-500 hover:to-blue-400 rounded-t-xl transition-all duration-500 border-t border-blue-400/50" 
+ className="w-full bg-gradient-to-t from-[hsl(var(--info)/0.2)] to-[hsl(var(--info)/0.8)] hover:from-[hsl(var(--info))] hover:to-[hsl(var(--info))] rounded-t-xl transition-all duration-500 border-t border-[hsl(var(--info)/0.5)]" 
  style={{ height: `${heightPct}%` }}
  ></div>
  

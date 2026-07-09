@@ -66,7 +66,7 @@ def create_strategy_role(
     if not strategy:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
     payload.estrategia_id = strategy_id
-    return _serialize_rol_personalizado(create_rol_personalizado(db, payload))
+    return _serialize_rol_personalizado(create_rol_personalizado(db, payload, actor_user_id=str(_user.id)))
 
 
 @roles_router.delete("/strategies/{strategy_id}/roles/{role_id}")
@@ -84,7 +84,7 @@ def delete_strategy_role(
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
     if strategy.default_role_id == role_id:
         strategy.default_role_id = None
-    if not delete_rol_personalizado(db, role_id):
+    if not delete_rol_personalizado(db, role_id, actor_user_id=str(_user.id)):
         raise HTTPException(status_code=404, detail="Rol no encontrado")
     return {"ok": True}
 
@@ -115,7 +115,7 @@ def create_motivo_excusa(
     """Crea un nuevo motivo de excusa."""
     from backend.crud.evangelism import create_motivo_excusa
 
-    return create_motivo_excusa(db, payload.descripcion)
+    return create_motivo_excusa(db, payload.descripcion, actor_user_id=str(_user.id))
 
 
 @roles_router.patch("/excuses/{excusa_id}", response_model=schemas.MotivoExcusaResponse)
@@ -128,7 +128,7 @@ def update_motivo_excusa(
     """Actualiza un motivo de excusa (no permite modificar los del sistema)."""
     from backend.crud.evangelism import update_motivo_excusa
 
-    result = update_motivo_excusa(db, excusa_id, descripcion=payload.descripcion, activo=payload.activo)
+    result = update_motivo_excusa(db, excusa_id, descripcion=payload.descripcion, activo=payload.activo, actor_user_id=str(_user.id))
     if not result:
         raise HTTPException(status_code=404, detail="Excusa no encontrada o es del sistema")
     return result
@@ -143,7 +143,7 @@ def delete_motivo_excusa(
     """Elimina un motivo de excusa (no permite eliminar los del sistema)."""
     from backend.crud.evangelism import delete_motivo_excusa
 
-    if not delete_motivo_excusa(db, excusa_id):
+    if not delete_motivo_excusa(db, excusa_id, actor_user_id=str(_user.id)):
         raise HTTPException(status_code=404, detail="Excusa no encontrada o es del sistema")
     return {"ok": True}
 
@@ -156,5 +156,5 @@ def seed_motivos_excusa(
     """Inserta las excusas base del sistema (SALUD, TRABAJO, FAMILIA, OTRA)."""
     from backend.crud.evangelism import seed_motivos_excusa
 
-    created = seed_motivos_excusa(db)
+    created = seed_motivos_excusa(db, actor_user_id=str(_user.id))
     return {"created": len(created), "excusas": [e.descripcion for e in created]}
