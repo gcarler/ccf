@@ -241,6 +241,23 @@ export default function ProjectDetailPage() {
         }
     };
 
+    const handleDeleteMilestone = async (milestoneId: string) => {
+        if (!token || !id) return;
+        setUpdatingMilestoneId(milestoneId);
+        try {
+            await apiFetch(`/projects/${id}/milestones/${milestoneId}`, {
+                method: 'DELETE',
+                token,
+            });
+            toast.success('Hito eliminado');
+            loadProject();
+        } catch {
+            toast.error('Error al eliminar hito');
+        } finally {
+            setUpdatingMilestoneId(null);
+        }
+    };
+
     const startEditingMilestone = (milestone: ProjectMilestoneRecord) => {
         setEditingMilestoneId(milestone.id);
         setMilestoneDraftTitle(milestone.title);
@@ -438,6 +455,14 @@ export default function ProjectDetailPage() {
                                                                     className="rounded-lg border border-[hsl(var(--border))] px-2 py-1 text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))] dark:border-white/10"
                                                                 >
                                                                     Editar
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteMilestone(m.id)}
+                                                                    disabled={updatingMilestoneId === m.id}
+                                                                    title="Eliminar hito"
+                                                                    className="rounded-lg border border-rose-200 px-2 py-1 text-[10px] font-semibold uppercase text-rose-600 hover:bg-rose-50 dark:border-rose-500/30 dark:hover:bg-rose-500/10 disabled:opacity-50"
+                                                                >
+                                                                    Eliminar
                                                                 </button>
                                                             </div>
                                                         )}

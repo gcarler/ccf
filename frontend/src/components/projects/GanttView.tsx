@@ -70,13 +70,14 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
         const left = offsetDays * dayWidth;
         const width = duration * dayWidth;
 
-        // Color by status/priority
+        // Color by status/priority (aligned with backend phase slugs)
         const colorMap: Record<string, string> = {
-            done:        'bg-emerald-500 shadow-emerald-500/25',
+            todo:        'bg-[hsl(var(--surface-2))] shadow-slate-500/20',
             in_progress: 'bg-[hsl(var(--primary))] shadow-blue-500/25',
-            blocked:     'bg-rose-500 shadow-rose-500/25',
             review:      'bg-amber-500 shadow-amber-500/20',
+            completed:   'bg-emerald-500 shadow-emerald-500/25',
         };
+
         const prioMap: Record<string, string> = {
             urgent: 'bg-rose-600 shadow-rose-500/25',
             high:   'bg-orange-500 shadow-orange-500/25',

@@ -3,6 +3,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
+import { DEFAULT_TASK_PRIORITY } from '@/lib/projects/constants';
 import type { ProjectTaskRecord } from '@/types/projects';
 import * as Popover from '@radix-ui/react-popover';
 import {
@@ -56,14 +57,14 @@ function formatRelative(date: Date): string {
 const STATUS_OPTIONS = [
     { value:'todo',        label:'Pendiente',   dot:'bg-[hsl(var(--surface-2))]',   bg:'bg-[hsl(var(--surface-2))] dark:bg-white/5',            text:'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',      border:'border-[hsl(var(--border))] dark:border-white/10' },
     { value:'in_progress', label:'En Progreso', dot:'bg-[hsl(var(--primary))]',    bg:'bg-blue-100 dark:bg-blue-500/20',         text:'text-[hsl(var(--primary))] dark:text-blue-300',        border:'border-blue-200 dark:border-blue-500/30' },
-    { value:'blocked',     label:'Bloqueado',   dot:'bg-rose-500',    bg:'bg-rose-100 dark:bg-rose-500/20',         text:'text-rose-700 dark:text-rose-300',        border:'border-rose-200 dark:border-rose-500/30' },
+    { value:'review',      label:'En Revisión', dot:'bg-amber-500',   bg:'bg-amber-100 dark:bg-amber-500/20',       text:'text-amber-700 dark:text-amber-300',      border:'border-amber-200 dark:border-amber-500/30' },
     { value:'completed',   label:'Completado',  dot:'bg-emerald-500', bg:'bg-emerald-100 dark:bg-emerald-500/20',   text:'text-emerald-700 dark:text-emerald-300',  border:'border-emerald-200 dark:border-emerald-500/30' },
 ] as const;
 function getStatus(val: string) { return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0]; }
 
 const PRIORITY_OPTIONS = [
     { value:'low',    label:'Baja',    color:'text-[hsl(var(--text-secondary))]',  fill:'#94a3b8' },
-    { value:'normal', label:'Media',   color:'text-[hsl(var(--primary))]',   fill:'#3b82f6' },
+    { value:'medium', label:'Media',   color:'text-[hsl(var(--primary))]',   fill:'#3b82f6' },
     { value:'high',   label:'Alta',    color:'text-orange-500', fill:'#f97316' },
     { value:'urgent', label:'Urgente', color:'text-rose-500',   fill:'#ef4444' },
 ] as const;
@@ -282,7 +283,7 @@ function PriorityRenderer(params: ICellRendererParams) {
     if (params.data?.__isGroup) return null;
     const { applyChangeRef } = params.context ?? {};
     const task = params.data as ProjectTaskRecord;
-    return <InlinePriorityCell value={task.priority ?? 'normal'} onChange={(v) => applyChangeRef?.current?.(task.id, 'priority', v)} />;
+    return <InlinePriorityCell value={task.priority ?? 'medium'} onChange={(v) => applyChangeRef?.current?.(task.id, 'priority', v)} />;
 }
 
 function DateRenderer(params: ICellRendererParams) {
@@ -398,7 +399,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
         if (groupBy === 'none') return processed;
         const groups: Record<string, ProjectTaskRecord[]> = {};
         processed.forEach(t => {
-            const k = groupBy === 'priority' ? (t.priority ?? 'normal') : (t.status ?? 'todo');
+            const k = groupBy === 'priority' ? (t.priority ?? DEFAULT_TASK_PRIORITY) : (t.status ?? 'todo');
             if (!groups[k]) groups[k] = [];
             groups[k].push(t);
         });

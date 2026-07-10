@@ -20,6 +20,10 @@ from backend.crud.crm_.extended import (
     get_crm_automation,
     get_crm_automations,
     update_crm_automation,
+    create_crm_automation_edge,
+    delete_crm_automation_edge,
+    get_crm_automation_edge,
+    get_crm_automation_edges,
 )
 from backend.crud.crm_.resources import (
     count_envios,
@@ -46,6 +50,9 @@ from backend.schemas.crm.automation import (
     CrmAutomationCreate,
     CrmAutomationOut,
     CrmAutomationUpdate,
+    CrmAutomationEdgeCreate,
+    CrmAutomationEdgeOut,
+    CrmAutomationEdgeUpdate,
 )
 from backend.schemas.crm.resources import (
     BitacoraEnvioOut,
@@ -150,6 +157,9 @@ def get_one_plantilla(
     obj = get_plantilla(db, plantilla_id)
     if not obj:
         raise HTTPException(404, "Plantilla no encontrada")
+    sede_id = get_user_sede_id(db, str(user.id))
+    if str(obj.sede_id) != str(sede_id):
+        raise HTTPException(403, "Acceso no autorizado")
     return PlantillaMensajeOut.from_orm_safe(obj, total_envios=count_envios(db, plantilla_id))
 
 
@@ -160,9 +170,13 @@ def patch_plantilla(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm")),
 ):
-    obj = update_plantilla(db, plantilla_id, payload)
+    obj = get_plantilla(db, plantilla_id)
     if not obj:
         raise HTTPException(404, "Plantilla no encontrada")
+    sede_id = get_user_sede_id(db, str(user.id))
+    if str(obj.sede_id) != str(sede_id):
+        raise HTTPException(403, "Acceso no autorizado")
+    obj = update_plantilla(db, plantilla_id, payload)
     return PlantillaMensajeOut.from_orm_safe(obj, total_envios=count_envios(db, plantilla_id))
 
 
@@ -172,6 +186,12 @@ def del_plantilla(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm")),
 ):
+    obj = get_plantilla(db, plantilla_id)
+    if not obj:
+        raise HTTPException(404, "Plantilla no encontrada")
+    sede_id = get_user_sede_id(db, str(user.id))
+    if str(obj.sede_id) != str(sede_id):
+        raise HTTPException(403, "Acceso no autorizado")
     if not delete_plantilla(db, plantilla_id):
         raise HTTPException(404, "Plantilla no encontrada")
 
@@ -184,6 +204,12 @@ def get_adjuntos(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm")),
 ):
+    obj = get_plantilla(db, plantilla_id)
+    if not obj:
+        raise HTTPException(404, "Plantilla no encontrada")
+    sede_id = get_user_sede_id(db, str(user.id))
+    if str(obj.sede_id) != str(sede_id):
+        raise HTTPException(403, "Acceso no autorizado")
     return [RecursoAdjuntoOut.from_orm_safe(r) for r in list_adjuntos(db, plantilla_id=plantilla_id)]
 
 
@@ -195,8 +221,12 @@ async def upload_adjunto(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm")),
 ):
-    if not get_plantilla(db, plantilla_id):
+    plantilla = get_plantilla(db, plantilla_id)
+    if not plantilla:
         raise HTTPException(404, "Plantilla no encontrada")
+    sede_id = get_user_sede_id(db, str(user.id))
+    if str(plantilla.sede_id) != str(sede_id):
+        raise HTTPException(403, "Acceso no autorizado")
 
     safe_name = sanitize_filename(file.filename or "upload")
     try:
@@ -210,7 +240,6 @@ async def upload_adjunto(
 
     url = storage_service.save_file(contents, safe_name, subfolder="crm_recursos")
     seaweed_fid = storage_service.save_file_seaweed(contents, safe_name, subfolder="crm_recursos")
-    sede_id = get_user_sede_id(db, str(user.id))
     persona_id = resolve_persona_id_from_identity(db, str(user.id))
 
     obj = create_adjunto(
@@ -234,6 +263,14 @@ def del_adjunto(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm")),
 ):
+    from backend.models_crm import RecursoAdjunto
+    import uuid
+    obj = db.query(RecursoAdjunto).filter_by(id=uuid.UUID(adjunto_id), activo=True).first()
+    if not obj:
+        raise HTTPException(404, "Adjunto no encontrado")
+    sede_id = get_user_sede_id(db, str(user.id))
+    if str(obj.sede_id) != str(sede_id):
+        raise HTTPException(403, "Acceso no autorizado")
     if not delete_adjunto(db, adjunto_id):
         raise HTTPException(404, "Adjunto no encontrado")
 
@@ -251,6 +288,9 @@ async def enviar_plantilla(
     plantilla = get_plantilla(db, plantilla_id)
     if not plantilla:
         raise HTTPException(404, "Plantilla no encontrada")
+    sede_id = get_user_sede_id(db, str(user.id))
+    if str(plantilla.sede_id) != str(sede_id):
+        raise HTTPException(403, "Acceso no autorizado")
 
     texto = plantilla.contenido_texto
     for var, valor in payload.variables.items():
@@ -259,7 +299,6 @@ async def enviar_plantilla(
     canal_val = plantilla.canal.value if hasattr(plantilla.canal, "value") else str(plantilla.canal)
     payload_log: dict = {"variables": payload.variables, "texto_hidratado": texto, "canal": canal_val}
 
-    sede_id = get_user_sede_id(db, str(user.id))
     persona_id = resolve_persona_id_from_identity(db, str(user.id))
 
     # ── Send through gateway ───────────────────────────────────────────
@@ -291,7 +330,7 @@ async def enviar_plantilla(
         payload_log["comms_log_id"] = comms_log_id
         payload_log["external_id"] = external_id
         payload_log["outcome"] = outcome
-    except ValueError as exc:
+    except Exception as exc:
         log_error = str(exc)
         outcome = CommunicationOutcome.FAILED.value
         payload_log["error"] = log_error
@@ -332,8 +371,9 @@ async def send_plantilla_campaign(
     plantilla = get_plantilla(db, plantilla_id)
     if not plantilla:
         raise HTTPException(404, "Plantilla no encontrada")
-
     sede_id = get_user_sede_id(db, str(user.id))
+    if str(plantilla.sede_id) != str(sede_id):
+        raise HTTPException(403, "Acceso no autorizado")
     sender_persona_id = resolve_persona_id_from_identity(db, str(user.id))
 
     personas = _resolve_campaign_personas(db, payload.target_segments, sede_id=sede_id)
@@ -503,6 +543,47 @@ def del_automation(
 ):
     if not delete_crm_automation(db, automation_id):
         raise HTTPException(404, "Automatizacion no encontrada")
+
+
+@router.get("/automations/edges", response_model=List[CrmAutomationEdgeOut])
+def list_automation_edges(
+    source_id: Optional[UUID] = None,
+    target_id: Optional[UUID] = None,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+):
+    rows = get_crm_automation_edges(db, source_id=source_id, target_id=target_id)
+    return [CrmAutomationEdgeOut.from_orm_safe(r) for r in rows]
+
+
+@router.post("/automations/edges", response_model=CrmAutomationEdgeOut, status_code=201)
+def create_automation_edge(
+    payload: CrmAutomationEdgeCreate,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+):
+    # Validate source automation exists
+    source = get_crm_automation(db, payload.source_id)
+    if not source:
+        raise HTTPException(404, f"Source automation with id {payload.source_id} not found")
+        
+    # Validate target automation exists
+    target = get_crm_automation(db, payload.target_id)
+    if not target:
+        raise HTTPException(404, f"Target automation with id {payload.target_id} not found")
+        
+    obj = create_crm_automation_edge(db, payload)
+    return CrmAutomationEdgeOut.from_orm_safe(obj)
+
+
+@router.delete("/automations/edges/{edge_id}", status_code=204)
+def delete_automation_edge(
+    edge_id: UUID,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+):
+    if not delete_crm_automation_edge(db, edge_id):
+        raise HTTPException(404, "Edge not found")
 
 
 @router.post("/automations/trigger", response_model=List[AutomationTriggerResult])

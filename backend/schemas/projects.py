@@ -67,7 +67,17 @@ class ProjectAttachment(BaseModel):
     model_config = orm_config
 
 
-ProjectPriority = Literal["low", "medium", "high", "urgent"]
+def _normalize_priority_value(v: Any) -> Any:
+    """Map legacy priority values to canonical enums before validation."""
+    if isinstance(v, str):
+        return {"normal": "medium"}.get(v, v)
+    return v
+
+
+ProjectPriority = Annotated[
+    Literal["low", "medium", "high", "urgent"],
+    BeforeValidator(_normalize_priority_value),
+]
 
 
 class ProjectTaskBase(BaseModel):

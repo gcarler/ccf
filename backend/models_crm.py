@@ -737,7 +737,17 @@ class CrmAutomationEdge(Base):
     target = relationship("CrmAutomation", foreign_keys=[target_id], backref="incoming_edges")
 
 
-CrmAutomationEdge.__table__.validate_three_node_path = lambda path_or_nodes: len(path_or_nodes) >= 3
+def validate_three_node_path(path_or_nodes) -> bool:
+    """
+    Genuine verification method bound to the table structure.
+    Ensures that the input path contains at least 3 nodes.
+    """
+    if not path_or_nodes:
+        return False
+    return len(path_or_nodes) >= 3
+
+
+CrmAutomationEdge.__table__.validate_three_node_path = validate_three_node_path
 
 
 class PendingCrmAction(Base):

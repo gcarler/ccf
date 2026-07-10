@@ -147,26 +147,31 @@ class AutomationEngine:
         def detect_cycle_dfs(start_id, db_session) -> bool:
             visited = set()
             rec_stack = set()
+            stack = [(start_id, False)]
             
-            def dfs(curr_id) -> bool:
-                if len(rec_stack) > 900:  # Safety recursion depth limit
+            while stack:
+                curr_id, is_leave = stack.pop()
+                if is_leave:
+                    rec_stack.discard(curr_id)
+                    visited.add(curr_id)
+                    continue
+                
+                if curr_id in rec_stack:
                     return True
-                visited.add(curr_id)
+                if curr_id in visited:
+                    continue
+                
                 rec_stack.add(curr_id)
+                stack.append((curr_id, True))
                 
                 edges_list = db_session.query(CrmAutomationEdge).filter(CrmAutomationEdge.source_id == curr_id).all()
                 for edge in edges_list:
                     target_id = edge.target_id
-                    if target_id not in visited:
-                        if dfs(target_id):
-                            return True
-                    elif target_id in rec_stack:
+                    if target_id in rec_stack:
                         return True
-                        
-                rec_stack.remove(curr_id)
-                return False
-                
-            return dfs(start_id)
+                    if target_id not in visited:
+                        stack.append((target_id, False))
+            return False
 
         def evaluate_condition(cond_type, actual_val, expected_val_str) -> bool:
             if not cond_type or not isinstance(cond_type, str):
@@ -228,17 +233,31 @@ class AutomationEngine:
                 if actual_val is None or expected_val_str is None:
                     return False
                 try:
-                    return float(actual_val) > float(expected_val_str)
+                    float(expected_val_str)
+                    is_expected_numeric = True
                 except Exception:
-                    return str(actual_val) > str(expected_val_str)
-                    
+                    is_expected_numeric = False
+                if is_expected_numeric:
+                    try:
+                        return float(actual_val) > float(expected_val_str)
+                    except Exception:
+                        return False
+                return str(actual_val) > str(expected_val_str)
+
             if cond_type == "lt":
                 if actual_val is None or expected_val_str is None:
                     return False
                 try:
-                    return float(actual_val) < float(expected_val_str)
+                    float(expected_val_str)
+                    is_expected_numeric = True
                 except Exception:
-                    return str(actual_val) < str(expected_val_str)
+                    is_expected_numeric = False
+                if is_expected_numeric:
+                    try:
+                        return float(actual_val) < float(expected_val_str)
+                    except Exception:
+                        return False
+                return str(actual_val) < str(expected_val_str)
             
             return False
 
@@ -263,7 +282,123 @@ class AutomationEngine:
                 if hasattr(models, "Persona"):
                     persona = db.query(models.Persona).filter(models.Persona.id == action.target_persona_id).first()
                 
-                # Execution of current action (simulated)
+                # Execution of current action through MessagingGateway
+                from backend.services.messaging import get_messaging_gateway
+                gateway = get_messaging_gateway()
+                
+                canal_lower = ""
+                if automation.action_type:
+                    canal_lower = automation.action_type.lower()
+                
+                if "whatsapp" in canal_lower:
+                    canal_lower = "whatsapp"
+                elif "email" in canal_lower:
+                    canal_lower = "email"
+                elif "sms" in canal_lower:
+                    canal_lower = "sms"
+                elif automation.action_payload and isinstance(automation.action_payload, dict) and automation.action_payload.get("canal"):
+                    canal_lower = automation.action_payload.get("canal").lower()
+                
+                plantilla_id = None
+                if automation.action_payload and isinstance(automation.action_payload, dict):
+                    plantilla_id = automation.action_payload.get("plantilla_id")
+                
+                plantilla = None
+                if plantilla_id:
+                    from backend.models_crm import PlantillaMensaje
+                    plantilla = db.query(PlantillaMensaje).filter(PlantillaMensaje.id == plantilla_id).first()
+                    
+                texto = ""
+                if plantilla:
+                    texto = plantilla.contenido_texto
+                    # Hydrate basic variables from persona
+                    if persona:
+                        vars_to_replace = {
+                            "name": persona.first_name or "",
+                            "nombre": persona.first_name or "",
+                            "first_name": persona.first_name or "",
+                            "last_name": persona.last_name or "",
+                            "apellido": persona.last_name or "",
+                        }
+                        for var, val in vars_to_replace.items():
+                            texto = texto.replace(f"{{{{{var}}}}}", val)
+                            texto = texto.replace(f"{{{{{var.upper()}}}}}", val)
+                else:
+                    texto = "Mensaje automático de automatización"
+
+                leader_id = str(case.asignado_a_id) if (case and case.asignado_a_id) else None
+                campaign_name = plantilla.titulo if plantilla else automation.name
+                
+                if canal_lower == "whatsapp":
+                    coro = gateway.send_whatsapp(db, str(action.target_persona_id), texto, leader_id, campaign_name=campaign_name)
+                elif canal_lower == "email":
+                    coro = gateway.send_email(db, str(action.target_persona_id), texto, leader_id, campaign_name=campaign_name)
+                else:
+                    coro = gateway.send_sms(db, str(action.target_persona_id), texto, leader_id, campaign_name=campaign_name)
+                
+                import asyncio
+                import threading
+                def run_async_job(c):
+                    try:
+                        loop = asyncio.get_running_loop()
+                    except RuntimeError:
+                        loop = None
+                    if loop and loop.is_running():
+                        res_list = []
+                        err_list = []
+                        def target():
+                            new_loop = asyncio.new_event_loop()
+                            try:
+                                res_list.append(new_loop.run_until_complete(c))
+                            except Exception as err:
+                                err_list.append(err)
+                            finally:
+                                new_loop.close()
+                        t = threading.Thread(target=target)
+                        t.start()
+                        t.join()
+                        if err_list:
+                            raise err_list[0]
+                        return res_list[0] if res_list else None
+                    else:
+                        return asyncio.run(c)
+                
+                # Execute sending
+                run_async_job(coro)
+                
+                # Log in BitacoraEnvioPlantilla
+                if plantilla_id or (automation.action_payload and isinstance(automation.action_payload, dict) and automation.action_payload.get("plantilla_id")):
+                    p_id = plantilla_id or automation.action_payload.get("plantilla_id")
+                    from backend.crud.crm_.resources import create_envio
+                    
+                    s_id = None
+                    if case and case.sede_id:
+                        s_id = str(case.sede_id)
+                    else:
+                        from backend.models_crm import Sede
+                        first_sede = db.query(Sede).first()
+                        if first_sede:
+                            s_id = str(first_sede.id)
+                        else:
+                            s_id = "00000000-0000-0000-0000-000000000000"
+                            
+                    try:
+                        create_envio(
+                            db,
+                            sede_id=s_id,
+                            plantilla_id=str(p_id) if plantilla else None,
+                            caso_id=str(case.id) if case else None,
+                            enviado_por_id=str(case.asignado_a_id) if (case and case.asignado_a_id) else None,
+                            destinatario_id=str(action.target_persona_id),
+                            payload_hidratado={
+                                "canal": canal_lower,
+                                "texto_hidratado": texto,
+                                "background_automation": str(automation.id)
+                            }
+                        )
+                    except Exception as env_err:
+                        logger.error(f"Error logging plantilla envio in automation: {env_err}")
+                
                 action.status = "executed"
                 
                 # Retrieve outgoing edges from active automation
@@ -309,7 +444,8 @@ class AutomationEngine:
                         logger.info(f"Queued next automation {next_auto.id} for execution at {next_execute_at}")
 
             except Exception as e:
-                logger.error(f"Failed to execute CRM automation {automation.id}: {e}")
+                import traceback
+                logger.error(f"Failed to execute CRM automation {automation.id}: {e}\n{traceback.format_exc()}")
                 action.status = "failed"
 
     def trigger_crm_automation(self, db: Session, automation_id: str, target_persona_id: str):

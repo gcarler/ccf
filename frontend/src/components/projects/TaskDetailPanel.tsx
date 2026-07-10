@@ -1,8 +1,17 @@
 "use client";
 
 import PersonaSelect from '@/components/ui/PersonaSelect';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
+import {
+    PRIORITY_CYCLE,
+    STATUS_CYCLE,
+    PRIORITY_LABELS,
+    STATUS_LABELS,
+    getValidStatus,
+    getValidPriority,
+} from '@/lib/projects/constants';
 import type { ProjectTaskRecord,TaskSupplyRecord } from '@/types/projects';
 import clsx from 'clsx';
 import { AnimatePresence,motion } from 'framer-motion';
@@ -13,9 +22,9 @@ CalendarDays,
 Check,
 CheckCircle2,
 ChevronDown,
-ChevronRight,
-Circle,
-Flag,
+ChevronRight,    Circle,
+    Eye,
+    Flag,
 FolderOpen,
 GitBranch,Home,
 Loader2,
@@ -83,17 +92,17 @@ interface TaskDetailPanelProps {
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-    todo:        { label: 'Pendiente',   color: 'text-[hsl(var(--text-secondary))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]/60',      icon: Circle },
-    in_progress: { label: 'En Progreso', color: 'text-[hsl(var(--primary))]',    bg: 'bg-blue-50 dark:bg-blue-500/10',         icon: Loader2 },
-    done:        { label: 'Completada',  color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10',   icon: CheckCircle2 },
-    blocked:     { label: 'Bloqueada',   color: 'text-rose-600',    bg: 'bg-rose-50 dark:bg-rose-500/10',         icon: X },
+    todo:        { label: STATUS_LABELS.todo,        color: 'text-[hsl(var(--text-secondary))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]/60',      icon: Circle },
+    in_progress: { label: STATUS_LABELS.in_progress, color: 'text-[hsl(var(--primary))]',    bg: 'bg-blue-50 dark:bg-blue-500/10',         icon: Loader2 },
+    review:      { label: STATUS_LABELS.review,      color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10',       icon: Eye },
+    completed:   { label: STATUS_LABELS.completed,   color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10',   icon: CheckCircle2 },
 };
 
 const PRIORITY_MAP: Record<string, { label: string; color: string; dot: string }> = {
-    urgent: { label: 'Urgente', color: 'text-rose-600',   dot: 'bg-rose-500' },
-    high:   { label: 'Alta',    color: 'text-orange-600', dot: 'bg-orange-500' },
-    normal: { label: 'Normal',  color: 'text-[hsl(var(--primary))]',   dot: 'bg-[hsl(var(--primary))]' },
-    low:    { label: 'Baja',    color: 'text-[hsl(var(--text-secondary))]',  dot: 'bg-[hsl(var(--surface-2))]' },
+    urgent: { label: PRIORITY_LABELS.urgent, color: 'text-rose-600',   dot: 'bg-rose-500' },
+    high:   { label: PRIORITY_LABELS.high,   color: 'text-orange-600', dot: 'bg-orange-500' },
+    medium: { label: PRIORITY_LABELS.medium, color: 'text-[hsl(var(--primary))]',   dot: 'bg-[hsl(var(--primary))]' },
+    low:    { label: PRIORITY_LABELS.low,    color: 'text-slate-700 dark:text-slate-400',  dot: 'bg-slate-500' },
 };
 
 const MIN_WIDTH = 400;
@@ -357,6 +366,9 @@ export default function TaskDetailPanel({
     // row is currently saving needs the matching ``string | null`` shape.
     // ``null`` is the "no row saving" sentinel state.
     const [savingSupplyId, setSavingSupplyId] = useState<string | null>(null);
+    const [deletingSupplyId, setDeletingSupplyId] = useState<string | null>(null);
+    const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
+    const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     // ── Labels / Etiquetas ─────────────────────────────────────────
     const [labels, setLabels]         = useState<string[]>((task as any)?.labels ?? []);
@@ -567,6 +579,21 @@ export default function TaskDetailPanel({
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0 || !task || !token) return;
+
+        // NOTE: Nginx requires `client_max_body_size 10M;` in the site config
+        // (e.g. /etc/nginx/sites-available/elfarocc.tech) to match this limit.
+        const MAX_MB = 10;
+        const MAX_BYTES = MAX_MB * 1024 * 1024;
+
+        for (const file of Array.from(files)) {
+            if (file.size > MAX_BYTES) {
+                // eslint-disable-next-line no-alert
+                alert(`Error: El archivo "${file.name}" supera el límite de ${MAX_MB}MB.`);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+                return;
+            }
+        }
+
         setUploading(true);
         for (const file of Array.from(files)) {
             try {
@@ -646,12 +673,9 @@ export default function TaskDetailPanel({
     };
 
     // ── Status / Priority / Assignee handlers ──────────────────────
-    const STATUS_CYCLE = ['todo', 'in_progress', 'review', 'completed'];
-    const PRIORITY_CYCLE = ['low', 'normal', 'high', 'urgent'];
-
     const handleStatusCycle = async () => {
         if (!task) return;
-        const currentIdx = STATUS_CYCLE.indexOf(task.status || 'todo');
+        const currentIdx = STATUS_CYCLE.indexOf(getValidStatus(task.status));
         const nextStatus = STATUS_CYCLE[(currentIdx + 1) % STATUS_CYCLE.length];
         const updated = { ...task, status: nextStatus };
         onUpdate?.(updated);
@@ -664,7 +688,7 @@ export default function TaskDetailPanel({
 
     const handlePriorityCycle = async () => {
         if (!task) return;
-        const currentIdx = PRIORITY_CYCLE.indexOf(task.priority || 'normal');
+        const currentIdx = PRIORITY_CYCLE.indexOf(getValidPriority(task.priority));
         const nextPriority = PRIORITY_CYCLE[(currentIdx + 1) % PRIORITY_CYCLE.length];
         const updated = { ...task, priority: nextPriority };
         onUpdate?.(updated);
@@ -697,10 +721,59 @@ export default function TaskDetailPanel({
         onClose();
     };
 
+    const handleDeleteComment = async (commentId: string) => {
+        if (!task || !token) return;
+        setConfirmAction({
+            title: 'Eliminar comentario',
+            description: '¿Estás seguro de que deseas eliminar este comentario? Esta acción no se puede deshacer.',
+            destructive: true,
+            confirmLabel: 'Eliminar',
+            onConfirm: async () => {
+                try {
+                    await apiFetch(`/projects/comments/${commentId}`, { method: 'DELETE', token });
+                    setComments(prev => prev.filter(c => c.id !== commentId));
+                    onActivityCreated?.();
+                } catch {
+                    // ignore
+                }
+                setConfirmAction(null);
+            },
+        });
+    };
+
+    const handleDeleteSupply = async (supplyId: string) => {
+        if (!task || !token) return;
+        setDeletingSupplyId(supplyId);
+        try {
+            await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/supplies/${supplyId}`, {
+                method: 'DELETE', token,
+            });
+            const nextSupplies = supplies.filter(s => s.id !== supplyId);
+            setSupplies(nextSupplies);
+            onUpdate?.({ ...task, supplies: nextSupplies });
+            onActivityCreated?.();
+        } catch { /* ignore */ }
+        finally { setDeletingSupplyId(null); }
+    };
+
+    const handleDeleteAttachment = async (attachmentId: string) => {
+        if (!task || !token) return;
+        setDeletingAttachmentId(attachmentId);
+        try {
+            await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/attachments/${attachmentId}`, {
+                method: 'DELETE', token,
+            });
+            const nextAttachments = (task.attachments ?? []).filter(a => a.id !== attachmentId);
+            onUpdate?.({ ...task, attachments: nextAttachments });
+            onActivityCreated?.();
+        } catch { /* ignore */ }
+        finally { setDeletingAttachmentId(null); }
+    };
+
     if (!task) return null;
 
     const status   = STATUS_MAP[task.status ?? 'todo'] ?? STATUS_MAP.todo;
-    const priority = PRIORITY_MAP[task.priority ?? 'normal'] ?? PRIORITY_MAP.normal;
+    const priority = PRIORITY_MAP[task.priority ?? 'medium'] ?? PRIORITY_MAP.medium;
     const StatusIcon = status.icon;
     const attachments = task.attachments ?? [];
 
@@ -1003,25 +1076,42 @@ export default function TaskDetailPanel({
                         ) : (
                             <div className="space-y-2">
                                 {attachments.map((attachment) => (
-                                    <a
+                                    <div
                                         key={attachment.id}
-                                        href={attachment.file_url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="flex items-center justify-between gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-left transition hover:border-blue-200 hover:bg-blue-50/60 dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10"
+                                        className="flex items-center justify-between gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 dark:border-white/[0.06] dark:bg-white/[0.03]"
                                     >
-                                        <div className="min-w-0">
+                                        <a
+                                            href={attachment.file_url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="min-w-0 flex-1 text-left transition hover:text-[hsl(var(--primary))]"
+                                        >
                                             <p className="truncate text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                 {attachment.filename}
                                             </p>
                                             <p className="text-[10px] text-[hsl(var(--text-secondary))]">
                                                 {attachment.file_size ? `${Math.max(1, Math.round(attachment.file_size / 1024))} KB` : 'Archivo adjunto'}
                                             </p>
+                                        </a>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <a
+                                                href={attachment.file_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] hover:underline"
+                                            >
+                                                Abrir
+                                            </a>
+                                            <button
+                                                onClick={() => handleDeleteAttachment(attachment.id)}
+                                                disabled={deletingAttachmentId === attachment.id}
+                                                title="Eliminar adjunto"
+                                                className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                                            >
+                                                {deletingAttachmentId === attachment.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                                            </button>
                                         </div>
-                                        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">
-                                            Abrir
-                                        </span>
-                                    </a>
+                                    </div>
                                 ))}
                             </div>
                         )}
@@ -1093,6 +1183,14 @@ export default function TaskDetailPanel({
                                         <option value="ready">Listo</option>
                                         <option value="unavailable">No disponible</option>
                                     </select>
+                                    <button
+                                        onClick={() => handleDeleteSupply(supply.id)}
+                                        disabled={deletingSupplyId === supply.id}
+                                        title="Eliminar insumo"
+                                        className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                                    >
+                                        {deletingSupplyId === supply.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -1188,7 +1286,7 @@ export default function TaskDetailPanel({
                                 </p>
                             )}
                             {comments.map(c => (
-                                <div key={c.id} className="flex gap-2.5">
+                                <div key={c.id} className="flex gap-2.5 group">
                                     <div
                                         className="size-6 rounded-full flex items-center justify-center font-semibold text-white shrink-0 mt-0.5"
                                         style={{ backgroundColor: c.authorColor ?? '#6366f1' }}
@@ -1201,6 +1299,13 @@ export default function TaskDetailPanel({
                                             <span className="text-[10px] text-[hsl(var(--text-secondary))]">
                                                 {c.timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                                             </span>
+                                            <button
+                                                onClick={() => handleDeleteComment(c.id)}
+                                                title="Eliminar comentario"
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity text-[hsl(var(--text-secondary))] hover:text-rose-500"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
                                         </div>
                                         <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">{c.text}</p>
                                     </div>
@@ -1249,6 +1354,8 @@ export default function TaskDetailPanel({
                 </div>{/* end body */}
 
             </motion.aside>
+
+            <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
         </AnimatePresence>
     );
 }
