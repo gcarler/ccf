@@ -36,6 +36,113 @@ def _crm_etapa_pipeline_live_column_names(db: Session) -> set[str]:
     return {str(column.get("name")) for column in columns if column.get("name")}
 
 
+def _crm_casos_live_column_names(db: Session) -> set[str]:
+    bind = db.get_bind()
+    if bind is None:
+        return set()
+    try:
+        columns = inspect(bind).get_columns("crm_casos")
+    except Exception:
+        return set()
+    return {str(column.get("name")) for column in columns if column.get("name")}
+
+
+def _build_transient_caso(
+    *,
+    caso_id: uuid.UUID,
+    persona_id: uuid.UUID,
+    sede_id: uuid.UUID,
+    pipeline_id: uuid.UUID,
+    etapa: EtapaPipeline,
+    titulo_caso: str,
+    origen_grupo_id: Optional[uuid.UUID],
+    origen_estrategia_id: Optional[UUID],
+    origen_sesion_id: Optional[UUID],
+    sla_vencimiento_contacto: datetime,
+) -> CasoCRM:
+    caso = CasoCRM(
+        id=caso_id,
+        persona_id=persona_id,
+        sede_id=sede_id,
+        pipeline_id=pipeline_id,
+        etapa_actual_id=etapa.id,
+        titulo_caso=titulo_caso,
+        prioridad=PrioridadCasoEnum.ALTA,
+        estado=EstadoCasoEnum.ABIERTO,
+        origen_canal=CanalOrigenEnum.EVANGELISMO,
+        origen_grupo_id=origen_grupo_id,
+        origen_estrategia_id=origen_estrategia_id,
+        origen_sesion_id=origen_sesion_id,
+        sla_vencimiento_contacto=sla_vencimiento_contacto,
+    )
+    caso.etapa_actual = etapa
+    return caso
+
+
+def _insert_caso_nuevo_visitante(
+    db: Session,
+    persona: Persona,
+    sede_id: uuid.UUID,
+    pipeline: PipelineCRM,
+    etapa: EtapaPipeline,
+    titulo_prefix: str,
+    origen_grupo_id: Optional[uuid.UUID] = None,
+    origen_estrategia_id: Optional[UUID] = None,
+    origen_sesion_id: Optional[UUID] = None,
+) -> Optional[CasoCRM]:
+    caso_id = uuid.uuid4()
+    live_cols = _crm_casos_live_column_names(db)
+    caso_data = {
+        "id": caso_id,
+        "persona_id": persona.id,
+        "sede_id": sede_id,
+        "pipeline_id": pipeline.id,
+        "etapa_actual_id": etapa.id,
+        "titulo_caso": f"{titulo_prefix}: {persona.first_name} {persona.last_name}".strip(),
+        "prioridad": PrioridadCasoEnum.ALTA,
+        "estado": EstadoCasoEnum.ABIERTO,
+        "origen_canal": CanalOrigenEnum.EVANGELISMO,
+        "origen_grupo_id": origen_grupo_id,
+        "origen_estrategia_id": origen_estrategia_id,
+        "origen_sesion_id": origen_sesion_id,
+        "sla_vencimiento_contacto": datetime.now(timezone.utc) + timedelta(hours=48),
+        "fecha_creacion": datetime.now(timezone.utc),
+        "fecha_cierre": None,
+        "deleted_at": None,
+        "payload_web": None,
+        "asignado_a_id": None,
+    }
+    if "sort_order" in live_cols:
+        caso_data["sort_order"] = 0
+    if "drag_source_etapa_id" in live_cols:
+        caso_data["drag_source_etapa_id"] = None
+    if "drag_target_etapa_id" in live_cols:
+        caso_data["drag_target_etapa_id"] = None
+    if "is_locked_for_reorder" in live_cols:
+        caso_data["is_locked_for_reorder"] = False
+    if "last_reorder_failed" in live_cols:
+        caso_data["last_reorder_failed"] = False
+
+    caso_table = Table(
+        "crm_casos",
+        MetaData(),
+        autoload_with=db.get_bind(),
+    )
+    db.execute(insert(caso_table), [{k: v for k, v in caso_data.items() if k in live_cols}])
+    return _build_transient_caso(
+        caso_id=caso_id,
+        persona_id=persona.id,
+        sede_id=sede_id,
+        pipeline_id=pipeline.id,
+        etapa=etapa,
+        titulo_caso=caso_data["titulo_caso"],
+        origen_grupo_id=origen_grupo_id,
+        origen_estrategia_id=origen_estrategia_id,
+        origen_sesion_id=origen_sesion_id,
+        sla_vencimiento_contacto=caso_data["sla_vencimiento_contacto"],
+    )
+
+
 def _obtener_o_crear_pipeline_nuevos_visitantes(
     db: Session, sede_id: uuid.UUID
 ) -> Optional[PipelineCRM]:
@@ -160,25 +267,18 @@ def crear_caso_desde_asistencia(
         )
         return None
 
-    sla = datetime.now(timezone.utc) + timedelta(hours=48)
-
-    caso = CasoCRM(
-        persona_id=persona.id,
+    caso = _insert_caso_nuevo_visitante(
+        db=db,
+        persona=persona,
         sede_id=sede_id,
-        pipeline_id=pipeline.id,
-        etapa_actual_id=etapa.id,
-        titulo_caso=f"Consolidar: {persona.first_name} {persona.last_name}",
-        prioridad=PrioridadCasoEnum.ALTA,
-        estado=EstadoCasoEnum.ABIERTO,
-        origen_canal=CanalOrigenEnum.EVANGELISMO,
+        pipeline=pipeline,
+        etapa=etapa,
+        titulo_prefix="Consolidar",
         origen_grupo_id=grupo.id,
         origen_estrategia_id=grupo.estrategia_id,
         origen_sesion_id=sesion.id,
-        sla_vencimiento_contacto=sla,
     )
-    db.add(caso)
     db.commit()
-    db.refresh(caso)
     return caso
 
 
@@ -212,21 +312,16 @@ def crear_caso_nuevo_visitante(
         )
         return None
 
-    caso = CasoCRM(
-        persona_id=persona.id,
+    caso = _insert_caso_nuevo_visitante(
+        db=db,
+        persona=persona,
         sede_id=sede_id,
-        pipeline_id=pipeline.id,
-        etapa_actual_id=etapa.id,
-        titulo_caso=f"{titulo_prefix}: {persona.first_name} {persona.last_name}".strip(),
-        prioridad=PrioridadCasoEnum.ALTA,
-        estado=EstadoCasoEnum.ABIERTO,
-        origen_canal=CanalOrigenEnum.EVANGELISMO,
+        pipeline=pipeline,
+        etapa=etapa,
+        titulo_prefix=titulo_prefix,
         origen_grupo_id=origen_grupo_id,
         origen_estrategia_id=origen_estrategia_id,
         origen_sesion_id=origen_sesion_id,
-        sla_vencimiento_contacto=datetime.now(timezone.utc) + timedelta(hours=48),
     )
-    db.add(caso)
     db.commit()  # commit único: persona + participante + pipeline nuevo (si aplica) + caso
-    db.refresh(caso)
     return caso
