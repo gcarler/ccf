@@ -284,6 +284,20 @@ def _get_site_or_404(db: Session, site_key: str) -> models.CmsSite:
     return row
 
 
+def _get_scoped_site_or_404(
+    db: Session, site_key: str, current_user: models.User,
+) -> models.CmsSite:
+    """Axioma 3 — retrieve site + enforce sede scope in one call.
+
+    Combines ``_get_site_or_404`` with ``_assert_site_sede_scope`` so that
+    every admin endpoint that operates on a site enforces multi-tenant
+    isolation without requiring the caller to remember both calls.
+    """
+    site = _get_scoped_site_or_404(db, site_key, current_user)
+    _assert_site_sede_scope(site, _actor_sede_from_user(db, current_user))
+    return site
+
+
 def _actor_sede_from_user(db: Session, current_user: models.User) -> uuid.UUID | None:
     """Resolve la sede del actor autenticado desde su persona.
 
@@ -447,8 +461,7 @@ def get_site(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
-    _assert_site_sede_scope(site, _actor_sede_from_user(db, current_user))
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     return site
 
 
@@ -460,8 +473,7 @@ def patch_site(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
-    row = _get_site_or_404(db, site_key)
-    _assert_site_sede_scope(row, _actor_sede_from_user(db, current_user))
+    row = _get_scoped_site_or_404(db, site_key, current_user)
     # Axioma 3 — Multi-Tenant: bloquear movimiento cross-sede. El
     # sede_id de un site no debe cambiar via API para evitar que un
     # editor de sede_a "adopte" o "mueva" un site de sede_b.
@@ -481,8 +493,7 @@ def delete_site(
 ):
     """Desactiva un sitio CMS sin eliminar su contenido."""
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
-    row = _get_site_or_404(db, site_key)
-    _assert_site_sede_scope(row, _actor_sede_from_user(db, current_user))
+    row = _get_scoped_site_or_404(db, site_key, current_user)
     crud.archive_cms_site(db, row)
     return None
 
@@ -493,7 +504,7 @@ def list_themes(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     return crud.list_cms_themes(db, site.id)
 
 
@@ -504,7 +515,7 @@ def get_theme(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = crud.get_cms_theme(db, site.id, theme_id)
     if not row:
         raise HTTPException(status_code=404, detail="theme not found")
@@ -527,7 +538,7 @@ def create_theme(
             CMS_PUBLISHER_ROLES,
             detail="Only publishers can activate a theme",
         )
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     return crud.create_cms_theme(db, site.id, payload, created_by=current_user.id)
 
 
@@ -548,7 +559,7 @@ def patch_theme(
             CMS_PUBLISHER_ROLES,
             detail="Only publishers can activate a theme",
         )
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = crud.get_cms_theme(db, site.id, theme_id)
     if not row:
         raise HTTPException(status_code=404, detail="theme not found")
@@ -565,7 +576,7 @@ def activate_theme(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = crud.activate_cms_theme(db, site.id, theme_id)
     if not row:
         raise HTTPException(status_code=404, detail="theme not found")
@@ -581,7 +592,7 @@ def delete_theme(
 ):
     """Archiva un tema CMS sin eliminar su historial."""
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = crud.get_cms_theme(db, site.id, theme_id)
     if not row:
         raise HTTPException(status_code=404, detail="theme not found")
@@ -595,7 +606,7 @@ def list_menus(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     return crud.list_cms_menus(db, site.id)
 
 
@@ -609,7 +620,7 @@ def create_menu(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     if crud.get_cms_menu(db, site.id, payload.menu_key.strip().lower()):
         raise HTTPException(status_code=409, detail="menu_key already exists")
     return crud.create_cms_menu(db, site.id, payload)
@@ -622,7 +633,7 @@ def get_menu(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     return _get_menu_or_404(db, site.id, menu_key)
 
 
@@ -635,7 +646,7 @@ def patch_menu(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_menu_or_404(db, site.id, menu_key)
     return crud.update_cms_menu(db, row, payload)
 
@@ -649,7 +660,7 @@ def delete_menu(
 ):
     """Desactiva un menu CMS sin eliminarlo."""
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_menu_or_404(db, site.id, menu_key)
     crud.delete_cms_menu(db, row)
 
@@ -664,7 +675,7 @@ def list_menu_items(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     menu = _get_menu_or_404(db, site.id, menu_key)
     return crud.list_cms_menu_items(db, menu.id)
 
@@ -682,7 +693,7 @@ def create_menu_item(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     menu = _get_menu_or_404(db, site.id, menu_key)
     return crud.create_cms_menu_item(db, menu.id, payload)
 
@@ -700,7 +711,7 @@ def patch_menu_item(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     menu = _get_menu_or_404(db, site.id, menu_key)
     item = crud.get_cms_menu_item(db, menu.id, item_id)
     if not item:
@@ -718,7 +729,7 @@ def delete_menu_item(
 ):
     """Oculta un item de menu sin eliminarlo."""
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     menu = _get_menu_or_404(db, site.id, menu_key)
     item = crud.get_cms_menu_item(db, menu.id, item_id)
     if not item:
@@ -738,7 +749,7 @@ def reorder_menu_items(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     menu = _get_menu_or_404(db, site.id, menu_key)
     return crud.reorder_cms_menu_items(db, menu.id, payload.items)
 
@@ -755,7 +766,7 @@ def list_pages(
     status: str | None = Query(None),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     pages, total = crud.list_cms_pages(db, site.id, skip=skip, limit=limit, status=status)
     return PaginatedResponse[schemas.CmsPageRead](
         items=pages, total=total, skip=skip, limit=limit
@@ -774,7 +785,7 @@ def create_page(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.status.strip().lower() != "draft":
         raise HTTPException(status_code=422, detail="new pages must start in draft")
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     payload.slug = _slugify(payload.slug)
     if not payload.slug:
         raise HTTPException(status_code=422, detail="slug is required")
@@ -790,7 +801,7 @@ def get_page(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     return _get_page_or_404(db, site.id, slug)
 
 
@@ -822,7 +833,7 @@ def patch_page(
             status_code=422,
             detail="expires_at must be >= publish_at",
         )
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_page_or_404(db, site.id, slug)
     updated = crud.update_cms_page(db, row, payload, current_user.id)
     # Workflow parity gap fix (2026-07-06): when an editor sets
@@ -849,7 +860,7 @@ def delete_page(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_page_or_404(db, site.id, slug)
     crud.delete_cms_page(db, row)
 
@@ -867,7 +878,7 @@ def list_sections(
     section_type: str | None = Query(None),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     items, total = crud.list_cms_sections(db, page.id, skip=skip, limit=limit, section_type=section_type)
     return PaginatedResponse[schemas.CmsSectionRead](
@@ -904,7 +915,7 @@ def create_section(
     payload.status = (payload.status or "active").strip().lower()
     if payload.status not in {"active", "archived"}:
         raise HTTPException(status_code=422, detail="unsupported section status")
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     return crud.create_cms_section(db, page.id, payload)
 
@@ -929,7 +940,7 @@ def patch_section(
         payload.status = payload.status.strip().lower()
         if payload.status not in {"active", "archived"}:
             raise HTTPException(status_code=422, detail="unsupported section status")
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     row = crud.get_cms_section(db, page.id, section_id)
     if not row:
@@ -946,7 +957,7 @@ def delete_section(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     row = crud.get_cms_section(db, page.id, section_id)
     if not row:
@@ -966,7 +977,7 @@ def reorder_sections(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     return crud.reorder_cms_sections(db, page.id, payload.items)
 @router.get(
@@ -981,7 +992,7 @@ def list_versions(
     limit: int = Query(20, ge=1, le=100),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     items, total = crud.list_cms_page_versions(db, page.id, skip=skip, limit=limit)
     return PaginatedResponse[schemas.CmsPageVersionRead](
@@ -1003,7 +1014,7 @@ def list_publish_log(
     limit: int = Query(50, ge=1, le=200),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     items, total = crud.list_cms_publish_logs(db, site.id, page_id=page.id, skip=skip, limit=limit)
     return PaginatedResponse[schemas.CmsPublishLogRead](
@@ -1040,9 +1051,9 @@ def seo_audit(
     en memoria sobre data materializada.
     """
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
 
-    pages_query = db.query(models.CmsPage).filter(models.CmsPage.site_id == site.id)
+    pages_query = db.query(models.CmsPage).options(lazyload("*")).filter(models.CmsPage.site_id == site.id)
     if status:
         pages_query = pages_query.filter(models.CmsPage.status == status)
     pages = (
@@ -1090,7 +1101,7 @@ def preview_page(
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     sections_list, _ = crud.list_cms_sections(db, page.id)
     sections = [
@@ -1148,7 +1159,7 @@ def rollback_page(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     version = crud.get_cms_page_version(db, page.id, version_id)
     if not version:
@@ -1171,7 +1182,7 @@ def workflow_page(
         _assert_role(current_user, CMS_PUBLISHER_ROLES)
     else:
         _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     row = crud.transition_cms_page_status(
         db, page, payload.action, current_user.id, notes=payload.notes
@@ -1707,7 +1718,7 @@ def cms_pastoral_team_list(
     (superadmin / anterior) sigue viendo el agregado global.
     """
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    base_query = db.query(models.Persona).filter(
+    base_query = db.query(models.Persona).options(lazyload("*")).filter(
         models.Persona.is_pastoral_leader.is_(True)
     )
     base_query = _scope_cms_pastoral_team_by_user_sede(db, current_user, base_query)
@@ -1801,7 +1812,7 @@ def list_global_blocks(
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     base = (
         db.query(models.CmsSection)
         .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
@@ -1839,7 +1850,7 @@ def create_global_block(
         payload.props_json = validated_props
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     page = db.query(models.CmsPage).filter(
         models.CmsPage.site_id == site.id,
         models.CmsPage.slug == "_global_blocks",
@@ -1878,7 +1889,7 @@ def patch_global_block(
     return schemas.CmsSectionRead.model_validate(block)
 
 
-@router.delete("/global-blocks/{section_id}", response_model=dict)
+@router.delete("/global-blocks/{section_id}", status_code=204)
 def delete_global_block(
     site_key: str, section_id: uuid.UUID,
     db: Session = Depends(get_db),
@@ -1892,7 +1903,7 @@ def delete_global_block(
         raise HTTPException(status_code=404, detail="Global block not found")
     block.deleted_at = _utcnow()
     db.commit()
-    return {"ok": True, "deleted": section_id}
+    return None
 
 
 # ── Posts & Taxonomías ─────────────────────────────────────────────────────
@@ -1942,7 +1953,7 @@ def list_categories(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     return crud.list_cms_categories(db, site.id)
 
 
@@ -1954,7 +1965,7 @@ def create_category(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     payload.slug = _slugify(payload.slug)
     if not payload.slug:
         raise HTTPException(status_code=422, detail="slug is required")
@@ -1970,7 +1981,7 @@ def get_category(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     return _get_category_or_404(db, site.id, slug)
 
 
@@ -1983,7 +1994,7 @@ def patch_category(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_category_or_404(db, site.id, slug)
     return crud.update_cms_category(db, row, payload)
 
@@ -1996,7 +2007,7 @@ def delete_category(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_category_or_404(db, site.id, slug)
     crud.delete_cms_category(db, row)
 
@@ -2009,7 +2020,7 @@ def list_tags(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     return crud.list_cms_tags(db, site.id)
 
 
@@ -2021,7 +2032,7 @@ def create_tag(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     payload.slug = _slugify(payload.slug)
     if not payload.slug:
         raise HTTPException(status_code=422, detail="slug is required")
@@ -2037,7 +2048,7 @@ def get_tag(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     return _get_tag_or_404(db, site.id, slug)
 
 
@@ -2050,7 +2061,7 @@ def patch_tag(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_tag_or_404(db, site.id, slug)
     return crud.update_cms_tag(db, row, payload)
 
@@ -2063,7 +2074,7 @@ def delete_tag(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_tag_or_404(db, site.id, slug)
     crud.delete_cms_tag(db, row)
 
@@ -2084,7 +2095,7 @@ def list_posts(
     tag_id: uuid.UUID | None = Query(None),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     items, total = crud.list_cms_posts(
         db, site.id, skip=skip, limit=limit, status=status,
         category_id=category_id, tag_id=tag_id,
@@ -2110,7 +2121,7 @@ def create_post(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
         raise HTTPException(status_code=422, detail="invalid status")
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     payload.slug = _slugify(payload.slug)
     if not payload.slug:
         raise HTTPException(status_code=422, detail="slug is required")
@@ -2130,7 +2141,7 @@ def get_post(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("cms", "read")),
 ):
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_post_or_404(db, site.id, slug)
     p = schemas.CmsPostReadWithTaxonomies.model_validate(row)
     p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, row.id)]
@@ -2147,7 +2158,7 @@ def patch_post(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_post_or_404(db, site.id, slug)
     if payload.status is not None and payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
         raise HTTPException(status_code=422, detail="invalid status")
@@ -2170,7 +2181,7 @@ def delete_post(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    site = _get_site_or_404(db, site_key)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_post_or_404(db, site.id, slug)
     crud.delete_cms_post(db, row)
 
@@ -2273,10 +2284,16 @@ def public_post(
     dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))],
 )
 def track_page_view(page_key: str, request: Request, db: Session = Depends(get_db)):
-    """Track a page view for analytics."""
+    """Track a page view for analytics.
+
+    Public endpoint (no auth) — called from the public frontend.
+    Rate-limited to 60 req/min. Only writes a page view record;
+    no sensitive data exposed.
+    """
     try:
         page = db.query(models.CmsPage).join(models.CmsSite).filter(
             models.CmsPage.slug == page_key,
+            models.CmsSite.is_active == True,
         ).first()
         if page:
             db.add(models.CmsPageView(
@@ -2376,13 +2393,16 @@ def get_resized_image(
 ):
     """Get a resized version of an uploaded image. Returns base64 or URL.
 
-    Defense-in-depth (Axioma 3): aunque este endpoint es público (la URL
+    Public endpoint (no auth) -- used by the public frontend for image
+    optimization. Rate-limited to 60 req/min.
+
+    Defense-in-depth (Axioma 3): aunque este endpoint es publico (la URL
     retornada puede ser consumida por el frontend publico), filtramos los
-    media archivados — un media archivado no debe ser público vía API. La
-    URL es por defecto del asset original, así que el caller puede
-    servirlo desde CDN con ``<img width=...>`` sin pasar por aquí, pero
+    media archivados -- un media archivado no debe ser publico via API. La
+    URL es por defecto del asset original, asi que el caller puede
+    servirlo desde CDN con ``<img width=...>`` sin pasar por aqui, pero
     mantenerlo scope-archived evita leaks de metadata para medios
-    retirados del site público.
+    retirados del site publico.
     """
     media = db.query(models.CmsMediaItem).filter(
         models.CmsMediaItem.id == media_id,
