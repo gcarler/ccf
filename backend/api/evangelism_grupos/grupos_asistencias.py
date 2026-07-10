@@ -17,6 +17,7 @@ from backend.api.evangelism_shared import (
     persona_payload,
     session_estado_habilitacion,
     session_read_only_options,
+    session_read_value,
     utc_now,
 )
 from backend.core.database import get_db
@@ -108,10 +109,10 @@ def get_groups_session_attendance(
         "topic": session.topic,
         "offering_amount": (float(session.offering_amount) if session.offering_amount is not None else None),
         "report_notes": session.report_notes,
-        "novelty_type": session.novelty_type,
-        "novelty_detail": session.novelty_detail,
+        "novelty_type": session_read_value(session, "novelty_type"),
+        "novelty_detail": session_read_value(session, "novelty_detail"),
         "cancellation_reason": session.cancellation_reason,
-        "reported_by_persona_id": session.reported_by_persona_id,
+        "reported_by_persona_id": session_read_value(session, "reported_by_persona_id"),
         "total": len(present),
         "present_count": len(present),
         "absent_count": len(absent),
@@ -171,9 +172,10 @@ def add_groups_attendance(
 
     from datetime import datetime, timezone
 
-    if session.report_deadline:
+    report_deadline = session_read_value(session, "report_deadline")
+    if report_deadline:
         current_time = datetime.now(timezone.utc)
-        deadline = session.report_deadline
+        deadline = report_deadline
         if deadline.tzinfo is None:
             deadline = deadline.replace(tzinfo=timezone.utc)
         if current_time > deadline:
@@ -269,11 +271,14 @@ def add_groups_attendance(
     session.topic = payload.get("topic", session.topic)
     session.offering_amount = new_offering_amount
     session.report_notes = payload.get("report_notes", session.report_notes)
-    session.novelty_type = payload.get("novelty_type", session.novelty_type)
-    session.novelty_detail = payload.get("novelty_detail", session.novelty_detail)
+    session.novelty_type = payload.get("novelty_type", session_read_value(session, "novelty_type"))
+    session.novelty_detail = payload.get("novelty_detail", session_read_value(session, "novelty_detail"))
     session.cancellation_reason = new_cancellation_reason
     session.status = new_status
-    session.reported_by_persona_id = payload.get("reported_by_persona_id", session.reported_by_persona_id)
+    session.reported_by_persona_id = payload.get(
+        "reported_by_persona_id",
+        session_read_value(session, "reported_by_persona_id"),
+    )
     session.reported_at = utc_now()
 
     try:
