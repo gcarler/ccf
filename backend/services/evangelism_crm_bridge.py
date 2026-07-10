@@ -7,7 +7,8 @@ from typing import Optional
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy import MetaData, Table, insert, inspect
+from sqlalchemy.orm import Session, load_only
 
 from backend.models_crm import Persona
 from backend.models_crm_pipeline import (
@@ -22,6 +23,17 @@ from backend.models_crm_pipeline import (
 from backend.models_evangelism import Asistencia, GrupoEvangelismo, SesionGrupo
 
 logger = logging.getLogger(__name__)
+
+
+def _crm_etapa_pipeline_live_column_names(db: Session) -> set[str]:
+    bind = db.get_bind()
+    if bind is None:
+        return set()
+    try:
+        columns = inspect(bind).get_columns("crm_etapas_pipeline")
+    except Exception:
+        return set()
+    return {str(column.get("name")) for column in columns if column.get("name")}
 
 
 def _obtener_o_crear_pipeline_nuevos_visitantes(
@@ -66,14 +78,34 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
         return pipeline  # pipeline existente ya tiene su etapa — no crear otra
 
     # Solo se llega aquí cuando el pipeline acaba de ser creado
-    etapa = EtapaPipeline(
-        pipeline_id=pipeline.id,
-        nombre="Nuevo Contacto",
-        orden=1,
-        requiere_accion=True,
-    )
-    db.add(etapa)
-    db.flush()  # flush sin commit — el caller hace el único db.commit() final
+    live_cols = _crm_etapa_pipeline_live_column_names(db)
+    etapa_id = uuid.uuid4()
+    etapa_data = {
+        "id": etapa_id,
+        "pipeline_id": pipeline.id,
+        "nombre": "Nuevo Contacto",
+        "orden": 1,
+        "requiere_accion": True,
+        "deleted_at": None,
+        "created_at": datetime.now(timezone.utc),
+    }
+    if "visual_color" in live_cols:
+        etapa_data["visual_color"] = None
+
+    if "visual_color" in live_cols:
+        db.add(
+            EtapaPipeline(
+                **{k: v for k, v in etapa_data.items() if hasattr(EtapaPipeline, k)}
+            )
+        )
+        db.flush()  # flush sin commit — el caller hace el único db.commit() final
+    else:
+        etapa_table = Table(
+            "crm_etapas_pipeline",
+            MetaData(),
+            autoload_with=db.get_bind(),
+        )
+        db.execute(insert(etapa_table), [{k: v for k, v in etapa_data.items() if k in live_cols}])
     return pipeline
 
 
@@ -99,6 +131,24 @@ def crear_caso_desde_asistencia(
 
     etapa = (
         db.query(EtapaPipeline)
+        .options(
+            load_only(
+                *[
+                    getattr(EtapaPipeline, name)
+                    for name in [
+                        "id",
+                        "pipeline_id",
+                        "nombre",
+                        "orden",
+                        "requiere_accion",
+                        "deleted_at",
+                        "created_at",
+                        "visual_color",
+                    ]
+                    if name in _crm_etapa_pipeline_live_column_names(db) and hasattr(EtapaPipeline, name)
+                ]
+            )
+        )
         .filter(EtapaPipeline.pipeline_id == pipeline.id)
         .order_by(EtapaPipeline.orden.asc())
         .first()
