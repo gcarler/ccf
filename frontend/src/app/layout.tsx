@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
 import "./globals.css";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -14,8 +13,6 @@ import { CommandCenterProvider } from "@/context/CommandCenterContext";
 import { CreationProvider } from "@/context/CreationContext";
 import { SidebarLayerProvider } from "@/context/SidebarLayerContext";
 import SiteBrandAssets from "@/components/SiteBrandAssets";
-
-const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 
 const _siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "Mi Comunidad";
 
@@ -39,7 +36,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="es" className={`${manrope.variable}`} suppressHydrationWarning>
+        <html lang="es" suppressHydrationWarning>
             <head>
                 <script
                     dangerouslySetInnerHTML={{

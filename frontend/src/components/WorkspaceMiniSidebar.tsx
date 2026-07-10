@@ -77,7 +77,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
         const isActive = href === '/' ? (pathname === '/' || !pathname) : pathname?.startsWith(href);
         return (
             <Tooltip key={id} content={label} side="right">
-                <Link href={href} className="relative" onClick={() => resetSidebarStack()}>
+                <Link href={href} prefetch={false} className="relative" onClick={() => resetSidebarStack()}>
                     <div
                         className={clsx(
                             "size-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer sidebar-nav-item",
@@ -129,7 +129,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             {/* ── Footer: solo Settings + Collapse (SIN ThemeToggle — ya está en el header) */}
             <div className="flex flex-col items-center gap-1 mb-2">
                 <Tooltip content="Ajustes" side="right">
-                    <Link href="/plataforma/settings">
+                    <Link href="/plataforma/settings" prefetch={false}>
                         <div className="size-10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 sidebar-nav-item transition-all duration-200 cursor-pointer">
                             <Settings size={19} />
                         </div>

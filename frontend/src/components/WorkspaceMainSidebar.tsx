@@ -112,6 +112,7 @@ function NavRow({
     return (
         <Link
             href={item.href}
+            prefetch={false}
             onClick={() => {
                 if (item.onClick) {
                     item.onClick();
