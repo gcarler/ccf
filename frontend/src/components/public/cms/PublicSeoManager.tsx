@@ -48,7 +48,7 @@ export default function PublicSeoManager() {
         if (!match) return;
 
         const controller = new AbortController();
-        const url = `${API_BASE}/api/cms/v2/public/sites/${SITE_KEY}/pages/${match.slug}`;
+        const url = `${API_BASE}/cms/v2/public/sites/${SITE_KEY}/pages/${match.slug}`;
 
         fetch(url, { signal: controller.signal })
             .then((r) => (r.ok ? r.json() : null))
