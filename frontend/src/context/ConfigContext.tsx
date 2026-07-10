@@ -21,10 +21,13 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         if (!token) { setLoading(false); return; }
         try {
             const { apiFetch } = await import('@/lib/http');
-            const data = await apiFetch('/workspace/config', { token });
+            // Tolerate slow cold-starts / heavy merges on first load.
+            const data = await apiFetch('/workspace/config', { token, timeout: 30_000 });
             setConfig(data);
-        } catch (err) { console.error("Config load failed", err); }
-        finally { setLoading(false); }
+        } catch (err) {
+            console.error("Config load failed", err);
+            // Keep previous config (if any) so the UI doesn't break.
+        } finally { setLoading(false); }
     }, [token]);
 
     useEffect(() => { refreshConfig(); }, [refreshConfig]);

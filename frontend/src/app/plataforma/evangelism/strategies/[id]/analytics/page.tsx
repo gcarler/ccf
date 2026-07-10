@@ -199,6 +199,18 @@ function ProgressBar({ value, max = 100, color = "bg-[hsl(var(--primary))]" }: {
 
 const WEEKS_OPTIONS = [4, 8, 12, 24, 52];
 
+// Wrapper that guarantees positive dimensions for Recharts' ResponsiveContainer.
+// Prevents the "width(-1) / height(-1)" warning in flex/grid parents.
+function ChartBox({ children, height, className }: { children: React.ReactNode; height: number | string; className?: string }) {
+  return (
+    <div className={className} style={{ width: "100%", height, minWidth: 1, minHeight: 1 }}>
+      <div style={{ width: "100%", height: "100%", minWidth: 1, minHeight: 1 }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const renderPieLabel = ({ name, percent }: any) => `${name} ${(((percent as number) ?? 0) * 100).toFixed(0)}%`;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -406,19 +418,21 @@ export default function StrategyAnalyticsPage() {
           {dim2_capacidad.grupos.length === 0 ? (
             <p className="text-[11px] text-[hsl(var(--text-secondary))] italic text-center py-6">Sin grupos con datos de capacidad</p>
           ) : (
-            <ResponsiveContainer width="100%" height={Math.max(120, dim2_capacidad.grupos.length * 36)}>
-              <BarChart data={dim2_capacidad.grupos} layout="vertical" margin={{ left: 8, right: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border-primary))" />
-                <XAxis type="number" domain={[0, 100]} tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="nombre" tick={{ fontSize: 11 }} width={60} />
-                <Tooltip formatter={(v) => [`${v}%`, "TOF"]} />
-                <Bar dataKey="tof_porcentaje" name="Ocupación %" radius={[0, 4, 4, 0]}>
-                  {dim2_capacidad.grupos.map((g, i) => (
-                    <Cell key={i} fill={g.estado === "SATURADO" ? "#ef4444" : g.estado === "SALUDABLE" ? "#22c55e" : "#f59e0b"} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <ChartBox height={Math.max(120, dim2_capacidad.grupos.length * 36)}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dim2_capacidad.grupos} layout="vertical" margin={{ left: 8, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border-primary))" />
+                  <XAxis type="number" domain={[0, 100]} tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} />
+                  <YAxis type="category" dataKey="nombre" tick={{ fontSize: 11 }} width={60} />
+                  <Tooltip formatter={(v) => [`${v}%`, "TOF"]} />
+                  <Bar dataKey="tof_porcentaje" name="Ocupación %" radius={[0, 4, 4, 0]}>
+                    {dim2_capacidad.grupos.map((g, i) => (
+                      <Cell key={i} fill={g.estado === "SATURADO" ? "#ef4444" : g.estado === "SALUDABLE" ? "#22c55e" : "#f59e0b"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartBox>
           )}
         </div>
 
@@ -457,16 +471,18 @@ export default function StrategyAnalyticsPage() {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">Tendencia de primera vez</p>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={tendencia_semanal} margin={{ left: 0, right: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border-primary))" />
-                  <XAxis dataKey="semana" tick={{ fontSize: 10 }} tickFormatter={v => v.slice(5)} />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="primera_vez" name="Primera vez" stroke="#22c55e" fill="#22c55e20" strokeWidth={2} />
-                  <Area type="monotone" dataKey="presentes" name="Presentes" stroke="#6366f1" fill="#6366f120" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
+              <ChartBox height={200}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={tendencia_semanal} margin={{ left: 0, right: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border-primary))" />
+                    <XAxis dataKey="semana" tick={{ fontSize: 10 }} tickFormatter={v => v.slice(5)} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip />
+                    <Area type="monotone" dataKey="primera_vez" name="Primera vez" stroke="#22c55e" fill="#22c55e20" strokeWidth={2} />
+                    <Area type="monotone" dataKey="presentes" name="Presentes" stroke="#6366f1" fill="#6366f120" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartBox>
             </div>
           </div>
         </div>
@@ -616,18 +632,20 @@ export default function StrategyAnalyticsPage() {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">Tendencia semanal de asistencia</p>
-              <ResponsiveContainer width="100%" height={240}>
-                <LineChart data={tendencia_semanal} margin={{ left: 0, right: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border-primary))" />
-                  <XAxis dataKey="semana" tick={{ fontSize: 10 }} tickFormatter={v => v.slice(5)} />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Line type="monotone" dataKey="presentes" name="Presentes" stroke="#6366f1" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="ausentes" name="Ausentes" stroke="#ef4444" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="tasa_asistencia" name="Tasa %" stroke="#22c55e" strokeWidth={2} strokeDasharray="4 2" dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+              <ChartBox height={240}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={tendencia_semanal} margin={{ left: 0, right: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border-primary))" />
+                    <XAxis dataKey="semana" tick={{ fontSize: 10 }} tickFormatter={v => v.slice(5)} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Line type="monotone" dataKey="presentes" name="Presentes" stroke="#6366f1" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="ausentes" name="Ausentes" stroke="#ef4444" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="tasa_asistencia" name="Tasa %" stroke="#22c55e" strokeWidth={2} strokeDasharray="4 2" dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartBox>
             </div>
           </div>
         </div>
@@ -871,14 +889,16 @@ export default function StrategyAnalyticsPage() {
               {pieEtaria.length === 0 ? (
                 <p className="text-[11px] text-[hsl(var(--text-secondary))] italic text-center py-8">Sin datos de edad registrados</p>
               ) : (
-                <ResponsiveContainer width="100%" height={180}>
-                  <PieChart>
-                    <Pie data={pieEtaria} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label={renderPieLabel} labelLine={false} style={{ fontSize: 10 }}>
-                      {pieEtaria.map((e, i) => <Cell key={e.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                <ChartBox height={180}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={pieEtaria} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label={renderPieLabel} labelLine={false} style={{ fontSize: 10 }}>
+                        {pieEtaria.map((e, i) => <Cell key={e.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartBox>
               )}
             </div>
             <div>
@@ -886,14 +906,16 @@ export default function StrategyAnalyticsPage() {
               {pieSpiritual.length === 0 ? (
                 <p className="text-[11px] text-[hsl(var(--text-secondary))] italic text-center py-8">Sin datos de estado espiritual</p>
               ) : (
-                <ResponsiveContainer width="100%" height={160}>
-                  <PieChart>
-                    <Pie data={pieSpiritual} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} label={renderPiePct} labelLine={false} style={{ fontSize: 10 }}>
-                      {pieSpiritual.map((e, i) => <Cell key={e.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                <ChartBox height={160}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={pieSpiritual} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} label={renderPiePct} labelLine={false} style={{ fontSize: 10 }}>
+                        {pieSpiritual.map((e, i) => <Cell key={e.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartBox>
               )}
               <div className="space-y-1 mt-2">
                 {pieSpiritual.map((e, i) => (
@@ -913,18 +935,20 @@ export default function StrategyAnalyticsPage() {
           <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl p-5">
             <SectionHeader icon={BarChart3} title="Comparativa por Grupo"
               sub="Ocupación · Atracción · Cumplimiento operativo" />
-            <ResponsiveContainer width="100%" height={280}>
-              <RadarChart data={radarData}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="grupo" tick={{ fontSize: 11 }} />
-                <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
-                <Radar name="Ocupación" dataKey="Ocupación" stroke="#6366f1" fill="#6366f1" fillOpacity={0.2} />
-                <Radar name="Atracción" dataKey="Asistencia" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} />
-                <Radar name="Cumplimiento" dataKey="Cumplimiento" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.2} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Tooltip />
-              </RadarChart>
-            </ResponsiveContainer>
+            <ChartBox height={280}>
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={radarData}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="grupo" tick={{ fontSize: 11 }} />
+                  <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
+                  <Radar name="Ocupación" dataKey="Ocupación" stroke="#6366f1" fill="#6366f1" fillOpacity={0.2} />
+                  <Radar name="Atracción" dataKey="Asistencia" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} />
+                  <Radar name="Cumplimiento" dataKey="Cumplimiento" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.2} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Tooltip />
+                </RadarChart>
+              </ResponsiveContainer>
+            </ChartBox>
           </div>
         )}
 

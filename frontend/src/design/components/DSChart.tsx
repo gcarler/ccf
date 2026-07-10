@@ -56,7 +56,9 @@ function ChartWrapper({ children, height }: { children: React.ReactNode; height:
     return (
         <div ref={ref} style={{ width: '100%', height, minWidth: 1, minHeight: 1 }}>
             {ready ? (
-                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                // Pass explicit pixel dimensions to avoid Recharts' internal
+                // "width(-1) / height(-1)" warning in flex/grid layouts.
+                <ResponsiveContainer width={width} height={h}>
                     {children}
                 </ResponsiveContainer>
             ) : (
