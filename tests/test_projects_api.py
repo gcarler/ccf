@@ -542,7 +542,8 @@ class TestComments:
         _, _, sede = seed_admin(db_session)
         headers = auth_headers(client)
         resp = client.post("/api/projects/comments", json={}, headers=headers)
-        assert resp.status_code == 400
+        # Pydantic validation returns 422 for missing required fields.
+        assert resp.status_code == 422
 
 
 # ── G: Inbox ─────────────────────────────────────────────────────────────

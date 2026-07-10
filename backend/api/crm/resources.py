@@ -209,6 +209,7 @@ async def upload_adjunto(
         raise HTTPException(400, "Archivo excede el límite de 10 MB")
 
     url = storage_service.save_file(contents, safe_name, subfolder="crm_recursos")
+    seaweed_fid = storage_service.save_file_seaweed(contents, safe_name, subfolder="crm_recursos")
     sede_id = get_user_sede_id(db, str(user.id))
     persona_id = resolve_persona_id_from_identity(db, str(user.id))
 
@@ -217,6 +218,7 @@ async def upload_adjunto(
         sede_id=sede_id,
         plantilla_id=plantilla_id,
         nombre_recurso=nombre_recurso,
+        seaweed_fid=seaweed_fid,
         url_acceso=url,
         nombre_archivo=file.filename or safe_name,
         tipo_mime=file.content_type or "application/octet-stream",
