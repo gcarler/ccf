@@ -14,7 +14,7 @@ La plataforma CCF se rige por un Kernel de Personas. Cualquier cambio debe prese
 persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"))
 ```
 
-Prohibido crear nuevas tablas paralelas para representar personas como estudiantes, miembros, lideres, donantes o usuarios ministeriales.
+Prohibido crear nuevas tablas paralelas para representar personas como estudiantes, integrantes, lideres, donantes o usuarios ministeriales.
 
 ## 2. Auth v3
 

@@ -33,7 +33,7 @@
 - Se ocultaron controles de toolbar que no tienen callback real.
 - Se elimino el bloqueo de build por lint.
 - Se reemplazaron los KPIs simulados de CRM por el endpoint real de analitica y se reutiliza la misma fuente en `grid`, `list`, `table`, `board`, `calendar` y `gantt`.
-- Se cambio la tarjeta ficticia de "Estudiantes Activos" por "Miembros Activos" con conteo real.
+- Se cambio la tarjeta ficticia de "Estudiantes Activos" por "Personas Activas" con conteo real.
 - Se conectaron `support/contact` y `support/tickets` con `/support/`; ahora crear y listar tickets usa persistencia real.
 - Se habilito contenido libre para claves wiki en `/content`, se agrego `useWikiDocument` y se migraron las wikis embebidas a persistencia compartida con migracion automatica desde `localStorage`.
 - Se conectaron las metricas principales de `admin/mission-impact` con `/finance/impact` y se diferencio visualmente la bitacora editorial de los datos operativos.

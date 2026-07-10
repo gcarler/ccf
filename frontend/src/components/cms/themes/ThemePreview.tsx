@@ -140,7 +140,7 @@ export default function ThemePreview({ tokens }: Props) {
       {/* ── Stats Row ── */}
       <div className="grid grid-cols-3 gap-px" style={{ background: t("--site-outline-variant", "#424750") }}>
         {[
-          { icon: Users, label: "Miembros", value: "1,240" },
+          { icon: Users, label: "Personas", value: "1,240" },
           { icon: Globe, label: "Países", value: "12" },
           { icon: Heart, label: "Donaciones", value: "$8.5K" },
         ].map((stat, i) => (

@@ -363,7 +363,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
       quote_author: "",
       quote_subtitle: "",
       stats: [
-        { value: "0+", label: "Miembros" },
+        { value: "0+", label: "Personas" },
         { value: "0+", label: "Años" },
         { value: "0", label: "Sedes" }
       ],

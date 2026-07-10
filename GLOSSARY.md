@@ -10,7 +10,7 @@
 
 | ❌ No usar | ✅ Usar | Razón |
 |---|---|---|
-| miembro / member (para referirse a una persona) | persona, integrante, participante | Axioma 1: el kernel es de personas, no de membresía |
+| termino heredado para referirse a una persona | persona, integrante, participante | Axioma 1: el kernel es de personas, no de membresía |
 | usuario (para referirse a un ser humano) | persona | `users` es solo para autenticación; la persona es la entidad real |
 | estudiante / alumno (como tabla) | persona con rol B en academy | Axioma 1: no hay tabla `estudiantes`, hay `personas` con enrollment |
 | líder (como tabla separada) | persona con rol B de "LIDER" | Axioma 1: el liderazgo es un rol, no una entidad separada |
@@ -25,7 +25,7 @@ Cualquier ser humano registrado en el sistema. Su ficha vive en la tabla `person
 
 ### ¿Qué NO es una persona?
 - Un `user` (es solo para login — tabla `users` con PK Integer, FK opcional a `personas.id`)
-- Un "miembro" (término eliminado)
+- Un integrante o participante (según contexto)
 - Un "estudiante" (es un rol, no una entidad)
 
 ### Las 3 Dimensiones de Identidad
@@ -33,7 +33,7 @@ Cualquier ser humano registrado en el sistema. Su ficha vive en la tabla `person
 | Dimensión | Qué representa | Tabla | Ejemplos |
 |---|---|---|---|
 | **A — Ministerio** | Llamado espiritual | `persona_ministries` | Pastor, Maestro, Evangelista |
-| **B — Rol Iglesia** | Nivel en el embudo | `persona_church_roles` / `persona_role_assignments` | Líder, Servidor, Miembro, Visitante |
+| **B — Rol Iglesia** | Nivel en el embudo | `persona_church_roles` / `persona_role_assignments` | Líder, Servidor, Integrante, Visitante |
 | **C — Rol Plataforma** | Permisos de software | `auth_roles` / `auth_user_module_roles` | ADMINISTRADOR, GESTOR, EDITOR, LECTOR |
 
 ## 🏠 Grupos y Casas de Gloria

@@ -19,11 +19,11 @@ Este documento resume lo que existe hoy y lo que falta en cada módulo para decl
   - Añadir flujos de tareas/proyectos si backend lo soporta (subir tareas + feedback).
 
 ## 3. CRM completo
-- **Implementado**: tablero general, pipeline, miembros, tareas, mensajes, scanner, automations, grupos (catálogo), voluntarios (listado), eventos con asistencia, settings simples.
+- **Implementado**: tablero general, pipeline, personas, tareas, mensajes, scanner, automations, grupos (catálogo), voluntarios (listado), eventos con asistencia, settings simples.
 - **Pendiente**:
   - CRUD completo para grupos, voluntarios, contactos (alta/baja, asignaciones por rol, filtros, permisos).
   - Integrar counseling y automations con datos reales (hoy es mock sin validación).
-  - Sincronizar CRM con academia (miembros ↔ estudiantes) y con comunidad (peticiones/prayer).
+  - Sincronizar CRM con academia (personas ↔ estudiantes) y con comunidad (peticiones/prayer).
   - Historial y métricas accionables (gráficos reales en dashboard, no valores fijos).
 
 ## 4. Comunidad (public-facing)

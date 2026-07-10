@@ -45,11 +45,26 @@ class SplitRequest(BaseModel):
     nuevo_lider_id: str  # UUID de la Persona que será líder del nuevo grupo
 
 
+class GrupoResumenMultiplicacion(BaseModel):
+    id: UUID
+    codigo: Optional[str] = None
+    nombre: str
+    lider_persona_id: Optional[UUID] = None
+    lider_nombre: Optional[str] = None
+    sede_id: Optional[UUID] = None
+    activo: bool
+    total_personas: int
+    parent_group_id: Optional[UUID] = None
+    parent_group_nombre: Optional[str] = None
+    notes_historial: Optional[str] = None
+    created_at: Optional[str] = None
+
+
 class SplitResponse(BaseModel):
     ok: bool
     mensaje: str
-    grupo_original: dict
-    nuevo_grupo: dict
+    grupo_original: GrupoResumenMultiplicacion
+    nuevo_grupo: GrupoResumenMultiplicacion
     personas_transferidas: int
 
 
@@ -91,7 +106,7 @@ def _count_personas(db: Session, grupo_id: UUID) -> int:
 
 
 def _serialize_grupo(grupo: models.GrupoEvangelismo, db: Session) -> dict:
-    miembros_total = _count_personas(db, grupo.id)
+    total_personas = _count_personas(db, grupo.id)
     return {
         "id": grupo.id,
         "codigo": grupo.codigo,
@@ -100,7 +115,7 @@ def _serialize_grupo(grupo: models.GrupoEvangelismo, db: Session) -> dict:
         "lider_nombre": f"{grupo.lider.first_name} {grupo.lider.last_name}" if grupo.lider else None,
         "sede_id": grupo.sede_id,
         "activo": grupo.activo,
-        "total_personas": miembros_total,
+        "total_personas": total_personas,
         "parent_group_id": grupo.parent_group_id,
         "parent_group_nombre": grupo.parent_group.nombre if grupo.parent_group else None,
         "notes_historial": grupo.notes_historial,

@@ -6,11 +6,11 @@
 
 | Contexto | Término UI correcto | Evitar |
 |---|---|---|
-| Cualquier persona en el sistema | persona, integrante, participante | miembro, member |
+| Cualquier persona en el sistema | persona, integrante, participante | termino heredado |
 | Grupo pequeño comunitario | Grupo Pequeño / Comunidad | Cell Group, Célula |
 | Grupo de evangelismo | Grupo de Evangelismo / Casa de Gloria | nombres heredados en inglés |
 | Líder de grupo | Líder | no hay tabla "líderes" |
-| Cantidad de personas en grupo | total_personas, Integrantes | members_count, Miembros |
+| Cantidad de personas en grupo | total_personas, Integrantes | conteo heredado |
 | Usuario de la plataforma | usuario (solo para login) | no confundir con persona |
 
 ## Convenciones de UI

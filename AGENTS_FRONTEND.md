@@ -8,18 +8,18 @@
 
 ## 🧠 Principios Fundamentales
 
-### 1. Las personas NO son "miembros"
+### 1. Las personas se nombran como personas
 
-En el frontend de CCF **nunca** se usa la palabra "miembro" para referirse a una persona registrada en el kernel. El término correcto es **personas**.
+En el frontend de CCF **nunca** se usa "miembro" para referirse a una persona registrada en el kernel. El término correcto es **personas**.
 
 | ❌ Incorrecto | ✅ Correcto |
 |---|---|
-| `members_count` (en UI) | `total_personas` |
-| "Lista de miembros" | "Directorio de personas" |
-| `MemberCard` | `PersonaCard` |
-| `membership_status` | `persona_role_assignments` |
+| `conteo_personas` (en UI) | `total_personas` |
+| "Lista de personas" | "Directorio de personas" |
+| `PersonaCard` | `PersonaCard` |
+| `estado_persona_rol` | `persona_role_assignments` |
 
-**Excepción:** La tabla/grupo de base de datos puede llamarse internamente "miembros" solo si se refiere a un rol específico (rol B del Axioma 2), pero la UI **siempre** debe presentarlo como "integrantes", "participantes" o "personas del grupo".
+**Excepción:** La tabla/grupo de base de datos puede usar un nombre interno de rol específico solo si el modelo lo exige, pero la UI **siempre** debe presentarlo como "integrantes", "participantes" o "personas del grupo".
 
 ### 2. Grupos Comunitarios y de Evangelismo
 
