@@ -69,6 +69,8 @@ from backend.crud.cms import (
     get_cms_theme,
     get_post_categories,
     get_post_tags,
+    get_posts_categories_batch,
+    get_posts_tags_batch,
     get_public_cms_page,
     get_seo_trend,
     get_public_cms_posts,
