@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { SITE_KEY } from "@/lib/site-config";
@@ -400,6 +400,7 @@ export default function CmsPagesManagement() {
               </div>
               <input
                 autoFocus
+                required
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 onKeyDown={(e) => e.key === "Escape" && setIsQuickAddOpen(false)}

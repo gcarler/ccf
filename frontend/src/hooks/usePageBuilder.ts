@@ -97,6 +97,8 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
   const [themeLoading, setThemeLoading] = useState(false);
   const themeLoadingRef = useRef(false);
   const isMountedRef = useRef(true);
+  const pendingLocalChangesRef = useRef(false);
+  const autoSaveSectionRef = useRef<CmsSection | null>(null);
 
   // ── Derived state ────────────────────────────────────────────────────────
   const activePage = useMemo(() => pages.find((p) => p.slug === activeSlug) ?? null, [pages, activeSlug]);
@@ -201,6 +203,37 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
   useEffect(() => {
     loadSectionsAndVersions(activeSlug).catch(() => undefined);
   }, [activeSlug, loadSectionsAndVersions]);
+
+  // ── Auto-save: persist local-only changes every 2 seconds ──────────────
+  useEffect(() => {
+    if (!canEdit || !token || !activeSlug) return;
+    const interval = setInterval(async () => {
+      if (!pendingLocalChangesRef.current || !autoSaveSectionRef.current) return;
+      const section = autoSaveSectionRef.current;
+      pendingLocalChangesRef.current = false;
+      try {
+        await patchCmsSection(siteKey, activeSlug, section.id, { props_json: section.props_json }, token);
+        await loadSectionsAndVersions(activeSlug);
+        notifyPreviewSync({ type: "section-saved", siteKey, slug: activeSlug, sectionId: section.id });
+      } catch {
+        // Auto-save failure is non-critical; next manual save will retry
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [canEdit, token, activeSlug, siteKey, loadSectionsAndVersions]);
+
+  // ── Save on tab close ──────────────────────────────────────────────────
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!pendingLocalChangesRef.current || !autoSaveSectionRef.current) return;
+      const section = autoSaveSectionRef.current;
+      const url = `/api/cms/v2/sites/${siteKey}/pages/${activeSlug}/sections/${section.id}`;
+      const body = JSON.stringify({ props_json: section.props_json });
+      navigator.sendBeacon(url, new Blob([body], { type: "application/json" }));
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [siteKey, activeSlug]);
 
   // ── SEO Analysis ─────────────────────────────────────────────────────────
   const seoAnalysis = useMemo(() => {
@@ -413,7 +446,10 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     const currentItem = asObject(currentItems[index]);
     currentItems[index] = { ...currentItem, ...patch };
     const nextProps = { ...currentProps, [key]: currentItems };
+    const updated = { ...activeSection, props_json: nextProps };
     setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: nextProps } : s));
+    pendingLocalChangesRef.current = true;
+    autoSaveSectionRef.current = updated;
     return nextProps;
   }, [activeSection]);
 
@@ -423,7 +459,10 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     const currentItems = Array.isArray(currentProps[key]) ? [...(currentProps[key] as Array<Record<string, unknown>>)] : [];
     const nextItems = [...currentItems, template];
     const nextProps = { ...currentProps, [key]: nextItems };
+    const updated = { ...activeSection, props_json: nextProps };
     setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: nextProps } : s));
+    pendingLocalChangesRef.current = true;
+    autoSaveSectionRef.current = updated;
     return nextProps;
   }, [activeSection]);
 
