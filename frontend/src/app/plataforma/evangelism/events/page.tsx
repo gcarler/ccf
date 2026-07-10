@@ -1,7 +1,5 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import type {
 BulkAttendanceSyncResult,
 EventAudience,
@@ -25,6 +23,7 @@ import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { apiFetch } from '@/lib/http';
 import { parseAndValidateTime } from '@/lib/time';
 import { Calendar,Check,Download,MoreVertical,Pencil,QrCode,Trash2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import React,{ useEffect,useState } from 'react';
@@ -70,7 +69,7 @@ interface AudiencePreset {
 
 
 
-export default function EventsPage() {
+function EventsPage() {
  const { token } = useAuth();
  const router = useRouter();
  const { addToast } = useToast();
@@ -1705,3 +1704,5 @@ export default function EventsPage() {
  </>
  );
 }
+
+export default dynamic(() => Promise.resolve(EventsPage), { ssr: false });
