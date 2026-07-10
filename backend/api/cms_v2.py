@@ -74,7 +74,7 @@ def _get_section_type_or_404(db: Session, name: str) -> models.CmsSectionType:
 def list_section_types(
     only_active: bool = Query(default=False),
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     """List every platform-wide section type.
 
@@ -96,7 +96,7 @@ def list_section_types(
 def get_section_type(
     name: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     return _get_section_type_or_404(db, name)
 
@@ -502,7 +502,7 @@ def delete_site(
 def list_themes(
     site_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     return crud.list_cms_themes(db, site.id)
@@ -513,7 +513,7 @@ def get_theme(
     site_key: str,
     theme_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = crud.get_cms_theme(db, site.id, theme_id)
@@ -604,7 +604,7 @@ def delete_theme(
 def list_menus(
     site_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     return crud.list_cms_menus(db, site.id)
@@ -631,7 +631,7 @@ def get_menu(
     site_key: str,
     menu_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     return _get_menu_or_404(db, site.id, menu_key)
@@ -673,7 +673,7 @@ def list_menu_items(
     site_key: str,
     menu_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     menu = _get_menu_or_404(db, site.id, menu_key)
@@ -764,7 +764,7 @@ def list_pages(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     status: str | None = Query(None),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     pages, total = crud.list_cms_pages(db, site.id, skip=skip, limit=limit, status=status)
@@ -799,7 +799,7 @@ def get_page(
     site_key: str,
     slug: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     return _get_page_or_404(db, site.id, slug)
@@ -876,7 +876,7 @@ def list_sections(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     section_type: str | None = Query(None),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
@@ -990,7 +990,7 @@ def list_versions(
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
@@ -1012,7 +1012,7 @@ def list_publish_log(
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
@@ -1951,7 +1951,7 @@ def _get_post_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsPost:
 def list_categories(
     site_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     return crud.list_cms_categories(db, site.id)
@@ -1979,7 +1979,7 @@ def get_category(
     site_key: str,
     slug: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     return _get_category_or_404(db, site.id, slug)
@@ -2018,7 +2018,7 @@ def delete_category(
 def list_tags(
     site_key: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     return crud.list_cms_tags(db, site.id)
@@ -2046,7 +2046,7 @@ def get_tag(
     site_key: str,
     slug: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     return _get_tag_or_404(db, site.id, slug)
@@ -2093,7 +2093,7 @@ def list_posts(
     status: str | None = Query(None),
     category_id: uuid.UUID | None = Query(None),
     tag_id: uuid.UUID | None = Query(None),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     items, total = crud.list_cms_posts(
@@ -2139,7 +2139,7 @@ def get_post(
     site_key: str,
     slug: str,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_post_or_404(db, site.id, slug)
