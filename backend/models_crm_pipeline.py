@@ -3,6 +3,7 @@
 Modelos para el CRM 2.0: pipelines configurables, call center omnicanal,
 trazabilidad de origen, y SLAs de tiempo de respuesta.
 """
+
 import enum
 import uuid as _uuid
 from datetime import datetime, timezone
@@ -23,6 +24,7 @@ def _utcnow():
 # ──────────────────────────────────────────────
 # ENUMS
 # ──────────────────────────────────────────────
+
 
 class TipoPipelineEnum(str, enum.Enum):
     NUEVOS_VISITANTES = "NUEVOS_VISITANTES"
@@ -66,11 +68,10 @@ class TipoInteraccionEnum(str, enum.Enum):
 # PIPELINES
 # ──────────────────────────────────────────────
 
+
 class PipelineCRM(Base):
     __tablename__ = "crm_pipelines"
-    __table_args__ = (
-        UniqueConstraint("sede_id", "tipo", name="uq_pipeline_sede_tipo"),
-    )
+    __table_args__ = (UniqueConstraint("sede_id", "tipo", name="uq_pipeline_sede_tipo"),)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
@@ -82,20 +83,20 @@ class PipelineCRM(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    etapas = relationship("EtapaPipeline", back_populates="pipeline",
-                          order_by="EtapaPipeline.orden",
-                          cascade="all, delete-orphan")
+    etapas = relationship(
+        "EtapaPipeline", back_populates="pipeline", order_by="EtapaPipeline.orden", cascade="all, delete-orphan"
+    )
     casos = relationship("CasoCRM", back_populates="pipeline")
 
 
 class EtapaPipeline(Base):
     __tablename__ = "crm_etapas_pipeline"
-    __table_args__ = (
-        UniqueConstraint("pipeline_id", "orden", name="uq_etapa_pipeline_orden"),
-    )
+    __table_args__ = (UniqueConstraint("pipeline_id", "orden", name="uq_etapa_pipeline_orden"),)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    pipeline_id = Column(UUID(as_uuid=True), ForeignKey("crm_pipelines.id", ondelete="CASCADE"), nullable=False, index=True)
+    pipeline_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_pipelines.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     nombre = Column(String(100), nullable=False)
     orden = Column(Integer, nullable=False)
     requiere_accion = Column(Boolean, default=True)
@@ -113,6 +114,7 @@ class EtapaPipeline(Base):
 # CASOS (TICKETS)
 # ──────────────────────────────────────────────
 
+
 class CasoCRM(Base):
     __tablename__ = "crm_casos"
 
@@ -127,10 +129,16 @@ class CasoCRM(Base):
     origen_canal = Column(SAEnum(CanalOrigenEnum), nullable=False, index=True)
     origen_detalle_id = Column(String(200), nullable=True, index=True)
     origen_sesion_id = Column(UUID(as_uuid=True), ForeignKey("sesiones_grupo.id", ondelete="SET NULL"), nullable=True)
-    origen_grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True)
-    origen_estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True)
+    origen_grupo_id = Column(
+        UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True
+    )
+    origen_estrategia_id = Column(
+        UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True
+    )
     payload_web = Column(JSON, nullable=True)
-    asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    asignado_a_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     fecha_creacion = Column(DateTime(timezone=True), default=_utcnow, index=True)
     fecha_cierre = Column(DateTime(timezone=True), nullable=True)
     sla_vencimiento_contacto = Column(DateTime(timezone=True), nullable=True)
@@ -160,7 +168,7 @@ class CasoCRM(Base):
                 case_ids.append(_uuid.UUID(cid))
             else:
                 case_ids.append(cid)
-        
+
         if len(case_ids) != len(set(case_ids)):
             raise ValueError("Duplicate IDs in reorder payload.")
 
@@ -185,17 +193,25 @@ class CasoCRM(Base):
                         all_stage_ids.add(val)
 
         if all_stage_ids:
-            stage_count = db.query(EtapaPipeline).join(PipelineCRM, EtapaPipeline.pipeline_id == PipelineCRM.id).filter(
-                EtapaPipeline.id.in_(list(all_stage_ids)),
-                PipelineCRM.sede_id == user_sede_id
-            ).count()
+            stage_count = (
+                db.query(EtapaPipeline)
+                .join(PipelineCRM, EtapaPipeline.pipeline_id == PipelineCRM.id)
+                .filter(EtapaPipeline.id.in_(list(all_stage_ids)), PipelineCRM.sede_id == user_sede_id)
+                .count()
+            )
             if stage_count != len(all_stage_ids):
                 raise ValueError("Sede isolation violation: some target stages do not belong to user's Sede.")
 
         try:
-            all_stage_cases = db.query(cls).filter(cls.etapa_actual_id.in_(list(all_stage_ids))).order_by(cls.id).with_for_update().all()
+            all_stage_cases = (
+                db.query(cls)
+                .filter(cls.etapa_actual_id.in_(list(all_stage_ids)))
+                .order_by(cls.id)
+                .with_for_update()
+                .all()
+            )
             locked_cases_map = {c.id: c for c in all_stage_cases}
-            
+
             for cid in case_ids:
                 if cid in locked_cases_map:
                     locked_cases_map[cid].is_locked_for_reorder = True
@@ -207,7 +223,7 @@ class CasoCRM(Base):
                     if sort_order < 0 and not cls.allow_negative_sort_indices():
                         raise ValueError("Negative sort indices are not allowed.")
                     locked_cases_map[cid].sort_order = sort_order
-                
+
                 for key in ("stage_id", "etapa_actual_id", "etapa_id", "target_stage_id", "drag_target_etapa_id"):
                     target_stage = item.get(key)
                     if target_stage is not None:
@@ -225,7 +241,7 @@ class CasoCRM(Base):
                 has_null = any(c.sort_order is None for c in cases_in_stage)
                 orders = [c.sort_order for c in cases_in_stage if c.sort_order is not None]
                 has_dup = len(orders) != len(set(orders))
-                
+
                 if has_null:
                     cls.handle_null_sort_order(db, stage_id)
                 if has_dup:
@@ -236,7 +252,7 @@ class CasoCRM(Base):
                 if cid in locked_cases_map:
                     locked_cases_map[cid].is_locked_for_reorder = False
                     locked_cases_map[cid].last_reorder_failed = False
-            
+
             if commit:
                 db.commit()
         except Exception as e:
@@ -294,7 +310,7 @@ class CasoCRM(Base):
                 case_ids.append(_uuid.UUID(cid))
             else:
                 case_ids.append(cid)
-        
+
         # Load the original stage for each case before reordering
         original_stages = {}
         for case in db.query(cls).filter(cls.id.in_(case_ids)).all():
@@ -312,13 +328,15 @@ class CasoCRM(Base):
                     changed_cases.append(case)
 
             if changed_cases:
-                from backend.models_crm import CrmAutomation, PendingCrmAction
                 from datetime import timedelta
 
-                automations = db.query(CrmAutomation).filter(
-                    CrmAutomation.trigger_event == "stage_change",
-                    CrmAutomation.is_active == True
-                ).all()
+                from backend.models_crm import CrmAutomation, PendingCrmAction
+
+                automations = (
+                    db.query(CrmAutomation)
+                    .filter(CrmAutomation.trigger_event == "stage_change", CrmAutomation.is_active == True)
+                    .all()
+                )
 
                 for case in changed_cases:
                     for automation in automations:
@@ -327,7 +345,7 @@ class CasoCRM(Base):
                             automation_id=automation.id,
                             target_persona_id=case.persona_id,
                             execute_at=execute_at,
-                            status="pending"
+                            status="pending",
                         )
                         db.add(action)
             db.commit()
@@ -339,15 +357,14 @@ class CasoCRM(Base):
     asignado_a = relationship("Persona", foreign_keys=[asignado_a_id])
     pipeline = relationship("PipelineCRM", back_populates="casos")
     etapa_actual = relationship("EtapaPipeline", back_populates="casos")
-    interacciones = relationship("InteraccionCRM", back_populates="caso",
-                                 cascade="all, delete-orphan")
-    tareas = relationship("TareaCRM", back_populates="caso",
-                          cascade="all, delete-orphan")
+    interacciones = relationship("InteraccionCRM", back_populates="caso", cascade="all, delete-orphan")
+    tareas = relationship("TareaCRM", back_populates="caso", cascade="all, delete-orphan")
 
 
 # ──────────────────────────────────────────────
 # INTERACCIONES (BITÁCORA CALL CENTER)
 # ──────────────────────────────────────────────
+
 
 class InteraccionCRM(Base):
     __tablename__ = "crm_interacciones"
@@ -359,7 +376,9 @@ class InteraccionCRM(Base):
     fecha_interaccion = Column(DateTime(timezone=True), default=_utcnow, index=True)
     resumen = Column(Text, nullable=False)
     duration_seconds = Column(Integer, default=0)
-    plantilla_usada_id = Column(UUID(as_uuid=True), ForeignKey("crm_plantillas_mensaje.id", ondelete="SET NULL"), nullable=True)
+    plantilla_usada_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_plantillas_mensaje.id", ondelete="SET NULL"), nullable=True
+    )
 
     caso = relationship("CasoCRM", back_populates="interacciones")
     realizado_por = relationship("Persona", foreign_keys=[realizado_por_id])
@@ -368,6 +387,7 @@ class InteraccionCRM(Base):
 # ──────────────────────────────────────────────
 # TAREAS CRM
 # ──────────────────────────────────────────────
+
 
 class TareaCRM(Base):
     __tablename__ = "crm_tareas"
