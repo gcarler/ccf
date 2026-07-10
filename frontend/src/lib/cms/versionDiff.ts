@@ -233,7 +233,9 @@ function diffSections(
     bMap.set(synthetic, bList[i]);
     orphanCount++;
   }
-  // orphanCount sections without section_key/id use positional fallback keys
+  if (orphanCount > 0) {
+    console.warn(`${orphanCount} section(s) have no section_key/id`);
+  }
 
   // Preserve render order: walk B (newer) first so unchanged / modified
   // sections appear in their final position. Then append any A-only

@@ -129,7 +129,10 @@ class AutomationEngine:
                 logger.info(f"Reminder created for task {task.id}.")
 
     def _process_crm_pending_actions(self, db: Session):
-        from backend.models_crm import PendingCrmAction, CrmAutomation
+        import uuid as _uuid
+
+        from backend.models_crm import CrmAutomation, CrmAutomationEdge, PendingCrmAction
+        from backend.models_crm_pipeline import CasoCRM
         from backend.models_shared import _utcnow
 
         pending_actions = (
@@ -141,22 +144,159 @@ class AutomationEngine:
             .all()
         )
 
+        def detect_cycle_dfs(start_id, db_session) -> bool:
+            visited = set()
+            rec_stack = set()
+            
+            def dfs(curr_id) -> bool:
+                if len(rec_stack) > 900:  # Safety recursion depth limit
+                    return True
+                visited.add(curr_id)
+                rec_stack.add(curr_id)
+                
+                edges_list = db_session.query(CrmAutomationEdge).filter(CrmAutomationEdge.source_id == curr_id).all()
+                for edge in edges_list:
+                    target_id = edge.target_id
+                    if target_id not in visited:
+                        if dfs(target_id):
+                            return True
+                    elif target_id in rec_stack:
+                        return True
+                        
+                rec_stack.remove(curr_id)
+                return False
+                
+            return dfs(start_id)
+
+        def evaluate_condition(cond_type, actual_val, expected_val_str) -> bool:
+            if not cond_type or not isinstance(cond_type, str):
+                cond_type = "equals"
+            
+            cond_type = cond_type.lower().strip()
+            
+            if cond_type == "always":
+                return True
+                
+            if cond_type == "ne":
+                return not evaluate_condition("equals", actual_val, expected_val_str)
+                
+            if cond_type == "equals":
+                if actual_val is None:
+                    return expected_val_str in (None, "", "None", "null")
+                if expected_val_str is None:
+                    return False
+                try:
+                    if isinstance(actual_val, bool):
+                        return actual_val == (expected_val_str.lower() in ("true", "1", "yes"))
+                    elif isinstance(actual_val, int):
+                        return actual_val == int(expected_val_str)
+                    elif isinstance(actual_val, float):
+                        return actual_val == float(expected_val_str)
+                    elif isinstance(actual_val, _uuid.UUID):
+                        return actual_val == _uuid.UUID(expected_val_str)
+                    elif hasattr(actual_val, "value"):  # Enum comparison
+                        return str(actual_val.value) == expected_val_str or str(actual_val) == expected_val_str
+                    else:
+                        return str(actual_val) == str(expected_val_str)
+                except Exception:
+                    return str(actual_val) == str(expected_val_str)
+            
+            if cond_type == "contains":
+                if actual_val is None or expected_val_str is None:
+                    return False
+                return str(expected_val_str).lower() in str(actual_val).lower()
+                
+            if cond_type == "starts_with":
+                if actual_val is None or expected_val_str is None:
+                    return False
+                return str(actual_val).lower().startswith(str(expected_val_str).lower())
+                
+            if cond_type == "in":
+                if actual_val is None or expected_val_str is None:
+                    return False
+                import json
+                try:
+                    items = json.loads(expected_val_str)
+                    if not isinstance(items, list):
+                        items = [items]
+                except Exception:
+                    items = [x.strip() for x in expected_val_str.split(",")]
+                act_str = str(actual_val).lower()
+                return any(str(item).lower() == act_str for item in items)
+                
+            if cond_type == "gt":
+                if actual_val is None or expected_val_str is None:
+                    return False
+                try:
+                    return float(actual_val) > float(expected_val_str)
+                except Exception:
+                    return str(actual_val) > str(expected_val_str)
+                    
+            if cond_type == "lt":
+                if actual_val is None or expected_val_str is None:
+                    return False
+                try:
+                    return float(actual_val) < float(expected_val_str)
+                except Exception:
+                    return str(actual_val) < str(expected_val_str)
+            
+            return False
+
         for action in pending_actions:
             automation = db.query(CrmAutomation).filter(CrmAutomation.id == action.automation_id).first()
             if not automation:
                 action.status = "failed"
                 continue
             
+            # DFS Loop Cycle Detection
+            if detect_cycle_dfs(automation.id, db):
+                logger.warning(f"Cycle detected in CRM automation flow starting at {automation.id}. Action failed.")
+                action.status = "failed"
+                continue
+            
             try:
-                # Aquí iría la lógica real de ejecución de la acción (enviar email, WhatsApp, etc.)
                 logger.info(f"Executing CRM automation {automation.id} for persona {action.target_persona_id}")
                 
-                # Ejecución exitosa
+                # Fetch target CasoCRM case and linked Persona
+                case = db.query(CasoCRM).filter(CasoCRM.persona_id == action.target_persona_id).first()
+                persona = None
+                if hasattr(models, "Persona"):
+                    persona = db.query(models.Persona).filter(models.Persona.id == action.target_persona_id).first()
+                
+                # Execution of current action (simulated)
                 action.status = "executed"
                 
-                # Encolar la siguiente acción si existe
-                if automation.next_automation_id:
-                    next_auto = db.query(CrmAutomation).filter(CrmAutomation.id == automation.next_automation_id).first()
+                # Retrieve outgoing edges from active automation
+                edges = db.query(CrmAutomationEdge).filter(CrmAutomationEdge.source_id == automation.id).all()
+                for edge in edges:
+                    # Evaluate conditions
+                    cond_type_str = edge.condition_type.lower().strip() if (edge.condition_type and isinstance(edge.condition_type, str)) else ""
+                    if cond_type_str == "always":
+                        # Always matches regardless of key/value
+                        pass
+                    elif edge.condition_key:
+                        val = None
+                        found = False
+                        
+                        # 1. CasoCRM attributes
+                        if case is not None and hasattr(case, edge.condition_key):
+                            val = getattr(case, edge.condition_key)
+                            found = True
+                        # 2. CasoCRM payload_web json keys
+                        elif case is not None and case.payload_web and isinstance(case.payload_web, dict) and edge.condition_key in case.payload_web:
+                            val = case.payload_web[edge.condition_key]
+                            found = True
+                        # 3. Linked Persona attributes
+                        elif persona is not None and hasattr(persona, edge.condition_key):
+                            val = getattr(persona, edge.condition_key)
+                            found = True
+                        
+                        if not found or not evaluate_condition(edge.condition_type, val, edge.condition_value):
+                            # Skip this edge since condition evaluates to False
+                            logger.info(f"Skipping edge {edge.id} due to condition mismatch: {edge.condition_key}")
+                            continue
+
+                    next_auto = db.query(CrmAutomation).filter(CrmAutomation.id == edge.target_id).first()
                     if next_auto:
                         next_execute_at = _utcnow() + timedelta(minutes=next_auto.delay_minutes)
                         next_action = PendingCrmAction(

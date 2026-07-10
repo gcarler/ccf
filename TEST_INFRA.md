@@ -1,53 +1,38 @@
-# CCF Test Infrastructure (TEST_INFRA)
+# E2E Test Infra: CRM Visual Enterprise Evolution
 
-This document describes the test runner, architecture, and testing methodology implemented for the CCF CRM "Super Pro" evolution.
+## Test Philosophy
+- Opaque-box, requirement-driven. No dependency on implementation design.
+- Methodology: Category-Partition + BVA + Pairwise + Workload Testing.
 
-## 1. Test Runner & Framework
-We use **pytest** as the primary test runner. The test infrastructure leverages direct async-to-sync testing mechanisms to match sandbox constraints and prevent execution hangs.
+## Feature Inventory
+| # | Feature | Source (requirement) | Tier 1 | Tier 2 | Tier 3 |
+|---|---------|---------------------|:------:|:------:|:------:|
+| 1 | Kanban UI | ORIGINAL_REQUEST R2 | 5 | 5 | Yes |
+| 2 | Drag-and-Drop | ORIGINAL_REQUEST R2 | 5 | 5 | Yes |
+| 3 | Reorder Endpoint | ORIGINAL_REQUEST R2 | 5 | 5 | Yes |
+| 4 | Atomic Reordering | ORIGINAL_REQUEST R2 | 5 | 5 | Yes |
+| 5 | Flow Builder UI | ORIGINAL_REQUEST R3 | 5 | 5 | Yes |
+| 6 | 3-Node Connection | ORIGINAL_REQUEST R3 | 5 | 5 | Yes |
+| 7 | Backend Branching Traversal | ORIGINAL_REQUEST R3 | 5 | 5 | Yes |
+| 8 | Loop/Cycle Validation | ORIGINAL_REQUEST R3 | 5 | 5 | Yes |
 
-### Key Libraries:
-- **pytest**: Test engine and test discovery.
-- **SQLAlchemy**: ORM database session management.
-- **httpx**: ASGI-compliant client (`ASGITransport`) to execute API tests synchronously.
+## Test Architecture
+- Test runner: pytest
+- Test case format: Pytest integration tests checking attributes, endpoints, and behaviors.
+- Directory layout: tests/test_crm_visual.py
 
----
+## Real-World Application Scenarios (Tier 4)
+| # | Scenario | Features Exercised | Complexity |
+|---|----------|--------------------|------------|
+| 1 | Lead Qualification Flow | F1, F2, F3, F7 | High |
+| 2 | Support Ticket Routing | F1, F3, F6 | High |
+| 3 | Cyclical Flow Resolution | F5, F8 | High |
+| 4 | Bulk Reassignment & Reorder | F3, F4, F7 | High |
+| 5 | Multi-Tenant Isolation CRM | F1, F3, F7 | High |
 
-## 2. Test Structure & Fixtures
-All database and client setups are managed via standard pytest fixtures defined in `tests/conftest.py`:
-
-- `db_session`: Manages transaction rollback and schema initialization (`Base.metadata.create_all`) for each test run, supporting SQLite by default and PostgreSQL in CI/CD.
-- `client`: A synchronous ASGI test client (`LocalASGITestClient`) that drives the FastAPI application directly without starting a background thread.
-- `seed_admin`: Idempotently sets up a platform administrator, their `Persona` profile, and their default `Sede` (campus).
-- `auth_headers`: Authenticates users via `/api/v3/auth/login` to obtain access tokens for API requests.
-
----
-
-## 3. The 4-Tier E2E Testing Methodology
-Our E2E test suite in `tests/test_crm_super_pro.py` comprises exactly **38 tests** divided into four logical tiers:
-
-### Tier 1: Feature Coverage (15 tests)
-- **Pastoral Health Score**: 5 tests verifying default values, calculations for high/medium/no activity, and database persistence.
-- **AI Copilot**: 5 tests checking endpoint behavior, empty case notes, missing API keys, OpenAI errors, and payload structure.
-- **Omnichannel Inbox**: 5 tests asserting unified display of WhatsApp, SMS, Email, and SpiritualMilestone events, sorted chronologically descending.
-
-### Tier 2: Boundary & Corner Cases (15 tests)
-- **Pastoral Health Score Boundaries**: 5 tests verifying zero/100 score limits, null data handling, inactive personas, and overflow prevention.
-- **AI Copilot Boundaries**: 5 tests verifying invalid ticket IDs, unauthorized access, context window truncation, unicode text, and cross-sede access blocks.
-- **Omnichannel Inbox Boundaries**: 5 tests checking empty timelines, duplicate timestamps, cross-sede timeline leakage, long custom milestones, and HTML/XSS injection.
-
-### Tier 3: Cross-Feature Combinations (3 tests)
-- Health status change events logged directly to the timeline.
-- AI Copilot leveraging unified timeline messages as contextual prompts.
-- Spiritual Milestones automatically triggering health score recalculations.
-
-### Tier 4: Real-world Application Scenarios (5 tests)
-- **Convert Journey**: Entry -> Group Attendance -> Baptism -> Counseling -> Scoring.
-- **Member Recovery**: Active -> Disengagement -> Status Change -> AI outreach -> Re-engagement -> Score Recovery.
-- **Sede Isolation**: End-to-end data isolation across different campus tenants.
-- **Rate Limiting & Concurrency**: Stress-testing rapid endpoint requests and database transaction safety.
-- **Holistic Campaign**: Multi-channel touchpoints -> Milestone -> Calculation -> Unified Timeline.
-
----
-
-## 4. External Integrations
-For AI-related functionality, we mock the **OpenAI** library at the module level using `unittest.mock.patch` to simulate completions. If the `openai` package is missing in the execution environment, our test suite dynamically mocks it via `sys.modules["openai"]` to prevent `ModuleNotFoundError` during test collection.
+## Coverage Thresholds
+- Tier 1: 40 tests (5 per feature)
+- Tier 2: 40 tests (5 per feature)
+- Tier 3: 8 tests (pairwise combinations)
+- Tier 4: 5 tests (real-world workflows)
+- Total minimum: 93 tests
