@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { Webhook, Plus, Trash2, Power, PowerOff, ChevronDown, ChevronUp } from "lucide-react";
 import SidePanel from "@/components/ui/SidePanel";
@@ -34,7 +33,6 @@ const AVAILABLE_EVENTS = [
 ];
 
 export default function WebhooksPage() {
-  const { user: _user } = useAuth();
   const [webhooks, setWebhooks] = useState<WebhookItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -46,9 +44,9 @@ export default function WebhooksPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<WebhookItem[]>("/cms/v2/webhooks?site_key=${SITE_KEY}", { silent: true });
+      const data = await apiFetch<WebhookItem[]>(`/cms/v2/webhooks?site_key=${SITE_KEY}`, { silent: true });
       setWebhooks(Array.isArray(data) ? data : []);
-    } catch { setWebhooks([]); }
+    } catch { toast.error("Error al cargar datos"); setWebhooks([]); }
     setLoading(false);
   };
 
@@ -80,7 +78,7 @@ export default function WebhooksPage() {
     try {
       const data = await apiFetch<WebhookDelivery[]>(`/cms/v2/webhooks/${id}/deliveries`, { silent: true });
       setDeliveries(Array.isArray(data) ? data : []);
-    } catch { setDeliveries([]); }
+    } catch { toast.error("Error al cargar datos"); setDeliveries([]); }
   };
 
   const toggleEvent = (event: string) => {
@@ -191,3 +189,4 @@ export default function WebhooksPage() {
   );
 }
 import { SITE_KEY } from "@/lib/site-config";
+import { toast } from "sonner";

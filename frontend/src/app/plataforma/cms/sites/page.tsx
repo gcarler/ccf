@@ -5,6 +5,7 @@ import { Globe, Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { createCmsSite, listCmsSites, patchCmsSite } from "@/lib/cms/v2";
 import { canManageSites } from "@/lib/cms/permissions";
+import { toast } from "sonner";
 
 function sanitizeSiteKey(value: string) {
   return value.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
@@ -39,7 +40,7 @@ export default function CmsSitesPage() {
   };
 
   useEffect(() => {
-    load().catch(() => undefined);
+    load().catch(() => toast.error("Error al cargar sitios"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 

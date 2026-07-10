@@ -17,7 +17,7 @@ export default function BrokenLinksPage() {
       const params = filter === "broken" ? "?resolved=false" : filter === "resolved" ? "?resolved=true" : "";
       const data = await apiFetch<BrokenLink[]>(`/cms/v2/broken-links?site_key=${SITE_KEY}${params}`, { silent: true });
       setLinks(Array.isArray(data) ? data : []);
-    } catch { setLinks([]); }
+    } catch { toast.error("Error al cargar datos"); setLinks([]); }
     setLoading(false);
   }, [filter]);
 
@@ -71,3 +71,4 @@ export default function BrokenLinksPage() {
   );
 }
 import { SITE_KEY } from "@/lib/site-config";
+import { toast } from "sonner";

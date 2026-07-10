@@ -140,7 +140,7 @@ export default function CmsSeoAuditPage() {
   };
 
   useEffect(() => {
-    fetchAudit().catch(() => undefined);
+    fetchAudit().catch(() => toast.error("Error al cargar auditoría"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, siteKey, statusFilter, minScore]);
 
@@ -184,7 +184,7 @@ export default function CmsSeoAuditPage() {
 
         <button
           type="button"
-          onClick={() => fetchAudit().catch(() => undefined)}
+          onClick={() => fetchAudit().catch(() => toast.error("Error al cargar auditoría"))}
           disabled={loading}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--primary))] dark:hover:border-[hsl(var(--primary))] text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] disabled:opacity-40 transition-colors"
           title="Refrescar"

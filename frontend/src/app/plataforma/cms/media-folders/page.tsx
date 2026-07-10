@@ -17,7 +17,7 @@ export default function MediaFoldersPage() {
     try {
       const data = await apiFetch<MediaFolder[]>("/cms/v2/media-folders?site_key=${SITE_KEY}", { silent: true });
       setFolders(Array.isArray(data) ? data : []);
-    } catch { setFolders([]); }
+    } catch { toast.error("Error al cargar datos"); setFolders([]); }
     setLoading(false);
   };
 
@@ -96,3 +96,4 @@ export default function MediaFoldersPage() {
   );
 }
 import { SITE_KEY } from "@/lib/site-config";
+import { toast } from "sonner";

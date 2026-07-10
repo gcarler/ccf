@@ -21,7 +21,7 @@ export default function SearchAdminPage() {
     try {
       const data = await apiFetch<{ results: SearchResult[]; promoted: Promotion[] }>(`/cms/v2/search`, { method: "POST", body: { site_key: SITE_KEY, query }, silent: true });
       setResults(data?.results || []);
-    } catch { setResults([]); }
+    } catch { toast.error("Error al cargar datos"); setResults([]); }
     setLoading(false);
   };
 
@@ -29,7 +29,7 @@ export default function SearchAdminPage() {
     try {
       const data = await apiFetch<Promotion[]>("/cms/v2/search/promotions?site_key=${SITE_KEY}", { silent: true });
       setPromoted(Array.isArray(data) ? data : []);
-    } catch { setPromoted([]); }
+    } catch { toast.error("Error al cargar datos"); setPromoted([]); }
   };
 
   useEffect(() => { loadPromos(); }, []);
@@ -116,3 +116,4 @@ export default function SearchAdminPage() {
   );
 }
 import { SITE_KEY } from "@/lib/site-config";
+import { toast } from "sonner";

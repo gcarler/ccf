@@ -233,12 +233,7 @@ function diffSections(
     bMap.set(synthetic, bList[i]);
     orphanCount++;
   }
-  if (orphanCount > 0) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `[versionDiff] ${orphanCount} section(s) have no section_key/id; using positional fallback keys.`,
-    );
-  }
+  // orphanCount sections without section_key/id use positional fallback keys
 
   // Preserve render order: walk B (newer) first so unchanged / modified
   // sections appear in their final position. Then append any A-only

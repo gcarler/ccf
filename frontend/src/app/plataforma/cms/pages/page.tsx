@@ -72,7 +72,7 @@ export default function CmsPagesManagement() {
   };
 
   useEffect(() => {
-    fetchPages(siteKey).catch(() => undefined);
+    fetchPages(siteKey).catch(() => toast.error("Error al cargar páginas"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, siteKey]);
 

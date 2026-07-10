@@ -24,7 +24,7 @@ export default function CustomTypesPage() {
     try {
       const data = await apiFetch<CustomType[]>(`/cms/v2/custom-types?site_key=${SITE_KEY}`, { silent: true });
       setTypes(Array.isArray(data) ? data : []);
-    } catch { setTypes([]); }
+    } catch { toast.error("Error al cargar datos"); setTypes([]); }
     setLoading(false);
   };
 
@@ -33,7 +33,7 @@ export default function CustomTypesPage() {
     try {
       const data = await apiFetch<CustomEntry[]>(`/cms/v2/custom-entries?site_key=${SITE_KEY}&type_key=${typeKey}`, { silent: true });
       setEntries(Array.isArray(data) ? data : []);
-    } catch { setEntries([]); }
+    } catch { toast.error("Error al cargar datos"); setEntries([]); }
   };
 
   useEffect(() => { loadTypes(); }, []);
@@ -183,3 +183,4 @@ export default function CustomTypesPage() {
   );
 }
 import { SITE_KEY } from "@/lib/site-config";
+import { toast } from "sonner";

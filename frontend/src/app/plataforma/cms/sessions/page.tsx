@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { Shield, Monitor, Smartphone, Trash2 } from "lucide-react";
 import SidePanel from "@/components/ui/SidePanel";
+import { toast } from "sonner";
 
 interface Session { id: string; browser: string | null; os: string | null; is_mobile: boolean; ip_address: string | null; last_activity_at: string; created_at: string; }
 
@@ -17,7 +18,7 @@ export default function SessionsPage() {
     try {
       const data = await apiFetch<Session[]>("/cms/v2/sessions", { silent: true });
       setSessions(Array.isArray(data) ? data : []);
-    } catch { setSessions([]); }
+    } catch { toast.error("Error al cargar datos"); setSessions([]); }
     setLoading(false);
   };
 
