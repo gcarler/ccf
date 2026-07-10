@@ -22,7 +22,7 @@ export default function CustomTypesPage() {
   const loadTypes = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<CustomType[]>("/cms/v2/custom-types?site_key=ccf", { silent: true });
+      const data = await apiFetch<CustomType[]>(`/cms/v2/custom-types?site_key=${SITE_KEY}`, { silent: true });
       setTypes(Array.isArray(data) ? data : []);
     } catch { setTypes([]); }
     setLoading(false);
@@ -31,7 +31,7 @@ export default function CustomTypesPage() {
   const loadEntries = async (typeKey: string) => {
     setSelectedType(typeKey);
     try {
-      const data = await apiFetch<CustomEntry[]>(`/cms/v2/custom-entries?site_key=ccf&type_key=${typeKey}`, { silent: true });
+      const data = await apiFetch<CustomEntry[]>(`/cms/v2/custom-entries?site_key=${SITE_KEY}&type_key=${typeKey}`, { silent: true });
       setEntries(Array.isArray(data) ? data : []);
     } catch { setEntries([]); }
   };
@@ -40,7 +40,7 @@ export default function CustomTypesPage() {
 
   const createType = async () => {
     if (!typeForm.type_key || !typeForm.label) return;
-    await apiFetch("/cms/v2/custom-types", { method: "POST", body: { site_key: "ccf", supports: ["title", "editor", "excerpt"], ...typeForm }, silent: true });
+    await apiFetch("/cms/v2/custom-types", { method: "POST", body: { site_key: SITE_KEY, supports: ["title", "editor", "excerpt"], ...typeForm }, silent: true });
     setTypeForm({ type_key: "", label: "", label_plural: "" });
     setShowTypeForm(false);
     loadTypes();
@@ -48,7 +48,7 @@ export default function CustomTypesPage() {
 
   const createEntry = async () => {
     if (!entryForm.slug || !entryForm.title || !selectedType) return;
-    await apiFetch("/cms/v2/custom-entries", { method: "POST", body: { site_key: "ccf", type_key: selectedType, ...entryForm }, silent: true });
+    await apiFetch("/cms/v2/custom-entries", { method: "POST", body: { site_key: SITE_KEY, type_key: selectedType, ...entryForm }, silent: true });
     setEntryForm({ slug: "", title: "", content_html: "", status: "draft" });
     setShowEntryForm(false);
     loadEntries(selectedType);
@@ -182,3 +182,4 @@ export default function CustomTypesPage() {
     </div>
   );
 }
+import { SITE_KEY } from "@/lib/site-config";

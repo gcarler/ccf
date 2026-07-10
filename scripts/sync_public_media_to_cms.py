@@ -16,31 +16,22 @@ if _PROJECT_ROOT is None:
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-"""Register public-site images in the CMS media library.
+"""Register external public-site images in the CMS media library.
 
-This keeps existing public assets addressable by the CMS instead of leaving
-them as orphaned files or hardcoded-only URLs.
+Local content images are now migrated into the CMS uploads directory via
+``scripts/migrate_public_images_to_cms.py`` and should not live in
+``frontend/public/``. This script only keeps references to external assets
+(Unsplash, Picsum) tracked in ``CmsMediaItem`` so the audit stays accurate.
 """
 
-import json
 import mimetypes
-import sys
-from pathlib import Path
 from urllib.parse import urlparse
-
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
 from backend import models
 from backend.core.database import SessionLocal
 
-PUBLIC_DIR = ROOT / "frontend" / "public"
-
-PUBLIC_IMAGE_EXTS = {".avif", ".jpg", ".jpeg", ".png", ".svg", ".webp"}
-
 EXTERNAL_PUBLIC_IMAGES = {
     "home": [
-        "/images/pastores-banner.jpg",
         "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80",
         "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80",
         "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=600&q=80",
@@ -77,26 +68,6 @@ EXTERNAL_PUBLIC_IMAGES = {
         "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=500&q=80",
         "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=500&q=80",
     ],
-}
-
-PASTOR_CANONICAL_IMAGES = {
-    "/pastores/luis_ricardo_meza_1777656765476.png": "/images/pastores/luis_ricardo_meza.webp",
-    "/pastores/histar_ariza_1777656780660.png": "/images/pastores/histar_ariza.webp",
-    "/pastores/alex_elvia_1777656808218.png": "/images/pastores/alex_elvia.webp",
-    "/pastores/camilo_alba_1777656794964.png": "/images/pastores/camilo_alba.webp",
-    "/pastores/fernando_monica_1777656831456.png": "/images/pastores/fernando_monica.webp",
-    "/pastores/nehemias_morales_1777656877353.png": "/images/pastores/nehemias_morales.webp",
-    "/pastores/yair_macea_1777656845407.png": "/images/pastores/yair_macea.webp",
-    "/pastores/yanedith_wilches_1777656863437.png": "/images/pastores/yanedith_wilches.webp",
-    "/pastores/luis_ricardo_meza.jpg": "/images/pastores/luis_ricardo_meza.webp",
-    "/pastores/histar_ariza.jpg": "/images/pastores/histar_ariza.webp",
-    "/pastores/alex_y_elvia.jpg": "/images/pastores/alex_elvia.webp",
-    "/pastores/camilo_y_alba.jpg": "/images/pastores/camilo_alba.webp",
-    "/pastores/monica_y_fernando.jpg": "/images/pastores/fernando_monica.webp",
-    "/pastores/nehemias_morales.jpg": "/images/pastores/nehemias_morales.webp",
-    "/pastores/yair_macea.jpg": "/images/pastores/yair_macea.webp",
-    "/pastores/martina_ariza.webp": "/images/pastores/martina_herrera.webp",
-    "/pastores/yanedith_wilches_1777656863437.webp": "/images/pastores/yanedith_wilches.webp",
 }
 
 
@@ -144,25 +115,6 @@ def upsert_media(db, *, url: str, section: str, tags: list[str], file_size: int 
     return created
 
 
-def register_local_public_images(db) -> tuple[int, int]:
-    created = 0
-    updated = 0
-    for path in PUBLIC_DIR.rglob("*"):
-        if not path.is_file() or path.suffix.lower() not in PUBLIC_IMAGE_EXTS:
-            continue
-        rel_url = "/" + path.relative_to(PUBLIC_DIR).as_posix()
-        was_created = upsert_media(
-            db,
-            url=rel_url,
-            section=_section_for_url(rel_url),
-            tags=["local-asset"],
-            file_size=path.stat().st_size,
-        )
-        created += int(was_created)
-        updated += int(not was_created)
-    return created, updated
-
-
 def register_external_public_images(db) -> tuple[int, int]:
     created = 0
     updated = 0
@@ -179,47 +131,12 @@ def register_external_public_images(db) -> tuple[int, int]:
     return created, updated
 
 
-def normalize_page_content_images(db) -> int:
-    changed = 0
-    rows = db.query(models.PageContent).all()
-    for row in rows:
-        try:
-            payload = json.loads(row.content or "{}")
-        except json.JSONDecodeError:
-            continue
-        raw = json.dumps(payload, ensure_ascii=False)
-        normalized = raw
-        for old, new in PASTOR_CANONICAL_IMAGES.items():
-            normalized = normalized.replace(old, new)
-        if normalized != raw:
-            row.content = normalized
-            changed += 1
-    return changed
-
-
-def normalize_persona_photos(db) -> int:
-    changed = 0
-    rows = db.query(models.Persona).filter(models.Persona.photo_url.isnot(None)).all()
-    for row in rows:
-        new_url = PASTOR_CANONICAL_IMAGES.get(row.photo_url)
-        if new_url and new_url != row.photo_url:
-            row.photo_url = new_url
-            changed += 1
-    return changed
-
-
 def main() -> None:
     db = SessionLocal()
     try:
-        local_created, local_updated = register_local_public_images(db)
         external_created, external_updated = register_external_public_images(db)
-        content_changed = normalize_page_content_images(db)
-        persona_changed = normalize_persona_photos(db)
         db.commit()
-        print(f"Local media: {local_created} created, {local_updated} updated")
         print(f"External media: {external_created} created, {external_updated} updated")
-        print(f"PageContent normalized: {content_changed}")
-        print(f"Persona photo URLs normalized: {persona_changed}")
     except Exception:
         db.rollback()
         raise

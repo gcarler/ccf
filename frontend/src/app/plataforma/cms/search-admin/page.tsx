@@ -19,7 +19,7 @@ export default function SearchAdminPage() {
     if (!query.trim()) return;
     setLoading(true);
     try {
-      const data = await apiFetch<{ results: SearchResult[]; promoted: Promotion[] }>(`/cms/v2/search`, { method: "POST", body: { site_key: "ccf", query }, silent: true });
+      const data = await apiFetch<{ results: SearchResult[]; promoted: Promotion[] }>(`/cms/v2/search`, { method: "POST", body: { site_key: SITE_KEY, query }, silent: true });
       setResults(data?.results || []);
     } catch { setResults([]); }
     setLoading(false);
@@ -27,7 +27,7 @@ export default function SearchAdminPage() {
 
   const loadPromos = async () => {
     try {
-      const data = await apiFetch<Promotion[]>("/cms/v2/search/promotions?site_key=ccf", { silent: true });
+      const data = await apiFetch<Promotion[]>("/cms/v2/search/promotions?site_key=${SITE_KEY}", { silent: true });
       setPromoted(Array.isArray(data) ? data : []);
     } catch { setPromoted([]); }
   };
@@ -36,7 +36,7 @@ export default function SearchAdminPage() {
 
   const createPromo = async () => {
     if (!promoForm.query_text || !promoForm.entity_id) return;
-    await apiFetch("/cms/v2/search/promotions", { method: "POST", body: { site_key: "ccf", ...promoForm }, silent: true });
+    await apiFetch("/cms/v2/search/promotions", { method: "POST", body: { site_key: SITE_KEY, ...promoForm }, silent: true });
     setPromoForm({ query_text: "", entity_type: "cms_page", entity_id: "", title: "", boost_score: 100 });
     setShowPromoForm(false);
     loadPromos();
@@ -115,3 +115,4 @@ export default function SearchAdminPage() {
     </div>
   );
 }
+import { SITE_KEY } from "@/lib/site-config";

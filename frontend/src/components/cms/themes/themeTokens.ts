@@ -97,7 +97,13 @@ const GRADIENT_TOKENS: TokenDef[] = [
   { key: "--site-mobile-nav-glow", label: "Mobile Nav Glow", description: "Glow nav móvil", type: "shadow", defaultValue: "0 0 15px rgba(165, 200, 255, 0.3)" },
 ];
 
+const BRAND_TOKENS: TokenDef[] = [
+  { key: "--site-logo-url", label: "Logo URL", description: "URL de la imagen del logo (relativa o absoluta)", type: "text", defaultValue: "" },
+  { key: "--site-logo-name", label: "Nombre del Logo", description: "Texto que acompaña al logo en navbar y sidebar", type: "text", defaultValue: "" },
+];
+
 export const TOKEN_CATEGORIES: TokenCategory[] = [
+  { id: "brand", label: "Branding", description: "Logo, nombre y elementos de marca del sitio", tokens: BRAND_TOKENS },
   { id: "colors", label: "Colores Principales", description: "Paleta cromática principal del sitio", tokens: COLOR_TOKENS },
   { id: "surfaces", label: "Jerarquía de Superficies", description: "Niveles de elevación y profundidad", tokens: SURFACE_TOKENS },
   { id: "effects", label: "Efectos e Interfaces", description: "Glassmorphism, glows, overlays y navegación", tokens: EFFECT_TOKENS },

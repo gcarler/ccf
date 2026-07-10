@@ -3,7 +3,7 @@
 Cubre dos leaks de datos User-Generated agregados cross-sede
 identificados en el audit:
 
-  1. ``GET /api/content/metrics/overview`` (cms_content.py)
+  1. ``GET /api/cms/metrics`` (cms.py)
      Pre-fix: contaba ``testimonials`` / ``announcements`` /
      ``CmsMediaItem`` cross-sede. Un admin de sede_a veía el total
      agregado de UGC de sede_b en su dashboard admin.
@@ -18,7 +18,7 @@ Post-fix: ambos endpoints pre-filtran UGC via los helpers
 ``backend.api._cms_helpers``. Staff con sede ve sólo counts de su
 sede. Superadmin (sin sede) sigue viendo globales (compat legacy).
 
-Site-faro content (PageContent / ContentPublication) sigue siendo
+Site-faro content (CmsPage / CmsSection) sigue siendo
 global por diseño: es site público, no UGC.
 
 Mirrors ``tests/test_cms_sede_isolation.py`` fixture style.
@@ -103,7 +103,7 @@ def _seed_media_in_sede(db, persona, sede_id, url, mime_type="image/png"):
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# 1) /api/content/metrics/overview — scope UGC counts by sede
+# 1) /api/cms/metrics — scope UGC counts by sede
 # ════════════════════════════════════════════════════════════════════════════
 
 
@@ -112,6 +112,7 @@ def test_content_metrics_overview_scopes_testimonials_by_sede(client, db_session
 
     Pre-fix el endpoint contaba TODOS los testimonios del platform,
     incluyendo los de sede_b — leak cross-sede en el dashboard admin.
+    Endpoint: GET /api/cms/metrics (antes /api/cms/content/metrics/overview).
     """
     (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
     _seed_testimonial_in_sede(
@@ -129,7 +130,7 @@ def test_content_metrics_overview_scopes_testimonials_by_sede(client, db_session
     db_session.commit()
 
     headers_a = auth_headers(client, email="cmsMetricsA@example.com")
-    resp = client.get("/api/cms/content/metrics/overview", headers=headers_a)
+    resp = client.get("/api/cms/metrics", headers=headers_a)
     assert resp.status_code == 200, resp.text
     body = resp.json()
     # Sede_a: 2 testimonios locales
@@ -156,7 +157,7 @@ def test_content_metrics_overview_scopes_announcements_by_sede(
     db_session.commit()
 
     headers_a = auth_headers(client, email="cmsMetricsA@example.com")
-    resp = client.get("/api/cms/content/metrics/overview", headers=headers_a)
+    resp = client.get("/api/cms/metrics", headers=headers_a)
     assert resp.status_code == 200, resp.text
     body = resp.json()
     assert body["announcements_total"] == 1, (
@@ -179,7 +180,7 @@ def test_content_metrics_overview_scopes_media_by_sede(client, db_session):
     db_session.commit()
 
     headers_a = auth_headers(client, email="cmsMetricsA@example.com")
-    resp = client.get("/api/cms/content/metrics/overview", headers=headers_a)
+    resp = client.get("/api/cms/metrics", headers=headers_a)
     assert resp.status_code == 200, resp.text
     body = resp.json()
     # media_total: sede_a=1 (1 imagen), sede_b=2 (1 png + 1 jpg). Si leak,
@@ -219,7 +220,7 @@ def test_content_metrics_overview_superadmin_sees_all(
     db_session.commit()
 
     headers_a = auth_headers(client, email="cmsMetricsA@example.com")
-    resp = client.get("/api/cms/content/metrics/overview", headers=headers_a)
+    resp = client.get("/api/cms/metrics", headers=headers_a)
     assert resp.status_code == 200, resp.text
     body = resp.json()
     # Superadmin ve 2 testimonios (sede_a + sede_b).

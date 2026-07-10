@@ -396,21 +396,17 @@ def delete_cms_media(
     Otherwise soft-deletes (archives)."""
     row = _get_scoped_cms_media(db, current_user, item_id)
     if permanent:
-        # Delete physical file
+        # Delete physical file; the database row is still archived via CRUD.
         if row.url:
             file_path = row.url.lstrip("/")
             full_path = os.path.join("/root/ccf", file_path)
             if os.path.exists(full_path):
                 os.remove(full_path)
-        # Delete DB record
-        db.delete(row)
-        db.commit()
-    else:
-        crud.delete_cms_media_item(
-            db,
-            row.id,
-            actor_user_id=str(current_user.id),
-        )
+    crud.delete_cms_media_item(
+        db,
+        row.id,
+        actor_user_id=str(current_user.id),
+    )
 
 
 @router.post("/cms/media/{item_id}/optimize", response_model=schemas.CmsMediaRead)

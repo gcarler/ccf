@@ -16,18 +16,20 @@ if _PROJECT_ROOT is None:
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-"""Audit public-site image references against the CMS media library."""
+"""Audit that public-site images live in the CMS, not in frontend/public/."""
 
 import re
-import sys
-from pathlib import Path
 
-from sync_public_media_to_cms import EXTERNAL_PUBLIC_IMAGES, PUBLIC_DIR, PUBLIC_IMAGE_EXTS, ROOT
+ROOT = _PROJECT_ROOT
+PUBLIC_DIR = ROOT / "frontend" / "public"
 
-sys.path.insert(0, str(ROOT))
-
-from backend import models
-from backend.core.database import SessionLocal
+# Assets that legitimately stay as static system files (PWA, UI chrome).
+ALLOWED_STATIC_FILES = {
+    "icons/icon-192x192.png",
+    "icons/icon-512x512.png",
+    "manifest.json",
+    "noise.svg",
+}
 
 SCAN_ROOTS = [
     ROOT / "frontend" / "src" / "app" / "(public)",
@@ -37,12 +39,26 @@ SCAN_ROOTS = [
     ROOT / "scripts",
 ]
 
-IMAGE_REF_RE = re.compile(
-    r"(?:https://(?:images\.unsplash\.com|picsum\.photos)[^\"'`\\s)]+|/(?:images|pastores)/[^\"'`\\s)]+\\.(?:avif|jpe?g|png|svg|webp))"
+LOCAL_IMAGE_REF_RE = re.compile(
+    r"/(?:images|pastores)/[^\"'`\s)]+\.(?:avif|jpe?g|png|svg|webp)"
 )
 
 
-def referenced_images() -> set[str]:
+def local_images_in_public() -> set[str]:
+    """Return content images still present in frontend/public/."""
+    found: set[str] = set()
+    for path in PUBLIC_DIR.rglob("*"):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(PUBLIC_DIR).as_posix()
+        if rel in ALLOWED_STATIC_FILES:
+            continue
+        found.add("/" + rel)
+    return found
+
+
+def local_image_references_in_code() -> set[str]:
+    """Return hardcoded references to /images/ or /pastores/ in public code."""
     refs: set[str] = set()
     for root in SCAN_ROOTS:
         if not root.exists():
@@ -50,38 +66,35 @@ def referenced_images() -> set[str]:
         for path in root.rglob("*"):
             if path.suffix not in {".py", ".ts", ".tsx"}:
                 continue
-            refs.update(IMAGE_REF_RE.findall(path.read_text(errors="ignore")))
+            text = path.read_text(errors="ignore")
+            for match in LOCAL_IMAGE_REF_RE.finditer(text):
+                start = match.start()
+                # Require the match to be preceded by start-of-text, quote, or whitespace.
+                # This avoids matching "images/pastores/..." inside migration script strings.
+                if start > 0 and text[start - 1] not in {'"', "'", '`', ' ', '\n', '\t'}:
+                    continue
+                refs.add(match.group())
     return refs
-
-
-def public_file_images() -> set[str]:
-    refs: set[str] = set()
-    for path in PUBLIC_DIR.rglob("*"):
-        if path.is_file() and path.suffix.lower() in PUBLIC_IMAGE_EXTS:
-            refs.add("/" + path.relative_to(PUBLIC_DIR).as_posix())
-    return refs
-
-
-def cms_media_urls() -> set[str]:
-    db = SessionLocal()
-    try:
-        return {row.url for row in db.query(models.CmsMediaItem).all()}
-    finally:
-        db.close()
 
 
 def main() -> None:
-    refs = referenced_images() | public_file_images()
-    cms = cms_media_urls()
-    missing = sorted(refs - cms)
-    print(f"Referenced/public images: {len(refs)}")
-    print(f"CMS media URLs: {len(cms)}")
-    if missing:
-        print("Missing CMS media records:")
-        for item in missing:
+    in_public = local_images_in_public()
+    in_code = local_image_references_in_code()
+
+    if in_public:
+        print("Content images still present in frontend/public/:")
+        for item in sorted(in_public):
             print(f"  {item}")
+
+    if in_code:
+        print("Hardcoded references to local /images/ or /pastores/ found:")
+        for item in sorted(in_code):
+            print(f"  {item}")
+
+    if in_public or in_code:
         raise SystemExit(1)
-    print("All referenced public images are registered in CMS media.")
+
+    print("OK: all public-site images are served from the CMS.")
 
 
 if __name__ == "__main__":

@@ -63,7 +63,7 @@ export default function CmsPagesManagement() {
       }
       setPages(nextPages || []);
     } catch (error) {
-      console.error("Error fetching pages:", error);
+      toast.error("Error fetching pages");
       toast.error("Error al cargar páginas");
       setPages([]);
     } finally {
@@ -189,7 +189,7 @@ export default function CmsPagesManagement() {
       setIsQuickAddOpen(false);
       await fetchPages(siteKey);
     } catch (error) {
-      console.error("Error creating page:", error);
+      toast.error("Error creating page");
       toast.error("Error al crear página. El slug puede estar en uso.");
     }
   };
@@ -211,7 +211,7 @@ export default function CmsPagesManagement() {
       setPendingArchivePage(null);
       await fetchPages(siteKey);
     } catch (error) {
-      console.error("Error archiving page:", error);
+      toast.error("Error archiving page");
       toast.error("Error al archivar página");
     }
   };
@@ -225,7 +225,7 @@ export default function CmsPagesManagement() {
       }
       await fetchPages(siteKey);
     } catch (error) {
-      console.error("Error restoring page:", error);
+      toast.error("Error restoring page");
       toast.error("Error al restaurar página");
     }
   };
@@ -242,7 +242,7 @@ export default function CmsPagesManagement() {
       setSelectedIds(new Set());
       await fetchPages(siteKey);
     } catch (error) {
-      console.error("Error archiving selected pages:", error);
+      toast.error("Error archiving selected pages");
       toast.error("Error al archivar páginas seleccionadas");
     }
   };
@@ -264,7 +264,7 @@ export default function CmsPagesManagement() {
       setSelectedPage(updated);
       await fetchPages(siteKey);
     } catch (error) {
-      console.error("Error updating page:", error);
+      toast.error("Error updating page");
       toast.error("Error al actualizar página");
     }
   };

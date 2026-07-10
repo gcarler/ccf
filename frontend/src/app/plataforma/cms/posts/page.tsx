@@ -83,7 +83,7 @@ export default function CmsPostsManagement() {
       setCategories(nextCategories || []);
       setTags(nextTags || []);
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      toast.error("Error fetching posts");
       toast.error("Error al cargar posts");
       setPosts([]);
     } finally {
@@ -129,7 +129,7 @@ export default function CmsPostsManagement() {
       setIsQuickAddOpen(false);
       await fetchData(siteKey);
     } catch (error) {
-      console.error("Error creating post:", error);
+      toast.error("Error creating post");
       toast.error("Error al crear post. El slug puede estar en uso.");
     }
   };
@@ -151,7 +151,7 @@ export default function CmsPostsManagement() {
       await fetchData(siteKey);
       toast.success("Post archivado");
     } catch (error) {
-      console.error("Error archiving post:", error);
+      toast.error("Error archiving post");
       toast.error("Error al archivar post");
     }
   };
@@ -166,7 +166,7 @@ export default function CmsPostsManagement() {
       await fetchData(siteKey);
       toast.success("Post restaurado a borrador");
     } catch (error) {
-      console.error("Error restoring post:", error);
+      toast.error("Error restoring post");
       toast.error("Error al restaurar post");
     }
   };
@@ -196,7 +196,7 @@ export default function CmsPostsManagement() {
       await fetchData(siteKey);
       toast.success("Post actualizado");
     } catch (error) {
-      console.error("Error updating post:", error);
+      toast.error("Error updating post");
       toast.error("Error al actualizar post");
     }
   };

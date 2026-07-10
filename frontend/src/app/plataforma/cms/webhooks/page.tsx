@@ -46,7 +46,7 @@ export default function WebhooksPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<WebhookItem[]>("/cms/v2/webhooks?site_key=ccf", { silent: true });
+      const data = await apiFetch<WebhookItem[]>("/cms/v2/webhooks?site_key=${SITE_KEY}", { silent: true });
       setWebhooks(Array.isArray(data) ? data : []);
     } catch { setWebhooks([]); }
     setLoading(false);
@@ -56,7 +56,7 @@ export default function WebhooksPage() {
 
   const create = async () => {
     if (!form.name || !form.url) return;
-    await apiFetch("/cms/v2/webhooks", { method: "POST", body: { site_key: "ccf", ...form }, silent: true });
+    await apiFetch("/cms/v2/webhooks", { method: "POST", body: { site_key: SITE_KEY, ...form }, silent: true });
     setForm({ name: "", url: "", events: [] });
     setShowForm(false);
     load();
@@ -190,3 +190,4 @@ export default function WebhooksPage() {
     </div>
   );
 }
+import { SITE_KEY } from "@/lib/site-config";

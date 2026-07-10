@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { toast } from "sonner";
 import { SITE_KEY } from '@/lib/site-config';
-import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Archive, Link2, Plus, RotateCcw, X,
@@ -118,7 +118,7 @@ export default function CmsMenusManagement() {
                 setSiteKey(nextSites[0].site_key);
             }
         } catch (error) {
-            console.error("Error fetching CMS sites:", error);
+            toast.error("Error fetching CMS sites");
             toast.error("Error al cargar sitios CMS");
         }
     };
@@ -142,7 +142,7 @@ export default function CmsMenusManagement() {
                 setMenuKey((mainMenu || nextMenus[0]).menu_key);
             }
         } catch (error) {
-            console.error("Error fetching CMS menus:", error);
+            toast.error("Error fetching CMS menus");
             toast.error("Error al cargar menús CMS");
             setMenus([]);
             setMenuKey("");
@@ -176,7 +176,7 @@ export default function CmsMenusManagement() {
             setNavConfig({ items: sorted });
         } catch (error) {
             if (!(error instanceof ApiError && error.status === 404)) {
-                console.error("Error fetching nav:", error);
+                toast.error("Error fetching nav");
                 toast.error("Error al cargar items del menú");
             }
             setNavConfig({ items: [] });
@@ -199,7 +199,7 @@ export default function CmsMenusManagement() {
             setNewMenuKey("");
             setNavConfig({ items: [] });
         } catch (error) {
-            console.error("Error creating menu:", error);
+            toast.error("Error creating menu");
             toast.error("Error al crear menú");
         }
     };
@@ -210,7 +210,7 @@ export default function CmsMenusManagement() {
             const updated = await patchCmsMenu(siteKey, selectedMenu.menu_key, { is_active: !selectedMenu.is_active }, token);
             setMenus((prev) => prev.map((menu) => menu.id === updated.id ? updated : menu));
         } catch (error) {
-            console.error("Error updating CMS menu:", error);
+            toast.error("Error updating CMS menu");
             toast.error("Error al actualizar menú");
         }
     };
@@ -237,7 +237,7 @@ export default function CmsMenusManagement() {
             setIsQuickAddOpen(false);
             fetchNav();
         } catch (error) {
-            console.error('Error creating menu item:', error);
+            toast.error('Error al crear item');
             toast.error('Error al crear item del menú');
         }
     };
@@ -254,7 +254,7 @@ export default function CmsMenusManagement() {
             }
             fetchNav();
         } catch (error) {
-            console.error('Error updating menu item visibility:', error);
+            toast.error('Error al actualizar visibilidad');
             toast.error('Error al actualizar visibilidad');
         }
         if (selectedIndex === index) {
@@ -285,7 +285,7 @@ export default function CmsMenusManagement() {
             setSelectedItem(updatedItem);
             fetchNav();
         } catch (error) {
-            console.error('Error updating menu item:', error);
+            toast.error('Error al actualizar item');
             toast.error('Error al actualizar item');
         }
     };
@@ -309,7 +309,7 @@ export default function CmsMenusManagement() {
             );
             fetchNav();
         } catch (error) {
-            console.error('Error reordering menu items:', error);
+            toast.error('Error al reordenar');
             toast.error('Error al reordenar items');
         }
     };
@@ -327,7 +327,7 @@ export default function CmsMenusManagement() {
             );
             fetchNav();
         } catch (error) {
-            console.error('Error applying menu reorder:', error);
+            toast.error('Error al aplicar orden');
             toast.error('Error al aplicar reorden');
         }
     };
@@ -816,4 +816,3 @@ export default function CmsMenusManagement() {
         </div>
     );
 }
-

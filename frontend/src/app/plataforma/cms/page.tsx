@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -274,7 +275,7 @@ export default function CmsHomePage() {
     };
 
     fetchData().catch((error) => {
-      console.error("CMS home fetch", error);
+      toast.error("Error al cargar dashboard");
       setDataIssue("No se pudo cargar el resumen del sitio.");
       setRecentTestimonials([]);
       setStats(EMPTY_STATS);
