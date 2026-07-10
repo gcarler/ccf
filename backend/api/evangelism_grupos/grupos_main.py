@@ -19,6 +19,7 @@ from backend.api.evangelism_shared import (
     is_absent_status,
     session_estado_habilitacion,
     session_read_only_options,
+    session_read_value,
     utc_now,
 )
 from backend.core.database import get_db
@@ -414,10 +415,10 @@ def get_grupo(
                 else 0
             ),
             "topic": session.topic,
-            "report_deadline": None,
+            "report_deadline": session_read_value(session, "report_deadline"),
             "offering_amount": (float(session.offering_amount) if session.offering_amount is not None else None),
-            "novelty_type": session.novelty_type,
-            "novelty_detail": session.novelty_detail,
+            "novelty_type": session_read_value(session, "novelty_type"),
+            "novelty_detail": session_read_value(session, "novelty_detail"),
             "cancellation_reason": session.cancellation_reason,
         }
         for session in sessions

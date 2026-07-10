@@ -16,6 +16,8 @@ from backend.api.evangelism_shared import (
     expected_group_rows,
     session_estado_habilitacion,
     session_read_only_options,
+    session_read_value,
+    _sessions_grupo_live_column_names,
     sessions_grupo_has_estado_habilitacion,
     utc_now,
 )
@@ -205,7 +207,11 @@ def list_my_pending_groups_sessions(
                 "status": session.status,
                 "attendance_count": attendance_count,
                 "expected_count": expected_count,
-                "report_deadline": (session.report_deadline.isoformat() if session.report_deadline else None),
+                "report_deadline": (
+                    session_read_value(session, "report_deadline").isoformat()
+                    if session_read_value(session, "report_deadline")
+                    else None
+                ),
             }
         )
     return items
@@ -363,10 +369,18 @@ def list_sessions(
             "topic": s.topic,
             "offering_amount": float(s.offering_amount) if s.offering_amount else None,
             "report_notes": s.report_notes,
-            "novelty_type": s.novelty_type,
-            "novelty_detail": s.novelty_detail,
-            "reported_by_persona_id": str(s.reported_by_persona_id) if s.reported_by_persona_id else None,
-            "report_deadline": s.report_deadline.isoformat() if s.report_deadline else None,
+            "novelty_type": session_read_value(s, "novelty_type"),
+            "novelty_detail": session_read_value(s, "novelty_detail"),
+            "reported_by_persona_id": (
+                str(session_read_value(s, "reported_by_persona_id"))
+                if session_read_value(s, "reported_by_persona_id")
+                else None
+            ),
+            "report_deadline": (
+                session_read_value(s, "report_deadline").isoformat()
+                if session_read_value(s, "report_deadline")
+                else None
+            ),
         }
         for s in rows
     ]
@@ -395,19 +409,27 @@ def create_session(
     )
     if not group:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
-    db_session = SessionModel(
+    live_columns = _sessions_grupo_live_column_names(db)
+    session_kwargs = dict(
         grupo_id=grupo_id,
         season_id=data.season_id,
         session_date=data.session_date,
         topic=data.topic,
         offering_amount=data.offering_amount,
         report_notes=data.report_notes,
-        novelty_type=data.novelty_type,
-        novelty_detail=data.novelty_detail,
         cancellation_reason=data.cancellation_reason,
-        reported_by_persona_id=data.reported_by_persona_id,
-        reported_at=_datetime.now(_timezone.utc),
         status=data.status,
+    )
+    if "novelty_type" in live_columns:
+        session_kwargs["novelty_type"] = data.novelty_type
+    if "novelty_detail" in live_columns:
+        session_kwargs["novelty_detail"] = data.novelty_detail
+    if "reported_by_persona_id" in live_columns:
+        session_kwargs["reported_by_persona_id"] = data.reported_by_persona_id
+    if "reported_at" in live_columns:
+        session_kwargs["reported_at"] = _datetime.now(_timezone.utc)
+    db_session = SessionModel(
+        **session_kwargs,
     )
     db.add(db_session)
     db.commit()
@@ -480,10 +502,18 @@ def get_session_detail(
             "offering_amount": float(session.offering_amount) if session.offering_amount else None,
             "status": session.status,
             "report_notes": session.report_notes,
-            "novelty_type": session.novelty_type,
-            "novelty_detail": session.novelty_detail,
-            "reported_by_persona_id": str(session.reported_by_persona_id) if session.reported_by_persona_id else None,
-            "report_deadline": session.report_deadline.isoformat() if session.report_deadline else None,
+            "novelty_type": session_read_value(session, "novelty_type"),
+            "novelty_detail": session_read_value(session, "novelty_detail"),
+            "reported_by_persona_id": (
+                str(session_read_value(session, "reported_by_persona_id"))
+                if session_read_value(session, "reported_by_persona_id")
+                else None
+            ),
+            "report_deadline": (
+                session_read_value(session, "report_deadline").isoformat()
+                if session_read_value(session, "report_deadline")
+                else None
+            ),
         },
         "attendance": attendance_list,
         "grupo": {
@@ -518,7 +548,10 @@ def update_session(
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
 
     update_data = update.model_dump(exclude_unset=True)
+    live_columns = _sessions_grupo_live_column_names(db)
     for key, value in update_data.items():
+        if key not in live_columns:
+            continue
         setattr(db_session, key, value)
 
     db_session.reported_at = _datetime.now(_timezone.utc)

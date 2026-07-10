@@ -43,8 +43,18 @@ def _sessions_grupo_live_column_names(db: Session) -> set[str]:
 
 def session_estado_habilitacion(session, default: str = "HABILITADO") -> str:
     """Read ``estado_habilitacion`` without triggering a deferred load."""
-    value = getattr(session, "__dict__", {}).get("estado_habilitacion", default)
+    value = session_read_value(session, "estado_habilitacion", default)
     return value or default
+
+
+def session_read_value(session, field: str, default=None):
+    """Read a mapped attribute from the loaded instance state only.
+
+    This avoids deferred-load queries against columns that may not exist in
+    the live schema while still returning a sensible default when the field
+    is absent or not loaded.
+    """
+    return getattr(session, "__dict__", {}).get(field, default)
 
 
 def session_read_only_options(db: Session):
