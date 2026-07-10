@@ -114,7 +114,7 @@ export default function MediaPicker({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-5xl max-h-[86vh] overflow-hidden rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#111418] border border-[hsl(var(--border))] dark:border-white/10 shadow-2xl"
+        className="w-full max-w-5xl max-h-[86vh] overflow-hidden rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] border border-[hsl(var(--border))] dark:border-white/10 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5">

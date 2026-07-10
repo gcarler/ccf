@@ -8,6 +8,8 @@ import { apiFetch } from "@/lib/http";
 import { Layout, FileText, PenTool, ArrowRight, Globe, Clock, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 import clsx from "clsx";
+import { DSCard } from "@/design/components/DSCard";
+import { DSSectionHeader } from "@/design/components/DSSectionHeader";
 
 interface PageData {
   id: string;
@@ -79,7 +81,7 @@ export default function CmsPageDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full items-center justify-center gap-3 bg-[hsl(var(--bg-primary))] dark:bg-[#0d0e11]">
+      <div className="flex flex-col h-full items-center justify-center gap-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-deep))]">
         <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center animate-pulse">
           <Layout size={28} strokeWidth={1} className="text-[hsl(var(--text-secondary))]" />
         </div>
@@ -94,7 +96,7 @@ export default function CmsPageDetailPage() {
   const status = STATUS_STYLES[page?.status ?? "draft"] ?? STATUS_STYLES["draft"];
 
   return (
-    <div className="flex flex-col h-full items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-[#0d0e11] p-4">
+    <div className="flex flex-col h-full items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-deep))] p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -139,7 +141,7 @@ export default function CmsPageDetailPage() {
         </div>
 
         {/* Redirect card */}
-        <div className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3 space-y-5">
+        <DSCard className="space-y-5">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
               Redirigiendo al Builder
@@ -184,7 +186,7 @@ export default function CmsPageDetailPage() {
           >
             ← Volver a páginas
           </button>
-        </div>
+        </DSCard>
       </motion.div>
     </div>
   );

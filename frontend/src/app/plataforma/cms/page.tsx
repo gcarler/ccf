@@ -387,7 +387,7 @@ export default function CmsHomePage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]/60 dark:bg-[#141517]">
+    <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]/60 dark:bg-[hsl(var(--admin-bg-primary))]">
       <div className="space-y-3 px-4 py-2 lg:px-3">
         {dataIssue && (
           <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
@@ -414,7 +414,7 @@ export default function CmsHomePage() {
           {metricCards.map((metric) => {
             const Icon = metric.icon;
             return (
-              <Link key={metric.label} href={metric.href} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[#111418] transition-colors hover:border-blue-300 dark:hover:border-blue-500/50">
+              <Link key={metric.label} href={metric.href} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))] transition-colors hover:border-blue-300 dark:hover:border-blue-500/50">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric.label}</p>
                   <Icon size={15} className="text-[hsl(var(--text-secondary))]" />
@@ -429,7 +429,7 @@ export default function CmsHomePage() {
 
         {/* Charts row */}
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="mb-3">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tendencias</p>
               <h2 className="mt-1 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Publicaciones por mes</h2>
@@ -452,7 +452,7 @@ export default function CmsHomePage() {
             )}
           </div>
 
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="mb-3">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contenido</p>
               <h2 className="mt-1 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Secciones por tipo</h2>
@@ -480,7 +480,7 @@ export default function CmsHomePage() {
 
         {/* Quality + Role */}
         <section className="grid grid-cols-1 gap-3 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="flex flex-col gap-3 border-b border-[hsl(var(--border))] pb-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Control de calidad</p>
@@ -526,7 +526,7 @@ export default function CmsHomePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acceso</p>
@@ -564,7 +564,7 @@ export default function CmsHomePage() {
         {/* Top pages + Recent posts + Activity */}
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
           {/* Top pages */}
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Páginas más vistas</h2>
@@ -599,7 +599,7 @@ export default function CmsHomePage() {
           </div>
 
           {/* Recent posts */}
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Posts recientes</h2>
@@ -639,7 +639,7 @@ export default function CmsHomePage() {
           </div>
 
           {/* Recent activity */}
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Actividad reciente</h2>
@@ -676,7 +676,7 @@ export default function CmsHomePage() {
 
         {/* Testimonials + Workflow */}
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Testimonios recientes</h2>
@@ -713,7 +713,7 @@ export default function CmsHomePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#111418]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Ruta de gestion</h2>

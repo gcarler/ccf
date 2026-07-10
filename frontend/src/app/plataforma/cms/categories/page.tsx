@@ -56,7 +56,6 @@ export default function CmsCategoriesManagement() {
       setSites(nextSites || []);
       setCategories(nextCategories || []);
     } catch (error) {
-      toast.error("Error fetching categories");
       toast.error("Error al cargar categorías");
       setCategories([]);
     } finally {
@@ -94,7 +93,6 @@ export default function CmsCategoriesManagement() {
       setIsQuickAddOpen(false);
       await fetchData(siteKey);
     } catch (error) {
-      toast.error("Error creating category");
       toast.error("Error al crear categoría. El slug puede estar en uso.");
     }
   };
@@ -106,7 +104,6 @@ export default function CmsCategoriesManagement() {
       toast.success("Categoría archivada");
       await fetchData(siteKey);
     } catch (error) {
-      toast.error("Error archiving category");
       toast.error("Error al archivar categoría");
     }
   };
@@ -118,7 +115,6 @@ export default function CmsCategoriesManagement() {
       toast.success("Categoría restaurada");
       await fetchData(siteKey);
     } catch (error) {
-      toast.error("Error restoring category");
       toast.error("Error al restaurar categoría");
     }
   };
@@ -142,7 +138,6 @@ export default function CmsCategoriesManagement() {
       setSelectedCategory(null);
       await fetchData(siteKey);
     } catch (error) {
-      toast.error("Error updating category");
       toast.error("Error al actualizar categoría");
     }
   };
@@ -152,7 +147,7 @@ export default function CmsCategoriesManagement() {
   }, [categories, selectedCategory]);
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
       <header className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-3 gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <FolderOpen size={16} className="text-[hsl(var(--primary))] shrink-0" />
@@ -247,7 +242,7 @@ export default function CmsCategoriesManagement() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
                   className={clsx(
-                    "group bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-200 flex items-center gap-4",
+                    "group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-200 flex items-center gap-4",
                     isArchived
                       ? "border-dashed border-[hsl(var(--border))] dark:border-white/10 opacity-60"
                       : "border-[hsl(var(--border))]/70 dark:border-white/5"
@@ -337,7 +332,7 @@ export default function CmsCategoriesManagement() {
                     onChange={(e) =>
                       setSelectedCategory({ ...selectedCategory, name: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                   />
                 </div>
@@ -351,7 +346,7 @@ export default function CmsCategoriesManagement() {
                     onChange={(e) =>
                       setSelectedCategory({ ...selectedCategory, slug: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                   />
                 </div>
@@ -365,7 +360,7 @@ export default function CmsCategoriesManagement() {
                     onChange={(e) =>
                       setSelectedCategory({ ...selectedCategory, description: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
                     disabled={!canEdit}
                   />
                 </div>
@@ -381,7 +376,7 @@ export default function CmsCategoriesManagement() {
                         parent_id: e.target.value || null,
                       })
                     }
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                   >
                     <option value="">Sin padre (raíz)</option>

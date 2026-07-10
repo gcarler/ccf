@@ -61,7 +61,6 @@ export default function CmsTagsManagement() {
       setSites(nextSites || []);
       setTags(nextTags || []);
     } catch (error) {
-      toast.error("Error fetching tags");
       toast.error("Error al cargar etiquetas");
       setTags([]);
     } finally {
@@ -99,7 +98,6 @@ export default function CmsTagsManagement() {
       setIsQuickAddOpen(false);
       await fetchData(siteKey);
     } catch (error) {
-      toast.error("Error creating tag");
       toast.error("Error al crear etiqueta. El slug puede estar en uso.");
     }
   };
@@ -111,7 +109,6 @@ export default function CmsTagsManagement() {
       toast.success("Etiqueta archivada");
       await fetchData(siteKey);
     } catch (error) {
-      toast.error("Error archiving tag");
       toast.error("Error al archivar etiqueta");
     }
   };
@@ -123,7 +120,6 @@ export default function CmsTagsManagement() {
       toast.success("Etiqueta restaurada");
       await fetchData(siteKey);
     } catch (error) {
-      toast.error("Error restoring tag");
       toast.error("Error al restaurar etiqueta");
     }
   };
@@ -145,13 +141,12 @@ export default function CmsTagsManagement() {
       setSelectedTag(null);
       await fetchData(siteKey);
     } catch (error) {
-      toast.error("Error updating tag");
       toast.error("Error al actualizar etiqueta");
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
       <header className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-3 gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <Tag size={16} className="text-[hsl(var(--primary))] shrink-0" />
@@ -260,7 +255,7 @@ export default function CmsTagsManagement() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
                   className={clsx(
-                    "group bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border px-4 py-3 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-200 flex items-center gap-3",
+                    "group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border px-4 py-3 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-200 flex items-center gap-3",
                     isArchived
                       ? "border-dashed border-[hsl(var(--border))] dark:border-white/10 opacity-60"
                       : "border-[hsl(var(--border))]/70 dark:border-white/5"
@@ -343,7 +338,7 @@ export default function CmsTagsManagement() {
                     onChange={(e) =>
                       setSelectedTag({ ...selectedTag, name: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                   />
                 </div>
@@ -357,7 +352,7 @@ export default function CmsTagsManagement() {
                     onChange={(e) =>
                       setSelectedTag({ ...selectedTag, slug: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                   />
                 </div>

@@ -93,9 +93,9 @@ export default function CmsTestimonialDetailPage() {
         try {
             if (newStatus === 'archived') {
                 await apiFetch(`/admin/testimonials/${id}`, { method: 'DELETE', token });
-                setTestimonial({ ...testimonial, is_approved: false, show_on_home: false, status: 'archived' });
+                setTestimonial((prev) => prev ? { ...prev, is_approved: false, show_on_home: false, status: 'archived' } : null);
             } else {
-                const updated = await apiFetch<any>(`/admin/testimonials/${id}`, {
+                const updated = await apiFetch<TestimonialData>(`/admin/testimonials/${id}`, {
                     method: 'PATCH',
                     token,
                     body: { status: newStatus },
@@ -123,7 +123,7 @@ export default function CmsTestimonialDetailPage() {
                 breadcrumbs={[
                     { label: 'CMS', icon: Layout, href: '/plataforma/cms' },
                     { label: 'Testimonios', icon: Quote, href: '/plataforma/cms/testimonials' },
-                    { label: testimonial.author_name, icon: User },
+                    { label: testimonial.author_name ?? 'Sin autor', icon: User },
                 ]}
             />
 
@@ -132,8 +132,8 @@ export default function CmsTestimonialDetailPage() {
                     <header className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <DSBadge tone="blue" label={testimonial.category.toUpperCase()} />
-                                <DSBadge tone={testimonial.status === 'approved' ? 'emerald' : testimonial.status === 'archived' ? 'slate' : 'amber'} label={testimonial.status.toUpperCase()} />
+                                <DSBadge tone="blue" label={(testimonial.category ?? 'general').toUpperCase()} />
+                                <DSBadge tone={testimonial.status === 'approved' ? 'emerald' : testimonial.status === 'archived' ? 'slate' : 'amber'} label={(testimonial.status ?? 'pending').toUpperCase()} />
                             </div>
                             <h1 className="text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white tracking-tight leading-none uppercase">
                                 Moderación de Testimonio
@@ -189,7 +189,7 @@ export default function CmsTestimonialDetailPage() {
                                     <Quote size={48} className="absolute -top-4 -left-4 text-blue-500/10 -z-0" />
                                     <div className="flex items-center gap-1 mb-2">
                                         {[1, 2, 3, 4, 5].map(star => (
-                                            <Star key={star} size={16} className={clsx(star <= testimonial.rating ? 'text-amber-400 fill-amber-400' : 'text-[hsl(var(--text-secondary))]')} />
+                                            <Star key={star} size={16} className={clsx(star <= (testimonial.rating ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-[hsl(var(--text-secondary))]')} />
                                         ))}
                                     </div>
                                     <p className="text-xl font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] italic leading-relaxed relative z-10">
@@ -219,7 +219,7 @@ export default function CmsTestimonialDetailPage() {
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha de Recepción</p>
                                         <p className="text-xs font-bold flex items-center gap-2">
-                                            <Calendar size={14} /> {new Date(testimonial.created_at).toLocaleString()}
+                                            <Calendar size={14} /> {testimonial.created_at ? new Date(testimonial.created_at).toLocaleString() : '—'}
                                         </p>
                                     </div>
                                     <div className="space-y-1">

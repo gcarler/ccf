@@ -41,7 +41,7 @@ export default function BuilderCanvas({
     reloadTheme,
   } = builder;
   return (
-        <section className="lg:col-span-6 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-4">
+        <section className="lg:col-span-6 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">Canvas · {activeSlug ? `/${activeSlug}` : "Selecciona página"}</h2>
             <div className="flex items-center gap-2">
@@ -61,7 +61,7 @@ export default function BuilderCanvas({
                 </button>
                 {/* Palette tooltip */}
                 <div role="tooltip" className="absolute top-full mt-1.5 right-0 hidden group-hover:block z-50 w-44">
-                  <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-lg p-2 space-y-1">
+                  <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] shadow-lg p-2 space-y-1">
                     <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-0.5">Paleta del tema</p>
                     {Object.entries(canvasTokens)
                       .filter(([k]) => k.startsWith("--site-"))

@@ -19,7 +19,7 @@ export default function CmsBuilderPage() {
 
   return (
     <div className="space-y-3 p-3">
-      <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-3 flex items-center justify-between">
+      <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-3 flex items-center justify-between">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">CMS V2 Builder</p>
           <h1 className="mt-2 text-lg font-semibold">Constructor visual multisitio</h1>

@@ -131,7 +131,6 @@ export default function CmsSeoAuditPage() {
       const data = await getSeoAudit(siteKey, opts, token);
       setAudit(data);
     } catch (error) {
-      toast.error("Error fetching SEO audit");
       toast.error("No se pudo cargar el audit SEO del sitio");
       setAudit(null);
     } finally {
@@ -170,7 +169,7 @@ export default function CmsSeoAuditPage() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
       <header className="h-12 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-4 gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <Gauge size={16} className="text-[hsl(var(--primary))] shrink-0" />
@@ -299,7 +298,7 @@ export default function CmsSeoAuditPage() {
             </section>
 
             {/* Page list */}
-            <section className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#111418] overflow-hidden">
+            <section className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--admin-bg-tertiary))] overflow-hidden">
               {filteredPages.length === 0 ? (
                 <div className="px-6 py-1.5 text-center">
                   <Sparkles
@@ -437,7 +436,7 @@ export default function CmsSeoAuditPage() {
                 return (
                   <li
                     key={finding.code}
-                    className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1f]"
+                    className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))]"
                   >
                     <div className="flex items-start gap-3">
                       <div
@@ -586,7 +585,7 @@ function StatCard({
         "rounded-lg p-4 border",
         tone
           ? tone
-          : "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418]",
+          : "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))]",
       )}
     >
       <div className="flex items-center justify-between gap-3">

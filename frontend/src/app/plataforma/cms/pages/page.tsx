@@ -63,7 +63,6 @@ export default function CmsPagesManagement() {
       }
       setPages(nextPages || []);
     } catch (error) {
-      toast.error("Error fetching pages");
       toast.error("Error al cargar páginas");
       setPages([]);
     } finally {
@@ -189,7 +188,6 @@ export default function CmsPagesManagement() {
       setIsQuickAddOpen(false);
       await fetchPages(siteKey);
     } catch (error) {
-      toast.error("Error creating page");
       toast.error("Error al crear página. El slug puede estar en uso.");
     }
   };
@@ -211,7 +209,6 @@ export default function CmsPagesManagement() {
       setPendingArchivePage(null);
       await fetchPages(siteKey);
     } catch (error) {
-      toast.error("Error archiving page");
       toast.error("Error al archivar página");
     }
   };
@@ -225,7 +222,6 @@ export default function CmsPagesManagement() {
       }
       await fetchPages(siteKey);
     } catch (error) {
-      toast.error("Error restoring page");
       toast.error("Error al restaurar página");
     }
   };
@@ -242,7 +238,6 @@ export default function CmsPagesManagement() {
       setSelectedIds(new Set());
       await fetchPages(siteKey);
     } catch (error) {
-      toast.error("Error archiving selected pages");
       toast.error("Error al archivar páginas seleccionadas");
     }
   };
@@ -264,7 +259,6 @@ export default function CmsPagesManagement() {
       setSelectedPage(updated);
       await fetchPages(siteKey);
     } catch (error) {
-      toast.error("Error updating page");
       toast.error("Error al actualizar página");
     }
   };
@@ -294,7 +288,7 @@ export default function CmsPagesManagement() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.025 }}
             onClick={() => openPage(page)}
-            className="group bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer flex items-center gap-4"
+            className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer flex items-center gap-4"
           >
             <div className="size-6 rounded-md bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] flex items-center justify-center shrink-0 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
               <FileText size={18} />
@@ -341,7 +335,7 @@ export default function CmsPagesManagement() {
                 <button
                   key={page.id}
                   onClick={() => openPage(page)}
-                  className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-blue-400 hover:shadow-lg transition-all"
+                  className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-blue-400 hover:shadow-lg transition-all"
                 >
                   <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{page.title}</p>
                   <p className="text-[10px] font-mono text-[hsl(var(--text-secondary))] mt-2 truncate">/{page.slug}</p>
@@ -355,7 +349,7 @@ export default function CmsPagesManagement() {
   );
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
       <header className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-3 gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <FileText size={16} className="text-[hsl(var(--primary))] shrink-0" />
@@ -440,7 +434,7 @@ export default function CmsPagesManagement() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
-                  className="group bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-200 flex items-center gap-4"
+                  className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-200 flex items-center gap-4"
                 >
                   {/* Checkbox */}
                   <button
@@ -552,7 +546,7 @@ export default function CmsPagesManagement() {
                       <button
                         key={row.page.id}
                         onClick={() => openPage(row.page)}
-                        className="w-full flex items-center gap-3 p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#141517] border border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--primary))] transition-all group text-left"
+                        className="w-full flex items-center gap-3 p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--primary))] transition-all group text-left"
                       >
                         <div className={clsx(
                           "size-2 rounded-full shrink-0",
@@ -704,11 +698,11 @@ export default function CmsPagesManagement() {
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Titulo</span>
-                  <input type="text" value={selectedPage.title} onChange={(e) => setSelectedPage({ ...selectedPage, title: e.target.value })} className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md" disabled={!canEdit} />
+                  <input type="text" value={selectedPage.title} onChange={(e) => setSelectedPage({ ...selectedPage, title: e.target.value })} className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md" disabled={!canEdit} />
                 </div>
                 <div className="space-y-1.5">
                   <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Slug</span>
-                  <input type="text" value={selectedPage.slug} onChange={(e) => setSelectedPage({ ...selectedPage, slug: e.target.value })} className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md" disabled={!canEdit} />
+                  <input type="text" value={selectedPage.slug} onChange={(e) => setSelectedPage({ ...selectedPage, slug: e.target.value })} className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md" disabled={!canEdit} />
                 </div>
               </div>
             </section>
@@ -722,7 +716,7 @@ export default function CmsPagesManagement() {
                     rows={3}
                     value={(selectedPage.seo_json?.meta_description as string) || ""}
                     onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), meta_description: e.target.value } })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
                     disabled={!canEdit}
                     placeholder="Breve descripcion para Google..."
                   />
@@ -733,7 +727,7 @@ export default function CmsPagesManagement() {
                     type="url"
                     value={(selectedPage.seo_json?.meta_image as string) || ""}
                     onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), meta_image: e.target.value } })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                     placeholder="https://..."
                   />
@@ -749,7 +743,7 @@ export default function CmsPagesManagement() {
                     type="url"
                     value={(selectedPage.seo_json?.canonical_url as string) || ""}
                     onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), canonical_url: e.target.value } })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                     placeholder="https://ejemplo.com/pagina-canonical"
                   />
@@ -760,7 +754,7 @@ export default function CmsPagesManagement() {
                   <select
                     value={(selectedPage.seo_json?.robots_meta as string) || ""}
                     onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), robots_meta: e.target.value || undefined } })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                   >
                     <option value="">index, follow (por defecto)</option>

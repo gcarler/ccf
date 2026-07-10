@@ -177,7 +177,7 @@ export default function PageVersionsDiffPage() {
 
   // ── Render ───────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
       <Header
         siteKey={siteKey}
         sites={sites}
@@ -264,7 +264,7 @@ function Header({
   onBackToBuilder: () => void;
 }) {
   return (
-    <header className="h-12 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-4 gap-3 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+    <header className="h-12 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-4 gap-3 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
       <button
         onClick={onBackToBuilder}
         className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"

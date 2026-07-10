@@ -451,7 +451,7 @@ function SectionPreview({
   return (
     <div
       className={clsx(
-        "rounded-md border bg-[hsl(var(--bg-primary))] dark:bg-[#141517] p-2.5 space-y-1.5",
+        "rounded-md border bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] p-2.5 space-y-1.5",
         side === "before"
           ? "border-rose-200/70 dark:border-rose-500/20"
           : "border-emerald-200/70 dark:border-emerald-500/20",

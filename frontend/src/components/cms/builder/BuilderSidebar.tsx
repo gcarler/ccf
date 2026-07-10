@@ -28,7 +28,7 @@ export default function BuilderSidebar({
     addTemplateSection,
   } = builder;
   return (
-        <aside className="lg:col-span-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
+        <aside className="lg:col-span-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-3">
           <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sitio</label>
           <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm">
             {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}

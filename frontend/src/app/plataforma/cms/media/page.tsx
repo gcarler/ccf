@@ -138,7 +138,6 @@ export default function CmsMediaLibrary() {
       await fetchMedia();
     } catch (err) {
       toast.error("Error al subir archivo");
-      toast.error("Error al subir archivo");
     } finally {
       setUploading(false);
     }
@@ -185,7 +184,6 @@ export default function CmsMediaLibrary() {
       setItems(prev => prev.map(item => item.id === selectedItem.id ? normalized : item));
       setTagsText(tags.join(", "));
     } catch (err) {
-      toast.error("Error al guardar metadata");
       toast.error("Error al guardar metadatos");
     } finally {
       setMetadataSaving(false);
@@ -203,7 +201,6 @@ export default function CmsMediaLibrary() {
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, ...updated, status: nextStatus } : i));
       if (selectedItem?.id === item.id) setSelectedItem(prev => prev ? { ...prev, ...updated, status: nextStatus } : prev);
     } catch (err) {
-      toast.error("Error al archivar");
       toast.error("Error al archivar medio");
     } finally {
       setDeletingId(null);
@@ -219,7 +216,6 @@ export default function CmsMediaLibrary() {
       if (selectedItem?.id === item.id) setSelectedItem(null);
       toast.success("Archivo eliminado permanentemente");
     } catch (err) {
-      toast.error("Error al eliminar");
       toast.error("Error al eliminar archivo");
     } finally {
       setDeletingId(null);
@@ -235,7 +231,6 @@ export default function CmsMediaLibrary() {
       if (selectedItem?.id === item.id) setSelectedItem(prev => prev ? { ...prev, ...updated } : prev);
       toast.success("Imagen optimizada para web");
     } catch (err) {
-      toast.error("Error al optimizar");
       toast.error("Error al optimizar imagen");
     } finally {
       setOptimizingId(null);
@@ -347,7 +342,7 @@ export default function CmsMediaLibrary() {
 
   return (
     <div
-      className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0d0e11] overflow-hidden"
+      className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-deep))] overflow-hidden"
       onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
       onDragLeave={() => setIsDraggingOver(false)}
       onDrop={handleDrop}
