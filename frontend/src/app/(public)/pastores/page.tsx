@@ -56,7 +56,7 @@ export default function PastoresIndexPage() {
                 is_main_pastor: p.is_main_pastor,
             }));
         }
-        // Fallback: read from CMS content block (legacy)
+        // Fallback: read from CMS content block
         const pastorsCms = page?.blocks?.pastors;
         const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
         return Array.isArray(list) ? list : [];
