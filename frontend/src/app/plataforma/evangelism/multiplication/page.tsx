@@ -58,36 +58,38 @@ interface PersonaOption {
   nombre_completo: string;
 }
 
-// Adapter layer: translate backend field names (miembros) to frontend canonical
-// names (personas). The backend API for /evangelism/multiplication/* still
-// returns the previous field names; remove these helpers once the backend is
-// updated to use the canonical 'personas' vocabulary in:
+// Adapter layer: keep the screen tolerant to both the legacy backend names
+// (miembros) and the canonical names (personas). This lets the UI survive
+// the rollout while the API contract converges.
+//
+// The backend now prefers the canonical 'personas' vocabulary in:
 //   - GET  /evangelism/multiplication/check
 //   - GET  /evangelism/multiplication/history
 //   - POST /evangelism/multiplication/split
-// TODO(backend-migration): delete this adapter layer when backend returns
-// {total_personas, personas_actuales, personas_transferidas} instead of
-// the previous {total_miembros, miembros_actuales, miembros_transferidos}.
 type GrupoSummary = { id: string; nombre: string; total_personas: number };
 function dropPreviousTotalPersonas(g: any): GrupoSummary {
-  const { total_miembros, ...rest } = g;
-  return { ...rest, total_personas: total_miembros };
+  const total_personas = g?.total_personas ?? g?.total_miembros ?? 0;
+  const { total_miembros, total_personas: _total_personas, ...rest } = g || {};
+  return { ...rest, total_personas };
 }
 function adaptCheckItem(raw: any): MultiplicationCheckItem {
-  const { total_miembros, ...rest } = raw;
-  return { ...rest, total_personas: total_miembros };
+  const total_personas = raw?.total_personas ?? raw?.total_miembros ?? 0;
+  const { total_miembros, total_personas: _total_personas, ...rest } = raw || {};
+  return { ...rest, total_personas };
 }
 function adaptHistoryItem(raw: any): MultiplicationHistoryItem {
-  const { miembros_actuales, ...rest } = raw;
-  return { ...rest, personas_actuales: miembros_actuales };
+  const personas_actuales = raw?.personas_actuales ?? raw?.miembros_actuales ?? 0;
+  const { miembros_actuales, personas_actuales: _personas_actuales, ...rest } = raw || {};
+  return { ...rest, personas_actuales };
 }
 function adaptSplitResponse(res: any): SplitResponse {
-  const { grupo_original, nuevo_grupo, miembros_transferidos, ...rest } = res;
+  const personas_transferidas = res?.personas_transferidas ?? res?.miembros_transferidos ?? 0;
+  const { grupo_original, nuevo_grupo, miembros_transferidos, personas_transferidas: _personas_transferidas, ...rest } = res || {};
   return {
     ...rest,
     grupo_original: dropPreviousTotalPersonas(grupo_original),
     nuevo_grupo: dropPreviousTotalPersonas(nuevo_grupo),
-    personas_transferidas: miembros_transferidos,
+    personas_transferidas,
   };
 }
 

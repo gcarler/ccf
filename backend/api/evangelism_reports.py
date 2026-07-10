@@ -224,7 +224,8 @@ def attendance_pdf(
 ):
     """Genera PDF de asistencia del grupo con tabla de sesiones y línea de firma."""
     grupo = _get_group_or_404(db, grupo_id)
-    if grupo.sede_id and str(grupo.sede_id) != str(require_user_sede_id(db, current_user)):
+    user_sede = require_user_sede_id(db, current_user)
+    if user_sede is not None and grupo.sede_id and str(grupo.sede_id) != str(user_sede):
         raise HTTPException(status_code=403, detail="Grupo no pertenece a tu sede")
     leader_name = _get_leader_name(db, grupo)
     rows = _build_session_rows(db, grupo_id)
@@ -332,7 +333,8 @@ def attendance_excel(
 ):
     """Genera Excel de asistencia del grupo con tabla de sesiones."""
     grupo = _get_group_or_404(db, grupo_id)
-    if grupo.sede_id and str(grupo.sede_id) != str(require_user_sede_id(db, current_user)):
+    user_sede = require_user_sede_id(db, current_user)
+    if user_sede is not None and grupo.sede_id and str(grupo.sede_id) != str(user_sede):
         raise HTTPException(status_code=403, detail="Grupo no pertenece a tu sede")
     leader_name = _get_leader_name(db, grupo)
     rows = _build_session_rows(db, grupo_id)
@@ -359,29 +361,36 @@ def strategy_summary(
 ):
     """Resumen de todos los grupos de una estrategia de evangelismo."""
     user_sede = require_user_sede_id(db, current_user)
-    estrategia = db.query(models.EstrategiaEvangelismo).filter(
+    estrategia_q = db.query(models.EstrategiaEvangelismo).filter(
         models.EstrategiaEvangelismo.id == strategy_id,
-        models.EstrategiaEvangelismo.sede_id == user_sede,
-    ).first()
+        models.EstrategiaEvangelismo.deleted_at.is_(None),
+    )
+    if user_sede is not None:
+        estrategia_q = estrategia_q.filter(models.EstrategiaEvangelismo.sede_id == user_sede)
+    estrategia = estrategia_q.first()
     if not estrategia:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
 
-    grupos = db.query(models.GrupoEvangelismo).filter(
+    grupos_q = db.query(models.GrupoEvangelismo).filter(
         models.GrupoEvangelismo.estrategia_id == strategy_id,
-        models.GrupoEvangelismo.sede_id == user_sede,
-    ).all()
+        models.GrupoEvangelismo.deleted_at.is_(None),
+    )
+    if user_sede is not None:
+        grupos_q = grupos_q.filter(models.GrupoEvangelismo.sede_id == user_sede)
+    grupos = grupos_q.all()
     grupo_ids = [grupo.id for grupo in grupos]
 
     participantes_map = dict(
         db.query(models.ParticipanteGrupo.grupo_id, func.count(models.ParticipanteGrupo.id))
         .filter(models.ParticipanteGrupo.grupo_id.in_(grupo_ids) if grupo_ids else False)
-        .filter(models.ParticipanteGrupo.activo)
+        .filter(models.ParticipanteGrupo.activo, models.ParticipanteGrupo.deleted_at.is_(None))
         .group_by(models.ParticipanteGrupo.grupo_id)
         .all()
     )
     sesiones_map = dict(
         db.query(models.SesionGrupo.grupo_id, func.count(models.SesionGrupo.id))
         .filter(models.SesionGrupo.grupo_id.in_(grupo_ids) if grupo_ids else False)
+        .filter(models.SesionGrupo.deleted_at.is_(None))
         .group_by(models.SesionGrupo.grupo_id)
         .all()
     )
@@ -389,6 +398,7 @@ def strategy_summary(
         db.query(models.SesionGrupo.grupo_id, func.count(models.SesionGrupo.id))
         .filter(models.SesionGrupo.grupo_id.in_(grupo_ids) if grupo_ids else False)
         .filter(models.SesionGrupo.estado == "REALIZADA")
+        .filter(models.SesionGrupo.deleted_at.is_(None))
         .group_by(models.SesionGrupo.grupo_id)
         .all()
     )
@@ -403,9 +413,13 @@ def strategy_summary(
             .outerjoin(
                 models.Asistencia,
                 (models.Asistencia.sesion_id == models.SesionGrupo.id)
-                & (models.Asistencia.estado.in_(ATTENDED_STATES)),
+                & (models.Asistencia.estado.in_(ATTENDED_STATES))
+                & (models.Asistencia.deleted_at.is_(None)),
             )
-            .filter(models.SesionGrupo.grupo_id.in_(grupo_ids))
+            .filter(
+                models.SesionGrupo.grupo_id.in_(grupo_ids),
+                models.SesionGrupo.deleted_at.is_(None),
+            )
             .group_by(models.SesionGrupo.grupo_id, models.SesionGrupo.id)
             .all()
         ):
