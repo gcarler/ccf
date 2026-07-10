@@ -7,7 +7,7 @@ volunteer_skills, chat_messages.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -597,7 +597,7 @@ def delete_crm_automation_edge(db: Session, edge_id: UUID) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
 

@@ -68,7 +68,7 @@ class ProjectAttachment(BaseModel):
 
 
 def _normalize_priority_value(v: Any) -> Any:
-    """Map legacy priority values to canonical enums before validation."""
+    """Map compat priority values to canonical enums before validation."""
     if isinstance(v, str):
         return {"normal": "medium"}.get(v, v)
     return v
