@@ -27,14 +27,18 @@ FIRST_TIME_STATES = {"primera_vez", "first_time"}
 
 def sessions_grupo_has_estado_habilitacion(db: Session) -> bool:
     """Return whether the live schema exposes ``sesiones_grupo.estado_habilitacion``."""
+    return "estado_habilitacion" in _sessions_grupo_live_column_names(db)
+
+
+def _sessions_grupo_live_column_names(db: Session) -> set[str]:
     bind = db.get_bind()
     if bind is None:
-        return False
+        return set()
     try:
         columns = inspect(bind).get_columns("sesiones_grupo")
     except Exception:
-        return False
-    return any(column.get("name") == "estado_habilitacion" for column in columns)
+        return set()
+    return {str(column.get("name")) for column in columns if column.get("name")}
 
 
 def session_estado_habilitacion(session, default: str = "HABILITADO") -> str:
@@ -47,32 +51,35 @@ def session_read_only_options(db: Session):
     """Build a load_only option that tolerates older schemas safely."""
     from backend.models import SesionGrupo
 
-    columns = [
-        SesionGrupo.id,
-        SesionGrupo.grupo_id,
-        SesionGrupo.fecha_sesion,
-        SesionGrupo.estado,
-        SesionGrupo.motivo_cancelacion,
-        SesionGrupo.tema_estudio,
-        SesionGrupo.notas_lider,
-        SesionGrupo.offering_amount,
-        SesionGrupo.season_id,
-        SesionGrupo.created_at,
-        SesionGrupo.deleted_at,
-        SesionGrupo.reported_at,
-        SesionGrupo.novelty_type,
-        SesionGrupo.novelty_detail,
-        SesionGrupo.reported_by_persona_id,
-        SesionGrupo.report_deadline,
+    live_columns = _sessions_grupo_live_column_names(db)
+    desired_columns = [
+        "id",
+        "grupo_id",
+        "fecha_sesion",
+        "estado",
+        "motivo_cancelacion",
+        "tema_estudio",
+        "notas_lider",
+        "offering_amount",
+        "season_id",
+        "created_at",
+        "deleted_at",
+        "reported_at",
+        "novelty_type",
+        "novelty_detail",
+        "reported_by_persona_id",
+        "report_deadline",
+        "estado_habilitacion",
+        "habilitado_por",
+        "habilitado_en",
     ]
-    if sessions_grupo_has_estado_habilitacion(db):
-        columns.extend(
-            [
-                SesionGrupo.estado_habilitacion,
-                SesionGrupo.habilitado_por,
-                SesionGrupo.habilitado_en,
-            ]
-        )
+    columns = [
+        getattr(SesionGrupo, column_name)
+        for column_name in desired_columns
+        if column_name in live_columns and hasattr(SesionGrupo, column_name)
+    ]
+    if not columns:
+        columns = [SesionGrupo.id, SesionGrupo.grupo_id, SesionGrupo.fecha_sesion]
     return load_only(*columns)
 
 
