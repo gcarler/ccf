@@ -213,23 +213,27 @@ def reorder_casos(
     ids = [item.id for item in payload]
     if len(ids) != len(set(ids)):
         raise HTTPException(status_code=400, detail="Duplicate IDs in payload")
-    
+
     # Convert payload to dict list for atomic_sort_reorder
-    payload_dict = [{"id": item.id, "sort_order": item.sort_order, "etapa_actual_id": item.etapa_actual_id} for item in payload]
+    payload_dict = [
+        {"id": item.id, "sort_order": item.sort_order, "etapa_actual_id": item.etapa_actual_id} for item in payload
+    ]
     try:
         models.CasoCRM.atomic_sort_reorder(db, payload_dict, sede_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
     return {"status": "success"}
 
 
 # --- GENUINE DATABASE-BACKED LOGIC FOR KANBAN & AUTOMATIONS ---
 
-from pydantic import BaseModel, Field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
+from pydantic import BaseModel
+
 
 class DragDropEventCreate(BaseModel):
     caso_id: UUID
@@ -253,18 +257,18 @@ def kanban_layout(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    pipeline = db.query(models.PipelineCRM).filter(
-        models.PipelineCRM.sede_id == sede_id,
-        models.PipelineCRM.activo == True,
-        models.PipelineCRM.deleted_at .is_(None)
-    ).first()
+    pipeline = (
+        db.query(models.PipelineCRM)
+        .filter(
+            models.PipelineCRM.sede_id == sede_id,
+            models.PipelineCRM.activo == True,
+            models.PipelineCRM.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not pipeline:
         return {"layout": "default", "pipeline_id": None}
-    return {
-        "layout": "default",
-        "pipeline_id": str(pipeline.id),
-        "pipeline_name": pipeline.nombre
-    }
+    return {"layout": "default", "pipeline_id": str(pipeline.id), "pipeline_name": pipeline.nombre}
 
 
 @router.get("/pipeline/kanban/stages")
@@ -273,13 +277,17 @@ def kanban_stages(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    stages = db.query(models.EtapaPipeline).join(
-        models.PipelineCRM, models.EtapaPipeline.pipeline_id == models.PipelineCRM.id
-    ).filter(
-        models.PipelineCRM.sede_id == sede_id,
-        models.PipelineCRM.activo == True,
-        models.EtapaPipeline.deleted_at .is_(None)
-    ).order_by(models.EtapaPipeline.orden).all()
+    stages = (
+        db.query(models.EtapaPipeline)
+        .join(models.PipelineCRM, models.EtapaPipeline.pipeline_id == models.PipelineCRM.id)
+        .filter(
+            models.PipelineCRM.sede_id == sede_id,
+            models.PipelineCRM.activo == True,
+            models.EtapaPipeline.deleted_at.is_(None),
+        )
+        .order_by(models.EtapaPipeline.orden)
+        .all()
+    )
     return [_serialize_stage(stage) for stage in stages]
 
 
@@ -297,10 +305,12 @@ def kanban_cards(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    cards = db.query(models.CasoCRM).filter(
-        models.CasoCRM.sede_id == sede_id,
-        models.CasoCRM.deleted_at .is_(None)
-    ).order_by(models.CasoCRM.sort_order).all()
+    cards = (
+        db.query(models.CasoCRM)
+        .filter(models.CasoCRM.sede_id == sede_id, models.CasoCRM.deleted_at.is_(None))
+        .order_by(models.CasoCRM.sort_order)
+        .all()
+    )
     return [
         {
             "id": str(card.id),
@@ -326,10 +336,7 @@ def kanban_filter(
     current_user=Depends(require_pastor_or_admin),
 ):
     user_sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    query = db.query(models.CasoCRM).filter(
-        models.CasoCRM.sede_id == user_sede_id,
-        models.CasoCRM.deleted_at .is_(None)
-    )
+    query = db.query(models.CasoCRM).filter(models.CasoCRM.sede_id == user_sede_id, models.CasoCRM.deleted_at.is_(None))
     if pipeline_id:
         query = query.filter(models.CasoCRM.pipeline_id == pipeline_id)
     if assignee_id:
@@ -338,7 +345,7 @@ def kanban_filter(
         query = query.filter(models.CasoCRM.prioridad == priority)
     if status:
         query = query.filter(models.CasoCRM.estado == status)
-    
+
     cards = query.order_by(models.CasoCRM.sort_order).all()
     return [
         {
@@ -362,17 +369,14 @@ def drag_drop_events(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    case = db.query(models.CasoCRM).filter(
-        models.CasoCRM.id == payload.caso_id,
-        models.CasoCRM.sede_id == sede_id
-    ).first()
+    case = (
+        db.query(models.CasoCRM).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
+    )
     if not case:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
-    
+
     event = models.CrmDragDropEvent(
-        caso_id=payload.caso_id,
-        source_stage_id=payload.source_stage_id,
-        target_stage_id=payload.target_stage_id
+        caso_id=payload.caso_id, source_stage_id=payload.source_stage_id, target_stage_id=payload.target_stage_id
     )
     db.add(event)
     db.commit()
@@ -391,14 +395,14 @@ def check_for_cycles_dfs(nodes: list[str], edges: list[dict]) -> tuple[bool, lis
         tgt = e["target"]
         if src in adj and tgt in adj:
             adj[src].append(tgt)
-            
+
     visited = {}  # 0 = unvisited, 1 = visiting, 2 = visited
     cycles = []
-    
+
     def dfs(node, path):
         visited[node] = 1
         path.append(node)
-        
+
         for neighbor in adj.get(node, []):
             if visited.get(neighbor, 0) == 1:
                 # Cycle found: extract cycle loop
@@ -406,14 +410,14 @@ def check_for_cycles_dfs(nodes: list[str], edges: list[dict]) -> tuple[bool, lis
                 cycles.append(path[cycle_start:] + [neighbor])
             elif visited.get(neighbor, 0) == 0:
                 dfs(neighbor, path)
-                
+
         path.pop()
         visited[node] = 2
 
     for n in nodes:
         if visited.get(n, 0) == 0:
             dfs(n, [])
-            
+
     return len(cycles) > 0, cycles
 
 
@@ -450,17 +454,14 @@ def get_graph_from_payload_or_db(payload: dict | None, db: Session) -> tuple[lis
                         tgt = e.get("target") or e.get("target_id")
                         if src is None or src == "" or tgt is None or tgt == "":
                             raise ValueError("Source or target in edge is missing or malformed")
-                        edges.append({
-                            "source": str(src),
-                            "target": str(tgt)
-                        })
+                        edges.append({"source": str(src), "target": str(tgt)})
     # Fallback to database
     if not has_payload_keys and not nodes:
         db_nodes = db.query(models.CrmAutomation).all()
         nodes = [str(n.id) for n in db_nodes]
         db_edges = db.query(models.CrmAutomationEdge).all()
         edges = [{"source": str(e.source_id), "target": str(e.target_id)} for e in db_edges]
-        
+
     return nodes, edges
 
 
@@ -471,9 +472,9 @@ def evaluate_condition(key: str, op: str, expected_val: Any, variables: dict) ->
     if key not in variables:
         return False
     actual_val = variables[key]
-    
+
     op_lower = op.lower().strip()
-    
+
     if op_lower == "equals":
         if actual_val is None:
             return expected_val in (None, "", "None", "null")
@@ -546,7 +547,7 @@ def automations_palette():
             {"value": "send_sms", "label": "Enviar SMS"},
             {"value": "create_task", "label": "Crear Tarea de Consolidación"},
             {"value": "send_email", "label": "Enviar Email"},
-        ]
+        ],
     }
 
 
@@ -570,10 +571,10 @@ def validate_path(payload: dict = None, db: Session = Depends(get_db)):
         nodes, edges = get_graph_from_payload_or_db(payload, db)
     except ValueError as e:
         return {"valid": False, "error": str(e)}
-    
+
     if len(nodes) < 3:
         return {"valid": False, "error": "Path must have at least 3 nodes"}
-        
+
     adj = {n: [] for n in nodes}
     in_degree = {n: 0 for n in nodes}
     for e in edges:
@@ -582,10 +583,10 @@ def validate_path(payload: dict = None, db: Session = Depends(get_db)):
         if src in adj and tgt in adj:
             adj[src].append(tgt)
             in_degree[tgt] += 1
-            
+
     starts = [n for n in nodes if in_degree[n] == 0]
     max_path_len = 0
-    
+
     def dfs(node, current_len, visited_nodes):
         nonlocal max_path_len
         visited_nodes.add(node)
@@ -597,10 +598,10 @@ def validate_path(payload: dict = None, db: Session = Depends(get_db)):
 
     for start in starts:
         dfs(start, 1, set())
-        
+
     if max_path_len < 3:
         return {"valid": False, "error": "No valid path of length 3 or more exists"}
-        
+
     return {"valid": True, "max_path_length": max_path_len}
 
 
@@ -622,20 +623,16 @@ def branching_traverse(payload: dict):
     """Simulates branching node traversal based on dynamic condition logic."""
     variables = payload.get("variables", {})
     conditions = payload.get("conditions", [])
-    
+
     results = []
     for cond in conditions:
         key = cond.get("key")
         op = cond.get("operator") or cond.get("condition_type")
         val = cond.get("value") or cond.get("condition_value")
         results.append(evaluate_condition(key, op, val, variables))
-        
+
     is_true = all(results) if results else True
-    return {
-        "status": "traversed",
-        "result": is_true,
-        "path": "true" if is_true else "false"
-    }
+    return {"status": "traversed", "result": is_true, "path": "true" if is_true else "false"}
 
 
 @router.post("/automations/flows/check-cycles")
@@ -695,19 +692,20 @@ def kanban_stage_empty(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    stage = db.query(models.EtapaPipeline).join(
-        models.PipelineCRM, models.EtapaPipeline.pipeline_id == models.PipelineCRM.id
-    ).filter(
-        models.EtapaPipeline.id == stage_id,
-        models.PipelineCRM.sede_id == sede_id
-    ).first()
+    stage = (
+        db.query(models.EtapaPipeline)
+        .join(models.PipelineCRM, models.EtapaPipeline.pipeline_id == models.PipelineCRM.id)
+        .filter(models.EtapaPipeline.id == stage_id, models.PipelineCRM.sede_id == sede_id)
+        .first()
+    )
     if not stage:
         raise HTTPException(status_code=404, detail="Etapa no encontrada")
-    
-    cases_count = db.query(models.CasoCRM).filter(
-        models.CasoCRM.etapa_actual_id == stage_id,
-        models.CasoCRM.deleted_at .is_(None)
-    ).count()
+
+    cases_count = (
+        db.query(models.CasoCRM)
+        .filter(models.CasoCRM.etapa_actual_id == stage_id, models.CasoCRM.deleted_at.is_(None))
+        .count()
+    )
     return {"stage_id": str(stage_id), "is_empty": cases_count == 0}
 
 
@@ -720,25 +718,30 @@ def kanban_stage_limit_cases(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    stage = db.query(models.EtapaPipeline).join(
-        models.PipelineCRM, models.EtapaPipeline.pipeline_id == models.PipelineCRM.id
-    ).filter(
-        models.EtapaPipeline.id == stage_id,
-        models.PipelineCRM.sede_id == sede_id
-    ).first()
+    stage = (
+        db.query(models.EtapaPipeline)
+        .join(models.PipelineCRM, models.EtapaPipeline.pipeline_id == models.PipelineCRM.id)
+        .filter(models.EtapaPipeline.id == stage_id, models.PipelineCRM.sede_id == sede_id)
+        .first()
+    )
     if not stage:
         raise HTTPException(status_code=404, detail="Etapa no encontrada")
-    
-    cards = db.query(models.CasoCRM).filter(
-        models.CasoCRM.etapa_actual_id == stage_id,
-        models.CasoCRM.deleted_at .is_(None)
-    ).order_by(models.CasoCRM.sort_order).limit(limit).offset(offset).all()
-    
-    total_count = db.query(models.CasoCRM).filter(
-        models.CasoCRM.etapa_actual_id == stage_id,
-        models.CasoCRM.deleted_at .is_(None)
-    ).count()
-    
+
+    cards = (
+        db.query(models.CasoCRM)
+        .filter(models.CasoCRM.etapa_actual_id == stage_id, models.CasoCRM.deleted_at.is_(None))
+        .order_by(models.CasoCRM.sort_order)
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
+
+    total_count = (
+        db.query(models.CasoCRM)
+        .filter(models.CasoCRM.etapa_actual_id == stage_id, models.CasoCRM.deleted_at.is_(None))
+        .count()
+    )
+
     return {
         "cards": [
             {
@@ -754,7 +757,7 @@ def kanban_stage_limit_cases(
             for card in cards
         ],
         "total_count": total_count,
-        "has_more": offset + len(cards) < total_count
+        "has_more": offset + len(cards) < total_count,
     }
 
 
@@ -765,13 +768,10 @@ def kanban_search(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    query = db.query(models.CasoCRM).filter(
-        models.CasoCRM.sede_id == sede_id,
-        models.CasoCRM.deleted_at .is_(None)
-    )
+    query = db.query(models.CasoCRM).filter(models.CasoCRM.sede_id == sede_id, models.CasoCRM.deleted_at.is_(None))
     if title:
         query = query.filter(models.CasoCRM.titulo_caso.ilike(f"%{title}%"))
-    
+
     cards = query.order_by(models.CasoCRM.sort_order).all()
     return [
         {
@@ -794,11 +794,16 @@ def kanban_unassigned(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    cards = db.query(models.CasoCRM).filter(
-        models.CasoCRM.sede_id == sede_id,
-        models.CasoCRM.asignado_a_id .is_(None),
-        models.CasoCRM.deleted_at .is_(None)
-    ).order_by(models.CasoCRM.sort_order).all()
+    cards = (
+        db.query(models.CasoCRM)
+        .filter(
+            models.CasoCRM.sede_id == sede_id,
+            models.CasoCRM.asignado_a_id.is_(None),
+            models.CasoCRM.deleted_at.is_(None),
+        )
+        .order_by(models.CasoCRM.sort_order)
+        .all()
+    )
     return [
         {
             "id": str(card.id),
@@ -820,19 +825,22 @@ def kanban_stage_deleted(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    cards = db.query(models.CasoCRM).join(
-        models.EtapaPipeline, models.CasoCRM.etapa_actual_id == models.EtapaPipeline.id
-    ).filter(
-        models.CasoCRM.sede_id == sede_id,
-        models.EtapaPipeline.deleted_at .is_not(None),
-        models.CasoCRM.deleted_at .is_(None)
-    ).all()
+    cards = (
+        db.query(models.CasoCRM)
+        .join(models.EtapaPipeline, models.CasoCRM.etapa_actual_id == models.EtapaPipeline.id)
+        .filter(
+            models.CasoCRM.sede_id == sede_id,
+            models.EtapaPipeline.deleted_at.is_not(None),
+            models.CasoCRM.deleted_at.is_(None),
+        )
+        .all()
+    )
     return [
         {
             "id": str(card.id),
             "title": card.titulo_caso,
             "stage_id": str(card.etapa_actual_id),
-            "deleted_stage_name": card.etapa_actual.nombre
+            "deleted_stage_name": card.etapa_actual.nombre,
         }
         for card in cards
     ]
@@ -845,13 +853,12 @@ def drag_drop_same_stage(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    case = db.query(models.CasoCRM).filter(
-        models.CasoCRM.id == payload.caso_id,
-        models.CasoCRM.sede_id == sede_id
-    ).first()
+    case = (
+        db.query(models.CasoCRM).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
+    )
     if not case:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
-    
+
     reorder_payload = [{"id": payload.caso_id, "sort_order": payload.sort_order}]
     try:
         models.CasoCRM.atomic_sort_reorder(db, reorder_payload, sede_id)
@@ -867,24 +874,26 @@ def drag_drop_invalid_stage(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    case = db.query(models.CasoCRM).filter(
-        models.CasoCRM.id == payload.caso_id,
-        models.CasoCRM.sede_id == sede_id
-    ).first()
+    case = (
+        db.query(models.CasoCRM).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
+    )
     if not case:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
-    
-    target_stage = db.query(models.EtapaPipeline).join(
-        models.PipelineCRM, models.EtapaPipeline.pipeline_id == models.PipelineCRM.id
-    ).filter(
-        models.EtapaPipeline.id == payload.target_stage_id,
-        models.PipelineCRM.id == case.pipeline_id,
-        models.PipelineCRM.sede_id == sede_id,
-        models.EtapaPipeline.deleted_at .is_(None)
-    ).first()
+
+    target_stage = (
+        db.query(models.EtapaPipeline)
+        .join(models.PipelineCRM, models.EtapaPipeline.pipeline_id == models.PipelineCRM.id)
+        .filter(
+            models.EtapaPipeline.id == payload.target_stage_id,
+            models.PipelineCRM.id == case.pipeline_id,
+            models.PipelineCRM.sede_id == sede_id,
+            models.EtapaPipeline.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not target_stage:
         raise HTTPException(status_code=400, detail="Invalid stage transition")
-    
+
     case.etapa_actual_id = payload.target_stage_id
     db.commit()
     return {"status": "success"}
@@ -904,36 +913,38 @@ def drag_drop_concurrent(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    case = db.query(models.CasoCRM).filter(
-        models.CasoCRM.id == payload.caso_id,
-        models.CasoCRM.sede_id == sede_id
-    ).first()
+    case = (
+        db.query(models.CasoCRM).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
+    )
     if not case:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
-    
+
     # Check if there is an active lock for stage (concurrency protection)
     # Clear old locks (>10s)
     ten_seconds_ago = datetime.now(timezone.utc) - timedelta(seconds=10)
     db.query(models.CrmReorderLock).filter(models.CrmReorderLock.locked_at < ten_seconds_ago).delete()
     db.commit()
-    
-    lock = db.query(models.CrmReorderLock).filter(
-        models.CrmReorderLock.stage_id == case.etapa_actual_id
-    ).with_for_update().first()
+
+    lock = (
+        db.query(models.CrmReorderLock)
+        .filter(models.CrmReorderLock.stage_id == case.etapa_actual_id)
+        .with_for_update()
+        .first()
+    )
     if lock:
         raise HTTPException(status_code=409, detail="Stage is locked for concurrent reordering")
-    
+
     lock = models.CrmReorderLock(stage_id=case.etapa_actual_id)
     db.add(lock)
     db.commit()
-    
+
     try:
         case.etapa_actual_id = payload.target_stage_id
         db.commit()
     finally:
         db.query(models.CrmReorderLock).filter(models.CrmReorderLock.id == lock.id).delete()
         db.commit()
-        
+
     return {"status": "success"}
 
 
@@ -947,19 +958,16 @@ def drag_drop_recovery(
     ten_seconds_ago = datetime.now(timezone.utc) - timedelta(seconds=10)
     db.query(models.CrmReorderLock).filter(models.CrmReorderLock.locked_at < ten_seconds_ago).delete()
     db.commit()
-    
+
     caso_id = payload.get("caso_id")
     if caso_id:
-        case = db.query(models.CasoCRM).filter(
-            models.CasoCRM.id == UUID(caso_id),
-            models.CasoCRM.sede_id == sede_id
-        ).first()
+        case = (
+            db.query(models.CasoCRM)
+            .filter(models.CasoCRM.id == UUID(caso_id), models.CasoCRM.sede_id == sede_id)
+            .first()
+        )
         if case:
-            return {
-                "status": "recovered",
-                "stage_id": str(case.etapa_actual_id),
-                "sort_order": case.sort_order
-            }
+            return {"status": "recovered", "stage_id": str(case.etapa_actual_id), "sort_order": case.sort_order}
     return {"status": "recovered"}
 
 
@@ -998,8 +1006,17 @@ def flows_validate_types(payload: dict = None):
     payload = payload or {}
     nodes = payload.get("nodes", [])
     valid_types = {
-        "new_persona", "birthday", "inactivity", "low_attendance", "anniversary", "stage_change",
-        "send_whatsapp", "send_sms", "create_task", "send_email", "condition_branch"
+        "new_persona",
+        "birthday",
+        "inactivity",
+        "low_attendance",
+        "anniversary",
+        "stage_change",
+        "send_whatsapp",
+        "send_sms",
+        "create_task",
+        "send_email",
+        "condition_branch",
     }
     for node in nodes:
         node_type = node.get("type")
@@ -1065,21 +1082,22 @@ def cross_flow_check(payload: dict = None, db: Session = Depends(get_db)):
     payload = payload or {}
     flow_id = payload.get("flow_id")
     edges = payload.get("edges", [])
-    
+
     if flow_id:
         node_ids = set()
         for e in edges:
             node_ids.add(e["source"])
             node_ids.add(e["target"])
-            
-        owned_count = db.query(models.CrmAutomationNode).filter(
-            models.CrmAutomationNode.id.in_(list(node_ids)),
-            models.CrmAutomationNode.flow_id == flow_id
-        ).count()
-        
+
+        owned_count = (
+            db.query(models.CrmAutomationNode)
+            .filter(models.CrmAutomationNode.id.in_(list(node_ids)), models.CrmAutomationNode.flow_id == flow_id)
+            .count()
+        )
+
         if owned_count != len(node_ids):
             raise HTTPException(status_code=400, detail="Cross-flow edge detected: node does not belong to the flow")
-            
+
     return {"valid": True}
 
 
@@ -1096,7 +1114,7 @@ def branching_type_mismatch(payload: dict = None):
     payload = payload or {}
     variables = payload.get("variables", {})
     conditions = payload.get("conditions", [])
-    
+
     for cond in conditions:
         key = cond.get("key")
         op = cond.get("operator")
@@ -1109,7 +1127,7 @@ def branching_type_mismatch(payload: dict = None):
                 except (ValueError, TypeError):
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Type mismatch: cannot compare numeric field '{key}' with non-numeric value '{val}'"
+                        detail=f"Type mismatch: cannot compare numeric field '{key}' with non-numeric value '{val}'",
                     )
     return {"status": "success"}
 
@@ -1119,7 +1137,7 @@ def branching_missing_else(payload: dict = None):
     payload = payload or {}
     branch_node_id = payload.get("node_id")
     edges = payload.get("edges", [])
-    
+
     if branch_node_id:
         outgoing_ports = [e.get("source_port") for e in edges if e.get("source") == branch_node_id]
         if "true" in outgoing_ports and "false" not in outgoing_ports:
@@ -1132,7 +1150,7 @@ def branching_infinite_nesting(payload: dict = None):
     payload = payload or {}
     nodes = payload.get("nodes", [])
     edges = payload.get("edges", [])
-    
+
     adj = {n: [] for n in nodes}
     for e in edges:
         src = e.get("source")
@@ -1140,7 +1158,7 @@ def branching_infinite_nesting(payload: dict = None):
         if src not in adj or tgt not in adj:
             raise HTTPException(status_code=400, detail="Source or target node not found in nodes list")
         adj[src].append(tgt)
-        
+
     max_depth = 0
 
     def get_depth(node, visited, current_depth=1):
@@ -1155,10 +1173,10 @@ def branching_infinite_nesting(payload: dict = None):
 
     for n in nodes:
         max_depth = max(max_depth, get_depth(n, set()))
-        
+
     if max_depth > 15:
         raise HTTPException(status_code=400, detail="Nesting depth limit of 15 exceeded")
-        
+
     return {"status": "success", "max_depth": max_depth}
 
 
@@ -1210,18 +1228,19 @@ def kanban_sync_reorder(
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     pipeline_id = UUID(payload["pipeline_id"])
-    pipeline = db.query(models.PipelineCRM).filter(
-        models.PipelineCRM.id == pipeline_id,
-        models.PipelineCRM.sede_id == sede_id
-    ).first()
+    pipeline = (
+        db.query(models.PipelineCRM)
+        .filter(models.PipelineCRM.id == pipeline_id, models.PipelineCRM.sede_id == sede_id)
+        .first()
+    )
     if not pipeline:
         raise HTTPException(status_code=404, detail="Pipeline no encontrado")
-    
+
     for stage in pipeline.etapas:
         models.CasoCRM.handle_null_sort_order(db, stage.id)
         models.CasoCRM.resolve_duplicate_sort_index(db, stage.id)
         models.CasoCRM.consecutive_sort_order(db, stage.id)
-    
+
     return {"status": "synced"}
 
 
@@ -1235,12 +1254,12 @@ def flow_builder_three_node_render(
     flow = db.query(models.CrmAutomationFlow).filter(models.CrmAutomationFlow.id == flow_id).first()
     if not flow:
         raise HTTPException(status_code=404, detail="Flow no encontrado")
-    
+
     nodes = db.query(models.CrmAutomationNode).filter(models.CrmAutomationNode.flow_id == flow_id).all()
     return {
         "status": "rendered",
         "flow_name": flow.name,
-        "nodes": [{"id": str(n.id), "type": n.node_type, "ports": n.ports_config} for n in nodes]
+        "nodes": [{"id": str(n.id), "type": n.node_type, "ports": n.ports_config} for n in nodes],
     }
 
 
@@ -1263,23 +1282,24 @@ def reorder_trigger_automation(
     caso = db.query(models.CasoCRM).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not caso:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
-        
-    automation = db.query(models.CrmAutomation).filter(
-        models.CrmAutomation.trigger_event == "stage_change",
-        models.CrmAutomation.is_active == True
-    ).first()
-    
+
+    automation = (
+        db.query(models.CrmAutomation)
+        .filter(models.CrmAutomation.trigger_event == "stage_change", models.CrmAutomation.is_active == True)
+        .first()
+    )
+
     if automation:
         action = models.PendingCrmAction(
             automation_id=automation.id,
             target_persona_id=caso.persona_id,
             execute_at=datetime.now(timezone.utc),
-            status="pending"
+            status="pending",
         )
         db.add(action)
         db.commit()
         return {"status": "triggered", "action_id": str(action.id)}
-    
+
     return {"status": "no_automation_triggered"}
 
 
@@ -1290,13 +1310,14 @@ def branching_three_node_traversal(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    pipeline = db.query(models.PipelineCRM).filter(
-        models.PipelineCRM.id == UUID(payload["pipeline_id"]),
-        models.PipelineCRM.sede_id == sede_id
-    ).first()
+    pipeline = (
+        db.query(models.PipelineCRM)
+        .filter(models.PipelineCRM.id == UUID(payload["pipeline_id"]), models.PipelineCRM.sede_id == sede_id)
+        .first()
+    )
     if not pipeline:
         raise HTTPException(status_code=404, detail="Pipeline no encontrado")
-    
+
     return {"status": "traversed", "pipeline_name": pipeline.nombre}
 
 
@@ -1317,10 +1338,7 @@ def lead_qualification(
     caso_id = UUID(payload["caso_id"])
     target_etapa_id = UUID(payload["target_etapa_id"])
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    caso = db.query(models.CasoCRM).filter(
-        models.CasoCRM.id == caso_id,
-        models.CasoCRM.sede_id == sede_id
-    ).first()
+    caso = db.query(models.CasoCRM).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not caso:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
     caso.etapa_actual_id = target_etapa_id
@@ -1336,21 +1354,16 @@ def support_ticket_routing(
 ):
     caso_id = UUID(payload["caso_id"])
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    caso = db.query(models.CasoCRM).filter(
-        models.CasoCRM.id == caso_id,
-        models.CasoCRM.sede_id == sede_id
-    ).first()
+    caso = db.query(models.CasoCRM).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not caso:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
-    
-    ticket = db.query(models.SupportTicket).filter(
-        models.SupportTicket.subject.ilike(f"%{caso.titulo_caso}%")
-    ).first()
+
+    ticket = db.query(models.SupportTicket).filter(models.SupportTicket.subject.ilike(f"%{caso.titulo_caso}%")).first()
     if ticket:
         caso.asignado_a_id = ticket.user_id
         db.commit()
         return {"route": "support", "assigned_to": str(ticket.user_id)}
-        
+
     return {"route": "default", "assigned_to": None}
 
 
@@ -1363,7 +1376,7 @@ def cyclical_flow_resolution(
     flow_id = UUID(payload["flow_id"])
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
-    
+
     cache = db.query(models.CrmFlowCycleCache).filter(models.CrmFlowCycleCache.flow_id == flow_id).first()
     if not cache:
         cache = models.CrmFlowCycleCache(flow_id=flow_id, has_cycle=has_cycle)
@@ -1371,7 +1384,7 @@ def cyclical_flow_resolution(
     else:
         cache.has_cycle = has_cycle
     db.commit()
-    
+
     return {"has_cycles": has_cycle, "resolved": not has_cycle}
 
 
@@ -1386,10 +1399,7 @@ def bulk_reassignment_reorder(
         caso_id = UUID(item["id"])
         sort_order = item["sort_order"]
         asignado_a_id = UUID(item["asignado_a_id"])
-        caso = db.query(models.CasoCRM).filter(
-            models.CasoCRM.id == caso_id,
-            models.CasoCRM.sede_id == sede_id
-        ).first()
+        caso = db.query(models.CasoCRM).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
         if caso:
             caso.sort_order = sort_order
             caso.asignado_a_id = asignado_a_id

@@ -1,4 +1,5 @@
 """CRM — Biblioteca de Recursos: categorías, plantillas, adjuntos y bitácora de envíos."""
+
 from __future__ import annotations
 
 import uuid
@@ -16,14 +17,13 @@ from backend.core.uploads import ensure_allowed_extension, sanitize_filename
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_from_identity
 from backend.crud.crm_.extended import (
     create_crm_automation,
+    create_crm_automation_edge,
     delete_crm_automation,
+    delete_crm_automation_edge,
     get_crm_automation,
+    get_crm_automation_edges,
     get_crm_automations,
     update_crm_automation,
-    create_crm_automation_edge,
-    delete_crm_automation_edge,
-    get_crm_automation_edge,
-    get_crm_automation_edges,
 )
 from backend.crud.crm_.resources import (
     count_envios,
@@ -48,11 +48,10 @@ from backend.schemas.crm.automation import (
     AutomationTriggerPayload,
     AutomationTriggerResult,
     CrmAutomationCreate,
-    CrmAutomationOut,
-    CrmAutomationUpdate,
     CrmAutomationEdgeCreate,
     CrmAutomationEdgeOut,
-    CrmAutomationEdgeUpdate,
+    CrmAutomationOut,
+    CrmAutomationUpdate,
 )
 from backend.schemas.crm.resources import (
     BitacoraEnvioOut,
@@ -77,6 +76,7 @@ router = APIRouter(prefix="/resources", tags=["CRM Recursos"])
 
 
 # ── Categorías ────────────────────────────────────────────────────────────────
+
 
 @router.get("/categorias", response_model=List[CategoriaRecursoOut])
 def get_categorias(
@@ -120,6 +120,7 @@ def del_categoria(
 
 
 # ── Plantillas ────────────────────────────────────────────────────────────────
+
 
 @router.get("/plantillas", response_model=List[PlantillaMensajeOut])
 def get_plantillas(
@@ -198,6 +199,7 @@ def del_plantilla(
 
 # ── Adjuntos ──────────────────────────────────────────────────────────────────
 
+
 @router.get("/plantillas/{plantilla_id}/adjuntos", response_model=List[RecursoAdjuntoOut])
 def get_adjuntos(
     plantilla_id: str,
@@ -263,8 +265,10 @@ def del_adjunto(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm")),
 ):
-    from backend.models_crm import RecursoAdjunto
     import uuid
+
+    from backend.models_crm import RecursoAdjunto
+
     obj = db.query(RecursoAdjunto).filter_by(id=uuid.UUID(adjunto_id), activo=True).first()
     if not obj:
         raise HTTPException(404, "Adjunto no encontrado")
@@ -276,6 +280,7 @@ def del_adjunto(
 
 
 # ── Bitácora / Envíos ─────────────────────────────────────────────────────────
+
 
 @router.post("/plantillas/{plantilla_id}/enviar", response_model=BitacoraEnvioOut, status_code=201)
 async def enviar_plantilla(
@@ -311,17 +316,26 @@ async def enviar_plantilla(
     try:
         if canal_lower == "whatsapp":
             comms = await gateway.send_whatsapp(
-                db, payload.destinatario_id, texto, str(user.id),
+                db,
+                payload.destinatario_id,
+                texto,
+                str(user.id),
                 campaign_name=plantilla.titulo,
             )
         elif canal_lower == "email":
             comms = await gateway.send_email(
-                db, payload.destinatario_id, texto, str(user.id),
+                db,
+                payload.destinatario_id,
+                texto,
+                str(user.id),
                 campaign_name=plantilla.titulo,
             )
         else:
             comms = await gateway.send_sms(
-                db, payload.destinatario_id, texto, str(user.id),
+                db,
+                payload.destinatario_id,
+                texto,
+                str(user.id),
                 campaign_name=plantilla.titulo,
             )
         comms_log_id = comms.id
@@ -399,18 +413,30 @@ async def send_plantilla_campaign(
         try:
             if canal_lower == "whatsapp":
                 await gateway.send_whatsapp(
-                    db, str(persona.id), texto, str(user.id),
-                    campaign_name=payload.campaign_name, external_id=campaign_id,
+                    db,
+                    str(persona.id),
+                    texto,
+                    str(user.id),
+                    campaign_name=payload.campaign_name,
+                    external_id=campaign_id,
                 )
             elif canal_lower == "email":
                 await gateway.send_email(
-                    db, str(persona.id), texto, str(user.id),
-                    campaign_name=payload.campaign_name, external_id=campaign_id,
+                    db,
+                    str(persona.id),
+                    texto,
+                    str(user.id),
+                    campaign_name=payload.campaign_name,
+                    external_id=campaign_id,
                 )
             else:
                 await gateway.send_sms(
-                    db, str(persona.id), texto, str(user.id),
-                    campaign_name=payload.campaign_name, external_id=campaign_id,
+                    db,
+                    str(persona.id),
+                    texto,
+                    str(user.id),
+                    campaign_name=payload.campaign_name,
+                    external_id=campaign_id,
                 )
         except ValueError:
             failed_count += 1
@@ -566,12 +592,12 @@ def create_automation_edge(
     source = get_crm_automation(db, payload.source_id)
     if not source:
         raise HTTPException(404, f"Source automation with id {payload.source_id} not found")
-        
+
     # Validate target automation exists
     target = get_crm_automation(db, payload.target_id)
     if not target:
         raise HTTPException(404, f"Target automation with id {payload.target_id} not found")
-        
+
     obj = create_crm_automation_edge(db, payload)
     return CrmAutomationEdgeOut.from_orm_safe(obj)
 
@@ -605,41 +631,49 @@ async def trigger_automations(
         ap = automation.action_payload or {}
 
         if act != "send_plantilla":
-            results.append(AutomationTriggerResult(
-                automation_id=automation.id,
-                automation_name=automation.name,
-                status="skipped",
-                detail=f"Tipo de accion '{act}' no implementado",
-            ))
+            results.append(
+                AutomationTriggerResult(
+                    automation_id=automation.id,
+                    automation_name=automation.name,
+                    status="skipped",
+                    detail=f"Tipo de accion '{act}' no implementado",
+                )
+            )
             continue
 
         plantilla_id = ap.get("plantilla_id")
         if not plantilla_id:
-            results.append(AutomationTriggerResult(
-                automation_id=automation.id,
-                automation_name=automation.name,
-                status="skipped",
-                detail="action_payload.plantilla_id no especificado",
-            ))
+            results.append(
+                AutomationTriggerResult(
+                    automation_id=automation.id,
+                    automation_name=automation.name,
+                    status="skipped",
+                    detail="action_payload.plantilla_id no especificado",
+                )
+            )
             continue
 
         if not target_persona_id:
-            results.append(AutomationTriggerResult(
-                automation_id=automation.id,
-                automation_name=automation.name,
-                status="skipped",
-                detail="context.persona_id no especificado",
-            ))
+            results.append(
+                AutomationTriggerResult(
+                    automation_id=automation.id,
+                    automation_name=automation.name,
+                    status="skipped",
+                    detail="context.persona_id no especificado",
+                )
+            )
             continue
 
         plantilla = get_plantilla(db, plantilla_id)
         if not plantilla:
-            results.append(AutomationTriggerResult(
-                automation_id=automation.id,
-                automation_name=automation.name,
-                status="failed",
-                detail="Plantilla no encontrada",
-            ))
+            results.append(
+                AutomationTriggerResult(
+                    automation_id=automation.id,
+                    automation_name=automation.name,
+                    status="failed",
+                    detail="Plantilla no encontrada",
+                )
+            )
             continue
 
         texto = plantilla.contenido_texto
@@ -652,30 +686,46 @@ async def trigger_automations(
         try:
             if canal == "whatsapp":
                 await gateway.send_whatsapp(
-                    db, target_persona_id, texto, str(user.id),
-                    campaign_name=f"Auto: {automation.name}", external_id=ext_id,
+                    db,
+                    target_persona_id,
+                    texto,
+                    str(user.id),
+                    campaign_name=f"Auto: {automation.name}",
+                    external_id=ext_id,
                 )
             elif canal == "email":
                 await gateway.send_email(
-                    db, target_persona_id, texto, str(user.id),
-                    campaign_name=f"Auto: {automation.name}", external_id=ext_id,
+                    db,
+                    target_persona_id,
+                    texto,
+                    str(user.id),
+                    campaign_name=f"Auto: {automation.name}",
+                    external_id=ext_id,
                 )
             else:
                 await gateway.send_sms(
-                    db, target_persona_id, texto, str(user.id),
-                    campaign_name=f"Auto: {automation.name}", external_id=ext_id,
+                    db,
+                    target_persona_id,
+                    texto,
+                    str(user.id),
+                    campaign_name=f"Auto: {automation.name}",
+                    external_id=ext_id,
                 )
-            results.append(AutomationTriggerResult(
-                automation_id=automation.id,
-                automation_name=automation.name,
-                status="triggered",
-            ))
+            results.append(
+                AutomationTriggerResult(
+                    automation_id=automation.id,
+                    automation_name=automation.name,
+                    status="triggered",
+                )
+            )
         except ValueError as exc:
-            results.append(AutomationTriggerResult(
-                automation_id=automation.id,
-                automation_name=automation.name,
-                status="failed",
-                detail=str(exc),
-            ))
+            results.append(
+                AutomationTriggerResult(
+                    automation_id=automation.id,
+                    automation_name=automation.name,
+                    status="failed",
+                    detail=str(exc),
+                )
+            )
 
     return results

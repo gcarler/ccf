@@ -66,9 +66,7 @@ class AutomationEngine:
         # Usar la vista que creamos en el paso anterior
         from sqlalchemy import text
 
-        query = text(
-            "SELECT user_id, full_name, open_tasks FROM view_user_workload WHERE open_tasks > 8"
-        )
+        query = text("SELECT user_id, full_name, open_tasks FROM view_user_workload WHERE open_tasks > 8")
         overloaded = db.execute(query).fetchall()
 
         for row in overloaded:
@@ -137,10 +135,7 @@ class AutomationEngine:
 
         pending_actions = (
             db.query(PendingCrmAction)
-            .filter(
-                PendingCrmAction.status == "pending",
-                PendingCrmAction.execute_at <= _utcnow()
-            )
+            .filter(PendingCrmAction.status == "pending", PendingCrmAction.execute_at <= _utcnow())
             .all()
         )
 
@@ -148,22 +143,22 @@ class AutomationEngine:
             visited = set()
             rec_stack = set()
             stack = [(start_id, False)]
-            
+
             while stack:
                 curr_id, is_leave = stack.pop()
                 if is_leave:
                     rec_stack.discard(curr_id)
                     visited.add(curr_id)
                     continue
-                
+
                 if curr_id in rec_stack:
                     return True
                 if curr_id in visited:
                     continue
-                
+
                 rec_stack.add(curr_id)
                 stack.append((curr_id, True))
-                
+
                 edges_list = db_session.query(CrmAutomationEdge).filter(CrmAutomationEdge.source_id == curr_id).all()
                 for edge in edges_list:
                     target_id = edge.target_id
@@ -176,15 +171,15 @@ class AutomationEngine:
         def evaluate_condition(cond_type, actual_val, expected_val_str) -> bool:
             if not cond_type or not isinstance(cond_type, str):
                 cond_type = "equals"
-            
+
             cond_type = cond_type.lower().strip()
-            
+
             if cond_type == "always":
                 return True
-                
+
             if cond_type == "ne":
                 return not evaluate_condition("equals", actual_val, expected_val_str)
-                
+
             if cond_type == "equals":
                 if actual_val is None:
                     return expected_val_str in (None, "", "None", "null")
@@ -205,21 +200,22 @@ class AutomationEngine:
                         return str(actual_val) == str(expected_val_str)
                 except Exception:
                     return str(actual_val) == str(expected_val_str)
-            
+
             if cond_type == "contains":
                 if actual_val is None or expected_val_str is None:
                     return False
                 return str(expected_val_str).lower() in str(actual_val).lower()
-                
+
             if cond_type == "starts_with":
                 if actual_val is None or expected_val_str is None:
                     return False
                 return str(actual_val).lower().startswith(str(expected_val_str).lower())
-                
+
             if cond_type == "in":
                 if actual_val is None or expected_val_str is None:
                     return False
                 import json
+
                 try:
                     items = json.loads(expected_val_str)
                     if not isinstance(items, list):
@@ -228,7 +224,7 @@ class AutomationEngine:
                     items = [x.strip() for x in expected_val_str.split(",")]
                 act_str = str(actual_val).lower()
                 return any(str(item).lower() == act_str for item in items)
-                
+
             if cond_type == "gt":
                 if actual_val is None or expected_val_str is None:
                     return False
@@ -258,7 +254,7 @@ class AutomationEngine:
                     except Exception:
                         return False
                 return str(actual_val) < str(expected_val_str)
-            
+
             return False
 
         for action in pending_actions:
@@ -266,48 +262,54 @@ class AutomationEngine:
             if not automation:
                 action.status = "failed"
                 continue
-            
+
             # DFS Loop Cycle Detection
             if detect_cycle_dfs(automation.id, db):
                 logger.warning(f"Cycle detected in CRM automation flow starting at {automation.id}. Action failed.")
                 action.status = "failed"
                 continue
-            
+
             try:
                 logger.info(f"Executing CRM automation {automation.id} for persona {action.target_persona_id}")
-                
+
                 # Fetch target CasoCRM case and linked Persona
                 case = db.query(CasoCRM).filter(CasoCRM.persona_id == action.target_persona_id).first()
                 persona = None
                 if hasattr(models, "Persona"):
                     persona = db.query(models.Persona).filter(models.Persona.id == action.target_persona_id).first()
-                
+
                 # Execution of current action through MessagingGateway
                 from backend.services.messaging import get_messaging_gateway
+
                 gateway = get_messaging_gateway()
-                
+
                 canal_lower = ""
                 if automation.action_type:
                     canal_lower = automation.action_type.lower()
-                
+
                 if "whatsapp" in canal_lower:
                     canal_lower = "whatsapp"
                 elif "email" in canal_lower:
                     canal_lower = "email"
                 elif "sms" in canal_lower:
                     canal_lower = "sms"
-                elif automation.action_payload and isinstance(automation.action_payload, dict) and automation.action_payload.get("canal"):
+                elif (
+                    automation.action_payload
+                    and isinstance(automation.action_payload, dict)
+                    and automation.action_payload.get("canal")
+                ):
                     canal_lower = automation.action_payload.get("canal").lower()
-                
+
                 plantilla_id = None
                 if automation.action_payload and isinstance(automation.action_payload, dict):
                     plantilla_id = automation.action_payload.get("plantilla_id")
-                
+
                 plantilla = None
                 if plantilla_id:
                     from backend.models_crm import PlantillaMensaje
+
                     plantilla = db.query(PlantillaMensaje).filter(PlantillaMensaje.id == plantilla_id).first()
-                    
+
                 texto = ""
                 if plantilla:
                     texto = plantilla.contenido_texto
@@ -328,16 +330,23 @@ class AutomationEngine:
 
                 leader_id = str(case.asignado_a_id) if (case and case.asignado_a_id) else None
                 campaign_name = plantilla.titulo if plantilla else automation.name
-                
+
                 if canal_lower == "whatsapp":
-                    coro = gateway.send_whatsapp(db, str(action.target_persona_id), texto, leader_id, campaign_name=campaign_name)
+                    coro = gateway.send_whatsapp(
+                        db, str(action.target_persona_id), texto, leader_id, campaign_name=campaign_name
+                    )
                 elif canal_lower == "email":
-                    coro = gateway.send_email(db, str(action.target_persona_id), texto, leader_id, campaign_name=campaign_name)
+                    coro = gateway.send_email(
+                        db, str(action.target_persona_id), texto, leader_id, campaign_name=campaign_name
+                    )
                 else:
-                    coro = gateway.send_sms(db, str(action.target_persona_id), texto, leader_id, campaign_name=campaign_name)
-                
+                    coro = gateway.send_sms(
+                        db, str(action.target_persona_id), texto, leader_id, campaign_name=campaign_name
+                    )
+
                 import asyncio
                 import threading
+
                 def run_async_job(c):
                     try:
                         loop = asyncio.get_running_loop()
@@ -346,6 +355,7 @@ class AutomationEngine:
                     if loop and loop.is_running():
                         res_list = []
                         err_list = []
+
                         def target():
                             new_loop = asyncio.new_event_loop()
                             try:
@@ -354,6 +364,7 @@ class AutomationEngine:
                                 err_list.append(err)
                             finally:
                                 new_loop.close()
+
                         t = threading.Thread(target=target)
                         t.start()
                         t.join()
@@ -362,26 +373,31 @@ class AutomationEngine:
                         return res_list[0] if res_list else None
                     else:
                         return asyncio.run(c)
-                
+
                 # Execute sending
                 run_async_job(coro)
-                
+
                 # Log in BitacoraEnvioPlantilla
-                if plantilla_id or (automation.action_payload and isinstance(automation.action_payload, dict) and automation.action_payload.get("plantilla_id")):
+                if plantilla_id or (
+                    automation.action_payload
+                    and isinstance(automation.action_payload, dict)
+                    and automation.action_payload.get("plantilla_id")
+                ):
                     p_id = plantilla_id or automation.action_payload.get("plantilla_id")
                     from backend.crud.crm_.resources import create_envio
-                    
+
                     s_id = None
                     if case and case.sede_id:
                         s_id = str(case.sede_id)
                     else:
                         from backend.models_crm import Sede
+
                         first_sede = db.query(Sede).first()
                         if first_sede:
                             s_id = str(first_sede.id)
                         else:
                             s_id = "00000000-0000-0000-0000-000000000000"
-                            
+
                     try:
                         create_envio(
                             db,
@@ -393,39 +409,48 @@ class AutomationEngine:
                             payload_hidratado={
                                 "canal": canal_lower,
                                 "texto_hidratado": texto,
-                                "background_automation": str(automation.id)
-                            }
+                                "background_automation": str(automation.id),
+                            },
                         )
                     except Exception as env_err:
                         logger.error(f"Error logging plantilla envio in automation: {env_err}")
-                
+
                 action.status = "executed"
-                
+
                 # Retrieve outgoing edges from active automation
                 edges = db.query(CrmAutomationEdge).filter(CrmAutomationEdge.source_id == automation.id).all()
                 for edge in edges:
                     # Evaluate conditions
-                    cond_type_str = edge.condition_type.lower().strip() if (edge.condition_type and isinstance(edge.condition_type, str)) else ""
+                    cond_type_str = (
+                        edge.condition_type.lower().strip()
+                        if (edge.condition_type and isinstance(edge.condition_type, str))
+                        else ""
+                    )
                     if cond_type_str == "always":
                         # Always matches regardless of key/value
                         pass
                     elif edge.condition_key:
                         val = None
                         found = False
-                        
+
                         # 1. CasoCRM attributes
                         if case is not None and hasattr(case, edge.condition_key):
                             val = getattr(case, edge.condition_key)
                             found = True
                         # 2. CasoCRM payload_web json keys
-                        elif case is not None and case.payload_web and isinstance(case.payload_web, dict) and edge.condition_key in case.payload_web:
+                        elif (
+                            case is not None
+                            and case.payload_web
+                            and isinstance(case.payload_web, dict)
+                            and edge.condition_key in case.payload_web
+                        ):
                             val = case.payload_web[edge.condition_key]
                             found = True
                         # 3. Linked Persona attributes
                         elif persona is not None and hasattr(persona, edge.condition_key):
                             val = getattr(persona, edge.condition_key)
                             found = True
-                        
+
                         if not found or not evaluate_condition(edge.condition_type, val, edge.condition_value):
                             # Skip this edge since condition evaluates to False
                             logger.info(f"Skipping edge {edge.id} due to condition mismatch: {edge.condition_key}")
@@ -438,30 +463,28 @@ class AutomationEngine:
                             automation_id=next_auto.id,
                             target_persona_id=action.target_persona_id,
                             execute_at=next_execute_at,
-                            status="pending"
+                            status="pending",
                         )
                         db.add(next_action)
                         logger.info(f"Queued next automation {next_auto.id} for execution at {next_execute_at}")
 
             except Exception as e:
                 import traceback
+
                 logger.error(f"Failed to execute CRM automation {automation.id}: {e}\n{traceback.format_exc()}")
                 action.status = "failed"
 
     def trigger_crm_automation(self, db: Session, automation_id: str, target_persona_id: str):
         from backend.models_crm import CrmAutomation, PendingCrmAction
         from backend.models_shared import _utcnow
-        
+
         automation = db.query(CrmAutomation).filter(CrmAutomation.id == automation_id).first()
         if not automation:
             return
-            
+
         execute_at = _utcnow() + timedelta(minutes=automation.delay_minutes)
         action = PendingCrmAction(
-            automation_id=automation.id,
-            target_persona_id=target_persona_id,
-            execute_at=execute_at,
-            status="pending"
+            automation_id=automation.id, target_persona_id=target_persona_id, execute_at=execute_at, status="pending"
         )
         db.add(action)
         db.commit()
