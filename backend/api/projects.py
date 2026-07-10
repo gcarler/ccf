@@ -475,10 +475,13 @@ def list_all_comments(
         q = q.filter(models.ProjectComment.project_id == _to_uuid(project_id))
     elif user_sede:
         # No project filter → join with Project and keep only those in
-        # the actor's sede.
+        # the actor's sede. Also exclude comments on soft-deleted projects.
         q = q.join(
             models.Project, models.Project.id == models.ProjectComment.project_id
-        ).filter(models.Project.sede_id == user_sede)
+        ).filter(
+            models.Project.sede_id == user_sede,
+            models.Project.deleted_at.is_(None),
+        )
     if unresolved_only:
         q = q.filter(models.ProjectComment.is_resolved.is_(False))
     if task_id:
@@ -581,7 +584,10 @@ def portfolio_summary(
             done_case,
         )
         .outerjoin(models.ProjectTask, models.ProjectTask.project_id == models.Project.id)
-        .filter(models.Project.deleted_at.is_(None))
+        .filter(
+            models.Project.deleted_at.is_(None),
+            models.ProjectTask.deleted_at.is_(None),
+        )
     )
     if user_sede:
         q = q.filter(models.Project.sede_id == user_sede)
@@ -700,9 +706,13 @@ def list_activities(
         q = q.filter(models.ProjectActivityLog.project_id == _to_uuid(project_id))
     elif user_sede:
         # Join con Project para que ``Project.sede_id`` sea usable en el filtro.
+        # Exclude activity logs from soft-deleted projects.
         q = q.join(
             models.Project, models.Project.id == models.ProjectActivityLog.project_id
-        ).filter(models.Project.sede_id == user_sede)
+        ).filter(
+            models.Project.sede_id == user_sede,
+            models.Project.deleted_at.is_(None),
+        )
     logs = q.order_by(models.ProjectActivityLog.created_at.desc()).limit(limit).all()
 
     # ── Batch fetch: 1 query for the unique project_ids of this page ──
@@ -1087,7 +1097,12 @@ def get_project_whiteboard(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     board = (
-        db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id)).first()
+        db.query(models.ProjectWhiteboard)
+        .filter(
+            models.ProjectWhiteboard.project_id == _to_uuid(project_id),
+            models.ProjectWhiteboard.deleted_at.is_(None),
+        )
+        .first()
     )
     return _normalize_dates(board)
 
@@ -1102,7 +1117,12 @@ def update_project_whiteboard(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     board = (
-        db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id)).first()
+        db.query(models.ProjectWhiteboard)
+        .filter(
+            models.ProjectWhiteboard.project_id == _to_uuid(project_id),
+            models.ProjectWhiteboard.deleted_at.is_(None),
+        )
+        .first()
     )
     title = payload.title or "Pizarra Estrategica"
     elements = payload.elements_json or "[]"
@@ -1134,10 +1154,12 @@ def delete_project_whiteboard(
 ):
     """Realiza soft delete de la pizarra asociada a un proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
-    _ensure_project(db, project_id, user_sede=user_sede)
-    board = (
+    _ensure_project(db, project_id, user_sede=user_sede)    board = (
         db.query(models.ProjectWhiteboard)
-        .filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id))
+        .filter(
+            models.ProjectWhiteboard.project_id == _to_uuid(project_id),
+            models.ProjectWhiteboard.deleted_at.is_(None),
+        )
         .first()
     )
     if board:

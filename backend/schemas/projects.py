@@ -216,6 +216,13 @@ class ProjectCommentCreate(ProjectCommentBase):
     pass
 
 
+class ProjectCommentCreateWithProject(ProjectCommentBase):
+    """Payload for the flat /projects/comments endpoint that carries the
+    project_id in the request body."""
+
+    project_id: UUIDStr
+
+
 class ProjectCommentUpdate(BaseModel):
     content: Optional[str] = None
     is_resolved: Optional[bool] = None
