@@ -29,11 +29,11 @@ def sessions_grupo_has_estado_habilitacion(db: Session) -> bool:
     """Return whether the live schema exposes ``sesiones_grupo.estado_habilitacion``."""
     bind = db.get_bind()
     if bind is None:
-        return True
+        return False
     try:
         columns = inspect(bind).get_columns("sesiones_grupo")
     except Exception:
-        return True
+        return False
     return any(column.get("name") == "estado_habilitacion" for column in columns)
 
 
