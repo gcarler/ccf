@@ -7,7 +7,8 @@ from backend import crud, models, schemas
 from backend.api.crm._shared import _get_scoped_persona
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access, require_permission
-from backend.crud.crm import resolve_persona_id_for_user
+from backend.core.tenant import get_user_sede_id
+from backend.crud.crm_.shared import resolve_persona_id_for_user
 
 router = APIRouter(tags=["CRM"])
 
@@ -31,7 +32,7 @@ def list_personas(
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Lista personas con búsqueda, paginación y ordenamiento. Filtrado por sede."""
-    sede_id = crud.get_user_sede_id(db, current_user.id)
+    sede_id = get_user_sede_id(db, current_user.id)
     return crud.search_personas(
         db,
         search=search,

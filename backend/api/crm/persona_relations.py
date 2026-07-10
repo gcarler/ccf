@@ -14,7 +14,8 @@ from backend.api.crm._shared import (
 )
 from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access
-from backend.crud.crm import get_user_sede_id
+from backend.core.tenant import get_user_sede_id
+from backend.crud.crm_.shared import resolve_persona_id_for_user
 
 router = APIRouter(tags=["CRM"])
 

@@ -6,6 +6,11 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.api.crm._shared import (
+    _persona_live_column_names,
+    persona_query,
+    prepare_persona_for_output,
+)
 
 
 def calculate_pastoral_health(db: Session, persona_id: UUID) -> tuple[int, str]:
@@ -28,11 +33,14 @@ def calculate_pastoral_health(db: Session, persona_id: UUID) -> tuple[int, str]:
       - ESTABLE: 40 <= Score < 80
       - COMPROMETIDO: Score >= 80
     """
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    live_cols = _persona_live_column_names(db)
+    persona = persona_query(db).filter(models.Persona.id == persona_id).first()
     if not persona:
         raise ValueError(f"Persona with ID {persona_id} not found")
 
-    previous_status = persona.health_status
+    persona = prepare_persona_for_output(db, persona)
+    previous_status = getattr(persona, "health_status", None)
+    is_baptized = bool(getattr(persona, "is_baptized", False))
 
     # 1. Attendance score
     # Asistencia opportunities & attended
@@ -114,12 +122,12 @@ def calculate_pastoral_health(db: Session, persona_id: UUID) -> tuple[int, str]:
         if m.type and any(kw in m.type.lower() for kw in ["bapt", "baut"]):
             has_bapt = True
             break
-    if has_bapt:
+    if has_bapt and "is_baptized" in live_cols:
         persona.is_baptized = True
-        db.commit()
+        is_baptized = True
 
     milestone_points = milestones_count
-    if persona.is_baptized:
+    if is_baptized or bool(getattr(persona, "is_baptized", False)):
         milestone_points += 1
 
     milestone_score = min(milestone_points * 10, 30)
@@ -162,21 +170,25 @@ def calculate_pastoral_health(db: Session, persona_id: UUID) -> tuple[int, str]:
         status = "COMPROMETIDO"
 
     # Re-fetch/ensure object state is clean after any intermediate commits
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
-    persona.health_score = clamped_score
-    persona.health_status = status
+    persona = persona_query(db).filter(models.Persona.id == persona_id).first()
+    if not persona:
+        raise ValueError(f"Persona with ID {persona_id} not found")
+    if "health_score" in live_cols:
+        persona.health_score = clamped_score
+    if "health_status" in live_cols:
+        persona.health_status = status
 
     if previous_status is None or previous_status != status:
-        milestone = models.SpiritualMilestone(
-            persona_id=persona_id,
-            type=f"Health Status Change to {status}",
-            event_date=date.today(),
-            notes=f"Health score updated to {clamped_score}"
-        )
-        db.add(milestone)
+        if "health_score" in live_cols or "health_status" in live_cols:
+            milestone = models.SpiritualMilestone(
+                persona_id=persona_id,
+                type=f"Health Status Change to {status}",
+                event_date=date.today(),
+                notes=f"Health score updated to {clamped_score}",
+            )
+            db.add(milestone)
 
     db.commit()
-    db.refresh(persona)
 
     return clamped_score, status
 
@@ -186,8 +198,10 @@ def update_pastoral_health(db: Session, persona_id: UUID) -> models.Persona:
     commits the session, and returns the updated Persona object.
     """
     calculate_pastoral_health(db, persona_id)
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
-    return persona
+    persona = persona_query(db).filter(models.Persona.id == persona_id).first()
+    if persona:
+        return prepare_persona_for_output(db, persona)
+    return None
 
 
 calculate_pastoral_health_score = calculate_pastoral_health

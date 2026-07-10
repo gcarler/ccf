@@ -27,10 +27,8 @@ from backend.api.crm._shared import (
 )
 from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access
-from backend.crud.crm import (
-    get_user_sede_id,
-    resolve_persona_id_for_user,
-)
+from backend.core.tenant import get_user_sede_id
+from backend.crud.crm_.shared import resolve_persona_id_for_user
 from backend.models_crm_pipeline import CanalOrigenEnum, EstadoCasoEnum, TipoInteraccionEnum
 from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
 from backend.services.messaging import (

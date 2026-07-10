@@ -14,7 +14,8 @@ from backend.core.database import get_db
 from backend.core.permissions import require_module_access
 from backend.core.storage import storage_service
 from backend.core.uploads import ensure_allowed_extension, sanitize_filename
-from backend.crud.crm import get_user_sede_id, resolve_persona_id_from_identity
+from backend.core.tenant import get_user_sede_id
+from backend.crud.crm_.shared import resolve_persona_id_from_identity
 from backend.crud.crm_.extended import (
     create_crm_automation,
     create_crm_automation_edge,

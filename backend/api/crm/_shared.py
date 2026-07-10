@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session, load_only
 
 from backend import models
 from backend.crud._utils import _to_uuid
-from backend.crud.crm import get_user_sede_id
 from backend.schemas.crm.base import PersonaResponse
+from backend.core.tenant import get_user_sede_id
 from backend.services.messaging_outcomes import (
     DELIVERED_OUTCOMES,
     CommunicationOutcome,
@@ -278,17 +278,13 @@ def _get_scoped_task(db: Session, user: models.User, task_id) -> models.TareaCRM
 
     # 2. Scope via persona_id (target persona)
     if task.persona_id is not None:
-        persona = db.query(models.Persona).filter(
-            models.Persona.id == task.persona_id
-        ).first()
+        persona = persona_query(db).filter(models.Persona.id == task.persona_id).first()
         if persona and persona.sede_id and str(persona.sede_id) == str(user_sede):
             return task
 
     # 3. Scope via asignado_a_id (assignee)
     if task.asignado_a_id is not None:
-        assignee = db.query(models.Persona).filter(
-            models.Persona.id == task.asignado_a_id
-        ).first()
+        assignee = persona_query(db).filter(models.Persona.id == task.asignado_a_id).first()
         if assignee and assignee.sede_id and str(assignee.sede_id) == str(user_sede):
             return task
 
@@ -550,13 +546,14 @@ def _resolve_campaign_personas(db, segments: list, sede_id=None) -> list:
     if sede_id:
         donations_q = donations_q.filter(models.Donation.sede_id == sede_id)
     donation_persona_ids = {pid for (pid,) in donations_q.distinct().all()}
-    personas_q = db.query(models.Persona)
+    personas_q = persona_query(db)
     if sede_id:
         personas_q = personas_q.filter(models.Persona.sede_id == sede_id)
     personas = personas_q.all()
     selected = []
     seen_ids: set = set()
     for persona in personas:
+        persona = prepare_persona_for_output(db, persona)
         if persona.id in seen_ids:
             continue
         if any(_persona_matches_segment(persona, segment, donation_persona_ids) for segment in normalized_segments):
