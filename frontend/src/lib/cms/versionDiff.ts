@@ -475,7 +475,7 @@ export function diffArray(before: unknown[], after: unknown[]): FieldDiff {
       }
     }
     if (!anyChange) {
-      // Even if membership + equality match, the order may have
+      // Even if set equality + element equality match, the order may have
       // shifted (matters semantically for ordered lists).
       for (let i = 0; i < after.length; i++) {
         const k = stableKeyOf(after[i], useKey);

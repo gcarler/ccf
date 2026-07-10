@@ -24,7 +24,7 @@ Testimonials, Announcements**, Analytics, Projects — está protegido por:
 | Migration | Cubre |
 |---|---|
 | `20260701_0001_cms_content_sede_id` | `cms_media_items.sede_id` + `testimonials.sede_id` + `announcements.sede_id` + `announcements.created_by_persona_id` |
-| `20260701_0002_no_legacy` | Purga de orphans, ownership obligatorio, proyectos estrictos, `baptism_date`, contactos públicos canónicos y retiro de objetos `members` |
+| `20260701_0002_no_legacy` | Purga de orphans, ownership obligatorio, proyectos estrictos, `baptism_date`, contactos públicos canónicos y retiro de objetos de membresía heredados |
 
 Backfill idempotente y Postgres + SQLite-compatible (los tests del CI usan
 SQLite por lo que la migración detecta el dialect y usa sintaxis portable).

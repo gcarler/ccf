@@ -24,7 +24,7 @@ Este documento reemplaza planes anteriores de saneamiento. La fuente vigente par
 - La persona se identifica por UUID en `personas.id`.
 - `auth_users.id` comparte UUID con `personas.id`.
 - No se recrean columnas inversas entre personas y autenticacion.
-- No se introducen tablas paralelas para miembros, estudiantes, lideres o usuarios ministeriales.
+- No se introducen tablas paralelas para integrantes, estudiantes, lideres o usuarios ministeriales.
 - La plataforma usa rutas v3 y modulos actuales registrados en `backend/app.py`.
 - Academy activa es `academy_core`; Auth activa es `auth_v3`.
 - Los datos pastorales y ministeriales se filtran por `sede_id`.

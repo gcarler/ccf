@@ -98,7 +98,7 @@ def get_sessions(current_user: models.User = Depends(require_active_user), ...):
 | `/api/projects` | GET | ✅ 200 | Lista proyectos |
 | `/api/projects` | POST | ✅ 201 | Create project |
 | `/api/projects/{id}` | DELETE | ✅ 200 | Delete project |
-| `/api/crm/members/` | GET | ⚠️ 405 | Preexistente — trailing slash issue |
+| `/api/crm/personas/` | GET | ⚠️ 405 | Preexistente — trailing slash issue |
 | `/api/crm/tasks` | GET | ✅ 200 | Lista tareas |
 | `/api/admin/users` | GET | ✅ 200 | 7 usuarios |
 | `/api/admin/roles` | GET | ✅ 200 | Roles listados |
@@ -119,7 +119,7 @@ def get_sessions(current_user: models.User = Depends(require_active_user), ...):
 | Issue | Severidad | Detalle |
 |---|---|---|
 | `/api/auth/stats/summary` → 500 | Media | `func` no importado en `auth.py` |
-| `/api/crm/members/` → 405 | Baja | Trailing slash en la ruta |
+| `/api/crm/personas/` → 405 | Baja | Trailing slash en la ruta |
 | `/api/academy/courses` → 307 | Baja | Redirect sin trailing slash |
 | Linting: `logger` undefined en auth.py | Baja | No afecta runtime |
 | Linting: variables no usadas | Baja | `google_id`, `google_picture` |
@@ -137,7 +137,7 @@ def get_sessions(current_user: models.User = Depends(require_active_user), ...):
 | `92f7493` | fix(permissions): docente role access to projects |
 | `e5d011f` | test(projects): quality test script |
 | `402652c` | refactor(evangelism): navigate to strategy detail page |
-| `2dee3f6` | feat(evangelism): group member management drawer |
+| `2dee3f6` | feat(evangelism): group personas management drawer |
 | `17a9095` | fix(evangelism): ccf_token key mismatch |
 | `ccbeacf` | fix(evangelism): delete strategy returns 204 |
 | `49d7ac3` | chore: clean up development scripts |

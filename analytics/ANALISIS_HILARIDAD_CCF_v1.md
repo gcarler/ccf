@@ -142,7 +142,7 @@ Tablas que usan `DELETE` físico en lugar de `deleted_at`:
 | Tabla | Datos perdidos al borrar |
 |---|---|
 | `event_attendances` | Historial de asistencia |
-| `member_positions` | Historial de cargos |
+| `persona_positions` | Historial de cargos |
 | `communication_logs` | Evidencia de comunicación |
 | `pastoral_call_logs` | Registro de llamadas pastorales |
 | `academy_forum_comments` | Foros de cursos |
@@ -277,11 +277,11 @@ Ejemplos encontrados:
 
 | # | Hallazgo | Archivo | Impacto |
 |---|---|---|---|
-| 1 | Componente monolítico de 1,098 líneas | `crm/members/[id]/page.tsx` | Mantenibilidad nula |
+| 1 | Componente monolítico de 1,098 líneas | `crm/personas/[id]/page.tsx` | Mantenibilidad nula |
 | 2 | Lazy loading parcial (solo CRM history/financial) | Varios | Carga innecesaria |
-| 3 | Memory leaks por timers sin cleanup | `MemberDetailPage` | Degradación en uso prolongado |
-| 4 | Delay artificial de 500ms | `MemberDetailPage` | UX lenta innecesariamente |
-| 5 | Rutas duplicadas (`/admin/members` y `/crm/members`) | Varios | Confusión de navegación |
+| 3 | Memory leaks por timers sin cleanup | `PersonaDetailPage` | Degradación en uso prolongado |
+| 4 | Delay artificial de 500ms | `PersonaDetailPage` | UX lenta innecesariamente |
+| 5 | Rutas duplicadas (`/admin/personas` y `/crm/personas`) | Varios | Confusión de navegación |
 
 ### BD Medios
 
@@ -326,7 +326,7 @@ Ejemplos encontrados:
 - **Esperado:** 50x-500x mejora en JOINs frecuentes
 
 ### Cuello #3: Componentes Monolíticos en Frontend 🟠
-- **Ubicación:** `crm/members/[id]/page.tsx` (1,098 líneas)
+- **Ubicación:** `crm/personas/[id]/page.tsx` (1,098 líneas)
 - **Impacto:** Re-renderizado masivo, bloqueo del main thread
 - **Fix inmediato:** Dividir en sub-componentes por pestaña
 - **Esperado:** Tiempo de interacción < 100ms
@@ -450,7 +450,7 @@ Ejemplos encontrados:
 ### Fase 3: Estándares (Semana 4-6)
 7. **Migrar modales a Drawers** — empezar por `UniversalCreationModal`
 8. **Implementar tokens semánticos** de Tailwind — plan de migración gradual
-9. **Dividir componentes monolíticos** — empezar por `crm/members/[id]/page.tsx`
+9. **Dividir componentes monolíticos** — empezar por `crm/personas/[id]/page.tsx`
 10. **Migrar PK Integer a UUID** en tablas transaccionales siguiendo la Receta de 6 Pasos del REGLAS.md
 
 ### Fase 4: Tests (Semana 5-6)

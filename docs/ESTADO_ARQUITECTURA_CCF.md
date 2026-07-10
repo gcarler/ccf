@@ -175,7 +175,7 @@ contrato estricto:
 - `personas.baptism_date` como único nombre físico y público;
 - contactos públicos escritos en `CasoCRM`/pipeline canónico;
 - seguimiento de evangelismo con un solo vocabulario de campos;
-- eliminación de funciones/tablas paralelas de members;
+- eliminación de funciones/tablas paralelas de membresía heredada;
 - eliminación de aliases y stubs creados sólo para tests.
 
 El Gate 10 de `tests/test_arquitectura_100pct.py` introspecciona firmas,

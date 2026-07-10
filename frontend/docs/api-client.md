@@ -38,14 +38,14 @@ Ejemplo básico con manejo de errores:
 
 ```ts
 try {
-const data = await apiFetch<Member[]>("/crm/members/", { token, cache: "no-store" });
-  setMembers(data);
+const data = await apiFetch<Persona[]>("/crm/personas/", { token, cache: "no-store" });
+  setPersonas(data);
 } catch (error) {
   if (error instanceof ApiError && error.status === 401) {
     logout();
     return;
   }
-  addToast("No pudimos cargar los miembros", "error");
+  addToast("No pudimos cargar las personas", "error");
 }
 ```
 

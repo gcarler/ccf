@@ -36,13 +36,13 @@ Auditoria de continuidad de datos del componente Evangelismo, desde base de dato
 - La creacion de casos CRM desde eventos y FARO ya no usa `pipeline_id=1` ni `etapa_actual_id=1`; reutiliza el resolvedor canonico de pipeline de nuevos visitantes.
 - Los hilos de campanas, eventos y participantes esperados filtran por `sede_id` cuando construyen audiencias o tableros.
 - Los estados de asistencia se normalizan desde un helper compartido.
-- Reportes y rankings de evangelismo cargan asistencia, miembros y conteos con consultas por lotes o agregaciones, evitando N+1 en los caminos principales.
+- Reportes y rankings de evangelismo cargan asistencia, personas y conteos con consultas por lotes o agregaciones, evitando N+1 en los caminos principales.
 - Las acciones destructivas del frontend usan `ConfirmActionDrawer` y no `window.confirm` / `confirm`.
 - La vista de detalle de estrategia redujo la precarga de personas para asistencia de `limit=1000` a consulta paginada de 200 registros ordenados.
 - El flujo `estrategia triple 7` queda cubierto por prueba de regresion: estrategia geografica relacional semanal, grupos `g1` a `g4`, 10 personas por grupo, generacion semanal, habilitacion y registro de asistencia semana a semana.
 - El trigger de ausencias recurrentes ya no referencia `current_user` fuera de alcance; recibe `sede_id` desde el endpoint de asistencia y consulta participantes activos reales.
 - La habilitacion manual de una sesion ahora valida `sede_id`, `deleted_at` de grupo y `deleted_at` de sesion.
-- El contador de miembros de grupo al reemplazar participantes ya excluye participantes soft-deleted.
+- El contador de personas de grupo al reemplazar participantes ya excluye participantes soft-deleted.
 - El frontend de roles personalizados usa el contrato real `nombre_rol` y envia `estrategia_id` UUID, no el codigo de estrategia.
 - El frontend FARO crea sesiones con el identificador canonico de grupo.
 - Las sesiones FARO creadas desde temporada quedan habilitadas para reporte y retornan `session_ids`.

@@ -58,37 +58,33 @@ interface PersonaOption {
   nombre_completo: string;
 }
 
-// Adapter layer: keep the screen tolerant to both the previous backend names
-// (miembros) and the canonical names (personas). This lets the UI survive
-// the rollout while the API contract converges.
-//
-// The backend now prefers the canonical 'personas' vocabulary in:
+// The backend and UI use the canonical "personas" vocabulary in:
 //   - GET  /evangelism/multiplication/check
 //   - GET  /evangelism/multiplication/history
 //   - POST /evangelism/multiplication/split
 type GrupoSummary = { id: string; nombre: string; total_personas: number };
-function dropPreviousTotalPersonas(g: any): GrupoSummary {
-  const total_personas = g?.total_personas ?? g?.total_miembros ?? 0;
-  const { total_miembros, total_personas: _total_personas, ...rest } = g || {};
+function normalizeGroupSummary(g: any): GrupoSummary {
+  const total_personas = g?.total_personas ?? 0;
+  const { total_personas: _total_personas, ...rest } = g || {};
   return { ...rest, total_personas };
 }
-function adaptCheckItem(raw: any): MultiplicationCheckItem {
-  const total_personas = raw?.total_personas ?? raw?.total_miembros ?? 0;
-  const { total_miembros, total_personas: _total_personas, ...rest } = raw || {};
+function normalizeCheckItem(raw: any): MultiplicationCheckItem {
+  const total_personas = raw?.total_personas ?? 0;
+  const { total_personas: _total_personas, ...rest } = raw || {};
   return { ...rest, total_personas };
 }
-function adaptHistoryItem(raw: any): MultiplicationHistoryItem {
-  const personas_actuales = raw?.personas_actuales ?? raw?.miembros_actuales ?? 0;
-  const { miembros_actuales, personas_actuales: _personas_actuales, ...rest } = raw || {};
+function normalizeHistoryItem(raw: any): MultiplicationHistoryItem {
+  const personas_actuales = raw?.personas_actuales ?? 0;
+  const { personas_actuales: _personas_actuales, ...rest } = raw || {};
   return { ...rest, personas_actuales };
 }
-function adaptSplitResponse(res: any): SplitResponse {
-  const personas_transferidas = res?.personas_transferidas ?? res?.miembros_transferidos ?? 0;
-  const { grupo_original, nuevo_grupo, miembros_transferidos, personas_transferidas: _personas_transferidas, ...rest } = res || {};
+function normalizeSplitResponse(res: any): SplitResponse {
+  const personas_transferidas = res?.personas_transferidas ?? 0;
+  const { grupo_original, nuevo_grupo, personas_transferidas: _personas_transferidas, ...rest } = res || {};
   return {
     ...rest,
-    grupo_original: dropPreviousTotalPersonas(grupo_original),
-    nuevo_grupo: dropPreviousTotalPersonas(nuevo_grupo),
+    grupo_original: normalizeGroupSummary(grupo_original),
+    nuevo_grupo: normalizeGroupSummary(nuevo_grupo),
     personas_transferidas,
   };
 }
@@ -117,7 +113,7 @@ export default function MultiplicationPage() {
           token,
           query: { umbral: String(threshold) },
         });
-        const result = Array.isArray(raw) ? raw.map(adaptCheckItem) : [];
+        const result = Array.isArray(raw) ? raw.map(normalizeCheckItem) : [];
         setChecks(result);
       } catch (e: any) {
         toast.error(e?.message || 'Error al cargar análisis de multiplicación');
@@ -135,7 +131,7 @@ export default function MultiplicationPage() {
       const raw = await apiFetch<any[]>('/evangelism/multiplication/history', {
         token,
       });
-      const result = Array.isArray(raw) ? raw.map(adaptHistoryItem) : [];
+      const result = Array.isArray(raw) ? raw.map(normalizeHistoryItem) : [];
       setHistory(result);
     } catch (e: any) {
       toast.error(e?.message || 'Error al cargar historial de multiplicaciones');
@@ -199,7 +195,7 @@ export default function MultiplicationPage() {
           nuevo_lider_id: nuevoLiderId,
         },
       });
-      const result = adaptSplitResponse(raw);
+      const result = normalizeSplitResponse(raw);
       toast.success(result.mensaje);
       setSplitDrawerOpen(false);
       fetchChecks(umbral);
