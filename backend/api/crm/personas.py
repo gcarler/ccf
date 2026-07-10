@@ -33,10 +33,21 @@ def list_personas(
     """Lista personas con búsqueda, paginación y ordenamiento. Filtrado por sede."""
     sede_id = crud.get_user_sede_id(db, current_user.id)
     return crud.search_personas(
-        db, search=search, role=role, estado_vital=estado_vital,
-        sex=sex, group_name=group_name, participation_type=participation_type,
-        id_type=id_type, min_age=min_age, max_age=max_age,
-        sede_id=sede_id, skip=skip, limit=limit, sort_by=sort_by, sort_dir=sort_dir,
+        db,
+        search=search,
+        role=role,
+        estado_vital=estado_vital,
+        sex=sex,
+        group_name=group_name,
+        participation_type=participation_type,
+        id_type=id_type,
+        min_age=min_age,
+        max_age=max_age,
+        sede_id=sede_id,
+        skip=skip,
+        limit=limit,
+        sort_by=sort_by,
+        sort_dir=sort_dir,
     )
 
 
@@ -77,7 +88,11 @@ def get_persona(
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Obtiene una persona por UUID. Axioma 3: scope por sede_id del usuario."""
-    return _get_scoped_persona(db, current_user, persona_id)
+    persona = _get_scoped_persona(db, current_user, persona_id)
+    from backend.crud.crm_.health import update_pastoral_health
+
+    update_pastoral_health(db, persona.id)
+    return persona
 
 
 @router.post("/personas", response_model=schemas.PersonaResponse)

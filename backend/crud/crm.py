@@ -2,6 +2,9 @@
 # ruff: noqa: F401
 
 from backend.crud.crm_ import (
+    calculate_health_score,
+    calculate_pastoral_health,
+    calculate_pastoral_health_score,
     create_communication_log,
     create_community_card,
     create_counseling_ticket,
@@ -77,6 +80,7 @@ from backend.crud.crm_ import (
     update_family,
     update_grupo,
     update_milestone,
+    update_pastoral_health,
     update_persona,
     update_prayer_request,
     update_support_ticket,

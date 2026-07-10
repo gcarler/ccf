@@ -39,7 +39,7 @@ export default function EvangelismClient() {
  if (!token) return;
  setLoading(true);
  try {
- const result = await apiFetch<EvangelismStrategy[]>('/evangelism/strategies/', { token });
+ const result = await apiFetch<EvangelismStrategy[]>('/evangelism/strategies', { token });
  setData(Array.isArray(result) ? result : []);
  } catch {
  toast.error('Error al cargar estrategias de evangelismo');

@@ -34,7 +34,6 @@ logger = logging.getLogger(__name__)
 # --- EVANGELISM STRATEGIES ---
 
 
-@estrategias_router.get("/strategies", response_model=List[EvangelismStrategy])
 def _hydrate_strategy_synonyms(obj: EvangelismStrategy, source) -> EvangelismStrategy:
     """Asegura synonyms de SQLAlchemy que Pydantic v2 puede omitir."""
     if obj.recurrence is None and source.frecuencia is not None:
@@ -85,6 +84,27 @@ def read_evangelism_strategies(
         obj.group_count = _count_strategy_groups(db, s.id)
         result.append(obj)
     return result
+
+
+@estrategias_router.get("/strategies", response_model=List[EvangelismStrategy])
+def read_evangelism_strategies_route(
+    skip: int = 0,
+    limit: int = 100,
+    activa: Optional[bool] = None,
+    clase_raiz: Optional[str] = None,
+    sede_id: Optional[str] = None,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_pastor_or_admin),
+):
+    return read_evangelism_strategies(
+        skip=skip,
+        limit=limit,
+        activa=activa,
+        clase_raiz=clase_raiz,
+        sede_id=sede_id,
+        db=db,
+        _user=_user,
+    )
 
 
 @estrategias_router.get("/strategies/{strategy_id}", response_model=EvangelismStrategy)
