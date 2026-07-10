@@ -432,24 +432,6 @@ class TestimonialRead(BaseModel):
     model_config = orm_config
 
 
-class NewsletterSubscriptionCreate(BaseModel):
-    email: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    phone: Optional[str] = None
-    source: Optional[str] = "newsletter-web"
-    landing_page: Optional[str] = None
-    campaign: Optional[str] = None
-
-
-class NewsletterSubscriptionRead(BaseModel):
-    id: UUID
-    email: str
-    status: str
-    created_at: datetime
-    model_config = orm_config
-
-
 # ── Pastoral Profile ───────────────────────────────────────────────────────
 
 

@@ -716,16 +716,6 @@ def list_cms_pages(
     return items, total
 
 
-def list_cms_pages_all(db: Session, site_id: uuid.UUID):
-    """Return all pages for a site without pagination."""
-    return (
-        db.query(models.CmsPage)
-        .filter(models.CmsPage.site_id == site_id)
-        .order_by(models.CmsPage.updated_at.desc())
-        .all()
-    )
-
-
 def get_cms_page(db: Session, site_id: uuid.UUID, slug: str):
     return (
         db.query(models.CmsPage)
@@ -846,7 +836,7 @@ def update_cms_section(
     db: Session, row: models.CmsSection, payload: schemas.CmsSectionUpdate
 ):
     data = payload.model_dump(exclude_unset=True)
-    for field in ["type", "sort_order", "is_visible", "status"]:
+    for field in ["type", "sort_order", "is_visible", "status", "is_global", "global_key"]:
         if field in data and data[field] is not None:
             setattr(row, field, data[field])
     if "props_json" in data and data["props_json"] is not None:
@@ -1720,23 +1710,6 @@ def delete_testimonial(
 
 
 # ── Pastoral Profile ───────────────────────────────────────────────────────
-
-
-def list_pastoral_team(db: Session) -> list[models.Persona]:
-    return (
-        db.query(models.Persona)
-        .filter(models.Persona.is_pastoral_leader.is_(True))
-        .order_by(models.Persona.is_main_pastor.desc(), models.Persona.nombre_completo.asc())
-        .all()
-    )
-
-
-def get_persona_by_id(db: Session, persona_id: str) -> models.Persona | None:
-    try:
-        uid = uuid.UUID(persona_id)
-    except ValueError:
-        return None
-    return db.query(models.Persona).filter(models.Persona.id == uid).first()
 
 
 def update_pastoral_profile(
