@@ -746,6 +746,9 @@ def get_cms_dashboard(db: Session, sede_id: Optional[str] = None) -> CmsDashboar
     ), params).all()
     versiones_por_pagina = [ChartDataPoint(label=r[0] or "Sin título", value=float(r[1])) for r in version_rows]
 
+    # ── SEO score trend (widget del dashboard) ────────────────────────
+    seo_trend = _build_seo_trend_slice(db, sede_id=sede_id)
+
     return CmsDashboard(
         cards=[
             MetricCard(title="Páginas", value=str(total), trend=f"{published} publicadas", tone="blue", icon="FileText"),
@@ -767,8 +770,176 @@ def get_cms_dashboard(db: Session, sede_id: Optional[str] = None) -> CmsDashboar
         posts_published=posts_published,
         categories_total=categories_total,
         tags_total=tags_total,
+        seo_trend=seo_trend,
         filters=_sede_filters(db),
         last_updated=_utcnow().isoformat(),
+    )
+
+
+def _build_seo_trend_slice(
+    db: Session,
+    *,
+    sede_id: Optional[str],
+):
+    """Construct ``CmsSeoTrendResponse`` from daily snapshots.
+
+    La fuente de verdad del trend es la tabla ``cms_seo_snapshots``,
+    alimentada por ``backend.scheduler``. Si NO hay snapshots
+    persistidos aún, fallback al audit on-the-fly de hoy (devuelve
+    un único punto en history_30d con ``has_data=True`` para que el
+    widget muestre "Score actual: X" mientras se acumula histórico).
+
+    Cost note: el fallback ejecuta un audit completo por cada site
+    activo en el scope (O(N) queries con eager load de pages +
+    sections + media). Esto es aceptable como ruta **transient**
+    — corre una sola vez por dashboard hasta que el cron captura
+    el primer snapshot — pero NO está pensado para ejecutarse en
+    cada render. En instalaciones nuevas sin cron configurado, el
+    dashboard будет lento hasta que ``backend.scheduler`` corra
+    al menos una vez.
+    """
+    # Gate 6 anti-drift: SEO audit helpers viven ahora en
+    # ``backend.api._cms_helpers._shared`` (post-merge de ``seo_audit.py``)
+    # y se re-exportan vía el __init__ del paquete para que callers
+    # consuman la API pública (alineado con cms_v2.py).
+    from backend.api._cms_helpers import (
+        audit_pages,
+        build_media_alt_lookup,
+        collect_section_media_ids,
+        group_sections_by_page,
+    )
+    from backend.schemas.dashboard import CmsSeoTrendResponse, SeoTrendPoint
+
+    today = datetime.now(timezone.utc).date()
+    cutoff_7d = today - timedelta(days=6)
+    cutoff_30d = today - timedelta(days=29)
+
+    snap_query = db.query(models.CmsSeoSnapshot).filter(
+        models.CmsSeoSnapshot.captured_date >= cutoff_30d
+    )
+    if sede_id:
+        snap_query = snap_query.filter(models.CmsSeoSnapshot.sede_id == sede_id)
+    snapshots = snap_query.order_by(models.CmsSeoSnapshot.captured_date.asc()).all()
+
+    if not snapshots:
+        # Fallback: audit on-the-fly de hoy. Sólo se activa la primera
+        # vez tras instalar el feature (mientras el cron aún no corre).
+        scaffold_sites_q = db.query(models.CmsSite).filter(
+            models.CmsSite.is_active.is_(True)
+        )
+        if sede_id:
+            scaffold_sites_q = scaffold_sites_q.filter(
+                models.CmsSite.sede_id == sede_id
+            )
+        sites = scaffold_sites_q.all()
+        if not sites:
+            return CmsSeoTrendResponse(has_data=False)
+
+        all_scores: list[int] = []
+        total_pages_seen = 0
+        pages_with_errors_seen = 0
+        critical_seen = 0
+        for site in sites:
+            pages = (
+                db.query(models.CmsPage)
+                .filter(models.CmsPage.site_id == site.id)
+                .all()
+            )
+            sections = (
+                db.query(models.CmsSection)
+                .join(
+                    models.CmsPage,
+                    models.CmsSection.page_id == models.CmsPage.id,
+                )
+                .filter(models.CmsPage.site_id == site.id)
+                .filter(models.CmsSection.deleted_at.is_(None))
+                .all()
+            )
+            sections_by_page = group_sections_by_page(sections)
+            media_ids = collect_section_media_ids(sections)
+            media_alt_lookup = build_media_alt_lookup(db, media_ids)
+            _audits, aggregate = audit_pages(
+                pages, sections_by_page, media_alt_lookup
+            )
+            all_scores.append(int(aggregate.average_score or 0))
+            total_pages_seen += int(aggregate.total_pages or 0)
+            pages_with_errors_seen += int(aggregate.pages_with_errors or 0)
+            critical_seen += int(aggregate.critical_issues or 0)
+
+        current_avg = (
+            round(sum(all_scores) / len(all_scores)) if all_scores else 0
+        )
+        today_label = today.strftime("%d %b")
+        return CmsSeoTrendResponse(
+            current_score=current_avg,
+            total_pages=total_pages_seen,
+            pages_with_errors=pages_with_errors_seen,
+            critical_issues=critical_seen,
+            history_30d=[SeoTrendPoint(label=today_label, value=current_avg)],
+            history_7d=[SeoTrendPoint(label=today_label, value=current_avg)],
+            captured_at=datetime.now(timezone.utc).isoformat(),
+            has_data=True,
+        )
+
+    # ── Snapshot-driven path (cron ya capturó datos) ────────────────────
+    by_date: dict = {}
+    for s in snapshots:
+        by_date.setdefault(s.captured_date.isoformat(), []).append(s)
+
+    series_30d: list[SeoTrendPoint] = []
+    series_7d: list[SeoTrendPoint] = []
+    last_sample = None
+    prev_sample = None
+
+    for date_key in sorted(by_date.keys()):
+        samples = by_date[date_key]
+        avg = round(
+            sum(int(x.average_score or 0) for x in samples) / len(samples)
+        )
+        # Muestra los anexos (total_pages, errors) del primer row del día.
+        sample = samples[0]
+        point = SeoTrendPoint(
+            label=sample.captured_date.strftime("%d %b"),
+            value=avg,
+            metadata={
+                "captured_date": date_key,
+                "total_pages": int(sample.total_pages or 0),
+                "pages_with_errors": int(sample.pages_with_errors or 0),
+                "critical_issues": int(sample.critical_issues or 0),
+            },
+        )
+        series_30d.append(point)
+        cutoff_str = cutoff_7d.isoformat()
+        if date_key >= cutoff_str:
+            series_7d.append(point)
+        prev_sample = last_sample
+        last_sample = sample
+
+    current_score = int(last_sample.average_score or 0) if last_sample else None
+    previous_score = int(prev_sample.average_score or 0) if prev_sample else None
+    change_vs_prior = (
+        current_score - previous_score
+        if current_score is not None and previous_score is not None
+        else None
+    )
+    is_alert = bool(
+        change_vs_prior is not None
+        and previous_score is not None
+        and change_vs_prior < -10
+    )
+
+    return CmsSeoTrendResponse(
+        current_score=current_score,
+        previous_score=previous_score,
+        change_vs_prior=change_vs_prior,
+        is_alert=is_alert,
+        total_pages=int(last_sample.total_pages or 0) if last_sample else 0,
+        pages_with_errors=int(last_sample.pages_with_errors or 0) if last_sample else 0,
+        critical_issues=int(last_sample.critical_issues or 0) if last_sample else 0,
+        history_7d=series_7d,
+        history_30d=series_30d,
+        captured_at=last_sample.captured_at.isoformat() if last_sample else None,
+        has_data=True,
     )
 
 

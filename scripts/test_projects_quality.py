@@ -36,7 +36,9 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)) + "/..")
 
 from backend.core.database import SessionLocal
 from backend.core.security import get_password_hash
-from backend.models import *  # noqa: F401 - importa todos los modelos para resolver relaciones
+from backend.models import *  # noqa: F401
+from backend.models_crm import Persona  # explicit for safety alongside wildcard
+from backend.models_auth import RolPlataforma as _RolPlataforma
 from backend.models_identity import User
 from backend.models_projects import (
     Project,
@@ -118,10 +120,17 @@ ok("Limpieza completada")
 section("2. CREACIÓN DE 3 USUARIOS DE PRUEBA")
 # ──────────────────────────────────────────────────────────────
 
+# Find admin user first (needed for sede_id and as project owner)
+admin_user = db.query(User).filter(User.email == "admin@ccf.com").first()
+if admin_user:
+    info(f"Admin encontrado: {admin_user.email} (id={admin_user.id}, sede_id={getattr(admin_user, 'sede_id', 'N/A')})")
+else:
+    fail("No se encontró usuario admin@ccf.com")
+
 users_data = [
-    {"email": "prueba1@ccf.test", "username": "usuario_prueba_1", "role": "estudiante", "name": "Usuario Prueba 1"},
-    {"email": "prueba2@ccf.test", "username": "usuario_prueba_2", "role": "docente", "name": "Usuario Prueba 2"},
-    {"email": "prueba3@ccf.test", "username": "usuario_prueba_3", "role": "coordinador", "name": "Usuario Prueba 3"},
+    {"email": "prueba1@ccf.test", "username": "usuario_prueba_1", "role_name": "LECTOR", "name": "Usuario Prueba 1"},
+    {"email": "prueba2@ccf.test", "username": "usuario_prueba_2", "role_name": "EDITOR", "name": "Usuario Prueba 2"},
+    {"email": "prueba3@ccf.test", "username": "usuario_prueba_3", "role_name": "GESTOR", "name": "Usuario Prueba 3"},
 ]
 
 created_users = []
@@ -131,24 +140,32 @@ for ud in users_data:
         ok(f"Usuario '{ud['name']}' ya existe (id={existing.id})")
         created_users.append(existing)
     else:
+        # Create a Persona first (required FK for auth_users.id)
+        persona = Persona(
+            first_name=ud["name"].split()[-1] if " " in ud["name"] else ud["name"],
+            last_name=ud["name"].split()[0] if " " in ud["name"] else "Test",
+            email=ud["email"],
+        )
+        db.add(persona)
+        db.flush()  # Get persona.id assigned
         u = User(
+            id=persona.id,  # auth_users.id = personas.id
             username=ud["username"],
             email=ud["email"],
             password_hash=get_password_hash("prueba123"),
-            role=ud["role"],
             is_active=True,
+            sede_id=getattr(admin_user, 'sede_id', None) if admin_user else None,
         )
+        role_obj = db.query(_RolPlataforma).filter(_RolPlataforma.nombre == ud["role_name"]).first()
+        if role_obj:
+            u.rol_plataforma_id = role_obj.id
         db.add(u)
         db.commit()
         db.refresh(u)
-        ok(f"Usuario '{ud['name']}' creado (id={u.id}, rol={u.role})")
+        ok(f"Usuario '{ud['name']}' creado (id={u.id})")
         created_users.append(u)
 
-admin_user = db.query(User).filter(User.email == "admin@ccf.com").first()
-if admin_user:
-    info(f"Admin encontrado: {admin_user.email} (id={admin_user.id})")
-else:
-    fail("No se encontró usuario admin@ccf.com")
+if not admin_user:
     admin_user = created_users[0]  # fallback
 
 u1, u2, u3 = created_users
@@ -189,10 +206,10 @@ for name, slug, color, order in default_phases:
 db.commit()
 ok("4 fases kanban creadas (Por Hacer, En Curso, Revisión, Completado)")
 
-# Log de actividad
+# Log de actividad (using persona_id, not user_id)
 db.add(ProjectActivityLog(
     project_id=project.id,
-    user_id=admin_user.id,
+    persona_id=admin_user.id,
     action_type="project_created",
     description=f"Proyecto creado por {admin_user.username}",
 ))
@@ -279,7 +296,7 @@ for td in tasks_data:
 
     db.add(ProjectActivityLog(
         project_id=project.id,
-        user_id=admin_user.id,
+        persona_id=admin_user.id,
         action_type="task_created",
         description=f"Tarea creada: {task.title} → {assignee.username}",
     ))
@@ -344,7 +361,7 @@ ok(f"Documento wiki creado: '{wiki.title}' (id={wiki.id})")
 
 db.add(ProjectActivityLog(
     project_id=project.id,
-    user_id=admin_user.id,
+    persona_id=admin_user.id,
     action_type="wiki_updated",
     description="Documento wiki creado: Guía del Proyecto",
 ))
@@ -408,7 +425,7 @@ for cd in comments_data:
 
     db.add(ProjectActivityLog(
         project_id=project.id,
-        user_id=cd["author_id"],
+        persona_id=cd["author_id"],
         action_type="comment_added",
         description=f"{author.username} comentó{task_title}",
     ))

@@ -3,6 +3,8 @@ import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 import { Church, Heart, Mail, Globe } from 'lucide-react';
 import { SITE_NAME, SITE_URL, SITE_EMAIL } from '@/lib/site-config';
+import { useSiteBranding } from '@/lib/site-branding';
+import OptimizedImage from '@/components/ui/OptimizedImage';
 
 type FooterLink = {
     label: string;
@@ -42,6 +44,7 @@ const footerLinks: FooterGroup[] = [
 ];
 
 export default function Footer() {
+    const { logoUrl, logoName } = useSiteBranding();
     return (
         <footer className="w-full bg-[#020617] border-t border-white/5">
             <div className="w-full px-4 lg:px-4 py-8">
@@ -49,8 +52,12 @@ export default function Footer() {
                     {/* Brand */}
                     <div className="md:col-span-1 space-y-2">
                         <div className="flex items-center gap-2 text-white">
-                            <Church size={16} className="text-[hsl(var(--primary))]" />
-                            <span className="text-xs font-semibold uppercase tracking-wide">{SITE_NAME}</span>
+                            {logoUrl ? (
+                                <OptimizedImage src={logoUrl} alt={logoName || SITE_NAME} width={20} height={20} className="size-5 rounded object-contain" />
+                            ) : (
+                                <Church size={16} className="text-[hsl(var(--primary))]" />
+                            )}
+                            <span className="text-xs font-semibold uppercase tracking-wide">{logoName || SITE_NAME}</span>
                         </div>
                         <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed max-w-xs">
                             Plataforma de inteligencia ministerial para la formación teológica, gestión pastoral y colaboración de equipos.

@@ -131,6 +131,11 @@ class TestChatDeletePermissions:
         # Third-party user with no privileged role.
         seed_user_with_role(db_session, role_name="persona", email="reader@test.com")
         hdr_reader = auth_headers(client, email="reader@test.com")
+        # Author has full read access; we use them to verify the rejected
+        # delete did NOT remove the row. The reader role lacks the
+        # ``projects:read`` permission so reading via ``hdr_reader`` would
+        # 403 and pollute the assertion with permission-side noise.
+        hdr_owner = auth_headers(client, email="author@test.com")
 
         resp = client.delete(
             f"/api/projects/{proj.id}/messages/{msg.id}",
@@ -144,8 +149,11 @@ class TestChatDeletePermissions:
         # Confirm the message is still present after the rejected delete —
         # no partial authorization.
         listed = client.get(
-            f"/api/projects/{proj.id}/messages", headers=hdr_reader
+            f"/api/projects/{proj.id}/messages", headers=hdr_owner
         ).json()
+        assert isinstance(listed, list), (
+            f"GET /messages must return a list (got: {type(listed).__name__}): {listed}"
+        )
         assert any(m["id"] == str(msg.id) and m.get("deleted_at") in (None, "null", "")
                    for m in listed), (
             f"Message should still exist after rejected delete: {listed}"
@@ -173,6 +181,13 @@ class TestChatDeletePermissions:
 
         client.delete(f"/api/projects/{proj.id}/messages/{msg.id}", headers=headers)
 
+        # The factory above loaded ``msg`` into ``db_session``'s identity
+        # map. The API call commits ``msg.deleted_at`` from a SEPARATE
+        # session, so SQLAlchemy's identity map still hands back the
+        # stale (pre-commit) snapshot when queried by primary key. Force
+        # a fresh DB read here so the auditability assertion sees the
+        # post-commit timestamp.
+        db_session.expire_all()
         row = db_session.query(ChatMessage).filter(
             ChatMessage.id == msg.id
         ).first()

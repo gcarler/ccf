@@ -78,6 +78,11 @@ function resolveCommand(command, commandArgs) {
 
 await acquireLock();
 
+// Aumentar memoria disponible para evitar OOM en builds grandes
+if (!process.env.NODE_OPTIONS || !process.env.NODE_OPTIONS.includes('max-old-space-size')) {
+    process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS || ''} --max-old-space-size=8192`.trim();
+}
+
 const command = resolveCommand(args[0], args.slice(1));
 const child = spawn(command.executable, command.args, {
     stdio: 'inherit',

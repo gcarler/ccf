@@ -24,7 +24,7 @@ def admin_data(db_session):
 class TestCRMPersonaCreate:
     def test_create_persona(self, db_session):
         from backend.crud.crm import create_persona
-        from backend.schemas.crm import PersonaCreate
+        from backend.schemas.crm.base import PersonaCreate
         p = create_persona(db_session, PersonaCreate(
             first_name="Test", last_name="User",
             email=f"test_{uuid.uuid4().hex[:6]}@example.com",
@@ -46,7 +46,7 @@ class TestCRMPersonaCreate:
 class TestCRMPersonaRead:
     def test_get_persona(self, db_session):
         from backend.crud.crm import create_persona, get_persona
-        from backend.schemas.crm import PersonaCreate
+        from backend.schemas.crm.base import PersonaCreate
         p = create_persona(db_session, PersonaCreate(first_name="Read", last_name="Test", email=f"r_{uuid.uuid4().hex[:6]}@e.com"))
         result = get_persona(db_session, str(p.id))
         assert result is not None
@@ -76,14 +76,14 @@ class TestCRMPersonaRead:
 class TestCRMPersonaUpdate:
     def test_update_persona(self, db_session):
         from backend.crud.crm import create_persona, update_persona
-        from backend.schemas.crm import PersonaCreate, PersonaUpdate
+        from backend.schemas.crm.base import PersonaCreate, PersonaUpdate
         p = create_persona(db_session, PersonaCreate(first_name="Old", last_name="Name", email=f"u_{uuid.uuid4().hex[:6]}@e.com"))
         updated = update_persona(db_session, str(p.id), PersonaUpdate(first_name="New"))
         assert updated.first_name == "New"
 
     def test_update_persona_not_found(self, db_session):
         from backend.crud.crm import update_persona
-        from backend.schemas.crm import PersonaUpdate
+        from backend.schemas.crm.base import PersonaUpdate
         result = update_persona(db_session, str(uuid.uuid4()), PersonaUpdate(first_name="X"))
         assert result is None
 
@@ -91,7 +91,7 @@ class TestCRMPersonaUpdate:
 class TestCRMPersonaDelete:
     def test_delete_persona(self, db_session):
         from backend.crud.crm import create_persona, delete_persona
-        from backend.schemas.crm import PersonaCreate
+        from backend.schemas.crm.base import PersonaCreate
         p = create_persona(db_session, PersonaCreate(first_name="Del", last_name="User", email=f"d_{uuid.uuid4().hex[:6]}@e.com"))
         result = delete_persona(db_session, str(p.id))
         assert result is True
@@ -105,14 +105,14 @@ class TestCRMPersonaDelete:
 class TestCRMSearch:
     def test_search_personas(self, db_session):
         from backend.crud.crm import create_persona, search_personas
-        from backend.schemas.crm import PersonaCreate
+        from backend.schemas.crm.base import PersonaCreate
         create_persona(db_session, PersonaCreate(first_name="Searchable", last_name="Person", email=f"s_{uuid.uuid4().hex[:6]}@e.com"))
         results = search_personas(db_session, search="Searchable")
         assert isinstance(results, list)
 
     def test_search_personas(self, db_session):
         from backend.crud.crm import create_persona, search_personas
-        from backend.schemas.crm import PersonaCreate
+        from backend.schemas.crm.base import PersonaCreate
         create_persona(db_session, PersonaCreate(first_name="Persona", last_name="Search", email=f"m_{uuid.uuid4().hex[:6]}@e.com"))
         results = search_personas(db_session, "Persona", sede_id=None)
         assert isinstance(results, list)
@@ -272,13 +272,13 @@ class TestCRMCommunity:
 
 class TestCRMMinistries:
     def test_get_persona_ministry_assignments(self, db_session):
-        from backend.crud.crm_extended import get_persona_ministry_assignments
+        from backend.crud.crm_.extended import get_persona_ministry_assignments
 
         result = get_persona_ministry_assignments(db_session)
         assert isinstance(result, list)
 
     def test_get_persona_positions(self, db_session):
-        from backend.crud.crm_extended import get_persona_positions
+        from backend.crud.crm_.extended import get_persona_positions
 
         result = get_persona_positions(db_session)
         assert isinstance(result, list)

@@ -22,6 +22,7 @@ import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 import { safeString, asObject, CANVAS_PREVIEW_TOKENS } from "@/components/cms/builder/utils";
 import { toast } from "sonner";
+import { notifyPreviewSync } from "@/lib/cms/preview-sync";
 
 export type CanvasMode = "esquema" | "render";
 export type PreviewDevice = "desktop" | "mobile";
@@ -362,6 +363,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
       props_json: template.props_json,
     }, token);
     await loadSectionsAndVersions(activeSlug);
+    notifyPreviewSync({ type: "section-created", siteKey, slug: activeSlug });
   }, [token, activeSlug, canEdit, siteKey, sections.length, loadSectionsAndVersions]);
 
   const addSection = useCallback(async (type?: string, props?: Record<string, unknown>) => {
@@ -372,6 +374,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
       props_json: props || { title: "Nueva sección", body: "Edita este contenido", cta_label: "Ver más", cta_href: "/" },
     }, token);
     await loadSectionsAndVersions(activeSlug);
+    notifyPreviewSync({ type: "section-created", siteKey, slug: activeSlug });
   }, [token, activeSlug, canEdit, siteKey, sections.length, loadSectionsAndVersions, newSectionType]);
 
   const saveSectionField = useCallback(async (field: string, value: string) => {
@@ -381,6 +384,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     try {
       await patchCmsSection(siteKey, activeSlug, activeSection.id, { props_json: nextProps }, token);
       await loadSectionsAndVersions(activeSlug);
+      notifyPreviewSync({ type: "section-saved", siteKey, slug: activeSlug, sectionId: activeSection.id });
     } finally {
       setSaving(false);
     }
@@ -392,6 +396,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     try {
       await patchCmsSection(siteKey, activeSlug, activeSection.id, { props_json: nextProps }, token);
       await loadSectionsAndVersions(activeSlug);
+      notifyPreviewSync({ type: "section-saved", siteKey, slug: activeSlug, sectionId: activeSection.id });
     } finally {
       setSaving(false);
     }
@@ -426,6 +431,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     if (!token || !activeSection || !activeSlug || !canEdit) return;
     await patchCmsSection(siteKey, activeSlug, activeSection.id, { is_visible: visible }, token);
     await loadSectionsAndVersions(activeSlug);
+    notifyPreviewSync({ type: "section-saved", siteKey, slug: activeSlug, sectionId: activeSection.id });
   }, [token, activeSection, activeSlug, canEdit, siteKey, loadSectionsAndVersions]);
 
   const updateSectionPropsLocal = useCallback((nextProps: Record<string, unknown>) => {
@@ -448,6 +454,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     if (!token || !activeSlug) return;
     await reorderCmsSections(siteKey, activeSlug, payload, token);
     await loadSectionsAndVersions(activeSlug);
+    notifyPreviewSync({ type: "section-reordered", siteKey, slug: activeSlug });
   }, [canEdit, sections, token, activeSlug, siteKey, loadSectionsAndVersions]);
 
   const moveSectionToIndex = useCallback(async (sourceId: string, targetId: string) => {
@@ -480,6 +487,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     const nextStatus = activeSection.status === "archived" ? "active" : "archived";
     await patchCmsSection(siteKey, activeSlug, activeSection.id, { status: nextStatus }, token);
     await loadSectionsAndVersions(activeSlug);
+    notifyPreviewSync({ type: "section-deleted", siteKey, slug: activeSlug, sectionId: activeSection.id });
   }, [token, activeSection, activeSlug, canEdit, siteKey, loadSectionsAndVersions]);
 
   const runWorkflow = useCallback(async (action: "submit_review" | "approve" | "publish" | "archive" | "revert_draft") => {
@@ -489,6 +497,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     await workflowCmsPage(siteKey, activeSlug, action, note || undefined, token);
     await loadPages(siteKey);
     await loadSectionsAndVersions(activeSlug);
+    notifyPreviewSync({ type: "section-saved", siteKey, slug: activeSlug });
     setNote("");
   }, [token, activeSlug, canPublish, canEdit, siteKey, note, loadPages, loadSectionsAndVersions]);
 
@@ -565,7 +574,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
         throw new Error("Respuesta vacía de la IA");
       }
     } catch (err) {
-      console.warn("CCFGPT endpoint failed, using fallback:", err);
+      toast.warning("Servicio de IA no disponible, usando contenido de ejemplo");
       // Fallback mock content preserved from original implementation
       const toneLabels: Record<string, string> = {
         inspiration: "Inspiracional & Espiritual",

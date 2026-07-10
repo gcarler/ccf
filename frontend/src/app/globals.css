@@ -25,6 +25,24 @@
   --secondary: 142 76% 36%;
   --bg-muted: 210 40% 96.1%;
 
+  /* Semantic color tokens */
+  --success: 142 76% 36%;
+  --success-foreground: 0 0% 100%;
+  --success-muted: 142 76% 95%;
+  --success-text: 142 80% 22%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  --warning-muted: 38 92% 95%;
+  --warning-text: 30 80% 28%;
+  --info: 197 98% 37%;
+  --info-foreground: 0 0% 100%;
+  --info-muted: 197 98% 95%;
+  --info-text: 197 90% 25%;
+  --danger: 0 84.2% 60.2%;
+  --danger-foreground: 0 0% 100%;
+  --danger-muted: 0 84.2% 95%;
+  --danger-text: 0 70% 28%;
+
   /* Compact radii: 4-8px for cards/buttons, 9999px only for avatars */
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
@@ -62,6 +80,27 @@
   --destructive: 0 62.8% 30.6%;
   --secondary: 142 71% 45%;
   --bg-muted: 222 47% 10%;
+
+  /* Semantic color tokens */
+  --success: 142 71% 45%;
+  --success-foreground: 0 0% 100%;
+  --success-muted: 142 71% 15%;
+  --success-text: 142 70% 75%;
+  --warning: 38 92% 55%;
+  --warning-foreground: 0 0% 100%;
+  --warning-muted: 38 92% 15%;
+  --warning-text: 38 80% 70%;
+  --info: 197 78% 50%;
+  --info-foreground: 0 0% 100%;
+  --info-muted: 197 78% 15%;
+  --info-text: 197 80% 75%;
+  --danger: 0 62.8% 30.6%;
+  --danger-foreground: 0 0% 100%;
+  --danger-muted: 0 62.8% 15%;
+  --danger-text: 0 70% 75%;
+
+  /* Surface tokens */
+  --surface-card: 220 6% 12%;
   
   --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
   --shadow-premium: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 5px 15px -3px rgba(0, 0, 0, 0.3);
@@ -287,6 +326,105 @@
   .animate-shimmer {
     animation: shimmer 2s infinite;
   }
+
+  /* ── Semantic Color Utilities ── */
+  .bg-success { background-color: hsl(var(--success)); }
+  .bg-success-muted { background-color: hsl(var(--success-muted)); }
+  .bg-warning { background-color: hsl(var(--warning)); }
+  .bg-warning-muted { background-color: hsl(var(--warning-muted)); }
+  .bg-info { background-color: hsl(var(--info)); }
+  .bg-info-muted { background-color: hsl(var(--info-muted)); }
+  .bg-danger { background-color: hsl(var(--danger)); }
+  .bg-danger-muted { background-color: hsl(var(--danger-muted)); }
+
+  .text-success { color: hsl(var(--success)); }
+  .text-success-text { color: hsl(var(--success-text)); }
+  .text-warning { color: hsl(var(--warning)); }
+  .text-warning-text { color: hsl(var(--warning-text)); }
+  .text-info { color: hsl(var(--info)); }
+  .text-info-text { color: hsl(var(--info-text)); }
+  .text-danger { color: hsl(var(--danger)); }
+  .text-danger-text { color: hsl(var(--danger-text)); }
+
+  .border-success { border-color: hsl(var(--success)); }
+  .border-success-muted { border-color: hsl(var(--success-muted)); }
+  .border-warning { border-color: hsl(var(--warning)); }
+  .border-warning-muted { border-color: hsl(var(--warning-muted)); }
+  .border-info { border-color: hsl(var(--info)); }
+  .border-info-muted { border-color: hsl(var(--info-muted)); }
+  .border-danger { border-color: hsl(var(--danger)); }
+  .border-danger-muted { border-color: hsl(var(--danger-muted)); }
+
+  .ring-success { --tw-ring-color: hsl(var(--success)); }
+  .ring-warning { --tw-ring-color: hsl(var(--warning)); }
+  .ring-info { --tw-ring-color: hsl(var(--info)); }
+  .ring-danger { --tw-ring-color: hsl(var(--danger)); }
+
+  .shadow-primary { box-shadow: 0 4px 12px 0 hsl(var(--primary) / 0.15); }
+  .shadow-success { box-shadow: 0 4px 12px 0 hsl(var(--success) / 0.15); }
+  .shadow-warning { box-shadow: 0 4px 12px 0 hsl(var(--warning) / 0.15); }
+  .shadow-info { box-shadow: 0 4px 12px 0 hsl(var(--info) / 0.15); }
+  .shadow-danger { box-shadow: 0 4px 12px 0 hsl(var(--danger) / 0.15); }
+
+  /* ── Semantic Component Utilities ── */
+  /* Badges: muted bg + text in light, soft bg + bright text in dark */
+  .badge-success { background-color: hsl(var(--success-muted)); color: hsl(var(--success-text)); }
+  .dark .badge-success { background-color: hsl(var(--success) / 0.2); color: hsl(var(--success)); }
+
+  .badge-warning { background-color: hsl(var(--warning-muted)); color: hsl(var(--warning-text)); }
+  .dark .badge-warning { background-color: hsl(var(--warning) / 0.2); color: hsl(var(--warning)); }
+
+  .badge-info { background-color: hsl(var(--info-muted)); color: hsl(var(--info-text)); }
+  .dark .badge-info { background-color: hsl(var(--info) / 0.2); color: hsl(var(--info)); }
+
+  .badge-danger { background-color: hsl(var(--danger-muted)); color: hsl(var(--danger-text)); }
+  .dark .badge-danger { background-color: hsl(var(--danger) / 0.2); color: hsl(var(--danger)); }
+
+  /* Hover badge utilities */
+  .hover\:badge-success:hover { background-color: hsl(var(--success-muted)); color: hsl(var(--success-text)); }
+  .dark .hover\:badge-success:hover { background-color: hsl(var(--success) / 0.3); color: hsl(var(--success)); }
+  .hover\:badge-warning:hover { background-color: hsl(var(--warning-muted)); color: hsl(var(--warning-text)); }
+  .dark .hover\:badge-warning:hover { background-color: hsl(var(--warning) / 0.3); color: hsl(var(--warning)); }
+  .hover\:badge-info:hover { background-color: hsl(var(--info-muted)); color: hsl(var(--info-text)); }
+  .dark .hover\:badge-info:hover { background-color: hsl(var(--info) / 0.3); color: hsl(var(--info)); }
+  .hover\:badge-danger:hover { background-color: hsl(var(--danger-muted)); color: hsl(var(--danger-text)); }
+  .dark .hover\:badge-danger:hover { background-color: hsl(var(--danger) / 0.3); color: hsl(var(--danger)); }
+
+  /* Group-hover badge utilities */
+  .group:hover .group-hover\:badge-success { background-color: hsl(var(--success-muted)); color: hsl(var(--success-text)); }
+  .dark .group:hover .group-hover\:badge-success { background-color: hsl(var(--success) / 0.3); color: hsl(var(--success)); }
+  .group:hover .group-hover\:badge-warning { background-color: hsl(var(--warning-muted)); color: hsl(var(--warning-text)); }
+  .dark .group:hover .group-hover\:badge-warning { background-color: hsl(var(--warning) / 0.3); color: hsl(var(--warning)); }
+  .group:hover .group-hover\:badge-info { background-color: hsl(var(--info-muted)); color: hsl(var(--info-text)); }
+  .dark .group:hover .group-hover\:badge-info { background-color: hsl(var(--info) / 0.3); color: hsl(var(--info)); }
+  .group:hover .group-hover\:badge-danger { background-color: hsl(var(--danger-muted)); color: hsl(var(--danger-text)); }
+  .dark .group:hover .group-hover\:badge-danger { background-color: hsl(var(--danger) / 0.3); color: hsl(var(--danger)); }
+
+  /* Soft interactive backgrounds */
+  .bg-success-soft { background-color: hsl(var(--success-muted)); }
+  .dark .bg-success-soft { background-color: hsl(var(--success) / 0.2); }
+  .bg-danger-soft { background-color: hsl(var(--danger-muted)); }
+  .dark .bg-danger-soft { background-color: hsl(var(--danger) / 0.2); }
+  .bg-info-soft { background-color: hsl(var(--info-muted)); }
+  .dark .bg-info-soft { background-color: hsl(var(--info) / 0.2); }
+  .bg-warning-soft { background-color: hsl(var(--warning-muted)); }
+  .dark .bg-warning-soft { background-color: hsl(var(--warning) / 0.2); }
+
+  /* Hover variants for semantic soft backgrounds */
+  .hover\:bg-success-soft:hover { background-color: hsl(var(--success-muted)); }
+  .dark .hover\:bg-success-soft:hover { background-color: hsl(var(--success) / 0.2); }
+  .hover\:bg-danger-soft:hover { background-color: hsl(var(--danger-muted)); }
+  .dark .hover\:bg-danger-soft:hover { background-color: hsl(var(--danger) / 0.2); }
+  .hover\:bg-info-soft:hover { background-color: hsl(var(--info-muted)); }
+  .dark .hover\:bg-info-soft:hover { background-color: hsl(var(--info) / 0.2); }
+  .hover\:bg-warning-soft:hover { background-color: hsl(var(--warning-muted)); }
+  .dark .hover\:bg-warning-soft:hover { background-color: hsl(var(--warning) / 0.2); }
+
+  /* Hover variants for semantic muted backgrounds */
+  .hover\:bg-success-muted:hover { background-color: hsl(var(--success-muted)); }
+  .hover\:bg-danger-muted:hover { background-color: hsl(var(--danger-muted)); }
+  .hover\:bg-info-muted:hover { background-color: hsl(var(--info-muted)); }
+  .hover\:bg-warning-muted:hover { background-color: hsl(var(--warning-muted)); }
 }
 
 /* Login page form elements */

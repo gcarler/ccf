@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Dict, List
 
-from pydantic import Field, model_validator
+from pydantic import Field, AliasChoices, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     The model_validator enforces strong values in staging/prod.
     """
 
-    environment: str = Field(default="local")
+    environment: str = Field(default="local", validation_alias=AliasChoices("ENV", "environment"))
     database_url: str = Field(
         default="sqlite:///./ccf_dev.db",
         description="DB URL - must be PostgreSQL in prod/staging (enforced by validator).",

@@ -25,7 +25,7 @@ class TestCrmCrud:
     def test_create_persona(self, authed_client):
         client, headers, sede, persona, db = authed_client
         from backend.crud.crm import create_persona
-        from backend.schemas.crm import PersonaCreate
+        from backend.schemas.crm.base import PersonaCreate
         payload = PersonaCreate(first_name="Test", last_name="User", email="test@crud.com")
         p = create_persona(db, payload)
         assert p is not None
@@ -34,7 +34,7 @@ class TestCrmCrud:
     def test_get_persona(self, authed_client):
         client, headers, sede, persona, db = authed_client
         from backend.crud.crm import create_persona, get_persona
-        from backend.schemas.crm import PersonaCreate
+        from backend.schemas.crm.base import PersonaCreate
         payload = PersonaCreate(first_name="Get", last_name="Test", email="get@crud.com")
         p = create_persona(db, payload)
         result = get_persona(db, p.id)
@@ -44,7 +44,7 @@ class TestCrmCrud:
     def test_update_persona(self, authed_client):
         client, headers, sede, persona, db = authed_client
         from backend.crud.crm import create_persona, update_persona
-        from backend.schemas.crm import PersonaCreate, PersonaUpdate
+        from backend.schemas.crm.base import PersonaCreate, PersonaUpdate
         payload = PersonaCreate(first_name="Old", last_name="Name", email="update@crud.com")
         p = create_persona(db, payload)
         update_payload = PersonaUpdate(first_name="New")
@@ -60,7 +60,7 @@ class TestCrmCrud:
     def test_delete_persona(self, authed_client):
         client, headers, sede, persona, db = authed_client
         from backend.crud.crm import create_persona, delete_persona
-        from backend.schemas.crm import PersonaCreate
+        from backend.schemas.crm.base import PersonaCreate
         payload = PersonaCreate(first_name="Delete", last_name="Me", email="delete@crud.com")
         p = create_persona(db, payload)
         result = delete_persona(db, p.id)

@@ -22,6 +22,7 @@ Targets (Sprint 2 of the roadmap):
 from __future__ import annotations
 
 import uuid as _uuid
+from datetime import datetime, timezone
 
 from backend.models_projects import ProjectDocument
 from tests.conftest import auth_headers, seed_admin
@@ -174,19 +175,12 @@ class TestWikiAuditTrail:
         create_wiki_factory(db_session, proj.id, title="Audit")
         headers = auth_headers(client)
 
-        # Mark soft-deleted directly (no DELETE endpoint exists yet for wiki).
-        # Use Python datetime as a bind var instead of SQL NOW() so the
-        # test is portable between Postgres test DBs and SQLite dev DBs
-        # (SQLite has no NOW() builtin).
-        from sqlalchemy import text as _text
-        _now = datetime.now(timezone.utc)
-        db_session.execute(
-            _text(
-                "UPDATE project_documents SET deleted_at = :ts "
-                "WHERE project_id = :pid"
-            ),
-            {"pid": str(proj.id), "ts": _now},
-        )
+        # Soft-delete via ORM (avoids session-cache issues with raw SQL)
+        wiki_row = db_session.query(ProjectDocument).filter(
+            ProjectDocument.project_id == proj.id
+        ).first()
+        assert wiki_row is not None
+        wiki_row.deleted_at = datetime.now(timezone.utc)
         db_session.commit()
 
         row = db_session.query(ProjectDocument).filter(

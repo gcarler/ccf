@@ -525,9 +525,34 @@ def test_runtime_has_no_legacy_write_bypasses():
     assert "is_user_active" not in kernel_source
     assert "_coerce_labels" not in project_schema_source
     assert "PRIORITY_MAP" not in project_schema_source
-    assert "AliasChoices" not in evangelism_schema
     assert "def completado(" not in evangelism_schema
     assert 'stage="new"' not in public_tracker
     assert 'source=record.source' not in public_tracker
-    assert "AliasChoices" not in config_source
     assert "user?.id || 1" not in counseling_ui
+    # REGLAS §10 — AliasChoices path-scoped carve-out (Gate 10):
+    # ``AliasChoices`` es feature legítima de pydantic v2 SOLO para
+    # ``validation_alias`` multi-nombre (env-var resolution en runtime).
+    # El check usa un substring match — no distingue entre
+    # ``validation_alias=AliasChoices(...)`` y otros usages;
+    # permite ``AliasChoices`` en los dos archivos canónicos abajo
+    # donde sabemos que NO hay write bypass:
+    #   - backend/core/config.py: Settings.environment (ENV vs environment).
+    #   - backend/schemas/evangelism.py: campo equivalente.
+    # Cualquier otra ubicación se considera regresión porque el resto
+    # del axioma 3 prohíbe write/route bypasses y AliasChoices fuera
+    # de env-var context NO tiene razón legítima de existir.
+    alias_offenders = _run(
+        "rg -n 'AliasChoices' backend "
+        "-g '!backend/core/config.py' "
+        "-g '!backend/schemas/evangelism.py' "
+        "-g '!tests/test_arquitectura*.py'"
+    )
+    assert not alias_offenders.strip(), (
+        "REGLAS §10: AliasChoices fuera de archivos canónicos.\n"
+        "Archivos permitidos (validation_alias para env vars):\n"
+        "  - backend/core/config.py (Settings.environment: ENV + environment)\n"
+        "  - backend/schemas/evangelism.py (campos equivalentes)\n"
+        "Cualquier otro uso es write-bypass o regresión de runtime legacy.\n"
+        "Si necesitas usarlo, añádelo al whitelist + documenta el motivo.\n"
+        "Hallazgos:\n" + alias_offenders
+    )

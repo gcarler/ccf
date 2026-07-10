@@ -215,17 +215,8 @@ class TestCMSFinalPush:
     def test_crud_every_function(self, db_session, full):
         from backend.crud import cms
         db = db_session
-        # Page content
-        _call(cms.list_page_contents, db)
-        _call(cms.get_page_content, db, "home")
-        _call(cms.get_or_create_page_content, db, "new_page")
-        _call(cms.list_page_contents, db, limit=10)
-        # Versions
-        _call(cms.get_page_content_versions, db, "home")
-        # Publications
-        _call(cms.list_content_publications, db)
-        _call(cms.get_or_create_content_publication, db, "home")
-        _call(cms.update_content_publication, db, "home", status="published")
+        # Legacy page_contents functions removed — CMS v2 uses CmsPage CRUD.
+        # Sites / themes / menus / pages / sections covered below.
         # Media
         _call(cms.list_cms_media_items, db)
         _call(cms.list_cms_media_items, db, query="test")

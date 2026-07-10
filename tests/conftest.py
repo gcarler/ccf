@@ -5,7 +5,10 @@ import os
 import uuid as _uuid
 import warnings
 
-os.environ.setdefault("ENV", "test")
+# Pydantic-settings reads ``ENVIRONMENT`` (not ``ENV``) for the
+# ``Settings.environment`` field. Keep this aligned so the validator's
+# sqlite/permissive-off branch fires (``env in {local,test,testing,ci}``).
+os.environ.setdefault("ENVIRONMENT", "test")
 
 import anyio.to_thread as _anyio_to_thread
 import httpx
@@ -76,6 +79,7 @@ if os.getenv("CCF_TEST_INLINE_SYNC_HANDLERS", "1") != "0":
 import backend.models  # noqa: F401 — register all models (including Auth v3) so create_all works
 from backend.app import app
 from backend.core.database import Base, get_db
+from backend.middleware.module_isolation import _circuit_breakers
 
 SQLALCHEMY_DATABASE_URL = (
     os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or "sqlite://"
@@ -186,6 +190,96 @@ def client(db_session):
     app.dependency_overrides = {get_db: override_get_db}
 
 
+@pytest.fixture(autouse=True)
+def _reset_module_circuit_breaker():
+    """Reset the module_isolation circuit-breaker state between tests.
+
+    The middleware's ``_circuit_breakers`` is a module-level dict that
+    persists across tests in the same Python process. Without this autouse
+    fixture, one failing test that opens the circuit (5 raises → 60s
+    ``open=True`` window) poisons every subsequent test in the run with
+    phantom 503s on the same module — a classic cross-test state leak.
+
+    Production code lives outside this fixture's lifetime (it only runs
+    during pytest collection), so clearing here has no impact on the
+    real application. We clear BOTH before AND after the test to be
+    defensive against leftover keys from a test that mutated the dict
+    (e.g., a future test that wants to assert breaker state directly).
+    """
+    _circuit_breakers.clear()
+    yield
+    _circuit_breakers.clear()
+
+
+@pytest.fixture(autouse=True)
+def _reset_caches_between_tests():
+    """Clear Redis cache and the CMS in-memory cache between tests.
+
+    ``@cached_public(ttl=300)`` on the CMS v2 endpoints caches the JSON
+    response under a deterministic key (the SHA-256 of the path args).
+    Without this fixture, the first test's response survives across the
+    full pytest run with a 300-second TTL — feeds a stale URL pointing
+    at a ``CmsMediaItem`` row that the next test's fixture just dropped
+    and re-created under a fresh ``uuid4``. The same problem applies to
+    ``_system_var_cache`` in ``backend.api.cms_v2`` (a module-level dict
+    that never expires). Pattern mirrored from ``_reset_module_circuit_breaker``
+    so the two state-leak vectors move in lock-step.
+
+    Implementation notes
+    --------------------
+    * Imports are deferred into the function body so an unrelated test
+      that doesn't import ``backend.core.cache`` (e.g. pure unit tests)
+      still works — the autouse fixture must not raise during collection.
+    * ``MemoryRedis`` (the default in-test backend, see
+      ``backend.core.cache``) exposes neither ``flushdb`` nor ``flushall``
+      — we clear its internal ``_store`` and ``_expire`` dicts instead.
+      Real Redis supports both ``flushdb`` / ``flushall``; we prefer
+      ``flushdb`` to limit blast radius if the test ever runs against a
+      shared Redis dev instance.
+    * ``_system_var_cache`` is imported lazily so a test that patches
+      ``cms_v2`` upstream doesn't AttributeError at fixture-collection
+      time. If the module surface changes, the test simply doesn't get
+      the cleanup (no false negatives created).
+    """
+    def _clear_redis():
+        try:
+            from backend.core.cache import get_redis
+        except Exception:
+            return  # cache module unavailable — nothing to clear
+        try:
+            redis_cli = get_redis()
+        except Exception:
+            return  # no client in this env (e.g. some test stubs it out)
+        try:
+            if hasattr(redis_cli, "flushdb"):
+                redis_cli.flushdb()
+            elif hasattr(redis_cli, "_store"):
+                redis_cli._store.clear()
+                redis_cli._expire.clear()
+        except Exception:
+            # Best-effort: never let the autouse fixture break a real
+            # test failure into an AttributeError / redis-py error.
+            pass
+
+    def _clear_cms_inmemory():
+        try:
+            from backend.api import cms_v2
+        except Exception:
+            return
+        cache = getattr(cms_v2, "_system_var_cache", None)
+        if cache is not None and hasattr(cache, "clear"):
+            try:
+                cache.clear()
+            except Exception:
+                pass
+
+    _clear_redis()
+    _clear_cms_inmemory()
+    yield
+    _clear_redis()
+    _clear_cms_inmemory()
+
+
 # ── Auth Helper (v2 / auth_users) ─────────────────────────────────────
 # All test files that need authenticated endpoints should use these
 # helpers instead of the numeric models.User pattern, because the
@@ -281,11 +375,27 @@ def auth_headers(client, email="admin@example.com", password="testpass123"):
     return {"Authorization": f"Bearer {token}"}
 
 
-def seed_user_with_role(db_session, role_name="persona", email="user@example.com", password="testpass123"):
+def seed_user_with_role(
+    db_session,
+    role_name="persona",
+    email="user@example.com",
+    password="testpass123",
+    sede_id=None,
+):
     """Crea un usuario Auth v3 con un rol de plataforma.
 
     Retorna (user, persona, sede).
-    Útil para tests que necesitan usuarios no-admin con roles personalizados.
+    Util para tests que necesitan usuarios no-admin con roles personalizados.
+
+    Multi-tenant alignment (chat-ws tests gate, 2026):
+    cuando ``sede_id`` no se pasa explicitamente, el helper reusa
+    CUALQUIER Sede ya visible en la sesion — mismo patron que
+    ``_ensure_sede`` en ``tests/factories_projects.py``. Esto evita que
+    ``seed_admin`` + ``seed_user_with_role`` (en secuencia) terminen en
+    sedes distintas, haciendo que la prueba asuma same-sede mientras
+    el setup generaba cross-sede. Resultado: el guard ``_ensure_project``
+    del API rechaza con 404 antes de poder llegar al role-check (403).
+    Tests que SI requieren cross-sede pueden pasar ``sede_id`` explicito.
     """
     from backend import models as _models
     from backend.core.security import get_password_hash
@@ -311,14 +421,35 @@ def seed_user_with_role(db_session, role_name="persona", email="user@example.com
         db_session.add(role)
         db_session.flush()
 
-    sede = _models.Sede(
-        id=_uuid.uuid4(),
-        nombre="Sede Test",
-        ciudad="Bogota",
-        es_activa=True,
-    )
-    db_session.add(sede)
-    db_session.flush()
+    # ── Multi-tenant: same-sede by default ───────────────
+    if sede_id is None:
+        existing_sede = db_session.query(_models.Sede).first()
+        if existing_sede is not None:
+            sede_id = existing_sede.id
+    if sede_id is not None:
+        sede = (
+            db_session.query(_models.Sede)
+            .filter(_models.Sede.id == sede_id)
+            .first()
+        )
+        if sede is None:
+            sede = _models.Sede(
+                id=sede_id,
+                nombre="Sede Test",
+                ciudad="Bogota",
+                es_activa=True,
+            )
+            db_session.add(sede)
+            db_session.flush()
+    else:
+        sede = _models.Sede(
+            id=_uuid.uuid4(),
+            nombre="Sede Test",
+            ciudad="Bogota",
+            es_activa=True,
+        )
+        db_session.add(sede)
+        db_session.flush()
     persona.sede_id = sede.id
 
     user = Usuario(

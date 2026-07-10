@@ -552,14 +552,8 @@ class TestCMSDeep:
     def test_cms_crud_all(self, db_session, full):
         from backend.crud import cms
         db = db_session
-        # page content
-        _call(cms.list_page_contents, db)
-        _call(cms.get_page_content, db, "home")
-        _call(cms.get_or_create_page_content, db, "new_page")
-        # publications
-        _call(cms.list_content_publications, db)
-        _call(cms.get_or_create_content_publication, db, "home")
-        _call(cms.update_content_publication, db, "home", status="published")
+        # Legacy page_contents / content_publications removed — CMS v2 CRUD
+        # (list_cms_sites, get_cms_site_by_key) exercise the same code paths.
         # media
         _call(cms.list_cms_media_items, db)
         _call(cms.list_cms_media_items, db, query="test")

@@ -3,11 +3,32 @@
 import datetime as dt
 import uuid as _uuid
 
+from fastapi import HTTPException
+
 
 def _to_uuid(val) -> _uuid.UUID:
     if isinstance(val, _uuid.UUID):
         return val
     return _uuid.UUID(str(val))
+
+
+def _coerce_uuid_or_404(value, detail: str = "Resource not found") -> _uuid.UUID:
+    """UUID coercion con 404 existence-leak safe ante input malformado.
+
+    Antes de cualquier query SQLA sobre un UUID de cliente, normalizamos
+    y validamos el shape. Un UUID malformado NO llega al motor de BD, lo
+    que cierra el vector 500 cuando el cliente envía basura. El ``detail``
+    retornado es neutro: no revela si el recurso existe en otra sede o
+    directamente no existe (existence-leak safe).
+
+    Compartir este helper entre ``crud/evangelism.py`` y los API helpers
+    evita drift y mantiene una sola política de error 404 para todos los
+    módulos multi-tenant (CMS, CRM, Evangelismo).
+    """
+    try:
+        return _uuid.UUID(str(value))
+    except (TypeError, ValueError, AttributeError):
+        raise HTTPException(status_code=404, detail=detail)
 
 
 def _utcnow() -> dt.datetime:

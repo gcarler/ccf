@@ -147,7 +147,7 @@ def _get_scoped_plantilla(db: Session, user: models.User, plantilla_id: str):
     """Recurso PlantillaMensaje: sede_id propio. Devuelve 404 si no está en
     el scope del usuario. Retorna el ORM object para los CRUD existentes.
     """
-    from backend.crud.crm_resources import get_plantilla
+    from backend.crud.crm_.resources import get_plantilla
     obj = get_plantilla(db, plantilla_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Plantilla no encontrada")
@@ -162,7 +162,7 @@ def _get_scoped_automation(db: Session, user: models.User, automation_id) -> mod
     vía la plantilla referenciada en action_payload. Si la automatización
     referencia una plantilla de otra sede, se considera fuera de scope.
     """
-    from backend.crud.crm_extended import get_crm_automation
+    from backend.crud.crm_.extended import get_crm_automation
     try:
         auto_uuid = _to_uuid(automation_id) if not isinstance(automation_id, UUID) else automation_id
     except (TypeError, ValueError):
@@ -172,7 +172,7 @@ def _get_scoped_automation(db: Session, user: models.User, automation_id) -> mod
         raise HTTPException(status_code=404, detail="Automatización no encontrada")
     user_sede = get_user_sede_id(db, user.id)
     if user_sede:
-        from backend.crud.crm_resources import get_plantilla as _get_plantilla
+        from backend.crud.crm_.resources import get_plantilla as _get_plantilla
         ap = auto.action_payload or {}
         plantilla_id = ap.get("plantilla_id")
         if plantilla_id:
