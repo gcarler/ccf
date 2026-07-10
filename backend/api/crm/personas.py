@@ -58,7 +58,7 @@ def my_ministry_profile(
 ):
     """Perfil ministerial del usuario autenticado."""
     persona_id = resolve_persona_id_for_user(db, current_user.id)
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first() if persona_id else None
+    persona = crud.get_persona(db, persona_id) if persona_id else None
     if not persona:
         raise HTTPException(status_code=404, detail="No tienes un perfil ministerial vinculado")
     return schemas.PersonaResponse.model_validate(persona)
