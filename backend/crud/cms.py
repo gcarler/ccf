@@ -398,7 +398,8 @@ def delete_cms_media_item(
 
 
 def list_cms_sites(db: Session, *, only_active: bool = False, sede_id: uuid.UUID | None = None):
-    q = db.query(models.CmsSite)
+    from sqlalchemy.orm import lazyload
+    q = db.query(models.CmsSite).options(lazyload("*"))
     if only_active:
         q = q.filter(models.CmsSite.is_active.is_(True))
     if sede_id is not None:
@@ -409,7 +410,8 @@ def list_cms_sites(db: Session, *, only_active: bool = False, sede_id: uuid.UUID
 
 
 def get_cms_site_by_key(db: Session, site_key: str):
-    return db.query(models.CmsSite).filter(models.CmsSite.site_key == site_key).first()
+    from sqlalchemy.orm import lazyload
+    return db.query(models.CmsSite).options(lazyload("*")).filter(models.CmsSite.site_key == site_key).first()
 
 
 def create_cms_site(db: Session, payload: schemas.CmsSiteCreate):
