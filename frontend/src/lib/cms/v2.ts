@@ -682,3 +682,21 @@ export async function getSeoAudit(
     query: options,
   });
 }
+
+export interface PageAnalytics {
+  page_key: string;
+  total_views: number;
+  days: number;
+  daily_views: Array<{ date: string; views: number }>;
+}
+
+export async function getPageAnalytics(
+  pageKey: string,
+  days: number = 30,
+  token?: string | null,
+): Promise<PageAnalytics> {
+  return apiFetch<PageAnalytics>(`/cms/v2/analytics/${encodeURIComponent(pageKey)}?days=${days}`, {
+    token,
+    cache: "no-store",
+  });
+}

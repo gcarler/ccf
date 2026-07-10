@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Eye, ExternalLink, FileImage, ImageIcon, Save, Send, Settings,
   Sparkles, BarChart3, CheckCircle2, AlertTriangle, XCircle, Wand2, RefreshCw,
@@ -10,6 +10,7 @@ import { SITE_URL } from "@/lib/site-config";
 import { asObject } from "@/components/cms/builder/utils";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import BuilderSectionInspector from "./BuilderSectionInspector";
+import { getPageAnalytics, type PageAnalytics } from "@/lib/cms/v2";
 import type { PageBuilderState, AiTemplate, AiTone } from "@/hooks/usePageBuilder";
 
 /* ── JSON-LD Preview Component ─────────────────────────────────────── */
@@ -134,6 +135,17 @@ export default function BuilderRightPanel({
     activeSite, setMediaPickerOpen, setMediaPickerTarget,
     activeSectionId, activeSection, updateSectionPropsLocal, saveSectionProps,
   } = builder;
+
+  // Fetch real analytics data for the active page
+  const [analytics, setAnalytics] = useState<PageAnalytics | null>(null);
+  useEffect(() => {
+    if (!activeSlug || activeRightTab !== "analytics") return;
+    const days = timeframe === "7d" ? 7 : timeframe === "30d" ? 30 : 365;
+    getPageAnalytics(activeSlug, days)
+      .then(setAnalytics)
+      .catch(() => setAnalytics(null));
+  }, [activeSlug, activeRightTab, timeframe]);
+
   return (
         <aside className="lg:col-span-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-4 max-h-[90vh] overflow-y-auto">
           {/* Tab Selection Header */}
@@ -637,34 +649,42 @@ export default function BuilderRightPanel({
                 <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                   <p className="text-[8px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Visitas Totales</p>
                   <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">
-                    {timeframe === "7d" ? "12,450" : timeframe === "30d" ? "54,230" : "423,910"}
+                    {analytics?.total_views?.toLocaleString() ?? "—"}
                   </p>
                   <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">
-                    {timeframe === "7d" ? "▲ +12.4%" : timeframe === "30d" ? "▲ +18.7%" : "▲ +22.4%"}
+                    {analytics ? `${analytics.days}d` : "Sin datos"}
                   </span>
                 </div>
                 <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
-                  <p className="text-[8px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Visitantes Únicos</p>
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Visitas / Día</p>
                   <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">
-                    {timeframe === "7d" ? "4,820" : timeframe === "30d" ? "21,150" : "168,490"}
+                    {analytics?.daily_views?.length
+                      ? Math.round(analytics.total_views / analytics.daily_views.length).toLocaleString()
+                      : "—"}
                   </p>
                   <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">
-                    {timeframe === "7d" ? "▲ +8.2%" : timeframe === "30d" ? "▲ +14.1%" : "▲ +19.6%"}
+                    Promedio
                   </span>
                 </div>
                 <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
-                  <p className="text-[8px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tiempo Promedio</p>
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pico Máximo</p>
                   <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">
-                    {timeframe === "7d" ? "2m 45s" : timeframe === "30d" ? "3m 12s" : "2m 58s"}
+                    {analytics?.daily_views?.length
+                      ? Math.max(...analytics.daily_views.map(d => d.views)).toLocaleString()
+                      : "—"}
                   </p>
-                  <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">▲ Óptimo</span>
+                  <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">
+                    {analytics?.daily_views?.length ? `en ${analytics.daily_views.length} días` : "Sin datos"}
+                  </span>
                 </div>
                 <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
-                  <p className="text-[8px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Porcentaje Rebote</p>
+                  <p className="text-[8px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Días con Actividad</p>
                   <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">
-                    {timeframe === "7d" ? "42.1%" : timeframe === "30d" ? "39.8%" : "41.2%"}
+                    {analytics?.daily_views?.filter(d => d.views > 0).length ?? "—"}
                   </p>
-                  <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">● Saludable</span>
+                  <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">
+                    de {analytics?.days ?? "—"} días
+                  </span>
                 </div>
               </div>
 

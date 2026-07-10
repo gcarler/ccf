@@ -308,6 +308,7 @@ export default function CmsPostsManagement() {
               </div>
               <input
                 autoFocus
+                required
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 onKeyDown={(e) => e.key === "Escape" && setIsQuickAddOpen(false)}
