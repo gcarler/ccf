@@ -24,11 +24,9 @@ documentos, comentarios y verifica el flujo completo.
 Uso:
     cd /root/ccf && ./venv/bin/python scripts/test_projects_quality.py
 """
-import base64
 import datetime
 import os
 import sys
-import tempfile
 
 # Asegurar que el path del proyecto esté disponible
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
@@ -128,7 +126,7 @@ else:
     fail("No se encontró usuario admin@ccf.com")
 
 users_data = [
-    {"email": "prueba1@ccf.test", "username": "usuario_prueba_1", "role_name": "LECTOR", "name": "Usuario Prueba 1"},
+    {"email": "prueba1@ccf.test", "username": "usuario_prueba_1", "role_name": "MIEMBRO", "name": "Usuario Prueba 1"},
     {"email": "prueba2@ccf.test", "username": "usuario_prueba_2", "role_name": "EDITOR", "name": "Usuario Prueba 2"},
     {"email": "prueba3@ccf.test", "username": "usuario_prueba_3", "role_name": "GESTOR", "name": "Usuario Prueba 3"},
 ]
@@ -179,6 +177,7 @@ project = Project(
     description="Proyecto de calidad para probar el módulo completo de proyectos. Incluye tareas, documentos y comentarios entre 3 usuarios.",
     status="active",
     owner_id=admin_user.id,
+    sede_id=getattr(admin_user, 'sede_id', None),
     color="#3b82f6",
     icon="palette",
 )
@@ -219,7 +218,7 @@ db.commit()
 section("4. CREACIÓN DE TAREAS ASIGNADAS CON FECHAS")
 # ──────────────────────────────────────────────────────────────
 
-now = datetime.datetime.utcnow()
+now = datetime.datetime.now(datetime.timezone.utc)
 tasks_data = [
     {
         "title": "Diseñar logo del proyecto",
@@ -479,11 +478,10 @@ section("9. PRUEBA DE API (ENDPOINTS)")
 
 import httpx
 
-# Login como admin
-login_resp = httpx.post("http://127.0.0.1:8000/api/auth/login", data={
-    "username": "admin@ccf.com",
-    "password": "admin123",
-    "grant_type": "password",
+# Login como admin (endpoint v3)
+login_resp = httpx.post("http://127.0.0.1:8000/api/v3/auth/login", json={
+    "email": "admin@ccf.com",
+    "password": "Ccf2026*+",
 }, follow_redirects=False)
 
 if login_resp.status_code == 200:
@@ -495,7 +493,7 @@ if login_resp.status_code == 200:
     resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers)
     if resp.status_code == 200:
         projects = resp.json()
-        found = [p for p in projects if p["id"] == project.id]
+        found = [p for p in projects if str(p["id"]) == str(project.id)]
         if found:
             ok(f"GET /projects → proyecto encontrado en lista ({len(projects)} proyectos totales)")
         else:
@@ -555,10 +553,9 @@ if login_resp.status_code == 200:
         fail(f"POST /projects/{id}/comments → HTTP {resp.status_code}: {resp.text[:100]}")
 
     # Login como usuario_prueba_2 (docente, tiene acceso a projects) y verificar que ve el proyecto
-    login_u2 = httpx.post("http://127.0.0.1:8000/api/auth/login", data={
-        "username": "prueba2@ccf.test",
+    login_u2 = httpx.post("http://127.0.0.1:8000/api/v3/auth/login", json={
+        "email": "prueba2@ccf.test",
         "password": "prueba123",
-        "grant_type": "password",
     }, follow_redirects=False)
     if login_u2.status_code == 200:
         token_u2 = login_u2.json().get("access_token", "")
@@ -568,7 +565,7 @@ if login_resp.status_code == 200:
         resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers_u2)
         if resp.status_code == 200:
             projs = resp.json()
-            found = [p for p in projs if p["id"] == project.id]
+            found = [p for p in projs if str(p["id"]) == str(project.id)]
             if found:
                 ok("usuario_prueba_2 puede ver el proyecto")
             else:
@@ -586,11 +583,10 @@ if login_resp.status_code == 200:
     else:
         fail(f"Login usuario_prueba_2 → HTTP {login_u2.status_code}")
 
-    # Verificar que usuario_prueba_1 (estudiante) NO tiene acceso a projects (expected: 403)
-    login_u1b = httpx.post("http://127.0.0.1:8000/api/auth/login", data={
-        "username": "prueba1@ccf.test",
+    # Verificar que usuario_prueba_1 (miembro sin permiso projects) NO tiene acceso a projects (expected: 403)
+    login_u1b = httpx.post("http://127.0.0.1:8000/api/v3/auth/login", json={
+        "email": "prueba1@ccf.test",
         "password": "prueba123",
-        "grant_type": "password",
     }, follow_redirects=False)
     if login_u1b.status_code == 200:
         token_u1b = login_u1b.json().get("access_token", "")

@@ -140,6 +140,7 @@ from backend.schemas.cms import (
                                      CmsThemeUpdate,
                                      CmsWorkflowAction,
                                      PageSeoAudit,
+                                     SchedulePagePublish,
                                      SeoAuditResponse,
                                      SeoFinding,
                                      SeoFindingSeverity,
@@ -150,6 +151,7 @@ from backend.schemas.cms import (
                                      TestimonialCreate,
                                      TestimonialRead,
                                      TestimonialUpdate,
+                                     SchedulePagePublish,
 )
 from backend.schemas.crm.base import (
                                      EVENT_TYPES,

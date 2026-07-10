@@ -105,6 +105,7 @@ from backend.models_crm import (  # noqa: F401
     ConversationParticipant,
     CounselingTicket,
     CrmAutomation,
+    CrmAutomationEdge,
     CrmEvent,
     Donation,
     DonationCategory,
@@ -128,6 +129,11 @@ from backend.models_crm import (  # noqa: F401
     VolunteerShift,
     VolunteerSkill,
     persona_volunteer_skills,
+    CrmAutomationFlow,
+    CrmAutomationNode,
+    CrmFlowCanvasConfig,
+    CrmFlowBranch,
+    CrmFlowCycleCache,
 )
 
 # CRM pipeline, cases, interactions and follow-up tasks
@@ -137,6 +143,8 @@ from backend.models_crm_pipeline import (
     InteraccionCRM,
     PipelineCRM,
     TareaCRM,
+    CrmReorderLock,
+    CrmDragDropEvent,
 )
 
 # Enterprise CMS — Audit Trail, Permissions, Notifications, Webhooks, Custom Types, Search, Sessions

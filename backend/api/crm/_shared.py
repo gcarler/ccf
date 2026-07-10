@@ -412,6 +412,7 @@ def _serialize_case(case: models.CasoCRM) -> dict:
             if not getattr(task, "completada", False)
         ),
         "notes": getattr(case, "notes", None) or payload.get(_payload_key("notes")) or payload,
+        "sort_order": getattr(case, "sort_order", 0),
         "created_at": created_at.isoformat() if created_at else None,
         "updated_at": updated_at.isoformat() if updated_at else None,
     }

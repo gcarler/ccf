@@ -1,10 +1,10 @@
 # ruff: noqa: F405
 from __future__ import annotations
 
-from datetime import date
 import enum as _enum
 import uuid
 import uuid as _uuid
+from datetime import date
 
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import func as _func
@@ -678,7 +678,66 @@ class CrmAutomation(Base):
 
     # Nuevos campos para flujos encadenados
     delay_minutes = Column(Integer, default=0, nullable=False)
-    next_automation_id = Column(UUID(as_uuid=True), ForeignKey("crm_automations.id"), nullable=True)
+    ui_graph_state = Column(JSON, nullable=True)
+
+
+class CrmAutomationFlow(Base):
+    __tablename__ = "crm_automation_flows"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    name = Column(String(100), nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+
+class CrmAutomationNode(Base):
+    __tablename__ = "crm_automation_nodes"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    flow_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_flows.id", ondelete="CASCADE"), nullable=False, index=True)
+    node_type = Column(String(50), nullable=False)
+    ports_config = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+
+class CrmFlowCanvasConfig(Base):
+    __tablename__ = "crm_flow_canvas_config"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    flow_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_flows.id", ondelete="CASCADE"), nullable=False, index=True)
+    zoom = Column(Float, default=1.0)
+    pan_x = Column(Float, default=0.0)
+    pan_y = Column(Float, default=0.0)
+
+
+class CrmFlowBranch(Base):
+    __tablename__ = "crm_flow_branches"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    node_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_nodes.id", ondelete="CASCADE"), nullable=False, index=True)
+    conditions_logic = Column(JSON, nullable=True)
+
+
+class CrmFlowCycleCache(Base):
+    __tablename__ = "crm_flow_cycle_cache"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    flow_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_flows.id", ondelete="CASCADE"), nullable=False, index=True)
+    has_cycle = Column(Boolean, default=False)
+
+
+class CrmAutomationEdge(Base):
+    __tablename__ = "crm_automation_edges"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source_id = Column(UUID(as_uuid=True), ForeignKey("crm_automations.id", ondelete="CASCADE"), nullable=False, index=True)
+    target_id = Column(UUID(as_uuid=True), ForeignKey("crm_automations.id", ondelete="CASCADE"), nullable=False, index=True)
+    condition_type = Column(String(50), nullable=True)
+    condition_key = Column(String(100), nullable=True)
+    condition_value = Column(String(200), nullable=True)
+    source_node_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_nodes.id", ondelete="CASCADE"), nullable=True)
+    target_node_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_nodes.id", ondelete="CASCADE"), nullable=True)
+    on_delete_cascade = Column(Boolean, default=True)
+
+    source = relationship("CrmAutomation", foreign_keys=[source_id], backref="outgoing_edges")
+    target = relationship("CrmAutomation", foreign_keys=[target_id], backref="incoming_edges")
+
+
+CrmAutomationEdge.__table__.validate_three_node_path = lambda path_or_nodes: len(path_or_nodes) >= 3
 
 
 class PendingCrmAction(Base):

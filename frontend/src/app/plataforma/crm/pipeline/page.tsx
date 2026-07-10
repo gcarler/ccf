@@ -109,15 +109,32 @@ export default function ConsolidationPipelinePage() {
         }
     };
 
-    const handleUpdateStage = useCallback(async (leadId: string, newStage: string) => {
+    const handleUpdateStage = useCallback(async (
+        leadId: string, 
+        newStage: string, 
+        reorderPayload?: { id: string, sort_order: number, etapa_actual_id: string }[]
+    ) => {
         if (!canEditCrm) return;
+
         // Optimistic update
-        setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage: newStage } : l));
+        setLeads(prev => prev.map(l => {
+            const updatedStage = l.id === leadId ? newStage : l.stage;
+            const reorderItem = reorderPayload?.find(item => item.id === l.id);
+            const updatedSortOrder = reorderItem ? reorderItem.sort_order : l.sort_order;
+            return { ...l, stage: updatedStage, sort_order: updatedSortOrder };
+        }));
+
         try {
-            await apiFetch(`/crm/casos/${leadId}`, {
-                method: 'PATCH', token, body: { stage: newStage }
+            const payload = reorderPayload && reorderPayload.length > 0
+                ? reorderPayload
+                : [{ id: leadId, etapa_actual_id: newStage }];
+
+            await apiFetch('/crm/pipeline/casos/reorder', {
+                method: 'PATCH',
+                token,
+                body: payload
             });
-            addToast(`Movido a ${STAGE_LABEL[newStage] ?? newStage}`, 'success');
+            addToast(`Actualizado exitosamente`, 'success');
         } catch {
             addToast('Error al actualizar etapa', 'error');
             fetchPipeline(); // Revert
