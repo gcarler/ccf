@@ -1625,11 +1625,7 @@ def public_robots(site_key: str, db: Session = Depends(get_db)):
     settings = get_settings()
     base_url = settings.frontend_url.rstrip("/")
     sitemap_url = f"{base_url.rstrip('/')}/api/cms/v2/public/sites/{site_key}/sitemap.xml"
-    # Allow site-level robots override from seo_json on the site if any
-    robots_rules = None
-    if isinstance(site.seo_json, dict) and site.seo_json.get("robots_rules"):
-        robots_rules = site.seo_json["robots_rules"]
-    txt = build_robots_txt(base_url, sitemap_url=sitemap_url, rules=robots_rules)
+    txt = build_robots_txt(base_url, sitemap_url=sitemap_url)
     return Response(content=txt, media_type="text/plain")
 
 
