@@ -1881,9 +1881,10 @@ def patch_global_block(
     ).first()
     if not block:
         raise HTTPException(status_code=404, detail="Global block not found")
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        if hasattr(block, key):
-            setattr(block, key, value)
+    data = payload.model_dump(exclude_unset=True)
+    for key in ["type", "props_json", "sort_order", "is_visible", "status", "is_global", "global_key"]:
+        if key in data and data[key] is not None:
+            setattr(block, key, data[key])
     db.commit()
     db.refresh(block)
     return schemas.CmsSectionRead.model_validate(block)
@@ -2100,11 +2101,15 @@ def list_posts(
         db, site.id, skip=skip, limit=limit, status=status,
         category_id=category_id, tag_id=tag_id,
     )
+    # Batch-fetch categories and tags to avoid N+1 queries
+    post_ids = [post.id for post in items]
+    cats_by_post = crud.get_posts_categories_batch(db, post_ids)
+    tags_by_post = crud.get_posts_tags_batch(db, post_ids)
     enriched = []
     for post in items:
         p = schemas.CmsPostReadWithTaxonomies.model_validate(post)
-        p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, post.id)]
-        p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, post.id)]
+        p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in cats_by_post.get(post.id, [])]
+        p.tags = [schemas.CmsTagRead.model_validate(t) for t in tags_by_post.get(post.id, [])]
         enriched.append(p)
     return PaginatedResponse[schemas.CmsPostReadWithTaxonomies](
         items=enriched, total=total, skip=skip, limit=limit
@@ -2344,26 +2349,20 @@ def get_page_analytics(
 
 @router.post("/pages/{page_id}/schedule", response_model=Dict[str, Any])
 def schedule_page_publish(
-    site_key: str, page_id: uuid.UUID, payload: Dict[str, Any],
+    site_key: str, page_id: uuid.UUID, payload: schemas.SchedulePagePublish,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Schedule a page for future publication (compatibility wrapper).
 
-    Superseded (2026-07-06) — prefer ``PATCH /sites/{site_key}/pages/{slug}``
+    Superseded (2026-07-06) -- prefer ``PATCH /sites/{site_key}/pages/{slug}``
     with ``publish_at`` and ``expires_at`` fields. This endpoint is
     kept as a thin wrapper for existing integrations; it now persists
     the timestamp to ``CmsPage.publish_at`` instead of the stale
     ``seo_json['_scheduled_at']``. ``scheduled_at`` is required.
     """
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
-    scheduled_at = payload.get("scheduled_at")
-    if not scheduled_at:
-        raise HTTPException(status_code=400, detail="scheduled_at is required")
-    try:
-        parsed = datetime.fromisoformat(str(scheduled_at).replace("Z", "+00:00"))
-    except (ValueError, TypeError, AttributeError):
-        raise HTTPException(status_code=400, detail="Invalid datetime format")
+    parsed = payload.scheduled_at
     page = db.query(models.CmsPage).filter(models.CmsPage.id == page_id).first()
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")

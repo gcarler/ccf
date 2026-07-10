@@ -5,6 +5,7 @@ Si un módulo falla (evangelism, crm, academy, projects, etc.), el error se
 captura y se retorna un 500 con detalle del módulo, sin tumbar todo el servidor.
 """
 import logging
+import os
 import time
 import traceback
 
@@ -81,12 +82,15 @@ async def module_isolation_middleware(request: Request, call_next):
             circuit["open"] = True
             logger.warning(f"[{module}] Circuit breaker OPEN after {circuit['failures']} failures")
 
+        # In production, never expose exception details to the client.
+        # The full error is already logged above at ERROR level.
+        detail = str(e)[:200] if os.getenv("ENVIRONMENT") != "production" else "Error interno del servidor"
         return JSONResponse(
             status_code=500,
             content={
                 "error": f"Error interno en el módulo {module}",
                 "module": module,
-                "detail": str(e)[:500],
+                "detail": detail,
             }
         )
 

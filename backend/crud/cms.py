@@ -1943,14 +1943,12 @@ def create_cms_post(
         updated_by_persona_id=resolve_persona_id_for_user(db, user_id),
     )
     db.add(row)
-    db.commit()
-    db.refresh(row)
+    db.flush()
     if payload.category_ids:
         _set_post_categories(db, row.id, payload.category_ids)
-        db.commit()
     if payload.tag_ids:
         _set_post_tags(db, row.id, payload.tag_ids)
-        db.commit()
+    db.commit()
     db.refresh(row)
     return row
 
@@ -1984,14 +1982,12 @@ def update_cms_post(
         row.expires_at = data["expires_at"]
     if user_id is not None:
         row.updated_by_persona_id = resolve_persona_id_for_user(db, user_id)
-    db.commit()
-    db.refresh(row)
+    db.flush()
     if "category_ids" in data and data["category_ids"] is not None:
         _set_post_categories(db, row.id, data["category_ids"])
-        db.commit()
     if "tag_ids" in data and data["tag_ids"] is not None:
         _set_post_tags(db, row.id, data["tag_ids"])
-        db.commit()
+    db.commit()
     db.refresh(row)
     return row
 
@@ -2018,6 +2014,38 @@ def get_post_tags(db: Session, post_id: uuid.UUID):
         .filter(models.CmsPostTag.post_id == post_id)
         .all()
     )
+
+
+def get_posts_categories_batch(db: Session, post_ids: list[uuid.UUID]) -> dict[uuid.UUID, list]:
+    """Batch-fetch categories for multiple posts in one query (N+1 fix)."""
+    if not post_ids:
+        return {}
+    rows = (
+        db.query(models.CmsPostCategory.post_id, models.CmsCategory)
+        .join(models.CmsCategory, models.CmsCategory.id == models.CmsPostCategory.category_id)
+        .filter(models.CmsPostCategory.post_id.in_(post_ids))
+        .all()
+    )
+    result: dict[uuid.UUID, list] = {pid: [] for pid in post_ids}
+    for post_id, category in rows:
+        result[post_id].append(category)
+    return result
+
+
+def get_posts_tags_batch(db: Session, post_ids: list[uuid.UUID]) -> dict[uuid.UUID, list]:
+    """Batch-fetch tags for multiple posts in one query (N+1 fix)."""
+    if not post_ids:
+        return {}
+    rows = (
+        db.query(models.CmsPostTag.post_id, models.CmsTag)
+        .join(models.CmsTag, models.CmsTag.id == models.CmsPostTag.tag_id)
+        .filter(models.CmsPostTag.post_id.in_(post_ids))
+        .all()
+    )
+    result: dict[uuid.UUID, list] = {pid: [] for pid in post_ids}
+    for post_id, tag in rows:
+        result[post_id].append(tag)
+    return result
 
 
 def get_public_cms_posts(

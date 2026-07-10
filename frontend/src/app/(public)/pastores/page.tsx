@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, Sparkles } from 'lucide-react';
 import RichText from "@/components/public/RichText";
 import { useCmsV2Page } from '@/hooks/useCmsV2Page';
 import PublicHeroWithSlides from '@/components/public/PublicHeroWithSlides';
+import { getPublicPastoralTeam, type PastoralProfile } from '@/lib/cms/v2';
+import { SITE_KEY } from '@/lib/site-config';
 
 import { sanitizeCmsHtml } from '@/lib/cms/sanitize';
 
@@ -27,14 +29,38 @@ export default function PastoresIndexPage() {
     const page = useCmsV2Page('pastors');
     const heroCms = page?.blocks?.hero;
     const feedCms = page?.blocks?.feed;
-    const pastorsCms = page?.blocks?.pastors;
 
     const heroContent = heroCms?.content ? JSON.parse(heroCms.content) : null;
     const feedContent = feedCms?.content ? JSON.parse(feedCms.content) : null;
+
+    // Fetch pastors from the pastoral-team API (source of truth)
+    const [apiPastors, setApiPastors] = useState<PastoralProfile[]>([]);
+    const [apiLoading, setApiLoading] = useState(true);
+    useEffect(() => {
+        getPublicPastoralTeam(SITE_KEY)
+            .then((data) => setApiPastors(Array.isArray(data) ? data : []))
+            .catch(() => setApiPastors([]))
+            .finally(() => setApiLoading(false));
+    }, []);
+
     const pastors = useMemo(() => {
+        // Use API data as source of truth; fall back to CMS block if API empty
+        if (apiPastors.length > 0) {
+            return apiPastors.map((p) => ({
+                id: p.id,
+                slug: p.slug,
+                name: p.name,
+                role: p.role ?? undefined,
+                photo_url: p.photo_url ?? undefined,
+                bio_short: p.bio_short ?? undefined,
+                is_main_pastor: p.is_main_pastor,
+            }));
+        }
+        // Fallback: read from CMS content block (legacy)
+        const pastorsCms = page?.blocks?.pastors;
         const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
         return Array.isArray(list) ? list : [];
-    }, [pastorsCms]);
+    }, [apiPastors, page]);
     const heroBadge = typeof feedContent?.hero_badge === "string" ? feedContent.hero_badge : "";
     const heroTitle = typeof heroContent?.title === "string" ? heroContent.title : "";
     const heroDescription = typeof heroContent?.description === "string" ? heroContent.description : "";
@@ -60,7 +86,7 @@ export default function PastoresIndexPage() {
 
             {/* ── Pastors Grid ── */}
             <section className="ccf-section ccf-container pt-[3cm]">
-                {!pastorsCms ? (
+                {apiLoading && !pastors.length ? (
                     <div className="flex items-center justify-center py-20">
                         <div className="w-8 h-8 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
                         <span className="sr-only">{loadingLabel}</span>
@@ -76,9 +102,9 @@ export default function PastoresIndexPage() {
                             {/* Image */}
                             <Link href={`/pastores/${pastor.slug}`} className="relative h-52 w-full bg-[hsl(var(--surface-2))] dark:bg-[#0a0c12] overflow-hidden block">
                                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-[hsl(var(--primary))/0.1] to-transparent pointer-events-none z-10" />
-                                {pastor.photo_url || pastor.image ? (
+                                {pastor.photo_url || (pastor as CmsPastor).image ? (
                                     <Image
-                                        src={pastor.photo_url || pastor.image || ""}
+                                        src={pastor.photo_url || (pastor as CmsPastor).image || ""}
                                         alt={pastor.name}
                                         fill
                                         className="object-cover object-top transition-transform duration-700 group-hover:scale-110"
@@ -107,7 +133,7 @@ export default function PastoresIndexPage() {
                             {/* Content */}
                             <div className="p-4 flex-1 flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117]">
                                 <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-3 flex-1 leading-relaxed line-clamp-3">
-                                    {pastor.bio_short || pastor.story || ''}
+                                    {pastor.bio_short || (pastor as CmsPastor).story || ''}
                                 </p>
 
                                 {/* CTA */}
