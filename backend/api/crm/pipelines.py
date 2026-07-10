@@ -9,8 +9,8 @@ from backend import models
 from backend.core.database import get_db
 from backend.core.permissions import require_pastor_or_admin
 from backend.core.tenant import require_user_sede_id
-from backend.crud import crm_pipeline
-from backend.schemas.crm_pipeline import (
+from backend.crud.crm_ import pipeline as crm_pipeline
+from backend.schemas.crm.pipeline import (
     PipelineCreate,
     PipelineResponse,
     PipelineStageCreate,

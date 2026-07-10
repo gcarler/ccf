@@ -14,14 +14,14 @@ from backend.core.permissions import require_module_access
 from backend.core.storage import storage_service
 from backend.core.uploads import ensure_allowed_extension, sanitize_filename
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_from_identity
-from backend.crud.crm_extended import (
+from backend.crud.crm_.extended import (
     create_crm_automation,
     delete_crm_automation,
     get_crm_automation,
     get_crm_automations,
     update_crm_automation,
 )
-from backend.crud.crm_resources import (
+from backend.crud.crm_.resources import (
     count_envios,
     create_adjunto,
     create_categoria,
@@ -40,14 +40,14 @@ from backend.crud.crm_resources import (
     update_estado_envio,
     update_plantilla,
 )
-from backend.schemas.crm_automation import (
+from backend.schemas.crm.automation import (
     AutomationTriggerPayload,
     AutomationTriggerResult,
     CrmAutomationCreate,
     CrmAutomationOut,
     CrmAutomationUpdate,
 )
-from backend.schemas.crm_resources import (
+from backend.schemas.crm.resources import (
     BitacoraEnvioOut,
     CampaignFromPlantillaPayload,
     CampaignResultOut,

@@ -351,9 +351,8 @@ class TestCMSAllFunctions:
     def test_all_list_functions(self, rich_data):
         from backend.crud import cms
         db = rich_data["db"]
-        _c(cms.list_page_contents, db)
-        _c(cms.get_page_content, db, "home")
-        _c(cms.list_content_publications, db)
+        # Legacy page_contents functions removed — CMS v2 uses CmsPage/CmsSection.
+        # list_cms_sites / get_cms_site_by_key exercise the same coverage path.
         _c(cms.list_cms_media_items, db)
         _c(cms.list_cms_sites, db)
         _c(cms.list_cms_sites, db, only_active=True)

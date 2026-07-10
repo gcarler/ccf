@@ -201,9 +201,10 @@ class TestCMSEveryFunction:
     def test_every_function(self, full):
         from backend.crud import cms
         db = full["db"]; aid = str(full["admin"].id)
-        _c(cms.list_page_contents, db); _c(cms.get_page_content, db, "home")
-        _c(cms.get_or_create_page_content, db, f"new_{uuid.uuid4().hex[:6]}")
-        _c(cms.list_content_publications, db); _c(cms.get_or_create_content_publication, db, "home")
+        # Legacy page_contents / content_publications removed — CMS v2 uses
+        # CmsPage CRUD (list_cms_pages, get_cms_page, create_cms_page, etc.)
+        _c(cms.list_cms_sites, db)
+        _c(cms.get_cms_site_by_key, db, "faro")
         _c(cms.list_cms_media_items, db); _c(cms.list_cms_media_items, db, query="t")
         _c(cms.list_cms_sites, db); _c(cms.list_cms_sites, db, only_active=True)
         site = db.execute(__import__("sqlalchemy").text("SELECT id FROM cms_sites LIMIT 1")).scalar()

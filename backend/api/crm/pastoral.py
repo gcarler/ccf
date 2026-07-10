@@ -741,7 +741,7 @@ def create_crm_task(
     # trazabilidad — Axioma 1 defense in depth). override también
     # cualquier `completed_at` enviado por el cliente (server-authoritative
     # timestamp).
-    from backend.schemas.crm import CrmTaskStatus
+    from backend.schemas.crm.base import CrmTaskStatus
 
     payload.completed_at = (
         utc_now() if payload.status == CrmTaskStatus.completed else None

@@ -44,13 +44,33 @@ def _ensure_persona(db, persona_id: Optional[_uuid.UUID] = None):
 
 
 def _ensure_sede(db, sede_id: Optional[_uuid.UUID] = None):
-    """Create a bare Sede if sede_id is not given."""
+    """Create a bare Sede if sede_id is not given.
+
+    Multi-tenant alignment with ``_ensure_project`` (quality-triage pass):
+    when *no* explicit ``sede_id`` is supplied, prefer reusing a Sede
+    that is already visible to the current SQLAlchemy session. This
+    keeps factory-produced projects aligned with the ``seed_admin``
+    helper in ``tests/conftest.py`` (which creates its own Sede +
+    Usuario + Persona), so calls like
+    ``create_project_factory(db_session)`` (no ``sede_id`` kwarg) land
+    on the same ``sede_id`` as the caller that will hit the API.
+    Without this reuse, every factory synth creation would spawn a
+    brand-new Sede whose ``id`` differs from the auth admin's
+    ``user.sede_id``, tripping the new scope guard in
+    :func:`backend.api.projects._ensure_project` and producing a 404.
+    """
     from backend import models as _models
 
     if sede_id:
         s = db.query(_models.Sede).filter(_models.Sede.id == sede_id).first()
         if s:
             return s
+    # Reuse ANY existing Sede visible in this session when one already
+    # exists — typical case: ``seed_admin`` already created the Sede.
+    if sede_id is None:
+        existing = db.query(_models.Sede).first()
+        if existing is not None:
+            return existing
     s = _models.Sede(
         id=sede_id or _uuid.uuid4(),
         nombre=f"Sede Factory {_short_id()}",

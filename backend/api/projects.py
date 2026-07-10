@@ -55,18 +55,26 @@ def list_all_my_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Obtiene todas las tareas asignadas al usuario actual de todos los proyectos."""
+    """Obtiene todas las tareas asignadas al usuario actual de todos los proyectos.
+
+    Axioma 3 — strict scope: solo se devuelven tareas de proyectos en la
+    ``sede_id`` del actor. Superadmin (sin sede) ve todo.
+    """
     persona_id = get_user_persona_id(db, current_user.id)
     if not persona_id:
         return []
-    tasks = (
+    user_sede = get_user_sede_id(db, current_user.id)
+    q = (
         db.query(models.ProjectTask)
+        .join(models.Project, models.Project.id == models.ProjectTask.project_id)
         .filter(
             models.ProjectTask.assignee_id == persona_id,
             models.ProjectTask.deleted_at.is_(None),
         )
-        .all()
     )
+    if user_sede:
+        q = q.filter(models.Project.sede_id == user_sede)
+    tasks = q.all()
     for t in tasks:
         _normalize_dates(t)
     return tasks
@@ -555,12 +563,17 @@ def portfolio_summary(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Resumen de portafolio agrupado por estatus de proyecto."""
+    """Resumen de portafolio agrupado por estatus de proyecto.
+
+    Axioma 3 — strict scope: solo se agregan proyectos en la ``sede_id``
+    del actor. Superadmin (sin sede) ve todo.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
     done_case = func.coalesce(func.sum(cast(models.ProjectTask.status == "completed", Integer)), 0).label(
         "completed_tasks"
     )
 
-    rows = (
+    q = (
         db.query(
             models.Project.status,
             func.count(models.Project.id).label("total_projects"),
@@ -568,9 +581,11 @@ def portfolio_summary(
             done_case,
         )
         .outerjoin(models.ProjectTask, models.ProjectTask.project_id == models.Project.id)
-        .group_by(models.Project.status)
-        .all()
+        .filter(models.Project.deleted_at.is_(None))
     )
+    if user_sede:
+        q = q.filter(models.Project.sede_id == user_sede)
+    rows = q.group_by(models.Project.status).all()
 
     return [
         schemas.ProjectPortfolioSummaryRow(
@@ -826,23 +841,37 @@ def list_inbox(
             .all()
         )
 
-    for comment, project in unread_comments:
-        state = (
-            db.query(models.ProjectInboxState)
-            .filter(
+    # ── Batch-fetch authors + inbox states (N+1 fix) ──
+    comment_author_ids = {c.author_id for c, _ in unread_comments if c.author_id}
+    comment_item_ids = {f"comment-{c.id}" for c, _ in unread_comments}
+    authors_map: dict = {}
+    if comment_author_ids:
+        authors_map = {
+            p.id: _author_name(p)
+            for p in db.query(models.Persona).filter(models.Persona.id.in_(comment_author_ids)).all()
+        }
+    inbox_states_map: dict = {}
+    if comment_item_ids and persona_id:
+        inbox_states_map = {
+            s.item_id: s.is_read
+            for s in db.query(models.ProjectInboxState).filter(
                 models.ProjectInboxState.persona_id == persona_id,
-                models.ProjectInboxState.item_id == f"comment-{comment.id}",
-            )
-            .first()
-        )
-        is_read = state.is_read if state else False
+                models.ProjectInboxState.item_id.in_(comment_item_ids),
+            ).all()
+        }
 
-        author = db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()
+    for comment, project in unread_comments:
+        item_id = f"comment-{comment.id}"
+        is_read = inbox_states_map.get(item_id, False)
+
+    for comment, project in unread_comments:
+        item_id = f"comment-{comment.id}"
+        is_read = inbox_states_map.get(item_id, False)
         inbox_items.append(
             schemas.ProjectInboxItem(
-                id=f"comment-{comment.id}",
+                id=item_id,
                 type="comment",
-                user=_author_name(author),
+                user=authors_map.get(comment.author_id, "Usuario"),
                 content=comment.content[:120],
                 project=project.title,
                 project_id=str(project.id) if project.id is not None else None,
@@ -877,22 +906,27 @@ def list_inbox(
             .all()
         )
 
-    for task, project in assigned_tasks:
-        state = (
-            db.query(models.ProjectInboxState)
-            .filter(
+    # ── Batch-fetch inbox states for task items (N+1 fix) ──
+    task_item_ids = {f"task-{t.id}" for t, _ in assigned_tasks}
+    task_inbox_states_map: dict = {}
+    if task_item_ids and persona_id:
+        task_inbox_states_map = {
+            s.item_id: s.is_read
+            for s in db.query(models.ProjectInboxState).filter(
                 models.ProjectInboxState.persona_id == persona_id,
-                models.ProjectInboxState.item_id == f"task-{task.id}",
-            )
-            .first()
-        )
-        is_read = state.is_read if state else False
+                models.ProjectInboxState.item_id.in_(task_item_ids),
+            ).all()
+        }
+
+    for task, project in assigned_tasks:
+        item_id = f"task-{task.id}"
+        is_read = task_inbox_states_map.get(item_id, False)
         project_owner_name = (
             _author_name(project.owner) if project and getattr(project, "owner", None) else "Equipo"
         )
         inbox_items.append(
             schemas.ProjectInboxItem(
-                id=f"task-{task.id}",
+                id=item_id,
                 type="task_assigned",
                 user=project_owner_name,
                 content=f"Tarea asignada: {task.title}",
@@ -1448,8 +1482,8 @@ def create_project_comment(
     _ensure_project(db, project_id, user_sede=user_sede)
     author_persona_id = get_user_persona_id(db, current_user.id)
     comment = models.ProjectComment(
-        project_id=project_id,
-        task_id=payload.task_id,
+        project_id=_to_uuid(project_id),
+        task_id=_to_uuid(payload.task_id) if payload.task_id else None,
         author_id=author_persona_id,
         content=payload.content,
     )

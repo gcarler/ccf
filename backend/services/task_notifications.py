@@ -8,7 +8,16 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud.crm import resolve_persona_id_for_user
-from backend.services.email import render_task_assignment_email, send_email
+# Import the email MODULE (not the function name) so test suites can
+# `monkeypatch.setattr(backend.services.email, "send_email", _stub)`
+# and have the patch reach this caller. If we did
+# `from backend.services.email import send_email`, the import would bind
+# the function into our module's globals and the monkeypatch on the
+# source module would not affect us — that's the classic Python
+# mock-pitfall. Keep the function name on this side via module
+# attribute access (``email_svc.send_email``).
+from backend.services import email as email_svc
+from backend.services.email import render_task_assignment_email
 
 logger = logging.getLogger(__name__)
 
@@ -38,19 +47,27 @@ def notify_task_assigned(
     """Create the audit + notification trail for a task assignment and dispatch the
     email — all in **one atomic transaction**.
 
-    Atomicity contract (Sprint 1 — PR 1.2):
+    Atomicity contract (Sprint 1 — quality-triage pass):
 
-    * Activity log + NotificacionUsuario + CommunicationLog are staged in a single
-      ``try`` block.
-    * A single ``db.commit()`` at the end flushes the whole batch.
+    * Activity log + CommunicationLog are staged in a single ``try``
+      block, and the in-app ``NotificacionUsuario`` is staged **after**
+      the email's outcome is known.
+    * When ``send_email`` returns ``False``, the
+      ``NotificacionUsuario`` is **NOT** added; the
+      ``CommunicationLog(outcome="email_failed")`` audit row is the sole
+      artifact. This is the pivotal fix for the orphan notif pattern:
+      before, the notification was added unconditionally then committed
+      even when the email failed, leaving a phantom inbox entry with no
+      auditable delivery state.
+    * A single ``db.commit()`` at the end flushes the agreed batch.
     * Any exception (validation, SMTP failure, transient error) trips
-      ``db.rollback()`` so we NEVER leave an orphan ``NotificacionUsuario`` row
-      behind. The pre-fix code used two commits: activity+notification were
-      flushed first, then email was attempted. On email failure the second
-      commit didn't happen but the first had already leaked the notification.
+      ``db.rollback()`` so we NEVER leave an orphan batch behind. The
+      pre-fix code used a 2-stage commit that detached the notification
+      from the audit, violating defense-in-depth.
 
-    Returns ``True`` when the audit + email path completed; ``False`` when the
-    transaction was rolled back.
+    Returns ``True`` when the audit (+ optional notification + email)
+    path completed; ``False`` when the transaction was rolled back or no
+    email was sent and the audit row's outcome is ``no_email``.
     """
     assignee = (
         db.query(models.Persona)
@@ -109,7 +126,57 @@ def notify_task_assigned(
             )
         )
 
-        if recipient_id:
+        # Decide outcome FIRST; only stage NotificacionUsuario when the
+        # email path succeeded (or when there is no email to send). The
+        # CommunicationLog audit row is staged in every legal leaf state
+        # to keep the trail truthful.
+        if not getattr(assignee, "email", None):
+            db.add(
+                models.CommunicationLog(
+                    persona_id=assignee.id,
+                    channel="Email",
+                    campaign_name="Asignación de tarea",
+                    content=notification_content,
+                    leader_id=assigned_by_persona_id,
+                    outcome="no_email",
+                )
+            )
+            # No inbox notification when there's no email channel — the
+            # assignee wouldn't have a way to learn about the assignment.
+            db.commit()
+            logger.info(
+                "Task assignment logged without email: %s", task.id,
+            )
+            return True
+
+        subject, html, text = render_task_assignment_email(
+            task_title=task.title,
+            task_url=task_url,
+            project_title=project_title,
+            assignee_name=assignee_name,
+            assigned_by_name=sender_name,
+            priority=getattr(task, "priority", None),
+            due_date=due_text,
+            description=description,
+        )
+        sent = email_svc.send_email(to=assignee.email, subject=subject, html=html, text=text)
+        outcome = "email_sent" if sent else "email_failed"
+        db.add(
+            models.CommunicationLog(
+                persona_id=assignee.id,
+                channel="Email",
+                campaign_name="Asignación de tarea",
+                content=text,
+                leader_id=assigned_by_persona_id,
+                outcome=outcome,
+            )
+        )
+        # Stage the inbox notification ONLY when the email succeeded.
+        # This is the pivotal atomicity contract: send_email=False ⇒ NO
+        # NotificacionUsuario (the audit row's outcome="email_failed" is
+        # the source of truth). Pre-fix: an orphan notification was left
+        # in the inbox even when the mail never went out.
+        if sent and recipient_id:
             existing = (
                 db.query(models.NotificacionUsuario)
                 .filter(
@@ -130,50 +197,8 @@ def notify_task_assigned(
                     )
                 )
 
-        # Decide outcome, attach the CommunicationLog audit row, then commit
-        # exactly once. Branches here are the three legal leaf states of a
-        # task assignment; the absence of any return until after the commit
-        # is what makes the operation atomic.
-        if not getattr(assignee, "email", None):
-            db.add(
-                models.CommunicationLog(
-                    persona_id=assignee.id,
-                    channel="Email",
-                    campaign_name="Asignación de tarea",
-                    content=notification_content,
-                    leader_id=assigned_by_persona_id,
-                    outcome="no_email",
-                )
-            )
-            db.commit()
-            logger.info(
-                "Task assignment logged without email: %s", task.id,
-            )
-            return True
-
-        subject, html, text = render_task_assignment_email(
-            task_title=task.title,
-            task_url=task_url,
-            project_title=project_title,
-            assignee_name=assignee_name,
-            assigned_by_name=sender_name,
-            priority=getattr(task, "priority", None),
-            due_date=due_text,
-            description=description,
-        )
-        sent = send_email(to=assignee.email, subject=subject, html=html, text=text)
-        outcome = "email_sent" if sent else "email_failed"
-        db.add(
-            models.CommunicationLog(
-                persona_id=assignee.id,
-                channel="Email",
-                campaign_name="Asignación de tarea",
-                content=text,
-                leader_id=assigned_by_persona_id,
-                outcome=outcome,
-            )
-        )
-        # Single atomic commit for activity log + notification + audit row
+        # Single atomic commit for activity log + audit row (+ optional
+        # inbox notification when the email succeeded).
         db.commit()
         if not sent:
             # Outcome already recorded; surface observability without raising
@@ -186,7 +211,7 @@ def notify_task_assigned(
     except Exception as exc:
         # Atomic rollback: drops the entire batch so we never persist a row
         # without its accompanying audit log. This is the pivotal Sprint 1
-        # PR 1.2 contract that fixes the orphan-NotificacionUsuario pattern.
+        # contract that fixes the orphan-NotificacionUsuario pattern.
         db.rollback()
         logger.exception(
             "notify_task_assigned failed; rolled back atomic transaction: "

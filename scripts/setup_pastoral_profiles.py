@@ -35,8 +35,8 @@ def utcnow():
     return datetime.now(timezone.utc)
 
 
-YANEDITH_PHOTO = "/images/pastores/yanedith_wilches.webp"
-MARTINA_PHOTO = "/images/pastores/martina_herrera.webp"
+YANEDITH_PHOTO = "/api/static/cms/pastores/dec6d24cdea242d5b73630408b14111b.webp"
+MARTINA_PHOTO = "/api/static/cms/pastores/f1233104623743879e328ffdd94abee5.webp"
 
 
 def main():

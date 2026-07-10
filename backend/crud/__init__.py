@@ -11,7 +11,7 @@ This package re-exports only symbols consumed via ``from backend import crud``
 # ── Sub-modules accessed directly (kernel, agenda, pipeline, test aliases) ──
 from backend.crud import (
     agenda,  # noqa: F401
-    crm_pipeline,  # noqa: F401
+
     kernel,  # noqa: F401
 )
 
@@ -144,7 +144,7 @@ from backend.crud.crm import (
 )
 
 # ── CRM Extended — chat / conversations ────────────────────────────────────
-from backend.crud.crm_extended import (
+from backend.crud.crm_.extended import (
     create_conversation,
     create_direct_message,
     get_conversation_messages,
@@ -180,6 +180,7 @@ from backend.crud.projects import (
     create_activity_log,
     create_default_phases,
     create_project,
+    get_project,  # Axiom 3 defense-in-depth: single-record scope filter
     get_project_phases,
     get_projects,
     set_project_phases,

@@ -45,7 +45,7 @@ class StorageService:
             f.write(optimized)
 
         log.info(f"File saved: {full_path}  ({len(optimized)} bytes)")
-        return f"/static/{subfolder}/{unique_name}"
+        return f"/api/static/{subfolder}/{unique_name}"
 
     def save_file_original(
         self, content: bytes, filename: str, subfolder: str = "general"
@@ -67,7 +67,7 @@ class StorageService:
             f.write(content)
 
         log.info(f"File saved (original): {full_path}")
-        return f"/static/{subfolder}/{unique_name}"
+        return f"/api/static/{subfolder}/{unique_name}"
 
     def delete_file(self, file_path: str):
         # Implementation for cleanup if needed

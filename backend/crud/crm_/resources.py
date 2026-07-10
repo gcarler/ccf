@@ -15,7 +15,7 @@ from backend.models_crm import (
     PlantillaMensaje,
     RecursoAdjunto,
 )
-from backend.schemas.crm_resources import (
+from backend.schemas.crm.resources import (
     CategoriaRecursoCreate,
     CategoriaRecursoUpdate,
     PlantillaMensajeCreate,

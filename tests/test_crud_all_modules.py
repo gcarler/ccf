@@ -267,28 +267,34 @@ class TestCMSMedia:
         assert result is True
 
 
-class TestCMSPublication:
-    def test_get_or_create_publication(self, db_session):
-        from backend.crud.cms import get_or_create_content_publication
-        pub = get_or_create_content_publication(db_session, "test-page")
-        assert pub is not None
+# Legacy page_contents / content_publications functions were removed during
+# the CMS v2 migration. CmsPage, CmsSection and CmsPublishLog are the
+# canonical replacements. The test classes below exercise the v2 CRUD
+# equivalents (list_cms_publish_logs, list_cms_pages, create_cms_page).
 
-    def test_list_publications(self, db_session):
-        from backend.crud.cms import list_content_publications
-        result = list_content_publications(db_session)
-        assert isinstance(result, list)
+
+class TestCMSPublication:
+    def test_list_publish_logs(self, db_session):
+        from backend.crud.cms import list_cms_publish_logs
+        site = _site_id(db_session)
+        items, total = list_cms_publish_logs(db_session, site)
+        assert isinstance(items, list)
+        assert isinstance(total, int)
 
 
 class TestCMSPageContent:
-    def test_get_or_create_content(self, db_session):
-        from backend.crud.cms import get_or_create_page_content
-        content = get_or_create_page_content(db_session, "home")
-        assert content is not None
-
-    def test_list_contents(self, db_session):
-        from backend.crud.cms import list_page_contents
-        result = list_page_contents(db_session)
-        assert isinstance(result, list)
+    def test_create_and_list_pages(self, db_session):
+        from backend.crud.cms import create_cms_page, list_cms_pages
+        from backend.schemas.cms import CmsPageCreate
+        site = _site_id(db_session)
+        page = create_cms_page(
+            db_session, site,
+            CmsPageCreate(slug=f"pc_{uuid.uuid4().hex[:6]}", title="Test", status="draft"),
+            user_id=None,
+        )
+        assert page is not None
+        items, total = list_cms_pages(db_session, site_id=site)
+        assert isinstance(items, list)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -442,22 +448,22 @@ class TestProjects:
 
 class TestCRMExtended:
     def test_get_positions(self, db_session):
-        from backend.crud.crm_extended import get_positions
+        from backend.crud.crm_.extended import get_positions
         result = get_positions(db_session)
         assert isinstance(result, list)
 
     def test_create_position(self, db_session):
-        from backend.crud.crm_extended import PositionCreate, create_position
+        from backend.crud.crm_.extended import PositionCreate, create_position
         pos = create_position(db_session, PositionCreate(name=f"Pos {uuid.uuid4().hex[:6]}"))
         assert pos is not None
 
     def test_get_ministries(self, db_session):
-        from backend.crud.crm_extended import get_ministries
+        from backend.crud.crm_.extended import get_ministries
         result = get_ministries(db_session)
         assert isinstance(result, list)
 
     def test_create_ministry(self, db_session):
-        from backend.crud.crm_extended import MinistryCreate, create_ministry
+        from backend.crud.crm_.extended import MinistryCreate, create_ministry
 
         ministry = create_ministry(
             db_session,
@@ -470,37 +476,37 @@ class TestCRMExtended:
         assert ministry.name.startswith("M_")
 
     def test_get_persona_positions(self, db_session):
-        from backend.crud.crm_extended import get_persona_positions
+        from backend.crud.crm_.extended import get_persona_positions
         result = get_persona_positions(db_session)
         assert isinstance(result, list)
 
     def test_get_persona_ministry_assignments(self, db_session):
-        from backend.crud.crm_extended import get_persona_ministry_assignments
+        from backend.crud.crm_.extended import get_persona_ministry_assignments
         result = get_persona_ministry_assignments(db_session)
         assert isinstance(result, list)
 
     def test_get_role_definitions(self, db_session):
-        from backend.crud.crm_extended import get_role_definitions
+        from backend.crud.crm_.extended import get_role_definitions
         result = get_role_definitions(db_session)
         assert isinstance(result, list)
 
     def test_get_crm_automations(self, db_session):
-        from backend.crud.crm_extended import get_crm_automations
+        from backend.crud.crm_.extended import get_crm_automations
         result = get_crm_automations(db_session)
         assert isinstance(result, list)
 
     def test_get_funds(self, db_session):
-        from backend.crud.crm_extended import get_funds
+        from backend.crud.crm_.extended import get_funds
         result = get_funds(db_session)
         assert isinstance(result, list)
 
     def test_get_persona_role_links(self, db_session):
-        from backend.crud.crm_extended import get_persona_role_links
+        from backend.crud.crm_.extended import get_persona_role_links
         result = get_persona_role_links(db_session)
         assert isinstance(result, list)
 
     def test_get_event_assignments(self, db_session):
-        from backend.crud.crm_extended import get_event_assignments
+        from backend.crud.crm_.extended import get_event_assignments
         result = get_event_assignments(db_session)
         assert isinstance(result, list)
 

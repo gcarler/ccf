@@ -85,8 +85,14 @@ def test_flujo_estrategia_triple7_geografica_relacional_semanal(client, db_sessi
         assert detail["base_attendee_ids"] == [str(persona.id) for persona in group_personas]
         assert len(detail["base_attendees"]) == 10
 
+    # Quality fix (R3 — riesgo residual audit): el endpoint ofrece un query
+    # param ``habilitar_inmediatamente``. La regresion histórica
+    # ``bloqueada → habilitar → reportar`` exige que las sesiones nazcan
+    # ``DESHABILITADO`` para validar que el endpoint de asistencia respeta
+    # la regla de bloqueo. Por eso este caso opta por False.
     generate_response = client.post(
         f"/api/evangelism/strategies/{strategy['id']}/generate-sessions",
+        params={"habilitar_inmediatamente": False},
         headers=headers,
     )
     assert generate_response.status_code == 200, generate_response.text
@@ -94,6 +100,8 @@ def test_flujo_estrategia_triple7_geografica_relacional_semanal(client, db_sessi
     assert generated["groups"] == 4
     assert generated["sessions_per_group"] == 4
     assert generated["total_sessions_created"] == 16
+    assert generated["habilitar_inmediatamente"] is False
+    assert generated["sesiones_habilitadas"] == 0
 
     sessions_response = client.get(
         "/api/evangelism/sessions",

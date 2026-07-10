@@ -93,7 +93,11 @@ const MODULE_CONFIG: Record<string, { label: string; icon: LucideIcon; color: st
 
 // ─── Helpers ───────────────────────────────────────────────────────
 
-/* unused getIcon removed */
+// ─── SEO score trend widget (CMS module only) ─────────────────────────
+
+import { SeoTrendCard, type SeoTrendResponse } from '@/components/SeoTrendCard';
+
+
 function fmtNum(n: number) {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
     if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
@@ -470,6 +474,15 @@ export default function DashboardShell({
                                     tone={(card.tone as any) || 'blue'}
                                 />
                             ))}
+                        </motion.div>
+                    )}
+
+                    {/* ── CMS SEO score trend widget (data-driven; rendered
+                        whenever the dashboard payload includes seo_trend
+                        with has_data=true) ───────────────────────── */}
+                    {data.seo_trend?.has_data && (
+                        <motion.div variants={itemVariants}>
+                            <SeoTrendCard trend={data.seo_trend as SeoTrendResponse} />
                         </motion.div>
                     )}
 

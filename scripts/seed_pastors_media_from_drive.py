@@ -2,18 +2,19 @@
 from __future__ import annotations
 # ruff: noqa: I001
 
-"""Import public pastor photos from a Google Drive folder into CMS/public storage.
+"""Import public pastor photos from a Google Drive folder into CMS media library.
 
-The public pastores page consumes CMS page sections, so the correct workflow is:
+The public pastores page consumes CMS page sections, so the workflow is:
 
 1. Download the Drive images.
-2. Store them under the backend static uploads directory.
-3. Update the published CMS `pastors` page so each pastor points at the
-   project-hosted asset URL.
+2. Save them through StorageService into ``uploads/cms/pastores/`` and register
+   each one as a ``CmsMediaItem`` (Axioma 3: with sede_id and created_by_persona_id).
+3. Update the published CMS ``pastors`` page so each pastor points at the
+   CMS-hosted asset URL.
 4. Re-publish the page so the public snapshot stays in sync.
 
-This script is idempotent. If a file already exists and the CMS image URL is
-already correct, rerunning it is a no-op.
+This script is idempotent. If a Drive file has already been downloaded and the
+CMS image URL is already correct, rerunning it is a no-op.
 """
 
 import json
@@ -31,17 +32,15 @@ if _PROJECT_ROOT is None:
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from backend import models  # noqa: E402
+from backend import crud, models  # noqa: E402
 from backend.core.database import SessionLocal  # noqa: E402
-from backend.core.config import get_settings  # noqa: E402
+from backend.core.storage import storage_service  # noqa: E402
 
 
 FOLDER_ID = "1Hq9fUDEbyBHoCz_DPnoYNX1fKyhIBpOi"
 SITE_KEY = "ccf"
 PAGE_SLUG = "pastors"
 UPLOAD_SUBDIR = "cms/pastores"
-PUBLIC_SUBDIR = "images/pastores"
-
 
 TARGET_FILES = {
     "luis-ricardo-meza": ["PASTOR LUIS RICARDO MEZA.jpg", "PASTOR  LUIS RICARDO MEZA.jpg"],
@@ -55,6 +54,23 @@ TARGET_FILES = {
     "fernando-y-monica": ["PASTORES MONICA Y FERNANDO.jpg"],
     "pastors-banner": ["PASTORES LUIS RICARDO E HISTAR.jpg"],
 }
+
+
+def _find_admin_user(db) -> models.Usuario:
+    user = (
+        db.query(models.Usuario)
+        .filter(models.Usuario.email == "gscarlosernesto@gmail.com")
+        .first()
+    )
+    if user is None:
+        user = (
+            db.query(models.Usuario)
+            .filter(models.Usuario.is_active.is_(True), models.Usuario.sede_id.isnot(None))
+            .first()
+        )
+    if user is None:
+        raise RuntimeError("No active admin/user with sede found to own CMS media items")
+    return user
 
 
 def _download_folder_index(folder_id: str) -> str:
@@ -91,52 +107,71 @@ def _download_drive_file(file_id: str) -> tuple[bytes, str]:
     return resp.content, content_type
 
 
-def _slug_to_filename(slug: str, original_name: str) -> str:
-    suffix = Path(original_name).suffix.lower() or ".jpg"
-    if suffix not in {".jpg", ".jpeg", ".png", ".webp", ".gif"}:
-        suffix = ".jpg"
-    return f"{slug}{suffix}"
+def _ensure_cms_media(db, user: models.Usuario, slug: str, content: bytes, original_name: str) -> str:
+    """Save image via StorageService and register/return the public CMS URL."""
+    public_path = storage_service.save_file(content, original_name, subfolder=UPLOAD_SUBDIR)
+    # StorageService returns ``/static/{subfolder}/{name}`` \u2014 the path
+    # WITHIN the static mount. The app mounts StaticFiles at
+    # ``/api/static`` (see ``backend/app.py``: ``app.mount("/api/static", ...)``),
+    # so the public URL is the mount path + the storage path's tail. A naive
+    # ``f"/api/static{public_path}"`` would produce
+    # ``/api/static/static/cms/pastores/<uuid>.webp`` (DOUBLE static) and
+    # the live endpoint would 500 on the wrong URL. Strip the leading
+    # ``/static/`` so the public URL is canonical.
+    if public_path.startswith("/static/"):
+        relative = public_path[len("/static/"):]
+    else:
+        relative = public_path.lstrip("/")
+    public_url = f"/api/static/{relative}"
 
-
-def _public_url(filename: str) -> str:
-    return f"/images/pastores/{filename}"
-
-
-def _ensure_local_file(path: Path, content: bytes) -> bool:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if path.exists() and path.read_bytes() == content:
-        return False
-    path.write_bytes(content)
-    return True
+    existing = (
+        db.query(models.CmsMediaItem)
+        .filter(models.CmsMediaItem.url == public_url)
+        .first()
+    )
+    if existing is None:
+        crud.create_cms_media_item(
+            db,
+            url=public_url,
+            alt_text=slug.replace("-", " ").replace("_", " ").title(),
+            section="pastores",
+            tags=["public-site", "drive-import", slug],
+            created_by=user.id,
+            filename=Path(original_name).name,
+            mime_type="image/webp",
+            file_size=len(content),
+            actor_user_id=user.id,
+        )
+    return public_url
 
 
 def main() -> int:
     folder_html = _download_folder_index(FOLDER_ID)
     folder_files = _extract_files(folder_html)
 
-    settings = get_settings()
-    uploads_root = Path(settings.uploads_dir)
-    public_root = _PROJECT_ROOT / "frontend" / "public"
     photo_urls: dict[str, str] = {}
-
     downloaded = 0
-    for slug, candidates in TARGET_FILES.items():
-        file_id = next((folder_files[_normalize_name(name)] for name in candidates if _normalize_name(name) in folder_files), None)
-        if not file_id:
-            raise RuntimeError(f"Could not find a Drive file for {slug!r}")
-
-        content, _content_type = _download_drive_file(file_id)
-        original_name = candidates[0]
-        filename = _slug_to_filename(slug, original_name)
-        local_upload_path = uploads_root / UPLOAD_SUBDIR / filename
-        local_public_path = public_root / PUBLIC_SUBDIR / filename
-        changed_upload = _ensure_local_file(local_upload_path, content)
-        changed_public = _ensure_local_file(local_public_path, content)
-        if changed_upload or changed_public:
-            downloaded += 1
-        photo_urls[slug] = _public_url(filename)
 
     with SessionLocal() as db:
+        user = _find_admin_user(db)
+
+        for slug, candidates in TARGET_FILES.items():
+            file_id = next(
+                (folder_files[_normalize_name(name)] for name in candidates if _normalize_name(name) in folder_files),
+                None,
+            )
+            if not file_id:
+                raise RuntimeError(f"Could not find a Drive file for {slug!r}")
+
+            content, _content_type = _download_drive_file(file_id)
+            original_name = candidates[0]
+            public_url = _ensure_cms_media(db, user, slug, content, original_name)
+
+            # Idempotency: count as downloaded only if this exact URL is new.
+            if photo_urls.get(slug) != public_url:
+                downloaded += 1
+            photo_urls[slug] = public_url
+
         site = db.query(models.CmsSite).filter(models.CmsSite.site_key == SITE_KEY).first()
         if site is None:
             raise RuntimeError(f"CMS site {SITE_KEY!r} not found")
@@ -216,8 +251,6 @@ def main() -> int:
             }
             for s in sections
         ]
-        # Use SQL directly to keep the script self-contained and avoid coupling
-        # to CRUD helpers that expect authenticated users.
         version_number = db.execute(
             text("SELECT COALESCE(MAX(version_number), 0) + 1 FROM cms_page_versions WHERE page_id = :page_id"),
             {"page_id": page.id},

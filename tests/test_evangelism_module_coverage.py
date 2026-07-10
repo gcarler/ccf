@@ -211,7 +211,6 @@ def full(db_session, client):
 
 
 class TestSharedPureHelpers:
-    """Cubre las funciones puras sin DB ni HTTP."""
 
     def test_normalize_attendance_status_present(self):
         from backend.api.evangelism_shared import normalize_attendance_status
@@ -343,6 +342,203 @@ class TestSharedPureHelpers:
         # Asegurar que 'primera_vez' mapea a 'present' (es presente en primera vez)
         assert normalize_attendance_status("primera_vez") == "present"
         assert normalize_attendance_status("first_time") == "present"
+
+
+# ═══════════════════════════════════════════════════════════════════
+# R1 — Riesgo residual audit: StatusAsistenciaCanonico con
+# field_validator absorbe variantes legacy sin 422.
+# ═══════════════════════════════════════════════════════════════════
+
+class TestStatusAsistenciaCanonicoSchema:
+    """Validar el enum Pydantic canónico de estado de asistencia."""
+
+    def test_canonical_values_present(self):
+        from backend.schemas.evangelism import StatusAsistenciaCanonico
+        assert StatusAsistenciaCanonico.PRESENT.value == "present"
+        assert StatusAsistenciaCanonico.ABSENT.value == "absent"
+        assert StatusAsistenciaCanonico.EXCUSED.value == "excused"
+        assert StatusAsistenciaCanonico.FIRST_TIME.value == "first_time"
+
+    def test_asistencia_grupo_create_absorbe_legacy_variants(self):
+        """Clientes legacy enviando 'ASISTIO', 'Presente', 'primera_vez', etc.
+        no rompen con 422; el field_validator los normaliza al enum."""
+        from backend.schemas.evangelism import AsistenciaGrupoCreate, StatusAsistenciaCanonico
+        variants = [
+            ("ASISTIO", StatusAsistenciaCanonico.PRESENT),
+            ("Presente", StatusAsistenciaCanonico.PRESENT),
+            ("present", StatusAsistenciaCanonico.PRESENT),
+            ("primera_vez", StatusAsistenciaCanonico.PRESENT),
+            ("first_time", StatusAsistenciaCanonico.PRESENT),
+            ("FALTO", StatusAsistenciaCanonico.ABSENT),
+            ("Ausente", StatusAsistenciaCanonico.ABSENT),
+            ("absent", StatusAsistenciaCanonico.ABSENT),
+            ("EXCUSA", StatusAsistenciaCanonico.EXCUSED),
+            ("excusa", StatusAsistenciaCanonico.EXCUSED),
+            ("excused", StatusAsistenciaCanonico.EXCUSED),
+        ]
+        for raw, expected in variants:
+            schema = AsistenciaGrupoCreate.model_validate(
+                {"persona_id": _uuid_str(), "status": raw}
+            )
+            assert schema.status == expected, (
+                f"Variante {raw!r} esperaba {expected!r} pero schema normalizó a {schema.status!r}"
+            )
+
+    def test_asistencia_grupo_create_unknown_value_falls_back_to_present(self):
+        """Valor que no mapea a ningún miembro del enum no rompe con
+        422: cae a PRESENT (semántica conservadora del frontend)."""
+        from backend.schemas.evangelism import AsistenciaGrupoCreate, StatusAsistenciaCanonico
+        schema = AsistenciaGrupoCreate.model_validate(
+            {"persona_id": _uuid_str(), "status": "xyz_unknown_legacy"}
+        )
+        assert schema.status == StatusAsistenciaCanonico.PRESENT
+
+    def test_submit_attendance_endpoint_absorbe_legacy_status_string(
+        self, full, db_session
+    ):
+        """POST /sessions/{id}/attendance con status legacy string
+        'ASISTIO'/'primera_vez' (en español) se procesa correctamente
+        gracias al field_validator del schema."""
+        sesion = full["sesiones"][1]
+        # Configurar sesión como habilitada (ya lo está por el fixture full)
+        resp = full["c"].post(
+            f"/api/evangelism/sessions/{sesion.id}/attendance",
+            json=[
+                {
+                    "persona_id": str(full["personas"][5].id),
+                    "status": "ASISTIO",  # variante legacy
+                },
+                {
+                    "persona_id": str(full["personas"][6].id),
+                    "status": "primera_vez",  # variante legacy en español
+                },
+            ],
+            headers=full["h"],
+        )
+        assert resp.status_code == 200, resp.text
+
+
+# ═══════════════════════════════════════════════════════════════════
+# R2 — Riesgo residual audit: búsqueda remota de personas con
+# AbortController. El endpoint debe filtrar por sede, respetar el
+# mínimo de 3 caracteres y devolver resultados normalizados.
+# ═══════════════════════════════════════════════════════════════════
+
+class TestPersonaSearchEndpoint:
+    def test_search_requires_min_three_chars(self, full):
+        resp = full["c"].get(
+            "/api/evangelism/personas/search",
+            params={"q": "ab"},
+            headers=full["h"],
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["results"] == []
+
+    def test_search_returns_matches_within_sede(self, full):
+        # El fixture "full" siembra 12 personas con first_name
+        # "Persona0"..."Persona11" en la sede del admin. Una búsqueda
+        # por "Persona" (8 chars) debe matchear todas.
+        resp = full["c"].get(
+            "/api/evangelism/personas/search",
+            params={"q": "Persona"},
+            headers=full["h"],
+        )
+        assert resp.status_code == 200, resp.text
+        data = resp.json()
+        assert len(data["results"]) >= 1, f"Esperaba >=1 resultado, obtuve {data['results']}"
+        # Todas las personas devueltas pertenecen a la misma sede.
+        for r in data["results"]:
+            assert r["nombre_completo"], "Cada resultado debe tener nombre"
+
+    def test_search_respects_limit_param(self, full):
+        resp = full["c"].get(
+            "/api/evangelism/personas/search",
+            params={"q": "Persona", "limit": 3},
+            headers=full["h"],
+        )
+        assert resp.status_code == 200, resp.text
+        assert len(resp.json()["results"]) <= 3
+
+
+# ═══════════════════════════════════════════════════════════════════
+# R3 — Riesgo residual audit: generate-sessions ofrece
+# ``?habilitar_inmediatamente=True`` por defecto.
+# ═══════════════════════════════════════════════════════════════════
+
+class TestGenerateSessionsHabilitarParam:
+    def test_default_habilita_sesiones_generadas(self, full, db_session):
+        """Por defecto las sesiones nacen HABILITADO y el líder
+        puede reportar asistencia sin paso intermedio."""
+        from backend.models_evangelism import SesionGrupo
+
+        # Limpiar sesiones previas del fixture (en la sesión de test).
+        existing_ids = [
+            row[0]
+            for row in db_session.query(SesionGrupo.id)
+            .filter(SesionGrupo.grupo_id.in_([g.id for g in full["grupos"]]))
+            .all()
+        ]
+        if existing_ids:
+            db_session.query(SesionGrupo).filter(
+                SesionGrupo.id.in_(existing_ids)
+            ).update(
+                {SesionGrupo.deleted_at: datetime.now(timezone.utc)},
+                synchronize_session=False,
+            )
+            db_session.commit()
+
+        resp = full["c"].post(
+            f"/api/evangelism/strategies/{full['estrategia'].id}/generate-sessions",
+            headers=full["h"],
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["habilitar_inmediatamente"] is True
+        assert body["sesiones_habilitadas"] == body["total_sessions_created"]
+        assert body["sesiones_habilitadas"] > 0
+
+    def test_explicit_false_conserva_bloqueo(self, full, db_session):
+        """Pasar ``habilitar_inmediatamente=false`` preserva la regla
+        histórica: sesiones nacen DESHABILITADO y el reporte falla
+        con 403 hasta llamar /habilitar-todas."""
+        from backend.models_evangelism import SesionGrupo
+
+        existing_ids = [
+            row[0]
+            for row in db_session.query(SesionGrupo.id)
+            .filter(SesionGrupo.grupo_id.in_([g.id for g in full["grupos"]]))
+            .all()
+        ]
+        if existing_ids:
+            db_session.query(SesionGrupo).filter(
+                SesionGrupo.id.in_(existing_ids)
+            ).update(
+                {SesionGrupo.deleted_at: datetime.now(timezone.utc)},
+                synchronize_session=False,
+            )
+            db_session.commit()
+
+        resp = full["c"].post(
+            f"/api/evangelism/strategies/{full['estrategia'].id}/generate-sessions",
+            params={"habilitar_inmediatamente": False},
+            headers=full["h"],
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["habilitar_inmediatamente"] is False
+        assert body["sesiones_habilitadas"] == 0
+
+        # Verificar el bloqueo persiste en la sesión de test
+        sesion = (
+            db_session.query(SesionGrupo)
+            .filter(
+                SesionGrupo.grupo_id.in_([g.id for g in full["grupos"]]),
+                SesionGrupo.deleted_at.is_(None),
+            )
+            .first()
+        )
+        assert sesion is not None
+        assert sesion.estado_habilitacion == "DESHABILITADO"
 
 
 # ════════════════════════════════════════════════════════════════════

@@ -27,7 +27,22 @@ def create_project(
     owner_persona_id: UUID | str,
     sede_id: UUID | str,
 ):
-    """Crea un proyecto mediante el contrato Pydantic canónico."""
+    """Crea un proyecto mediante el contrato Pydantic canónico.
+
+    Axioma 3 — la sede es obligatoria. ``sede_id=None`` se rechaza con
+    ``ValueError`` para que la ruta no pueda crear accidentalmente un
+    proyecto "huérfano" que luego escaparía al scope multi-tenant
+    (``tests/test_projects_multi_tenant.py::TestMultiTenantCRUDDefenseInDepth``).
+
+    El superadmin histórico no envía ``sede_id``; en ese caso la capa de
+    ruta debe pasar la sede activa del actor (o cortar antes de llegar
+    aquí). Esta función NO cae al modo "global" — protege la base como
+    defense-in-depth.
+    """
+    if sede_id is None:
+        raise ValueError(
+            "sede_id is required (Axioma 3): cannot create a tenant-less project"
+        )
     data = project.model_dump()
     data.pop("owner_id", None)
     row = models.Project(**data)

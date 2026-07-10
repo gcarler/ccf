@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.schemas._common import orm_config
 
@@ -137,6 +137,39 @@ class AgendaDashboard(BaseModel):
     model_config = orm_config
 
 
+class SeoTrendPoint(BaseModel):
+    """Un punto diario del widget SEO score trend."""
+    label: str
+    value: int
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class CmsSeoTrendResponse(BaseModel):
+    """Slice de SEO score trend para el dashboard CMS.
+
+    Alimenta el widget "SEO score trend" del dashboard. La serie
+    ``history_30d`` se renderiza como sparkline; ``history_7d`` se
+    muestra como detalle + comparación con la semana previa. La
+    alerta ``is_alert`` se dispara cuando la última lectura cae más
+    de 10 puntos respecto a la previa (sea misma semana o 7d atrás).
+    """
+    current_score: Optional[int] = None
+    previous_score: Optional[int] = None
+    change_vs_prior: Optional[int] = None
+    is_alert: bool = False
+    alert_threshold: int = Field(
+        default=10,
+        description="Daily drop in points that triggers is_alert=True.",
+    )
+    total_pages: int = 0
+    pages_with_errors: int = 0
+    critical_issues: int = 0
+    history_7d: List[SeoTrendPoint] = []
+    history_30d: List[SeoTrendPoint] = []
+    captured_at: Optional[str] = None
+    has_data: bool = False
+
+
 class CmsDashboard(BaseModel):
     cards: List[MetricCard]
     versiones_por_pagina: List[ChartDataPoint] = []
@@ -154,6 +187,9 @@ class CmsDashboard(BaseModel):
     posts_published: int = 0
     categories_total: int = 0
     tags_total: int = 0
+    # SEO score trend widget (alimentado por ``cms_seo_snapshots``,
+    # capturado por ``backend.scheduler`` cada día).
+    seo_trend: Optional[CmsSeoTrendResponse] = None
     filters: Optional[List[DashboardFilter]] = None
     last_updated: Optional[str] = None
     model_config = orm_config

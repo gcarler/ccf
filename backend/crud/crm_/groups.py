@@ -12,11 +12,35 @@ def _group_participant_role_values(item):
     role = str(getattr(item, "role", "") or "participante").strip()
     custom_role_id = getattr(item, "rol_personalizado_id", None)
     if role.startswith("custom:"):
+        # Preferir el UUID explicito que llega como campo del payload si es
+        # valido; de lo contrario, extraerlo del prefijo ``custom:<UUID>``.
+        # ANTES se hacia ``int(...)`` que silenciosamente decia ``ValueError``
+        # para cualquier UUID valido y ponia ``custom_role_id = None``: eso
+        # corrompia la persistencia del rol personalizado.
+        explicit = custom_role_id
+        if explicit and not isinstance(explicit, uuid.UUID):
+            try:
+                explicit = uuid.UUID(str(explicit))
+            except (TypeError, ValueError):
+                explicit = None
+        parsed_from_string = None
         try:
-            custom_role_id = int(role.split(":", 1)[1])
+            parsed_from_string = uuid.UUID(role.split(":", 1)[1])
         except (TypeError, ValueError):
-            custom_role_id = None
+            parsed_from_string = None
+        custom_role_id = explicit or parsed_from_string
         role = "personalizado"
+    elif role == "personalizado":
+        # Marcador legado del frontend: si llega el UUID explicito en el
+        # payload, usarlo; si no, el caller (update_grupo) rehidratara desde
+        # la fila existente para no perder la asignacion previa.
+        explicit = custom_role_id
+        if explicit and not isinstance(explicit, uuid.UUID):
+            try:
+                explicit = uuid.UUID(str(explicit))
+            except (TypeError, ValueError):
+                explicit = None
+        custom_role_id = explicit
     return role or "participante", custom_role_id
 
 
@@ -89,9 +113,13 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
         setattr(house, key, value)
 
     if payload.base_attendees_with_roles is not None:
+        # ``synchronize_session='fetch'`` (default) actualiza la cache de
+        # SQLAlchemy tras el bulk SOFT-delete, por lo que las reactivaciones
+        # del primer loop y el sync posterior leen estado consistente sin
+        # necesidad de ``db.expire_all()``.
         db.query(models.ParticipanteGrupo).filter(models.ParticipanteGrupo.grupo_id == house_id).update(
             {models.ParticipanteGrupo.deleted_at: _utcnow(), models.ParticipanteGrupo.activo: False},
-            synchronize_session=False,
+            synchronize_session="fetch",
         )
         for item in payload.base_attendees_with_roles:
             role, custom_role_id = _group_participant_role_values(item)
@@ -104,6 +132,12 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
                 existing.deleted_at = None
                 existing.activo = True
                 existing.role = role
+                # Rehidratacion: cuando el frontend envia el marcador legado
+                # 'personalizado' sin ``rol_personalizado_id`` explicito,
+                # preservamos el UUID que ya estaba persistido en la fila
+                # para no perder la asignacion custom de ese participante.
+                if role == "personalizado" and not custom_role_id:
+                    custom_role_id = existing.rol_personalizado_id
                 existing.rol_personalizado_id = custom_role_id
             else:
                 db.add(
@@ -114,7 +148,10 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
                         rol_personalizado_id=custom_role_id,
                     )
                 )
-        # Sincronizar lider_persona_id, asistente_persona_id y anfitrion_persona_id desde los participantes.
+        # Sincronizar lider_persona_id, asistente_persona_id y anfitrion_persona_id
+        # desde los participantes ya rehidratados (incluida la rehidratacion
+        # de ``rol_personalizado_id`` para participantes legados con marcador
+        # ``personalizado``).
         _SUBORDINATE_TOKENS = {"co", "colider", "colíder", "asistente", "del"}
         db.flush()
 
@@ -122,19 +159,68 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
         new_assistant_id = None
         new_host_id = None
 
-        for item in payload.base_attendees_with_roles:
-            role_str = str(getattr(item, "role", "") or "").lower().strip()
-            custom_id = getattr(item, "rol_personalizado_id", None)
-            if role_str.startswith("custom:") and not custom_id:
+        # 1ª consulta: participantes activos del grupo. Sin JOIN en SQL para
+        # evitar el mismatch UUID-vs-hex del ``==`` directo en SQLite.
+        active_pgs = (
+            db.query(models.ParticipanteGrupo)
+            .filter(
+                models.ParticipanteGrupo.grupo_id == house_id,
+                models.ParticipanteGrupo.activo.is_(True),
+                models.ParticipanteGrupo.deleted_at.is_(None),
+            )
+            .all()
+        )
+
+        # 2ª consulta bulk: pre-fetch de TODOS los roles custom referenciados
+        # por estos participantes. Evita N+1 y es robusta al mismatch de tipo
+        # porque SQLAlchemy convierte ambos lados (param hex/UUID stored como
+        # hex) por el mismo bind_processor.
+        raw_ids = [pg.rol_personalizado_id for pg in active_pgs if pg.rol_personalizado_id is not None]
+        normalized_ids: set = set()
+        for rid in raw_ids:
+            if isinstance(rid, uuid.UUID):
+                normalized_ids.add(rid)
+            elif isinstance(rid, str):
                 try:
-                    custom_id = int(role_str.split(":", 1)[1])
-                except (ValueError, TypeError):
-                    pass
-            if custom_id:
-                custom_rol = db.query(models.RolPersonalizadoEstrategia).filter(
-                    models.RolPersonalizadoEstrategia.id == custom_id
-                ).first()
-                role_str = (custom_rol.nombre_rol if custom_rol else role_str).lower().strip()
+                    normalized_ids.add(uuid.UUID(rid))
+                except (ValueError, AttributeError):
+                    continue
+
+        custom_roles_by_id: dict = {}
+        if normalized_ids:
+            # Defensa de tenant: scope por ``estrategia_id`` + ``deleted_at IS NULL``.
+            # Aunque los UUIDs son globales por naturaleza, mantener el scope de
+            # la estrategia previene pull-cross-estrategia si una migración
+            # legada comparte IDs entre estrategias.
+            rol_q = db.query(models.RolPersonalizadoEstrategia).filter(
+                models.RolPersonalizadoEstrategia.id.in_(normalized_ids),
+                models.RolPersonalizadoEstrategia.deleted_at.is_(None),
+            )
+            if house.estrategia_id is not None:
+                rol_q = rol_q.filter(
+                    models.RolPersonalizadoEstrategia.estrategia_id == house.estrategia_id,
+                )
+            rows = rol_q.all()
+            for r in rows:
+                custom_roles_by_id[r.id] = r
+
+        for pg in active_pgs:
+            role_str = (pg.role or "").lower().strip()
+            if role_str == "personalizado" and pg.rol_personalizado_id is not None:
+                # Normalizar el id del lado del participante (puede llegar como
+                # str desde la cache de SQLAlchemy en SQLite) a uuid.UUID para
+                # hacer lookup consistente en el dict bulk-prefetched.
+                lookup_id = None
+                if isinstance(pg.rol_personalizado_id, uuid.UUID):
+                    lookup_id = pg.rol_personalizado_id
+                elif isinstance(pg.rol_personalizado_id, str):
+                    try:
+                        lookup_id = uuid.UUID(pg.rol_personalizado_id)
+                    except (ValueError, AttributeError):
+                        lookup_id = None
+                cr = custom_roles_by_id.get(lookup_id) if lookup_id else None
+                if cr:
+                    role_str = (cr.nombre_rol or "").lower().strip()
 
             # Normalizar para comparación
             role_norm = role_str.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
@@ -144,14 +230,12 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
             is_assistant = ("asistente" in tokens or "colider" in tokens or ("co" in tokens and ("lider" in tokens or "leader" in tokens)))
             is_host = "anfitrion" in tokens or "host" in tokens
 
-            p_uuid = uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id
-
             if is_leader and not new_leader_id:
-                new_leader_id = p_uuid
+                new_leader_id = pg.persona_id
             if is_assistant and not new_assistant_id:
-                new_assistant_id = p_uuid
+                new_assistant_id = pg.persona_id
             if is_host and not new_host_id:
-                new_host_id = p_uuid
+                new_host_id = pg.persona_id
 
         house.lider_persona_id = new_leader_id
         house.asistente_persona_id = new_assistant_id
