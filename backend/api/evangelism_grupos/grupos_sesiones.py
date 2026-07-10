@@ -14,6 +14,9 @@ from backend.api.evangelism_shared import (
     _get_persona_for_user,
     _is_crm_admin_or_pastor,
     expected_group_rows,
+    session_estado_habilitacion,
+    session_read_only_options,
+    sessions_grupo_has_estado_habilitacion,
     utc_now,
 )
 from backend.core.database import get_db
@@ -29,6 +32,9 @@ router = APIRouter()
 static_router = APIRouter()
 dynamic_router = APIRouter()
 
+def _session_read_options(db: Session):
+    return session_read_only_options(db)
+
 
 # ── Sessions listing & creation ──
 
@@ -43,6 +49,7 @@ def list_groups_sessions(
 ):
     user_sede = require_user_sede_id(db, current_user)
     query = db.query(SesionGrupo).options(
+        _session_read_options(db),
         joinedload(models.SesionGrupo.grupo),
     ).join(models.GrupoEvangelismo)
     if season_id:
@@ -133,6 +140,7 @@ def list_my_pending_groups_sessions(
     # We omit that joinedload and batch-fetch CampaignSeason rows instead.
     sessions = (
         db.query(SesionGrupo)
+        .options(_session_read_options(db))
         .options(joinedload(models.SesionGrupo.grupo))
         .filter(
             models.SesionGrupo.grupo_id.in_(house_ids),
@@ -276,6 +284,7 @@ def create_groups_session(
         from sqlalchemy import func
         existing = (
             db.query(SesionGrupo)
+            .options(_session_read_options(db))
             .filter(
                 models.SesionGrupo.grupo_id == h_id,
                 func.date(models.SesionGrupo.fecha_sesion) == session_date,
@@ -291,15 +300,17 @@ def create_groups_session(
                 )
             continue  # In batch mode, we just skip existing
 
-        session = models.SesionGrupo(
+        session_kwargs = dict(
             grupo_id=h_id,
             season_id=season_id,
             session_date=session_date,
             status="Realizada",
-            estado_habilitacion=HabilitacionSesionEnum.HABILITADO.value,
             topic=topic,
             report_deadline=report_deadline,
         )
+        if sessions_grupo_has_estado_habilitacion(db):
+            session_kwargs["estado_habilitacion"] = HabilitacionSesionEnum.HABILITADO.value
+        session = models.SesionGrupo(**session_kwargs)
         db.add(session)
         created_sessions.append(session)
 
@@ -308,8 +319,6 @@ def create_groups_session(
     except Exception:
         db.rollback()
         raise
-    for s in created_sessions:
-        db.refresh(s)
 
     return {
         "message": f"Se crearon {len(created_sessions)} sesiones.",
@@ -331,7 +340,7 @@ def list_sessions(
     """List sessions, optionally filtered by strategy or house."""
 
     user_sede = require_user_sede_id(db, current_user)
-    q = db.query(SesionGrupo).join(
+    q = db.query(SesionGrupo).options(_session_read_options(db)).join(
         models.GrupoEvangelismo,
         models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id,
     ).filter(
@@ -350,7 +359,7 @@ def list_sessions(
             "grupo_id": s.grupo_id,
             "session_date": s.session_date.isoformat() if s.session_date else None,
             "status": s.status or "Realizada",
-            "estado_habilitacion": getattr(s, "estado_habilitacion", "DESHABILITADO"),
+            "estado_habilitacion": session_estado_habilitacion(s),
             "topic": s.topic,
             "offering_amount": float(s.offering_amount) if s.offering_amount else None,
             "report_notes": s.report_notes,
@@ -425,6 +434,7 @@ def get_session_detail(
 
     session = (
         db.query(SesionGrupo)
+        .options(_session_read_options(db))
         .options(joinedload(models.SesionGrupo.grupo))
         .join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id)
         .filter(models.SesionGrupo.id == session_id)
@@ -497,6 +507,7 @@ def update_session(
 
     db_session = (
         db.query(SessionModel)
+        .options(_session_read_options(db))
         .join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == SessionModel.grupo_id)
         .filter(SessionModel.id == session_id)
         .filter(models.GrupoEvangelismo.sede_id == require_user_sede_id(db, current_user))
@@ -512,7 +523,6 @@ def update_session(
 
     db_session.reported_at = _datetime.now(_timezone.utc)
     db.commit()
-    db.refresh(db_session)
     # Serializar via SesionGrupoResponse (antes dict manual). El validador
     # ``_coerce_uuid_to_str`` garantiza que ``id`` y ``grupo_id`` se
     # expongan como string en el JSON — preserva el contrato con el
@@ -530,6 +540,7 @@ def delete_session(
 
     db_session = (
         db.query(SesionGrupo)
+        .options(_session_read_options(db))
         .join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id)
         .filter(models.SesionGrupo.id == session_id)
         .filter(models.GrupoEvangelismo.sede_id == require_user_sede_id(db, current_user))
@@ -562,6 +573,7 @@ def toggle_session_habilitacion(
 
     session = (
         db.query(SesionGrupo)
+        .options(_session_read_options(db))
         .join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == SesionGrupo.grupo_id)
         .filter(SesionGrupo.id == session_id)
         .filter(models.GrupoEvangelismo.sede_id == require_user_sede_id(db, current_user))
@@ -584,15 +596,15 @@ def toggle_session_habilitacion(
     # Resolver persona del usuario actual
     persona = _get_persona_for_user(db, current_user.id)
 
-    session.estado_habilitacion = nuevo_estado
-    session.habilitado_por = persona.id if persona else None
-    session.habilitado_en = utc_now()
-    db.commit()
-    db.refresh(session)
+    if sessions_grupo_has_estado_habilitacion(db):
+        session.estado_habilitacion = nuevo_estado
+        session.habilitado_por = persona.id if persona else None
+        session.habilitado_en = utc_now()
+        db.commit()
 
     return {
         "session_id": session_id,
-        "estado_habilitacion": session.estado_habilitacion,
+        "estado_habilitacion": session_estado_habilitacion(session, default=nuevo_estado),
         "habilitado_en": session.habilitado_en.isoformat() if session.habilitado_en else None,
     }
 
@@ -616,6 +628,9 @@ def habilitar_todas_sesiones(
         raise HTTPException(status_code=404, detail="Estrategia sin grupos")
 
     persona = _get_persona_for_user(db, current_user.id)
+
+    if not sessions_grupo_has_estado_habilitacion(db):
+        return {"strategy_id": strategy_id, "sesiones_habilitadas": 0}
 
     updated = db.query(SesionGrupo).filter(
         SesionGrupo.grupo_id.in_(grupo_ids),
@@ -647,6 +662,9 @@ def deshabilitar_todas_sesiones(
     grupo_ids = [g.id for g in grupos]
     if not grupo_ids:
         raise HTTPException(status_code=404, detail="Estrategia sin grupos")
+
+    if not sessions_grupo_has_estado_habilitacion(db):
+        return {"strategy_id": strategy_id, "sesiones_deshabilitadas": 0}
 
     updated = db.query(SesionGrupo).filter(
         SesionGrupo.grupo_id.in_(grupo_ids),

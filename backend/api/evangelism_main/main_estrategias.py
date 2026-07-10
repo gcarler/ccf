@@ -20,6 +20,7 @@ from backend.crud.evangelism import (
 from backend.crud.evangelism import (
     update_estrategia as update_evangelism_strategy,
 )
+from backend.api.evangelism_shared import sessions_grupo_has_estado_habilitacion
 from backend.schemas.crm.base import (
     EvangelismStrategy,
     EvangelismStrategyCreate,
@@ -318,6 +319,19 @@ def generate_strategy_sessions(
     sesiones_habilitadas = 0
     if habilitar_inmediatamente and created > 0:
         from backend.models_evangelism import HabilitacionSesionEnum, SesionGrupo
+
+        if not sessions_grupo_has_estado_habilitacion(db):
+            return {
+                "strategy": strat.nombre,
+                "recurrence": strat.frecuencia,
+                "start": str(fecha_inicio),
+                "end": str(strat.fecha_fin),
+                "sessions_per_group": sessions_per_group,
+                "groups": len(groups),
+                "total_sessions_created": created,
+                "sesiones_habilitadas": 0,
+                "habilitar_inmediatamente": habilitar_inmediatamente,
+            }
 
         # Auto-habilitar SOLO las sesiones creadas en este call.
         # ``_before_call`` se tomó arriba antes de ``calcular_sesiones``

@@ -15,6 +15,8 @@ from backend.api.evangelism_shared import (
     _check_first_time_lead_trigger,
     expected_group_rows,
     persona_payload,
+    session_estado_habilitacion,
+    session_read_only_options,
     utc_now,
 )
 from backend.core.database import get_db
@@ -23,6 +25,9 @@ from backend.core.tenant import require_user_sede_id
 from backend.models import Asistencia, GrupoEvangelismo, SesionGrupo
 
 router = APIRouter()
+
+def _session_read_options(db: Session):
+    return session_read_only_options(db)
 
 
 # ── Session Attendance ──
@@ -35,7 +40,7 @@ def get_groups_session_attendance(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    session = db.query(SesionGrupo).filter(
+    session = db.query(SesionGrupo).options(_session_read_options(db)).filter(
         models.SesionGrupo.id == session_id,
         models.SesionGrupo.deleted_at.is_(None),
     ).first()
@@ -141,7 +146,7 @@ def add_groups_attendance(
                 canonical_status = _normalize_status_alias(item.get("status"))
                 item["attended"] = canonical_status in {"present", "first_time"}
 
-    session = db.query(SesionGrupo).filter(
+    session = db.query(SesionGrupo).options(_session_read_options(db)).filter(
         models.SesionGrupo.id == session_id,
         models.SesionGrupo.deleted_at.is_(None),
     ).first()
@@ -157,10 +162,11 @@ def add_groups_attendance(
         raise HTTPException(status_code=403, detail="No autorizado para este grupo")
 
     from backend.models_evangelism import HabilitacionSesionEnum
-    if session.estado_habilitacion != HabilitacionSesionEnum.HABILITADO.value:
+    estado_habilitacion = session_estado_habilitacion(session)
+    if estado_habilitacion != HabilitacionSesionEnum.HABILITADO.value:
         raise HTTPException(
             status_code=403,
-            detail=f"La sesión está {session.estado_habilitacion.lower()} y no acepta reportes de asistencia.",
+            detail=f"La sesión está {estado_habilitacion.lower()} y no acepta reportes de asistencia.",
         )
 
     from datetime import datetime, timezone
@@ -293,6 +299,7 @@ def submit_attendance(
     user_sede = require_user_sede_id(db, current_user)
     session = (
         db.query(SesionGrupo)
+        .options(_session_read_options(db))
         .join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id)
         .filter(models.SesionGrupo.id == session_id)
         .filter(models.GrupoEvangelismo.sede_id == user_sede)
@@ -304,10 +311,11 @@ def submit_attendance(
 
     # Protección IDOR: solo sesiones habilitadas aceptan reportes
     from backend.models_evangelism import HabilitacionSesionEnum
-    if session.estado_habilitacion != HabilitacionSesionEnum.HABILITADO.value:
+    estado_habilitacion = session_estado_habilitacion(session)
+    if estado_habilitacion != HabilitacionSesionEnum.HABILITADO.value:
         raise HTTPException(
             status_code=403,
-            detail=f"La sesión está {session.estado_habilitacion.lower()} y no acepta reportes de asistencia."
+            detail=f"La sesión está {estado_habilitacion.lower()} y no acepta reportes de asistencia."
         )
 
     # Soft-delete existing attendance for this session

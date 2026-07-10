@@ -19,7 +19,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 
 from backend import models
 from backend.api.evangelism_shared import (
@@ -35,6 +35,25 @@ from backend.core.tenant import require_user_sede_id
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+_SESSION_READ_ONLY_COLUMNS = [
+    models.SesionGrupo.id,
+    models.SesionGrupo.grupo_id,
+    models.SesionGrupo.fecha_sesion,
+    models.SesionGrupo.estado,
+    models.SesionGrupo.motivo_cancelacion,
+    models.SesionGrupo.tema_estudio,
+    models.SesionGrupo.notas_lider,
+    models.SesionGrupo.offering_amount,
+    models.SesionGrupo.season_id,
+    models.SesionGrupo.created_at,
+    models.SesionGrupo.deleted_at,
+    models.SesionGrupo.reported_at,
+    models.SesionGrupo.novelty_type,
+    models.SesionGrupo.novelty_detail,
+    models.SesionGrupo.reported_by_persona_id,
+    models.SesionGrupo.report_deadline,
+]
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -75,6 +94,7 @@ def _build_session_rows(
     """Return one dict per session with attendance stats."""
     sessions = (
         db.query(models.SesionGrupo)
+        .options(load_only(*_SESSION_READ_ONLY_COLUMNS))
         .filter(
             models.SesionGrupo.grupo_id == grupo_id,
             models.SesionGrupo.deleted_at.is_(None),
