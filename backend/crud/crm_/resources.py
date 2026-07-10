@@ -165,12 +165,14 @@ def create_adjunto(
     nombre_archivo: str,
     tipo_mime: str,
     peso_bytes: int,
+    seaweed_fid: Optional[str] = None,
     creado_por_id: Optional[str] = None,
 ) -> RecursoAdjunto:
     obj = RecursoAdjunto(
         sede_id=_uuid.UUID(sede_id),
         plantilla_id=_uuid.UUID(plantilla_id) if plantilla_id else None,
         nombre_recurso=nombre_recurso,
+        seaweed_fid=seaweed_fid,
         url_acceso=url_acceso,
         nombre_archivo=nombre_archivo,
         tipo_mime=tipo_mime,

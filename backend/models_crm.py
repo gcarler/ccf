@@ -651,6 +651,22 @@ class CrmAutomation(Base):
     action_payload = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
+    
+    # Nuevos campos para flujos encadenados
+    delay_minutes = Column(Integer, default=0, nullable=False)
+    next_automation_id = Column(UUID(as_uuid=True), ForeignKey("crm_automations.id"), nullable=True)
+
+
+class PendingCrmAction(Base):
+    __tablename__ = "crm_pending_actions"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    automation_id = Column(UUID(as_uuid=True), ForeignKey("crm_automations.id"), nullable=False)
+    target_persona_id = Column(UUID(as_uuid=True), nullable=False)
+    execute_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    status = Column(String(30), default="pending", index=True) # pending, executed, failed
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    automation = relationship("CrmAutomation")
 
 
 class RoleDefinition(Base):

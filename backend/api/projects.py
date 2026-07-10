@@ -442,7 +442,7 @@ def set_project_phases(
             )
 
     phase_dicts = [{"name": p.name, "slug": p.slug, "color": p.color, "order_index": i} for i, p in enumerate(phases)]
-    created = crud.set_project_phases(db, project_id, phase_dicts)
+    created = crud.set_project_phases(db, _to_uuid(project_id), phase_dicts)
     return created
 
 
@@ -873,10 +873,6 @@ def list_inbox(
     for comment, project in unread_comments:
         item_id = f"comment-{comment.id}"
         is_read = inbox_states_map.get(item_id, False)
-
-    for comment, project in unread_comments:
-        item_id = f"comment-{comment.id}"
-        is_read = inbox_states_map.get(item_id, False)
         inbox_items.append(
             schemas.ProjectInboxItem(
                 id=item_id,
@@ -1019,7 +1015,7 @@ def get_project_wiki(
     """
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
-    doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.project_id == project_id).first()
+    doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.project_id == _to_uuid(project_id)).first()
     return _normalize_dates(doc)
 
 
@@ -1032,7 +1028,7 @@ def update_project_wiki(
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)  # Validates project exists + scope
-    doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.project_id == project_id).first()
+    doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.project_id == _to_uuid(project_id)).first()
     title = payload.title or "Wiki Ministerial"
     content = payload.content or ""
     author_persona_id = get_user_persona_id(db, current_user.id)
@@ -1097,12 +1093,7 @@ def get_project_whiteboard(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     board = (
-        db.query(models.ProjectWhiteboard)
-        .filter(
-            models.ProjectWhiteboard.project_id == _to_uuid(project_id),
-            models.ProjectWhiteboard.deleted_at.is_(None),
-        )
-        .first()
+        db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id)).first()
     )
     return _normalize_dates(board)
 
@@ -1117,12 +1108,7 @@ def update_project_whiteboard(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     board = (
-        db.query(models.ProjectWhiteboard)
-        .filter(
-            models.ProjectWhiteboard.project_id == _to_uuid(project_id),
-            models.ProjectWhiteboard.deleted_at.is_(None),
-        )
-        .first()
+        db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id)).first()
     )
     title = payload.title or "Pizarra Estrategica"
     elements = payload.elements_json or "[]"
@@ -1154,13 +1140,9 @@ def delete_project_whiteboard(
 ):
     """Realiza soft delete de la pizarra asociada a un proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
-    _ensure_project(db, project_id, user_sede=user_sede)    board = (
-        db.query(models.ProjectWhiteboard)
-        .filter(
-            models.ProjectWhiteboard.project_id == _to_uuid(project_id),
-            models.ProjectWhiteboard.deleted_at.is_(None),
-        )
-        .first()
+    _ensure_project(db, project_id, user_sede=user_sede)
+    board = (
+        db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id)).first()
     )
     if board:
         board.deleted_at = datetime.now(timezone.utc)
@@ -1450,16 +1432,16 @@ def delete_subtask(
 
 @router.post("/comments", response_model=schemas.ProjectCommentItem)
 def create_comment(
-    payload: dict,
+    payload: schemas.ProjectCommentCreateWithProject,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Crea un comentario usando project_id en el body."""
-    project_id = payload.get("project_id")
-    content = (payload.get("content") or "").strip()
-    if not project_id or not content:
-        raise HTTPException(status_code=400, detail="project_id and content are required")
-    task_id = payload.get("task_id")
+    project_id = payload.project_id
+    content = payload.content.strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="content is required")
+    task_id = payload.task_id
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     author_persona_id = get_user_persona_id(db, current_user.id)

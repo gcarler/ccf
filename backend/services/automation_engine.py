@@ -55,6 +55,9 @@ class AutomationEngine:
             # 2. Recordatorio de Deadline (24h antes)
             self._process_deadline_rule(db)
 
+            # 3. Flujos de Automatización de CRM
+            self._process_crm_pending_actions(db)
+
             db.commit()
         finally:
             db.close()
@@ -124,6 +127,68 @@ class AutomationEngine:
                 )
                 db.add(reminder)
                 logger.info(f"Reminder created for task {task.id}.")
+
+    def _process_crm_pending_actions(self, db: Session):
+        from backend.models_crm import PendingCrmAction, CrmAutomation
+        from backend.models_shared import _utcnow
+
+        pending_actions = (
+            db.query(PendingCrmAction)
+            .filter(
+                PendingCrmAction.status == "pending",
+                PendingCrmAction.execute_at <= _utcnow()
+            )
+            .all()
+        )
+
+        for action in pending_actions:
+            automation = db.query(CrmAutomation).filter(CrmAutomation.id == action.automation_id).first()
+            if not automation:
+                action.status = "failed"
+                continue
+            
+            try:
+                # Aquí iría la lógica real de ejecución de la acción (enviar email, WhatsApp, etc.)
+                logger.info(f"Executing CRM automation {automation.id} for persona {action.target_persona_id}")
+                
+                # Ejecución exitosa
+                action.status = "executed"
+                
+                # Encolar la siguiente acción si existe
+                if automation.next_automation_id:
+                    next_auto = db.query(CrmAutomation).filter(CrmAutomation.id == automation.next_automation_id).first()
+                    if next_auto:
+                        next_execute_at = _utcnow() + timedelta(minutes=next_auto.delay_minutes)
+                        next_action = PendingCrmAction(
+                            automation_id=next_auto.id,
+                            target_persona_id=action.target_persona_id,
+                            execute_at=next_execute_at,
+                            status="pending"
+                        )
+                        db.add(next_action)
+                        logger.info(f"Queued next automation {next_auto.id} for execution at {next_execute_at}")
+
+            except Exception as e:
+                logger.error(f"Failed to execute CRM automation {automation.id}: {e}")
+                action.status = "failed"
+
+    def trigger_crm_automation(self, db: Session, automation_id: str, target_persona_id: str):
+        from backend.models_crm import CrmAutomation, PendingCrmAction
+        from backend.models_shared import _utcnow
+        
+        automation = db.query(CrmAutomation).filter(CrmAutomation.id == automation_id).first()
+        if not automation:
+            return
+            
+        execute_at = _utcnow() + timedelta(minutes=automation.delay_minutes)
+        action = PendingCrmAction(
+            automation_id=automation.id,
+            target_persona_id=target_persona_id,
+            execute_at=execute_at,
+            status="pending"
+        )
+        db.add(action)
+        db.commit()
 
 
 # Inicializar motor globalmente
