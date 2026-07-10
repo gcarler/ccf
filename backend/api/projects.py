@@ -286,28 +286,28 @@ _CANONICAL_PHASE_SLUGS: frozenset[str] = frozenset(
     {"todo", "in_progress", "review", "completed"}
 )
 
-# Legacy enum values that may still exist in client payloads or old DB rows.
+# Compat enum values that may still exist in client payloads or old DB rows.
 # These are normalized to canonical values on read/write to avoid 422 errors
 # and to keep the UI consistent.
-_LEGACY_PRIORITY_MAP: dict[str, str] = {"normal": "medium"}
-_LEGACY_STATUS_MAP: dict[str, str] = {"done": "completed", "blocked": "todo", "pending": "todo"}
+_COMPAT_PRIORITY_MAP: dict[str, str] = {"normal": "medium"}
+_COMPAT_STATUS_MAP: dict[str, str] = {"done": "completed", "blocked": "todo", "pending": "todo"}
 
 
 def _normalize_task_payload(payload: dict) -> dict:
-    """Map legacy task status/priority values to canonical enums in payloads."""
+    """Map compat task status/priority values to canonical enums in payloads."""
     if "priority" in payload and isinstance(payload["priority"], str):
-        payload["priority"] = _LEGACY_PRIORITY_MAP.get(payload["priority"], payload["priority"])
+        payload["priority"] = _COMPAT_PRIORITY_MAP.get(payload["priority"], payload["priority"])
     if "status" in payload and isinstance(payload["status"], str):
-        payload["status"] = _LEGACY_STATUS_MAP.get(payload["status"], payload["status"])
+        payload["status"] = _COMPAT_STATUS_MAP.get(payload["status"], payload["status"])
     return payload
 
 
 def _normalize_task_enums(task: models.ProjectTask) -> None:
-    """Map legacy task status/priority values stored on a task row to canonical enums."""
-    if task.priority in _LEGACY_PRIORITY_MAP:
-        task.priority = _LEGACY_PRIORITY_MAP[task.priority]
-    if task.status in _LEGACY_STATUS_MAP:
-        task.status = _LEGACY_STATUS_MAP[task.status]
+    """Map compat task status/priority values stored on a task row to canonical enums."""
+    if task.priority in _COMPAT_PRIORITY_MAP:
+        task.priority = _COMPAT_PRIORITY_MAP[task.priority]
+    if task.status in _COMPAT_STATUS_MAP:
+        task.status = _COMPAT_STATUS_MAP[task.status]
 
 
 def _serialize_task_attachments(task: models.ProjectTask) -> models.ProjectTask:

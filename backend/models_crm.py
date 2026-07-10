@@ -732,6 +732,7 @@ class CrmAutomationEdge(Base):
     source_node_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_nodes.id", ondelete="CASCADE"), nullable=True)
     target_node_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_nodes.id", ondelete="CASCADE"), nullable=True)
     on_delete_cascade = Column(Boolean, default=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     source = relationship("CrmAutomation", foreign_keys=[source_id], backref="outgoing_edges")
     target = relationship("CrmAutomation", foreign_keys=[target_id], backref="incoming_edges")
