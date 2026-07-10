@@ -2108,8 +2108,8 @@ def list_posts(
     enriched = []
     for post in items:
         p = schemas.CmsPostReadWithTaxonomies.model_validate(post)
-        p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in cats_by_post.get(post.id, [])]
-        p.tags = [schemas.CmsTagRead.model_validate(t) for t in tags_by_post.get(post.id, [])]
+        p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in cats_by_post.get(str(post.id), [])]
+        p.tags = [schemas.CmsTagRead.model_validate(t) for t in tags_by_post.get(str(post.id), [])]
         enriched.append(p)
     return PaginatedResponse[schemas.CmsPostReadWithTaxonomies](
         items=enriched, total=total, skip=skip, limit=limit

@@ -2018,8 +2018,13 @@ def get_post_tags(db: Session, post_id: uuid.UUID):
     )
 
 
-def get_posts_categories_batch(db: Session, post_ids: list[uuid.UUID]) -> dict[uuid.UUID, list]:
-    """Batch-fetch categories for multiple posts in one query (N+1 fix)."""
+def get_posts_categories_batch(db: Session, post_ids: list[uuid.UUID]) -> dict[str, list]:
+    """Batch-fetch categories for multiple posts in one query (N+1 fix).
+
+    Keys are normalized to strings because some DB drivers (notably SQLite)
+    return UUIDs as strings, which would cause KeyError when the caller
+    looks up by the original uuid.UUID object.
+    """
     if not post_ids:
         return {}
     rows = (
@@ -2028,14 +2033,19 @@ def get_posts_categories_batch(db: Session, post_ids: list[uuid.UUID]) -> dict[u
         .filter(models.CmsPostCategory.post_id.in_(post_ids))
         .all()
     )
-    result: dict[uuid.UUID, list] = {pid: [] for pid in post_ids}
+    result: dict[str, list] = {str(pid): [] for pid in post_ids}
     for post_id, category in rows:
-        result[post_id].append(category)
+        result.setdefault(str(post_id), []).append(category)
     return result
 
 
-def get_posts_tags_batch(db: Session, post_ids: list[uuid.UUID]) -> dict[uuid.UUID, list]:
-    """Batch-fetch tags for multiple posts in one query (N+1 fix)."""
+def get_posts_tags_batch(db: Session, post_ids: list[uuid.UUID]) -> dict[str, list]:
+    """Batch-fetch tags for multiple posts in one query (N+1 fix).
+
+    Keys are normalized to strings because some DB drivers (notably SQLite)
+    return UUIDs as strings, which would cause KeyError when the caller
+    looks up by the original uuid.UUID object.
+    """
     if not post_ids:
         return {}
     rows = (
@@ -2044,9 +2054,9 @@ def get_posts_tags_batch(db: Session, post_ids: list[uuid.UUID]) -> dict[uuid.UU
         .filter(models.CmsPostTag.post_id.in_(post_ids))
         .all()
     )
-    result: dict[uuid.UUID, list] = {pid: [] for pid in post_ids}
+    result: dict[str, list] = {str(pid): [] for pid in post_ids}
     for post_id, tag in rows:
-        result[post_id].append(tag)
+        result.setdefault(str(post_id), []).append(tag)
     return result
 
 
