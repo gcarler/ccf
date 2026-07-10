@@ -17,7 +17,7 @@ export default function GlossaryPage() {
     setLoading(true);
     try {
       const params = search ? `?search=${encodeURIComponent(search)}` : "";
-      const data = await apiFetch<GlossaryTerm[]>(`/cms/v2/glossary?site_key=ccf${params}`, { silent: true });
+      const data = await apiFetch<GlossaryTerm[]>(`/cms/v2/glossary?site_key=${SITE_KEY}${params}`, { silent: true });
       setTerms(Array.isArray(data) ? data : []);
     } catch { setTerms([]); }
     setLoading(false);
@@ -27,7 +27,7 @@ export default function GlossaryPage() {
 
   const create = async () => {
     if (!form.term || !form.definition) return;
-    await apiFetch("/cms/v2/glossary", { method: "POST", body: { site_key: "ccf", ...form, aliases: form.aliases.split(",").map(a => a.trim()).filter(Boolean) }, silent: true });
+    await apiFetch("/cms/v2/glossary", { method: "POST", body: { site_key: SITE_KEY, ...form, aliases: form.aliases.split(",").map(a => a.trim()).filter(Boolean) }, silent: true });
     setForm({ term: "", definition: "", aliases: "", category: "" });
     setShowForm(false);
     load();
@@ -89,3 +89,4 @@ export default function GlossaryPage() {
     </div>
   );
 }
+import { SITE_KEY } from "@/lib/site-config";

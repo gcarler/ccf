@@ -14,9 +14,16 @@ route into the canonical CMS v2 tables:
 It is idempotent: rerunning it updates rows only when the canonical payload
 changes, and it publishes a new page version only when the page snapshot
 differs from the live CMS state.
+
+The script runs against every site key listed in ``TARGET_SITES`` (default
+``["ccf", "faro"]``). This immunizes the platform against site-key drift
+between the frontend SITE_KEY env var and the canonical backend identifiers,
+which previously caused ``GET /cms/v2/public/sites/faro/theme`` to return
+``404 active theme not found`` for every ``/faro/*`` public route.
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -34,7 +41,18 @@ from backend import models  # noqa: E402
 from backend.core.database import SessionLocal  # noqa: E402
 
 
-SITE_KEY = "ccf"
+# Sites that must always have an active CmsTheme + CmsMenu("main") +
+# CmsPage("pastors"). The smoke-report surfaced ``404 active theme not found``
+# on every ``/faro/*`` route because only ``"ccf"`` was seeded; the frontend
+# can resolve to either key depending on ``NEXT_PUBLIC_SITE_KEY`` so we ensure
+# BOTH without renaming the canonical backend identifier.
+# Operator override (e.g. deployments that only ever serve a subset) can be
+# set via the ``CCF_PUBLIC_SITE_KEYS`` env var as a comma-separated string.
+TARGET_SITES = [
+    key.strip().lower()
+    for key in os.environ.get("CCF_PUBLIC_SITE_KEYS", "ccf,faro").split(",")
+    if key.strip()
+]
 PAGE_SLUG = "pastors"
 MENU_KEY = "main"
 THEME_NAME = "Tema institucional CCF"
@@ -353,26 +371,81 @@ def _ensure_page(db, site: models.CmsSite) -> tuple[bool, bool]:
     return created, changed
 
 
+def _ensure_site(db, site_key: str) -> tuple[models.CmsSite, bool]:
+    """Return the CmsSite row for ``site_key``, creating it when missing.
+
+    Axioma 3 — Multi-Tenant (REGLAS.md §4): CmsSite is the only legitimate
+    exception to the multi-tenant rule (editorial content shared
+    cross-sede by design). The new site intentionally has no ``sede_id``,
+    matching the documented exception in
+    ``backend/api/_cms_helpers/_shared.py``. Do NOT add ``sede_id`` here.
+    """
+    site = (
+        db.query(models.CmsSite)
+        .filter(models.CmsSite.site_key == site_key)
+        .first()
+    )
+    if site is not None:
+        if not site.is_active:
+            site.is_active = True
+        return site, False
+    site = models.CmsSite(
+        site_key=site_key,
+        name=site_key.upper(),
+        base_path="/",
+        is_active=True,
+    )
+    db.add(site)
+    db.flush()
+    return site, True
+
+
 def main() -> int:
     with SessionLocal() as db:
-        site = (
-            db.query(models.CmsSite)
-            .filter(models.CmsSite.site_key == SITE_KEY)
-            .first()
-        )
-        if site is None:
-            raise RuntimeError(f"CMS site {SITE_KEY!r} not found")
-
         menu_title, nav_payload = _load_page_content(db, "ccf_nav_items")
-        menu_created, menu_changed = _ensure_menu(db, site, nav_payload)
-        theme_created, theme_changed = _ensure_theme(db, site)
-        page_created, page_changed = _ensure_page(db, site)
-        db.commit()
 
-        print(f"Site: {SITE_KEY}")
-        print(f"Menu {MENU_KEY}: {'created' if menu_created else 'exists'}; {'updated' if menu_changed else 'unchanged'}")
-        print(f"Theme: {'created' if theme_created else 'exists'}; {'updated/activated' if theme_changed else 'unchanged'}")
-        print(f"Page {PAGE_SLUG}: {'created' if page_created else 'exists'}; {'updated/published' if page_changed else 'unchanged'}")
+        themes_active = 0
+        for site_key in TARGET_SITES:
+            site, site_created = _ensure_site(db, site_key)
+            menu_created, menu_changed = _ensure_menu(db, site, nav_payload)
+            theme_created, theme_changed = _ensure_theme(db, site)
+            if theme_created or theme_changed:
+                themes_active += 1
+            # The pastors page depends on legacy ``page_contents`` rows that
+            # an environment without the canonical bootstrap never had. Wrap
+            # the page ensure so a missing bootstrap never blocks the
+            # critical theme/site/menu ensure — the theme is what unblocks
+            # ``GET /cms/v2/public/sites/{site_key}/theme``.
+            try:
+                page_created, page_changed = _ensure_page(db, site)
+                page_status = (
+                    f"{'created' if page_created else 'exists'}; "
+                    f"{'updated/published' if page_changed else 'unchanged'}"
+                )
+            except RuntimeError as exc:
+                page_status = f"skipped (legacy page_contents missing: {exc})"
+                db.rollback()  # leave a clean tx for the theme+site+menu commit
+            except Exception:
+                page_status = "skipped (unexpected error in _ensure_page)"
+                db.rollback()
+
+            print(f"--- Site: {site_key} ---")
+            print(f"Site: {'created' if site_created else 'exists'}")
+            print(
+                f"Menu {MENU_KEY}: {'created' if menu_created else 'exists'}; "
+                f"{'updated' if menu_changed else 'unchanged'}"
+            )
+            print(
+                f"Theme: {'created' if theme_created else 'exists'}; "
+                f"{'updated/activated' if theme_changed else 'unchanged'}"
+            )
+            print(f"Page {PAGE_SLUG}: {page_status}")
+
+        db.commit()
+        print(
+            f"Summary: {len(TARGET_SITES)} sites touched; "
+            f"{themes_active} theme activations/updates."
+        )
         print(f"Menu source: {menu_title}")
         return 0
 

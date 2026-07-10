@@ -15,7 +15,7 @@ export default function BrokenLinksPage() {
     setLoading(true);
     try {
       const params = filter === "broken" ? "?resolved=false" : filter === "resolved" ? "?resolved=true" : "";
-      const data = await apiFetch<BrokenLink[]>(`/cms/v2/broken-links?site_key=ccf${params}`, { silent: true });
+      const data = await apiFetch<BrokenLink[]>(`/cms/v2/broken-links?site_key=${SITE_KEY}${params}`, { silent: true });
       setLinks(Array.isArray(data) ? data : []);
     } catch { setLinks([]); }
     setLoading(false);
@@ -70,3 +70,4 @@ export default function BrokenLinksPage() {
     </div>
   );
 }
+import { SITE_KEY } from "@/lib/site-config";

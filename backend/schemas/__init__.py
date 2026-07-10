@@ -153,7 +153,7 @@ from backend.schemas.cms import (
                                      TestimonialRead,
                                      TestimonialUpdate,
 )
-from backend.schemas.crm import (
+from backend.schemas.crm.base import (
                                      EVENT_TYPES,
                                      MINISTRY_ROLES,
                                      CaseCall,
@@ -239,7 +239,7 @@ from backend.schemas.crm import (
 )
 
 # ── CRM Resources (Biblioteca de Recursos) ───────────────────────────
-from backend.schemas.crm_resources import (  # noqa: F401
+from backend.schemas.crm.resources import (  # noqa: F401
                                      BitacoraEnvioOut,
                                      CategoriaRecursoCreate,
                                      CategoriaRecursoOut,

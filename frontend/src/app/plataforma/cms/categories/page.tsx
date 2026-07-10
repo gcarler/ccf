@@ -56,7 +56,7 @@ export default function CmsCategoriesManagement() {
       setSites(nextSites || []);
       setCategories(nextCategories || []);
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      toast.error("Error fetching categories");
       toast.error("Error al cargar categorías");
       setCategories([]);
     } finally {
@@ -94,7 +94,7 @@ export default function CmsCategoriesManagement() {
       setIsQuickAddOpen(false);
       await fetchData(siteKey);
     } catch (error) {
-      console.error("Error creating category:", error);
+      toast.error("Error creating category");
       toast.error("Error al crear categoría. El slug puede estar en uso.");
     }
   };
@@ -106,7 +106,7 @@ export default function CmsCategoriesManagement() {
       toast.success("Categoría archivada");
       await fetchData(siteKey);
     } catch (error) {
-      console.error("Error archiving category:", error);
+      toast.error("Error archiving category");
       toast.error("Error al archivar categoría");
     }
   };
@@ -118,7 +118,7 @@ export default function CmsCategoriesManagement() {
       toast.success("Categoría restaurada");
       await fetchData(siteKey);
     } catch (error) {
-      console.error("Error restoring category:", error);
+      toast.error("Error restoring category");
       toast.error("Error al restaurar categoría");
     }
   };
@@ -142,7 +142,7 @@ export default function CmsCategoriesManagement() {
       setSelectedCategory(null);
       await fetchData(siteKey);
     } catch (error) {
-      console.error("Error updating category:", error);
+      toast.error("Error updating category");
       toast.error("Error al actualizar categoría");
     }
   };

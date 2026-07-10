@@ -12,14 +12,20 @@ from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, lazyload
 
 from backend import crud, models, schemas
 from backend.api._cms_helpers import (
     _get_scoped_cms_media,
     _get_scoped_persona,
     _scope_cms_pastoral_team_by_user_sede,
-    seo_audit as _seo_audit,
+    # Gate 6 anti-drift: SEO audit helpers re-exportados por el __init__
+    # del paquete (público) para evitar exponer ``_shared`` como path público.
+    # Los call sites usan ‍‍`_audit_xxx.foo()‍‍`‍‍ directamente.
+    audit_pages,
+    build_media_alt_lookup,
+    collect_section_media_ids,
+    group_sections_by_page,
 )
 from backend.core.cache_v2 import cached_public
 from backend.core.config import get_settings
@@ -181,7 +187,7 @@ def get_allowed_section_types(db: Session) -> set[str]:
             return types
     except Exception:
         # If table missing or any error, fall back
-        pass
+        logger.debug("Section type catalog query failed, using hardcoded fallback")
     # Fallback hardcoded list (kept in sync with scripts/seed_cms_section_types.py)
     return {
         "hero",
@@ -312,9 +318,19 @@ def _assert_site_sede_scope(
 def _get_public_site_or_404(db: Session, site_key: str) -> models.CmsSite:
     """Fetch a public‑active CMS site or raise 404.
 
-    Ensures the site exists and ``is_active`` flag is true.
+    Uses ``lazyload('*')`` to avoid the massive cascade of eager-loaded
+    relationships on ``CmsSite`` (pages, menus, themes, posts, etc. each
+    with ``selectin`` loading). Public endpoints only need ``site.id`` and
+    ``site.is_active`` — not the full relational graph.
     """
-    row = _get_site_or_404(db, site_key)
+    row = (
+        db.query(models.CmsSite)
+        .options(lazyload("*"))
+        .filter(models.CmsSite.site_key == site_key.strip().lower())
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="site not found")
     if not row.is_active:
         raise HTTPException(status_code=404, detail="site not found")
     return row
@@ -323,19 +339,26 @@ def _get_public_site_or_404(db: Session, site_key: str) -> models.CmsSite:
 def _get_menu_or_404(db: Session, site_id: UUID, menu_key: str) -> models.CmsMenu:
     """Retrieve a CMS menu by its key for a given site or raise 404.
 
-    Args:
-        db: Database session.
-        site_id: UUID of the site.
-        menu_key: Key of the menu (case‑insensitive).
+    Uses ``lazyload('*')`` to avoid eager-loading the ``CmsSite`` cascade.
     """
-    row = crud.get_cms_menu(db, site_id, menu_key.strip().lower())
+    row = (
+        db.query(models.CmsMenu)
+        .options(lazyload("*"))
+        .filter(models.CmsMenu.site_id == site_id, models.CmsMenu.menu_key == menu_key)
+        .first()
+    )
     if not row:
         raise HTTPException(status_code=404, detail="menu not found")
     return row
 
 
 def _get_page_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsPage:
-    row = crud.get_cms_page(db, site_id, _slugify(slug))
+    row = (
+        db.query(models.CmsPage)
+        .options(lazyload("*"))
+        .filter(models.CmsPage.site_id == site_id, models.CmsPage.slug == _slugify(slug))
+        .first()
+    )
     if not row:
         raise HTTPException(status_code=404, detail="page not found")
     return row
@@ -1029,7 +1052,7 @@ def seo_audit(
         .all()
     )
     page_ids = [page.id for page in pages]
-    sections_by_page = _seo_audit.group_sections_by_page([])
+    sections_by_page = group_sections_by_page([])
     if page_ids:
         sections_rows = (
             db.query(models.CmsSection)
@@ -1037,14 +1060,14 @@ def seo_audit(
             .order_by(models.CmsSection.sort_order.asc())
             .all()
         )
-        sections_by_page = _seo_audit.group_sections_by_page(sections_rows)
+        sections_by_page = group_sections_by_page(sections_rows)
 
-    media_ids = _seo_audit.collect_section_media_ids(
+    media_ids = collect_section_media_ids(
         section for rows in sections_by_page.values() for section in rows
     )
-    media_alt_lookup = _seo_audit.build_media_alt_lookup(db, media_ids)
+    media_alt_lookup = build_media_alt_lookup(db, media_ids)
 
-    audits, aggregate = _seo_audit.audit_pages(
+    audits, aggregate = audit_pages(
         pages, sections_by_page, media_alt_lookup,
     )
     if min_score is not None:
@@ -1166,7 +1189,17 @@ def workflow_page(
 @cached_public(ttl=300)
 def public_theme(site_key: str, db: Session = Depends(get_db)):
     site = _get_public_site_or_404(db, site_key)
-    row = crud.get_active_cms_theme(db, site.id)
+    row = (
+        db.query(models.CmsTheme)
+        .options(lazyload("*"))
+        .filter(
+            models.CmsTheme.site_id == site.id,
+            models.CmsTheme.is_active.is_(True),
+            models.CmsTheme.status != "archived",
+        )
+        .order_by(models.CmsTheme.updated_at.desc())
+        .first()
+    )
     if not row:
         raise HTTPException(status_code=404, detail="active theme not found")
     return {
@@ -1193,7 +1226,13 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
     menu = _get_menu_or_404(db, site.id, menu_key)
     if not menu.is_active:
         raise HTTPException(status_code=404, detail="menu not found")
-    all_items = crud.list_cms_menu_items(db, menu.id)
+    all_items = (
+        db.query(models.CmsMenuItem)
+        .options(lazyload("*"))
+        .filter(models.CmsMenuItem.menu_id == menu.id)
+        .order_by(models.CmsMenuItem.sort_order.asc(), models.CmsMenuItem.id.asc())
+        .all()
+    )
     public_ids = {item.id for item in all_items if item.visibility == "public"}
     items = [item for item in all_items if item.visibility == "public" and (item.parent_id is None or item.parent_id in public_ids)]
     visible_ids = {item.id for item in items}
@@ -1378,7 +1417,13 @@ def public_pages_list(
 ):
     """Public endpoint: list published CMS pages for sitemap and SEO."""
     site = _get_public_site_or_404(db, site_key)
-    pages, total = crud.list_cms_pages(db, site.id, skip=skip, limit=limit, status="published")
+    query = (
+        db.query(models.CmsPage)
+        .options(lazyload("*"))
+        .filter(models.CmsPage.site_id == site.id, models.CmsPage.status == "published")
+    )
+    total = query.count()
+    pages = query.order_by(models.CmsPage.updated_at.desc()).offset(skip).limit(limit).all()
     return PaginatedResponse[schemas.CmsPageRead](
         items=pages, total=total, skip=skip, limit=limit
     )
@@ -1392,13 +1437,28 @@ def public_pages_list(
 @cached_public(ttl=300)
 def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
     site = _get_public_site_or_404(db, site_key)
-    page = crud.get_public_cms_page(db, site.id, _slugify(slug))
+    page = (
+        db.query(models.CmsPage)
+        .options(lazyload("*"))
+        .filter(
+            models.CmsPage.site_id == site.id,
+            models.CmsPage.slug == _slugify(slug),
+            models.CmsPage.status == "published",
+        )
+        .first()
+    )
     if not page:
         raise HTTPException(status_code=404, detail="published page not found")
     published_version = None
     if page.published_version_id:
-        published_version = crud.get_cms_page_version(
-            db, page.id, page.published_version_id
+        published_version = (
+            db.query(models.CmsPageVersion)
+            .options(lazyload("*"))
+            .filter(
+                models.CmsPageVersion.page_id == page.id,
+                models.CmsPageVersion.id == page.published_version_id,
+            )
+            .first()
         )
 
     if published_version:
@@ -1540,7 +1600,14 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
 def public_sitemap(site_key: str, db: Session = Depends(get_db)):
     """Public endpoint: generate sitemap.xml for all published pages."""
     site = _get_public_site_or_404(db, site_key)
-    pages, _ = crud.list_cms_pages(db, site.id, skip=0, limit=500, status="published")
+    pages = (
+        db.query(models.CmsPage)
+        .options(lazyload("*"))
+        .filter(models.CmsPage.site_id == site.id, models.CmsPage.status == "published")
+        .order_by(models.CmsPage.updated_at.desc())
+        .limit(500)
+        .all()
+    )
     settings = get_settings()
     base_url = settings.frontend_url.rstrip("/")
     xml = build_sitemap_xml(pages, base_url, include_images=True)
@@ -1836,21 +1903,36 @@ def delete_global_block(
 
 
 def _get_category_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsCategory:
-    row = crud.get_cms_category(db, site_id, _slugify(slug))
+    row = (
+        db.query(models.CmsCategory)
+        .options(lazyload("*"))
+        .filter(models.CmsCategory.site_id == site_id, models.CmsCategory.slug == _slugify(slug))
+        .first()
+    )
     if not row:
         raise HTTPException(status_code=404, detail="category not found")
     return row
 
 
 def _get_tag_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsTag:
-    row = crud.get_cms_tag(db, site_id, _slugify(slug))
+    row = (
+        db.query(models.CmsTag)
+        .options(lazyload("*"))
+        .filter(models.CmsTag.site_id == site_id, models.CmsTag.slug == _slugify(slug))
+        .first()
+    )
     if not row:
         raise HTTPException(status_code=404, detail="tag not found")
     return row
 
 
 def _get_post_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsPost:
-    row = crud.get_cms_post(db, site_id, _slugify(slug))
+    row = (
+        db.query(models.CmsPost)
+        .options(lazyload("*"))
+        .filter(models.CmsPost.site_id == site_id, models.CmsPost.slug == _slugify(slug))
+        .first()
+    )
     if not row:
         raise HTTPException(status_code=404, detail="post not found")
     return row
@@ -2114,10 +2196,20 @@ def public_posts_list(
     tag_slug: str | None = Query(None),
 ):
     site = _get_public_site_or_404(db, site_key)
-    items, total = crud.get_public_cms_posts(
-        db, site.id, skip=skip, limit=limit,
-        category_slug=category_slug, tag_slug=tag_slug,
+    query = (
+        db.query(models.CmsPost)
+        .options(lazyload("*"))
+        .filter(
+            models.CmsPost.site_id == site.id,
+            models.CmsPost.status == "published",
+        )
     )
+    if category_slug:
+        query = query.join(models.CmsPostCategory).join(models.CmsCategory).filter(models.CmsCategory.slug == category_slug)
+    if tag_slug:
+        query = query.join(models.CmsPostTag).join(models.CmsTag).filter(models.CmsTag.slug == tag_slug)
+    total = query.count()
+    items = query.order_by(models.CmsPost.published_at.desc().nullslast()).offset(skip).limit(limit).all()
     enriched = []
     for post in items:
         p = schemas.CmsPublicPostRead.model_validate(post)
@@ -2150,7 +2242,16 @@ def public_post(
     db: Session = Depends(get_db),
 ):
     site = _get_public_site_or_404(db, site_key)
-    post = crud.get_public_cms_post(db, site.id, _slugify(slug))
+    post = (
+        db.query(models.CmsPost)
+        .options(lazyload("*"))
+        .filter(
+            models.CmsPost.site_id == site.id,
+            models.CmsPost.slug == _slugify(slug),
+            models.CmsPost.status == "published",
+        )
+        .first()
+    )
     if not post:
         raise HTTPException(status_code=404, detail="published post not found")
     p = schemas.CmsPublicPostRead.model_validate(post)
@@ -2372,3 +2473,6 @@ async def optimize_uploaded_image(
         "max_width": max_width,
         "quality": quality,
     }
+
+
+

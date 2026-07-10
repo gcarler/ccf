@@ -53,6 +53,12 @@ def _to_jsonable(value: Any) -> Any:
         # with any leftover v1 models. Skip ``type`` because every class
         # has a ``.dict`` attribute via ``__class__``.
         return _to_jsonable(value.dict())
+    if hasattr(value, "_sa_instance_state"):
+        # SQLAlchemy model — extract column values, skip internal SA keys.
+        return _to_jsonable({
+            k: v for k, v in value.__dict__.items()
+            if not k.startswith("_")
+        })
     if isinstance(value, (list, tuple)):
         return [_to_jsonable(item) for item in value]
     if isinstance(value, dict):

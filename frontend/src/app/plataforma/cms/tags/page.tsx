@@ -61,7 +61,7 @@ export default function CmsTagsManagement() {
       setSites(nextSites || []);
       setTags(nextTags || []);
     } catch (error) {
-      console.error("Error fetching tags:", error);
+      toast.error("Error fetching tags");
       toast.error("Error al cargar etiquetas");
       setTags([]);
     } finally {
@@ -99,7 +99,7 @@ export default function CmsTagsManagement() {
       setIsQuickAddOpen(false);
       await fetchData(siteKey);
     } catch (error) {
-      console.error("Error creating tag:", error);
+      toast.error("Error creating tag");
       toast.error("Error al crear etiqueta. El slug puede estar en uso.");
     }
   };
@@ -111,7 +111,7 @@ export default function CmsTagsManagement() {
       toast.success("Etiqueta archivada");
       await fetchData(siteKey);
     } catch (error) {
-      console.error("Error archiving tag:", error);
+      toast.error("Error archiving tag");
       toast.error("Error al archivar etiqueta");
     }
   };
@@ -123,7 +123,7 @@ export default function CmsTagsManagement() {
       toast.success("Etiqueta restaurada");
       await fetchData(siteKey);
     } catch (error) {
-      console.error("Error restoring tag:", error);
+      toast.error("Error restoring tag");
       toast.error("Error al restaurar etiqueta");
     }
   };
@@ -145,7 +145,7 @@ export default function CmsTagsManagement() {
       setSelectedTag(null);
       await fetchData(siteKey);
     } catch (error) {
-      console.error("Error updating tag:", error);
+      toast.error("Error updating tag");
       toast.error("Error al actualizar etiqueta");
     }
   };

@@ -26,6 +26,10 @@ class CmsMediaItem(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
+    sede = relationship("Sede", foreign_keys=[sede_id], lazy="joined")
+
 
 class CmsSite(Base):
     __tablename__ = "cms_sites"
@@ -42,6 +46,17 @@ class CmsSite(Base):
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    sede = relationship("Sede", foreign_keys=[sede_id], lazy="joined")
+    themes = relationship("CmsTheme", back_populates="site", lazy="selectin")
+    menus = relationship("CmsMenu", back_populates="site", lazy="selectin")
+    pages = relationship("CmsPage", back_populates="site", lazy="selectin")
+    categories = relationship("CmsCategory", back_populates="site", lazy="selectin")
+    tags = relationship("CmsTag", back_populates="site", lazy="selectin")
+    posts = relationship("CmsPost", back_populates="site", lazy="selectin")
+    publish_logs = relationship("CmsPublishLog", back_populates="site", lazy="selectin")
+    seo_snapshots = relationship("CmsSeoSnapshot", back_populates="site", lazy="selectin")
 
 
 class CmsTheme(Base):
@@ -63,6 +78,11 @@ class CmsTheme(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    site = relationship("CmsSite", back_populates="themes", lazy="joined")
+    created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
+    updated_by_persona = relationship("Persona", foreign_keys=[updated_by_persona_id], lazy="joined")
+
 
 class CmsMenu(Base):
     __tablename__ = "cms_menus"
@@ -82,6 +102,10 @@ class CmsMenu(Base):
     __table_args__ = (
         UniqueConstraint("site_id", "menu_key", name="uq_cms_menu_site_key"),
     )
+
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    site = relationship("CmsSite", back_populates="menus", lazy="joined")
+    items = relationship("CmsMenuItem", back_populates="menu", lazy="selectin")
 
 
 class CmsMenuItem(Base):
@@ -108,6 +132,20 @@ class CmsMenuItem(Base):
     meta_json = Column(JSON, default={})
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    menu = relationship("CmsMenu", back_populates="items", lazy="joined")
+    parent = relationship(
+        "CmsMenuItem",
+        remote_side=[id],
+        back_populates="children",
+        lazy="joined",
+    )
+    children = relationship(
+        "CmsMenuItem",
+        back_populates="parent",
+        lazy="selectin",
+    )
 
 
 class CmsPage(Base):
@@ -150,6 +188,20 @@ class CmsPage(Base):
         UniqueConstraint("site_id", "slug", name="uq_cms_page_site_slug"),
     )
 
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    site = relationship("CmsSite", back_populates="pages", lazy="joined")
+    sections = relationship("CmsSection", back_populates="page", lazy="selectin")
+    versions = relationship("CmsPageVersion", back_populates="page", lazy="selectin", foreign_keys="CmsPageVersion.page_id")
+    views = relationship("CmsPageView", back_populates="page", lazy="selectin")
+    publish_logs = relationship("CmsPublishLog", back_populates="page", lazy="selectin")
+    created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
+    updated_by_persona = relationship("Persona", foreign_keys=[updated_by_persona_id], lazy="joined")
+    published_version = relationship(
+        "CmsPageVersion",
+        foreign_keys=[published_version_id],
+        lazy="joined",
+    )
+
 
 class CmsPageVersion(Base):
     __tablename__ = "cms_page_versions"
@@ -173,6 +225,15 @@ class CmsPageVersion(Base):
             "page_id", "version_number", name="uq_cms_page_version_number"
         ),
     )
+
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    page = relationship(
+        "CmsPage",
+        back_populates="versions",
+        foreign_keys=[page_id],
+        lazy="joined",
+    )
+    created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
 
 
 class CmsSection(Base):
@@ -198,6 +259,11 @@ class CmsSection(Base):
     updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    page = relationship("CmsPage", back_populates="sections", lazy="joined")
+    created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
+    updated_by_persona = relationship("Persona", foreign_keys=[updated_by_persona_id], lazy="joined")
 
 
 class CmsSectionType(Base):
@@ -234,6 +300,11 @@ class CmsPublishLog(Base):
     metadata_json = Column(JSON, default={})
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    site = relationship("CmsSite", back_populates="publish_logs", lazy="joined")
+    page = relationship("CmsPage", back_populates="publish_logs", lazy="joined")
+    actor_persona = relationship("Persona", foreign_keys=[actor_persona_id], lazy="joined")
+
 
 class CmsPageView(Base):
     __tablename__ = "cms_page_views"
@@ -243,6 +314,9 @@ class CmsPageView(Base):
     user_agent = Column(String(500), nullable=True)
     referrer = Column(String(500), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    page = relationship("CmsPage", back_populates="views", lazy="joined")
 
 
 class SavedView(Base):
@@ -258,6 +332,9 @@ class SavedView(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    persona = relationship("Persona", foreign_keys=[persona_id], lazy="joined")
 
 
 class Announcement(Base):
@@ -280,6 +357,10 @@ class Announcement(Base):
     published_at = Column(DateTime(timezone=True), default=_utcnow)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
+    sede = relationship("Sede", foreign_keys=[sede_id], lazy="joined")
 
 
 class Testimonial(Base):
@@ -306,6 +387,7 @@ class Testimonial(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     author = relationship("Persona", foreign_keys=[author_persona_id], lazy="joined")
+    sede = relationship("Sede", foreign_keys=[sede_id], lazy="joined")
 
 
 # ── Posts & Taxonomías (Blog/Noticias) ─────────────────────────────────────
@@ -336,6 +418,26 @@ class CmsCategory(Base):
         UniqueConstraint("site_id", "slug", name="uq_cms_category_site_slug"),
     )
 
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    site = relationship("CmsSite", back_populates="categories", lazy="joined")
+    parent = relationship(
+        "CmsCategory",
+        remote_side=[id],
+        back_populates="children",
+        lazy="joined",
+    )
+    children = relationship(
+        "CmsCategory",
+        back_populates="parent",
+        lazy="selectin",
+    )
+    posts = relationship(
+        "CmsPost",
+        secondary="cms_post_categories",
+        back_populates="categories",
+        lazy="selectin",
+    )
+
 
 class CmsTag(Base):
     __tablename__ = "cms_tags"
@@ -354,6 +456,15 @@ class CmsTag(Base):
 
     __table_args__ = (
         UniqueConstraint("site_id", "slug", name="uq_cms_tag_site_slug"),
+    )
+
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    site = relationship("CmsSite", back_populates="tags", lazy="joined")
+    posts = relationship(
+        "CmsPost",
+        secondary="cms_post_tags",
+        back_populates="tags",
+        lazy="selectin",
     )
 
 
@@ -390,6 +501,24 @@ class CmsPost(Base):
         UniqueConstraint("site_id", "slug", name="uq_cms_post_site_slug"),
     )
 
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    site = relationship("CmsSite", back_populates="posts", lazy="joined")
+    author_persona = relationship("Persona", foreign_keys=[author_persona_id], lazy="joined")
+    created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
+    updated_by_persona = relationship("Persona", foreign_keys=[updated_by_persona_id], lazy="joined")
+    categories = relationship(
+        "CmsCategory",
+        secondary="cms_post_categories",
+        back_populates="posts",
+        lazy="selectin",
+    )
+    tags = relationship(
+        "CmsTag",
+        secondary="cms_post_tags",
+        back_populates="posts",
+        lazy="selectin",
+    )
+
 
 class CmsPostCategory(Base):
     __tablename__ = "cms_post_categories"
@@ -404,6 +533,10 @@ class CmsPostCategory(Base):
         primary_key=True,
     )
 
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    post = relationship("CmsPost", lazy="joined")
+    category = relationship("CmsCategory", lazy="joined")
+
 
 class CmsPostTag(Base):
     __tablename__ = "cms_post_tags"
@@ -417,6 +550,10 @@ class CmsPostTag(Base):
         ForeignKey("cms_tags.id", ondelete="CASCADE"),
         primary_key=True,
     )
+
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    post = relationship("CmsPost", lazy="joined")
+    tag = relationship("CmsTag", lazy="joined")
 
 
 class CmsSeoSnapshot(Base):
@@ -469,3 +606,7 @@ class CmsSeoSnapshot(Base):
     __table_args__ = (
         UniqueConstraint("site_id", "captured_date", name="uq_cms_seo_snapshot_site_date"),
     )
+
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    site = relationship("CmsSite", back_populates="seo_snapshots", lazy="joined")
+    sede = relationship("Sede", foreign_keys=[sede_id], lazy="joined")

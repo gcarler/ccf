@@ -137,7 +137,7 @@ export default function CmsMediaLibrary() {
       }
       await fetchMedia();
     } catch (err) {
-      console.error("Upload error", err);
+      toast.error("Error al subir archivo");
       toast.error("Error al subir archivo");
     } finally {
       setUploading(false);
@@ -185,7 +185,7 @@ export default function CmsMediaLibrary() {
       setItems(prev => prev.map(item => item.id === selectedItem.id ? normalized : item));
       setTagsText(tags.join(", "));
     } catch (err) {
-      console.error("Save media metadata error", err);
+      toast.error("Error al guardar metadata");
       toast.error("Error al guardar metadatos");
     } finally {
       setMetadataSaving(false);
@@ -203,7 +203,7 @@ export default function CmsMediaLibrary() {
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, ...updated, status: nextStatus } : i));
       if (selectedItem?.id === item.id) setSelectedItem(prev => prev ? { ...prev, ...updated, status: nextStatus } : prev);
     } catch (err) {
-      console.error("Archive media error", err);
+      toast.error("Error al archivar");
       toast.error("Error al archivar medio");
     } finally {
       setDeletingId(null);
@@ -219,7 +219,7 @@ export default function CmsMediaLibrary() {
       if (selectedItem?.id === item.id) setSelectedItem(null);
       toast.success("Archivo eliminado permanentemente");
     } catch (err) {
-      console.error("Delete media error", err);
+      toast.error("Error al eliminar");
       toast.error("Error al eliminar archivo");
     } finally {
       setDeletingId(null);
@@ -235,7 +235,7 @@ export default function CmsMediaLibrary() {
       if (selectedItem?.id === item.id) setSelectedItem(prev => prev ? { ...prev, ...updated } : prev);
       toast.success("Imagen optimizada para web");
     } catch (err) {
-      console.error("Optimize media error", err);
+      toast.error("Error al optimizar");
       toast.error("Error al optimizar imagen");
     } finally {
       setOptimizingId(null);
@@ -500,7 +500,7 @@ export default function CmsMediaLibrary() {
                         <button
                           onClick={e => { e.stopPropagation(); optimizeItem(item); }}
                           disabled={optimizingId === item.id}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
                         >
                           {optimizingId === item.id ? <Loader2 size={10} className="animate-spin" /> : <Zap size={10} />}
                           Optimizar
@@ -604,7 +604,7 @@ export default function CmsMediaLibrary() {
                         <button
                           onClick={e => { e.stopPropagation(); optimizeItem(item); }}
                           disabled={optimizingId === item.id}
-                          className="p-2 rounded-md hover:bg-violet-50 text-[hsl(var(--text-secondary))] hover:text-violet-600 transition-colors disabled:opacity-60"
+                          className="p-2 rounded-md hover:bg-blue-50 text-[hsl(var(--text-secondary))] hover:text-blue-600 transition-colors disabled:opacity-60"
                           aria-label="Optimizar"
                         >
                           {optimizingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}

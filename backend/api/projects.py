@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -98,6 +99,21 @@ def _to_uuid(val):
 
 
 def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Project:
+    """Fetch a project by id and enforce multi-tenant scope (Axioma 3).
+
+    Existence-leak safe: returns 404 (never 403) when the project is in a
+    different ``sede_id`` than the actor. This matches the CRM/CMS
+    ``_ensure_*`` convention so cross-tenant probing yields indistinguishable
+    error from "not found".
+
+    Args:
+        db: SQLAlchemy session.
+        project_id: Project identifier (UUID or string).
+        user_sede: When provided, the actor's sede. If the project has a
+            ``sede_id`` and it differs from ``user_sede``, raises 404. If
+            ``user_sede`` is ``None`` (superadmin path) no scope filter is
+            applied.
+    """
     project = (
         db.query(models.Project)
         .options(
@@ -110,7 +126,8 @@ def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Proj
     )
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if user_sede and project.sede_id and project.sede_id != user_sede:
+    if user_sede and project.sede_id and str(project.sede_id) != str(user_sede):
+        # Existence-leak safe rejection — same envelope as "not found".
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
@@ -223,6 +240,19 @@ def _assert_status_in_project_phases(
             f"Active phases for this {source}: [{pretty}]"
         ),
     )
+
+
+def _validate_whiteboard_json(elements_json: str) -> None:
+    """Valida que elements_json sea JSON válido.
+
+    Rechaza el literal "undefined" (bug de cliente JS) y JSON malformado.
+    """
+    if elements_json.strip().lower() == "undefined":
+        raise HTTPException(status_code=400, detail="elements_json must be valid JSON, got 'undefined'")
+    try:
+        json.loads(elements_json)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="elements_json must be valid JSON")
 
 
 # Canonical 4-phase set used when a project has no active Phase rows
@@ -365,7 +395,8 @@ def list_project_phases(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Lista las fases (columnas del kanban) de un proyecto."""
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     return crud.get_project_phases(db, project_id)
 
 
@@ -380,7 +411,8 @@ def set_project_phases(
     El orden en el array define el order_index de cada fase.
     Solo administradores y gestores pueden modificar fases.
     """
-    _project = _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _project = _ensure_project(db, project_id, user_sede=user_sede)
 
     # Check no phase with tasks is being deleted
     existing = {p.slug for p in crud.get_project_phases(db, project_id)}
@@ -418,12 +450,29 @@ def list_all_comments(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Lista todos los comentarios de proyectos con filtros opcionales."""
+    """Lista todos los comentarios de proyectos con filtros opcionales.
+
+    Axioma 3 — strict scope: el feed global de comentarios queda acotado
+    a los proyectos del actor. La ruta acepta un ``project_id`` opcional
+    para filtrado explícito (validado vía ``_ensure_project``); cuando
+    NO se pasa project_id, la respuesta agrega comentarios de proyectos
+    visibles para la ``sede_id`` del actor. Superadmin (sin sede) sigue
+    viendo todo, consistente con ``list_projects``.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
     q = db.query(models.ProjectComment).filter(models.ProjectComment.deleted_at.is_(None))
+    if project_id:
+        # Validate scope at the project level before exposing its comments.
+        _ensure_project(db, project_id, user_sede=user_sede)
+        q = q.filter(models.ProjectComment.project_id == _to_uuid(project_id))
+    elif user_sede:
+        # No project filter → join with Project and keep only those in
+        # the actor's sede.
+        q = q.join(
+            models.Project, models.Project.id == models.ProjectComment.project_id
+        ).filter(models.Project.sede_id == user_sede)
     if unresolved_only:
         q = q.filter(models.ProjectComment.is_resolved.is_(False))
-    if project_id:
-        q = q.filter(models.ProjectComment.project_id == _to_uuid(project_id))
     if task_id:
         q = q.filter(models.ProjectComment.task_id == _to_uuid(task_id))
     rows = q.order_by(models.ProjectComment.created_at.desc()).limit(limit).all()
@@ -462,7 +511,8 @@ def create_project_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     project = db.query(models.Project).filter(models.Project.id == _to_uuid(project_id)).first()
     payload = task.model_dump()
     _assert_status_in_project_phases(db, project_id, payload.get("status"))
@@ -539,44 +589,72 @@ def workload_summary(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Resumen de carga de trabajo por persona."""
-    review_case = func.coalesce(func.sum(cast(models.ProjectTask.status == "review", Integer)), 0).label("in_review")
+    """Resumen de carga de trabajo por persona.
 
-    rows = (
+    Axioma 3 — strict scope consistente con el resto del módulo: solo se
+    agregan tareas de proyectos en la ``sede_id`` del actor. Superadmin
+    (``user_sede`` = ``None``) ve todo.
+
+    N+1 fix (oportunista, Sprint 1.1) — antes este endpoint emitía una
+    query de ``COUNT(overdue)`` por cada assignee devolvido por la query
+    principal (1 + N queries). Ahora las tres métricas (open / in_review /
+    overdue) se agregan en un único ``GROUP BY`` con ``CASE`` expressions
+    portable sobre SQLite + Postgres. Una sola query para N assignees.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    open_statuses = ("todo", "in_progress", "review")
+    now_expr = func.now()
+
+    open_count = func.count(models.ProjectTask.id).label("open_tasks")
+    in_review_count = func.coalesce(
+        func.sum(cast(models.ProjectTask.status == "review", Integer)),
+        0,
+    ).label("in_review")
+    overdue_count = func.coalesce(
+        func.sum(
+            cast(
+                models.ProjectTask.status.in_(open_statuses)
+                & (models.ProjectTask.due_date < now_expr),
+                Integer,
+            )
+        ),
+        0,
+    ).label("overdue_tasks")
+
+    q = (
         db.query(
             models.ProjectTask.assignee_id,
-            func.count(models.ProjectTask.id).label("open_tasks"),
-            review_case,
+            open_count,
+            in_review_count,
+            overdue_count,
         )
         .filter(
-            models.ProjectTask.status.in_(["todo", "in_progress", "review"]),
+            models.ProjectTask.status.in_(open_statuses),
             models.ProjectTask.assignee_id.isnot(None),
+            models.ProjectTask.deleted_at.is_(None),
         )
-        .group_by(models.ProjectTask.assignee_id)
+    )
+    if user_sede:
+        # Single JOIN when scope is set; supplies ``Project.sede_id`` to the
+        # WHERE. Without this the workload feed would leak cross-sede rows.
+        q = q.join(
+            models.Project, models.Project.id == models.ProjectTask.project_id
+        ).filter(models.Project.sede_id == user_sede)
+
+    rows = (
+        q.group_by(models.ProjectTask.assignee_id)
+        .order_by(open_count.desc())
         .all()
     )
-
-    result = []
-    for row in rows:
-        overdue = (
-            db.query(func.count(models.ProjectTask.id))
-            .filter(
-                models.ProjectTask.assignee_id == row[0],
-                models.ProjectTask.due_date < func.now(),
-                models.ProjectTask.status.in_(["todo", "in_progress", "review"]),
-            )
-            .scalar()
-            or 0
+    return [
+        schemas.ProjectWorkloadSummaryRow(
+            assignee_id=str(row.assignee_id) if row.assignee_id else None,
+            open_tasks=row.open_tasks or 0,
+            in_review=row.in_review or 0,
+            overdue_tasks=row.overdue_tasks or 0,
         )
-        result.append(
-            schemas.ProjectWorkloadSummaryRow(
-                assignee_id=str(row[0]) if row[0] else None,
-                open_tasks=row[1] or 0,
-                in_review=row[2] or 0,
-                overdue_tasks=overdue,
-            )
-        )
-    return result
+        for row in rows
+    ]
 
 
 @router.get("/activities", response_model=List[schemas.ProjectActivityItem])
@@ -586,22 +664,52 @@ def list_activities(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Feed de actividad global de proyectos."""
-    q = db.query(models.ProjectActivityLog).order_by(models.ProjectActivityLog.created_at.desc())
+    """Feed de actividad global de proyectos.
+
+    Axioma 3 — strict scope: cuando NO se pasa ``project_id`` el feed
+    se acota a bitacoras de proyectos visibles para la ``sede_id`` del
+    actor (join con Project). Cuando SÍ se pasa ``project_id``, se
+    valida la sede del proyecto con ``_ensure_project``. Esto elimina
+    el leak cross-sede del feed ministerial.
+
+    N+1 fix (oportunista, Sprint 1.1) — antes cada log disparaba su
+    propio ``db.query(Project).filter(id=log.project_id).first()`` para
+    resolver ``project_title``. Con ``limit=200`` eso eran hasta 200
+    queries por request. Ahora se hace un único ``IN (...)`` batch y se
+    indexa por ``project_id`` en un dict para O(1) lookup por log.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    q = db.query(models.ProjectActivityLog)
     if project_id:
+        _ensure_project(db, project_id, user_sede=user_sede)
         q = q.filter(models.ProjectActivityLog.project_id == _to_uuid(project_id))
-    logs = q.limit(limit).all()
+    elif user_sede:
+        # Join con Project para que ``Project.sede_id`` sea usable en el filtro.
+        q = q.join(
+            models.Project, models.Project.id == models.ProjectActivityLog.project_id
+        ).filter(models.Project.sede_id == user_sede)
+    logs = q.order_by(models.ProjectActivityLog.created_at.desc()).limit(limit).all()
+
+    # ── Batch fetch: 1 query for the unique project_ids of this page ──
+    project_ids = {log.project_id for log in logs if log.project_id}
+    projects_map: dict = {}
+    if project_ids:
+        rows = (
+            db.query(models.Project.id, models.Project.title)
+            .filter(models.Project.id.in_(project_ids))
+            .all()
+        )
+        projects_map = {pid: title for pid, title in rows}
 
     result = []
     for log in logs:
         _normalize_dates(log)
-        project = db.query(models.Project).filter(models.Project.id == log.project_id).first()
         result.append(
             schemas.ProjectActivityItem(
                 id=str(log.id),
                 kind=log.action_type,
                 project_id=str(log.project_id) if log.project_id is not None else None,
-                project_title=project.title if project else "Proyecto",
+                project_title=projects_map.get(log.project_id, "Proyecto"),
                 description=log.description or "",
                 created_at=log.created_at or _utcnow(),
             )
@@ -615,8 +723,16 @@ def get_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Obtiene una tarea por ID."""
+    """Obtiene una tarea por ID.
+
+    Axioma 3 — cross-sede defense-in-depth: validate the task's parent
+    project against the actor's ``sede_id`` via ``_ensure_project``. Without
+    this, a user from sede_a could fetch a task in sede_b just by guessing
+    the task_id.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
     task = _ensure_task(db, task_id)
+    _ensure_project(db, str(task.project_id), user_sede=user_sede)
     _normalize_dates(task)
     return task
 
@@ -628,8 +744,16 @@ def update_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
-    """Actualiza una tarea usando ruta plana (sin project_id)."""
+    """Actualiza una tarea usando ruta plana (sin project_id).
+
+    Axioma 3 — the flat PATCH path takes only ``task_id``. We must
+    validate the task's parent project via ``_ensure_project`` so a
+    sede_a user cannot mutate tasks in sede_b projects just by knowing
+    the task_id (existence-leak safe: returns 404, not 403).
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
     task = _ensure_task(db, task_id)
+    _ensure_project(db, str(task.project_id), user_sede=user_sede)
     update_data = payload.model_dump(exclude_unset=True)
     if "status" in update_data:
         _assert_status_in_project_phases(db, task.project_id, update_data["status"])
@@ -659,24 +783,45 @@ def list_inbox(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Bandeja de entrada: tareas recién asignadas y comentarios no leídos."""
+    """Bandeja de entrada: tareas recién asignadas + comentarios no leídos.
+
+    Axioma 3 — strict scope: only comments from projects whose ``sede_id``
+    matches the actor's home sede are exposed. Cross-sede unread comments
+    are filtered server-side; superadmin (``user_sede`` = ``None``) sees
+    all, consistente con ``list_projects`` / ``list_whiteboards``.
+
+    Task-assignment surface (Sprint 1.1): antes el inbox solo exponía
+    comentarios no resueltos. Ahora también expone las **tareas abiertas
+    asignadas** al actor (``ProjectTask.assignee_id == persona_id``) en
+    proyectos visibles, con ``item_id = f"task-{task.id}"`` para que el
+    endpoint ``POST /api/projects/inbox/{id}/read`` pueda marcarlas como
+    leídas sin tocar lógica nueva. La query excluye tareas ya
+    completadas (estado terminal) para reducir el feed a pendientes
+    reales. El ``selectinload(Project.owner)`` evita un N+1 al resolver
+    el nombre del asignador.
+    """
     inbox_items: list[schemas.ProjectInboxItem] = []
 
     # Obtener persona_id (UUID) desde current_user.id (Integer)
     persona = _resolve_persona(db, current_user.id)
     persona_id = persona.id if persona else None
+    user_sede = get_user_sede_id(db, current_user.id)
 
     # Comentarios no leídos en proyectos del usuario
     unread_comments = ()
     if persona_id:
-        unread_comments = (
+        q_unread = (
             db.query(models.ProjectComment, models.Project)
             .join(models.Project, models.Project.id == models.ProjectComment.project_id)
             .filter(
                 ~models.ProjectComment.is_resolved,
                 models.ProjectComment.author_id != persona_id,
             )
-            .order_by(models.ProjectComment.created_at.desc())
+        )
+        if user_sede:
+            q_unread = q_unread.filter(models.Project.sede_id == user_sede)
+        unread_comments = (
+            q_unread.order_by(models.ProjectComment.created_at.desc())
             .limit(limit)
             .all()
         )
@@ -704,6 +849,59 @@ def list_inbox(
                 task_id=str(comment.task_id) if comment.task_id is not None else None,
                 is_read=is_read,
                 created_at=comment.created_at,
+            )
+        )
+
+    # ── Task-assignments inbox surface (NEW, Sprint 1.1) ─────────
+    # Tareas ABIERTAs asignadas al actor en proyectos visibles. Cierra el
+    # feature gap donde instancias donde el email había fallado / no había
+    # sido enviado aún así quedaban sin notificar al inbox. La query
+    # excluye tareas completadas (estado terminal) y soft-deleted.
+    assigned_tasks = ()
+    if persona_id:
+        q_tasks = (
+            db.query(models.ProjectTask, models.Project)
+            .join(models.Project, models.Project.id == models.ProjectTask.project_id)
+            .options(selectinload(models.Project.owner))
+            .filter(
+                models.ProjectTask.assignee_id == persona_id,
+                models.ProjectTask.deleted_at.is_(None),
+                models.ProjectTask.status != "completed",
+            )
+        )
+        if user_sede:
+            q_tasks = q_tasks.filter(models.Project.sede_id == user_sede)
+        assigned_tasks = (
+            q_tasks.order_by(models.ProjectTask.updated_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    for task, project in assigned_tasks:
+        state = (
+            db.query(models.ProjectInboxState)
+            .filter(
+                models.ProjectInboxState.persona_id == persona_id,
+                models.ProjectInboxState.item_id == f"task-{task.id}",
+            )
+            .first()
+        )
+        is_read = state.is_read if state else False
+        project_owner_name = (
+            _author_name(project.owner) if project and getattr(project, "owner", None) else "Equipo"
+        )
+        inbox_items.append(
+            schemas.ProjectInboxItem(
+                id=f"task-{task.id}",
+                type="task_assigned",
+                user=project_owner_name,
+                content=f"Tarea asignada: {task.title}",
+                project=project.title if project else "Proyecto",
+                project_id=str(project.id) if project and project.id is not None else None,
+                task_id=str(task.id),
+                task_title=task.title,
+                is_read=is_read,
+                created_at=task.updated_at or _utcnow(),
             )
         )
 
@@ -746,7 +944,8 @@ def get_project(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    p = _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    p = _ensure_project(db, project_id, user_sede=user_sede)
     _normalize_dates(p)
     for m in p.milestones:
         _normalize_dates(m)
@@ -767,6 +966,15 @@ def get_project_wiki(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
+    """Obtiene el wiki (ProjectDocument) asociado a un proyecto.
+
+    Axioma 3 — the route previously skipped ``_ensure_project`` and
+    leaked cross-sede wikis by guessing project_id. The fix mirrors the
+    rest of the module: validate the parent project before returning
+    the document.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.project_id == project_id).first()
     return _normalize_dates(doc)
 
@@ -778,7 +986,8 @@ def update_project_wiki(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
-    _ensure_project(db, project_id)  # Validates project exists
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)  # Validates project exists + scope
     doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.project_id == project_id).first()
     title = payload.title or "Wiki Ministerial"
     content = payload.content or ""
@@ -816,13 +1025,22 @@ def list_whiteboards(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Lista todas las pizarras activas ordenadas por fecha de actualización."""
-    boards = (
+    """Lista todas las pizarras activas del alcance del actor actual.
+
+    Axioma 3 — solo se devuelven pizarras cuyos proyectos pertenezcan a la
+    ``sede_id`` del actor. Esto previene el leak cross-sede del feed de
+    whiteboards en el módulo de plataforma. El superadmin (``user_sede``
+    = ``None``) sigue viendo todas, consistente con list_projects.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    q = (
         db.query(models.ProjectWhiteboard)
+        .join(models.Project, models.Project.id == models.ProjectWhiteboard.project_id)
         .filter(models.ProjectWhiteboard.deleted_at.is_(None))
-        .order_by(models.ProjectWhiteboard.updated_at.desc())
-        .all()
     )
+    if user_sede:
+        q = q.filter(models.Project.sede_id == user_sede)
+    boards = q.order_by(models.ProjectWhiteboard.updated_at.desc()).all()
     return [_normalize_dates(b) for b in boards]
 
 
@@ -832,7 +1050,8 @@ def get_project_whiteboard(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     board = (
         db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id)).first()
     )
@@ -846,12 +1065,16 @@ def update_project_whiteboard(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     board = (
         db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id)).first()
     )
     title = payload.title or "Pizarra Estrategica"
     elements = payload.elements_json or "[]"
+
+    # Validate elements_json is valid JSON (reject "undefined", malformed, etc.)
+    _validate_whiteboard_json(elements)
 
     if not board:
         board = models.ProjectWhiteboard(project_id=_to_uuid(project_id), title=title, elements_json=elements)
@@ -876,7 +1099,8 @@ def delete_project_whiteboard(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Realiza soft delete de la pizarra asociada a un proyecto."""
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     board = (
         db.query(models.ProjectWhiteboard)
         .filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id))
@@ -1071,15 +1295,21 @@ def create_subtask(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Crea una subtarea (nivel 2 o 3) bajo una tarea existente."""
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     parent_task = _ensure_task_in_project(db, project_id, task_id)
     payload = subtask.model_dump()
     _assert_status_in_project_phases(db, project_id, payload.get("status"))
     max_order = (
         db.query(func.max(models.ProjectTask.order_index)).filter(models.ProjectTask.parent_id == task_id).scalar() or 0
     )
-    payload["project_id"] = project_id
-    payload["parent_id"] = task_id
+    # FIX: Previously these were assigned as raw strings (``project_id`` is
+    # declared as ``str`` from the route path). ``ProjectTask.project_id``
+    # is a ``UUID(as_uuid=True)`` column — assigning a string breaks SQLite
+    # (see ``tests/test_projects_api.py::TestTasks::test_create_task_with_uuid_assignee``
+    # and the parametrized regression suite). Coerce via ``_to_uuid``.
+    payload["project_id"] = _to_uuid(project_id)
+    payload["parent_id"] = _to_uuid(task_id)
     payload["order_index"] = max_order + 1
     db_subtask = models.ProjectTask(**payload)
     db.add(db_subtask)
@@ -1115,7 +1345,8 @@ def update_subtask(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Actualiza una subtarea."""
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     _ensure_task_in_project(db, project_id, task_id)
     subtask = _ensure_task_in_project(db, project_id, subtask_id)
     if str(subtask.parent_id) != str(task_id):
@@ -1147,7 +1378,8 @@ def delete_subtask(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Elimina una subtarea."""
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     _ensure_task_in_project(db, project_id, task_id)
     subtask = _ensure_task_in_project(db, project_id, subtask_id)
     if str(subtask.parent_id) != str(task_id):
@@ -1172,7 +1404,8 @@ def create_comment(
     if not project_id or not content:
         raise HTTPException(status_code=400, detail="project_id and content are required")
     task_id = payload.get("task_id")
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     author_persona_id = get_user_persona_id(db, current_user.id)
     comment = models.ProjectComment(
         project_id=_to_uuid(project_id),
@@ -1192,7 +1425,7 @@ def create_comment(
     db.refresh(comment)
     return schemas.ProjectCommentItem(
         id=comment.id,
-        project_id=str(commit.project_id) if comment.project_id is not None else None,
+        project_id=str(comment.project_id) if comment.project_id is not None else None,
         task_id=str(comment.task_id) if comment.task_id is not None else None,
         content=comment.content,
         author_id=str(comment.author_id) if comment.author_id is not None else None,
@@ -1211,7 +1444,8 @@ def create_project_comment(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Crea un comentario en un proyecto."""
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     author_persona_id = get_user_persona_id(db, current_user.id)
     comment = models.ProjectComment(
         project_id=project_id,
@@ -1253,6 +1487,11 @@ def update_project_comment(
     comment = db.query(models.ProjectComment).filter(models.ProjectComment.id == comment_id).first()
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
+    # IDOR fix + Axioma 3: validate that the actor's sede matches the comment's
+    # parent project. Without this a sede_a user could mutate a comment in a
+    # sede_b project by guessing the comment_id and calling PATCH/DELETE.
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, str(comment.project_id), user_sede=user_sede)
     if payload.content is not None:
         comment.content = payload.content
     if payload.is_resolved is not None:
@@ -1284,7 +1523,8 @@ def list_project_tasks(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Lista todas las tareas de un proyecto."""
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     q = (
         db.query(models.ProjectTask)
         .options(
@@ -1335,7 +1575,8 @@ def update_project(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Actualiza los metadatos de un proyecto."""
-    project = _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
     update_data = payload.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(project, key, value)
@@ -1353,7 +1594,8 @@ def delete_project(
     current_user: models.User = Depends(require_staff_or_admin),
 ):
     """Elimina un proyecto y todos sus datos relacionados."""
-    project = _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
     project.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return {"ok": True, "deleted": project_id}
@@ -1367,7 +1609,8 @@ def delete_project_task(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Elimina una tarea de un proyecto."""
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     task = _ensure_task_in_project(db, project_id, task_id)
     task.deleted_at = datetime.now(timezone.utc)
     db.commit()
@@ -1384,6 +1627,10 @@ def delete_project_comment(
     comment = db.query(models.ProjectComment).filter(models.ProjectComment.id == comment_id).first()
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
+    # IDOR fix + Axioma 3 (mirror of update_project_comment): the actor
+    # must own the sede that owns the comment's parent project.
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, str(comment.project_id), user_sede=user_sede)
     comment.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return {"ok": True, "deleted": comment_id}
@@ -1400,12 +1647,58 @@ def list_project_messages(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """List project chat messages, newest first, with cursor pagination."""
-    _ensure_project(db, project_id)
+    """List project chat messages, newest first, with cursor pagination.
+
+    Axioma 3 — the actor's ``sede_id`` is validated through
+    ``_ensure_project`` (with ``user_sede`` filter); if the project does
+    not belong to the actor's sede the response is exactly 404 — no
+    existence leak.
+
+    Soft-delete filter — contract: ``deleted_at IS NOT NULL`` messages
+    are *excluded* from the listing (audit only), keeping the DB row
+    intact for the parallel
+    ``TestChatDeletePermissions::test_soft_deleted_message_kept_in_db_for_audit``
+    contract. Hard-delete is reserved to admin forensics tooling, never
+    via this endpoint.
+
+    Cursor pagination — ``before`` is the **integer representation** of
+    the cursor UUID (the client's ``uuid.UUID(...).int`` form). The DB
+    column stores UUIDs as 32-char hex strings (SQLite) or native UUID
+    (Postgres). We must NOT pass the raw ``int`` to SQLAlchemy because
+    SQLite raises ``OverflowError: Python int too large to convert to
+    SQLite INTEGER`` (UUID.int ≈ 10^38 > INT64 max ≈ 9.2e18). So we
+    rebuild the UUID from the int and compare against its hex form (or
+    canonical string in Postgres). Falls back to UUID string parsing if
+    ``before`` is passed as a canonical UUID string (forward compat).
+    Malformed cursors no-op rather than 422 — pagination is best-effort.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     room = f"project_{project_id}"
-    q = db.query(models.ChatMessage).filter(models.ChatMessage.room_id == room)
-    if before:
-        q = q.filter(models.ChatMessage.id < before)
+    q = db.query(models.ChatMessage).filter(
+        models.ChatMessage.room_id == room,
+        models.ChatMessage.deleted_at.is_(None),
+    )
+    if before is not None:
+        cursor_hex: Optional[str] = None
+        try:
+            # Primary path: client sends ``cursor.int`` — the integer of
+            # a UUID. SQLite-bound int comparison would overflow, so we
+            # reconstruct the UUID and compare by hex string instead.
+            cursor_uuid = uuid.UUID(int=int(before))
+            cursor_hex = cursor_uuid.hex
+        except (TypeError, ValueError, OverflowError):
+            try:
+                # Forward-compat: someone passed a canonical UUID string.
+                cursor_uuid = uuid.UUID(str(before))
+                cursor_hex = cursor_uuid.hex
+            except (TypeError, ValueError, AttributeError):
+                # Malformed cursor — best-effort: skip the filter rather
+                # than fail the request. Pagination clients retry on stale
+                # cursor with the latest ID anyway.
+                cursor_hex = None
+        if cursor_hex:
+            q = q.filter(models.ChatMessage.id < cursor_hex)
     rows = q.order_by(models.ChatMessage.created_at.desc()).limit(limit).all()
     sender_ids = {r.sender_id for r in rows}
     users_map = {}
@@ -1437,7 +1730,8 @@ def send_project_message(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Send a message to the project chat room."""
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     persona = _resolve_persona(db, current_user.id)
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
@@ -1488,10 +1782,22 @@ def delete_project_message(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
-    """Delete a chat message (own message or admin)."""
+    """Delete a chat message (own message or admin).
+
+    IDOR fix + Axioma 3: validate that ``msg.room_id == project_{project_id}``
+    before any role check so a sede_a user cannot delete messages stored
+    under ``project_b`` by guessing message_ids. Without this the helper
+    would happily return 200 on cross-project ids.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     msg = db.query(models.ChatMessage).filter(models.ChatMessage.id == message_id).first()
     if not msg:
         raise HTTPException(404, detail="Message not found")
+    if str(msg.room_id) != f"project_{project_id}":
+        # Existence-leak safe rejection: the message is real but it doesn't
+        # belong to the project in the URL path. 404, not 403.
+        raise HTTPException(404, detail="Message not found in this project")
     if msg.sender_id != current_user.id:
         role = normalize_role(getattr(current_user, "role", ""))
         if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
@@ -1513,7 +1819,8 @@ def list_project_milestones(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Lista los hitos de un proyecto."""
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     milestones = (
         db.query(models.ProjectMilestone)
         .filter(
@@ -1540,7 +1847,8 @@ def create_project_milestone(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Crea un hito en un proyecto."""
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     milestone = models.ProjectMilestone(project_id=_to_uuid(project_id), **payload.model_dump())
     db.add(milestone)
     _log_project_activity(
@@ -1565,7 +1873,8 @@ def update_project_milestone(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Actualiza un hito y registra cambios relevantes en la bitacora."""
-    _ensure_project(db, project_id)
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     milestone = _ensure_milestone_in_project(db, project_id, milestone_id)
     previous_completed = milestone.is_completed
     update_data = payload.model_dump(exclude_unset=True)

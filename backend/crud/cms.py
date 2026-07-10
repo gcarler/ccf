@@ -1204,8 +1204,11 @@ def capture_daily_seo_snapshots(
 
     Retorna un dict ``{snapshots_count, skipped_count, sites_captured}``
     con conteos para heartbeat.
-    """
-    from backend.api._cms_helpers.seo_audit import (
+    """        # Gate 6 anti-drift: SEO audit helpers viven ahora en
+    # ``backend.api._cms_helpers._shared`` (post-merge de ``seo_audit.py``)
+    # y se re-exportan vía el __init__ del paquete para que callers
+    # consuman la API pública (alineado con cms_v2.py).
+    from backend.api._cms_helpers import (
         audit_pages,
         build_media_alt_lookup,
         collect_section_media_ids,
