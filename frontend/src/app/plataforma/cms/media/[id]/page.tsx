@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
@@ -29,12 +29,27 @@ function formatBytes(bytes?: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+interface MediaItemData {
+  id: string;
+  url: string;
+  filename: string;
+  created_at?: string;
+  alt_text?: string;
+  section?: string;
+  tags?: string[];
+  mime_type?: string;
+  mimetype?: string;
+  file_size?: number;
+  size?: number;
+  status?: string;
+}
+
 export default function CmsMediaDetailPage() {
     const params = useParams();
     const id = params?.id as string;
     const { token } = useAuth();
-    
-    const [item, setItem] = useState<any>(null);
+
+    const [item, setItem] = useState<MediaItemData | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [tagsText, setTagsText] = useState('');
@@ -44,7 +59,7 @@ export default function CmsMediaDetailPage() {
         const loadItem = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/cms/media/${id}`, { token }).catch(() => null);
+                const data = await apiFetch<MediaItemData>(`/cms/media/${id}`, { token }).catch(() => null);
                 const normalized = data ? {
                     ...data,
                     alt_text: data.alt_text || data.filename || '',
@@ -69,7 +84,7 @@ export default function CmsMediaDetailPage() {
         setSaving(true);
         try {
             const tags = tagsText.split(',').map((tag) => tag.trim()).filter(Boolean);
-            const updated = await apiFetch<any>(`/cms/media/${id}`, {
+            const updated = await apiFetch<MediaItemData>(`/cms/media/${id}`, {
                 method: 'PATCH',
                 token,
                 body: {
@@ -99,7 +114,7 @@ export default function CmsMediaDetailPage() {
         if (!token || !item) return;
         try {
             if (item.status === 'archived') {
-                const updated = await apiFetch<any>(`/cms/media/${id}`, { method: 'PATCH', token, body: { status: 'active' } });
+                const updated = await apiFetch<MediaItemData>(`/cms/media/${id}`, { method: 'PATCH', token, body: { status: 'active' } });
                 setItem({ ...item, ...updated, status: 'active' });
                 toast.success('Recurso restaurado');
             } else {
