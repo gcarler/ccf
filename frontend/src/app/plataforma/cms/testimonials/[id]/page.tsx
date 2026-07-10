@@ -26,7 +26,29 @@ import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 
-function getTestimonialMediaUrl(testimonial: any): string {
+interface TestimonialData {
+  id: string;
+  created_at?: string;
+  author_name?: string;
+  author?: { username?: string };
+  author_persona_id?: string;
+  content?: string;
+  media_type?: string;
+  image_url?: string;
+  media_url?: string;
+  video_url?: string;
+  podcast_url?: string;
+  is_featured?: boolean;
+  status?: string;
+  category?: string;
+  rating?: number;
+  author_role?: string;
+  show_on_home?: boolean;
+  is_approved?: boolean;
+  emotion?: string;
+}
+
+function getTestimonialMediaUrl(testimonial: TestimonialData | null): string {
     if (!testimonial) return '';
     if (testimonial.media_type === 'image') return testimonial.image_url || testimonial.media_url || '';
     if (testimonial.media_type === 'video') return testimonial.video_url || testimonial.media_url || '';
@@ -39,7 +61,7 @@ export default function CmsTestimonialDetailPage() {
     const id = params?.id as string;
     const { token } = useAuth();
     
-    const [testimonial, setTestimonial] = useState<any>(null);
+    const [testimonial, setTestimonial] = useState<TestimonialData | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -47,7 +69,7 @@ export default function CmsTestimonialDetailPage() {
         const loadTestimonial = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/admin/testimonials/${id}`, { token }).catch(() => null);
+                const data = await apiFetch<TestimonialData>(`/admin/testimonials/${id}`, { token }).catch(() => null);
                 const authorPersonaId = data?.author_persona_id ? String(data.author_persona_id) : null;
                 const normalized = data ? {
                     ...data,
