@@ -38,8 +38,26 @@ import {
   Zap,
   Plus,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-export const MODULE_CONFIGS: Record<string, any> = {
+interface ModuleNavItem {
+  id: string;
+  label: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+interface ModuleNavSection {
+  title: string;
+  items: ModuleNavItem[];
+}
+
+interface ModuleConfig {
+  title: string;
+  sections: ModuleNavSection[];
+}
+
+export const MODULE_CONFIGS: Record<string, ModuleConfig> = {
   projects: {
     title: 'Portfolio',
     sections: [

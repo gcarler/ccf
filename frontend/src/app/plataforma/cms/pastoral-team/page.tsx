@@ -27,6 +27,14 @@ import {
 import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
 import MediaPicker from "@/components/cms/builder/MediaPicker";
 
+interface PersonaSearchResult {
+  id: string;
+  nombre_completo?: string;
+  name?: string;
+  church_role?: string;
+  is_pastoral_leader?: boolean;
+}
+
 type DrawerMode = "edit" | "add" | null;
 
 export default function PastoralTeamPage() {
@@ -178,14 +186,14 @@ export default function PastoralTeamPage() {
     }
     setSearchingAdd(true);
     try {
-      const res = await apiFetch<any[]>(
+      const res = await apiFetch<PersonaSearchResult[]>(
         `/crm/v2/personas?q=${encodeURIComponent(q)}&limit=10`,
         { token }
       );
       const existingIds = new Set(profiles.map((p) => p.id));
       setAddResults(
         (res || []).filter(
-          (p: any) => !existingIds.has(p.id) && !p.is_pastoral_leader
+          (p: PersonaSearchResult) => !existingIds.has(p.id) && !p.is_pastoral_leader
         )
       );
     } catch {
@@ -729,7 +737,7 @@ export default function PastoralTeamPage() {
                     </p>
                   ) : (
                     <div className="space-y-2">
-                      {addResults.map((persona: any) => (
+                      {addResults.map((persona: PersonaSearchResult) => (
                         <div
                           key={persona.id}
                           className="flex items-center justify-between p-3 rounded-xl bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/[0.04]"
