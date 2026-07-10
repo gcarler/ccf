@@ -102,6 +102,8 @@ def _rank_by_attendance(db: Session, groups, start, end):
                 models.SesionGrupo.grupo_id.in_(group_ids),
                 models.SesionGrupo.fecha_sesion >= start,
                 models.SesionGrupo.fecha_sesion < end,
+                models.SesionGrupo.deleted_at.is_(None),
+                models.Asistencia.deleted_at.is_(None),
             )
             .all()
         )
@@ -138,6 +140,7 @@ def _rank_by_growth(db: Session, groups, this_start, this_end, last_start, last_
         .filter(
             models.ParticipanteGrupo.activo,
             models.ParticipanteGrupo.fecha_ingreso < this_end,
+            models.ParticipanteGrupo.deleted_at.is_(None),
         )
         .group_by(models.ParticipanteGrupo.grupo_id)
         .all()
@@ -148,6 +151,7 @@ def _rank_by_growth(db: Session, groups, this_start, this_end, last_start, last_
         .filter(
             models.ParticipanteGrupo.activo,
             models.ParticipanteGrupo.fecha_ingreso < last_end,
+            models.ParticipanteGrupo.deleted_at.is_(None),
         )
         .group_by(models.ParticipanteGrupo.grupo_id)
         .all()
@@ -179,6 +183,7 @@ def _rank_by_visitors(db: Session, groups, start, end):
             models.ParticipanteGrupo.rol_base == "visitante",
             models.ParticipanteGrupo.fecha_ingreso >= start,
             models.ParticipanteGrupo.fecha_ingreso < end,
+            models.ParticipanteGrupo.deleted_at.is_(None),
         )
         .group_by(models.ParticipanteGrupo.grupo_id)
         .all()
@@ -228,6 +233,7 @@ def monthly_comparison(
         sess_q = sess_q.filter(
             models.SesionGrupo.fecha_sesion >= start,
             models.SesionGrupo.fecha_sesion < end,
+            models.SesionGrupo.deleted_at.is_(None),
         )
         sessions = sess_q.scalar() or 0
 
@@ -241,6 +247,8 @@ def monthly_comparison(
                 models.Asistencia.estado.in_(ATTENDED_STATES),
                 models.SesionGrupo.fecha_sesion >= start,
                 models.SesionGrupo.fecha_sesion < end,
+                models.SesionGrupo.deleted_at.is_(None),
+                models.Asistencia.deleted_at.is_(None),
             )
         )
         if strategy_id:
@@ -256,6 +264,8 @@ def monthly_comparison(
                 base_filter,
                 models.SesionGrupo.fecha_sesion >= start,
                 models.SesionGrupo.fecha_sesion < end,
+                models.SesionGrupo.deleted_at.is_(None),
+                models.Asistencia.deleted_at.is_(None),
             )
         )
         if strategy_id:
@@ -273,6 +283,7 @@ def monthly_comparison(
                 models.ParticipanteGrupo.rol_base == "visitante",
                 models.ParticipanteGrupo.fecha_ingreso >= start,
                 models.ParticipanteGrupo.fecha_ingreso < end,
+                models.ParticipanteGrupo.deleted_at.is_(None),
             )
         )
         if strategy_id:
@@ -285,6 +296,7 @@ def monthly_comparison(
             .filter(
                 models.HistorialEmbudo.fecha_cambio >= start,
                 models.HistorialEmbudo.fecha_cambio < end,
+                models.HistorialEmbudo.deleted_at.is_(None),
             )
         )
         new_conversions = conv_q.scalar() or 0
@@ -339,6 +351,8 @@ def rankings_leaders(
                 models.SesionGrupo.grupo_id.in_(group_ids),
                 models.SesionGrupo.fecha_sesion >= this_start,
                 models.SesionGrupo.fecha_sesion < this_end,
+                models.SesionGrupo.deleted_at.is_(None),
+                models.Asistencia.deleted_at.is_(None),
             )
             .all()
         )
@@ -351,7 +365,7 @@ def rankings_leaders(
     personas_by_group = dict(
         db.query(models.ParticipanteGrupo.grupo_id, _func.count(models.ParticipanteGrupo.id))
         .filter(models.ParticipanteGrupo.grupo_id.in_(group_ids) if group_ids else False)
-        .filter(models.ParticipanteGrupo.activo)
+        .filter(models.ParticipanteGrupo.activo, models.ParticipanteGrupo.deleted_at.is_(None))
         .group_by(models.ParticipanteGrupo.grupo_id)
         .all()
     )
@@ -362,6 +376,7 @@ def rankings_leaders(
             models.ParticipanteGrupo.rol_base == "visitante",
             models.ParticipanteGrupo.fecha_ingreso >= this_start,
             models.ParticipanteGrupo.fecha_ingreso < this_end,
+            models.ParticipanteGrupo.deleted_at.is_(None),
         )
         .group_by(models.ParticipanteGrupo.grupo_id)
         .all()

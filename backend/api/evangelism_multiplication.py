@@ -166,12 +166,16 @@ def split_group(
     al nuevo grupo. Registra el historial de multiplicación."""
     import uuid as _uuid
 
+    user_sede = require_user_sede_id(db, current_user)
+
     # ── Validar grupo original ──
-    grupo_original = (
-        db.query(models.GrupoEvangelismo)
-        .filter(models.GrupoEvangelismo.id == payload.grupo_id)
-        .first()
+    grupo_q = db.query(models.GrupoEvangelismo).filter(
+        models.GrupoEvangelismo.id == payload.grupo_id,
+        models.GrupoEvangelismo.deleted_at.is_(None),
     )
+    if user_sede is not None:
+        grupo_q = grupo_q.filter(models.GrupoEvangelismo.sede_id == user_sede)
+    grupo_original = grupo_q.first()
     if not grupo_original:
         raise HTTPException(status_code=404, detail="Grupo original no encontrado.")
 
@@ -188,11 +192,10 @@ def split_group(
             status_code=400, detail="nuevo_lider_id debe ser un UUID válido."
         )
 
-    nuevo_lider = (
-        db.query(models.Persona)
-        .filter(models.Persona.id == nuevo_lider_uuid)
-        .first()
-    )
+    persona_q = db.query(models.Persona).filter(models.Persona.id == nuevo_lider_uuid)
+    if user_sede is not None:
+        persona_q = persona_q.filter(models.Persona.sede_id == user_sede)
+    nuevo_lider = persona_q.first()
     if not nuevo_lider:
         raise HTTPException(status_code=404, detail="Persona del nuevo líder no encontrada.")
 
@@ -277,10 +280,15 @@ def multiplication_history(
 ):
     """Devuelve el historial de multiplicaciones: todos los grupos que tienen
     un parent_group_id (es decir, que nacieron de una división)."""
+    user_sede = require_user_sede_id(db, current_user)
+    hijos_q = db.query(models.GrupoEvangelismo).filter(
+        models.GrupoEvangelismo.parent_group_id.isnot(None),
+        models.GrupoEvangelismo.deleted_at.is_(None),
+    )
+    if user_sede is not None:
+        hijos_q = hijos_q.filter(models.GrupoEvangelismo.sede_id == user_sede)
     hijos = (
-        db.query(models.GrupoEvangelismo)
-        .filter(models.GrupoEvangelismo.parent_group_id.isnot(None))
-        .options(
+        hijos_q.options(
             joinedload(models.GrupoEvangelismo.parent_group),
             joinedload(models.GrupoEvangelismo.lider),
         )

@@ -11,6 +11,7 @@ import uuid
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -37,36 +38,56 @@ def send_reminders(
     now = utc_now()
     tomorrow = (now + datetime.timedelta(days=1)).date()
     seven_days_ago = now - datetime.timedelta(days=7)
+    today_start = datetime.datetime.combine(now.date(), datetime.time.min, tzinfo=datetime.timezone.utc)
+    today_end = datetime.datetime.combine(now.date(), datetime.time.max, tzinfo=datetime.timezone.utc)
 
     notifications_created = 0
     details: List[Dict] = []
 
+    def _notification_already_sent(user_id, title: str, content: str) -> bool:
+        return (
+            db.query(models.NotificacionUsuario.id)
+            .filter(
+                models.NotificacionUsuario.user_id == user_id,
+                models.NotificacionUsuario.title == title,
+                models.NotificacionUsuario.content == content,
+                models.NotificacionUsuario.created_at >= today_start,
+                models.NotificacionUsuario.created_at <= today_end,
+            )
+            .first()
+            is not None
+        )
+
     # ── 1. Sessions scheduled for tomorrow ──────────────────────────
-    tomorrow_start = datetime.datetime.combine(tomorrow, datetime.time.min)
-    tomorrow_end = datetime.datetime.combine(tomorrow, datetime.time.max)
+    tomorrow_start = datetime.datetime.combine(tomorrow, datetime.time.min, tzinfo=datetime.timezone.utc)
+    tomorrow_end = datetime.datetime.combine(tomorrow, datetime.time.max, tzinfo=datetime.timezone.utc)
 
     user_sede_id = get_user_sede_id(db, current_user.id)
-    sessions_tomorrow = (
+    sessions_q = (
         db.query(models.SesionGrupo)
+        .join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id)
         .filter(
+            models.SesionGrupo.deleted_at.is_(None),
+            models.GrupoEvangelismo.deleted_at.is_(None),
             models.SesionGrupo.fecha_sesion >= tomorrow_start,
             models.SesionGrupo.fecha_sesion <= tomorrow_end,
-            models.SesionGrupo.estado == "PENDIENTE",
+            func.lower(models.SesionGrupo.estado) == "pendiente",
         )
-        .all()
     )
-    # Axioma 3: filtrar por sede
     if user_sede_id:
-        _valid_group_ids = {g.id for g in db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.sede_id == user_sede_id).all()}
-        sessions_tomorrow = [s for s in sessions_tomorrow if s.grupo_id in _valid_group_ids]
+        sessions_q = sessions_q.filter(models.GrupoEvangelismo.sede_id == user_sede_id)
+    sessions_tomorrow = sessions_q.all()
 
     group_ids_tomorrow = {s.grupo_id for s in sessions_tomorrow}
-    groups_map: Dict[int, models.GrupoEvangelismo] = {}
+    groups_map: Dict[uuid.UUID, models.GrupoEvangelismo] = {}
 
     if group_ids_tomorrow:
         groups = (
             db.query(models.GrupoEvangelismo)
-            .filter(models.GrupoEvangelismo.id.in_(list(group_ids_tomorrow)))
+            .filter(
+                models.GrupoEvangelismo.id.in_(list(group_ids_tomorrow)),
+                models.GrupoEvangelismo.deleted_at.is_(None),
+            )
             .all()
         )
         groups_map = {g.id: g for g in groups}
@@ -109,6 +130,8 @@ def send_reminders(
             title=title,
             content=content,
         )
+        if _notification_already_sent(group.lider_persona_id, title, content):
+            continue
         db.add(notification)
         notifications_created += 1
         details.append(
@@ -122,25 +145,26 @@ def send_reminders(
         )
 
     # ── 2. Groups without attendance report in 7+ days ──────────────
-    groups_with_recent_report = (
+    recent_report_q = (
         db.query(models.SesionGrupo.grupo_id)
+        .join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id)
         .filter(
-            models.SesionGrupo.estado == "REALIZADA",
+            models.SesionGrupo.deleted_at.is_(None),
+            models.GrupoEvangelismo.deleted_at.is_(None),
+            func.lower(models.SesionGrupo.estado) == "realizada",
             models.SesionGrupo.fecha_sesion >= seven_days_ago,
         )
-        .distinct()
-        .subquery()
     )
+    if user_sede_id:
+        recent_report_q = recent_report_q.filter(models.GrupoEvangelismo.sede_id == user_sede_id)
 
-    inactive_groups_q = (
-        db.query(models.GrupoEvangelismo)
-        .filter(
-            models.GrupoEvangelismo.activo,
-            models.GrupoEvangelismo.lider_persona_id.isnot(None),
-            ~models.GrupoEvangelismo.id.in_(
-                db.query(groups_with_recent_report.c.grupo_id)
-            ),
-        )
+    groups_with_recent_report = recent_report_q.distinct().subquery()
+
+    inactive_groups_q = db.query(models.GrupoEvangelismo).filter(
+        models.GrupoEvangelismo.activo,
+        models.GrupoEvangelismo.deleted_at.is_(None),
+        models.GrupoEvangelismo.lider_persona_id.isnot(None),
+        ~models.GrupoEvangelismo.id.in_(db.query(groups_with_recent_report.c.grupo_id)),
     )
     if user_sede_id:
         inactive_groups_q = inactive_groups_q.filter(models.GrupoEvangelismo.sede_id == user_sede_id)
@@ -183,6 +207,8 @@ def send_reminders(
             title=title,
             content=content,
         )
+        if _notification_already_sent(group.lider_persona_id, title, content):
+            continue
         db.add(notification)
         notifications_created += 1
         details.append(
