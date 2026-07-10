@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 from backend.analytics.proactive_ia import run_proactive_analysis
 from backend.core.database import SessionLocal
+from backend.api.evangelism_shared import sessions_grupo_has_estado_habilitacion
 
 log = logging.getLogger(__name__)
 
@@ -31,6 +32,8 @@ def run_session_governance():
 
     db = SessionLocal()
     try:
+        if not sessions_grupo_has_estado_habilitacion(db):
+            return
         now = datetime.now(timezone.utc)
         # Semana en curso: lunes 00:00 → domingo 23:59
         days_since_monday = now.weekday()

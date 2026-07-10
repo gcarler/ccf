@@ -4,7 +4,8 @@ import datetime
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy.orm import Session
+from sqlalchemy import inspect
+from sqlalchemy.orm import Session, load_only
 
 from backend import models
 from backend.services.messaging_outcomes import DELIVERED_OUTCOMES, CommunicationOutcome
@@ -22,6 +23,57 @@ ATTENDED_STATES = {"ASISTIO", "Presente", "present", "presente", "primera_vez", 
 ABSENT_STATES = {"FALTO", "Ausente", "absent", "ausente"}
 EXCUSED_STATES = {"EXCUSA", "Excusa", "excusa"}
 FIRST_TIME_STATES = {"primera_vez", "first_time"}
+
+
+def sessions_grupo_has_estado_habilitacion(db: Session) -> bool:
+    """Return whether the live schema exposes ``sesiones_grupo.estado_habilitacion``."""
+    bind = db.get_bind()
+    if bind is None:
+        return True
+    try:
+        columns = inspect(bind).get_columns("sesiones_grupo")
+    except Exception:
+        return True
+    return any(column.get("name") == "estado_habilitacion" for column in columns)
+
+
+def session_estado_habilitacion(session, default: str = "HABILITADO") -> str:
+    """Read ``estado_habilitacion`` without triggering a deferred load."""
+    value = getattr(session, "__dict__", {}).get("estado_habilitacion", default)
+    return value or default
+
+
+def session_read_only_options(db: Session):
+    """Build a load_only option that tolerates older schemas safely."""
+    from backend.models import SesionGrupo
+
+    columns = [
+        SesionGrupo.id,
+        SesionGrupo.grupo_id,
+        SesionGrupo.fecha_sesion,
+        SesionGrupo.estado,
+        SesionGrupo.motivo_cancelacion,
+        SesionGrupo.tema_estudio,
+        SesionGrupo.notas_lider,
+        SesionGrupo.offering_amount,
+        SesionGrupo.season_id,
+        SesionGrupo.created_at,
+        SesionGrupo.deleted_at,
+        SesionGrupo.reported_at,
+        SesionGrupo.novelty_type,
+        SesionGrupo.novelty_detail,
+        SesionGrupo.reported_by_persona_id,
+        SesionGrupo.report_deadline,
+    ]
+    if sessions_grupo_has_estado_habilitacion(db):
+        columns.extend(
+            [
+                SesionGrupo.estado_habilitacion,
+                SesionGrupo.habilitado_por,
+                SesionGrupo.habilitado_en,
+            ]
+        )
+    return load_only(*columns)
 
 
 def normalize_attendance_status(value) -> str:
@@ -93,6 +145,14 @@ def _check_absence_trigger(db: Session, session_id: UUID, sede_id):
 
     session = (
         db.query(SesionGrupo)
+        .options(
+            load_only(
+                SesionGrupo.id,
+                SesionGrupo.grupo_id,
+                SesionGrupo.fecha_sesion,
+                SesionGrupo.deleted_at,
+            )
+        )
         .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
         .filter(
             SesionGrupo.id == session_id,
@@ -116,6 +176,14 @@ def _check_absence_trigger(db: Session, session_id: UUID, sede_id):
     # Get last 3 sessions for this house
     recent_sessions = (
         db.query(SesionGrupo)
+        .options(
+            load_only(
+                SesionGrupo.id,
+                SesionGrupo.grupo_id,
+                SesionGrupo.fecha_sesion,
+                SesionGrupo.deleted_at,
+            )
+        )
         .filter(
             SesionGrupo.grupo_id == house.id,
             SesionGrupo.deleted_at.is_(None),

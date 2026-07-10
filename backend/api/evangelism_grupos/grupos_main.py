@@ -17,6 +17,8 @@ from backend.api.evangelism_shared import (
     _get_persona_for_user,
     _is_crm_admin_or_pastor,
     is_absent_status,
+    session_estado_habilitacion,
+    session_read_only_options,
     utc_now,
 )
 from backend.core.database import get_db
@@ -27,6 +29,9 @@ from backend.models import GrupoEvangelismo, SesionGrupo
 router = APIRouter()
 static_router = APIRouter()
 dynamic_router = APIRouter()
+
+def _session_read_options(db: Session):
+    return session_read_only_options(db)
 
 
 # ── Cell Group CRUD ──
@@ -335,6 +340,7 @@ def get_grupo(
 
     sessions = (
         db.query(SesionGrupo)
+        .options(_session_read_options(db))
         .filter(
             models.SesionGrupo.grupo_id == grupo_id,
             models.SesionGrupo.deleted_at.is_(None),
@@ -391,7 +397,7 @@ def get_grupo(
             "grupo_id": session.grupo_id,
             "session_date": session.session_date.isoformat(),
             "status": session.status,
-            "estado_habilitacion": getattr(session, "estado_habilitacion", "DESHABILITADO"),
+            "estado_habilitacion": session_estado_habilitacion(session),
             "attendance_count": attendance_map.get(session.id, 0),
             "present_count": sum(1 for row in attendance_by_session.get(session.id, []) if row.attended),
             "absent_count": sum(1 for row in attendance_by_session.get(session.id, []) if not row.attended),
@@ -813,7 +819,12 @@ def get_macro_despliegue(
     houses = q.order_by(models.GrupoEvangelismo.nombre.asc()).all()
 
     # 3. Get all sessions for the season
-    sessions = db.query(SesionGrupo).filter(models.SesionGrupo.season_id == season_id).all()
+    sessions = (
+        db.query(SesionGrupo)
+        .options(_session_read_options(db))
+        .filter(models.SesionGrupo.season_id == season_id)
+        .all()
+    )
 
     # Group sessions by house
     sessions_by_house = collections.defaultdict(list)
@@ -943,10 +954,15 @@ def register_groups_visitor(
 
     # Fix #5: validar que session_id pertenece a este grupo
     if visitor.session_id is not None:
-        sesion = db.query(models.SesionGrupo).filter(
-            models.SesionGrupo.id == visitor.session_id,
-            models.SesionGrupo.grupo_id == visitor.grupo_id,
-        ).first()
+        sesion = (
+            db.query(models.SesionGrupo)
+            .options(_session_read_options(db))
+            .filter(
+                models.SesionGrupo.id == visitor.session_id,
+                models.SesionGrupo.grupo_id == visitor.grupo_id,
+            )
+            .first()
+        )
         if not sesion:
             raise HTTPException(status_code=400, detail="La sesión no pertenece a este grupo")
 
@@ -1055,6 +1071,7 @@ def get_strategy_metrics(
 
     sessions = (
         db.query(SesionGrupo)
+        .options(_session_read_options(db))
         .filter(
             models.SesionGrupo.grupo_id.in_(house_ids),
             models.SesionGrupo.fecha_sesion >= cutoff.date(),
