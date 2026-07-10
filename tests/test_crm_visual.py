@@ -1,5 +1,5 @@
 import uuid
-
+from datetime import datetime, timezone
 from backend.core.database import Base
 from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
 from tests.conftest import auth_headers, seed_admin
@@ -63,30 +63,55 @@ def _seed_test_data(db_session):
 # ==============================================================================
 
 # Feature 1: Kanban UI (5 tests)
-def test_tier1_f1_kanban_ui_layout(client):
-    response = client.get("/api/crm/pipeline/kanban/layout")
-    assert response.status_code == 200, "F1: Kanban UI layout endpoint not implemented"
+def test_tier1_f1_kanban_ui_layout(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    response = client.get("/api/crm/pipeline/kanban/layout", headers=headers)
+    assert response.status_code == 200
+    assert response.json()["pipeline_id"] == str(pipeline.id)
 
-def test_tier1_f1_kanban_ui_stages_count(client):
-    response = client.get("/api/crm/pipeline/kanban/stages")
-    assert response.status_code == 200, "F1: Kanban UI stages count endpoint not implemented"
+def test_tier1_f1_kanban_ui_stages_count(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    response = client.get("/api/crm/pipeline/kanban/stages", headers=headers)
+    assert response.status_code == 200
+    assert len(response.json()) == 2
 
-def test_tier1_f1_kanban_ui_columns_config(client):
-    response = client.get("/api/crm/pipeline/kanban/columns")
-    assert response.status_code == 200, "F1: Kanban UI columns configuration endpoint not implemented"
+def test_tier1_f1_kanban_ui_columns_config(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    response = client.get("/api/crm/pipeline/kanban/columns", headers=headers)
+    assert response.status_code == 200
+    assert len(response.json()) == 2
 
-def test_tier1_f1_kanban_ui_card_fields(client):
-    response = client.get("/api/crm/pipeline/kanban/cards")
-    assert response.status_code == 200, "F1: Kanban UI card fields endpoint not implemented"
+def test_tier1_f1_kanban_ui_card_fields(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    response = client.get("/api/crm/pipeline/kanban/cards", headers=headers)
+    assert response.status_code == 200
+    cards = response.json()
+    assert len(cards) == 2
+    assert cards[0]["title"] == "Caso 1"
 
-def test_tier1_f1_kanban_ui_filter_by_sede(client):
-    response = client.get("/api/crm/pipeline/kanban/filter?sede_id=123")
-    assert response.status_code == 200, "F1: Kanban UI filtering by Sede not implemented"
+def test_tier1_f1_kanban_ui_filter_by_sede(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    response = client.get(f"/api/crm/pipeline/kanban/filter?pipeline_id={pipeline.id}", headers=headers)
+    assert response.status_code == 200
+    assert len(response.json()) == 2
 
 # Feature 2: Drag-and-Drop (5 tests)
-def test_tier1_f2_drag_and_drop_event_listener(client):
-    response = client.post("/api/crm/pipeline/kanban/drag-drop/events", json={})
-    assert response.status_code == 200, "F2: Drag-and-Drop event listener endpoint not implemented"
+def test_tier1_f2_drag_and_drop_event_listener(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    payload = {
+        "caso_id": str(caso1.id),
+        "source_stage_id": str(etapa1.id),
+        "target_stage_id": str(etapa2.id)
+    }
+    response = client.post("/api/crm/pipeline/kanban/drag-drop/events", json=payload, headers=headers)
+    assert response.status_code == 200
+    assert response.json()["status"] == "event_registered"
 
 def test_tier1_f2_drag_and_drop_source_etapa():
     assert hasattr(CasoCRM, "drag_source_etapa_id"), "F2: CasoCRM missing drag_source_etapa_id attribute"
@@ -206,12 +231,20 @@ def test_tier1_f7_backend_branching_variables(client):
     assert response.status_code == 200, "F7: Branching variables endpoint not implemented"
 
 def test_tier1_f7_backend_branching_true_path(client):
-    response = client.post("/api/crm/automations/branching/traverse", json={"branch": "true"})
-    assert response.status_code == 200, "F7: Branching traversal true-path evaluation not implemented"
+    payload = {
+        "variables": {"nombre": "Juan"},
+        "conditions": [{"key": "nombre", "operator": "equals", "value": "Juan"}]
+    }
+    response = client.post("/api/crm/automations/branching/traverse", json=payload)
+    assert response.status_code == 200
 
 def test_tier1_f7_backend_branching_false_path(client):
-    response = client.post("/api/crm/automations/branching/traverse", json={"branch": "false"})
-    assert response.status_code == 200, "F7: Branching traversal false-path evaluation not implemented"
+    payload = {
+        "variables": {"nombre": "Juan"},
+        "conditions": [{"key": "nombre", "operator": "equals", "value": "Pedro"}]
+    }
+    response = client.post("/api/crm/automations/branching/traverse", json=payload)
+    assert response.status_code == 200
 
 def test_tier1_f7_backend_branching_multiple_conditions():
     branches_table = Base.metadata.tables.get("crm_flow_branches")
@@ -226,12 +259,23 @@ def test_tier1_f8_loop_cycle_dfs_algorithm():
     assert "crm_flow_cycle_cache" in Base.metadata.tables, "F8: crm_flow_cycle_cache table not implemented"
 
 def test_tier1_f8_loop_cycle_raise_error(client):
-    response = client.post("/api/crm/automations/flows/validate", json={"cycle": True})
-    assert response.status_code == 200, "F8: Flow validation cycle check endpoint not implemented"
+    payload = {
+        "nodes": ["n1", "n2"],
+        "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n1"}]
+    }
+    response = client.post("/api/crm/automations/flows/validate", json=payload)
+    assert response.status_code == 200
+    assert response.json()["valid"] is False
 
 def test_tier1_f8_loop_cycle_self_reference(client):
-    response = client.post("/api/crm/automations/flows/validate-node", json={"self_ref": True})
-    assert response.status_code == 200, "F8: Node self-reference validation endpoint not implemented"
+    payload = {
+        "nodes": ["n1"],
+        "node_id": "n1",
+        "edges": [{"source": "n1", "target": "n1"}]
+    }
+    response = client.post("/api/crm/automations/flows/validate-node", json=payload)
+    assert response.status_code == 200
+    assert response.json()["valid"] is False
 
 def test_tier1_f8_loop_cycle_validation_endpoint(client):
     response = client.post("/api/crm/automations/validate-graph", json={})
@@ -243,46 +287,107 @@ def test_tier1_f8_loop_cycle_validation_endpoint(client):
 # ==============================================================================
 
 # Feature 1: Kanban UI (5 tests)
-def test_tier2_f1_kanban_ui_empty_stage(client):
-    response = client.get("/api/crm/pipeline/kanban/stage/empty")
-    assert response.status_code == 200, "F1 Tier 2: Kanban UI empty stage handling not implemented"
+def test_tier2_f1_kanban_ui_empty_stage(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    response = client.get(f"/api/crm/pipeline/kanban/stage/empty?stage_id={etapa2.id}", headers=headers)
+    assert response.status_code == 200
+    assert response.json()["is_empty"] is True
 
-def test_tier2_f1_kanban_ui_excessive_cases(client):
-    response = client.get("/api/crm/pipeline/kanban/stage/limit-cases")
-    assert response.status_code == 200, "F1 Tier 2: Kanban UI excessive cases pagination not implemented"
+def test_tier2_f1_kanban_ui_excessive_cases(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    response = client.get(f"/api/crm/pipeline/kanban/stage/limit-cases?stage_id={etapa1.id}&limit=1", headers=headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["cards"]) == 1
+    assert data["total_count"] == 2
+    assert data["has_more"] is True
 
-def test_tier2_f1_kanban_ui_special_chars_title(client):
-    response = client.get("/api/crm/pipeline/kanban/search?title=🚨_special_$%^")
-    assert response.status_code == 200, "F1 Tier 2: Kanban UI special characters in title handling not implemented"
+def test_tier2_f1_kanban_ui_special_chars_title(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    caso1.titulo_caso = "🚨_special_$%^"
+    db_session.commit()
+    headers = auth_headers(client, email=admin.email)
+    response = client.get("/api/crm/pipeline/kanban/search?title=🚨_special_$%^", headers=headers)
+    assert response.status_code == 200
+    cards = response.json()
+    assert len(cards) == 1
+    assert cards[0]["id"] == str(caso1.id)
 
-def test_tier2_f1_kanban_ui_null_assignee(client):
-    response = client.get("/api/crm/pipeline/kanban/unassigned")
-    assert response.status_code == 200, "F1 Tier 2: Kanban UI null assignee filtering not implemented"
+def test_tier2_f1_kanban_ui_null_assignee(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    caso1.asignado_a_id = None
+    db_session.commit()
+    headers = auth_headers(client, email=admin.email)
+    response = client.get("/api/crm/pipeline/kanban/unassigned", headers=headers)
+    assert response.status_code == 200
+    cards = response.json()
+    assert len(cards) >= 1
+    assert any(c["id"] == str(caso1.id) for c in cards)
 
-def test_tier2_f1_kanban_ui_deleted_stage(client):
-    response = client.get("/api/crm/pipeline/kanban/stage/deleted")
-    assert response.status_code == 200, "F1 Tier 2: Kanban UI soft-deleted stage cleanup not implemented"
+def test_tier2_f1_kanban_ui_deleted_stage(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    etapa1.deleted_at = datetime.now(timezone.utc)
+    db_session.commit()
+    headers = auth_headers(client, email=admin.email)
+    response = client.get("/api/crm/pipeline/kanban/stage/deleted", headers=headers)
+    assert response.status_code == 200
+    cards = response.json()
+    assert len(cards) == 2
 
 # Feature 2: Drag-and-Drop (5 tests)
-def test_tier2_f2_drag_drop_same_stage(client):
-    response = client.post("/api/crm/pipeline/kanban/drag-drop/same-stage", json={})
-    assert response.status_code == 200, "F2 Tier 2: Drag-and-Drop same stage reorder not implemented"
+def test_tier2_f2_drag_drop_same_stage(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    payload = {
+        "caso_id": str(caso1.id),
+        "sort_order": 10
+    }
+    response = client.post("/api/crm/pipeline/kanban/drag-drop/same-stage", json=payload, headers=headers)
+    assert response.status_code == 200
+    db_session.refresh(caso1)
+    assert caso1.sort_order == 10
 
-def test_tier2_f2_drag_drop_invalid_stage(client):
-    response = client.post("/api/crm/pipeline/kanban/drag-drop/invalid-stage", json={})
-    assert response.status_code in (400, 422), "F2 Tier 2: Drag-and-Drop invalid stage transition check not implemented"
+def test_tier2_f2_drag_drop_invalid_stage(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    payload = {
+        "caso_id": str(caso1.id),
+        "target_stage_id": "00000000-0000-0000-0000-000000000000"
+    }
+    response = client.post("/api/crm/pipeline/kanban/drag-drop/invalid-stage", json=payload, headers=headers)
+    assert response.status_code == 400
 
-def test_tier2_f2_drag_drop_missing_id(client):
-    response = client.post("/api/crm/pipeline/kanban/drag-drop/missing-id", json={})
-    assert response.status_code in (400, 422), "F2 Tier 2: Drag-and-Drop missing ID validation not implemented"
+def test_tier2_f2_drag_drop_missing_id(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    response = client.post("/api/crm/pipeline/kanban/drag-drop/missing-id", json={}, headers=headers)
+    assert response.status_code == 400
 
-def test_tier2_f2_drag_drop_concurrent_drag(client):
-    response = client.post("/api/crm/pipeline/kanban/drag-drop/concurrent", json={})
-    assert response.status_code == 200, "F2 Tier 2: Drag-and-Drop concurrent execution protection not implemented"
+def test_tier2_f2_drag_drop_concurrent_drag(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    payload = {
+        "caso_id": str(caso1.id),
+        "target_stage_id": str(etapa2.id)
+    }
+    response = client.post("/api/crm/pipeline/kanban/drag-drop/concurrent", json=payload, headers=headers)
+    assert response.status_code == 200
+    db_session.refresh(caso1)
+    assert caso1.etapa_actual_id == etapa2.id
 
-def test_tier2_f2_drag_drop_network_disconnect(client):
-    response = client.post("/api/crm/pipeline/kanban/drag-drop/recovery", json={})
-    assert response.status_code == 200, "F2 Tier 2: Drag-and-Drop connection recovery flow not implemented"
+def test_tier2_f2_drag_drop_network_disconnect(client, db_session):
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    headers = auth_headers(client, email=admin.email)
+    payload = {
+        "caso_id": str(caso1.id)
+    }
+    response = client.post("/api/crm/pipeline/kanban/drag-drop/recovery", json=payload, headers=headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "recovered"
+    assert data["stage_id"] == str(etapa1.id)
 
 # Feature 3: Reorder Endpoint (5 tests)
 def test_tier2_f3_reorder_endpoint_empty_payload(client, db_session):
@@ -333,87 +438,113 @@ def test_tier2_f4_atomic_reorder_cross_sede_leakage():
 
 # Feature 5: Flow Builder UI (5 tests)
 def test_tier2_f5_flow_builder_empty_canvas(client):
-    response = client.post("/api/crm/automations/flows/empty", json={})
-    assert response.status_code == 200, "F5 Tier 2: Flow Builder empty canvas handling not implemented"
+    response = client.post("/api/crm/automations/flows/empty", json={"nodes": []})
+    assert response.status_code == 200
 
 def test_tier2_f5_flow_builder_excessive_nodes(client):
-    response = client.post("/api/crm/automations/flows/max-nodes-check", json={})
-    assert response.status_code == 200, "F5 Tier 2: Flow Builder maximum node limit validation not implemented"
+    response = client.post("/api/crm/automations/flows/max-nodes-check", json={"nodes": ["n1"] * 105})
+    assert response.status_code == 400
 
 def test_tier2_f5_flow_builder_disconnected_node(client):
-    response = client.post("/api/crm/automations/flows/disconnected-nodes", json={})
-    assert response.status_code == 200, "F5 Tier 2: Flow Builder disconnected nodes warning not implemented"
+    response = client.post("/api/crm/automations/flows/disconnected-nodes", json={
+        "nodes": ["n1", "n2", "n3"],
+        "edges": [{"source": "n1", "target": "n2"}]
+    })
+    assert response.status_code == 200
+    assert response.json()["warning"] == "disconnected nodes"
+    assert response.json()["nodes"] == ["n3"]
 
 def test_tier2_f5_flow_builder_invalid_node_type(client):
-    response = client.post("/api/crm/automations/flows/validate-types", json={})
-    assert response.status_code == 200, "F5 Tier 2: Flow Builder node type schema validation not implemented"
+    response = client.post("/api/crm/automations/flows/validate-types", json={
+        "nodes": [{"id": "n1", "type": "invalid_type"}]
+    })
+    assert response.status_code == 400
 
 def test_tier2_f5_flow_builder_unicode_labels(client):
-    response = client.post("/api/crm/automations/flows/unicode", json={})
-    assert response.status_code == 200, "F5 Tier 2: Flow Builder unicode character handling not implemented"
+    response = client.post("/api/crm/automations/flows/unicode", json={"label": "🤖_unicode_flujo"})
+    assert response.status_code == 200
 
 # Feature 6: 3-Node Connection (5 tests)
 def test_tier2_f6_three_node_connection_two_nodes(client):
     response = client.post("/api/crm/automations/flows/validate-path-length", json={"nodes_count": 2})
-    assert response.status_code == 200, "F6 Tier 2: Minimum 3-node connection enforcement not implemented"
+    assert response.status_code == 200
+    assert response.json()["valid"] is False
 
 def test_tier2_f6_three_node_connection_multiple_inputs(client):
     response = client.post("/api/crm/automations/flows/validate-multiple-inputs", json={})
-    assert response.status_code == 200, "F6 Tier 2: Multiple inputs verification logic not implemented"
+    assert response.status_code == 200
 
 def test_tier2_f6_three_node_connection_multiple_outputs(client):
     response = client.post("/api/crm/automations/flows/validate-multiple-outputs", json={})
-    assert response.status_code == 200, "F6 Tier 2: Multiple outputs validation logic not implemented"
+    assert response.status_code == 200
 
 def test_tier2_f6_three_node_connection_orphaned_edge(client):
     response = client.post("/api/crm/automations/flows/clean-orphans", json={})
-    assert response.status_code == 200, "F6 Tier 2: Automated orphaned edge cleanup not implemented"
+    assert response.status_code == 200
 
 def test_tier2_f6_three_node_connection_cross_flow_edge(client):
     response = client.post("/api/crm/automations/flows/cross-flow-check", json={})
-    assert response.status_code == 200, "F6 Tier 2: Cross-flow connection restriction not implemented"
+    assert response.status_code == 200
 
 # Feature 7: Backend Branching Traversal (5 tests)
 def test_tier2_f7_backend_branching_null_vars(client):
-    response = client.post("/api/crm/automations/branching/null-vars", json={})
-    assert response.status_code == 200, "F7 Tier 2: Null/missing variable fallback handling not implemented"
+    response = client.post("/api/crm/automations/branching/null-vars", json={
+        "variables": {"nombre": None, "email": "test@example.com"}
+    })
+    assert response.status_code == 200
+    assert response.json()["null_variables"] == ["nombre"]
 
 def test_tier2_f7_backend_branching_type_mismatch(client):
-    response = client.post("/api/crm/automations/branching/type-mismatch", json={})
-    assert response.status_code == 200, "F7 Tier 2: Traversal condition operand type mismatch handling not implemented"
+    response = client.post("/api/crm/automations/branching/type-mismatch", json={
+        "variables": {"sort_order": 10},
+        "conditions": [{"key": "sort_order", "operator": "gt", "value": "not-numeric"}]
+    })
+    assert response.status_code == 400
 
 def test_tier2_f7_backend_branching_missing_else(client):
-    response = client.post("/api/crm/automations/branching/missing-else", json={})
-    assert response.status_code == 200, "F7 Tier 2: Traversal branch node missing else-path behavior not implemented"
+    response = client.post("/api/crm/automations/branching/missing-else", json={
+        "node_id": "n1",
+        "edges": [{"source": "n1", "target": "n2", "source_port": "true"}]
+    })
+    assert response.status_code == 400
 
 def test_tier2_f7_backend_branching_infinite_nesting(client):
-    response = client.post("/api/crm/automations/branching/infinite-nesting", json={})
-    assert response.status_code == 200, "F7 Tier 2: Deeply nested branching traversal stack overflow prevention not implemented"
+    response = client.post("/api/crm/automations/branching/infinite-nesting", json={
+        "nodes": ["n1", "n2", "n3"],
+        "edges": [
+            {"source": "n1", "target": "n2"},
+            {"source": "n2", "target": "n3"},
+            {"source": "n3", "target": "n1"}
+        ]
+    })
+    assert response.status_code == 400
 
 def test_tier2_f7_backend_branching_unexpected_operator(client):
-    response = client.post("/api/crm/automations/branching/unexpected-op", json={})
-    assert response.status_code == 200, "F7 Tier 2: Branching evaluation unexpected operator handling not implemented"
+    response = client.post("/api/crm/automations/branching/unexpected-op", json={
+        "conditions": [{"key": "nombre", "operator": "invalid_op", "value": "Juan"}]
+    })
+    assert response.status_code == 400
 
 # Feature 8: Loop/Cycle Validation (5 tests)
 def test_tier2_f8_loop_cycle_deep_nesting(client):
     response = client.post("/api/crm/automations/flows/cycle-deep", json={})
-    assert response.status_code == 200, "F8 Tier 2: Deep path cycle detection limits not implemented"
+    assert response.status_code == 200
 
 def test_tier2_f8_loop_cycle_multiple_cycles(client):
     response = client.post("/api/crm/automations/flows/multiple-cycles", json={})
-    assert response.status_code == 200, "F8 Tier 2: Multi-cycle identification not implemented"
+    assert response.status_code == 200
 
 def test_tier2_f8_loop_cycle_disconnected_cycles(client):
     response = client.post("/api/crm/automations/flows/disconnected-subgraph-cycles", json={})
-    assert response.status_code == 200, "F8 Tier 2: Cycles in disconnected subgraphs validation not implemented"
+    assert response.status_code == 200
 
 def test_tier2_f8_loop_cycle_valid_dag_false_alarm(client):
     response = client.post("/api/crm/automations/flows/validate-complex-dag", json={})
-    assert response.status_code == 200, "F8 Tier 2: Convergent valid DAG false positive avoidance not implemented"
+    assert response.status_code == 200
 
 def test_tier2_f8_loop_cycle_concurrent_validation(client):
     response = client.post("/api/crm/automations/flows/concurrent-cycle-checks", json={})
-    assert response.status_code == 200, "F8 Tier 2: Concurrent cycle validation thread-safety not implemented"
+    assert response.status_code == 200
 
 
 # ==============================================================================
@@ -421,56 +552,119 @@ def test_tier2_f8_loop_cycle_concurrent_validation(client):
 # ==============================================================================
 
 def test_tier3_kanban_reorder_sync(client, db_session):
-    # F1 (Kanban UI) + F3 (Reorder Endpoint)
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
     headers = auth_headers(client, email=admin.email)
     response = client.post("/api/crm/pipeline/kanban/sync-reorder", json={"pipeline_id": str(pipeline.id)}, headers=headers)
-    assert response.status_code == 200, "Tier 3: Kanban UI and reorder endpoint synchronization not implemented"
+    assert response.status_code == 200
     db_session.refresh(caso1)
     db_session.refresh(caso2)
 
-def test_tier3_drag_drop_atomic_reorder():
-    # F2 (Drag-and-Drop) + F4 (Atomic Reordering)
+def test_tier3_drag_drop_atomic_reorder(db_session):
     assert hasattr(CasoCRM, "atomic_drag_drop_reorder"), "Tier 3: Atomic drag-and-drop model transaction helper not implemented"
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    assert caso1.etapa_actual_id == etapa1.id
+    assert caso1.sort_order == 1
+    assert caso2.etapa_actual_id == etapa1.id
+    assert caso2.sort_order == 2
+    
+    payload = [
+        {"id": str(caso1.id), "sort_order": 1, "drag_target_etapa_id": str(etapa2.id)},
+        {"id": str(caso2.id), "sort_order": 5}
+    ]
+    CasoCRM.atomic_drag_drop_reorder(db_session, payload, sede.id)
+    db_session.refresh(caso1)
+    db_session.refresh(caso2)
+    assert caso1.etapa_actual_id == etapa2.id
+    assert caso1.sort_order == 1
+    assert caso2.etapa_actual_id == etapa1.id
+    assert caso2.sort_order == 5
 
 def test_tier3_flow_builder_three_node(client, db_session):
-    # F5 (Flow Builder UI) + F6 (3-Node Connection)
+    from backend.models_crm import CrmAutomationFlow, CrmAutomationNode
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    flow = CrmAutomationFlow(name="Test Flow", is_active=True)
+    db_session.add(flow)
+    db_session.commit()
+    node1 = CrmAutomationNode(flow_id=flow.id, node_type="new_persona", ports_config={"output": "out"})
+    db_session.add(node1)
+    db_session.commit()
     headers = auth_headers(client, email=admin.email)
-    response = client.post("/api/crm/automations/flow-builder/three-node-render", json={"pipeline_id": str(pipeline.id)}, headers=headers)
-    assert response.status_code == 200, "Tier 3: Flow Builder UI 3-node connection visual state not implemented"
+    response = client.post("/api/crm/automations/flow-builder/three-node-render", json={"flow_id": str(flow.id)}, headers=headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "rendered"
+    assert data["flow_name"] == "Test Flow"
+    assert len(data["nodes"]) == 1
 
 def test_tier3_flow_branching_cycle_validation(client, db_session):
-    # F7 (Branching Traversal) + F8 (Loop/Cycle Validation)
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
     headers = auth_headers(client, email=admin.email)
-    response = client.post("/api/crm/automations/branching/validate-cycles", json={"pipeline_id": str(pipeline.id)}, headers=headers)
-    assert response.status_code == 200, "Tier 3: Branching flows loop validation logic not implemented"
+    payload = {
+        "nodes": ["n1", "n2"],
+        "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n1"}]
+    }
+    response = client.post("/api/crm/automations/branching/validate-cycles", json=payload, headers=headers)
+    assert response.status_code == 200
+    assert response.json()["valid"] is False
 
 def test_tier3_reorder_flow_trigger(client, db_session):
-    # F3 (Reorder Endpoint) + F5 (Flow Builder UI)
+    from backend.models_crm import CrmAutomation
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    automation = CrmAutomation(name="Stage Change Trigger", trigger_event="stage_change", action_type="send_email", is_active=True)
+    db_session.add(automation)
+    db_session.commit()
     headers = auth_headers(client, email=admin.email)
     response = client.post("/api/crm/pipeline/casos/reorder-trigger-automation", json={"caso_id": str(caso1.id)}, headers=headers)
-    assert response.status_code == 200, "Tier 3: Reorder action triggering Flow Builder automation not implemented"
+    assert response.status_code == 200
+    assert response.json()["status"] == "triggered"
 
 def test_tier3_branching_three_node_connection(client, db_session):
-    # F6 (3-Node Connection) + F7 (Branching Traversal)
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
     headers = auth_headers(client, email=admin.email)
     response = client.post("/api/crm/automations/branching/three-node-traversal", json={"pipeline_id": str(pipeline.id)}, headers=headers)
-    assert response.status_code == 200, "Tier 3: Branch nodes minimum 3-node connection integration not implemented"
+    assert response.status_code == 200
+    assert response.json()["status"] == "traversed"
+    assert response.json()["pipeline_name"] == "Pipeline Test"
 
 def test_tier3_drag_drop_flow_validation(client, db_session):
-    # F2 (Drag-and-Drop) + F8 (Loop/Cycle Validation)
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
     headers = auth_headers(client, email=admin.email)
-    response = client.post("/api/crm/pipeline/kanban/drag-drop/validate-cycles", json={"pipeline_id": str(pipeline.id)}, headers=headers)
-    assert response.status_code == 200, "Tier 3: Drag-and-drop action triggering loop/cycle validation not implemented"
+    payload = {
+        "nodes": ["n1", "n2"],
+        "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n1"}]
+    }
+    response = client.post("/api/crm/pipeline/kanban/drag-drop/validate-cycles", json=payload, headers=headers)
+    assert response.status_code == 200
+    assert response.json()["valid"] is False
 
-def test_tier3_atomic_branching_traversal():
-    # F4 (Atomic Reordering) + F7 (Branching Traversal)
+def test_tier3_atomic_branching_traversal(db_session):
     assert hasattr(CasoCRM, "atomic_reorder_branching_eval"), "Tier 3: Atomic reorder with branching path evaluation not implemented"
+    from backend.models_crm import CrmAutomation, PendingCrmAction
+    admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    
+    automation = CrmAutomation(
+        name="Stage Change Evaluation Auto",
+        trigger_event="stage_change",
+        action_type="send_email",
+        delay_minutes=10,
+        is_active=True
+    )
+    db_session.add(automation)
+    db_session.commit()
+    
+    payload = [
+        {"id": str(caso1.id), "sort_order": 1, "drag_target_etapa_id": str(etapa2.id)}
+    ]
+    CasoCRM.atomic_reorder_branching_eval(db_session, payload, sede.id)
+    db_session.refresh(caso1)
+    assert caso1.etapa_actual_id == etapa2.id
+    
+    pending_actions = db_session.query(PendingCrmAction).filter(
+        PendingCrmAction.automation_id == automation.id,
+        PendingCrmAction.target_persona_id == caso1.persona_id
+    ).all()
+    assert len(pending_actions) == 1
+    assert pending_actions[0].status == "pending"
 
 
 # ==============================================================================
@@ -478,7 +672,6 @@ def test_tier3_atomic_branching_traversal():
 # ==============================================================================
 
 def test_tier4_scenario1_lead_qualification(client, db_session):
-    # Scenario 1: Lead Qualification Flow (Exercises F1, F2, F3, F7)
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
     headers = auth_headers(client, email=admin.email)
     payload = {
@@ -492,8 +685,11 @@ def test_tier4_scenario1_lead_qualification(client, db_session):
     assert caso1.etapa_actual_id == etapa2.id
 
 def test_tier4_scenario2_support_ticket_routing(client, db_session):
-    # Scenario 2: Support Ticket Routing (Exercises F1, F3, F6)
+    from backend.models_crm import SupportTicket
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    ticket = SupportTicket(user_id=persona.id, subject=f"Trouble with {caso1.titulo_caso}", description="Support needed")
+    db_session.add(ticket)
+    db_session.commit()
     headers = auth_headers(client, email=admin.email)
     payload = {
         "caso_id": str(caso1.id),
@@ -503,13 +699,18 @@ def test_tier4_scenario2_support_ticket_routing(client, db_session):
     assert response.status_code == 200, "Tier 4 Scenario 2: Support Ticket Routing not implemented"
     db_session.refresh(caso1)
     data = response.json()
-    assert "route" in data or "assigned_to" in data
+    assert data["route"] == "support"
+    assert data["assigned_to"] == str(persona.id)
 
 def test_tier4_scenario3_cyclical_flow_resolution(client, db_session):
-    # Scenario 3: Cyclical Flow Resolution (Exercises F5, F8)
+    from backend.models_crm import CrmAutomationFlow
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
+    flow = CrmAutomationFlow(name="Cyclical Flow Test", is_active=True)
+    db_session.add(flow)
+    db_session.commit()
     headers = auth_headers(client, email=admin.email)
     payload = {
+        "flow_id": str(flow.id),
         "flow_data": {
             "nodes": [{"id": "n1", "type": "trigger"}, {"id": "n2", "type": "action"}],
             "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n1"}]
@@ -519,10 +720,10 @@ def test_tier4_scenario3_cyclical_flow_resolution(client, db_session):
     assert response.status_code == 200, "Tier 4 Scenario 3: Cyclical Flow Resolution not implemented"
     db_session.refresh(caso1)
     data = response.json()
-    assert "has_cycles" in data or "resolved" in data
+    assert data["has_cycles"] is True
+    assert data["resolved"] is False
 
 def test_tier4_scenario4_bulk_reassignment_reorder(client, db_session):
-    # Scenario 4: Bulk Reassignment & Reorder (Exercises F3, F4, F7)
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
     headers = auth_headers(client, email=admin.email)
     payload = {
@@ -541,7 +742,6 @@ def test_tier4_scenario4_bulk_reassignment_reorder(client, db_session):
     assert caso2.asignado_a_id == persona.id
 
 def test_tier4_scenario5_multitenant_isolation_crm(client, db_session):
-    # Scenario 5: Multi-Tenant Isolation CRM (Exercises F1, F3, F7)
     from tests.conftest import seed_user_with_role
     admin_a, persona_a, sede_a, pipeline_a, etapa1_a, etapa2_a, caso1_a, caso2_a = _seed_test_data(db_session)
     user_b, persona_b, sede_b = seed_user_with_role(db_session, role_name="ADMIN", email="admin_b@example.com", sede_id=uuid.uuid4())

@@ -6,12 +6,13 @@ import {
     X, CheckCircle2, Circle, CalendarDays, FolderOpen,
     MoreHorizontal, Sparkles, Loader2, ChevronDown, AlignLeft,
     Clock, Zap, Trash2, Copy, ExternalLink,
-    Save, MessageSquare, Link2, AlertTriangle, CheckCheck,
+    Save, MessageSquare, Link2, Eye, CheckCheck,
     Hash
 } from 'lucide-react';
 import clsx from 'clsx';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
+import { STATUS_LABELS, PRIORITY_LABELS, type TaskStatus, type TaskPriority } from '@/lib/projects/constants';
 
 // ─────────────────────────────────────────────────────────────────
 // TYPES
@@ -19,8 +20,8 @@ import { useAuth } from '@/context/AuthContext';
 export interface TaskDetail {
     id: string;
     title: string;
-    status: string;
-    priority: string | null;
+    status: TaskStatus | string;
+    priority: TaskPriority | string | null;
     due_date: string | null;
     project_id: string;
     project_title?: string;
@@ -41,40 +42,40 @@ interface TaskEditDrawerProps {
 // ─────────────────────────────────────────────────────────────────
 const PRIORITY_OPTIONS = [
     {
-        value: 'urgent', label: 'Urgente',
+        value: 'urgent', label: PRIORITY_LABELS.urgent,
         color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-500/10',
         border: 'border-rose-200 dark:border-rose-500/30',
         dot: 'bg-rose-500', bar: 'bg-rose-500',
         glow: 'shadow-rose-500/20',
     },
     {
-        value: 'high', label: 'Alta',
+        value: 'high', label: PRIORITY_LABELS.high,
         color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-500/10',
         border: 'border-orange-200 dark:border-orange-500/30',
         dot: 'bg-orange-500', bar: 'bg-orange-500',
         glow: 'shadow-orange-500/20',
     },
     {
-        value: 'medium', label: 'Media',
+        value: 'medium', label: PRIORITY_LABELS.medium,
         color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10',
         border: 'border-amber-200 dark:border-amber-500/30',
         dot: 'bg-amber-500', bar: 'bg-amber-500',
         glow: 'shadow-amber-500/20',
     },
     {
-        value: 'low', label: 'Baja',
-        color: 'text-[hsl(var(--text-secondary))]', bg: 'bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]/40',
-        border: 'border-[hsl(var(--border))] dark:border-[hsl(var(--border))]/50',
-        dot: 'bg-[hsl(var(--surface-2))]', bar: 'bg-[hsl(var(--surface-2))]',
-        glow: 'shadow-black/10',
+        value: 'low', label: PRIORITY_LABELS.low,
+        color: 'text-slate-700 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-slate-500/10',
+        border: 'border-slate-200 dark:border-slate-500/30',
+        dot: 'bg-slate-500', bar: 'bg-slate-500',
+        glow: 'shadow-slate-500/20',
     },
 ];
 
 const STATUS_OPTIONS = [
-    { value: 'todo',        label: 'Por hacer',   color: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]/60',      icon: Circle },
-    { value: 'in_progress', label: 'En progreso', color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',     bg: 'bg-blue-50 dark:bg-blue-500/10',          icon: Clock },
-    { value: 'done',        label: 'Completada',  color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10',  icon: CheckCircle2 },
-    { value: 'blocked',     label: 'Bloqueada',   color: 'text-rose-600 dark:text-rose-400',     bg: 'bg-rose-50 dark:bg-rose-500/10',          icon: AlertTriangle },
+    { value: 'todo',        label: STATUS_LABELS.todo,        color: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]/60',      icon: Circle },
+    { value: 'in_progress', label: STATUS_LABELS.in_progress, color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',     bg: 'bg-blue-50 dark:bg-blue-500/10',          icon: Clock },
+    { value: 'review',      label: STATUS_LABELS.review,      color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10',  icon: Eye },
+    { value: 'completed',   label: STATUS_LABELS.completed,   color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10',  icon: CheckCircle2 },
 ];
 
 const XP_MAP: Record<string, number> = { urgent: 100, high: 60, medium: 40, low: 20 };

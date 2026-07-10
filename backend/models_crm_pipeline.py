@@ -152,7 +152,7 @@ class CasoCRM(Base):
         return (cls.sla_vencimiento_contacto != None) & (cls.sla_vencimiento_contacto < func.now())  # noqa: E711
 
     @classmethod
-    def atomic_sort_reorder(cls, db, payload, user_sede_id) -> None:
+    def atomic_sort_reorder(cls, db, payload, user_sede_id, commit=True) -> None:
         case_ids = []
         for item in payload:
             cid = item["id"]
@@ -212,6 +212,12 @@ class CasoCRM(Base):
                     target_stage = item.get(key)
                     if target_stage is not None:
                         target_stage_uuid = _uuid.UUID(str(target_stage))
+                        # Validate stage belongs to the case's pipeline
+                        target_etapa = db.query(EtapaPipeline).filter(EtapaPipeline.id == target_stage_uuid).first()
+                        if not target_etapa:
+                            raise ValueError("Stage not found")
+                        if target_etapa.pipeline_id != locked_cases_map[cid].pipeline_id:
+                            raise ValueError("Stage does not belong to the case's pipeline.")
                         locked_cases_map[cid].etapa_actual_id = target_stage_uuid
 
             for stage_id in all_stage_ids:
@@ -231,7 +237,8 @@ class CasoCRM(Base):
                     locked_cases_map[cid].is_locked_for_reorder = False
                     locked_cases_map[cid].last_reorder_failed = False
             
-            db.commit()
+            if commit:
+                db.commit()
         except Exception as e:
             cls.reorder_transaction_rollback(db)
             raise e
@@ -275,12 +282,58 @@ class CasoCRM(Base):
         return count == len(case_ids)
 
     @classmethod
-    def atomic_drag_drop_reorder(cls, db, *args, **kwargs) -> None:
-        pass
+    def atomic_drag_drop_reorder(cls, db, payload, user_sede_id) -> None:
+        cls.atomic_sort_reorder(db, payload, user_sede_id)
 
     @classmethod
-    def atomic_reorder_branching_eval(cls, db, *args, **kwargs) -> None:
-        pass
+    def atomic_reorder_branching_eval(cls, db, payload, user_sede_id) -> None:
+        case_ids = []
+        for item in payload:
+            cid = item["id"]
+            if isinstance(cid, str):
+                case_ids.append(_uuid.UUID(cid))
+            else:
+                case_ids.append(cid)
+        
+        # Load the original stage for each case before reordering
+        original_stages = {}
+        for case in db.query(cls).filter(cls.id.in_(case_ids)).all():
+            original_stages[case.id] = case.etapa_actual_id
+
+        try:
+            # Perform the sorting reorder without committing
+            cls.atomic_sort_reorder(db, payload, user_sede_id, commit=False)
+
+            # Compare and identify cases that changed stage
+            changed_cases = []
+            for case in db.query(cls).filter(cls.id.in_(case_ids)).all():
+                orig_stage = original_stages.get(case.id)
+                if orig_stage and orig_stage != case.etapa_actual_id:
+                    changed_cases.append(case)
+
+            if changed_cases:
+                from backend.models_crm import CrmAutomation, PendingCrmAction
+                from datetime import timedelta
+
+                automations = db.query(CrmAutomation).filter(
+                    CrmAutomation.trigger_event == "stage_change",
+                    CrmAutomation.is_active == True
+                ).all()
+
+                for case in changed_cases:
+                    for automation in automations:
+                        execute_at = _utcnow() + timedelta(minutes=automation.delay_minutes or 0)
+                        action = PendingCrmAction(
+                            automation_id=automation.id,
+                            target_persona_id=case.persona_id,
+                            execute_at=execute_at,
+                            status="pending"
+                        )
+                        db.add(action)
+            db.commit()
+        except Exception as e:
+            cls.reorder_transaction_rollback(db)
+            raise e
 
     persona = relationship("Persona", foreign_keys=[persona_id])
     asignado_a = relationship("Persona", foreign_keys=[asignado_a_id])

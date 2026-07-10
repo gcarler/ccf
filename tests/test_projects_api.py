@@ -10,12 +10,16 @@ from __future__ import annotations
 
 import uuid as _uuid
 
+import pytest
+
 from backend.models_crm import (
     ChatMessage,  # noqa: F401 — register for import side effects
     Persona,
 )
+from backend.models_projects import ProjectAttachment
 from tests.conftest import auth_headers, seed_admin
 from tests.factories_projects import (
+    create_attachment_factory,
     create_comment_factory,
     create_default_phases_factory,
     create_message_factory,
@@ -133,12 +137,19 @@ class TestProjectsCRUD:
 
     def test_delete_project(self, client, db_session):
         """DELETE /api/projects/{id} soft-deletes the project."""
+        from backend.models_projects import Project
+
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
         headers = auth_headers(client)
         resp = client.delete(f"/api/projects/{proj.id}", headers=headers)
         assert resp.status_code == 200
-        assert resp.json()["ok"] is True
+        body = resp.json()
+        assert body["ok"] is True
+        assert body["deleted"] == str(proj.id)
+        # Verify soft delete in DB
+        db_session.refresh(proj)
+        assert proj.deleted_at is not None
 
     def test_delete_project_removes_from_list(self, client, db_session):
         """Deleted project no longer appears in listing."""
@@ -287,6 +298,42 @@ class TestTasks:
         assert resp.status_code == 200
         assert resp.json()["priority"] == "urgent"
 
+    def test_create_task_normalizes_legacy_priority(self, client, db_session):
+        """Legacy priority 'normal' is normalized to 'medium' on create."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+        resp = client.post(
+            f"/api/projects/{proj.id}/tasks",
+            json={"title": "Legacy priority", "status": "todo", "priority": "normal"},
+            headers=headers,
+        )
+        assert resp.status_code == 201
+        assert resp.json()["priority"] == "medium"
+
+    def test_update_task_normalizes_legacy_status(self, client, db_session):
+        """Legacy status values 'done' and 'blocked' are normalized on update."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        task = create_task_factory(db_session, proj.id, status="todo")
+        headers = auth_headers(client)
+
+        resp = client.patch(
+            f"/api/projects/{proj.id}/tasks/{task.id}",
+            json={"status": "done"},
+            headers=headers,
+        )
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "completed"
+
+        resp = client.patch(
+            f"/api/projects/{proj.id}/tasks/{task.id}",
+            json={"status": "blocked"},
+            headers=headers,
+        )
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "todo"
+
     def test_delete_task(self, client, db_session):
         """DELETE /projects/{id}/tasks/{task_id} soft-deletes."""
         _, _, sede = seed_admin(db_session)
@@ -295,7 +342,12 @@ class TestTasks:
         headers = auth_headers(client)
         resp = client.delete(f"/api/projects/{proj.id}/tasks/{task.id}", headers=headers)
         assert resp.status_code == 200
-        assert resp.json()["ok"] is True
+        body = resp.json()
+        assert body["ok"] is True
+        assert body["deleted"] == str(task.id)
+        # Verify soft delete in DB
+        db_session.refresh(task)
+        assert task.deleted_at is not None
 
     def test_get_task_not_found(self, client, db_session):
         """GET /projects/tasks/{fake_uuid} returns 404."""
@@ -369,7 +421,12 @@ class TestSubtasks:
             headers=headers,
         )
         assert resp.status_code == 200
-        assert resp.json()["ok"] is True
+        body = resp.json()
+        assert body["ok"] is True
+        assert body["deleted"] == str(sub.id)
+        # Verify soft delete in DB
+        db_session.refresh(sub)
+        assert sub.deleted_at is not None
 
     def test_subtask_mismatched_parent(self, client, db_session):
         """PATCH subtask with wrong parent returns 404."""
@@ -388,8 +445,9 @@ class TestSubtasks:
 
 
 # ── E: Milestones ─────────────────────────────────────────────────────────
-# Routes (4): GET/POST /projects/{id}/milestones,
-#             PATCH /projects/{id}/milestones/{mid}
+# Routes (5): GET/POST /projects/{id}/milestones,
+#             PATCH /projects/{id}/milestones/{mid},
+#             DELETE /projects/{id}/milestones/{mid}
 
 
 class TestMilestones:
@@ -443,6 +501,22 @@ class TestMilestones:
         )
         assert resp.status_code == 200
         assert resp.json()["is_completed"] is False
+
+    def test_delete_milestone(self, client, db_session):
+        """DELETE /projects/{id}/milestones/{mid} soft-deletes the milestone."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        ms = create_milestone_factory(db_session, proj.id)
+        headers = auth_headers(client)
+        resp = client.delete(f"/api/projects/{proj.id}/milestones/{ms.id}", headers=headers)
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["ok"] is True
+        assert body["deleted"] == str(ms.id)
+        # Verify it no longer appears in the listing
+        list_resp = client.get(f"/api/projects/{proj.id}/milestones", headers=headers)
+        assert list_resp.status_code == 200
+        assert all(m["id"] != str(ms.id) for m in list_resp.json())
 
 
 # ── F: Comments ──────────────────────────────────────────────────────────
@@ -530,7 +604,12 @@ class TestComments:
         headers = auth_headers(client)
         resp = client.delete(f"/api/projects/comments/{comment.id}", headers=headers)
         assert resp.status_code == 200
-        assert resp.json()["ok"] is True
+        body = resp.json()
+        assert body["ok"] is True
+        assert body["deleted"] == str(comment.id)
+        # Verify soft delete in DB
+        db_session.refresh(comment)
+        assert comment.deleted_at is not None
 
     def test_comment_not_found(self, client, db_session):
         _, _, sede = seed_admin(db_session)
@@ -751,7 +830,65 @@ class TestSupplies:
             headers=headers,
         )
         assert resp.status_code == 200
-        assert resp.json()["ok"] is True
+        body = resp.json()
+        assert body["ok"] is True
+        assert body["deleted"] == str(supply.id)
+        # Verify soft delete in DB
+        db_session.refresh(supply)
+        assert supply.deleted_at is not None
+
+
+# ── J.1: Attachments ───────────────────────────────────────────────────────
+# Routes (2): POST /projects/{pid}/tasks/{tid}/attachments,
+#             DELETE /projects/{pid}/tasks/{tid}/attachments/{aid}
+
+
+class TestAttachments:
+
+    def test_upload_attachment(self, client, db_session):
+        """POST /projects/{pid}/tasks/{tid}/attachments uploads a file."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        task = create_task_factory(db_session, proj.id)
+        headers = auth_headers(client)
+        files = {"file": ("reporte.pdf", b"%PDF-1.4 test", "application/pdf")}
+        resp = client.post(
+            f"/api/projects/{proj.id}/tasks/{task.id}/attachments",
+            files=files,
+            headers=headers,
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["title"] == task.title
+        attachments = data["attachments"]
+        assert any(a["filename"] == "reporte.pdf" for a in attachments)
+        assert any(a["file_url"] for a in attachments)
+        assert any(a["file_size"] > 0 for a in attachments)
+        # Verify persistence in DB
+        db_attachment = db_session.query(ProjectAttachment).filter(
+            ProjectAttachment.task_id == task.id,
+            ProjectAttachment.filename == "reporte.pdf",
+        ).first()
+        assert db_attachment is not None
+
+    def test_delete_attachment(self, client, db_session):
+        """DELETE /projects/{pid}/tasks/{tid}/attachments/{aid} soft-deletes."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        task = create_task_factory(db_session, proj.id)
+        attachment = create_attachment_factory(db_session, task.id)
+        headers = auth_headers(client)
+        resp = client.delete(
+            f"/api/projects/{proj.id}/tasks/{task.id}/attachments/{attachment.id}",
+            headers=headers,
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["ok"] is True
+        assert body["deleted"] == str(attachment.id)
+        # Verify soft delete in DB
+        db_session.refresh(attachment)
+        assert attachment.deleted_at is not None
 
 
 # ── K: Chat Messages ─────────────────────────────────────────────────────
@@ -788,7 +925,175 @@ class TestMessages:
         headers = auth_headers(client)
         resp = client.delete(f"/api/projects/{proj.id}/messages/{msg.id}", headers=headers)
         assert resp.status_code == 200
-        assert resp.json()["ok"] is True
+        body = resp.json()
+        assert body["ok"] is True
+        # Verify soft delete in DB
+        db_session.refresh(msg)
+        assert msg.deleted_at is not None
+
+
+# ── L.1: Cross-sede / Multi-tenant Security ───────────────────────────────
+
+
+class TestCrossSedeSecurity:
+    """Verify Axioma 3: users cannot access projects from another sede."""
+
+    def test_cross_sede_update_task_returns_404(self, client, db_session):
+        """PATCH task in another sede returns 404 (not 403)."""
+        from tests.conftest import seed_user_with_role
+
+        _, _, sede_a = seed_admin(db_session)
+        proj = create_project_factory(db_session, sede_id=sede_a.id)
+        task = create_task_factory(db_session, proj.id)
+        # Create user in a different sede
+        seed_user_with_role(
+            db_session,
+            role_name="pastor",
+            email="userb@test.com",
+            sede_id=_uuid.uuid4(),
+        )
+        headers_b = auth_headers(client, email="userb@test.com")
+        resp = client.patch(
+            f"/api/projects/{proj.id}/tasks/{task.id}",
+            json={"title": "Hacked"},
+            headers=headers_b,
+        )
+        assert resp.status_code == 404
+        # Verify task was not modified
+        db_session.refresh(task)
+        assert task.title != "Hacked"
+
+    def test_cross_sede_upload_attachment_returns_404(self, client, db_session):
+        """POST attachment in another sede returns 404 and does not create it."""
+        from tests.conftest import seed_user_with_role
+
+        _, _, sede_a = seed_admin(db_session)
+        proj = create_project_factory(db_session, sede_id=sede_a.id)
+        task = create_task_factory(db_session, proj.id)
+        seed_user_with_role(
+            db_session,
+            role_name="pastor",
+            email="userb2@test.com",
+            sede_id=_uuid.uuid4(),
+        )
+        headers_b = auth_headers(client, email="userb2@test.com")
+        files = {"file": ("reporte.pdf", b"%PDF-1.4 test", "application/pdf")}
+        resp = client.post(
+            f"/api/projects/{proj.id}/tasks/{task.id}/attachments",
+            files=files,
+            headers=headers_b,
+        )
+        assert resp.status_code == 404
+        # Verify no attachment was created
+        db_attachment = db_session.query(ProjectAttachment).filter(
+            ProjectAttachment.task_id == task.id,
+        ).first()
+        assert db_attachment is None
+
+    def test_cross_sede_delete_attachment_returns_404(self, client, db_session):
+        """DELETE attachment in another sede returns 404 and does not delete it."""
+        from tests.conftest import seed_user_with_role
+
+        _, _, sede_a = seed_admin(db_session)
+        proj = create_project_factory(db_session, sede_id=sede_a.id)
+        task = create_task_factory(db_session, proj.id)
+        attachment = create_attachment_factory(db_session, task.id)
+        seed_user_with_role(
+            db_session,
+            role_name="pastor",
+            email="userb4@test.com",
+            sede_id=_uuid.uuid4(),
+        )
+        headers_b = auth_headers(client, email="userb4@test.com")
+        resp = client.delete(
+            f"/api/projects/{proj.id}/tasks/{task.id}/attachments/{attachment.id}",
+            headers=headers_b,
+        )
+        assert resp.status_code == 404
+        # Verify attachment was not deleted
+        db_session.refresh(attachment)
+        assert attachment.deleted_at is None
+
+    def test_cross_sede_delete_milestone_returns_404(self, client, db_session):
+        """DELETE milestone in another sede returns 404 and does not delete it."""
+        from tests.conftest import seed_user_with_role
+
+        _, _, sede_a = seed_admin(db_session)
+        proj = create_project_factory(db_session, sede_id=sede_a.id)
+        ms = create_milestone_factory(db_session, proj.id)
+        seed_user_with_role(
+            db_session,
+            role_name="pastor",
+            email="userb5@test.com",
+            sede_id=_uuid.uuid4(),
+        )
+        headers_b = auth_headers(client, email="userb5@test.com")
+        resp = client.delete(
+            f"/api/projects/{proj.id}/milestones/{ms.id}",
+            headers=headers_b,
+        )
+        assert resp.status_code == 404
+        # Verify milestone was not deleted
+        db_session.refresh(ms)
+        assert ms.deleted_at is None
+
+    @pytest.mark.parametrize("method,expected_status", [
+        ("get", 404),
+        ("post", 404),
+        ("patch", 404),
+        ("delete", 404),
+    ])
+    def test_cross_sede_supply_operations_return_404(
+        self, client, db_session, method, expected_status
+    ):
+        """GET/POST/PATCH/DELETE supplies in another sede return 404."""
+        from tests.conftest import seed_user_with_role
+
+        _, _, sede_a = seed_admin(db_session)
+        proj = create_project_factory(db_session, sede_id=sede_a.id)
+        task = create_task_factory(db_session, proj.id)
+        supply = create_supply_factory(db_session, task.id)
+        seed_user_with_role(
+            db_session,
+            role_name="pastor",
+            email=f"userb3_{method}@test.com",
+            sede_id=_uuid.uuid4(),
+        )
+        headers_b = auth_headers(client, email=f"userb3_{method}@test.com")
+
+        url = f"/api/projects/{proj.id}/tasks/{task.id}/supplies"
+        if method in ("patch", "delete"):
+            url = f"{url}/{supply.id}"
+
+        if method == "get":
+            resp = client.get(url, headers=headers_b)
+        elif method == "post":
+            resp = client.post(
+                url,
+                json={"item_name": "Cable", "quantity": 1, "status": "pending"},
+                headers=headers_b,
+            )
+        elif method == "patch":
+            resp = client.patch(url, json={"status": "ready"}, headers=headers_b)
+        else:  # delete
+            resp = client.delete(url, headers=headers_b)
+
+        assert resp.status_code == expected_status
+
+        # Verify no mutation occurred
+        if method == "post":
+            from backend.models_projects import TaskSupply
+            count = db_session.query(TaskSupply).filter(
+                TaskSupply.task_id == task.id,
+                TaskSupply.item_name == "Cable",
+            ).count()
+            assert count == 0
+        elif method == "patch":
+            db_session.refresh(supply)
+            assert supply.status != "ready"
+        elif method == "delete":
+            db_session.refresh(supply)
+            assert supply.deleted_at is None
 
 
 # ── L: UUID & Edge Cases ─────────────────────────────────────────────────

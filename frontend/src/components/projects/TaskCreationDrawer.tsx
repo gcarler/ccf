@@ -6,6 +6,7 @@ import { CheckSquare, Type, AlignLeft, Flag, Loader2, User } from 'lucide-react'
 import PersonaSelect from '@/components/ui/PersonaSelect';
 import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import { PRIORITY_LABELS } from '@/lib/projects/constants';
 
 interface Props {
     isOpen: boolean;
@@ -22,10 +23,10 @@ interface FormValues {
 }
 
 const PRIORITIES = [
-    { value: 'urgent', label: 'Urgente', color: 'bg-rose-500', iconColor: 'text-rose-500' },
-    { value: 'high', label: 'Alta', color: 'bg-amber-500', iconColor: 'text-amber-500' },
-    { value: 'medium', label: 'Normal', color: 'bg-[hsl(var(--primary))]', iconColor: 'text-[hsl(var(--primary))]' },
-    { value: 'low', label: 'Baja', color: 'bg-[hsl(var(--surface-2))]', iconColor: 'text-[hsl(var(--text-secondary))]' }
+    { value: 'urgent', label: PRIORITY_LABELS.urgent, color: 'bg-rose-500', iconColor: 'text-rose-500' },
+    { value: 'high', label: PRIORITY_LABELS.high, color: 'bg-amber-500', iconColor: 'text-amber-500' },
+    { value: 'medium', label: PRIORITY_LABELS.medium, color: 'bg-[hsl(var(--primary))]', iconColor: 'text-[hsl(var(--primary))]' },
+    { value: 'low', label: PRIORITY_LABELS.low, color: 'bg-[hsl(var(--surface-2))]', iconColor: 'text-[hsl(var(--text-secondary))]' }
 ];
 
 export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onClose, onSubmit }: Props) {

@@ -76,6 +76,7 @@ def list_all_my_tasks(
         q = q.filter(models.Project.sede_id == user_sede)
     tasks = q.all()
     for t in tasks:
+        _normalize_task_enums(t)
         _normalize_dates(t)
     return tasks
 
@@ -188,6 +189,21 @@ def _ensure_milestone_in_project(db: Session, project_id: str, milestone_id: str
     return milestone
 
 
+def _ensure_attachment_in_task(db: Session, project_id: str, task_id: str, attachment_id: str) -> models.ProjectAttachment:
+    _ensure_task_in_project(db, project_id, task_id)
+    attachment = (
+        db.query(models.ProjectAttachment)
+        .filter(
+            models.ProjectAttachment.id == _to_uuid(attachment_id),
+            models.ProjectAttachment.task_id == _to_uuid(task_id),
+        )
+        .first()
+    )
+    if not attachment:
+        raise HTTPException(status_code=404, detail="Attachment not found in task")
+    return attachment
+
+
 def _assert_status_in_project_phases(
     db: Session, project_id: Any, status_value: Any
 ) -> None:
@@ -270,6 +286,29 @@ _CANONICAL_PHASE_SLUGS: frozenset[str] = frozenset(
     {"todo", "in_progress", "review", "completed"}
 )
 
+# Legacy enum values that may still exist in client payloads or old DB rows.
+# These are normalized to canonical values on read/write to avoid 422 errors
+# and to keep the UI consistent.
+_LEGACY_PRIORITY_MAP: dict[str, str] = {"normal": "medium"}
+_LEGACY_STATUS_MAP: dict[str, str] = {"done": "completed", "blocked": "todo", "pending": "todo"}
+
+
+def _normalize_task_payload(payload: dict) -> dict:
+    """Map legacy task status/priority values to canonical enums in payloads."""
+    if "priority" in payload and isinstance(payload["priority"], str):
+        payload["priority"] = _LEGACY_PRIORITY_MAP.get(payload["priority"], payload["priority"])
+    if "status" in payload and isinstance(payload["status"], str):
+        payload["status"] = _LEGACY_STATUS_MAP.get(payload["status"], payload["status"])
+    return payload
+
+
+def _normalize_task_enums(task: models.ProjectTask) -> None:
+    """Map legacy task status/priority values stored on a task row to canonical enums."""
+    if task.priority in _LEGACY_PRIORITY_MAP:
+        task.priority = _LEGACY_PRIORITY_MAP[task.priority]
+    if task.status in _LEGACY_STATUS_MAP:
+        task.status = _LEGACY_STATUS_MAP[task.status]
+
 
 def _serialize_task_attachments(task: models.ProjectTask) -> models.ProjectTask:
     task.__dict__["attachments"] = [
@@ -350,6 +389,7 @@ def list_projects(
         for m in p.milestones:
             _normalize_dates(m)
         for t in p.tasks:
+            _normalize_task_enums(t)
             _normalize_dates(t)
             # Normalize attachments from ORM objects to dicts for Pydantic serialization
             if hasattr(t, "attachments") and t.attachments:
@@ -453,6 +493,7 @@ def set_project_phases(
 def list_all_comments(
     unresolved_only: bool = False,
     limit: int = Query(120, le=500),
+    offset: int = Query(0, ge=0),
     project_id: Optional[str] = None,
     task_id: Optional[str] = None,
     db: Session = Depends(get_db),
@@ -486,7 +527,7 @@ def list_all_comments(
         q = q.filter(models.ProjectComment.is_resolved.is_(False))
     if task_id:
         q = q.filter(models.ProjectComment.task_id == _to_uuid(task_id))
-    rows = q.order_by(models.ProjectComment.created_at.desc()).limit(limit).all()
+    rows = q.order_by(models.ProjectComment.created_at.desc()).offset(offset).limit(limit).all()
     # Batch-fetch authors to avoid N+1 queries
     author_ids = {row.author_id for row in rows if row.author_id}
     authors_map = {}
@@ -526,6 +567,7 @@ def create_project_task(
     _ensure_project(db, project_id, user_sede=user_sede)
     project = db.query(models.Project).filter(models.Project.id == _to_uuid(project_id)).first()
     payload = task.model_dump()
+    _normalize_task_payload(payload)
     _assert_status_in_project_phases(db, project_id, payload.get("status"))
     max_order = (
         db.query(func.max(models.ProjectTask.order_index))
@@ -681,6 +723,7 @@ def workload_summary(
 @router.get("/activities", response_model=List[schemas.ProjectActivityItem])
 def list_activities(
     limit: int = Query(20, le=200),
+    offset: int = Query(0, ge=0),
     project_id: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
@@ -713,7 +756,7 @@ def list_activities(
             models.Project.sede_id == user_sede,
             models.Project.deleted_at.is_(None),
         )
-    logs = q.order_by(models.ProjectActivityLog.created_at.desc()).limit(limit).all()
+    logs = q.order_by(models.ProjectActivityLog.created_at.desc()).offset(offset).limit(limit).all()
 
     # ── Batch fetch: 1 query for the unique project_ids of this page ──
     project_ids = {log.project_id for log in logs if log.project_id}
@@ -758,6 +801,7 @@ def get_task(
     user_sede = get_user_sede_id(db, current_user.id)
     task = _ensure_task(db, task_id)
     _ensure_project(db, str(task.project_id), user_sede=user_sede)
+    _normalize_task_enums(task)
     _normalize_dates(task)
     return task
 
@@ -780,11 +824,13 @@ def update_task(
     task = _ensure_task(db, task_id)
     _ensure_project(db, str(task.project_id), user_sede=user_sede)
     update_data = payload.model_dump(exclude_unset=True)
+    _normalize_task_payload(update_data)
     if "status" in update_data:
         _assert_status_in_project_phases(db, task.project_id, update_data["status"])
     previous_assignee_id = getattr(task, "assignee_id", None)
     for key, value in update_data.items():
         setattr(task, key, value)
+    _normalize_task_enums(task)
     task.updated_at = _utcnow()
     db.commit()
     db.refresh(task)
@@ -1161,6 +1207,8 @@ async def upload_task_attachment(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     task = _ensure_task_in_project(db, project_id, task_id)
     filename = sanitize_filename(file.filename or "file")
     contents = await file.read()
@@ -1189,6 +1237,30 @@ async def upload_task_attachment(
     return _serialize_task_attachments(task)
 
 
+@router.delete("/{project_id}/tasks/{task_id}/attachments/{attachment_id}", response_model=dict)
+def delete_task_attachment(
+    project_id: str,
+    task_id: str,
+    attachment_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina un archivo adjunto de una tarea (soft delete)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    attachment = _ensure_attachment_in_task(db, project_id, task_id, attachment_id)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "attachment_deleted",
+        f"Archivo '{attachment.filename}' eliminado",
+    )
+    attachment.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"ok": True, "deleted": attachment_id}
+
+
 @router.patch("/{project_id}/tasks/{task_id}", response_model=schemas.ProjectTask)
 def update_project_task(
     project_id: str,
@@ -1198,8 +1270,11 @@ def update_project_task(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Actualiza una tarea con auditoría ministerial automática."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     task = _ensure_task_in_project(db, project_id, task_id)
     update_data = payload.model_dump(exclude_unset=True)
+    _normalize_task_payload(update_data)
     if "status" in update_data:
         _assert_status_in_project_phases(db, project_id, update_data["status"])
     previous_assignee_id = getattr(task, "assignee_id", None)
@@ -1207,6 +1282,7 @@ def update_project_task(
     for key, value in update_data.items():
         setattr(task, key, value)
 
+    _normalize_task_enums(task)
     db.commit()
     db.refresh(task)
     if "assignee_id" in update_data and _assignment_changed(previous_assignee_id, getattr(task, "assignee_id", None)) and task.assignee_id:
@@ -1227,6 +1303,8 @@ def list_task_supplies(
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
     """Lista los insumos de una tarea."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     _ensure_task_in_project(db, project_id, task_id)
     return (
         db.query(models.TaskSupply)
@@ -1249,6 +1327,8 @@ def create_task_supply(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Crea un insumo requerido para una tarea."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     task = _ensure_task_in_project(db, project_id, task_id)
     supply = models.TaskSupply(task_id=_to_uuid(task_id), **payload.model_dump())
     db.add(supply)
@@ -1277,6 +1357,8 @@ def update_task_supply(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Actualiza nombre, cantidad o estado de un insumo."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     task = _ensure_task_in_project(db, project_id, task_id)
     supply = _ensure_supply_in_task(db, project_id, task_id, supply_id)
     update_data = payload.model_dump(exclude_unset=True)
@@ -1303,6 +1385,8 @@ def delete_task_supply(
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Elimina un insumo de una tarea."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
     task = _ensure_task_in_project(db, project_id, task_id)
     supply = _ensure_supply_in_task(db, project_id, task_id, supply_id)
     _log_project_activity(
@@ -1337,6 +1421,7 @@ def create_subtask(
     _ensure_project(db, project_id, user_sede=user_sede)
     parent_task = _ensure_task_in_project(db, project_id, task_id)
     payload = subtask.model_dump()
+    _normalize_task_payload(payload)
     _assert_status_in_project_phases(db, project_id, payload.get("status"))
     max_order = (
         db.query(func.max(models.ProjectTask.order_index)).filter(models.ProjectTask.parent_id == task_id).scalar() or 0
@@ -1390,11 +1475,13 @@ def update_subtask(
     if str(subtask.parent_id) != str(task_id):
         raise HTTPException(status_code=404, detail="Subtask not found under task")
     update_data = payload.model_dump(exclude_unset=True)
+    _normalize_task_payload(update_data)
     if "status" in update_data:
         _assert_status_in_project_phases(db, project_id, update_data["status"])
     previous_assignee_id = getattr(subtask, "assignee_id", None)
     for key, value in update_data.items():
         setattr(subtask, key, value)
+    _normalize_task_enums(subtask)
     db.commit()
     db.refresh(subtask)
     if "assignee_id" in update_data and _assignment_changed(previous_assignee_id, getattr(subtask, "assignee_id", None)) and subtask.assignee_id:
@@ -1579,6 +1666,7 @@ def list_project_tasks(
     tasks = q.order_by(models.ProjectTask.order_index.asc()).all()
 
     for t in tasks:
+        _normalize_task_enums(t)
         _normalize_dates(t)
         if hasattr(t, "attachments") and t.attachments:
             t.__dict__["attachments"] = [
@@ -1900,6 +1988,29 @@ def create_project_milestone(
     db.refresh(milestone)
     _normalize_dates(milestone)
     return milestone
+
+
+@router.delete("/{project_id}/milestones/{milestone_id}", response_model=dict)
+def delete_project_milestone(
+    project_id: str,
+    milestone_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina un hito de un proyecto (soft delete)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    milestone = _ensure_milestone_in_project(db, project_id, milestone_id)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "milestone_deleted",
+        f"Hito '{milestone.title}' eliminado",
+    )
+    milestone.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"ok": True, "deleted": milestone_id}
 
 
 @router.patch("/{project_id}/milestones/{milestone_id}", response_model=schemas.ProjectMilestone)

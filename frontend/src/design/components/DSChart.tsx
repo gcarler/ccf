@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useId } from 'react';
+import React, { useId, useState, useEffect } from 'react';
 import {
     LineChart, Line, AreaChart, Area, BarChart, Bar,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -28,12 +28,40 @@ const CHART_COLORS = {
     tooltipText: '#fff',
 };
 
+function useContainerSize() {
+    const ref = React.useRef<HTMLDivElement>(null);
+    const [size, setSize] = React.useState({ width: 0, height: 0 });
+
+    React.useEffect(() => {
+        if (!ref.current) return;
+        const el = ref.current;
+        const update = () => {
+            const rect = el.getBoundingClientRect();
+            setSize({ width: Math.max(0, rect.width), height: Math.max(0, rect.height) });
+        };
+        update();
+        const ro = new ResizeObserver(update);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    return { ref, ...size };
+}
+
 function ChartWrapper({ children, height }: { children: React.ReactNode; height: number }) {
+    const { ref, width, height: measuredHeight } = useContainerSize();
+    const h = measuredHeight > 0 ? measuredHeight : height;
+    const ready = width > 0 && h > 0;
+
     return (
-        <div style={{ width: '100%', height, minWidth: 0, minHeight: 0 }}>
-            <ResponsiveContainer>
-                {children}
-            </ResponsiveContainer>
+        <div ref={ref} style={{ width: '100%', height, minWidth: 1, minHeight: 1 }}>
+            {ready ? (
+                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                    {children}
+                </ResponsiveContainer>
+            ) : (
+                <div style={{ width: '100%', height: h, minWidth: 1, minHeight: 1 }} />
+            )}
         </div>
     );
 }
@@ -150,9 +178,14 @@ export function DSChart({
     color = colors.primary[500],
 }: DSChartProps) {
     const gradientId = useId();
+    const [mounted, setMounted] = useState(false);
 
-    if (data.length === 0) {
-        return <div style={{ width: '100%', height, minWidth: 0, minHeight: 0 }} />;
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted || data.length === 0) {
+        return <div style={{ width: '100%', height, minWidth: 1, minHeight: 1 }} />;
     }
 
     switch (type) {

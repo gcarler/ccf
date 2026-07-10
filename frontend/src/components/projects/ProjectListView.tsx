@@ -40,10 +40,9 @@ function formatRelative(date: Date): string {
 // ─── Status Config ────────────────────────────────────────────────────────────
 const STATUS_OPTIONS = [
     { value: 'todo',        label: 'Pendiente',   dot: 'bg-[hsl(var(--surface-2))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',           text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',    border: 'border-[hsl(var(--border))] dark:border-white/10' },
-    { value: 'pending',     label: 'Pendiente',   dot: 'bg-[hsl(var(--surface-2))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',           text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',    border: 'border-[hsl(var(--border))] dark:border-white/10' },
     { value: 'in_progress', label: 'En Progreso', dot: 'bg-[hsl(var(--primary))]',  bg: 'bg-blue-100 dark:bg-blue-500/20',    text: 'text-[hsl(var(--primary))] dark:text-blue-300',  border: 'border-blue-200 dark:border-blue-500/30' },
-    { value: 'blocked',     label: 'Bloqueado',   dot: 'bg-rose-500',    bg: 'bg-rose-100 dark:bg-rose-500/20',        text: 'text-rose-700 dark:text-rose-300',      border: 'border-rose-200 dark:border-rose-500/30' },
-    { value: 'completed',        label: 'Completado',  dot: 'bg-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-500/20',  text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-500/30' },
+    { value: 'review',      label: 'En Revisión', dot: 'bg-amber-500',   bg: 'bg-amber-100 dark:bg-amber-500/20',    text: 'text-amber-700 dark:text-amber-300',  border: 'border-amber-200 dark:border-amber-500/30' },
+    { value: 'completed',   label: 'Completado',  dot: 'bg-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-500/20',  text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-500/30' },
 ] as const;
 function getStatus(val: string) {
     return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0];
@@ -52,7 +51,7 @@ function getStatus(val: string) {
 // ─── Priority Config ──────────────────────────────────────────────────────────
 const PRIORITY_OPTIONS = [
     { value: 'low',    label: 'Baja',    color: 'text-[hsl(var(--text-secondary))]',   fill: '#94a3b8' },
-    { value: 'normal', label: 'Media',   color: 'text-[hsl(var(--primary))]',    fill: '#3b82f6' },
+    { value: 'medium', label: 'Media',   color: 'text-[hsl(var(--primary))]',    fill: '#3b82f6' },
     { value: 'high',   label: 'Alta',    color: 'text-orange-500',  fill: '#f97316' },
     { value: 'urgent', label: 'Urgente', color: 'text-rose-500',    fill: '#ef4444' },
 ] as const;
@@ -62,11 +61,10 @@ function getPriority(val: string) {
 
 // ─── Group header pill styles ─────────────────────────────────────────────────
 const GROUP_PILL: Record<string, string> = {
-    in_progress: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-500/20 dark:text-blue-300',
-    pending:     'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]',
     todo:        'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]',
-    done:        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-    blocked:     'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+    in_progress: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-500/20 dark:text-blue-300',
+    review:      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    completed:   'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
 };
 
 // ─── TYPE DEFINITIONS ─────────────────────────────────────────────────────────
@@ -542,7 +540,7 @@ function TaskRow({
     const commentRef = useRef<HTMLDivElement>(null);
 
     const status = task._status ?? task.status ?? 'todo';
-    const priority = task._priority ?? task.priority ?? 'normal';
+    const priority = task._priority ?? task.priority ?? 'medium';
     const dueDate = task._due_date !== undefined ? task._due_date : task.due_date;
     const assignedUser = task._assignedUser ?? null;
 
@@ -702,8 +700,7 @@ function StatusGroup({
     onQuickAddCancel?: () => void;
 }) {
     const inputRef = React.useRef<HTMLInputElement>(null);
-    const isAddingHere =
-        quickAddStatus === status || (quickAddStatus === 'todo' && status === 'pending');
+    const isAddingHere = quickAddStatus === status;
     const [collapsed, setCollapsed] = useState(false);
 
     React.useEffect(() => {
@@ -815,7 +812,7 @@ function StatusGroup({
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const STATUS_ORDER = ['in_progress', 'pending', 'todo', 'completed', 'blocked'];
+const STATUS_ORDER = ['todo', 'in_progress', 'review', 'completed'];
 
 export default function ProjectListView({
     tasks: propTasks,
@@ -859,7 +856,7 @@ export default function ProjectListView({
             return s === status;
         }),
     })).filter(g => {
-        const isTarget = quickAddStatus === g.status || (quickAddStatus === 'todo' && g.status === 'pending');
+        const isTarget = quickAddStatus === g.status;
         return g.tasks.length > 0 || isTarget;
     });
 

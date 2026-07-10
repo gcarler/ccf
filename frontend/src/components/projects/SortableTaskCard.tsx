@@ -7,6 +7,7 @@ import { CalendarDays, MessageSquare, Flag, GripVertical } from 'lucide-react';
 import clsx from 'clsx';
 import { format, isPast, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { PRIORITY_LABELS } from '@/lib/projects/constants';
 
 interface Props {
     task: any;
@@ -14,10 +15,10 @@ interface Props {
 }
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    urgent: { label: 'Urgente', color: 'text-[hsl(var(--destructive))]',    bg: 'bg-red-50 dark:bg-red-900/20'    },
-    high:   { label: 'Alta',    color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-    normal: { label: 'Normal',  color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-900/20'  },
-    low:    { label: 'Baja',    color: 'text-[hsl(var(--text-secondary))]',  bg: 'bg-[hsl(var(--surface-1))] dark:bg-white/5'     },
+    urgent: { label: PRIORITY_LABELS.urgent, color: 'text-[hsl(var(--destructive))]',    bg: 'bg-red-50 dark:bg-red-900/20'    },
+    high:   { label: PRIORITY_LABELS.high,   color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+    medium: { label: PRIORITY_LABELS.medium, color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-900/20'  },
+    low:    { label: PRIORITY_LABELS.low,    color: 'text-[hsl(var(--text-secondary))]',  bg: 'bg-[hsl(var(--surface-1))] dark:bg-white/5'     },
 };
 
 export function SortableTaskCard({ task, onOpen }: Props) {
@@ -37,7 +38,7 @@ export function SortableTaskCard({ task, onOpen }: Props) {
         zIndex: isDragging ? 999 : 'auto',
     };
 
-    const priority = PRIORITY_CONFIG[task.priority?.toLowerCase()] || PRIORITY_CONFIG.normal;
+    const priority = PRIORITY_CONFIG[task.priority?.toLowerCase()] || PRIORITY_CONFIG.medium;
 
     const dueDateStr = task.due_date || task.dueDate;
     const dueDate    = dueDateStr ? new Date(dueDateStr) : null;

@@ -5,22 +5,22 @@ import { AgGridReact } from 'ag-grid-react';
 import { AllCommunityModule, ModuleRegistry, themeQuartz, ColDef } from 'ag-grid-community';
 import clsx from 'clsx';
 import type { ProjectTaskRecord } from '@/types/projects';
+import { STATUS_LABELS, PRIORITY_LABELS } from '@/lib/projects/constants';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
-    completed:   { label: 'Completado',  cls: 'bg-emerald-50 border-emerald-100 text-emerald-600' },
-    in_progress: { label: 'En progreso', cls: 'bg-blue-50 border-blue-100 text-[hsl(var(--primary))]' },
-    blocked:     { label: 'Bloqueado',   cls: 'bg-rose-50 border-rose-100 text-rose-600' },
-    todo:        { label: 'Pendiente',   cls: 'bg-amber-50 border-amber-100 text-amber-700' },
+    completed:   { label: STATUS_LABELS.completed,   cls: 'bg-emerald-50 border-emerald-100 text-emerald-600' },
+    in_progress: { label: STATUS_LABELS.in_progress, cls: 'bg-blue-50 border-blue-100 text-[hsl(var(--primary))]' },
+    review:      { label: STATUS_LABELS.review,      cls: 'bg-amber-50 border-amber-100 text-amber-700' },
+    todo:        { label: STATUS_LABELS.todo,        cls: 'bg-slate-50 border-slate-100 text-slate-600' },
 };
 
 const PRIORITY_MAP: Record<string, { label: string; cls: string }> = {
-    urgent: { label: 'Urgente', cls: 'text-rose-600' },
-    high:   { label: 'Alta',    cls: 'text-orange-500' },
-    medium: { label: 'Media',   cls: 'text-amber-500' },
-    normal: { label: 'Normal',  cls: 'text-[hsl(var(--primary))]' },
-    low:    { label: 'Baja',    cls: 'text-[hsl(var(--text-secondary))]' },
+    urgent: { label: PRIORITY_LABELS.urgent, cls: 'text-rose-600' },
+    high:   { label: PRIORITY_LABELS.high,   cls: 'text-orange-500' },
+    medium: { label: PRIORITY_LABELS.medium, cls: 'text-[hsl(var(--primary))]' },
+    low:    { label: PRIORITY_LABELS.low,    cls: 'text-[hsl(var(--text-secondary))]' },
 };
 
 function TitleRenderer({ value, data }: any) {
@@ -42,7 +42,7 @@ function StatusRenderer({ value }: any) {
 }
 
 function PriorityRenderer({ value }: any) {
-    const p = PRIORITY_MAP[value?.toLowerCase()] ?? PRIORITY_MAP.normal;
+    const p = PRIORITY_MAP[value?.toLowerCase()] ?? PRIORITY_MAP.medium;
     return <span className={clsx('text-[11px] font-bold uppercase tracking-wide', p.cls)}>⚑ {p.label}</span>;
 }
 

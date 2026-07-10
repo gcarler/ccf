@@ -95,6 +95,8 @@ class CrmAutomationCreate(BaseModel):
     action_type: str
     action_payload: dict | None = None
     is_active: bool = True
+    delay_minutes: int = 0
+    ui_graph_state: dict | None = None
 
 
 class CrmAutomationUpdate(BaseModel):
@@ -103,6 +105,28 @@ class CrmAutomationUpdate(BaseModel):
     action_type: str | None = None
     action_payload: dict | None = None
     is_active: bool | None = None
+    delay_minutes: int | None = None
+    ui_graph_state: dict | None = None
+
+
+class CrmAutomationEdgeCreate(BaseModel):
+    source_id: UUID
+    target_id: UUID
+    condition_type: str | None = None
+    condition_key: str | None = None
+    condition_value: str | None = None
+    source_node_id: UUID | None = None
+    target_node_id: UUID | None = None
+
+
+class CrmAutomationEdgeUpdate(BaseModel):
+    source_id: UUID | None = None
+    target_id: UUID | None = None
+    condition_type: str | None = None
+    condition_key: str | None = None
+    condition_value: str | None = None
+    source_node_id: UUID | None = None
+    target_node_id: UUID | None = None
 
 
 class RoleDefinitionCreate(BaseModel):
@@ -508,6 +532,72 @@ def delete_crm_automation(db: Session, automation_id: UUID) -> bool:
     if not row:
         return False
     row.is_active = False
+    db.commit()
+    return True
+
+
+# ── CRM Automation Edges ──────────────────────────────────────────────────
+
+
+def get_crm_automation_edges(
+    db: Session,
+    source_id: UUID | None = None,
+    target_id: UUID | None = None,
+) -> List[models.CrmAutomationEdge]:
+    q = db.query(models.CrmAutomationEdge)
+    if source_id is not None:
+        q = q.filter(models.CrmAutomationEdge.source_id == source_id)
+    if target_id is not None:
+        q = q.filter(models.CrmAutomationEdge.target_id == target_id)
+    return q.all()
+
+
+def get_crm_automation_edge(db: Session, edge_id: UUID) -> Optional[models.CrmAutomationEdge]:
+    return (
+        db.query(models.CrmAutomationEdge)
+        .filter(models.CrmAutomationEdge.id == edge_id)
+        .first()
+    )
+
+
+def create_crm_automation_edge(
+    db: Session, payload: CrmAutomationEdgeCreate
+) -> models.CrmAutomationEdge:
+    row = models.CrmAutomationEdge(**payload.model_dump())
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_crm_automation_edge(
+    db: Session,
+    edge_id: UUID,
+    payload: CrmAutomationEdgeUpdate,
+) -> Optional[models.CrmAutomationEdge]:
+    row = (
+        db.query(models.CrmAutomationEdge)
+        .filter(models.CrmAutomationEdge.id == edge_id)
+        .first()
+    )
+    if not row:
+        return None
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(row, k, v)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_crm_automation_edge(db: Session, edge_id: UUID) -> bool:
+    row = (
+        db.query(models.CrmAutomationEdge)
+        .filter(models.CrmAutomationEdge.id == edge_id)
+        .first()
+    )
+    if not row:
+        return False
+    db.delete(row)
     db.commit()
     return True
 

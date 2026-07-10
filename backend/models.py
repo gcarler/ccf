@@ -134,6 +134,7 @@ from backend.models_crm import (  # noqa: F401
     CrmFlowCanvasConfig,
     CrmFlowBranch,
     CrmFlowCycleCache,
+    PendingCrmAction,
 )
 
 # CRM pipeline, cases, interactions and follow-up tasks
