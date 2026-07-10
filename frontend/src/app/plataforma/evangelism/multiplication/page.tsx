@@ -58,7 +58,7 @@ interface PersonaOption {
   nombre_completo: string;
 }
 
-// Adapter layer: keep the screen tolerant to both the legacy backend names
+// Adapter layer: keep the screen tolerant to both the previous backend names
 // (miembros) and the canonical names (personas). This lets the UI survive
 // the rollout while the API contract converges.
 //
