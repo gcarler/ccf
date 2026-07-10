@@ -418,8 +418,6 @@ def submit_attendance(
             persona.spiritual_status = "VISITANTE_EVANGELISMO"
             db.commit()
             db.refresh(persona)
-            if caso is not None:
-                db.refresh(caso)
 
             evento = {
                 "origen_modulo": "EVANGELISMO",
