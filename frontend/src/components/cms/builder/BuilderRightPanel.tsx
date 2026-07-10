@@ -135,7 +135,7 @@ export default function BuilderRightPanel({
     activeSectionId, activeSection, updateSectionPropsLocal, saveSectionProps,
   } = builder;
   return (
-        <aside className="lg:col-span-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-4 max-h-[90vh] overflow-y-auto">
+        <aside className="lg:col-span-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-4 max-h-[90vh] overflow-y-auto">
           {/* Tab Selection Header */}
           <div className="flex border-b border-[hsl(var(--border))] dark:border-white/10 pb-2 gap-1 overflow-x-auto">
             <button

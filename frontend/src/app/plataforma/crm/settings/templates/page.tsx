@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import apiFetch from "@/lib/apiFetch";
+import { apiFetch } from "@/lib/http";
 
 interface Plantilla {
   id: string;
@@ -36,8 +36,8 @@ export default function TemplatesPage() {
     try {
       setLoading(true);
       const [catsRes, plantsRes] = await Promise.all([
-        apiFetch("/api/crm/resources/categorias"),
-        apiFetch("/api/crm/resources/plantillas")
+        apiFetch<Categoria[]>("/api/crm/resources/categorias"),
+        apiFetch<Plantilla[]>("/api/crm/resources/plantillas")
       ]);
       setCategorias(catsRes);
       setPlantillas(plantsRes);
@@ -53,12 +53,12 @@ export default function TemplatesPage() {
     try {
       let createdPlantilla;
       if (formData.id) {
-        createdPlantilla = await apiFetch(`/api/crm/resources/plantillas/${formData.id}`, {
+        createdPlantilla = await apiFetch<Plantilla>(`/api/crm/resources/plantillas/${formData.id}`, {
           method: "PATCH",
           body: JSON.stringify(formData)
         });
       } else {
-        createdPlantilla = await apiFetch("/api/crm/resources/plantillas", {
+        createdPlantilla = await apiFetch<Plantilla>("/api/crm/resources/plantillas", {
           method: "POST",
           body: JSON.stringify(formData)
         });

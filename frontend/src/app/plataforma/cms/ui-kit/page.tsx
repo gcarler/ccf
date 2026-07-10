@@ -22,7 +22,7 @@ export default function CmsUiKitPage() {
   const [activeTab, setActiveTab] = useState("tab1");
 
   return (
-    <div className="flex flex-col h-full bg-[#f8f9fc] dark:bg-[#0d0e11] overflow-y-auto custom-scrollbar">
+    <div className="flex flex-col h-full bg-[#f8f9fc] dark:bg-[hsl(var(--admin-bg-deep))] overflow-y-auto custom-scrollbar">
       <div className="p-4 space-y-4 w-full max-w-6xl mx-auto">
         {/* Header */}
         <div>

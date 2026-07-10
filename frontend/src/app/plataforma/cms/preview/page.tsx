@@ -128,7 +128,7 @@ function CmsPreviewInner() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[#0b0d11]">
-      <header className="shrink-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-3 dark:border-white/10 dark:bg-[#111418]">
+      <header className="shrink-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-3 dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Vista previa CMS</p>
@@ -159,7 +159,7 @@ function CmsPreviewInner() {
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 md:p-4">
-        <div className="mx-auto max-w-6xl overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-xl dark:border-white/10 dark:bg-[#0f1115]">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-xl dark:border-white/10 dark:bg-[hsl(var(--admin-bg-surface))]">
           <div className="flex items-center gap-2 border-b border-[hsl(var(--border))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
             <Monitor size={13} /> Draft actual
             {autoRefresh && <span className="ml-auto text-emerald-600 dark:text-emerald-400">● Auto-refresh activo</span>}

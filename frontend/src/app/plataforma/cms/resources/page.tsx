@@ -371,9 +371,9 @@ export default function CmsResourcesPage() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[#111213]">
+    <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--admin-bg-input))]">
       <div className="mx-auto max-w-7xl space-y-4 p-4">
-        <section className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#141517]">
+        <section className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[hsl(var(--admin-bg-primary))]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
               <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:border-blue-500/20 dark:bg-blue-500/10">
@@ -406,7 +406,7 @@ export default function CmsResourcesPage() {
         </section>
 
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(220px,280px)_1fr]">
-          <aside className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[#141517]">
+          <aside className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[hsl(var(--admin-bg-primary))]">
             <div className="relative">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
               <input
@@ -453,7 +453,7 @@ export default function CmsResourcesPage() {
               {filteredResources.map((item) => {
                 const Icon = item.icon;
                 return (
-                  <article key={item.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#141517]">
+                  <article key={item.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[hsl(var(--admin-bg-primary))]">
                     <div className="flex items-start gap-3">
                       <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))] dark:bg-white/5">
                         <Icon size={18} />
@@ -537,7 +537,7 @@ export default function CmsResourcesPage() {
             </section>
 
             {filteredResources.length === 0 && (
-              <div className="rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-8 text-center dark:border-white/10 dark:bg-[#141517]">
+              <div className="rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-8 text-center dark:border-white/10 dark:bg-[hsl(var(--admin-bg-primary))]">
                 <PackageOpen size={34} className="mx-auto text-[hsl(var(--text-secondary))]" />
                 <p className="mt-3 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">No hay recursos con ese filtro</p>
                 <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">Prueba otra categoria o termino de busqueda.</p>
@@ -564,7 +564,7 @@ export default function CmsResourcesPage() {
               body: "Cursos, eventos y testimonios aprobados nacen en sus modulos y el CMS decide si aparecen en la web.",
             },
           ].map((item) => (
-            <div key={item.title} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[#141517]">
+            <div key={item.title} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[hsl(var(--admin-bg-primary))]">
               <item.icon size={18} className="text-[hsl(var(--primary))]" />
               <h3 className="mt-3 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{item.title}</h3>
               <p className="mt-2 text-xs leading-relaxed text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.body}</p>

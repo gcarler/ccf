@@ -264,7 +264,7 @@ export default function CmsThemesPage() {
   return (
     <div className="space-y-4 p-4 max-w-[1600px] mx-auto">
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
@@ -384,7 +384,7 @@ export default function CmsThemesPage() {
         {/* ── Left: Editor ── */}
         <div className="xl:col-span-5 space-y-4">
           {/* Site & Name */}
-          <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
+          <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
@@ -460,7 +460,7 @@ export default function CmsThemesPage() {
           </div>
 
           {/* Token Editor */}
-          <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] overflow-hidden">
+          <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] overflow-hidden">
             <div className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-between">
               <h2 className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
                 Tokens de diseño
@@ -556,7 +556,7 @@ export default function CmsThemesPage() {
         {/* ── Right: Preview ── */}
         {showPreview && (
           <div className="xl:col-span-7 space-y-4">
-            <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4">
+            <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Eye size={14} className="text-primary" />
@@ -573,7 +573,7 @@ export default function CmsThemesPage() {
       </div>
 
       {/* ── Existing Themes ── */}
-      <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4 space-y-3">
+      <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Layers size={14} className="text-primary" />
@@ -693,7 +693,7 @@ export default function CmsThemesPage() {
 
       {/* ── Floating Save Bar ── */}
       <div className="sticky bottom-4 z-50 flex justify-center">
-        <div className="inline-flex items-center gap-3 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418]/95 backdrop-blur-xl px-5 py-3 shadow-xl">
+        <div className="inline-flex items-center gap-3 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))]/95 backdrop-blur-xl px-5 py-3 shadow-xl">
           <div className="text-xs">
             <p className="font-bold">{editingThemeId ? `Editando: ${name}` : name}</p>
             <p className="text-[10px] opacity-50">{usedTokensCount} tokens configurados</p>

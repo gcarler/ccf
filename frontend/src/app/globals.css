@@ -101,7 +101,17 @@
 
   /* Surface tokens */
   --surface-card: 220 6% 12%;
-  
+
+  /* Admin dark mode tokens — replace hardcoded hex in CMS pages */
+  --admin-bg-primary: #141517;
+  --admin-bg-secondary: #252528;
+  --admin-bg-tertiary: #111418;
+  --admin-bg-deep: #0d0e11;
+  --admin-bg-surface: #0f1115;
+  --admin-bg-elevated: #1a1b1f;
+  --admin-bg-input: #111213;
+  --admin-border: #2a2d32;
+
   --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
   --shadow-premium: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 5px 15px -3px rgba(0, 0, 0, 0.3);
   --shadow-floating: 0 30px 60px -12px rgba(0, 0, 0, 0.6), 0 18px 36px -18px rgba(0, 0, 0, 0.4);

@@ -83,7 +83,6 @@ export default function CmsPostsManagement() {
       setCategories(nextCategories || []);
       setTags(nextTags || []);
     } catch (error) {
-      toast.error("Error fetching posts");
       toast.error("Error al cargar posts");
       setPosts([]);
     } finally {
@@ -129,7 +128,6 @@ export default function CmsPostsManagement() {
       setIsQuickAddOpen(false);
       await fetchData(siteKey);
     } catch (error) {
-      toast.error("Error creating post");
       toast.error("Error al crear post. El slug puede estar en uso.");
     }
   };
@@ -151,7 +149,6 @@ export default function CmsPostsManagement() {
       await fetchData(siteKey);
       toast.success("Post archivado");
     } catch (error) {
-      toast.error("Error archiving post");
       toast.error("Error al archivar post");
     }
   };
@@ -166,7 +163,6 @@ export default function CmsPostsManagement() {
       await fetchData(siteKey);
       toast.success("Post restaurado a borrador");
     } catch (error) {
-      toast.error("Error restoring post");
       toast.error("Error al restaurar post");
     }
   };
@@ -196,7 +192,6 @@ export default function CmsPostsManagement() {
       await fetchData(siteKey);
       toast.success("Post actualizado");
     } catch (error) {
-      toast.error("Error updating post");
       toast.error("Error al actualizar post");
     }
   };
@@ -229,7 +224,7 @@ export default function CmsPostsManagement() {
                 <button
                   key={post.id}
                   onClick={() => openPost(post)}
-                  className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-blue-400 hover:shadow-lg transition-all"
+                  className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-blue-400 hover:shadow-lg transition-all"
                 >
                   <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{post.title}</p>
                   <p className="text-[10px] font-mono text-[hsl(var(--text-secondary))] mt-2 truncate">/{post.slug}</p>
@@ -252,7 +247,7 @@ export default function CmsPostsManagement() {
   );
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
       <header className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-3 gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <FileText size={16} className="text-[hsl(var(--primary))] shrink-0" />
@@ -349,7 +344,7 @@ export default function CmsPostsManagement() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
-                  className="group bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-200 flex items-center gap-4"
+                  className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-200 flex items-center gap-4"
                 >
                   <button
                     onClick={() => toggleSelect(post.id)}
@@ -509,7 +504,7 @@ export default function CmsPostsManagement() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.025 }}
                   onClick={() => openPost(post)}
-                  className="group bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer flex items-center gap-4"
+                  className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer flex items-center gap-4"
                 >
                   <div className="size-6 rounded-md bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 flex items-center justify-center shrink-0 group-hover:bg-fuchsia-600 group-hover:text-white transition-all">
                     <FileText size={18} />
@@ -560,7 +555,7 @@ export default function CmsPostsManagement() {
                     type="text"
                     value={selectedPost.title}
                     onChange={(e) => setSelectedPost({ ...selectedPost, title: e.target.value })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                   />
                 </div>
@@ -570,7 +565,7 @@ export default function CmsPostsManagement() {
                     type="text"
                     value={selectedPost.slug}
                     onChange={(e) => setSelectedPost({ ...selectedPost, slug: e.target.value })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                   />
                 </div>
@@ -580,7 +575,7 @@ export default function CmsPostsManagement() {
                     rows={3}
                     value={selectedPost.excerpt || ""}
                     onChange={(e) => setSelectedPost({ ...selectedPost, excerpt: e.target.value })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
                     disabled={!canEdit}
                     placeholder="Breve resumen del post..."
                   />
@@ -591,7 +586,7 @@ export default function CmsPostsManagement() {
                     rows={8}
                     value={selectedPost.content || ""}
                     onChange={(e) => setSelectedPost({ ...selectedPost, content: e.target.value })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar font-mono"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar font-mono"
                     disabled={!canEdit}
                     placeholder="Contenido del post (puede ser Markdown o HTML)..."
                   />
@@ -602,7 +597,7 @@ export default function CmsPostsManagement() {
                     type="url"
                     value={selectedPost.featured_image_url || ""}
                     onChange={(e) => setSelectedPost({ ...selectedPost, featured_image_url: e.target.value })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                     placeholder="https://..."
                   />
@@ -695,7 +690,7 @@ export default function CmsPostsManagement() {
                     rows={2}
                     value={(selectedPost.seo_json?.meta_description as string) || ""}
                     onChange={(e) => setSelectedPost({ ...selectedPost, seo_json: { ...(selectedPost.seo_json || {}), meta_description: e.target.value } })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
+                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
                     disabled={!canEdit}
                     placeholder="Breve descripción para Google..."
                   />

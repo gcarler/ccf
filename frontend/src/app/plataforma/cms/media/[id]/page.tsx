@@ -229,7 +229,7 @@ export default function CmsMediaDetailPage() {
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Subido</p>
-                                    <p className="text-xs font-bold">{new Date(item.created_at).toLocaleDateString()}</p>
+                                    <p className="text-xs font-bold">{item.created_at ? new Date(item.created_at).toLocaleDateString() : '—'}</p>
                                 </div>
                             </div>
                         </DSCard>

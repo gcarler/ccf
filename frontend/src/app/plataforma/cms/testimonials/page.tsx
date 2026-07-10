@@ -377,7 +377,7 @@ export default function CmsTestimonialsPage() {
   );
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0d0e11] overflow-hidden">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-deep))] overflow-hidden">
       {/* ── Header toolbar ── */}
       <header className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 px-3 py-1.5 flex items-center gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -613,7 +613,7 @@ export default function CmsTestimonialsPage() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 380, opacity: 0 }}
               transition={{ type: "spring", damping: 28, stiffness: 280 }}
-              className="w-96 shrink-0 border-l border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-[#111418] flex flex-col overflow-y-auto"
+              className="w-96 shrink-0 border-l border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--admin-bg-tertiary))] flex flex-col overflow-y-auto"
             >
               {/* Panel header */}
               <div className="p-3 flex items-center justify-between border-b border-[hsl(var(--border))] dark:border-white/5 shrink-0">

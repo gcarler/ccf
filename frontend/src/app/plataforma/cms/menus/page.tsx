@@ -118,8 +118,7 @@ export default function CmsMenusManagement() {
                 setSiteKey(nextSites[0].site_key);
             }
         } catch (error) {
-            toast.error("Error fetching CMS sites");
-            toast.error("Error al cargar sitios CMS");
+      toast.error("Error al cargar sitios CMS");
         }
     };
 
@@ -142,8 +141,7 @@ export default function CmsMenusManagement() {
                 setMenuKey((mainMenu || nextMenus[0]).menu_key);
             }
         } catch (error) {
-            toast.error("Error fetching CMS menus");
-            toast.error("Error al cargar menús CMS");
+      toast.error("Error al cargar menús CMS");
             setMenus([]);
             setMenuKey("");
             setNavConfig({ items: [] });
@@ -176,8 +174,7 @@ export default function CmsMenusManagement() {
             setNavConfig({ items: sorted });
         } catch (error) {
             if (!(error instanceof ApiError && error.status === 404)) {
-                toast.error("Error fetching nav");
-                toast.error("Error al cargar items del menú");
+      toast.error("Error al cargar items del menú");
             }
             setNavConfig({ items: [] });
         } finally {
@@ -199,8 +196,7 @@ export default function CmsMenusManagement() {
             setNewMenuKey("");
             setNavConfig({ items: [] });
         } catch (error) {
-            toast.error("Error creating menu");
-            toast.error("Error al crear menú");
+      toast.error("Error al crear menú");
         }
     };
 
@@ -210,8 +206,7 @@ export default function CmsMenusManagement() {
             const updated = await patchCmsMenu(siteKey, selectedMenu.menu_key, { is_active: !selectedMenu.is_active }, token);
             setMenus((prev) => prev.map((menu) => menu.id === updated.id ? updated : menu));
         } catch (error) {
-            toast.error("Error updating CMS menu");
-            toast.error("Error al actualizar menú");
+      toast.error("Error al actualizar menú");
         }
     };
 
@@ -370,7 +365,7 @@ export default function CmsMenusManagement() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
             {/* TOOLBAR */}
             <header className="min-h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex flex-wrap items-center px-3 py-3 gap-3 shrink-0">
                 <div className="flex items-center gap-2 flex-1">
@@ -384,7 +379,7 @@ export default function CmsMenusManagement() {
                     <select
                         value={siteKey}
                         onChange={(event) => setSiteKey(event.target.value)}
-                        className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] px-3 py-1.5 text-[11px] font-bold"
+                        className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] px-3 py-1.5 text-[11px] font-bold"
                     >
                         {sites.length === 0 && <option value={siteKey}>{siteKey}</option>}
                         {sites.map((site) => (
@@ -395,7 +390,7 @@ export default function CmsMenusManagement() {
                         value={menuKey}
                         onChange={(event) => setMenuKey(event.target.value)}
                         disabled={menus.length === 0 || menuLoading}
-                        className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] px-3 py-1.5 text-[11px] font-bold disabled:opacity-50"
+                        className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] px-3 py-1.5 text-[11px] font-bold disabled:opacity-50"
                     >
                         {menus.length === 0 && <option value="">Sin menus</option>}
                         {menus.map((menu) => (
@@ -439,14 +434,14 @@ export default function CmsMenusManagement() {
                     }}
                     placeholder="Nombre del menu"
                     disabled={!canEdit}
-                    className="min-w-48 flex-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] px-3 py-2 text-xs disabled:opacity-50"
+                    className="min-w-48 flex-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] px-3 py-2 text-xs disabled:opacity-50"
                 />
                 <input
                     value={newMenuKey}
                     onChange={(event) => setNewMenuKey(sanitizeKey(event.target.value))}
                     placeholder="menu_key"
                     disabled={!canEdit}
-                    className="w-40 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] px-3 py-2 text-xs disabled:opacity-50"
+                    className="w-40 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] px-3 py-2 text-xs disabled:opacity-50"
                 />
                 <button
                     type="submit"
@@ -586,7 +581,7 @@ export default function CmsMenusManagement() {
                                         "group rounded-lg border p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center gap-4",
                                         item.visibility === "hidden"
                                             ? "bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border-dashed border-[hsl(var(--border))] dark:border-white/10 opacity-75"
-                                            : "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border-[hsl(var(--border))]/70 dark:border-white/5"
+                                            : "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border-[hsl(var(--border))]/70 dark:border-white/5"
                                     )}
                                     style={{ marginLeft: `${depth * 16}px` }}
                                 >
@@ -692,7 +687,7 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.label}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, label: e.target.value })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all font-bold"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all font-bold"
                                 />
                             </div>
                             
@@ -705,7 +700,7 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.href}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, href: e.target.value })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"
                                 />
                             </div>
 
@@ -720,7 +715,7 @@ export default function CmsMenusManagement() {
                                         parent_id: e.target.value || null,
                                     })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"
                                 >
                                     <option value="">Sin padre (nivel raíz)</option>
                                     {navConfig.items

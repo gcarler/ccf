@@ -252,7 +252,7 @@ export default function SectionTypesPage() {
 
   if (!canView) {
     return (
-      <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]/60 dark:bg-[#141517]">
+      <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]/60 dark:bg-[hsl(var(--admin-bg-primary))]">
         <div className="mx-auto max-w-3xl px-4 py-1.5 text-center">
           <h1 className="text-xl font-semibold">Acceso restringido</h1>
           <p className="mt-3 text-[hsl(var(--text-secondary))]">
@@ -264,7 +264,7 @@ export default function SectionTypesPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]/60 dark:bg-[#141517]">
+    <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]/60 dark:bg-[hsl(var(--admin-bg-primary))]">
       <div className="space-y-4 px-4 py-2 lg:px-6">
         <AdminHero
           eyebrow="CMS"
@@ -292,7 +292,7 @@ export default function SectionTypesPage() {
         />
 
         {/* ── Filter Bar ── */}
-        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] px-4 py-3 shadow-sm flex flex-wrap items-center gap-3">
+        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] px-4 py-3 shadow-sm flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-56">
             <Search
               size={14}
@@ -330,7 +330,7 @@ export default function SectionTypesPage() {
             <div className="w-7 h-7 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-10 text-center bg-[hsl(var(--bg-primary))] dark:bg-[#111418]">
+          <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-10 text-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <Layers3
               size={32}
               className="mx-auto text-[hsl(var(--text-secondary))]"
@@ -347,7 +347,7 @@ export default function SectionTypesPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-sm">
+          <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] shadow-sm">
             <table className="w-full text-sm">
               <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border-b border-[hsl(var(--border))] dark:border-white/10">
                 <tr>
