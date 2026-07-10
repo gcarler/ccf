@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { Shield, Filter, Download } from "lucide-react";
+import { toast } from "sonner";
 
 interface AuditLogEntry {
   id: string;
@@ -43,7 +44,7 @@ export default function AuditPage() {
       if (filters.actor_email) params.set("actor_email", filters.actor_email);
       const data = await apiFetch<AuditLogEntry[]>(`/cms/v2/audit-logs?${params}`, { silent: true });
       setLogs(Array.isArray(data) ? data : []);
-    } catch { setLogs([]); }
+    } catch { toast.error("Error al cargar datos"); setLogs([]); }
     setLoading(false);
   };
 

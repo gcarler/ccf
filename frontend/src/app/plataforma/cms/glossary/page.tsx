@@ -19,7 +19,7 @@ export default function GlossaryPage() {
       const params = search ? `?search=${encodeURIComponent(search)}` : "";
       const data = await apiFetch<GlossaryTerm[]>(`/cms/v2/glossary?site_key=${SITE_KEY}${params}`, { silent: true });
       setTerms(Array.isArray(data) ? data : []);
-    } catch { setTerms([]); }
+    } catch { toast.error("Error al cargar datos"); setTerms([]); }
     setLoading(false);
   }, [search]);
 
@@ -90,3 +90,4 @@ export default function GlossaryPage() {
   );
 }
 import { SITE_KEY } from "@/lib/site-config";
+import { toast } from "sonner";

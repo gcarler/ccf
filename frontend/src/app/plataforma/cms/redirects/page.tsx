@@ -19,7 +19,7 @@ export default function RedirectsPage() {
     try {
       const data = await apiFetch<Redirect[]>("/cms/v2/redirects?site_key=${SITE_KEY}", { silent: true });
       setRedirects(Array.isArray(data) ? data : []);
-    } catch { setRedirects([]); }
+    } catch { toast.error("Error al cargar datos"); setRedirects([]); }
     setLoading(false);
   };
 
@@ -120,3 +120,4 @@ export default function RedirectsPage() {
   );
 }
 import { SITE_KEY } from "@/lib/site-config";
+import { toast } from "sonner";

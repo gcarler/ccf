@@ -38,6 +38,7 @@ import {
   TOKEN_CATEGORIES,
 } from "@/components/cms/themes/themeTokens";
 import ThemePreview from "@/components/cms/themes/ThemePreview";
+import { toast } from "sonner";
 
 /* ── Types ── */
 interface CmsTheme {
@@ -127,7 +128,7 @@ export default function CmsThemesPage() {
   );
 
   useEffect(() => {
-    load(siteKey).catch(() => undefined);
+    load(siteKey).catch(() => toast.error("Error al cargar temas"));
     setEditingThemeId(null);
   }, [token, siteKey, load]);
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { Bell, Check, CheckCheck } from "lucide-react";
+import { toast } from "sonner";
 
 interface Notification {
   id: string;
@@ -31,7 +32,7 @@ export default function NotificationsPage() {
       const data = await apiFetch<{ items: Notification[]; total_unread: number }>(`/cms/v2/notifications${params}`, { silent: true });
       setNotifs(data?.items || []);
       setTotalUnread(data?.total_unread || 0);
-    } catch { setNotifs([]); }
+    } catch { toast.error("Error al cargar datos"); setNotifs([]); }
     setLoading(false);
   }, [filter]);
 
