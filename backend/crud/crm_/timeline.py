@@ -5,10 +5,11 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud._utils import _to_uuid
+from backend.api.crm._shared import persona_query
 
 
 def get_persona_timeline(db: Session, persona_id: str):
-    persona = db.query(models.Persona).filter(models.Persona.id == _to_uuid(persona_id)).first()
+    persona = persona_query(db).filter(models.Persona.id == _to_uuid(persona_id)).first()
     if not persona:
         return []
 

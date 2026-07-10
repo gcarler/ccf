@@ -17,6 +17,7 @@ from backend.api.crm._shared import (
     _get_scoped_prayer_request,
     _get_scoped_task,
     _persona_full_name,
+    persona_query,
     _resolve_assignee_for_task,
     _scope_by_user_sede_via_persona,
     _serialize_case,
@@ -115,7 +116,7 @@ def _get_persona_or_404(db: Session, persona_ref: str, user_sede: Optional[uuid.
     """Resolve a canonical UUID persona reference within the user's sede."""
     try:
         persona_uuid = uuid.UUID(str(persona_ref))
-        persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
+        persona = persona_query(db).filter(models.Persona.id == persona_uuid).first()
     except (TypeError, ValueError):
         persona = None
 
@@ -189,7 +190,7 @@ def create_caso_crm(
         if email:
             conditions.append(models.Persona.email == email)
         persona = (
-            db.query(models.Persona)
+            persona_query(db)
             .filter(or_(*conditions), models.Persona.sede_id == uuid.UUID(str(user_sede)))
             .first()
             if conditions
@@ -224,7 +225,7 @@ def create_caso_crm(
         return _serialize_case(case)
 
     p_uuid = uuid.UUID(payload["persona_id"]) if isinstance(payload["persona_id"], str) else payload["persona_id"]
-    persona = db.query(models.Persona).filter(models.Persona.id == p_uuid).first()
+    persona = persona_query(db).filter(models.Persona.id == p_uuid).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
     user_sede = get_user_sede_id(db, current_user.id)
@@ -529,7 +530,7 @@ async def send_crm_message(
         for segment in target_segments:
             normalized = str(segment).strip().lower()
             if normalized == "active":
-                q = db.query(models.Persona).filter(models.Persona.church_role == "Miembro")
+                q = persona_query(db).filter(models.Persona.church_role == "Miembro")
                 q = _scope_by_user_sede_via_persona(db, current_user, q)
                 if channel in {"whatsapp", "sms"}:
                     q = q.filter(models.Persona.phone.isnot(None), models.Persona.phone != "")
@@ -537,7 +538,7 @@ async def send_crm_message(
                     q = q.filter(models.Persona.email.isnot(None), models.Persona.email != "")
                 rows = q.all()
             elif normalized == "groups":
-                q = db.query(models.Persona).filter(models.Persona.family_id.isnot(None))
+                q = persona_query(db).filter(models.Persona.family_id.isnot(None))
                 q = _scope_by_user_sede_via_persona(db, current_user, q)
                 if channel in {"whatsapp", "sms"}:
                     q = q.filter(models.Persona.phone.isnot(None), models.Persona.phone != "")
@@ -1585,7 +1586,7 @@ def get_crm_analytics_summary(
 ):
     user_sede = get_user_sede_id(db, current_user.id)
 
-    persona_q = db.query(models.Persona)
+    persona_q = persona_query(db)
     persona_q = _scope_by_user_sede_via_persona(db, current_user, persona_q)
 
     total_personas = persona_q.count()
@@ -1843,7 +1844,7 @@ def list_volunteers(
     """Lista todos los voluntarios con sus horas y ministerios."""
     from collections import defaultdict
 
-    personas_q = db.query(models.Persona)
+    personas_q = persona_query(db)
     personas_q = _scope_by_user_sede_via_persona(db, current_user, personas_q)
     personas = personas_q.all()
     if not personas:
@@ -1986,7 +1987,7 @@ def get_crm_radar(
     """Datos del radar ministerial para dashboard."""
     user_sede = get_user_sede_id(db, current_user.id)
 
-    personas_q = db.query(models.Persona)
+    personas_q = persona_query(db)
     personas_q = _scope_by_user_sede_via_persona(db, current_user, personas_q)
     total_personas = personas_q.count()
 

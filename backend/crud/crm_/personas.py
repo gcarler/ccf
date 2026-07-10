@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, selectinload
 from backend import models, schemas
 from backend.crud._utils import _to_uuid, _utcnow
 from backend.crud.crm_.shared import _audit_log
+from backend.api.crm._shared import persona_query, prepare_persona_for_output
 
 
 def create_persona(db: Session, payload: schemas.PersonaCreate) -> models.Persona:
@@ -26,7 +27,9 @@ def create_persona(db: Session, payload: schemas.PersonaCreate) -> models.Person
     row = models.Persona(**data)
     db.add(row)
     db.commit()
-    db.refresh(row)
+    row = get_persona(db, row.id)
+    if row is None:
+        raise RuntimeError("Created persona could not be reloaded safely")
     _audit_log(
         db,
         "personas",
@@ -63,7 +66,7 @@ def _find_existing_persona(db: Session, payload: schemas.PersonaCreate) -> Optio
     phones = [p for p in (payload.phone, payload.mobile_phone) if p]
     if phones:
         match = (
-            db.query(models.Persona)
+            persona_query(db)
             .filter(
                 or_(
                     models.Persona.phone.in_(phones),
@@ -76,7 +79,7 @@ def _find_existing_persona(db: Session, payload: schemas.PersonaCreate) -> Optio
             return match
 
     if payload.id_number:
-        match = db.query(models.Persona).filter(models.Persona.id_number == payload.id_number).first()
+        match = persona_query(db).filter(models.Persona.id_number == payload.id_number).first()
         if match:
             return match
 
@@ -102,7 +105,7 @@ def search_personas(
     sort_by: str | None = None,
     sort_dir: str = "asc",
 ):
-    query = db.query(models.Persona).options(
+    query = persona_query(db).options(
         selectinload(models.Persona.family),
         selectinload(models.Persona.positions),
     )
@@ -150,15 +153,17 @@ def search_personas(
     query = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
 
     personas = query.offset(skip).limit(limit).all()
+    personas = [prepare_persona_for_output(db, p) for p in personas]
     return _enrich_personas_with_progress(db, personas)
 
 
 def get_persona(db: Session, persona_id: str) -> Optional[models.Persona]:
-    return db.query(models.Persona).filter(models.Persona.id == _to_uuid(persona_id)).first()
+    persona = persona_query(db).filter(models.Persona.id == _to_uuid(persona_id)).first()
+    return prepare_persona_for_output(db, persona) if persona else None
 
 
 def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate) -> Optional[models.Persona]:
-    row = db.query(models.Persona).filter(models.Persona.id == _to_uuid(persona_id)).first()
+    row = persona_query(db).filter(models.Persona.id == _to_uuid(persona_id)).first()
     if not row:
         return None
 
@@ -175,7 +180,9 @@ def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate)
     _track_funnel_changes(db, row, old_church_role, old_estado_vital, old_baptism_date)
 
     db.commit()
-    db.refresh(row)
+    row = get_persona(db, persona_id)
+    if not row:
+        return None
     _audit_log(
         db,
         "personas",
@@ -269,7 +276,7 @@ def _compute_days_in_state(db: Session, persona_id, state_name: str) -> int | No
 
 
 def delete_persona(db: Session, persona_id: str) -> bool:
-    row = db.query(models.Persona).filter(models.Persona.id == _to_uuid(persona_id)).first()
+    row = persona_query(db).filter(models.Persona.id == _to_uuid(persona_id)).first()
     if not row:
         return False
     # Soft-delete: nunca eliminar físicamente una Persona.
@@ -345,7 +352,7 @@ def search_personas_paginated(
     sort_dir: str = "asc",
 ) -> dict:
     """Returns { items: [...], total: N } for server-side AG Grid pagination."""
-    query = db.query(models.Persona).options(
+    query = persona_query(db).options(
         selectinload(models.Persona.family),
         selectinload(models.Persona.positions),
     )
