@@ -310,6 +310,10 @@ class CmsWorkflowAction(BaseModel):
     notes: Optional[str] = None
 
 
+class SchedulePagePublish(BaseModel):
+    scheduled_at: datetime
+
+
 class CmsPublicPageRead(BaseModel):
     site_key: str
     slug: str
