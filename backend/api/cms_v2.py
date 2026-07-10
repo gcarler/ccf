@@ -293,7 +293,7 @@ def _get_scoped_site_or_404(
     every admin endpoint that operates on a site enforces multi-tenant
     isolation without requiring the caller to remember both calls.
     """
-    site = _get_scoped_site_or_404(db, site_key, current_user)
+    site = _get_site_or_404(db, site_key)
     _assert_site_sede_scope(site, _actor_sede_from_user(db, current_user))
     return site
 
