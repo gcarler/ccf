@@ -26,9 +26,11 @@ from typing import List, Union
 from uuid import UUID
 
 from dateutil.relativedelta import relativedelta
+from sqlalchemy import MetaData, Table, insert
 from sqlalchemy.orm import Session
 
 from backend.models_evangelism import FrecuenciaEnum, GrupoEvangelismo, SesionGrupo
+from backend.api.evangelism_shared import _sessions_grupo_live_column_names
 
 # ──────────────────────────────────────────────
 # Estrategia de incremento
@@ -205,6 +207,15 @@ def calcular_sesiones(
     if not grupos_validos:
         return 0
 
+    live_columns = _sessions_grupo_live_column_names(db)
+    reflected_table = None
+    if db.get_bind() is not None:
+        reflected_table = Table(
+            "sesiones_grupo",
+            MetaData(),
+            autoload_with=db.get_bind(),
+        )
+
     existing_pairs = {
         (grupo_id, _a_utc(fecha))
         for grupo_id, fecha in (
@@ -218,19 +229,54 @@ def calcular_sesiones(
     }
 
     created = 0
+    rows_to_insert: list[dict] = []
     for grupo_id in grupos_validos:
         for fecha in fechas:
             if (grupo_id, _a_utc(fecha)) not in existing_pairs:
-                db.add(
-                    SesionGrupo(
-                        grupo_id=grupo_id,
-                        fecha_sesion=fecha,
-                        estado="PENDIENTE",
-                    )
-                )
+                row = {
+                    "id": uuid.uuid4(),
+                    "grupo_id": grupo_id,
+                    "fecha_sesion": fecha,
+                    "estado": "PENDIENTE",
+                }
+                if "estado_habilitacion" in live_columns:
+                    row["estado_habilitacion"] = "DESHABILITADO"
+                if "created_at" in live_columns:
+                    row["created_at"] = datetime.now(timezone.utc)
+                if "deleted_at" in live_columns:
+                    row["deleted_at"] = None
+                if "reported_at" in live_columns:
+                    row["reported_at"] = None
+                if "habilitado_por" in live_columns:
+                    row["habilitado_por"] = None
+                if "habilitado_en" in live_columns:
+                    row["habilitado_en"] = None
+                if "motivo_cancelacion" in live_columns:
+                    row["motivo_cancelacion"] = None
+                if "tema_estudio" in live_columns:
+                    row["tema_estudio"] = None
+                if "notas_lider" in live_columns:
+                    row["notas_lider"] = None
+                if "offering_amount" in live_columns:
+                    row["offering_amount"] = None
+                if "season_id" in live_columns:
+                    row["season_id"] = None
+                if "novelty_type" in live_columns:
+                    row["novelty_type"] = None
+                if "novelty_detail" in live_columns:
+                    row["novelty_detail"] = None
+                if "reported_by_persona_id" in live_columns:
+                    row["reported_by_persona_id"] = None
+                if "report_deadline" in live_columns:
+                    row["report_deadline"] = None
+                rows_to_insert.append({k: v for k, v in row.items() if k in live_columns})
                 created += 1
 
     try:
+        if rows_to_insert:
+            if reflected_table is None:
+                raise RuntimeError("Cannot reflect sesiones_grupo table for insert")
+            db.execute(insert(reflected_table), rows_to_insert)
         db.commit()
     except Exception:
         db.rollback()
