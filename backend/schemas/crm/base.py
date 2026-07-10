@@ -34,6 +34,7 @@ class EventType(str, Enum):
     CULTURE = "CULTURE"
     CONFERENCE = "CONFERENCE"
 
+
 class EventAudienceType(str, Enum):
     ALL = "ALL"
     ROLE = "ROLE"
@@ -72,6 +73,7 @@ class CrmTaskPriority(str, Enum):
     high = "high"
     urgent = "urgent"
 
+
 class CrmEventBase(BaseModel):
     name: str
     description: Optional[str] = None
@@ -90,8 +92,10 @@ class CrmEventBase(BaseModel):
     status: str = "SCHEDULED"
     cancellation_reason: Optional[str] = None
 
+
 class CrmEventCreate(CrmEventBase):
     pass
+
 
 class CrmEventUpdate(BaseModel):
     name: Optional[str] = None
@@ -105,10 +109,12 @@ class CrmEventUpdate(BaseModel):
     status: Optional[str] = None
     cancellation_reason: Optional[str] = None
 
+
 class CrmEvent(CrmEventBase):
     id: UUID
     created_at: datetime
     model_config = orm_config
+
 
 class EventAttendanceBase(BaseModel):
     event_id: UUID
@@ -123,13 +129,16 @@ class EventAttendanceBase(BaseModel):
     notes: Optional[str] = None
     scanned_at: Optional[datetime] = None
 
+
 class EventAttendanceCreate(EventAttendanceBase):
     pass
+
 
 class EventAttendance(EventAttendanceBase):
     id: UUID
     scanned_at: Optional[datetime] = None
     model_config = orm_config
+
 
 class CounselingTicketBase(BaseModel):
     persona_id: UUID
@@ -137,8 +146,10 @@ class CounselingTicketBase(BaseModel):
     notes: Optional[str] = None
     status: str = "open"
 
+
 class CounselingTicketCreate(CounselingTicketBase):
     pastor_id: Optional[UUID] = None
+
 
 class CounselingTicketUpdate(BaseModel):
     subject: Optional[str] = None
@@ -148,6 +159,7 @@ class CounselingTicketUpdate(BaseModel):
     sentiment_score: Optional[float] = None
     sentiment_label: Optional[str] = None
     pastor_id: Optional[UUID] = None
+
 
 class CounselingTicket(CounselingTicketBase):
     id: UUID
@@ -167,6 +179,7 @@ class CounselingTicket(CounselingTicketBase):
             self.notes = "[RESTRINGIDO - SOLO PASTORES/ADMIN]"
         return self
 
+
 class PrayerRequestBase(BaseModel):
     requester_name: str
     request_text: str
@@ -175,8 +188,10 @@ class PrayerRequestBase(BaseModel):
     source: str = "crm"
     status: str = "pending"
 
+
 class PrayerRequestCreate(PrayerRequestBase):
     pass
+
 
 class PrayerRequestUpdate(BaseModel):
     request_text: Optional[str] = None
@@ -184,6 +199,7 @@ class PrayerRequestUpdate(BaseModel):
     status: Optional[str] = None
     is_public: Optional[bool] = None
     source: Optional[str] = None
+
 
 class PrayerRequestPublicCreate(BaseModel):
     """Schema for public web prayer requests — minimal fields, no auth."""
@@ -196,10 +212,12 @@ class PrayerRequestPublicCreate(BaseModel):
     landing_page: Optional[str] = None
     campaign: Optional[str] = None
 
+
 class PrayerRequest(PrayerRequestBase):
     id: UUID
     created_at: datetime
     model_config = orm_config
+
 
 class DonationBase(BaseModel):
     persona_id: Optional[UUID] = None
@@ -208,8 +226,10 @@ class DonationBase(BaseModel):
     fund_id: Optional[UUID] = None
     donor_name: Optional[str] = None
 
+
 class DonationCreate(DonationBase):
     pass
+
 
 class DonationUpdate(BaseModel):
     amount: Optional[float] = None
@@ -220,6 +240,7 @@ class DonationUpdate(BaseModel):
     anonymous: Optional[bool] = None
     method: Optional[str] = None
 
+
 class Donation(DonationBase):
     id: UUID
     status: str = "completed"
@@ -227,6 +248,7 @@ class Donation(DonationBase):
     payment_method: str = "Transferencia"
     created_at: datetime
     model_config = orm_config
+
 
 class CrmTaskBase(BaseModel):
     """Schema base para tareas CRM (uso persistencia + auditoría, Axioma 1).
@@ -258,8 +280,10 @@ class CrmTaskBase(BaseModel):
     priority: CrmTaskPriority = CrmTaskPriority.medium
     completed_at: Optional[datetime] = None  # synonym en TareaCRM para fecha_completada
 
+
 class CrmTaskCreate(CrmTaskBase):
     pass
+
 
 class CrmTaskUpdate(BaseModel):
     """Schema para PATCH `/tasks/{id}`.
@@ -298,10 +322,12 @@ class CrmTaskUpdate(BaseModel):
     assignee_id: Optional[UUID] = None
     caso_id: Optional[UUID] = None
 
+
 class CrmTask(CrmTaskBase):
     id: UUID
     created_at: datetime
     model_config = orm_config
+
 
 class VolunteerShiftBase(BaseModel):
     persona_id: UUID
@@ -312,8 +338,10 @@ class VolunteerShiftBase(BaseModel):
     status: str = "confirmed"
     notes: Optional[str] = None
 
+
 class VolunteerShiftCreate(VolunteerShiftBase):
     pass
+
 
 class VolunteerShiftUpdate(BaseModel):
     persona_id: Optional[UUID] = None
@@ -324,16 +352,19 @@ class VolunteerShiftUpdate(BaseModel):
     status: Optional[str] = None
     notes: Optional[str] = None
 
+
 class VolunteerShift(VolunteerShiftBase):
     id: UUID
     created_at: datetime
     model_config = orm_config
+
 
 class ColombianCity(BaseModel):
     id: UUID
     department_id: UUID
     name: str
     model_config = orm_config
+
 
 class ColombianDepartment(BaseModel):
     id: UUID
@@ -342,6 +373,7 @@ class ColombianDepartment(BaseModel):
     capital: str
     cities: List[ColombianCity] = []
     model_config = orm_config
+
 
 class PersonaResponse(BaseModel):
     model_config = orm_config
@@ -404,6 +436,9 @@ class PersonaResponse(BaseModel):
     church_join_date: Optional[date] = None
     colombian_department_id: Optional[UUID] = None
     city: Optional[str] = None
+    health_score: Optional[int] = None
+    health_status: Optional[str] = None
+
 
 class Persona(BaseModel):
     id: UUID
@@ -473,6 +508,7 @@ class Persona(BaseModel):
             self.spiritual_gifts = "[RESTRINGIDO]"
         return self
 
+
 class PersonaCreate(BaseModel):
     first_name: str = Field(..., min_length=2, max_length=100)
     last_name: str = Field(..., min_length=2, max_length=100)
@@ -525,6 +561,7 @@ class PersonaCreate(BaseModel):
     church_join_date: Optional[date] = None
     colombian_department_id: Optional[UUID] = None
     city: Optional[str] = None
+
 
 class PersonaUpdate(BaseModel):
     first_name: Optional[str] = None
@@ -594,7 +631,9 @@ class PersonaSelfProfileUpdate(BaseModel):
     birthday: Optional[date] = None
     city: Optional[str] = None
 
+
 # ── PERSONA (reemplaza Persona — UUID PK) ────────────────────
+
 
 class PositionBase(BaseModel):
     name: str
@@ -602,14 +641,17 @@ class PositionBase(BaseModel):
     category: Optional[str] = None
     is_active: bool = True
 
+
 class PositionCreate(PositionBase):
     pass
+
 
 class PositionUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     category: Optional[str] = None
     is_active: Optional[bool] = None
+
 
 class Position(PositionBase):
     id: UUID
@@ -635,6 +677,7 @@ MINISTRY_ROLES = [
     "Visitante Online",
 ]
 
+
 class PersonaMinistryAssignmentBase(BaseModel):
     persona_id: UUID
     ministry_id: UUID
@@ -644,8 +687,10 @@ class PersonaMinistryAssignmentBase(BaseModel):
     is_active: bool = True
     notes: Optional[str] = None
 
+
 class PersonaMinistryAssignmentCreate(PersonaMinistryAssignmentBase):
     pass
+
 
 class PersonaMinistryAssignmentUpdate(BaseModel):
     role: Optional[str] = None
@@ -653,9 +698,11 @@ class PersonaMinistryAssignmentUpdate(BaseModel):
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
+
 class PersonaMinistryAssignment(PersonaMinistryAssignmentBase):
     id: UUID
     model_config = orm_config
+
 
 class PersonaPositionBase(BaseModel):
     persona_id: UUID
@@ -665,8 +712,10 @@ class PersonaPositionBase(BaseModel):
     is_active: bool = True
     notes: Optional[str] = None
 
+
 class PersonaPositionCreate(PersonaPositionBase):
     pass
+
 
 class PersonaPositionUpdate(BaseModel):
     position_id: Optional[UUID] = None
@@ -675,9 +724,11 @@ class PersonaPositionUpdate(BaseModel):
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
+
 class PersonaPosition(PersonaPositionBase):
     id: UUID
     model_config = orm_config
+
 
 class FormationLevelBase(BaseModel):
     name: str
@@ -685,8 +736,10 @@ class FormationLevelBase(BaseModel):
     description: Optional[str] = None
     is_active: bool = True
 
+
 class FormationLevelCreate(FormationLevelBase):
     pass
+
 
 class FormationLevelUpdate(BaseModel):
     name: Optional[str] = None
@@ -694,10 +747,12 @@ class FormationLevelUpdate(BaseModel):
     description: Optional[str] = None
     is_active: Optional[bool] = None
 
+
 class FormationLevel(FormationLevelBase):
     id: UUID
     created_at: datetime
     model_config = orm_config
+
 
 class PersonaFormationBase(BaseModel):
     persona_id: UUID
@@ -709,8 +764,10 @@ class PersonaFormationBase(BaseModel):
     is_active: bool = True
     notes: Optional[str] = None
 
+
 class PersonaFormationCreate(PersonaFormationBase):
     pass
+
 
 class PersonaFormationUpdate(BaseModel):
     formation_level_id: Optional[UUID] = None
@@ -720,6 +777,7 @@ class PersonaFormationUpdate(BaseModel):
     end_date: Optional[datetime] = None
     is_active: Optional[bool] = None
     notes: Optional[str] = None
+
 
 class PersonaFormation(PersonaFormationBase):
     id: UUID
@@ -736,7 +794,7 @@ from backend.schemas.evangelism import (
     EstrategiaEvangelismoResponse as _EstrategiaEvangelismoResponse,  # noqa: E402, F401
 )
 from backend.schemas.evangelism import (
-    EstrategiaEvangelismoUpdate as EvangelismStrategyUpdate,
+    EstrategiaEvangelismoUpdate as EvangelismStrategyUpdate,  # noqa: F401
 )
 
 
@@ -746,6 +804,7 @@ class EvangelismStrategyBase(BaseModel):
     All fields are inherited from EstrategiaEvangelismoBase.
     The id type changes from int to str (UUID).
     """
+
     name: str
     description: Optional[str] = None
     codigo: Optional[str] = None
@@ -766,13 +825,16 @@ class EvangelismStrategyBase(BaseModel):
     status: str = "active"
     group_count: Optional[int] = None
 
+
 class EvangelismStrategy(EvangelismStrategyBase):
     """Respuesta canónica de una estrategia de evangelismo."""
+
     id: UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     fecha_creacion: Optional[datetime] = None
     model_config = orm_config
+
 
 class PersonaEvangelismBase(BaseModel):
     persona_id: UUID
@@ -783,8 +845,10 @@ class PersonaEvangelismBase(BaseModel):
     is_active: bool = True
     notes: Optional[str] = None
 
+
 class PersonaEvangelismCreate(PersonaEvangelismBase):
     pass
+
 
 class PersonaEvangelismUpdate(BaseModel):
     evangelism_strategy_id: Optional[UUID] = None  # UUID string
@@ -794,9 +858,11 @@ class PersonaEvangelismUpdate(BaseModel):
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
+
 class PersonaEvangelism(PersonaEvangelismBase):
     id: UUID
     model_config = orm_config
+
 
 class TeachingAssignmentBase(BaseModel):
     persona_id: UUID
@@ -808,8 +874,10 @@ class TeachingAssignmentBase(BaseModel):
     is_active: bool = True
     notes: Optional[str] = None
 
+
 class TeachingAssignmentCreate(TeachingAssignmentBase):
     pass
+
 
 class TeachingAssignmentUpdate(BaseModel):
     formation_level_id: Optional[UUID] = None
@@ -820,9 +888,11 @@ class TeachingAssignmentUpdate(BaseModel):
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
+
 class TeachingAssignment(TeachingAssignmentBase):
     id: UUID
     model_config = orm_config
+
 
 class CaseUpdate(BaseModel):
     stage: Optional[str] = None
@@ -835,12 +905,14 @@ class CaseUpdate(BaseModel):
     assigned_leader_id: Optional[str] = None
     notes: Optional[str] = None
 
+
 class CaseInteractionCreate(BaseModel):
     interaction_type: str
     interaction_date: Optional[datetime] = None
     result: Optional[str] = None
     notes: Optional[str] = None
     next_action_date: Optional[datetime] = None
+
 
 class CaseTaskCreate(BaseModel):
     title: str
@@ -849,12 +921,14 @@ class CaseTaskCreate(BaseModel):
     status: str = "pending"
     completed_at: Optional[datetime] = None
 
+
 class CaseTaskUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     due_date: Optional[datetime] = None
     status: Optional[str] = None
     completed_at: Optional[datetime] = None
+
 
 class Family(BaseModel):
     id: UUID
@@ -864,6 +938,7 @@ class Family(BaseModel):
     created_at: datetime
     model_config = orm_config
 
+
 class GroupAttendanceReportItem(BaseModel):
     persona_id: UUID
     attended: bool = True
@@ -871,6 +946,7 @@ class GroupAttendanceReportItem(BaseModel):
     absence_reason_detail: Optional[str] = None
     estado: Optional[str] = None  # EstadoAsistenciaEnum
     es_primera_vez: bool = False
+
 
 class GroupSessionReportUpdate(BaseModel):
     session_date: Optional[date] = None
@@ -884,6 +960,7 @@ class GroupSessionReportUpdate(BaseModel):
     reported_by_persona_id: Optional[str] = None
     attendees: Optional[List[GroupAttendanceReportItem]] = None
 
+
 class GroupSessionAttendanceItem(BaseModel):
     persona_id: UUID
     name: str
@@ -894,6 +971,7 @@ class GroupSessionAttendanceItem(BaseModel):
     scanned_at: Optional[datetime] = None
     estado: Optional[str] = None  # EstadoAsistenciaEnum
     es_primera_vez: bool = False
+
 
 class GroupSessionAttendance(BaseModel):
     session_id: UUID
@@ -913,12 +991,14 @@ class GroupSessionAttendance(BaseModel):
     expected_participantes: List[GroupSessionAttendanceItem] = []
     model_config = orm_config
 
+
 class CaseCallCreate(BaseModel):
     persona_id: Optional[UUID] = None
     outcome: str
     notes: Optional[str] = None
     prayer_requests: Optional[str] = None
     duration_seconds: int = 0
+
 
 class CaseCall(BaseModel):
     id: UUID

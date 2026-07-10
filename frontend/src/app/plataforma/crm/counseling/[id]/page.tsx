@@ -33,6 +33,49 @@ export default function CounselingDetailPage() {
     const { token } = useAuth();
     const [session, setSession] = useState<CounselingDetail | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedNotes, setEditedNotes] = useState("");
+    const [copilotLoading, setCopilotLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    const handleCopilot = async () => {
+        try {
+            setCopilotLoading(true);
+            const data = await apiFetch<{ draft: string }>(`/crm/counseling/${id}/copilot-draft`, { token });
+            const draft = data.draft;
+            if (draft) {
+                setEditedNotes((prev) => (prev ? `${prev}\n\n${draft}` : draft));
+                toast.success("Borrador de copilot generado correctamente");
+            } else {
+                toast.error("No se pudo obtener el borrador");
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Error al llamar a AI Copilot");
+        } finally {
+            setCopilotLoading(false);
+        }
+    };
+
+    const handleSave = async () => {
+        try {
+            setSaving(true);
+            const updated = await apiFetch<Partial<CounselingDetail>>(`/crm/counseling/${id}`, {
+                method: "PATCH",
+                body: { notes: editedNotes },
+                token,
+            });
+            setSession((prev) => prev ? { ...prev, ...updated } : null);
+            setIsEditing(false);
+            toast.success("Notas guardadas correctamente");
+        } catch (err) {
+            console.error(err);
+            toast.error("Error al guardar las notas");
+        } finally {
+            setSaving(false);
+        }
+    };
+
 
     useEffect(() => {
         if (!token || !id) return;
@@ -98,10 +141,58 @@ export default function CounselingDetailPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         <div className="lg:col-span-2 space-y-3">
                             <DSCard>
-                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Resumen de la Sesion</h3>
-                                <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
-                                    {session.summary || session.notes || "Sin resumen registrado."}
-                                </p>
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Resumen de la Sesion</h3>
+                                    {!isEditing && (
+                                        <button
+                                            onClick={() => {
+                                                setIsEditing(true);
+                                                setEditedNotes(session.notes || session.summary || "");
+                                            }}
+                                            className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] hover:underline"
+                                        >
+                                            Editar
+                                        </button>
+                                    )}
+                                </div>
+                                {isEditing ? (
+                                    <div className="space-y-3">
+                                        <textarea
+                                            value={editedNotes}
+                                            onChange={(e) => setEditedNotes(e.target.value)}
+                                            rows={6}
+                                            className="w-full p-2 text-sm bg-transparent border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white"
+                                            placeholder="Escribe el resumen de la sesión aquí..."
+                                        />
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <button
+                                                onClick={handleCopilot}
+                                                disabled={copilotLoading}
+                                                className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide rounded hover:opacity-90 disabled:opacity-50 flex items-center gap-1"
+                                            >
+                                                {copilotLoading ? "Generando..." : "AI Copilot"}
+                                            </button>
+                                            <button
+                                                onClick={handleSave}
+                                                disabled={saving}
+                                                className="px-3 py-1.5 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-wide rounded hover:bg-emerald-700 disabled:opacity-50"
+                                            >
+                                                {saving ? "Guardando..." : "Guardar"}
+                                            </button>
+                                            <button
+                                                onClick={() => setIsEditing(false)}
+                                                disabled={saving || copilotLoading}
+                                                className="px-3 py-1.5 bg-slate-600 text-white text-[10px] font-bold uppercase tracking-wide rounded hover:bg-slate-700 disabled:opacity-50"
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium whitespace-pre-wrap">
+                                        {session.notes || session.summary || "Sin resumen registrado."}
+                                    </p>
+                                )}
                             </DSCard>
 
                             <DSCard>

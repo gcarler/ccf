@@ -88,5 +88,24 @@ def get_persona_timeline(db: Session, persona_id: str):
             }
         )
 
+    milestones = db.query(models.SpiritualMilestone).filter(
+        models.SpiritualMilestone.persona_id == persona.id,
+        models.SpiritualMilestone.deleted_at.is_(None)
+    ).all()
+    for m in milestones:
+        timeline.append({
+            "type": "spiritual_milestone",
+            "title": f"Hito Espiritual: {m.type}",
+            "description": m.notes or f"Hito registrado: {m.type}",
+            "date": m.created_at.isoformat() if m.created_at else m.event_date.isoformat(),
+            "icon": "Milestone",
+            "color": "bg-indigo-500",
+        })
+
+    for item in timeline:
+        item["created_at"] = item["date"]
+        item["notes"] = item["description"]
+        item["event_type"] = item["title"]
+
     timeline.sort(key=lambda x: x["date"], reverse=True)
     return timeline

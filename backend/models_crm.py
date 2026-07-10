@@ -1,6 +1,7 @@
 # ruff: noqa: F405
 from __future__ import annotations
 
+from datetime import date
 import enum as _enum
 import uuid
 import uuid as _uuid
@@ -48,17 +49,19 @@ class Conversation(Base):
 
 class ConversationParticipant(Base):
     __tablename__ = "conversation_participants"
-    __table_args__ = (
-        UniqueConstraint("conversation_id", "user_id", name="uq_conversation_user"),
-    )
+    __table_args__ = (UniqueConstraint("conversation_id", "user_id", name="uq_conversation_user"),)
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     conversation_id = Column(
-        UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"),
-        nullable=False, index=True,
+        UUID(as_uuid=True),
+        ForeignKey("conversations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     user_id = Column(
-        UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"),
-        nullable=False, index=True,
+        UUID(as_uuid=True),
+        ForeignKey("auth_users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     last_read_at = Column(DateTime(timezone=True), nullable=True)
     is_archived = Column(Boolean, default=False)
@@ -128,14 +131,9 @@ class EventAssignment(Base):
     persona = relationship("Persona")
 
 
-
 class EventAttendance(Base):
     __tablename__ = "event_attendances"
-    __table_args__ = (
-        UniqueConstraint(
-            "event_id", "session_date", "persona_id", name="uq_event_attendance"
-        ),
-    )
+    __table_args__ = (UniqueConstraint("event_id", "session_date", "persona_id", name="uq_event_attendance"),)
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     event_id = Column(
         UUID(as_uuid=True),
@@ -143,9 +141,7 @@ class EventAttendance(Base):
         nullable=False,
         index=True,
     )
-    session_date = Column(
-        Date, nullable=False, index=True, default=lambda: _utcnow().date()
-    )
+    session_date = Column(Date, nullable=False, index=True, default=lambda: _utcnow().date())
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id", ondelete="CASCADE"),
@@ -163,7 +159,6 @@ class EventAttendance(Base):
 
     event = relationship("CrmEvent", back_populates="attendances")
     persona = relationship("Persona")
-
 
 
 class CounselingTicket(Base):
@@ -189,7 +184,6 @@ class CounselingTicket(Base):
     pastor = relationship("Persona", foreign_keys=[pastor_id])
 
 
-
 class PrayerRequest(Base):
     __tablename__ = "prayer_requests"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
@@ -199,9 +193,7 @@ class PrayerRequest(Base):
     category = Column(String(50), default="General")
     is_public = Column(Boolean, default=False, index=True)
     source = Column(String(50), default="crm", index=True)  # web, crm, evangelism
-    status = Column(
-        String(50), default="pending", index=True
-    )  # pending, praying, answered
+    status = Column(String(50), default="pending", index=True)  # pending, praying, answered
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
 
@@ -232,6 +224,7 @@ class Ministry(Base):
 # BIBLIOTECA DE RECURSOS CRM
 # ==============================================================================
 
+
 class CanalEnvio(_enum.Enum):
     WHATSAPP = "WHATSAPP"
     EMAIL = "EMAIL"
@@ -248,6 +241,7 @@ class EstadoEnvioPlantilla(_enum.Enum):
 
 class CategoriaRecurso(Base):
     """Agrupa plantillas para facilitar búsqueda en la UI del CRM."""
+
     __tablename__ = "crm_recurso_categorias"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -259,18 +253,23 @@ class CategoriaRecurso(Base):
 
 class PlantillaMensaje(Base):
     """Plantillas de mensajes con soporte para variables dinámicas {{var}}."""
+
     __tablename__ = "crm_plantillas_mensaje"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
-    categoria_id = Column(UUID(as_uuid=True), ForeignKey("crm_recurso_categorias.id", ondelete="RESTRICT"), nullable=False, index=True)
+    categoria_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_recurso_categorias.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
     titulo = Column(String(150), nullable=False, index=True)
     canal = Column(SAEnum(CanalEnvio), nullable=False, index=True)
     asunto = Column(String(200), nullable=True)
     contenido_texto = Column(Text, nullable=False)
     variables_requeridas = Column(ARRAY(String), default=list, nullable=False)
     meta_template_id = Column(String(150), nullable=True)
-    creado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    creado_por_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     fecha_creacion = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)
     fecha_actualizacion = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
     activo = Column(Boolean, default=True, nullable=False, index=True)
@@ -281,18 +280,23 @@ class PlantillaMensaje(Base):
 
 class RecursoAdjunto(Base):
     """Archivos multimedia vinculados a plantillas (local storage; seaweed_fid para migración futura)."""
+
     __tablename__ = "crm_recursos_adjuntos"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
-    plantilla_id = Column(UUID(as_uuid=True), ForeignKey("crm_plantillas_mensaje.id", ondelete="CASCADE"), nullable=True, index=True)
+    plantilla_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_plantillas_mensaje.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     nombre_recurso = Column(String(150), nullable=False)
     seaweed_fid = Column(String(100), nullable=True)
     url_acceso = Column(String, nullable=False)
     nombre_archivo = Column(String(255), nullable=False)
     tipo_mime = Column(String(100), nullable=False)
     peso_bytes = Column(Integer, nullable=False)
-    creado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    creado_por_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     fecha_creacion = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     activo = Column(Boolean, default=True, nullable=False, index=True)
 
@@ -301,14 +305,21 @@ class RecursoAdjunto(Base):
 
 class BitacoraEnvioPlantilla(Base):
     """Registro analítico de cada envío de plantilla: quién, a quién, con qué variables, resultado."""
+
     __tablename__ = "crm_envios_plantilla_log"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
-    plantilla_id = Column(UUID(as_uuid=True), ForeignKey("crm_plantillas_mensaje.id", ondelete="SET NULL"), nullable=True, index=True)
+    plantilla_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_plantillas_mensaje.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     caso_id = Column(UUID(as_uuid=True), ForeignKey("crm_casos.id", ondelete="CASCADE"), nullable=True, index=True)
-    enviado_por_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
-    destinatario_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
+    enviado_por_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    destinatario_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     fecha_envio = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)
     estado = Column(SAEnum(EstadoEnvioPlantilla), default=EstadoEnvioPlantilla.PROCESANDO, nullable=False, index=True)
     payload_hidratado = Column(JSON, nullable=False)
@@ -377,7 +388,9 @@ class Persona(Base):
     group_name = Column(String(100), nullable=True)
     campus = Column(String(100), nullable=True)
     church_join_date = Column(Date, nullable=True)
-    colombian_department_id = Column(UUID(as_uuid=True), ForeignKey("colombian_departments.id", ondelete="SET NULL"), nullable=True, index=True)
+    colombian_department_id = Column(
+        UUID(as_uuid=True), ForeignKey("colombian_departments.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     city = Column(String(100), nullable=True)
     latitud = Column(Numeric(10, 8), nullable=True)
     longitud = Column(Numeric(11, 8), nullable=True)
@@ -387,6 +400,8 @@ class Persona(Base):
     talents = Column(Text, nullable=True)
     spiritual_gifts = Column(Text, nullable=True)
     pastoral_notes = Column(Text, nullable=True)
+    health_score = Column(Integer, nullable=True)
+    health_status = Column(String(20), nullable=True)
 
     # ── Pastoral profile fields ───────────────────────────────────────────
     photo_url = Column(String(500), nullable=True)
@@ -401,8 +416,12 @@ class Persona(Base):
     is_pastoral_published = Column(Boolean, default=True)
 
     tags = Column(JSON, nullable=True, default=list)
-    origen_estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
-    origen_grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
+    origen_estrategia_id = Column(
+        UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    origen_grupo_id = Column(
+        UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     origen_sesion_id = Column(UUID(as_uuid=True), ForeignKey("sesiones_grupo.id", ondelete="SET NULL"), nullable=True)
     origen_fecha = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
@@ -410,7 +429,9 @@ class Persona(Base):
 
     # Scanner token para validación de códigos QR (producción)
     scanner_token_hash = Column(String(128), nullable=True, index=True, comment="SHA-256 hash del scanner token")
-    scanner_token_expires_at = Column(DateTime(timezone=True), nullable=True, comment="Fecha de expiración del scanner token")
+    scanner_token_expires_at = Column(
+        DateTime(timezone=True), nullable=True, comment="Fecha de expiración del scanner token"
+    )
 
     @hybrid_property
     def nombre_completo(self):
@@ -419,9 +440,7 @@ class Persona(Base):
 
     @nombre_completo.expression
     def nombre_completo(cls):
-        return _func.trim(
-            _func.coalesce(cls.first_name, "") + " " + _func.coalesce(cls.last_name, "")
-        )
+        return _func.trim(_func.coalesce(cls.first_name, "") + " " + _func.coalesce(cls.last_name, ""))
 
     @hybrid_property
     def telefono(self):
@@ -436,7 +455,7 @@ class Persona(Base):
         """Rol en la iglesia resuelto desde el Kernel."""
         if self.rol_iglesia and self.rol_iglesia.church_role:
             val = self.rol_iglesia.church_role
-            return val.value if hasattr(val, 'value') else str(val)
+            return val.value if hasattr(val, "value") else str(val)
         return self.church_role or "Miembro"
 
     @church_role_effective.setter
@@ -458,14 +477,27 @@ class Persona(Base):
     positions = relationship("PersonaPosition", back_populates="persona")
     donations = relationship("Donation", foreign_keys="Donation.persona_id", back_populates="persona")
     tasks = relationship("TareaCRM", foreign_keys="TareaCRM.persona_id", back_populates="persona")
-    volunteer_shifts = relationship("VolunteerShift", foreign_keys="VolunteerShift.persona_id", back_populates="persona")
-    communication_logs = relationship("CommunicationLog", foreign_keys="CommunicationLog.persona_id", back_populates="persona")
+    volunteer_shifts = relationship(
+        "VolunteerShift", foreign_keys="VolunteerShift.persona_id", back_populates="persona"
+    )
+    communication_logs = relationship(
+        "CommunicationLog", foreign_keys="CommunicationLog.persona_id", back_populates="persona"
+    )
     participaciones_grupo = relationship("ParticipanteGrupo", back_populates="persona")
     asistencias = relationship("Asistencia", back_populates="persona")
-    seguimientos_realizados = relationship("RegistroSeguimiento", foreign_keys="RegistroSeguimiento.responsable_id", back_populates="responsable")
+    seguimientos_realizados = relationship(
+        "RegistroSeguimiento", foreign_keys="RegistroSeguimiento.responsable_id", back_populates="responsable"
+    )
     historial_embudo = relationship("HistorialEmbudo", back_populates="persona")
-    ministerios_kernel = relationship("PersonaMinistry", foreign_keys="PersonaMinistry.persona_id", back_populates="persona")
-    rol_iglesia = relationship("PersonaRoleAssignment", foreign_keys="PersonaRoleAssignment.persona_id", back_populates="persona", uselist=False)
+    ministerios_kernel = relationship(
+        "PersonaMinistry", foreign_keys="PersonaMinistry.persona_id", back_populates="persona"
+    )
+    rol_iglesia = relationship(
+        "PersonaRoleAssignment",
+        foreign_keys="PersonaRoleAssignment.persona_id",
+        back_populates="persona",
+        uselist=False,
+    )
 
 
 class Position(Base):
@@ -477,18 +509,12 @@ class Position(Base):
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
-    persona_positions = relationship(
-        "PersonaPosition", back_populates="position", cascade="all, delete-orphan"
-    )
+    persona_positions = relationship("PersonaPosition", back_populates="position", cascade="all, delete-orphan")
 
 
 class PersonaPosition(Base):
     __tablename__ = "persona_positions"
-    __table_args__ = (
-        UniqueConstraint(
-            "persona_id", "position_id", "start_date", name="uq_persona_position_history"
-        ),
-    )
+    __table_args__ = (UniqueConstraint("persona_id", "position_id", "start_date", name="uq_persona_position_history"),)
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
@@ -535,10 +561,10 @@ class Donation(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
+    donation_date = Column(Date, nullable=True, default=date.today)
 
     persona = relationship("Persona", back_populates="donations")
     fund = relationship("Fund")
-
 
 
 class DonationCategory(Base):
@@ -619,7 +645,6 @@ class CommunicationLog(Base):
     leader = relationship("Persona", foreign_keys=[leader_id])
 
 
-
 class SpiritualMilestone(Base):
     __tablename__ = "spiritual_milestones"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
@@ -641,7 +666,6 @@ class SpiritualMilestone(Base):
     minister = relationship("Persona", foreign_keys=[minister_id])
 
 
-
 class CrmAutomation(Base):
     __tablename__ = "crm_automations"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
@@ -651,7 +675,7 @@ class CrmAutomation(Base):
     action_payload = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
-    
+
     # Nuevos campos para flujos encadenados
     delay_minutes = Column(Integer, default=0, nullable=False)
     next_automation_id = Column(UUID(as_uuid=True), ForeignKey("crm_automations.id"), nullable=True)
@@ -663,7 +687,7 @@ class PendingCrmAction(Base):
     automation_id = Column(UUID(as_uuid=True), ForeignKey("crm_automations.id"), nullable=False)
     target_persona_id = Column(UUID(as_uuid=True), nullable=False)
     execute_at = Column(DateTime(timezone=True), nullable=False, index=True)
-    status = Column(String(30), default="pending", index=True) # pending, executed, failed
+    status = Column(String(30), default="pending", index=True)  # pending, executed, failed
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     automation = relationship("CrmAutomation")
@@ -681,9 +705,7 @@ class RoleDefinition(Base):
 
 class PersonaRoleLink(Base):
     __tablename__ = "persona_role_links"
-    __table_args__ = (
-        UniqueConstraint("persona_id", "role_id", name="uq_persona_role_link"),
-    )
+    __table_args__ = (UniqueConstraint("persona_id", "role_id", name="uq_persona_role_link"),)
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
@@ -707,9 +729,7 @@ class PersonaMinistryAssignment(Base):
     """Rich association between Persona and Ministry with role and dates."""
 
     __tablename__ = "persona_ministry_assignments"
-    __table_args__ = (
-        UniqueConstraint("persona_id", "ministry_id", name="uq_persona_ministry_assignment"),
-    )
+    __table_args__ = (UniqueConstraint("persona_id", "ministry_id", name="uq_persona_ministry_assignment"),)
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
         UUID(as_uuid=True),
@@ -751,9 +771,7 @@ class SupportTicket(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     subject = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
-    status = Column(
-        String(20), default="open", index=True
-    )  # open, in_progress, resolved, closed
+    status = Column(String(20), default="open", index=True)  # open, in_progress, resolved, closed
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 

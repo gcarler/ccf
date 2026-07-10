@@ -61,6 +61,12 @@ from backend.crud.crm_.groups import (
     get_grupos,
     update_grupo,
 )
+from backend.crud.crm_.health import (
+    calculate_health_score,
+    calculate_pastoral_health,
+    calculate_pastoral_health_score,
+    update_pastoral_health,
+)
 from backend.crud.crm_.milestones import (
     create_milestone,
     delete_milestone,
