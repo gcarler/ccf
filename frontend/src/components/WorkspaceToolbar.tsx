@@ -80,7 +80,7 @@ export default function WorkspaceToolbar({
 
                         return (
                             <div key={idx} className={`${isLast ? 'flex' : 'hidden md:flex'} min-w-0 items-center gap-0.5 shrink ${isLast ? 'max-w-[48vw] sm:max-w-[220px]' : 'max-w-[160px] lg:max-w-[200px]'}`}>
-                                {bc.href ? <Link href={bc.href}>{content}</Link> : content}
+                                {bc.href ? <Link href={bc.href} prefetch={false}>{content}</Link> : content}
                                 {idx < breadcrumbs.length - 1 && (
                                     <ChevronRight size={13} className="hidden text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] shrink-0 md:block" />
                                 )}

@@ -72,6 +72,7 @@ export default function UnifiedSidebar({
                 {item.href && !hasChildren ? (
                     <Link
                         href={item.href}
+                        prefetch={false}
                         className={clsx(
                             "flex items-center gap-3 py-2 rounded-md transition-all cursor-pointer group relative",
                             isMini ? "justify-center px-0 w-10 mx-auto" : "px-3 w-full",
@@ -206,7 +207,7 @@ export default function UnifiedSidebar({
                                         className="overflow-hidden relative pl-4 ml-6 border-l border-[hsl(var(--border))] dark:border-white/10 mt-1 space-y-0.5"
                                     >
                                         {sections.flatMap((section: any) => section.items || []).map((item: any) => (
-                                            <Link key={item.id} href={item.href || '/'} className="flex items-center px-2 py-1.5 text-[12px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white rounded-md transition-colors w-full group">
+                                            <Link key={item.id} href={item.href || '/'} prefetch={false} className="flex items-center px-2 py-1.5 text-[12px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white rounded-md transition-colors w-full group">
                                                 <span className="truncate">{item.label}</span>
                                             </Link>
                                         ))}

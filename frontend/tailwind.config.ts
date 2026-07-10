@@ -70,11 +70,11 @@ const config: Config = {
                 "site-on-secondary-fixed": "var(--site-on-secondary-fixed)"
             },
             fontFamily: {
-                "display": ["Manrope", "sans-serif"],
-                "sans": ["Manrope", "sans-serif"],
-                "headline": ["var(--font-manrope)", "Manrope", "sans-serif"],
-                "body": ["var(--font-inter)", "Inter", "sans-serif"],
-                "label": ["var(--font-inter)", "Inter", "sans-serif"]
+                "display": ["Space Grotesk", "Plus Jakarta Sans", "Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+                "sans": ["Space Grotesk", "Plus Jakarta Sans", "Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+                "headline": ["Space Grotesk", "Plus Jakarta Sans", "Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+                "body": ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+                "label": ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"]
             },
             borderRadius: {
                 "DEFAULT": "0.25rem",
