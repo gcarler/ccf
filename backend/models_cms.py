@@ -534,8 +534,8 @@ class CmsPostCategory(Base):
     )
 
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
-    post = relationship("CmsPost", lazy="joined")
-    category = relationship("CmsCategory", lazy="joined")
+    post = relationship("CmsPost", lazy="joined", overlaps="categories,posts")
+    category = relationship("CmsCategory", lazy="joined", overlaps="categories,posts")
 
 
 class CmsPostTag(Base):
@@ -552,8 +552,8 @@ class CmsPostTag(Base):
     )
 
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
-    post = relationship("CmsPost", lazy="joined")
-    tag = relationship("CmsTag", lazy="joined")
+    post = relationship("CmsPost", lazy="joined", overlaps="posts,tags")
+    tag = relationship("CmsTag", lazy="joined", overlaps="posts,tags")
 
 
 class CmsSeoSnapshot(Base):
