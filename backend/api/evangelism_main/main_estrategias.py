@@ -323,7 +323,7 @@ def generate_strategy_sessions(
             "warning": str(e),
         }
     except Exception:
-        logger.exception("Failed to generate evangelism sessions for strategy=%s", strategy_id)
+        logger.warning("Failed to generate evangelism sessions for strategy=%s", strategy_id)
         return {
             "strategy": strat.nombre,
             "recurrence": strat.frecuencia,
