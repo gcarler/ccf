@@ -17,7 +17,6 @@ Plus
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback,useEffect,useMemo,useState } from 'react';
-import { toast } from 'sonner';
 import type { Strategy } from './types';
 
 // Antes: este archivo redeclaraba una interfaz EvangelismStrategy local
@@ -42,7 +41,6 @@ export default function EvangelismClient() {
  const result = await apiFetch<EvangelismStrategy[]>('/evangelism/strategies', { token, silent: true });
  setData(Array.isArray(result) ? result : []);
  } catch {
- toast.error('Error al cargar estrategias de evangelismo');
  setData([]);
  } finally {
  setLoading(false);
