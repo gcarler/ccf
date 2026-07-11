@@ -27,7 +27,7 @@ const GROUP_SECTIONS = [
 export default function GroupsLayout({ children }: { children: React.ReactNode }) {
     return (
         <ModuleErrorBoundary moduleName="Grupos">
-            <WorkspaceLayout sidebarTitle="Casas de Bendición" sidebarSections={GROUP_SECTIONS} allowedPermissions={['community:read']}>
+            <WorkspaceLayout sidebarTitle="Grupos" sidebarSections={GROUP_SECTIONS} allowedPermissions={['community:read']}>
                 {children}
             </WorkspaceLayout>
         </ModuleErrorBoundary>
