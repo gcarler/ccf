@@ -15,7 +15,6 @@ import {
   Users,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 interface MultiplicationCheckItem {
   grupo_id: string;
@@ -115,8 +114,8 @@ export default function MultiplicationPage() {
         });
         const result = Array.isArray(raw) ? raw.map(normalizeCheckItem) : [];
         setChecks(result);
-      } catch (e: any) {
-        toast.error(e?.message || 'Error al cargar análisis de multiplicación');
+      } catch {
+        setChecks([]);
       } finally {
         setLoadingChecks(false);
       }
@@ -127,17 +126,17 @@ export default function MultiplicationPage() {
   const fetchHistory = useCallback(async () => {
     if (!token) return;
     setLoadingHistory(true);
-    try {
-      const raw = await apiFetch<any[]>('/evangelism/multiplication/history', {
-        token,
-      });
-      const result = Array.isArray(raw) ? raw.map(normalizeHistoryItem) : [];
-      setHistory(result);
-    } catch (e: any) {
-      toast.error(e?.message || 'Error al cargar historial de multiplicaciones');
-    } finally {
-      setLoadingHistory(false);
-    }
+      try {
+        const raw = await apiFetch<any[]>('/evangelism/multiplication/history', {
+          token,
+        });
+        const result = Array.isArray(raw) ? raw.map(normalizeHistoryItem) : [];
+        setHistory(result);
+      } catch {
+        setHistory([]);
+      } finally {
+        setLoadingHistory(false);
+      }
   }, [token]);
 
   const fetchPersonasForGroup = useCallback(

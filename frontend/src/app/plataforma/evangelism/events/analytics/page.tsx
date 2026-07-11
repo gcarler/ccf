@@ -106,7 +106,7 @@ export default function GlobalEventAnalyticsPage() {
  <p className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] animate-pulse">Cargando analítica...</p>
  </div>
  ) : !data ? (
- <div className="text-center py-1.5 text-[hsl(var(--text-secondary))]">Error al cargar datos.</div>
+ <div className="text-center py-1.5 text-[hsl(var(--text-secondary))]">Sin datos disponibles para este filtro.</div>
  ) : (
  <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
  {/* KPIs */}
