@@ -257,12 +257,13 @@ def get_milestone(db: Session, milestone_id):
     return db.query(models.ProjectMilestone).filter(models.ProjectMilestone.id == milestone_id).first()
 
 
-def create_milestone(db: Session, project_id, title: str, description: str | None = None, target_date=None):
+def create_milestone(db: Session, project_id, title: str, description: str | None = None, target_date=None, is_completed: bool = False):
     row = models.ProjectMilestone(
         project_id=project_id,
         title=title,
         description=description,
         target_date=target_date,
+        is_completed=is_completed,
     )
     db.add(row)
     db.commit()
@@ -333,7 +334,14 @@ def delete_attachment(db: Session, attachment_id: UUID) -> bool:
 # ── Project Whiteboard ─────────────────────────────────
 
 def get_project_whiteboard(db: Session, project_id):
-    return db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == project_id).first()
+    return (
+        db.query(models.ProjectWhiteboard)
+        .filter(
+            models.ProjectWhiteboard.project_id == project_id,
+            models.ProjectWhiteboard.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 def update_project_whiteboard(db: Session, project_id, payload: schemas.ProjectWhiteboardUpdate) -> models.ProjectWhiteboard:
@@ -377,7 +385,12 @@ def update_project_wiki(db: Session, project_id, content: str, author_id=None) -
 # ── Task Supplies ───────────────────────────────────────
 
 def get_task_supplies(db: Session, task_id):
-    return db.query(models.TaskSupply).filter(models.TaskSupply.task_id == task_id, models.TaskSupply.deleted_at.is_(None)).all()
+    return (
+        db.query(models.TaskSupply)
+        .filter(models.TaskSupply.task_id == task_id, models.TaskSupply.deleted_at.is_(None))
+        .order_by(models.TaskSupply.id.asc())
+        .all()
+    )
 
 
 def get_supply(db: Session, supply_id: UUID):

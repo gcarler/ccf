@@ -161,6 +161,45 @@ class TestProjectsCRUD:
         assert resp.status_code == 200
         assert len(resp.json()) == 0
 
+    def test_list_projects_filtered_by_owner(self, client, db_session):
+        """GET /api/projects?owner_id={id} filters by owner."""
+        from backend.models_crm import Persona
+
+        _, _, sede = seed_admin(db_session)
+        owner_a = Persona(id=_uuid.uuid4(), first_name="Alice", last_name="Owner", email="alice@test.com")
+        owner_b = Persona(id=_uuid.uuid4(), first_name="Bob", last_name="Owner", email="bob@test.com")
+        db_session.add_all([owner_a, owner_b])
+        db_session.flush()
+
+        proj_a = create_project_factory(db_session, owner_id=owner_a.id, title="Proyecto Alice")
+        proj_b = create_project_factory(db_session, owner_id=owner_b.id, title="Proyecto Bob")
+
+        headers = auth_headers(client)
+
+        # Filter by owner_a → only proj_a
+        resp = client.get(f"/api/projects?owner_id={owner_a.id}", headers=headers)
+        assert resp.status_code == 200
+        projects = resp.json()
+        assert len(projects) == 1, f"Expected 1, got {len(projects)}"
+        assert projects[0]["title"] == "Proyecto Alice"
+
+        # Filter by owner_b → only proj_b
+        resp = client.get(f"/api/projects?owner_id={owner_b.id}", headers=headers)
+        assert resp.status_code == 200
+        projects = resp.json()
+        assert len(projects) == 1, f"Expected 1, got {len(projects)}"
+        assert projects[0]["title"] == "Proyecto Bob"
+
+        # Filter by non-existent owner → empty
+        resp = client.get(f"/api/projects?owner_id={_uuid.uuid4()}", headers=headers)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+        # Without filter → both
+        resp = client.get("/api/projects", headers=headers)
+        assert resp.status_code == 200
+        assert len(resp.json()) == 2
+
 
 # ── B: Phases ────────────────────────────────────────────────────────────
 # Routes: GET /projects/{id}/phases, PUT /projects/{id}/phases
@@ -534,6 +573,48 @@ class TestComments:
         assert resp.status_code == 200
         assert resp.json() == []
 
+    def test_list_comments_pagination(self, client, db_session):
+        """GET /api/projects/comments?limit=N&offset=M paginates correctly."""
+        user, persona, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+
+        # Create 5 comments with staggered timestamps so ordering is deterministic
+        for i in range(5):
+            create_comment_factory(
+                db_session, proj.id, persona.id,
+                content=f"Comentario paginado {i}",
+            )
+
+        headers = auth_headers(client)
+
+        # Page 1: limit=2 → first 2 items (newest first: 4, 3)
+        resp = client.get("/api/projects/comments?limit=2&offset=0", headers=headers)
+        assert resp.status_code == 200
+        page1 = resp.json()
+        assert len(page1) == 2, f"Expected 2, got {len(page1)}"
+        assert page1[0]["content"] == "Comentario paginado 4"
+        assert page1[1]["content"] == "Comentario paginado 3"
+
+        # Page 2: offset=2, limit=2 → next 2 items (2, 1)
+        resp = client.get("/api/projects/comments?limit=2&offset=2", headers=headers)
+        assert resp.status_code == 200
+        page2 = resp.json()
+        assert len(page2) == 2, f"Expected 2, got {len(page2)}"
+        assert page2[0]["content"] == "Comentario paginado 2"
+        assert page2[1]["content"] == "Comentario paginado 1"
+
+        # Page 3: offset=4, limit=2 → last item (0)
+        resp = client.get("/api/projects/comments?limit=2&offset=4", headers=headers)
+        assert resp.status_code == 200
+        page3 = resp.json()
+        assert len(page3) == 1, f"Expected 1, got {len(page3)}"
+        assert page3[0]["content"] == "Comentario paginado 0"
+
+        # Offset beyond total → empty list
+        resp = client.get("/api/projects/comments?limit=2&offset=99", headers=headers)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
     def test_list_comments_with_data(self, client, db_session):
         _, _, sede = seed_admin(db_session)
         data = setup_project_with_all_relations(db_session)
@@ -681,6 +762,71 @@ class TestPortfolioWorkload:
         resp = client.get("/api/projects/activities", headers=headers)
         assert resp.status_code == 200
         assert len(resp.json()) >= 1
+
+    def test_list_activities_default_limit(self, client, db_session):
+        """GET /api/projects/activities without explicit limit defaults to 20."""
+        user, persona, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+
+        # Create 25 activity logs — more than the default limit of 20
+        from tests.factories_projects import create_activity_log_factory
+
+        for i in range(25):
+            create_activity_log_factory(
+                db_session, proj.id, "task_created",
+                persona_id=persona.id,
+                description=f"Default limit test {i}",
+            )
+
+        headers = auth_headers(client)
+        # No limit param → uses default 20
+        resp = client.get("/api/projects/activities", headers=headers)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 20, f"Expected default limit 20, got {len(data)}"
+
+        # Explicit limit=5 overrides default
+        resp = client.get("/api/projects/activities?limit=5", headers=headers)
+        assert resp.status_code == 200
+        assert len(resp.json()) == 5, f"Expected 5, got {len(resp.json())}"
+
+    def test_list_activities_pagination(self, client, db_session):
+        """GET /api/projects/activities?limit=N&offset=M paginates correctly."""
+        user, persona, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+
+        # Create 5 activity logs
+        from tests.factories_projects import create_activity_log_factory
+
+        for i in range(5):
+            create_activity_log_factory(
+                db_session, proj.id, "task_created",
+                persona_id=persona.id,
+                description=f"Actividad paginada {i}",
+            )
+
+        headers = auth_headers(client)
+
+        # Page 1: limit=2 → first 2 (newest first: 4, 3)
+        resp = client.get("/api/projects/activities?limit=2&offset=0", headers=headers)
+        assert resp.status_code == 200
+        page1 = resp.json()
+        assert len(page1) == 2, f"Expected 2, got {len(page1)}"
+        assert "Actividad paginada 4" in page1[0]["description"]
+        assert "Actividad paginada 3" in page1[1]["description"]
+
+        # Page 2: offset=2, limit=2 → next 2 (2, 1)
+        resp = client.get("/api/projects/activities?limit=2&offset=2", headers=headers)
+        assert resp.status_code == 200
+        page2 = resp.json()
+        assert len(page2) == 2, f"Expected 2, got {len(page2)}"
+        assert "Actividad paginada 2" in page2[0]["description"]
+        assert "Actividad paginada 1" in page2[1]["description"]
+
+        # Offset beyond total → empty
+        resp = client.get("/api/projects/activities?limit=2&offset=99", headers=headers)
+        assert resp.status_code == 200
+        assert resp.json() == []
 
     def test_list_activities_filtered(self, client, db_session):
         _, _, sede = seed_admin(db_session)
@@ -844,6 +990,25 @@ class TestSupplies:
 
 
 class TestAttachments:
+
+    def test_upload_attachment_exceeds_max_size(self, client, db_session):
+        """POST with file > 10 MB returns 400."""
+        from backend.core.uploads import MAX_UPLOAD_SIZE
+
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        task = create_task_factory(db_session, proj.id)
+        headers = auth_headers(client)
+        # 1 byte over the limit
+        oversized = b"x" * (MAX_UPLOAD_SIZE + 1)
+        files = {"file": ("huge.pdf", oversized, "application/pdf")}
+        resp = client.post(
+            f"/api/projects/{proj.id}/tasks/{task.id}/attachments",
+            files=files,
+            headers=headers,
+        )
+        assert resp.status_code == 400, f"Expected 400, got {resp.status_code}: {resp.text}"
+        assert "File exceeds maximum size" in resp.text
 
     def test_upload_attachment(self, client, db_session):
         """POST /projects/{pid}/tasks/{tid}/attachments uploads a file."""

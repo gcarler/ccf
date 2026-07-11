@@ -18,9 +18,13 @@ from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access, require_staff_or_admin
 from backend.core.storage import storage_service
-from backend.core.uploads import sanitize_filename
+from backend.core.uploads import MAX_UPLOAD_SIZE, sanitize_filename
 from backend.crud.crm import get_user_sede_id
-from backend.crud.projects import get_user_persona_id
+from backend.crud.projects import (
+    get_user_persona_id,
+    create_milestone as _projects_create_milestone,
+    delete_milestone as _projects_delete_milestone,
+)
 from backend.mesh_websockets import manager
 from backend.services.task_notifications import notify_task_assigned
 
@@ -1021,7 +1025,33 @@ def mark_inbox_read(
     return {"ok": True, "item_id": item_id}
 
 
-# ── PROJECT BY ID ─────────────────────────────────────────────────────────────
+# ── WIKI & WHITEBOARD CON CALIDAD AUDITADA ─────────────────────────
+# NOTA: /whiteboards (sin project_id) debe ir ANTES de /{project_id}
+# para evitar que FastAPI interprete "whiteboards" como un project_id.
+
+
+@router.get("/whiteboards", response_model=List[schemas.ProjectWhiteboard])
+def list_whiteboards(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista todas las pizarras activas del alcance del actor actual.
+
+    Axioma 3 — solo se devuelven pizarras cuyos proyectos pertenezcan a la
+    ``sede_id`` del actor. Esto previene el leak cross-sede del feed de
+    whiteboards en el módulo de plataforma. El superadmin (``user_sede``
+    = ``None``) sigue viendo todas, consistente con list_projects.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    q = (
+        db.query(models.ProjectWhiteboard)
+        .join(models.Project, models.Project.id == models.ProjectWhiteboard.project_id)
+        .filter(models.ProjectWhiteboard.deleted_at.is_(None))
+    )
+    if user_sede:
+        q = q.filter(models.Project.sede_id == user_sede)
+    boards = q.order_by(models.ProjectWhiteboard.updated_at.desc()).all()
+    return [_normalize_dates(b) for b in boards]
 
 
 @router.get("/{project_id}", response_model=schemas.Project)
@@ -1041,9 +1071,6 @@ def get_project(
         _normalize_dates(log)
         log.user_name = log.persona.nombre_completo if log.persona else "Sistema"
     return p
-
-
-# --- WIKI & WHITEBOARD CON CALIDAD AUDITADA ---
 
 
 @router.get("/{project_id}/wiki", response_model=Optional[schemas.ProjectDocument])
@@ -1074,7 +1101,7 @@ def update_project_wiki(
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)  # Validates project exists + scope
-    doc = db.query(models.ProjectDocument).filter(models.ProjectDocument.project_id == _to_uuid(project_id)).first()
+    doc = crud.get_project_wiki(db, _to_uuid(project_id))
     title = payload.title or "Wiki Ministerial"
     content = payload.content or ""
     author_persona_id = get_user_persona_id(db, current_user.id)
@@ -1106,30 +1133,6 @@ def update_project_wiki(
     return _normalize_dates(doc)
 
 
-@router.get("/whiteboards", response_model=List[schemas.ProjectWhiteboard])
-def list_whiteboards(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
-):
-    """Lista todas las pizarras activas del alcance del actor actual.
-
-    Axioma 3 — solo se devuelven pizarras cuyos proyectos pertenezcan a la
-    ``sede_id`` del actor. Esto previene el leak cross-sede del feed de
-    whiteboards en el módulo de plataforma. El superadmin (``user_sede``
-    = ``None``) sigue viendo todas, consistente con list_projects.
-    """
-    user_sede = get_user_sede_id(db, current_user.id)
-    q = (
-        db.query(models.ProjectWhiteboard)
-        .join(models.Project, models.Project.id == models.ProjectWhiteboard.project_id)
-        .filter(models.ProjectWhiteboard.deleted_at.is_(None))
-    )
-    if user_sede:
-        q = q.filter(models.Project.sede_id == user_sede)
-    boards = q.order_by(models.ProjectWhiteboard.updated_at.desc()).all()
-    return [_normalize_dates(b) for b in boards]
-
-
 @router.get("/{project_id}/whiteboard", response_model=Optional[schemas.ProjectWhiteboard])
 def get_project_whiteboard(
     project_id: str,
@@ -1138,9 +1141,7 @@ def get_project_whiteboard(
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
-    board = (
-        db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id)).first()
-    )
+    board = crud.get_project_whiteboard(db, _to_uuid(project_id))
     return _normalize_dates(board)
 
 
@@ -1213,6 +1214,9 @@ async def upload_task_attachment(
     filename = sanitize_filename(file.filename or "file")
     contents = await file.read()
 
+    if len(contents) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=400, detail="File exceeds maximum size")
+
     url = storage_service.save_file(contents, filename, subfolder="projects")
 
     uploader_persona_id = get_user_persona_id(db, current_user.id)
@@ -1256,8 +1260,7 @@ def delete_task_attachment(
         "attachment_deleted",
         f"Archivo '{attachment.filename}' eliminado",
     )
-    attachment.deleted_at = datetime.now(timezone.utc)
-    db.commit()
+    crud.delete_attachment(db, _to_uuid(attachment_id))
     return {"ok": True, "deleted": attachment_id}
 
 
@@ -1306,12 +1309,7 @@ def list_task_supplies(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     _ensure_task_in_project(db, project_id, task_id)
-    return (
-        db.query(models.TaskSupply)
-        .filter(models.TaskSupply.task_id == _to_uuid(task_id))
-        .order_by(models.TaskSupply.id.asc())
-        .all()
-    )
+    return crud.get_task_supplies(db, _to_uuid(task_id))
 
 
 @router.post(
@@ -1396,8 +1394,7 @@ def delete_task_supply(
         "supply_deleted",
         f"Insumo '{supply.item_name}' eliminado de '{task.title}'",
     )
-    supply.deleted_at = datetime.now(timezone.utc)
-    db.commit()
+    crud.delete_supply(db, supply_id)
     return {"ok": True, "deleted": supply_id}
 
 
@@ -1947,15 +1944,7 @@ def list_project_milestones(
     """Lista los hitos de un proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
-    milestones = (
-        db.query(models.ProjectMilestone)
-        .filter(
-            models.ProjectMilestone.project_id == _to_uuid(project_id),
-            models.ProjectMilestone.deleted_at.is_(None),
-        )
-        .order_by(models.ProjectMilestone.target_date.asc())
-        .all()
-    )
+    milestones = crud.get_project_milestones(db, _to_uuid(project_id))
     for m in milestones:
         _normalize_dates(m)
     return milestones
@@ -1975,8 +1964,13 @@ def create_project_milestone(
     """Crea un hito en un proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
-    milestone = models.ProjectMilestone(project_id=_to_uuid(project_id), **payload.model_dump())
-    db.add(milestone)
+    milestone = _projects_create_milestone(
+        db, _to_uuid(project_id),
+        title=payload.title,
+        description=payload.description,
+        target_date=payload.target_date,
+        is_completed=payload.is_completed or False,
+    )
     _log_project_activity(
         db,
         project_id,
@@ -1985,7 +1979,6 @@ def create_project_milestone(
         f"Hito '{milestone.title}' creado",
     )
     db.commit()
-    db.refresh(milestone)
     _normalize_dates(milestone)
     return milestone
 
@@ -2008,8 +2001,7 @@ def delete_project_milestone(
         "milestone_deleted",
         f"Hito '{milestone.title}' eliminado",
     )
-    milestone.deleted_at = datetime.now(timezone.utc)
-    db.commit()
+    _projects_delete_milestone(db, _to_uuid(milestone_id))
     return {"ok": True, "deleted": milestone_id}
 
 

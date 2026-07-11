@@ -36,6 +36,7 @@ def upgrade() -> None:
         "project_attachments",
         "task_supplies",
         "project_documents",
+        "project_whiteboards",
     ]
     for table in tables:
         _add_deleted_at(table)
@@ -49,6 +50,7 @@ def downgrade() -> None:
         "project_comments",
         "project_phases",
         "project_milestones",
+        "project_whiteboards",
     ]
     for table in tables:
         op.execute(sa.text(f"ALTER TABLE {table} DROP COLUMN IF EXISTS deleted_at"))

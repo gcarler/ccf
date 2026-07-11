@@ -85,6 +85,7 @@ class ProjectWhiteboard(Base):
     title = Column(String(200), nullable=False, default="Pizarra")
     elements_json = Column(Text, nullable=False, default="[]")
     thumbnail_url = Column(String(500), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
