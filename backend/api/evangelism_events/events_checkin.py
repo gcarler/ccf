@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from typing import Optional
 from uuid import UUID
 
@@ -15,6 +16,7 @@ from backend.core.permissions import require_active_user
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class VisitorCreate(BaseModel):
@@ -98,9 +100,15 @@ def fast_checkin_visitor(
         )
     )
 
-    # Create CRM follow-up records for new visitors
+    # Create CRM follow-up records for new visitors.
+    # This is auxiliary: if the CRM bridge is temporarily out of sync with
+    # production schema, we keep the visitor registration successful.
     from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
-    crear_caso_nuevo_visitante(db, new_visitor, new_visitor.sede_id)
+
+    try:
+        crear_caso_nuevo_visitante(db, new_visitor, new_visitor.sede_id)
+    except Exception:
+        logger.exception("Failed to create CRM follow-up for evangelism event visitor %s", new_visitor.id)
 
     db.commit()
 

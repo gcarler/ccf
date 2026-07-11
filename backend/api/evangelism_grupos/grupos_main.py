@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import collections
+import logging
 from datetime import datetime as _datetime
 from datetime import timezone as _timezone
 from typing import List, Optional
@@ -30,6 +31,7 @@ from backend.models import GrupoEvangelismo, SesionGrupo
 router = APIRouter()
 static_router = APIRouter()
 dynamic_router = APIRouter()
+logger = logging.getLogger(__name__)
 
 def _session_read_options(db: Session):
     return session_read_only_options(db)
@@ -1010,12 +1012,16 @@ def register_groups_visitor(
     _ensure_group_visitor_link(db, visitor.grupo_id, new_persona.id)
 
     from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
-    crear_caso_nuevo_visitante(  # hace el db.commit() final
-        db, new_persona, grupo.sede_id,
-        origen_grupo_id=grupo.id,
-        origen_estrategia_id=grupo.estrategia_id,
-        origen_sesion_id=visitor.session_id,
-    )
+    try:
+        crear_caso_nuevo_visitante(  # hace el db.commit() final
+            db, new_persona, grupo.sede_id,
+            origen_grupo_id=grupo.id,
+            origen_estrategia_id=grupo.estrategia_id,
+            origen_sesion_id=visitor.session_id,
+        )
+    except Exception:
+        logger.exception("Failed to create CRM follow-up for group visitor %s", new_persona.id)
+        db.commit()
 
     return GroupVisitorResponse(
         status="created",
