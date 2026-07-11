@@ -108,7 +108,7 @@ def fast_checkin_visitor(
     try:
         crear_caso_nuevo_visitante(db, new_visitor, new_visitor.sede_id)
     except Exception:
-        logger.exception("Failed to create CRM follow-up for evangelism event visitor %s", new_visitor.id)
+        logger.warning("Failed to create CRM follow-up for evangelism event visitor %s", new_visitor.id)
 
     db.commit()
 

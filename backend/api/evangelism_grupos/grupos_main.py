@@ -1020,7 +1020,7 @@ def register_groups_visitor(
             origen_sesion_id=visitor.session_id,
         )
     except Exception:
-        logger.exception("Failed to create CRM follow-up for group visitor %s", new_persona.id)
+        logger.warning("Failed to create CRM follow-up for group visitor %s", new_persona.id)
         db.commit()
 
     return GroupVisitorResponse(
