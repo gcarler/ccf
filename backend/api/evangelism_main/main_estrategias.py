@@ -162,14 +162,9 @@ def create_strategy(
             _project_phases_as_tasks(db, result.id, result.name, strategy.phases, strategy.start_date)
         except Exception:
             db.rollback()
-            if not delete_evangelism_strategy(db=db, strategy_id=result.id, actor_user_id=str(current_user.id)):
-                logger.error(
-                    "Failed to clean up strategy after phase generation error",
-                    extra={"strategy_id": str(result.id)},
-                )
-            raise HTTPException(
-                status_code=500,
-                detail="No se pudieron generar las tareas del evento masivo",
+            logger.warning(
+                "Phase task generation failed for evangelism strategy=%s; keeping strategy saved",
+                result.id,
             )
     return result
 
@@ -212,9 +207,9 @@ def update_strategy(
             _project_phases_as_tasks(db, strategy_id, result.name, strategy.phases, strategy.start_date)
         except Exception:
             db.rollback()
-            raise HTTPException(
-                status_code=500,
-                detail="No se pudieron generar las tareas del evento masivo",
+            logger.warning(
+                "Phase task regeneration failed for evangelism strategy=%s; keeping update saved",
+                strategy_id,
             )
     return result
 
