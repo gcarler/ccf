@@ -6,16 +6,26 @@ import { apiFetch } from '@/lib/http';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import { LayoutDashboard, CheckCircle2, Home, Circle, ChevronLeft } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
+import { GLOBAL_PROJECT_ROUTES } from '@/lib/projects/routes';
 
 export default function ProjectsLayoutClient({ children, initialProjects }: { children: React.ReactNode, initialProjects: any[] }) {
     const { token } = useAuth();
+    const params = useParams() as { id?: string | string[] } | null;
     const pathname = usePathname();
-    // Path format: /plataforma/projects/[id] or /plataforma/projects/[id]/tasks
+    // Prefer next/navigation `useParams()` over path splitting to remain stable
+    // across future rewrites/basePath changes. Fall back to pathname parsing only
+    // if params are unavailable (e.g., older Next.js mock environments).
+    const rawParam = Array.isArray(params?.id) ? params?.id[0] : params?.id;
     const pathParts = pathname?.split('/') || [];
-    // Split of /plataforma/projects/[id]: ['', 'plataforma', 'projects', '[id]', ...]
-    const rawId = pathParts[3];
-    const isGlobalRoute = ['tasks', 'inbox', 'general', 'comments', 'team', 'responses', 'more', 'automations', 'welcome', undefined].includes(rawId);
+    const pathDerivedId = pathParts[3];
+    const rawId = rawParam ?? pathDerivedId;
+    // Anything that doesn't look like a UUID is treated as a global sub-route
+    // (tasks, inbox, automations, etc.) and excluded from project id detection.
+    const isGlobalRoute =
+        !rawId ||
+        GLOBAL_PROJECT_ROUTES.has(rawId) ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawId);
     const projectId = isGlobalRoute ? undefined : rawId;
 
     const [projects, setProjects] = useState<any[]>(initialProjects || []);

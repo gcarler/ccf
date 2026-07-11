@@ -11,12 +11,12 @@ import React,{ useEffect,useMemo,useState } from 'react';
 import type { ViewType } from '@/components/ViewSwitcher';
 import ProjectsShell from '@/components/projects/ProjectsShell';
 import ProjectCard from '@/components/projects/ProjectCard';
+import ProjectCreationDrawer from '@/components/projects/ProjectCreationDrawer';
 import { formatDate } from '@/components/projects/utils';
 import { DataTable } from '@/components/ui/DataTable';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
-import PersonaSelect from '@/components/ui/PersonaSelect';
 import { useAuth } from '@/context/AuthContext';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { DSCard } from '@/design/components/DSCard';
@@ -38,8 +38,6 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
     const [viewType, setViewType] = useState<ViewType>('grid');
     const [search, setSearch] = useState('');
     const [isCreating, setIsCreating] = useState(false);
-    const [newProjectOwner, setNewProjectOwner] = useState<string | null>(null);
-    const [newProjectTitle, setNewProjectTitle] = useState('');
     const [showCreateForm, setShowCreateForm] = useState(false);
 
     useEffect(() => {
@@ -70,7 +68,13 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             (p.description || '').toLowerCase().includes(search.toLowerCase())
         );
 
-    const handleCreateProject = async () => {
+    const handleCreateProject = async (data: {
+        title: string;
+        description: string;
+        status: string;
+        owner_id: string | null;
+        color: string;
+    }) => {
         if (isCreating) return;
         setIsCreating(true);
         try {
@@ -78,15 +82,14 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                 method: 'POST',
                 token,
                 body: {
-                    title: newProjectTitle.trim() || 'Nuevo Proyecto',
-                    description: '',
-                    color: '#2563eb',
-                    status: 'active',
-                    owner_id: newProjectOwner,
+                    title: data.title.trim() || 'Nuevo Proyecto',
+                    description: data.description || '',
+                    color: data.color,
+                    status: data.status,
+                    owner_id: data.owner_id,
                 },
             });
             setProjects((prev) => [created, ...prev]);
-            setNewProjectOwner(null);
             setShowCreateForm(false);
             toast.success('Proyecto creado');
             window.dispatchEvent(new CustomEvent('project-updated'));
@@ -200,49 +203,19 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             onSearch={setSearch}
             rightActions={
                 <button
-                    onClick={() => setShowCreateForm(!showCreateForm)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all hover:scale-105 ${
-                        showCreateForm
-                            ? 'bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
-                            : 'bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20'
-                    }`}
+                    onClick={() => setShowCreateForm(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
                 >
                     <Plus size={14} />
-                    {isCreating ? 'Creando...' : 'Nuevo Proyecto'}
+                    Nuevo Proyecto
                 </button>
             }
         >
-                {showCreateForm && (
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-4 border border-[hsl(var(--border))] dark:border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nuevo Proyecto</h3>
-                        <input
-                            value={newProjectTitle}
-                            onChange={(e) => setNewProjectTitle(e.target.value)}
-                            className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-sm font-medium"
-                            placeholder="Título del proyecto"
-                        />
-                        <PersonaSelect
-                            value={newProjectOwner}
-                            onChange={setNewProjectOwner}
-                            placeholder="Asignar responsable del proyecto"
-                        />
-                        <div className="flex gap-2">
-                            <button
-                                onClick={handleCreateProject}
-                                disabled={isCreating || !newProjectTitle.trim()}
-                                className="px-3 py-1.5 bg-[hsl(var(--primary))] disabled:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all"
-                            >
-                                {isCreating ? 'Creando...' : 'Crear Proyecto'}
-                            </button>
-                            <button
-                                onClick={() => { setShowCreateForm(false); setNewProjectTitle(''); setNewProjectOwner(null); }}
-                                className="px-3 py-1.5 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all"
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <ProjectCreationDrawer
+                    isOpen={showCreateForm}
+                    onClose={() => setShowCreateForm(false)}
+                    onSubmit={handleCreateProject}
+                />
 
                 {/* 📊 Project Metrics */}
                 <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -293,8 +266,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                                 <Folder size={48} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4" />
                                 <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">No hay proyectos</h3>
                                 <p className="text-sm text-[hsl(var(--text-secondary))] mt-1 mb-4 max-w-md">{search ? 'Ningún proyecto coincide con tu búsqueda.' : 'Crea tu primer proyecto para empezar.'}</p>
-                                {!search && (
-                                    <button onClick={() => setShowCreateForm(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide shadow-lg">
+                                {!search && (                                                <button onClick={() => setShowCreateForm(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95">
                                         <Plus size={16} /> Crear proyecto
                                     </button>
                                 )}
@@ -310,7 +282,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                         ) : viewType === 'list' ? (
                             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2 pb-4">
                                 {filtered.map((project) => (
-                                    <button key={project.id} onClick={() => router.push(`/plataforma/projects/${project.id}`)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition-all duration-300 hover:border-blue-300 active:scale-[0.99] dark:border-white/10 dark:bg-[#252528] hover:dark:bg-[#2A2B2E]">
+                                    <button key={project.id} onClick={() => router.push(`/plataforma/projects/${project.id}`)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition-all duration-300 hover:border-[hsl(var(--primary))]/60 dark:border-white/10 dark:bg-[hsl(var(--surface-2))]">
                                         <div className="flex items-center justify-between gap-4">
                                             <div className="min-w-0">
                                                 <p className="truncate text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{project.title}</p>

@@ -8,20 +8,30 @@ import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
+import { STATUS_LABELS, getValidStatus, type TaskStatus } from '@/lib/projects/constants';
+import { DSSkeleton } from '@/design/components/DSSkeleton';
 import type { ProjectTaskRecord } from '@/types/projects';
 import { CheckCircle2, Layout } from 'lucide-react';
 import clsx from 'clsx';
-import Skeleton from '@/components/ui/Skeleton';
 import { toast } from 'sonner';
 
-const STATUS_FLOW = ['todo', 'in_progress', 'review', 'completed'];
+const STATUS_FLOW: TaskStatus[] = ['todo', 'in_progress', 'review', 'completed'];
+// `as const` preserves the literal 'all' union; without it, TS widens the
+// array elements to `string` and the setStatus call site (line 80) fails
+// typecheck because the state union is narrower than `string`.
+const STATUS_FILTERS = ['all', 'todo', 'in_progress', 'review', 'completed'] as const;
+type StatusFilter = (typeof STATUS_FILTERS)[number];
 const PROJECT_TASK_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
+
+function formatStatusFilter(value: StatusFilter): string {
+    return value === 'all' ? 'Todas' : STATUS_LABELS[value as TaskStatus];
+}
 
 export default function ProjectsTasksPage() {
     const { token } = useAuth();
     const [tasks, setTasks] = useState<ProjectTaskRecord[]>([]);
     const [loading, setLoading] = useState(true);
-    const [status, setStatus] = useState<'all' | 'todo' | 'in_progress' | 'review' | 'completed'>('all');
+    const [status, setStatus] = useState<StatusFilter>('all');
     const [viewType, setViewType] = useState<ViewType>('list');
 
     useEffect(() => {
@@ -68,7 +78,7 @@ export default function ProjectsTasksPage() {
     }));
 
     const moveForward = async (task: ProjectTaskRecord) => {
-        const index = STATUS_FLOW.indexOf(task.status || 'todo');
+        const index = STATUS_FLOW.indexOf(getValidStatus(task.status));
         const nextStatus = STATUS_FLOW[Math.min(index + 1, STATUS_FLOW.length - 1)];
         if (!nextStatus || nextStatus === task.status) return;
         try {
@@ -93,25 +103,25 @@ export default function ProjectsTasksPage() {
         >
 
             <div className="px-3 py-3 border-b border-[hsl(var(--border))] dark:border-white/10 flex flex-wrap gap-2">
-                {['all', 'todo', 'in_progress', 'review', 'completed'].map((value) => (
+                {STATUS_FILTERS.map((value) => (
                     <button
                         key={value}
-                        onClick={() => setStatus(value as any)}
+                        onClick={() => setStatus(value as StatusFilter)}
                         className={clsx(
-                            'px-3 py-1 rounded-full text-[10px] uppercase tracking-wide font-black border',
+                            'px-3 py-1 rounded-full text-[10px] uppercase tracking-wide font-black border transition-colors',
                             status === value
-                                ? 'bg-[hsl(var(--primary))] text-white border-blue-600'
-                                : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]'
+                                ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
+                                : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
                         )}
                     >
-                        {value}
+                        {formatStatusFilter(value)}
                     </button>
                 ))}
             </div>
 
             <main className="flex-1 overflow-y-auto p-4">
                 {loading ? (
-                    <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-lg" />)}</div>
+                    <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <DSSkeleton key={idx} rounded="lg" className="h-20" />)}</div>
                 ) : filtered.length === 0 ? (
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-[hsl(var(--text-secondary))]">No hay tareas para este filtro.</div>
                 ) : viewType === 'table' ? (

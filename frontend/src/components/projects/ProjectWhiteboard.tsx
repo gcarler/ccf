@@ -263,15 +263,24 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
 
     // ── Render ─────────────────────────────────────────────────────────────
     // Always in DOM — use CSS to hide/show. Avoids all Fabric.js ref/dispose issues.
+    //
+    // ADR-2026-07-11 — full-screen canvas exception to AGENTS_FRONTEND.md §3
+    // ("Drawers, no Modales"). The whiteboard is a long-running interactive
+    // editor that requires the entire viewport, not a discrete modal/drawer.
+    // a11y role="application" (not "dialog") signals AT that the user is
+    // performing keyboard-driven canvas work, not confirming a decision. Esc
+    // closes; click on X is the only other dismissal. The portal keeps the
+    // canvas outside the React tree to avoid parent re-renders corrupting
+    // Fabric.js internal object state.
     if (!isMounted) return null;
 
     const whiteboard = (
         <div
             className={clsx(
-                'fixed inset-0 z-[9999] flex flex-col bg-[#f4f5f7] dark:bg-[#0f1115] transition-opacity duration-200',
+                'fixed inset-0 z-[9999] flex flex-col bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))] transition-opacity duration-200',
                 isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
             )}
-            role="dialog"
+            role="application"
             aria-label="Pizarra del proyecto"
             aria-hidden={!isOpen}
         >
@@ -288,7 +297,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                 submitLabel={isAiDrawing ? 'Generando…' : 'Generar'}
             />
             {/* Top Bar */}
-            <header className="h-11 px-4 shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-sm">
+            <header className="h-11 px-4 shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-sm">
                 <div className="flex items-center gap-3">
                     <div className="size-7 rounded-md bg-orange-500 flex items-center justify-center text-white">
                         <PencilRuler size={14} />
@@ -330,7 +339,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             </header>
 
             {/* Drawing Area */}
-            <div ref={drawingAreaRef} className="flex-1 relative overflow-hidden bg-[#f8fafc] dark:bg-[#0f1115]">
+            <div ref={drawingAreaRef} className="flex-1 relative overflow-hidden bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))]">
                 {/* Vertical toolbar */}
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-1 p-1.5 bg-white/95 dark:bg-[#1e1f21]/95 backdrop-blur-xl border border-[hsl(var(--border))] dark:border-white/10 rounded-xl shadow-2xl">
                     <ToolBtn active={tool === 'select'} onClick={() => setActiveTool('select')} icon={MousePointer2} label="Seleccionar (V)" />
