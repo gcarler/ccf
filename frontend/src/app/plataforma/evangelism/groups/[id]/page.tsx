@@ -238,7 +238,7 @@ export default function GroupDetailPage() {
  useEffect(() => {
  if (!token || !activeSession) return;
  setLoadingAtt(true);
- apiFetch<AttendanceData>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, { token })
+ apiFetch<AttendanceData>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, { token, silent: true })
  .then(data => {
  setAttendance(data);
  
@@ -293,7 +293,7 @@ export default function GroupDetailPage() {
  // Load personas for selector
  useEffect(() => {
  if (!token || !showAddAttendee) return;
- apiFetch<Persona[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(setPersonas).catch(() => { setPersonas([]); });
+ apiFetch<Persona[]>('/crm/personas', { token, silent: true, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(setPersonas).catch(() => { setPersonas([]); });
  }, [showAddAttendee, token]);
 
  // R2 fix: búsqueda remota con debounce + AbortController.
@@ -320,6 +320,7 @@ export default function GroupDetailPage() {
  const handle = setTimeout(() => {
  apiFetch<{ results: Persona[] }>('/evangelism/personas/search', {
  token,
+ silent: true,
  query: { q, limit: 10 },
  signal: controller.signal,
  })
@@ -367,14 +368,14 @@ setRemoteResults([]);
  setSaving(true);
  try {
  const res = await apiFetch<{ processed: number }>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, {
- method: 'POST', body: { persona_ids: Array.from(selectedIds) }, token
+ method: 'POST', body: { persona_ids: Array.from(selectedIds) }, token, silent: true
  });
  toast.success(`${res.processed} asistente(s) registrados`);
  setShowAddAttendee(false);
  setSelectedIds(new Set());
  setPersonaQuery('');
  // Reload attendance
- const updated = await apiFetch<AttendanceData>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, { token });
+ const updated = await apiFetch<AttendanceData>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, { token, silent: true });
  setAttendance(updated);
  // Update session count in list
  if (house) {
@@ -396,6 +397,7 @@ setRemoteResults([]);
  const res = await apiFetch<Persona>('/crm/personas', {
  method: 'POST',
  token,
+ silent: true,
  body: { ...newPersonaForm, church_role: 'Visitante' }
  });
  toast.success('Invitado creado con éxito');
@@ -427,6 +429,7 @@ setRemoteResults([]);
  await apiFetch<{ status: string }>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, {
  method: 'POST',
  token,
+ silent: true,
  body: {
  status: reportStatus,
  topic: reportTopic,
@@ -439,7 +442,7 @@ setRemoteResults([]);
  }
  });
  toast.success('Reporte semanal guardado');
- const updated = await apiFetch<AttendanceData>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, { token });
+ const updated = await apiFetch<AttendanceData>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, { token, silent: true });
  setAttendance(updated);
  setHouse(prev => prev ? {
  ...prev,
