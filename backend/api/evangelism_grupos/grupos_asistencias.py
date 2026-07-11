@@ -381,7 +381,8 @@ def submit_attendance(
             }
         )
 
-    session.reported_at = utc_now()
+    if "reported_at" in live_columns:
+        session.reported_at = utc_now()
 
     try:
         db.commit()
