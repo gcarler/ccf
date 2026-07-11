@@ -281,7 +281,7 @@ def _check_first_time_lead_trigger(db: Session, session_id: UUID):
             except Exception:
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.error(
+                logger.warning(
                     "Failed to update church_role to lead_nuevo for persona %s",
                     att.persona_id,
                     exc_info=True,
