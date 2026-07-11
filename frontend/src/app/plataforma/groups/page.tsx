@@ -26,7 +26,7 @@ export default function GroupsPage() {
                 const data = await apiFetch<any[]>('/evangelism/grupos', { token }).catch(() => []);
                 setGroups(data);
             } catch (err) {
-                toast.error('Error al cargar Casas de Bendición');
+                toast.error('Error al cargar grupos');
             }
         };
         loadGroups();
@@ -36,12 +36,12 @@ export default function GroupsPage() {
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Casas de Bendición', icon: Home },
+                    { label: 'Grupos', icon: Home },
                     { label: 'Dashboard', icon: TrendingUp },
                 ]}
                 rightActions={
                     <button className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
-                        <Plus size={14} /> Nueva Casa
+                        <Plus size={14} /> Nuevo Grupo
                     </button>
                 }
             />

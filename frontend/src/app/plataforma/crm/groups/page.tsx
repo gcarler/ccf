@@ -59,7 +59,7 @@ export default function CrmGroupsPage() {
             const data = await apiFetch<Grupo[]>('/crm/grupos', { token }).catch(() => []);
             setGroups(data);
         } catch {
-            toast.error('Error al cargar Casas de Bendición');
+            toast.error('Error al cargar grupos');
         } finally {
             setLoading(false);
         }
@@ -185,7 +185,7 @@ export default function CrmGroupsPage() {
             });
             setGroups(prev => prev.map(group => group.id === updated.id ? { ...group, ...updated } : group));
             setInviteGroup(updated);
-            toast.success('Persona agregado a la casa');
+            toast.success('Persona agregada al grupo');
         } catch {
             toast.error('No se pudo agregar el persona');
         } finally {
@@ -198,30 +198,21 @@ export default function CrmGroupsPage() {
         <CrmShell
             breadcrumbs={[
                 { label: 'CRM', icon: LayoutDashboard, href: '/plataforma/crm' },
-                { label: 'Casas de Bendición', icon: Home },
+                { label: 'Grupos', icon: Users },
             ]}
         >
             <main className="flex-1 overflow-y-auto scrollbar-thin">
-                {/* Hero Header */}
-                <div className="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 px-3 py-2 overflow-hidden">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.1)_0%,_transparent_60%)] pointer-events-none" />
-                    <div className="absolute -top-4 -left-12 size-56 rounded-full bg-white/5 blur-3xl" />
-                    <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-                        <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-200 mb-2">Evangelismo · Grupos</p>
-                            <h1 className="text-lg font-bold text-white tracking-tight mb-1">Casas de Bendición</h1>
-                            <p className="text-emerald-200 text-sm font-medium">Red de células y grupos de discipulado CCF</p>
-                        </div>
-
-                    </div>
+                {/* Header */}
+                <div className="px-3 py-4 border-b border-[hsl(var(--border))]/50 dark:border-white/5 mb-4">
+                    <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Grupos</h1>
                 </div>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-3 -mt-3 mb-3 relative z-10">
                     {[
-                        { label: 'Total Casas', value: stats.total, icon: Home, bg: 'bg-emerald-500' },
+                        { label: 'Total Grupos', value: stats.total, icon: Users, bg: 'bg-emerald-500' },
                         { label: 'Integrantes Activos', value: stats.totalPersonas, icon: Users, bg: 'bg-[hsl(var(--primary))]' },
-                        { label: 'Casas Activas', value: stats.active, icon: Activity, bg: 'bg-[hsl(var(--primary))]' },
+                        { label: 'Grupos Activos', value: stats.active, icon: Activity, bg: 'bg-[hsl(var(--primary))]' },
                         { label: 'Ocup. Promedio', value: `${stats.avgCapacity}%`, icon: TrendingUp, bg: 'bg-amber-500' },
                     ].map(s => (
                         <div key={s.label} className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg transition-all duration-300">
@@ -260,9 +251,9 @@ export default function CrmGroupsPage() {
                             <div className="size-10 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
                                 <Home size={36} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
                             </div>
-                            <h3 className="text-sm font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-2">Sin casas registradas</h3>
+                            <h3 className="text-sm font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-2">Sin grupos registrados</h3>
                             <p className="text-sm text-[hsl(var(--text-secondary))] font-medium mb-3">
-                                {query ? `No se encontraron casas con "${query}"` : 'Registra la primera Casa de Bendición de la red.'}
+                                {query ? `No se encontraron grupos con "${query}"` : 'Registra el primer grupo de la red.'}
                             </p>
 
                         </div>

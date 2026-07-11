@@ -46,15 +46,18 @@ def test_migration_baseline_failure_and_sqlite_incompatibility(tmp_path):
     res = _run_alembic("upgrade", "head", database_url=db_url)
 
     # The cms_categories duplicate-create bug is now fixed; assert it stays gone.
+    # This is the regression guard the test exists for from now on.
     assert "table cms_categories already exists" not in res.stderr
     assert "table cms_categories already exists" not in res.stdout
-    # The chain may still fail downstream on a separate, unrelated SQLite
-    # incompatibility (raw ``ALTER TABLE ADD COLUMN IF NOT EXISTS`` in
-    # ``20260710_0001_add_deleted_at_to_project_tables``). The exact failure
-    # wording for that bug is tracked separately; this test stays honest by
-    # only asserting that the cms_categories regression did NOT re-appear.
-    # Removing the previous `returncode != 0` guard: we no longer require
-    # the chain to fail — only that the prior bug is gone.
+    # The chain is expected to STILL FAIL on a fresh SQLite DB at a separate,
+    # unrelated SQLite incompatibility (raw ``ALTER TABLE ADD COLUMN IF NOT
+    # EXISTS`` in ``20260710_0001_add_deleted_at_to_project_tables``). Keeping
+    # ``res.returncode != 0`` preserves the test's adversarial contract: while
+    # bug #2 is open, this test must keep failing. Fixing bug #2 will require
+    # explicit treatment of SQLite-compatible pragmas (or splitting that
+    # migration into Postgres-only + a separate SQLite-safe addendum).
+    # Production (Postgres) is unaffected by the open bug.
+    assert res.returncode != 0
 
 def test_sqlite_foreign_keys_not_enforced(db_session):
     """

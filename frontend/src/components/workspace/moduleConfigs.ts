@@ -479,7 +479,7 @@ export const MODULE_CONFIGS: Record<string, ModuleConfig> = {
         items: [
           {
             id: 'groups-all',
-            label: 'Casas de Bendición',
+            label: 'Grupos',
             href: '/plataforma/community/grupos',
             icon: Home,
           },
