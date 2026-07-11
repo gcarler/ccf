@@ -55,7 +55,7 @@ export default function GroupDetailPage() {
         <CrmShell
             breadcrumbs={[
                 { label: "CRM", icon: LayoutDashboard, href: "/plataforma/crm" },
-                { label: "Casas de Bendicion", icon: Home, href: "/plataforma/crm/groups" },
+                { label: "Grupos", icon: Home, href: "/plataforma/crm/groups" },
                 { label: group.name, icon: MapPin },
             ]}
         >

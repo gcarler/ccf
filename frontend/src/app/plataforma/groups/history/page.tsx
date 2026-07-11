@@ -72,7 +72,7 @@ export default function GroupsHistoryPage() {
         <div className="flex h-full flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#1E1F21]">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: "Casas de Bendicion", icon: Home },
+                    { label: "Grupos", icon: Home },
                     { label: "Historial", icon: History },
                 ]}
             />
