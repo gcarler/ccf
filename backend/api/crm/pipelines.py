@@ -4,9 +4,11 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.api.crm._shared import case_query
 from backend.core.database import get_db
 from backend.core.permissions import require_pastor_or_admin
 from backend.core.tenant import require_user_sede_id
@@ -305,12 +307,9 @@ def kanban_cards(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    cards = (
-        db.query(models.CasoCRM)
-        .filter(models.CasoCRM.sede_id == sede_id, models.CasoCRM.deleted_at.is_(None))
-        .order_by(models.CasoCRM.sort_order)
-        .all()
-    )
+    cards = case_query(db).filter(models.CasoCRM.sede_id == sede_id, models.CasoCRM.deleted_at.is_(None)).order_by(
+        models.CasoCRM.sort_order
+    ).all()
     return [
         {
             "id": str(card.id),
@@ -336,7 +335,7 @@ def kanban_filter(
     current_user=Depends(require_pastor_or_admin),
 ):
     user_sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    query = db.query(models.CasoCRM).filter(models.CasoCRM.sede_id == user_sede_id, models.CasoCRM.deleted_at.is_(None))
+    query = case_query(db).filter(models.CasoCRM.sede_id == user_sede_id, models.CasoCRM.deleted_at.is_(None))
     if pipeline_id:
         query = query.filter(models.CasoCRM.pipeline_id == pipeline_id)
     if assignee_id:
@@ -369,9 +368,7 @@ def drag_drop_events(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    case = (
-        db.query(models.CasoCRM).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
-    )
+    case = case_query(db).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not case:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
 
@@ -702,9 +699,10 @@ def kanban_stage_empty(
         raise HTTPException(status_code=404, detail="Etapa no encontrada")
 
     cases_count = (
-        db.query(models.CasoCRM)
+        db.query(func.count(models.CasoCRM.id))
         .filter(models.CasoCRM.etapa_actual_id == stage_id, models.CasoCRM.deleted_at.is_(None))
-        .count()
+        .scalar()
+        or 0
     )
     return {"stage_id": str(stage_id), "is_empty": cases_count == 0}
 
@@ -728,7 +726,7 @@ def kanban_stage_limit_cases(
         raise HTTPException(status_code=404, detail="Etapa no encontrada")
 
     cards = (
-        db.query(models.CasoCRM)
+        case_query(db)
         .filter(models.CasoCRM.etapa_actual_id == stage_id, models.CasoCRM.deleted_at.is_(None))
         .order_by(models.CasoCRM.sort_order)
         .limit(limit)
@@ -737,9 +735,10 @@ def kanban_stage_limit_cases(
     )
 
     total_count = (
-        db.query(models.CasoCRM)
+        db.query(func.count(models.CasoCRM.id))
         .filter(models.CasoCRM.etapa_actual_id == stage_id, models.CasoCRM.deleted_at.is_(None))
-        .count()
+        .scalar()
+        or 0
     )
 
     return {
@@ -768,7 +767,7 @@ def kanban_search(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    query = db.query(models.CasoCRM).filter(models.CasoCRM.sede_id == sede_id, models.CasoCRM.deleted_at.is_(None))
+    query = case_query(db).filter(models.CasoCRM.sede_id == sede_id, models.CasoCRM.deleted_at.is_(None))
     if title:
         query = query.filter(models.CasoCRM.titulo_caso.ilike(f"%{title}%"))
 
@@ -795,7 +794,7 @@ def kanban_unassigned(
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     cards = (
-        db.query(models.CasoCRM)
+        case_query(db)
         .filter(
             models.CasoCRM.sede_id == sede_id,
             models.CasoCRM.asignado_a_id.is_(None),
@@ -826,7 +825,7 @@ def kanban_stage_deleted(
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     cards = (
-        db.query(models.CasoCRM)
+        case_query(db)
         .join(models.EtapaPipeline, models.CasoCRM.etapa_actual_id == models.EtapaPipeline.id)
         .filter(
             models.CasoCRM.sede_id == sede_id,
@@ -853,9 +852,7 @@ def drag_drop_same_stage(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    case = (
-        db.query(models.CasoCRM).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
-    )
+    case = case_query(db).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not case:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
 
@@ -874,9 +871,7 @@ def drag_drop_invalid_stage(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    case = (
-        db.query(models.CasoCRM).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
-    )
+    case = case_query(db).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not case:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
 
@@ -913,9 +908,7 @@ def drag_drop_concurrent(
     current_user=Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    case = (
-        db.query(models.CasoCRM).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
-    )
+    case = case_query(db).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not case:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
 
@@ -961,11 +954,7 @@ def drag_drop_recovery(
 
     caso_id = payload.get("caso_id")
     if caso_id:
-        case = (
-            db.query(models.CasoCRM)
-            .filter(models.CasoCRM.id == UUID(caso_id), models.CasoCRM.sede_id == sede_id)
-            .first()
-        )
+        case = case_query(db).filter(models.CasoCRM.id == UUID(caso_id), models.CasoCRM.sede_id == sede_id).first()
         if case:
             return {"status": "recovered", "stage_id": str(case.etapa_actual_id), "sort_order": case.sort_order}
     return {"status": "recovered"}
@@ -1279,7 +1268,7 @@ def reorder_trigger_automation(
 ):
     caso_id = UUID(payload["caso_id"])
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    caso = db.query(models.CasoCRM).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
+    caso = case_query(db).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not caso:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
 
@@ -1338,7 +1327,7 @@ def lead_qualification(
     caso_id = UUID(payload["caso_id"])
     target_etapa_id = UUID(payload["target_etapa_id"])
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    caso = db.query(models.CasoCRM).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
+    caso = case_query(db).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not caso:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
     caso.etapa_actual_id = target_etapa_id
@@ -1354,7 +1343,7 @@ def support_ticket_routing(
 ):
     caso_id = UUID(payload["caso_id"])
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    caso = db.query(models.CasoCRM).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
+    caso = case_query(db).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not caso:
         raise HTTPException(status_code=404, detail="Caso no encontrado")
 
@@ -1399,7 +1388,7 @@ def bulk_reassignment_reorder(
         caso_id = UUID(item["id"])
         sort_order = item["sort_order"]
         asignado_a_id = UUID(item["asignado_a_id"])
-        caso = db.query(models.CasoCRM).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
+        caso = case_query(db).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
         if caso:
             caso.sort_order = sort_order
             caso.asignado_a_id = asignado_a_id

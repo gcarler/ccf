@@ -6,7 +6,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import String, cast, or_
+from sqlalchemy import String, cast, func, or_
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -16,8 +16,10 @@ from backend.api.crm._shared import (
     _get_scoped_persona,
     _get_scoped_prayer_request,
     _get_scoped_task,
+    case_query,
     _persona_full_name,
     persona_query,
+    prepare_case_for_output,
     _resolve_assignee_for_task,
     _scope_by_user_sede_via_persona,
     _serialize_case,
@@ -55,7 +57,7 @@ def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[uuid.UUID]):
     except (ValueError, AttributeError):
         raise HTTPException(status_code=400, detail="Invalid case ID format")
     case = (
-        db.query(models.CasoCRM)
+        case_query(db)
         .filter(
             models.CasoCRM.id == case_uuid,
             models.CasoCRM.deleted_at.is_(None),
@@ -66,7 +68,7 @@ def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[uuid.UUID]):
         raise HTTPException(status_code=404, detail="Case not found")
     if user_sede and str(case.sede_id) != str(user_sede):
         raise HTTPException(status_code=404, detail="Case not found")
-    return case
+    return prepare_case_for_output(db, case)
 
 
 def _payload_key(name: str) -> str:
@@ -346,7 +348,7 @@ def list_crm_casos(
 ):
     """Lista casos CRM con paginación y filtros."""
     user_sede = get_user_sede_id(db, current_user.id)
-    q = db.query(models.CasoCRM).filter(models.CasoCRM.deleted_at.is_(None))
+    q = case_query(db).filter(models.CasoCRM.deleted_at.is_(None))
     if user_sede:
         q = q.filter(models.CasoCRM.sede_id == user_sede)
 
@@ -359,11 +361,27 @@ def list_crm_casos(
     if persona_id:
         q = q.filter(models.CasoCRM.persona_id == persona_id)
 
-    total = q.count()
-    cases = q.order_by(models.CasoCRM.fecha_creacion.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    total = db.query(func.count(models.CasoCRM.id)).filter(models.CasoCRM.deleted_at.is_(None))
+    if user_sede:
+        total = total.filter(models.CasoCRM.sede_id == user_sede)
+    if source:
+        total = total.filter(models.CasoCRM.origen_canal == source)
+    if stage:
+        total = total.filter(models.CasoCRM.estado == stage)
+    if status:
+        total = total.filter(models.CasoCRM.estado == status)
+    if persona_id:
+        total = total.filter(models.CasoCRM.persona_id == persona_id)
+    total = int(total.scalar() or 0)
+    cases = (
+        q.order_by(models.CasoCRM.fecha_creacion.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
 
     return {
-        "cases": [_serialize_case(c) for c in cases],
+        "cases": [_serialize_case(prepare_case_for_output(db, c)) for c in cases],
         "total": total,
         "page": page,
         "page_size": page_size,
@@ -1995,13 +2013,13 @@ def get_crm_radar(
     # _scope_by_user_sede_via_persona NO aplica aquí porque el modelo raíz no
     # es Persona. Axioma 3 se preserva vía el filtro directo sobre la propia
     # columna sede_id del modelo.
-    cases_q = db.query(models.CasoCRM).filter(
+    active_cases_q = db.query(func.count(models.CasoCRM.id)).filter(
         models.CasoCRM.estado != "CERRADO",
         models.CasoCRM.deleted_at.is_(None),
     )
     if user_sede:
-        cases_q = cases_q.filter(models.CasoCRM.sede_id == user_sede)
-    active_cases = cases_q.count()
+        active_cases_q = active_cases_q.filter(models.CasoCRM.sede_id == user_sede)
+    active_cases = int(active_cases_q.scalar() or 0)
 
     tasks_q = (
         db.query(models.TareaCRM)
@@ -2046,7 +2064,7 @@ def get_newsletter_leads(
     Un superadmin sin sede ve TODO lo no-borrado.
     """
     query = (
-        db.query(models.CasoCRM)
+        case_query(db)
         .join(models.Persona, models.CasoCRM.persona_id == models.Persona.id)
         .filter(
             models.CasoCRM.origen_canal == CanalOrigenEnum.WEB_FORM,
@@ -2071,7 +2089,7 @@ def get_newsletter_leads(
     if date_to:
         query = query.filter(models.CasoCRM.fecha_creacion <= date_to)
 
-    total = query.count()
+    total = int(query.order_by(None).with_entities(func.count(models.CasoCRM.id)).scalar() or 0)
     cases = query.order_by(models.CasoCRM.fecha_creacion.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
     leads = []
@@ -2114,7 +2132,7 @@ def export_newsletter_leads_csv(
     por defecto trae TODO lo no-borrado si el superadmin no tiene sede.
     """
     query = (
-        db.query(models.CasoCRM)
+        case_query(db)
         .join(models.Persona, models.CasoCRM.persona_id == models.Persona.id)
         .filter(
             models.CasoCRM.origen_canal == CanalOrigenEnum.WEB_FORM,

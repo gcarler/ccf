@@ -3,13 +3,49 @@ import datetime as dt
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import func, or_
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import func, inspect, or_
+from sqlalchemy.orm import Session, load_only, selectinload
 
 from backend import models, schemas
 from backend.crud._utils import _to_uuid, _utcnow
 from backend.crud.crm_.shared import _audit_log
-from backend.api.crm._shared import persona_query, prepare_persona_for_output
+
+
+def _persona_live_column_names(db: Session) -> set[str]:
+    bind = db.get_bind()
+    if bind is None:
+        return set()
+    try:
+        columns = inspect(bind).get_columns("personas")
+    except Exception:
+        return set()
+    return {str(column.get("name")) for column in columns if column.get("name")}
+
+
+def persona_query(db: Session):
+    live_cols = _persona_live_column_names(db)
+    live_attrs = [
+        getattr(models.Persona, name)
+        for name in live_cols
+        if hasattr(models.Persona, name)
+    ]
+    query = db.query(models.Persona)
+    if live_attrs:
+        query = query.options(load_only(*live_attrs))
+    return query
+
+
+def prepare_persona_for_output(db: Session, persona: models.Persona):
+    live_cols = _persona_live_column_names(db)
+    for field_name in schemas.PersonaResponse.model_fields:
+        if field_name == "nombre_completo" or field_name in live_cols:
+            continue
+        if hasattr(models.Persona, field_name):
+            try:
+                setattr(persona, field_name, None)
+            except Exception:
+                persona.__dict__[field_name] = None
+    return persona
 
 
 def create_persona(db: Session, payload: schemas.PersonaCreate) -> models.Persona:
