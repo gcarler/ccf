@@ -153,7 +153,9 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}, _
       // Silently treat timeouts as a network error, not a crash.
       throw new ApiError('Request timed out', 0, err);
     }
-    console.error(`[API_NETWORK_ERROR] ${method} ${path}:`, err.message);
+    if (!silent) {
+      console.error(`[API_NETWORK_ERROR] ${method} ${path}:`, err.message);
+    }
     throw new ApiError(err.message || 'Network error', 0, err);
   } finally {
     clearTimeout(timeoutId);
