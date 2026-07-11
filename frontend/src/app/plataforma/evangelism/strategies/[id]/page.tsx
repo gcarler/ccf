@@ -710,7 +710,7 @@ export default function StrategyDetailPage() {
  setSessionSaving(true);
  try {
  await apiFetch('/evangelism/sessions', {
- method: 'POST', token,
+ method: 'POST', token, silent: true,
  body: {
  grupo_id: sessionForm.grupo_id,
  session_date: `${sessionForm.session_date}T12:00:00`,
@@ -868,7 +868,7 @@ export default function StrategyDetailPage() {
 
  const handleDeleteSession = async (sessionId: number) => {
  try {
- await apiFetch(`/evangelism/sessions/${sessionId}`, { method: 'DELETE', token });
+ await apiFetch(`/evangelism/sessions/${sessionId}`, { method: 'DELETE', token, silent: true });
  toast.success('Sesión eliminada');
  fetchSessions();
  } catch (e: any) {
@@ -892,7 +892,7 @@ export default function StrategyDetailPage() {
  setSaving(true);
  try {
  await apiFetch(`/evangelism/strategies/${id}`, {
- method: 'PUT', token,
+ method: 'PUT', token, silent: true,
  body: {
  name: editName, description: editDesc, strategy_type: editType,
  status: editStatus,
@@ -917,7 +917,7 @@ export default function StrategyDetailPage() {
  const handleDelete = async () => {
  if (!strategy) return;
  try {
- await apiFetch(`/evangelism/strategies/${id}`, { method: 'DELETE', token });
+ await apiFetch(`/evangelism/strategies/${id}`, { method: 'DELETE', token, silent: true });
  toast.success('Estrategia eliminada');
  window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
  router.push('/plataforma/evangelism');
@@ -961,7 +961,7 @@ export default function StrategyDetailPage() {
  destructive: true,
  onConfirm: async () => {
  try {
- await apiFetch(`/evangelism/strategies/${id}/roles/${role.id}`, { method: 'DELETE', token });
+ await apiFetch(`/evangelism/strategies/${id}/roles/${role.id}`, { method: 'DELETE', token, silent: true });
  toast.success('Rol eliminado');
  fetchCustomRoles();
  fetchStrategy();
@@ -1238,7 +1238,7 @@ export default function StrategyDetailPage() {
  if (!group) return false;
  try {
  await apiFetch(`/evangelism/grupos/${rowId}`, {
- method: 'PUT', token,
+ method: 'PUT', token, silent: true,
  body: { [field]: value },
  });
  fetchGroups();
@@ -1349,7 +1349,7 @@ export default function StrategyDetailPage() {
  const actualField = field === '__displayName' ? 'topic' : field;
  try {
  await apiFetch(`/evangelism/sessions/${rowId}`, {
- method: 'PUT', token,
+ method: 'PUT', token, silent: true,
  body: { [actualField]: value },
  });
  fetchSessions();
@@ -1416,7 +1416,7 @@ export default function StrategyDetailPage() {
  e.stopPropagation();
  const accion = item.estado_habilitacion === 'HABILITADO' ? 'DESHABILITAR' : 'HABILITAR';
  try {
- await apiFetch(`/evangelism/sessions/${item.id}/habilitacion`, { method: 'PATCH', token, body: { accion } });
+ await apiFetch(`/evangelism/sessions/${item.id}/habilitacion`, { method: 'PATCH', token, silent: true, body: { accion } });
  fetchSessions();
  } catch { toast.error('Error al cambiar estado'); }
  }}
@@ -1859,6 +1859,7 @@ export default function StrategyDetailPage() {
  await apiFetch(`/evangelism/sessions/${s.id}/habilitacion`, {
  method: 'PATCH',
  token,
+ silent: true,
  body: { accion },
  });
  fetchSessions();
@@ -2093,7 +2094,7 @@ export default function StrategyDetailPage() {
  if (!newRoleName.trim()) return;
  try {
  await apiFetch(`/evangelism/strategies/${id}/roles`, {
- method: 'POST', token,
+ method: 'POST', token, silent: true,
  body: { estrategia_id: id, nombre_rol: newRoleName.trim(), descripcion: newRoleDesc || null },
  });
  toast.success('Rol creado');
@@ -2160,7 +2161,7 @@ export default function StrategyDetailPage() {
  <button onClick={async () => {
  try {
  await apiFetch(`/evangelism/follow-up/${f.id}`, {
- method: 'PATCH', token,
+ method: 'PATCH', token, silent: true,
  body: { estado_completado: true, fecha_seguimiento: new Date().toISOString() },
  });
  toast.success('Seguimiento completado');

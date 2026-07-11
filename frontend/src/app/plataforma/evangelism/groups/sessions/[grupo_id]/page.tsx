@@ -155,8 +155,8 @@ export default function SessionReportPage() {
  if (!house) return;
  setSaving(true);
  try {
-  const sessionData = await apiFetch<any>('/evangelism/sessions', {
-  method: 'POST', token: token || '',
+ const sessionData = await apiFetch<any>('/evangelism/sessions', {
+  method: 'POST', token: token || '', silent: true,
   body: {
   grupo_id: grupoId,
   session_date: `${sessionDate}T12:00:00`,
@@ -171,6 +171,7 @@ export default function SessionReportPage() {
  await apiFetch(`/evangelism/sessions/${sessionId}/habilitacion`, {
  method: 'PATCH',
  token,
+ silent: true,
  body: { accion: 'HABILITAR' },
  });
  const attPayload = people.map(p => ({
@@ -190,7 +191,7 @@ export default function SessionReportPage() {
  for (const guest of newGuests) {
  if (guest.firstName.trim() || guest.lastName.trim()) {
  await apiFetch('/evangelism/groups/visitors', {
- method: 'POST', token: token,
+ method: 'POST', token: token, silent: true,
  body: {
  first_name: guest.firstName.trim(),
  last_name: guest.lastName.trim(),
