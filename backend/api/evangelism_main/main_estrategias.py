@@ -301,6 +301,8 @@ def generate_strategy_sessions(
     from datetime import datetime as _dt_now
     _before_call = _dt_now.utcnow()
 
+    created = 0
+    sesiones_habilitadas = 0
     try:
         created = calcular_sesiones(
             db=db,
@@ -312,11 +314,36 @@ def generate_strategy_sessions(
             grupos_ids=[g.id for g in groups],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning("No se pudieron validar sesiones para strategy=%s: %s", strategy_id, e)
+        return {
+            "strategy": strat.nombre,
+            "recurrence": strat.frecuencia,
+            "start": str(fecha_inicio),
+            "end": str(strat.fecha_fin),
+            "sessions_per_group": 0,
+            "groups": len(groups),
+            "total_sessions_created": 0,
+            "sesiones_habilitadas": 0,
+            "habilitar_inmediatamente": habilitar_inmediatamente,
+            "warning": str(e),
+        }
+    except Exception:
+        logger.exception("Failed to generate evangelism sessions for strategy=%s", strategy_id)
+        return {
+            "strategy": strat.nombre,
+            "recurrence": strat.frecuencia,
+            "start": str(fecha_inicio),
+            "end": str(strat.fecha_fin),
+            "sessions_per_group": 0,
+            "groups": len(groups),
+            "total_sessions_created": 0,
+            "sesiones_habilitadas": 0,
+            "habilitar_inmediatamente": habilitar_inmediatamente,
+            "warning": "No se pudieron generar sesiones en esta sede",
+        }
 
     sessions_per_group = created // len(groups) if groups else 0
 
-    sesiones_habilitadas = 0
     if habilitar_inmediatamente and created > 0:
         from backend.models_evangelism import HabilitacionSesionEnum, SesionGrupo
 
