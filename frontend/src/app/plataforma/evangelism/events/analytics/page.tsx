@@ -5,7 +5,6 @@ import { BarChart3, Calendar, Filter, Users, TrendingUp, Award } from 'lucide-re
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import AdminHero from '@/components/admin/AdminHero';
 import { apiFetch } from '@/lib/http';
-import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import type { GlobalEventAnalyticsData } from '@/app/plataforma/evangelism/types';
 
@@ -27,8 +26,8 @@ export default function GlobalEventAnalyticsPage() {
  token
  });
  setData(res);
- } catch (error) {
- toast.error("Error al cargar la analítica");
+ } catch {
+ setData(null);
  } finally {
  setLoading(false);
  }

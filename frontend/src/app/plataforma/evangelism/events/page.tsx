@@ -182,7 +182,9 @@ function EventsPage() {
  setPersonas(Array.isArray(personasRes) ? personasRes : []);
  setStats(Array.isArray(statsRes) ? statsRes : []);
  } catch {
- addToast("Error al cargar datos", "error");
+ setEvents([]);
+ setPersonas([]);
+ setStats([]);
  } finally {
  setLoading(false);
  }
