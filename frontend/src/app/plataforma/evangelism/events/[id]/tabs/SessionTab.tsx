@@ -164,7 +164,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
 
   useEffect(() => {
     if (token) {
-      apiFetch<Persona[]>('/crm/personas', { token, query: { limit: 1000 } })
+      apiFetch<Persona[]>('/crm/personas', { token, silent: true, query: { limit: 1000 } })
         .then(setPersonas)
         .catch(() => toast.error('Error al cargar personas'));
     }
@@ -175,7 +175,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
     const loadSession = async () => {
       try {
         setSessionLoading(true);
-        const data = await apiFetch<SessionData>(`/evangelism/events/${eventId}/sessions/${sessionDate}`, { token });
+        const data = await apiFetch<SessionData>(`/evangelism/events/${eventId}/sessions/${sessionDate}`, { token, silent: true });
         setSessionData(data);
 
         // Pre-fill forms
