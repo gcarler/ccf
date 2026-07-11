@@ -81,7 +81,12 @@ export default function GroupPage() {
  const a = await apiFetch<GroupAnalytics>(`/evangelism/groups/analytics?season_id=${active.id}`, { token, silent: true }).catch(() => null);
  setAnalytics(a);
  }
- } catch { toast.error('Error al cargar Grupos en Casa'); }
+ } catch {
+ setSeasons([]);
+ setHouses([]);
+ setAnalytics(null);
+ setActiveSeason(null);
+ }
  finally { setLoading(false); }
  }, [token]);
 
