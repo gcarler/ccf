@@ -107,5 +107,14 @@ function formatRelative(date: string) {
     if (diff < 60) return 'Ahora';
     if (diff < 3600) return `${Math.floor(diff / 60)}m`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+    
+    // Check if it was yesterday
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today.getTime() - 86400000);
+    const eventDate = new Date(then.getFullYear(), then.getMonth(), then.getDate());
+    
+    if (eventDate.getTime() === today.getTime()) return 'Hoy';
+    if (eventDate.getTime() === yesterday.getTime()) return 'Ayer';
+    
     return then.toLocaleDateString(undefined, { day: '2-digit', month: 'short' });
 }
