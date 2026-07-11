@@ -15,7 +15,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.api.evangelism_shared import session_read_only_options, utc_now
+from backend.api.evangelism_shared import session_read_only_options, session_read_value, utc_now
 from backend.core.database import get_db
 from backend.core.permissions import require_pastor_or_admin
 from backend.crud.crm import get_user_sede_id
@@ -121,7 +121,7 @@ def send_reminders(
             f"Tienes una sesión programada para mañana "
             f"({tomorrow.strftime('%d/%m/%Y')}) en el grupo "
             f"\"{group.nombre or group.codigo}\". "
-            f"Tema: {session.tema_estudio or 'No especificado'}. "
+            f"Tema: {session_read_value(session, 'tema_estudio') or session_read_value(session, 'topic') or 'No especificado'}. "
             f"Por favor confirma tu asistencia y prepara el material necesario."
         )
 

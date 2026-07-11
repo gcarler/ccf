@@ -28,6 +28,7 @@ from backend.api.evangelism_shared import (
     is_attended_status,
     is_excused_status,
     session_read_only_options,
+    session_read_value,
 )
 from backend.core.database import get_db
 from backend.core.permissions import require_active_user
@@ -112,8 +113,12 @@ def _build_session_rows(
 
         rows.append({
             "fecha": sesion.fecha_sesion.strftime("%d/%m/%Y") if sesion.fecha_sesion else "—",
-            "tema": sesion.tema_estudio or "Sin tema",
-            "estado": sesion.estado or "—",
+            "tema": session_read_value(sesion, "tema_estudio")
+            or session_read_value(sesion, "topic")
+            or "Sin tema",
+            "estado": session_read_value(sesion, "estado")
+            or session_read_value(sesion, "status")
+            or "—",
             "asistentes": asistentes,
             "ausentes": ausentes,
             "excusas": excusas,
