@@ -52,7 +52,7 @@ const EVENT_TYPE_COLOR: Record<string, string> = {
 
 const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-const formatLocalDate = (date: Date) => {
+const _formatLocalDate = (date: Date) => {
  const year = date.getFullYear();
  const month = String(date.getMonth() + 1).padStart(2, '0');
  const day = String(date.getDate()).padStart(2, '0');
@@ -122,7 +122,7 @@ function EventsPage() {
 
  useEffect(() => {
  if (token) {
- apiFetch<RoleDefinition[]>('/evangelism/roles', { token }).then(setRoles).catch(() => {});
+ apiFetch<RoleDefinition[]>('/evangelism/roles', { token, silent: true }).then(setRoles).catch(() => {});
  }
  }, [token]);
 
@@ -174,9 +174,9 @@ function EventsPage() {
  setLoading(true);
  try {
  const [eventsRes, personasRes, statsRes] = await Promise.all([
- apiFetch<MinistryEvent[]>('/evangelism/events/', { token, cache: 'no-store' }),
- apiFetch<Persona[]>('/crm/personas', { token, query: { limit: 200 }, cache: 'no-store' }),
- apiFetch<EventDashboardStat[]>('/evangelism/events/dashboard-stats', { token, cache: 'no-store' })
+ apiFetch<MinistryEvent[]>('/evangelism/events/', { token, silent: true, cache: 'no-store' }),
+ apiFetch<Persona[]>('/crm/personas', { token, silent: true, query: { limit: 200 }, cache: 'no-store' }),
+ apiFetch<EventDashboardStat[]>('/evangelism/events/dashboard-stats', { token, silent: true, cache: 'no-store' })
  ]);
  setEvents(Array.isArray(eventsRes) ? eventsRes : []);
  setPersonas(Array.isArray(personasRes) ? personasRes : []);
