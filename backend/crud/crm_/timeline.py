@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud._utils import _to_uuid
-from backend.api.crm._shared import persona_query
+from backend.crud.crm_.personas import persona_query
 
 
 def get_persona_timeline(db: Session, persona_id: str):

@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import inspect
-from sqlalchemy.orm import Session, load_only
+from sqlalchemy.orm import Session, load_only, selectinload
 
 from backend import models
 from backend.crud._utils import _to_uuid
@@ -35,6 +35,28 @@ def _persona_live_column_names(db: Session) -> set[str]:
     return {str(column.get("name")) for column in columns if column.get("name")}
 
 
+def _case_live_column_names(db: Session) -> set[str]:
+    bind = db.get_bind()
+    if bind is None:
+        return set()
+    try:
+        columns = inspect(bind).get_columns("crm_casos")
+    except Exception:
+        return set()
+    return {str(column.get("name")) for column in columns if column.get("name")}
+
+
+def _stage_live_column_names(db: Session) -> set[str]:
+    bind = db.get_bind()
+    if bind is None:
+        return set()
+    try:
+        columns = inspect(bind).get_columns("crm_etapas_pipeline")
+    except Exception:
+        return set()
+    return {str(column.get("name")) for column in columns if column.get("name")}
+
+
 def persona_query(db: Session):
     live_cols = _persona_live_column_names(db)
     live_attrs = [
@@ -45,6 +67,42 @@ def persona_query(db: Session):
     query = db.query(models.Persona)
     if live_attrs:
         query = query.options(load_only(*live_attrs))
+    return query
+
+
+def case_query(db: Session):
+    live_cols = _case_live_column_names(db)
+    live_attrs = [
+        getattr(models.CasoCRM, name)
+        for name in live_cols
+        if hasattr(models.CasoCRM, name)
+    ]
+    query = db.query(models.CasoCRM)
+    if live_attrs:
+        query = query.options(load_only(*live_attrs))
+
+    persona_live_cols = _persona_live_column_names(db)
+    persona_live_attrs = [
+        getattr(models.Persona, name)
+        for name in persona_live_cols
+        if hasattr(models.Persona, name)
+    ]
+    stage_live_cols = _stage_live_column_names(db)
+    stage_live_attrs = [
+        getattr(models.EtapaPipeline, name)
+        for name in stage_live_cols
+        if hasattr(models.EtapaPipeline, name)
+    ]
+
+    if persona_live_attrs:
+        query = query.options(
+            selectinload(models.CasoCRM.persona).load_only(*persona_live_attrs),
+            selectinload(models.CasoCRM.asignado_a).load_only(*persona_live_attrs),
+        )
+    if stage_live_attrs:
+        query = query.options(
+            selectinload(models.CasoCRM.etapa_actual).load_only(*stage_live_attrs)
+        )
     return query
 
 
@@ -62,6 +120,25 @@ def prepare_persona_for_output(db: Session, persona: models.Persona):
             except Exception:
                 persona.__dict__[field_name] = None
     return persona
+
+
+def prepare_case_for_output(db: Session, case: models.CasoCRM):
+    live_cols = _case_live_column_names(db)
+    for field_name in models.CasoCRM.__table__.columns.keys():
+        if field_name in live_cols:
+            continue
+        if hasattr(models.CasoCRM, field_name):
+            try:
+                setattr(case, field_name, None)
+            except Exception:
+                case.__dict__[field_name] = None
+    persona = getattr(case, "persona", None)
+    if persona is not None:
+        prepare_persona_for_output(db, persona)
+    assigned = getattr(case, "asignado_a", None)
+    if assigned is not None:
+        prepare_persona_for_output(db, assigned)
+    return case
 
 
 # ── Axioma 3 — Multi-Tenant scope helpers (Axioma 3 pattern) ──────────────

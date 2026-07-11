@@ -9,7 +9,9 @@ from backend import crud, models, schemas
 from backend.api.crm._shared import (
     _get_scoped_family,
     _get_scoped_persona,
+    case_query,
     _scope_by_user_sede_via_persona,
+    prepare_case_for_output,
     _serialize_case,
 )
 from backend.core.database import get_db
@@ -119,7 +121,7 @@ def get_persona_crm_profile(
     )
 
     cases = (
-        db.query(models.CasoCRM)
+        case_query(db)
         .filter(
             models.CasoCRM.persona_id == persona_uuid,
             models.CasoCRM.deleted_at.is_(None),
@@ -127,7 +129,7 @@ def get_persona_crm_profile(
         .order_by(models.CasoCRM.fecha_creacion.desc())
         .all()
     )
-    case_rows = [_serialize_case(case) for case in cases]
+    case_rows = [_serialize_case(prepare_case_for_output(db, case)) for case in cases]
 
     position_rows = []
     for persona_position, position in positions:
