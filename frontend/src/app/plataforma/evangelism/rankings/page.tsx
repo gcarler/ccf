@@ -79,7 +79,7 @@ export default function RankingsPage() {
   const fetchStrategies = useCallback(async () => {
     if (!token) return;
     try {
-      const result = await apiFetch<StrategyItem[]>('/evangelism/strategies', { token });
+      const result = await apiFetch<StrategyItem[]>('/evangelism/strategies', { token, silent: true });
       setStrategies(Array.isArray(result) ? result : []);
     } catch {
       // silent
@@ -95,6 +95,7 @@ export default function RankingsPage() {
         if (selectedStrategy) query.strategy_id = selectedStrategy;
         const result = await apiFetch<GroupRanking[]>('/evangelism/rankings/groups', {
           token,
+          silent: true,
           query,
         });
         setGroupRankings(Array.isArray(result) ? result : []);
@@ -115,6 +116,7 @@ export default function RankingsPage() {
       if (selectedStrategy) query.strategy_id = selectedStrategy;
       const result = await apiFetch<MonthlyComparison>('/evangelism/rankings/monthly-comparison', {
         token,
+        silent: true,
         query,
       });
       setMonthlyComparison(result);
@@ -133,6 +135,7 @@ export default function RankingsPage() {
       if (selectedStrategy) query.strategy_id = selectedStrategy;
       const result = await apiFetch<LeaderRanking[]>('/evangelism/rankings/leaders', {
         token,
+        silent: true,
         query,
       });
       setLeaders(Array.isArray(result) ? result : []);

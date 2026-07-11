@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
-import { apiFetch } from "@/lib/http";
+import { ApiError, apiFetch } from "@/lib/http";
 import EvangelismShell from "@/components/evangelism/EvangelismShell";
 import { MapPin, ArrowLeft } from "lucide-react";
 import { DSCard } from "@/design/components/DSCard";
@@ -41,9 +41,13 @@ export default function EventDetailPage() {
     const loadEvent = async () => {
       try {
         setLoading(true);
-        const data = await apiFetch<MinistryEventDetail>(`/evangelism/events/${id}`, { token });
+        const data = await apiFetch<MinistryEventDetail>(`/evangelism/events/${id}`, { token, silent: true });
         setEvent(data);
       } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          setEvent(null);
+          return;
+        }
         toast.error("Error al cargar detalle del evento");
       } finally {
         setLoading(false);
