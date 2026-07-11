@@ -83,6 +83,7 @@ export default function GroupDetailPage() {
 
  const [house, setHouse] = useState<HouseDetail | null>(null);
  const [loading, setLoading] = useState(true);
+ const [loadError, setLoadError] = useState(false);
 
  // Active session attendance
  const [activeSession, setActiveSession] = useState<SessionRow | null>(null);
@@ -126,6 +127,7 @@ export default function GroupDetailPage() {
  useEffect(() => {
  if (!token || !id) return;
  setLoading(true);
+ setLoadError(false);
  apiFetch<HouseDetail>(`/evangelism/grupos/${id}`, { token, silent: true })
  .then(data => {
  setHouse(data);
@@ -137,7 +139,8 @@ export default function GroupDetailPage() {
  setHouse(null);
  return;
  }
- toast.error('Error al cargar el grupo');
+ setHouse(null);
+ setLoadError(true);
  })
  .finally(() => setLoading(false));
  }, [id, token]);
@@ -457,6 +460,15 @@ setRemoteResults([]);
  if (loading) return (
  <EvangelismShell breadcrumbs={[{ label: 'Grupos en Casa', href: '/plataforma/evangelism/groups', icon: Home }, { label: '...', icon: Home }]}>
  <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin text-[hsl(var(--primary))]" size={40} /></div>
+ </EvangelismShell>
+ );
+
+ if (loadError) return (
+ <EvangelismShell breadcrumbs={[{ label: 'Grupos en Casa', href: '/plataforma/evangelism/groups', icon: Home }]}>
+ <div className="p-4 text-center text-[hsl(var(--text-secondary))]">
+   <p className="mb-4">No se pudo cargar el grupo.</p>
+   <Link href="/plataforma/evangelism/groups" className="text-[hsl(var(--primary))] underline">Volver a grupos</Link>
+ </div>
  </EvangelismShell>
  );
 
