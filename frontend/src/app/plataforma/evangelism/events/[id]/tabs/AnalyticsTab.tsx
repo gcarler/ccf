@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
-import { toast } from "sonner";
 
 type EventAnalyticsData = {
   kpis: {
@@ -24,15 +23,18 @@ interface AnalyticsTabProps {
 export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
   const [analytics, setAnalytics] = useState<EventAnalyticsData | null>(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const loadAnalytics = async () => {
     if (!token) return;
     setLoadingAnalytics(true);
+    setFailed(false);
     try {
       const data = await apiFetch<EventAnalyticsData>(`/evangelism/events/${eventId}/analytics`, { token, silent: true });
       setAnalytics(data);
     } catch {
-      toast.error("Error al cargar analítica");
+      setAnalytics(null);
+      setFailed(true);
     } finally {
       setLoadingAnalytics(false);
     }
@@ -43,12 +45,27 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId, token]);
 
-  if (loadingAnalytics || !analytics) {
+  if (loadingAnalytics) {
     return (
       <div className="space-y-3">
         <div className="text-center py-1.5 text-[hsl(var(--text-secondary))] font-medium">Cargando analítica...</div>
       </div>
     );
+  }
+
+  if (failed) {
+    return (
+      <div className="space-y-3">
+        <div className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-4 text-center">
+          <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">No se pudo cargar la analítica</p>
+          <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">La vista puede seguir usándose mientras se corrige el origen de datos.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!analytics) {
+    return null;
   }
 
   return (
