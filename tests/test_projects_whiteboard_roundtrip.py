@@ -170,27 +170,12 @@ class TestWhiteboardRoundTrip:
 class TestWhiteboardSoftDelete:
     """Soft delete keeps the row for audit but excludes it from listings.
 
-    xfail-temporarily: the ``ProjectWhiteboard`` model does NOT yet
-    declare a ``deleted_at`` column (the column was deferred to a
-    dedicated Sprint 1/2 PR that also adds the alembic migration).
-    Until that lands, ``DELETE /{project_id}/whiteboard`` mutates an
-    unmapped attribute and SQLAlchemy silently drops it on flush, so
-    soft-deleted boards are NOT excluded from listings. The endpoint
-    code already sets the timestamp; only the persistence is missing.
-
-    Once ``ProjectWhiteboard.deleted_at`` lands (column + alembic
-    upgrade head), remove the per-method ``@pytest.mark.xfail``
-    decorators and these tests turn GREEN with no further code change.
+    The ``ProjectWhiteboard.deleted_at`` column is now mapped in the model
+    and included in the canonical migration (``20260710_0001``). The DELETE
+    endpoint stamps ``deleted_at``, the listing endpoint filters it out,
+    and direct DB inspection confirms the auditability contract.
     """
 
-    @pytest.mark.xfail(
-        reason=(
-            "ProjectWhiteboard.deleted_at column not yet in model; "
-            "soft-delete intent is in code but persists nowhere until "
-            "alembic adds the column. See Sprint 1/2 backlog."
-        ),
-        strict=False,
-    )
     def test_soft_deleted_whiteboard_excluded_from_listings(self, client, db_session):
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
@@ -214,14 +199,6 @@ class TestWhiteboardSoftDelete:
             f"GET must return null for soft-deleted board, got {get.json()}"
         )
 
-    @pytest.mark.xfail(
-        reason=(
-            "Same as above: ProjectWhiteboard.deleted_at not mapped; "
-            "row remains visible inside ``elements_json`` audit until "
-            "the column lands via alembic."
-        ),
-        strict=False,
-    )
     def test_soft_delete_preserves_elements_json_in_db(self, client, db_session):
         """Soft delete is reversible for audit — elements_json retained."""
         _, _, sede = seed_admin(db_session)

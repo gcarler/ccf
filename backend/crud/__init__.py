@@ -243,8 +243,14 @@ from backend.crud.projects import (
     create_activity_log,
     create_default_phases,
     create_project,
+    delete_attachment,
+    delete_supply,
     get_project,  # Axiom 3 defense-in-depth: single-record scope filter
+    get_project_milestones,
     get_project_phases,
+    get_project_whiteboard,
+    get_project_wiki,
     get_projects,
+    get_task_supplies,
     set_project_phases,
 )
