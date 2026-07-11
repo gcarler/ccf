@@ -184,7 +184,6 @@ columnas y archivos para impedir que reaparezcan esos bypasses.
 ## Documentos Relacionados
 
 - `REGLAS.md` — Kernel de Personas, Auth v3, Axioma 3.
-- `docs/PROTOCOLO_CAMBIOS_SEGUROS_CCF.md` — protocolo de cambios.
 - `docs/ESTANDARES_DESARROLLO.md` — estandares tecnicos.
 - `docs/AGENTES_OPERATIVOS_CCF.md` — guia operativa para agentes.
 - `docs/CIERRE_ARQUITECTURA_CCF.md` — acta formal del 100 % v3.0.1.

@@ -392,11 +392,11 @@ def delete_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """Delete media item. If permanent=true, deletes the file and DB record entirely.
+    """Delete media item. If permanent=true, deletes the file AND DB record.
     Otherwise soft-deletes (archives)."""
     row = _get_scoped_cms_media(db, current_user, item_id)
     if permanent:
-        # Delete physical file; the database row is still archived via CRUD.
+        # Delete physical file first, then hard-delete DB row.
         if row.url:
             file_path = row.url.lstrip("/")
             full_path = os.path.join("/root/ccf", file_path)
@@ -406,6 +406,7 @@ def delete_cms_media(
         db,
         row.id,
         actor_user_id=str(current_user.id),
+        permanent=permanent,
     )
 
 

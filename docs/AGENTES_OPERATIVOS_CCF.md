@@ -6,7 +6,6 @@
 La documentación existente ya cubre reglas duras y contratos:
 
 - `REGLAS.md`
-- `docs/PROTOCOLO_CAMBIOS_SEGUROS_CCF.md`
 - `docs/ESTANDARES_DESARROLLO.md`
 - `AGENTS_FRONTEND.md`
 
@@ -32,10 +31,9 @@ Lo que faltaba era una guía breve de uso por dominio. Esta capa divide el traba
 
 ## Orden de autoridad
 
-1. `docs/PROTOCOLO_CAMBIOS_SEGUROS_CCF.md`
-2. `REGLAS.md`
-3. `AGENTS_FRONTEND.md`
-4. `docs/ESTANDARES_DESARROLLO.md`
-5. `docs/AGENTES_OPERATIVOS_CCF.md`
+1. `REGLAS.md`
+2. `AGENTS_FRONTEND.md`
+3. `docs/ESTANDARES_DESARROLLO.md`
+4. `docs/AGENTES_OPERATIVOS_CCF.md`
 
 Este documento no reemplaza las reglas duras. Solo las convierte en un flujo operativo simple para agentes.
