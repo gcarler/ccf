@@ -751,7 +751,10 @@ def get_groups_analytics(
     ).join(models.GrupoEvangelismo)
     if season_id:
         query = query.filter(models.SesionGrupo.season_id == season_id)
-    query = query.filter(models.GrupoEvangelismo.sede_id == user_sede)
+    query = query.filter(
+        models.GrupoEvangelismo.sede_id == user_sede,
+        models.GrupoEvangelismo.deleted_at.is_(None),
+    )
 
     rows = query.group_by(models.SesionGrupo.grupo_id, models.SesionGrupo.season_id).all()
     total_attendance = sum(row.total_attendance or 0 for row in rows)
