@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/http';
+import { apiFetch, ApiError } from '@/lib/http';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -116,7 +116,12 @@ export default function SessionReportPage() {
       addPerson(data.assistant_id, 'Persona asignada', 'Asignado', 'present');
       addPerson(data.host_id, 'Persona asignada', 'Asignado', 'present');
       setPeople(Array.from(peopleById.values()));
-    } catch {
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        setHouse(null);
+        setPeople([]);
+        return;
+      }
       toast.error('Error al cargar el grupo');
     } finally {
       setLoading(false);

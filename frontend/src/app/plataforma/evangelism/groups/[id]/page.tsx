@@ -1,9 +1,10 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
+import { apiFetch, ApiError } from '@/lib/http';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 
@@ -131,7 +132,13 @@ export default function GroupDetailPage() {
  // Auto-select the most recent session
  if (data.sessions.length > 0) setActiveSession(data.sessions[0]);
  })
- .catch(() => toast.error('Error al cargar el grupo'))
+ .catch((error: unknown) => {
+ if (error instanceof ApiError && error.status === 404) {
+ setHouse(null);
+ return;
+ }
+ toast.error('Error al cargar el grupo');
+ })
  .finally(() => setLoading(false));
  }, [id, token]);
 
@@ -313,10 +320,10 @@ export default function GroupDetailPage() {
  if (controller.signal.aborted) return;
  setRemoteResults(res.results || []);
  })
- .catch(err => {
- if (controller.signal.aborted) return;
- setRemoteResults([]);
- })
+ .catch(_err => {
+if (controller.signal.aborted) return;
+setRemoteResults([]);
+})
  .finally(() => {
  if (!controller.signal.aborted) setRemoteLoading(false);
  });
@@ -454,7 +461,10 @@ export default function GroupDetailPage() {
 
  if (!house) return (
  <EvangelismShell breadcrumbs={[{ label: 'Grupos en Casa', href: '/plataforma/evangelism/groups', icon: Home }]}>
- <div className="p-4 text-center text-[hsl(var(--text-secondary))]">Grupo no encontrado.</div>
+ <div className="p-4 text-center text-[hsl(var(--text-secondary))]">
+   <p className="mb-4">Grupo no encontrado.</p>
+   <Link href="/plataforma/evangelism/groups" className="text-[hsl(var(--primary))] underline">Volver a grupos</Link>
+ </div>
  </EvangelismShell>
  );
 
