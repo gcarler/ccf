@@ -222,13 +222,14 @@ function GroupsContent() {
  return allPersonas;
  };
 
- Promise.all([
- apiFetch<Grupo[]>('/evangelism/grupos', { token }),
- loadPersonas(),
- apiFetch<AssignmentSummary>('/evangelism/groups/assignment-summary', {
+Promise.all([
+apiFetch<Grupo[]>('/evangelism/grupos', { token, silent: true }),
+loadPersonas(),
+apiFetch<AssignmentSummary>('/evangelism/groups/assignment-summary', {
  token,
- }).catch(() => null),
- ])
+ silent: true,
+}).catch(() => null),
+])
  .then(([housesData, personasData, summaryData]) => {
  if (cancelled) return;
  setHouses(housesData);
@@ -349,7 +350,8 @@ function GroupsContent() {
  await apiFetch(`/evangelism/grupos/${house.id}`, {
  method: 'DELETE',
  token,
- });
+ silent: true,
+});
  setHouses(houses.filter(h => h.id !== house.id));
  if (selectedHouse?.id === house.id) {
  setSelectedHouse(null);
@@ -381,7 +383,7 @@ function GroupsContent() {
  try {
  const detail = await apiFetch<Grupo>(  `/evangelism/grupos/${grupoId}`,
  
- { token }
+ { token, silent: true }
  );
  const current = new Set(
  detail.base_attendee_ids ||
@@ -498,7 +500,7 @@ function GroupsContent() {
  onClick={async () => {
  setIsCreating(false);
  try {
- const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token });
+ const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token, silent: true });
  setSelectedHouse(detail);
  setFormData(detail);
  setSelectedPersonaIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
@@ -550,7 +552,7 @@ function GroupsContent() {
  onClick={async () => {
  setIsCreating(false);
  try {
- const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token });
+ const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token, silent: true });
  setSelectedHouse(detail); setFormData(detail);
  setSelectedPersonaIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
  } catch {
@@ -619,7 +621,7 @@ function GroupsContent() {
  onClick={async () => {
  setIsCreating(false);
  try {
- const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token });
+ const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token, silent: true });
  setSelectedHouse(detail); setFormData(detail);
  setSelectedPersonaIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
  } catch {
@@ -684,7 +686,7 @@ function GroupsContent() {
  onClick={async () => {
  setIsCreating(false);
  try {
- const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token });
+ const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token, silent: true });
  setSelectedHouse(detail); setFormData(detail);
  setSelectedPersonaIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
  } catch {

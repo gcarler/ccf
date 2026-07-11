@@ -38,7 +38,7 @@ export default function GroupDetailPage() {
     if (loading) {
         return (
             <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                Recuperando informacion de la Casa de Bendicion...
+                Recuperando informacion del grupo...
             </div>
         );
     }
