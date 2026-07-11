@@ -193,7 +193,7 @@ def list_my_pending_groups_sessions(
         needs_report = (
             session.status in {"Programada", "Pendiente", "No reportada"}
             or attendance_count == 0
-            or not session.reported_at
+            or not session_read_value(session, "reported_at")
         )
         if not needs_report:
             continue
