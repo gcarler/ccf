@@ -160,15 +160,24 @@ export default function CounselingPage() {
                 />
             }
         >
-        <AdminHero
-            eyebrow="Consejería"
-            title="Centro de consejería"
-            description="Coordina sesiones pastorales y seguimiento espiritual por estado con IA que prioriza casos urgentes."
-            tags={['Consejería', 'Seguimiento', 'IA']}
-            watchers={heroWatchers}
-            primaryAction={{ label: 'Agendar sesión', icon: Plus, onClick: () => setIsDrawerOpen(true) }}
-            secondaryAction={{ label: 'Ver políticas', icon: Link2, onClick: () => router.push('/plataforma/privacy') }}
-        />
+        {/* Header */}
+        <div className="px-3 py-4 border-b border-[hsl(var(--border))]/50 dark:border-white/5 mb-4 flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Consejería</h1>
+            <div className="flex gap-2">
+                <button
+                    onClick={() => router.push('/plataforma/privacy')}
+                    className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-all"
+                >
+                    <Link2 size={16} /> Ver políticas
+                </button>
+                <button
+                    onClick={() => setIsDrawerOpen(true)}
+                    className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--primary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-sm hover:shadow-md hover:scale-105 transition-all active:scale-95 shrink-0"
+                >
+                    <Plus size={16} /> Agendar sesión
+                </button>
+            </div>
+        </div>
 
         {/* Filters Global */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-[hsl(var(--surface-2))] dark:bg-white/5 p-4 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 mb-3">
