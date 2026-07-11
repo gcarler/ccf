@@ -139,29 +139,21 @@ export default function VolunteersPage() {
         <CrmShell
             breadcrumbs={[
                 { label: 'CRM', icon: LayoutDashboard, href: '/plataforma/crm' },
-                { label: 'Cuerpo de Servidores', icon: Heart },
+                { label: 'Voluntariado', icon: Heart },
             ]}
         >
             <main className="flex-1 overflow-y-auto scrollbar-thin">
-                {/* Hero */}
-                <div className="relative bg-gradient-to-br from-blue-600 via-sky-600 to-sky-700 px-3 py-2 overflow-hidden">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.1)_0%,_transparent_60%)] pointer-events-none" />
-                    <div className="absolute -bottom-12 -right-12 size-10 rounded-full bg-white/5 blur-2xl" />
-                    <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-                        <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-blue-200 mb-2">Ministerio · Voluntariado</p>
-                            <h1 className="text-lg font-bold text-white tracking-tight mb-1">Cuerpo de Servidores</h1>
-                            <p className="text-blue-200 text-sm font-medium">Gestión de equipos de servicio ministerial</p>
-                        </div>
-                        {canEditCrm && (
-                            <button
-                                onClick={() => setShowAddForm(true)}
-                                className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95 shrink-0"
-                            >
-                                <Plus size={16} /> Registrar Servidor
-                            </button>
-                        )}
-                    </div>
+                {/* Header */}
+                <div className="px-3 py-4 border-b border-[hsl(var(--border))]/50 dark:border-white/5 mb-4 flex items-center justify-between">
+                    <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Voluntariado</h1>
+                    {canEditCrm && (
+                        <button
+                            onClick={() => setShowAddForm(true)}
+                            className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--primary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-sm hover:shadow-md hover:scale-105 transition-all active:scale-95 shrink-0"
+                        >
+                            <Plus size={16} /> Registrar Servidor
+                        </button>
+                    )}
                 </div>
 
                 {/* Stats */}
