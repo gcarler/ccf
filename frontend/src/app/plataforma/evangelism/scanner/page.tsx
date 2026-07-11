@@ -24,7 +24,7 @@ export default function ScannerPage() {
  setLoading(true);
  setIsScanning(false);
  try {
- const data = await apiFetch<ScanValidationResult>(`/evangelism/scanner/validate/${token}`, { method: 'POST', token: authToken });
+      const data = await apiFetch<ScanValidationResult>(`/evangelism/scanner/validate/${token}`, { method: 'POST', token: authToken, silent: true });
  setScannedData(data);
  toast.success('¡Asistencia Confirmada!');
  } catch (error) {
@@ -170,6 +170,5 @@ export default function ScannerPage() {
  </EvangelismShell>
  );
 }
-
 
 

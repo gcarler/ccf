@@ -228,6 +228,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
       await apiFetch(`/evangelism/events/${eventId}/sessions/${sessionDate}/visitors`, {
         method: 'POST',
         token,
+        silent: true,
         body: visitorForm
       });
       toast.success("Visitante registrado con éxito");
@@ -253,6 +254,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
       await apiFetch(`/evangelism/events/${eventId}/assignments`, {
         method: 'POST',
         token,
+        silent: true,
         body: { session_date: sessionDate, assignments }
       });
       setInitialSessionFingerprint(currentSessionFingerprint);
