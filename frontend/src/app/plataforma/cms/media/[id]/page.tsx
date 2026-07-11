@@ -47,6 +47,7 @@ interface MediaItemData {
 
 export default function CmsMediaDetailPage() {
     const params = useParams();
+    const router = useRouter();
     const id = params?.id as string;
     const { token } = useAuth();
 
@@ -128,6 +129,18 @@ export default function CmsMediaDetailPage() {
         }
     };
 
+    const permanentDelete = async () => {
+        if (!token || !item) return;
+        if (!confirm('¿Eliminar permanentemente este archivo? Se borrará el archivo y no se podrá recuperar.')) return;
+        try {
+            await apiFetch(`/cms/media/${id}?permanent=true`, { method: 'DELETE', token });
+            toast.success('Archivo eliminado permanentemente');
+            router.push('/plataforma/cms/media');
+        } catch (err) {
+            toast.error('Error al eliminar archivo');
+        }
+    };
+
     if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Recuperando Recurso Multimedia...</div>;
     if (!item) return <div className="p-4 text-center font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Recurso multimedia no encontrado.</div>;
 
@@ -143,6 +156,9 @@ export default function CmsMediaDetailPage() {
                     <div className="flex items-center gap-3">
                         <button onClick={toggleArchiveItem} className={`p-2 rounded-md transition-all ${item.status === 'archived' ? 'text-emerald-600 hover:bg-emerald-500/10' : 'text-amber-600 hover:bg-amber-500/10'}`}>
                             {item.status === 'archived' ? <RotateCcw size={20} /> : <Archive size={20} />}
+                        </button>
+                        <button onClick={permanentDelete} className="p-2 rounded-md text-red-500 hover:bg-red-500/10 transition-all" title="Eliminar permanentemente">
+                            <Trash2 size={20} />
                         </button>
                         <button onClick={saveMetadata} disabled={saving} className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50">
                             <Save size={14} /> {saving ? 'Guardando...' : 'Guardar Cambios'}
