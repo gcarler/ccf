@@ -126,6 +126,7 @@ export default function StrategyCreationDrawer({
             await apiFetch('/evangelism/strategies', {
                 method: 'POST',
                 token,
+                silent: true,
                 body: {
                     name: data.name.trim(),
                     description: data.description || null,
