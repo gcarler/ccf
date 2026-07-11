@@ -20,34 +20,15 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func as _func
-from sqlalchemy.orm import Session, load_only
+from sqlalchemy.orm import Session
 
 from backend import models
-from backend.api.evangelism_shared import ATTENDED_STATES
+from backend.api.evangelism_shared import ATTENDED_STATES, session_read_only_options
 from backend.core.database import get_db
 from backend.core.permissions import require_active_user
 from backend.core.tenant import get_user_sede_id
 
 router = APIRouter()
-
-_SESSION_READ_ONLY_COLUMNS = [
-    models.SesionGrupo.id,
-    models.SesionGrupo.grupo_id,
-    models.SesionGrupo.fecha_sesion,
-    models.SesionGrupo.estado,
-    models.SesionGrupo.motivo_cancelacion,
-    models.SesionGrupo.tema_estudio,
-    models.SesionGrupo.notas_lider,
-    models.SesionGrupo.offering_amount,
-    models.SesionGrupo.season_id,
-    models.SesionGrupo.created_at,
-    models.SesionGrupo.deleted_at,
-    models.SesionGrupo.reported_at,
-    models.SesionGrupo.novelty_type,
-    models.SesionGrupo.novelty_detail,
-    models.SesionGrupo.reported_by_persona_id,
-    models.SesionGrupo.report_deadline,
-]
 
 # ─────────────────────────────────────────────────────────
 # Constants
@@ -634,7 +615,7 @@ def strategy_alerts(
     for gid in group_ids:
         recent_sessions = (
             db.query(models.SesionGrupo)
-            .options(load_only(*_SESSION_READ_ONLY_COLUMNS))
+            .options(session_read_only_options(db))
             .filter(
                 models.SesionGrupo.grupo_id == gid,
                 _func.lower(models.SesionGrupo.estado) == "realizada",
@@ -917,7 +898,7 @@ def strategy_groups_detail(
         """Last 8 realized sessions attendance percentage."""
         sessions = (
             db.query(models.SesionGrupo)
-            .options(load_only(*_SESSION_READ_ONLY_COLUMNS))
+            .options(session_read_only_options(db))
             .filter(
                 models.SesionGrupo.grupo_id == gid,
                 _func.lower(models.SesionGrupo.estado) == "realizada",
@@ -1084,7 +1065,7 @@ def get_strategy_full_analytics(
     # Sesiones en el período
     sesiones = (
         db.query(models.SesionGrupo)
-        .options(load_only(*_SESSION_READ_ONLY_COLUMNS))
+        .options(session_read_only_options(db))
         .filter(
             models.SesionGrupo.grupo_id.in_(group_ids),
             models.SesionGrupo.fecha_sesion >= fecha_desde,
