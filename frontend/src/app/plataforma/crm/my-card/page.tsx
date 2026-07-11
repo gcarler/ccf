@@ -31,7 +31,7 @@ export default function MyCardPage() {
             return;
         }
         try {
-            const data = await apiFetch<Persona>('/crm/personas/me', { token, cache: 'no-store' });
+            const data = await apiFetch<Persona>('/crm/personas/me/profile', { token, cache: 'no-store' });
             setPersona(data);
         } catch (err) {
             console.error(err);
