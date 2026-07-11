@@ -18,6 +18,7 @@ from backend.api.evangelism_shared import (
     session_estado_habilitacion,
     session_read_only_options,
     session_read_value,
+    _sessions_grupo_live_column_names,
     utc_now,
 )
 from backend.core.database import get_db
@@ -29,6 +30,10 @@ router = APIRouter()
 
 def _session_read_options(db: Session):
     return session_read_only_options(db)
+
+
+def _session_live_columns(db: Session) -> set[str]:
+    return _sessions_grupo_live_column_names(db)
 
 
 # ── Session Attendance ──
@@ -268,18 +273,23 @@ def add_groups_attendance(
     if new_offering_amount is not None and float(new_offering_amount) < 0:
         raise HTTPException(status_code=400, detail="La ofrenda no puede ser un valor negativo.")
 
+    live_columns = _session_live_columns(db)
     session.topic = payload.get("topic", session.topic)
     session.offering_amount = new_offering_amount
     session.report_notes = payload.get("report_notes", session.report_notes)
-    session.novelty_type = payload.get("novelty_type", session_read_value(session, "novelty_type"))
-    session.novelty_detail = payload.get("novelty_detail", session_read_value(session, "novelty_detail"))
+    if "novelty_type" in live_columns:
+        session.novelty_type = payload.get("novelty_type", session_read_value(session, "novelty_type"))
+    if "novelty_detail" in live_columns:
+        session.novelty_detail = payload.get("novelty_detail", session_read_value(session, "novelty_detail"))
     session.cancellation_reason = new_cancellation_reason
     session.status = new_status
-    session.reported_by_persona_id = payload.get(
-        "reported_by_persona_id",
-        session_read_value(session, "reported_by_persona_id"),
-    )
-    session.reported_at = utc_now()
+    if "reported_by_persona_id" in live_columns:
+        session.reported_by_persona_id = payload.get(
+            "reported_by_persona_id",
+            session_read_value(session, "reported_by_persona_id"),
+        )
+    if "reported_at" in live_columns:
+        session.reported_at = utc_now()
 
     try:
         db.commit()
