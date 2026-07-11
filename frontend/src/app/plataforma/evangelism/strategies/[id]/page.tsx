@@ -639,7 +639,7 @@ export default function StrategyDetailPage() {
  setAllPersonas([]);
  setPersonaSplitHeight(200);
  try {
- const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${group.id}`, { token });
+ const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${group.id}`, { token, silent: true });
  setGroupPersonas(house?.base_attendees?.map((a: any) => ({
  id: a.persona_id,
  name: a.name || a.persona?.nombre_completo || '',
@@ -758,7 +758,7 @@ export default function StrategyDetailPage() {
  }
  try {
  // Get house personas to build attendance list
- const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${session.grupo_id}`, { token });
+ const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${session.grupo_id}`, { token, silent: true });
  const existing = await apiFetch<SessionDetailResponse>(`/evangelism/sessions/${session.id}`, { token }).catch(() => null);
  const existingMap: Record<string, { status: string; notes: string }> = {};
  if (existing?.attendance) {
