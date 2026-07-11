@@ -1669,7 +1669,7 @@ def public_pastoral_team(site_key: str, db: Session = Depends(get_db)):
     """
     # Verify site exists (no auth required for public)
     _get_public_site_or_404(db, site_key)
-    base_query = db.query(models.Persona).filter(
+    base_query = db.query(models.Persona).options(lazyload("*")).filter(
         models.Persona.is_pastoral_leader.is_(True),
         models.Persona.is_pastoral_published.is_(True),
     )
@@ -2390,21 +2390,19 @@ def get_resized_image(
     quality: int = Query(80, le=100),
     db: Session = Depends(get_db),
 ):
-    """Get a resized version of an uploaded image. Returns base64 or URL.
+    """Get a resized version of an uploaded image. Returns URL.
 
     Public endpoint (no auth) -- used by the public frontend for image
     optimization. Rate-limited to 60 req/min.
 
-    Defense-in-depth (Axioma 3): aunque este endpoint es publico (la URL
-    retornada puede ser consumida por el frontend publico), filtramos los
-    media archivados -- un media archivado no debe ser publico via API. La
-    URL es por defecto del asset original, asi que el caller puede
-    servirlo desde CDN con ``<img width=...>`` sin pasar por aqui, pero
-    mantenerlo scope-archived evita leaks de metadata para medios
-    retirados del site publico.
+    Defense-in-depth (Axioma 3): only returns non-archived media that
+    belongs to the CCF site (sede_id match).
     """
+    # Validate media belongs to CCF site and is not archived
+    ccf_site = _get_public_site_or_404(db, "ccf")
     media = db.query(models.CmsMediaItem).filter(
         models.CmsMediaItem.id == media_id,
+        models.CmsMediaItem.sede_id == ccf_site.sede_id,
     ).first()
     if not media or (media.status or "") == "archived":
         raise HTTPException(status_code=404, detail="Media not found")
