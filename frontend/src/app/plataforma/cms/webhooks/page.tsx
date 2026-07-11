@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { Webhook, Plus, Trash2, Power, PowerOff, ChevronDown, ChevronUp } from "lucide-react";
 import SidePanel from "@/components/ui/SidePanel";
+import { SITE_KEY } from "@/lib/site-config";
+import { toast } from "sonner";
 
 interface WebhookItem {
   id: string;
@@ -54,22 +56,28 @@ export default function WebhooksPage() {
 
   const create = async () => {
     if (!form.name || !form.url) return;
-    await apiFetch("/cms/v2/webhooks", { method: "POST", body: { site_key: SITE_KEY, ...form }, silent: true });
-    setForm({ name: "", url: "", events: [] });
-    setShowForm(false);
-    load();
+    try {
+      await apiFetch("/cms/v2/webhooks", { method: "POST", body: { site_key: SITE_KEY, ...form }, silent: true });
+      setForm({ name: "", url: "", events: [] });
+      setShowForm(false);
+      load();
+    } catch { toast.error("Error al crear webhook"); }
   };
 
   const toggle = async (id: string, active: boolean) => {
-    await apiFetch(`/cms/v2/webhooks/${id}`, { method: "PATCH", body: { is_active: !active }, silent: true });
-    load();
+    try {
+      await apiFetch(`/cms/v2/webhooks/${id}`, { method: "PATCH", body: { is_active: !active }, silent: true });
+      load();
+    } catch { toast.error("Error al cambiar estado del webhook"); }
   };
 
   const remove = async () => {
     if (!pendingDelete) return;
-    await apiFetch(`/cms/v2/webhooks/${pendingDelete.id}`, { method: "DELETE", silent: true });
-    setPendingDelete(null);
-    load();
+    try {
+      await apiFetch(`/cms/v2/webhooks/${pendingDelete.id}`, { method: "DELETE", silent: true });
+      setPendingDelete(null);
+      load();
+    } catch { toast.error("Error al eliminar webhook"); }
   };
 
   const loadDeliveries = async (id: string) => {
@@ -188,5 +196,3 @@ export default function WebhooksPage() {
     </div>
   );
 }
-import { SITE_KEY } from "@/lib/site-config";
-import { toast } from "sonner";

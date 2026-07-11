@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
 import {BookOpen, Plus, Search} from "lucide-react";
+import { SITE_KEY } from "@/lib/site-config";
+import { toast } from "sonner";
 
 interface GlossaryTerm { id: string; term: string; definition: string; aliases: string[]; category: string | null; language: string; }
 
@@ -27,10 +29,12 @@ export default function GlossaryPage() {
 
   const create = async () => {
     if (!form.term || !form.definition) return;
-    await apiFetch("/cms/v2/glossary", { method: "POST", body: { site_key: SITE_KEY, ...form, aliases: form.aliases.split(",").map(a => a.trim()).filter(Boolean) }, silent: true });
-    setForm({ term: "", definition: "", aliases: "", category: "" });
-    setShowForm(false);
-    load();
+    try {
+      await apiFetch("/cms/v2/glossary", { method: "POST", body: { site_key: SITE_KEY, ...form, aliases: form.aliases.split(",").map(a => a.trim()).filter(Boolean) }, silent: true });
+      setForm({ term: "", definition: "", aliases: "", category: "" });
+      setShowForm(false);
+      load();
+    } catch { toast.error("Error al crear término"); }
   };
 
   const grouped = terms.reduce((acc, t) => { const cat = t.category || "General"; (acc[cat] = acc[cat] || []).push(t); return acc; }, {} as Record<string, GlossaryTerm[]>);
@@ -89,5 +93,3 @@ export default function GlossaryPage() {
     </div>
   );
 }
-import { SITE_KEY } from "@/lib/site-config";
-import { toast } from "sonner";

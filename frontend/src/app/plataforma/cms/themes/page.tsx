@@ -610,8 +610,8 @@ export default function CmsThemesPage() {
                     <div
                       className="w-8 h-8 rounded-lg border shrink-0 shadow-sm"
                       style={{
-                        background: theme.tokens_json["--site-primary"] || "#a5c8ff",
-                        borderColor: theme.tokens_json["--site-outline-variant"] || "#424750",
+                        background: theme.tokens_json["--site-primary"] || "hsl(var(--primary))",
+                        borderColor: theme.tokens_json["--site-outline-variant"] || "hsl(var(--border))",
                       }}
                     />
                   )}

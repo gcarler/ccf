@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
 import {Puzzle, Plus, Trash2, ChevronRight} from "lucide-react";
 import SidePanel from "@/components/ui/SidePanel";
+import { SITE_KEY } from "@/lib/site-config";
+import { toast } from "sonner";
 
 interface CustomType { id: string; type_key: string; label: string; label_plural: string | null; icon: string | null; supports: string[]; fields_schema: Record<string, unknown>; }
 interface CustomEntry { id: string; type_key: string; slug: string; title: string; excerpt: string | null; status: string; version: number; view_count: number; created_at: string; }
@@ -40,6 +42,10 @@ export default function CustomTypesPage() {
 
   const createType = async () => {
     if (!typeForm.type_key || !typeForm.label) return;
+    if (!/^[a-z_]+$/.test(typeForm.type_key)) {
+      toast.error("El tipo_key solo debe contener minúsculas y guiones bajos");
+      return;
+    }
     try {
       await apiFetch("/cms/v2/custom-types", { method: "POST", body: { site_key: SITE_KEY, supports: ["title", "editor", "excerpt"], ...typeForm }, silent: true });
       setTypeForm({ type_key: "", label: "", label_plural: "" });
@@ -188,5 +194,3 @@ export default function CustomTypesPage() {
     </div>
   );
 }
-import { SITE_KEY } from "@/lib/site-config";
-import { toast } from "sonner";
