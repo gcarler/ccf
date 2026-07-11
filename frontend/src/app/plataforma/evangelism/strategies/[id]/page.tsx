@@ -271,6 +271,7 @@ export default function StrategyDetailPage() {
  const { token } = useAuth();
  const [strategy, setStrategy] = useState<Strategy | null>(null);
  const [loading, setLoading] = useState(true);
+ const [loadError, setLoadError] = useState(false);
  const [saving, setSaving] = useState(false);
  const [editName, setEditName] = useState('');
  const [editDesc, setEditDesc] = useState('');
@@ -453,6 +454,7 @@ export default function StrategyDetailPage() {
 
  const fetchStrategy = useCallback(async () => {
  setLoading(true);
+ setLoadError(false);
  try {
  const result = await apiFetch<Strategy>(`/evangelism/strategies/${id}`, { token, silent: true });
  setStrategy(result);
@@ -467,7 +469,8 @@ export default function StrategyDetailPage() {
  setEditEndDate(result.end_date ? result.end_date.substring(0, 10) : '');
  setEditRecurrence(result.recurrence || null);
  } catch (e: any) {
- toast.error('Error al cargar la estrategia');
+ setStrategy(null);
+ setLoadError(true);
  } finally {
  setLoading(false);
  }
@@ -1045,6 +1048,26 @@ export default function StrategyDetailPage() {
  ]}>
  <div className="space-y-3 p-3">
  {[1, 2, 3].map(i => <div key={i} className="h-12 bg-[hsl(var(--bg-muted))] rounded-lg animate-pulse" />)}
+ </div>
+ </EvangelismShell>
+ );
+ }
+
+ if (loadError) {
+ return (
+ <EvangelismShell breadcrumbs={[
+ { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
+ { label: 'Estrategias', href: '/plataforma/evangelism' },
+ { label: 'Error' }
+ ]}>
+ <div className="flex flex-col items-center justify-center py-16 text-center">
+ <AlertCircle size={48} className="text-[hsl(var(--text-secondary))] mb-4" />
+ <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">No se pudo cargar la estrategia</h2>
+ <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] max-w-md">La estrategia respondió con un estado inválido o el recurso no está disponible. Vuelve a la lista para reintentar.</p>
+ <button onClick={() => router.push('/plataforma/evangelism')}
+ className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
+ Volver a Estrategias
+ </button>
  </div>
  </EvangelismShell>
  );
