@@ -554,7 +554,8 @@ def update_session(
             continue
         setattr(db_session, key, value)
 
-    db_session.reported_at = _datetime.now(_timezone.utc)
+    if "reported_at" in live_columns:
+        db_session.reported_at = _datetime.now(_timezone.utc)
     db.commit()
     # Serializar via SesionGrupoResponse (antes dict manual). El validador
     # ``_coerce_uuid_to_str`` garantiza que ``id`` y ``grupo_id`` se
