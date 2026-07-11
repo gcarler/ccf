@@ -247,6 +247,8 @@ export default function ConsolidationPipelinePage() {
         return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
     }, [filteredLeads]);
 
+    const sourceKeys = useMemo(() => Object.keys(SOURCES ?? {}), []);
+
 
 
     // ── Push lead detail panel when a lead is selected ──────────────────────────
@@ -599,7 +601,7 @@ export default function ConsolidationPipelinePage() {
                                 onChange={e => setNewLeadForm({ ...newLeadForm, source: e.target.value })}
                                 className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white appearance-none transition-all"
                             >
-                                {Object.keys(SOURCES).map(s => <option key={s} value={s}>{SOURCES[s]} {s}</option>)}
+                                {sourceKeys.map(s => <option key={s} value={s}>{SOURCES[s]} {s}</option>)}
                             </select>
                         </div>
                         <div className="space-y-2">

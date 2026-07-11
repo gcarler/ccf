@@ -1081,7 +1081,7 @@ def update_project_wiki(
 
     if not doc:
         doc = models.ProjectDocument(
-            project_id=project_id,
+            project_id=_to_uuid(project_id),
             title=title,
             content=content,
             author_id=author_persona_id,
@@ -1590,10 +1590,10 @@ def create_project_comment(
     db.refresh(comment)
     return schemas.ProjectCommentItem(
         id=comment.id,
-        project_id=comment.project_id,
-        task_id=comment.task_id,
+        project_id=str(comment.project_id) if comment.project_id is not None else None,
+        task_id=str(comment.task_id) if comment.task_id is not None else None,
         content=comment.content,
-        author_id=comment.author_id,
+        author_id=str(comment.author_id) if comment.author_id is not None else None,
         author_name=_author_name(db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()),
         is_resolved=comment.is_resolved,
         created_at=comment.created_at,
@@ -1824,7 +1824,7 @@ def list_project_messages(
                 # cursor with the latest ID anyway.
                 cursor_hex = None
         if cursor_hex:
-            q = q.filter(models.ChatMessage.id < cursor_hex)
+            q = q.filter(models.ChatMessage.id < uuid.UUID(cursor_hex))
     rows = q.order_by(models.ChatMessage.created_at.desc()).limit(limit).all()
     sender_ids = {r.sender_id for r in rows}
     users_map = {}

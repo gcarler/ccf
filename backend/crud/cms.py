@@ -371,12 +371,16 @@ def delete_cms_media_item(
     item_id: uuid.UUID,
     *,
     actor_user_id: str | uuid.UUID,
+    permanent: bool = False,
 ) -> bool:
-    """Axioma 3 — Multi-Tenant: defense-in-depth pre soft-delete.
+    """Axioma 3 -- Multi-Tenant: defense-in-depth pre soft-delete.
 
     Retorna ``False`` tanto para inexistente como para cross-sede (llamada
     equivalente al ``_get_scoped_cms_media`` que ya hizo el API). El API
     layer traduce esto a ``HTTPException(404)``.
+
+    Si ``permanent=True``, ejecuta hard delete (db.delete) en vez de
+    soft delete (status='archived').
     """
     row = get_cms_media_item(db, item_id)
     if not row:
@@ -389,7 +393,10 @@ def delete_cms_media_item(
         current_row_sede=str(row.sede_id) if row.sede_id else None,
         incoming_author_persona_id=row.created_by_persona_id,
     )
-    row.status = "archived"
+    if permanent:
+        db.delete(row)
+    else:
+        row.status = "archived"
     db.commit()
     return True
 

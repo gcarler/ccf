@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import {
     Archive,
@@ -9,6 +9,7 @@ import {
     Image as ImageIcon,
     Save,
     RotateCcw,
+    Trash2,
     Download,
     Maximize2,
     Info,

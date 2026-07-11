@@ -512,16 +512,14 @@ export default function CmsMediaLibrary() {
                         {deletingId === item.id ? <Loader2 size={10} className="animate-spin" /> : item.status === "archived" ? <RotateCcw size={10} /> : <Archive size={10} />}
                         {item.status === "archived" ? "Restaurar" : "Archivar"}
                       </button>
-                      {item.status !== "archived" && (
-                        <button
-                          onClick={e => { e.stopPropagation(); deleteItem(item); }}
-                          disabled={deletingId === item.id}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
-                        >
-                          {deletingId === item.id ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
-                          Eliminar
-                        </button>
-                      )}
+                      <button
+                        onClick={e => { e.stopPropagation(); deleteItem(item); }}
+                        disabled={deletingId === item.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
+                      >
+                        {deletingId === item.id ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
+                        Eliminar
+                      </button>
                     </div>
                   </motion.div>
                 );
@@ -613,16 +611,14 @@ export default function CmsMediaLibrary() {
                       >
                         {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : item.status === "archived" ? <RotateCcw size={14} /> : <Archive size={14} />}
                       </button>
-                      {item.status !== "archived" && (
-                        <button
-                          onClick={e => { e.stopPropagation(); deleteItem(item); }}
-                          disabled={deletingId === item.id}
-                          className="p-2 rounded-md hover:bg-red-50 text-[hsl(var(--text-secondary))] hover:text-red-600 transition-colors disabled:opacity-60"
-                          aria-label="Eliminar"
-                        >
-                          {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                        </button>
-                      )}
+                      <button
+                        onClick={e => { e.stopPropagation(); deleteItem(item); }}
+                        disabled={deletingId === item.id}
+                        className="p-2 rounded-md hover:bg-red-50 text-[hsl(var(--text-secondary))] hover:text-red-600 transition-colors disabled:opacity-60"
+                        aria-label="Eliminar"
+                      >
+                        {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                      </button>
                     </div>
                   </motion.div>
                 );
