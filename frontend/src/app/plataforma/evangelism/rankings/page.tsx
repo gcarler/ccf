@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
 const GroupRankingsPanel = dynamic(
   () => import('./components/GroupRankingsPanel'),
@@ -99,11 +98,11 @@ export default function RankingsPage() {
           query,
         });
         setGroupRankings(Array.isArray(result) ? result : []);
-      } catch (e: any) {
-        toast.error(e?.message || 'Error al cargar rankings');
-      } finally {
-        setLoadingGroups(false);
-      }
+    } catch {
+      setGroupRankings([]);
+    } finally {
+      setLoadingGroups(false);
+    }
     },
     [token, selectedStrategy]
   );
@@ -120,8 +119,8 @@ export default function RankingsPage() {
         query,
       });
       setMonthlyComparison(result);
-    } catch (e: any) {
-      toast.error(e?.message || 'Error al cargar comparación mensual');
+    } catch {
+      setMonthlyComparison(null);
     } finally {
       setLoadingMonthly(false);
     }
@@ -139,8 +138,8 @@ export default function RankingsPage() {
         query,
       });
       setLeaders(Array.isArray(result) ? result : []);
-    } catch (e: any) {
-      toast.error(e?.message || 'Error al cargar líderes');
+    } catch {
+      setLeaders([]);
     } finally {
       setLoadingLeaders(false);
     }
