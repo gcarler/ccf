@@ -454,7 +454,7 @@ export default function StrategyDetailPage() {
  const fetchStrategy = useCallback(async () => {
  setLoading(true);
  try {
- const result = await apiFetch<Strategy>(`/evangelism/strategies/${id}`, { token });
+ const result = await apiFetch<Strategy>(`/evangelism/strategies/${id}`, { token, silent: true });
  setStrategy(result);
  setEditName(result.name);
  setEditDesc(result.description || '');
@@ -476,7 +476,7 @@ export default function StrategyDetailPage() {
  const fetchCustomRoles = useCallback(async () => {
  setLoadingRoles(true);
  try {
- const result = await apiFetch<CustomRole[]>(`/evangelism/strategies/${id}/roles`, { token });
+ const result = await apiFetch<CustomRole[]>(`/evangelism/strategies/${id}/roles`, { token, silent: true });
  setCustomRoles(result || []);
  } catch {
  // Roles endpoint may not exist for old strategies without codigo
@@ -489,7 +489,7 @@ export default function StrategyDetailPage() {
  const fetchFollowUps = useCallback(async () => {
  setLoadingFollowUps(true);
  try {
- const result = await apiFetch<FollowUpRecord[]>('/evangelism/follow-up/pending', { token });
+ const result = await apiFetch<FollowUpRecord[]>('/evangelism/follow-up/pending', { token, silent: true });
  setFollowUps(result || []);
  } catch {
  setFollowUps([]);
@@ -507,7 +507,7 @@ export default function StrategyDetailPage() {
  const fetchGroups = useCallback(async () => {
  setGroupsLoading(true);
  try {
- const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token, query: { evangelism_strategy_id: id } });
+ const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token, silent: true, query: { evangelism_strategy_id: id } });
  setGroups(all || []);
  } catch { toast.error('Error al cargar grupos'); } finally {
  setGroupsLoading(false);
@@ -521,7 +521,7 @@ export default function StrategyDetailPage() {
 
  const fetchMetrics = useCallback(async () => {
  try {
- const m = await apiFetch<StrategyMetrics>(`/evangelism/strategies/${id}/metrics`, { token });
+ const m = await apiFetch<StrategyMetrics>(`/evangelism/strategies/${id}/metrics`, { token, silent: true });
  setMetrics(m);
  } catch { toast.error('Error al cargar métricas'); }
  }, [id, token]);
@@ -529,7 +529,7 @@ export default function StrategyDetailPage() {
  const fetchSessions = useCallback(async () => {
  setSessionsLoading(true);
  try {
- const data = await apiFetch<SessionRow[]>(`/evangelism/sessions?strategy_id=${id}`, { token });
+ const data = await apiFetch<SessionRow[]>(`/evangelism/sessions?strategy_id=${id}`, { token, silent: true });
  setSessions(data || []);
  } catch { toast.error('Error al cargar sesiones'); } finally {
  setSessionsLoading(false);
@@ -553,7 +553,7 @@ export default function StrategyDetailPage() {
  const params: Record<string, any> = query.length >= 1
  ? { limit: 200, search: query }
  : { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' };
- const res = await apiFetch<any[]>('/crm/personas', { token, query: params });
+ const res = await apiFetch<any[]>('/crm/personas', { token, silent: true, query: params });
  setRoleResults(r => ({ ...r, [field]: res || [] }));
  } catch {
  setRoleResults(r => ({ ...r, [field]: [] }));
@@ -586,6 +586,7 @@ export default function StrategyDetailPage() {
  const roleDrivenAssignments = buildRoleDrivenGroupAssignments();
  await apiFetch('/evangelism/grupos', {
  method: 'POST', token,
+ silent: true,
  body: {
  name: groupForm.name.trim(),
  code: null,
@@ -615,7 +616,7 @@ export default function StrategyDetailPage() {
 
  const handleDeleteGroup = async (groupId: string) => {
  try {
- await apiFetch(`/evangelism/grupos/${groupId}`, { method: 'DELETE', token });
+ await apiFetch(`/evangelism/grupos/${groupId}`, { method: 'DELETE', token, silent: true });
  toast.success('Grupo eliminado');
  fetchGroups(); fetchStrategy();
  } catch { toast.error('Error al eliminar'); }
@@ -666,6 +667,7 @@ export default function StrategyDetailPage() {
  try {
  await apiFetch(`/evangelism/grupos/${selectedGroup.id}`, {
  method: 'PUT', token,
+ silent: true,
  body: {
  base_attendees_with_roles: groupPersonas.map(m => ({
  persona_id: m.id,
@@ -731,7 +733,7 @@ export default function StrategyDetailPage() {
   let sessionList = sessions;
   if (sessionList.length === 0) {
    try {
-    sessionList = (await apiFetch<SessionRow[]>(`/evangelism/sessions?strategy_id=${id}`, { token })) || [];
+ sessionList = (await apiFetch<SessionRow[]>(`/evangelism/sessions?strategy_id=${id}`, { token, silent: true })) || [];
     setSessions(sessionList);
    } catch { toast.error('Error al cargar sesiones'); return; }
   }
@@ -752,14 +754,14 @@ export default function StrategyDetailPage() {
  setNewVisitorForm({ first_name: '', last_name: '', phone: '', whatsapp: '', email: '', address: '' });
  // Pre-load all personas for visitor search if not already loaded
  if (allPersonas.length === 0) {
- apiFetch<any[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(res => {
+ apiFetch<any[]>('/crm/personas', { token, silent: true, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(res => {
  if (Array.isArray(res)) setAllPersonas(res);
  }).catch(() => { toast.error('Error al cargar personas'); });
  }
  try {
  // Get house personas to build attendance list
  const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${session.grupo_id}`, { token, silent: true });
- const existing = await apiFetch<SessionDetailResponse>(`/evangelism/sessions/${session.id}`, { token }).catch(() => null);
+ const existing = await apiFetch<SessionDetailResponse>(`/evangelism/sessions/${session.id}`, { token, silent: true }).catch(() => null);
  const existingMap: Record<string, { status: string; notes: string }> = {};
  if (existing?.attendance) {
  for (const a of existing.attendance) {
@@ -943,7 +945,7 @@ export default function StrategyDetailPage() {
  destructive: true,
  onConfirm: async () => {
  try {
- const res = await apiFetch<BulkHabilitacionResponse>(`/evangelism/strategies/${id}/deshabilitar-todas`, { method: 'POST', token });
+ const res = await apiFetch<BulkHabilitacionResponse>(`/evangelism/strategies/${id}/deshabilitar-todas`, { method: 'POST', token, silent: true });
  toast.success(`${res.sesiones_deshabilitadas} sesiones bloqueadas`);
  fetchSessions();
  } catch (e: any) { toast.error('Error al deshabilitar sesiones'); }
@@ -1699,7 +1701,7 @@ export default function StrategyDetailPage() {
  <button onClick={async () => {
  const btn = toast.loading('Generando sesiones...');
  try {
- const res = await apiFetch<GenerateSessionsResponse>(`/evangelism/strategies/${id}/generate-sessions`, { method: 'POST', token });
+ const res = await apiFetch<GenerateSessionsResponse>(`/evangelism/strategies/${id}/generate-sessions`, { method: 'POST', token, silent: true });
  toast.dismiss(btn);
  if (res.message) {
  toast.info(res.message);
@@ -1718,7 +1720,7 @@ export default function StrategyDetailPage() {
  )}
  <button onClick={async () => {
  try {
- const res = await apiFetch<BulkHabilitacionResponse>(`/evangelism/strategies/${id}/habilitar-todas`, { method: 'POST', token });
+ const res = await apiFetch<BulkHabilitacionResponse>(`/evangelism/strategies/${id}/habilitar-todas`, { method: 'POST', token, silent: true });
  toast.success(`${res.sesiones_habilitadas} sesiones habilitadas`);
  fetchSessions();
  } catch (e: any) { toast.error('Error al habilitar sesiones'); }

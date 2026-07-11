@@ -51,7 +51,7 @@ export default function DiscoverPage() {
             <header className="p-3 border-b border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 space-y-4">
                 <div>
                     <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Descubrir Grupos</h1>
-                    <p className="text-xs text-[hsl(var(--text-secondary))] font-medium mt-1">Encuentra una casa de bendición cerca de ti</p>
+                    <p className="text-xs text-[hsl(var(--text-secondary))] font-medium mt-1">Encuentra un grupo cerca de ti</p>
                 </div>
                 <div className="relative max-w-xl">
                     <input
