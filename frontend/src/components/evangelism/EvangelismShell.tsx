@@ -76,10 +76,10 @@ export default function EvangelismShell({
     const fetchStrategies = useCallback(async () => {
         if (!token) return;
         try {
-            const result = await apiFetch<StrategyItem[]>('/evangelism/strategies', { token });
+            const result = await apiFetch<StrategyItem[]>('/evangelism/strategies', { token, silent: true });
             setStrategies(Array.isArray(result) ? result : []);
-        } catch (error) {
-            console.error('Error fetching evangelism strategies:', error);
+        } catch {
+            setStrategies([]);
         }
     }, [token]);
 
