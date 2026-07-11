@@ -851,8 +851,8 @@ export default function CmsTestimonialsPage() {
       >
           <div className="mt-4">
               <TestimonialForm
-                userId={(user as any)?.id ?? null}
-                authorPersonaId={(user as any)?.persona_id ?? null}
+                userId={(user as { id?: string })?.id ?? null}
+                authorPersonaId={(user as { persona_id?: string })?.persona_id ?? null}
                 token={token ?? ''}
                 onSubmitted={() => { setShowForm(false); fetchTestimonials(); }}
               />

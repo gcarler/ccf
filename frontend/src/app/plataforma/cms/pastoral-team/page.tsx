@@ -50,7 +50,7 @@ export default function PastoralTeamPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [addSearch, setAddSearch] = useState("");
-  const [addResults, setAddResults] = useState<any[]>([]);
+  const [addResults, setAddResults] = useState<PersonaSearchResult[]>([]);
   const [searchingAdd, setSearchingAdd] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
 
@@ -120,7 +120,7 @@ export default function PastoralTeamPage() {
     const isPastoralPublished = formData.get("is_pastoral_published") === "on";
     const pastoralSortOrder = parseInt(formData.get("pastoral_sort_order") as string) || 0;
 
-    const data: Record<string, any> = {};
+    const data: Record<string, string | number | boolean | null> = {};
 
     // Always send photo_url from editing state (MediaPicker updates it directly)
     if (editing.photo_url) data.photo_url = editing.photo_url;
@@ -163,7 +163,7 @@ export default function PastoralTeamPage() {
     try {
       await updateCmsPastoralProfile(
         personaId,
-        { is_pastoral_leader: true } as any,
+        { is_pastoral_leader: true } as Partial<PastoralProfile>,
         token
       );
       setSuccessMsg("Líder agregado al equipo pastoral");
@@ -271,9 +271,9 @@ export default function PastoralTeamPage() {
                 {paginated.map((profile) => (
                   <div
                     key={profile.id}
-                    className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] rounded-xl border border-[hsl(var(--border))]/70 dark:border-white/[0.06] p-4 flex items-start gap-4 hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                    className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-deep))] rounded-xl border border-[hsl(var(--border))]/70 dark:border-white/[0.06] p-4 flex items-start gap-4 hover:shadow-lg hover:-translate-y-0.5 transition-all"
                   >
-                    <div className="relative w-14 h-14 rounded-full overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[#0a0c12] shrink-0 ring-2 ring-[hsl(var(--border))]/50 dark:ring-white/[0.06]">
+                    <div className="relative w-14 h-14 rounded-full overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] shrink-0 ring-2 ring-[hsl(var(--border))]/50 dark:ring-white/[0.06]">
                       {profile.photo_url ? (
                         <Image src={profile.photo_url} alt={profile.name} fill className="object-cover" sizes="56px" />
                       ) : (
@@ -315,10 +315,10 @@ export default function PastoralTeamPage() {
                 {paginated.map((profile) => (
                   <div
                     key={profile.id}
-                    className="group flex items-center gap-4 p-3 rounded-xl border border-[hsl(var(--border))]/70 dark:border-white/[0.06] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] hover:shadow-md transition-all cursor-pointer"
+                    className="group flex items-center gap-4 p-3 rounded-xl border border-[hsl(var(--border))]/70 dark:border-white/[0.06] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-deep))] hover:shadow-md transition-all cursor-pointer"
                     onClick={() => openDrawer(profile)}
                   >
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[#0a0c12] shrink-0">
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] shrink-0">
                       {profile.photo_url ? (
                         <Image src={profile.photo_url} alt={profile.name} fill className="object-cover" sizes="40px" />
                       ) : (
@@ -368,7 +368,7 @@ export default function PastoralTeamPage() {
                     {paginated.map((profile) => (
                       <tr key={profile.id} className="border-b border-[hsl(var(--border))]/50 dark:border-white/[0.03] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] transition-colors">
                         <td className="px-4 py-3">
-                          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[#0a0c12]">
+                          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]">
                             {profile.photo_url ? (
                               <Image src={profile.photo_url} alt={profile.name} fill className="object-cover" sizes="32px" />
                             ) : (
@@ -452,8 +452,8 @@ export default function PastoralTeamPage() {
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={closeDrawer}
           />
-          <div className="relative w-full max-w-2xl bg-[hsl(var(--bg-primary))] dark:bg-[#0a0c12] border-l border-[hsl(var(--border))] dark:border-white/[0.06] shadow-2xl overflow-y-auto">
-            <div className="sticky top-0 bg-[hsl(var(--bg-primary))] dark:bg-[#0a0c12] border-b border-[hsl(var(--border))] dark:border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
+          <div className="relative w-full max-w-2xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-l border-[hsl(var(--border))] dark:border-white/[0.06] shadow-2xl overflow-y-auto">
+            <div className="sticky top-0 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-b border-[hsl(var(--border))] dark:border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
               <h2 className="text-sm font-bold uppercase tracking-wider">
                 Editar perfil
               </h2>
@@ -683,8 +683,8 @@ export default function PastoralTeamPage() {
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={closeDrawer}
           />
-          <div className="relative w-full max-w-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0a0c12] border-l border-[hsl(var(--border))] dark:border-white/[0.06] shadow-2xl overflow-y-auto">
-            <div className="sticky top-0 bg-[hsl(var(--bg-primary))] dark:bg-[#0a0c12] border-b border-[hsl(var(--border))] dark:border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
+          <div className="relative w-full max-w-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-l border-[hsl(var(--border))] dark:border-white/[0.06] shadow-2xl overflow-y-auto">
+            <div className="sticky top-0 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-b border-[hsl(var(--border))] dark:border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
               <h2 className="text-sm font-bold uppercase tracking-wider">
                 Agregar líder pastoral
               </h2>
