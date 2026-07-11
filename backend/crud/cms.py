@@ -393,7 +393,10 @@ def delete_cms_media_item(
         current_row_sede=str(row.sede_id) if row.sede_id else None,
         incoming_author_persona_id=row.created_by_persona_id,
     )
-    row.status = "archived"
+    if permanent:
+        db.delete(row)
+    else:
+        row.status = "archived"
     db.commit()
     return True
 
