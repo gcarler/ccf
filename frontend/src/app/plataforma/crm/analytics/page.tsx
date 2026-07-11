@@ -69,6 +69,7 @@ export default function CrmAnalyticsPage() {
 
     const kpiRows = useMemo<KpiRow[]>(() => {
         if (!analytics) return [];
+        const casesByStage = analytics.cases_by_stage ?? {};
 
         return [
             {
@@ -86,7 +87,7 @@ export default function CrmAnalyticsPage() {
             {
                 label: 'Casos en Pipeline',
                 value: formatCount(analytics.total_cases),
-                context: `${Object.keys(analytics.cases_by_stage).length} etapas activas`,
+                context: `${Object.keys(casesByStage).length} etapas activas`,
                 tone: 'neutral',
             },
             {
@@ -100,9 +101,10 @@ export default function CrmAnalyticsPage() {
 
     const funnelRows = useMemo<FunnelRow[]>(() => {
         if (!analytics) return [];
+        const casesByStage = analytics.cases_by_stage ?? {};
         const total = Math.max(analytics.total_cases, 1);
 
-        return Object.entries(analytics.cases_by_stage)
+        return Object.entries(casesByStage)
             .map(([stage, value]) => ({
                 stage,
                 label: STAGE_LABEL[stage] ?? titleCase(stage),
