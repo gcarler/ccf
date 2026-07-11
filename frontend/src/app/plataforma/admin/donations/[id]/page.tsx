@@ -20,7 +20,7 @@ export default function DonationDetailPage() {
         const load = async () => {
             try {
                 setLoading(true);
-                const list = await apiFetch<any[]>("/crm/personas/donations", { token, cache: "no-store" });
+                const list = await apiFetch<any[]>("/finance/transactions", { token, cache: "no-store" });
                 const found = Array.isArray(list) ? list.find((item) => String(item.id) === donationId) : null;
                 setDonation(found ?? null);
             } catch (error) {

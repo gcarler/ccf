@@ -66,8 +66,8 @@ export default function DonationsManagementPage() {
     const loadDonations = async () => {
         if (!token) return;
         try {
-            const data = await apiFetch<any[]>("/crm/personas/donations", { token });
-            const list = Array.isArray(data) ? data : [];
+            const data = await apiFetch<any[]>("/finance/transactions", { token });
+            const list = Array.isArray(data) ? data.map((d: any) => ({ ...d, donor: d.description || d.donor })) : [];
             setDonations(list);
             const now = new Date();
             const thisMonth = list.filter((d: any) => {
