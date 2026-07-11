@@ -397,7 +397,7 @@ export default function PersonasPage() {
                                     if (sortDir) params.set('sort_dir', sortDir);
                                     if (search) params.set('search', search);
                                     return apiFetch<{ items: any[]; total: number }>(
-                                        `/crm/personas/paginated?${params.toString()}`,
+                                        `/crm/personas?${params.toString()}`,
                                         { token: token ?? undefined }
                                     ).then(res => ({ items: res.items ?? [], total: res.total ?? 0 }));
                                 },
