@@ -29,7 +29,7 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
     if (!token) return;
     setLoadingAnalytics(true);
     try {
-      const data = await apiFetch<EventAnalyticsData>(`/evangelism/events/${eventId}/analytics`, { token });
+      const data = await apiFetch<EventAnalyticsData>(`/evangelism/events/${eventId}/analytics`, { token, silent: true });
       setAnalytics(data);
     } catch {
       toast.error("Error al cargar analítica");

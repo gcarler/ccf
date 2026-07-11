@@ -448,7 +448,7 @@ function EventsPage() {
 
  try {
  setSavingCreateEvent(true);
- await apiFetch('/evangelism/events/', { method: 'POST', token, body: payload });
+ await apiFetch('/evangelism/events/', { method: 'POST', token, silent: true, body: payload });
  addToast("Evento creado con éxito", "success");
  setIsCreateDrawerOpen(false);
  setNewEvent({ name: '', description: '', event_type: 'PERMANENT', target_audience: 'ALL', target_role_id: '', target_role_ids: [], target_persona_ids: [], day_of_week: '0', month_day: '', fixed_date: '', start_time: '', end_time: '' });
@@ -703,7 +703,7 @@ function EventsPage() {
  if (!token) return;
  setDeletingEventLoadingId(evId);
  try {
- await apiFetch(`/evangelism/events/${evId}`, { method: 'DELETE', token });
+ await apiFetch(`/evangelism/events/${evId}`, { method: 'DELETE', token, silent: true });
  setEvents(prev => prev.filter(e => e.id !== evId));
  toast.success('Evento eliminado con éxito');
  } catch {
@@ -762,7 +762,7 @@ function EventsPage() {
 
  setUpdatingEventId(evId);
  try {
- await apiFetch(`/evangelism/events/${evId}`, { method: 'PUT', body: payload, token });
+ await apiFetch(`/evangelism/events/${evId}`, { method: 'PUT', body: payload, token, silent: true });
  setEvents(prev => prev.map(e => e.id === evId ? { ...e, ...payload } : e));
  toast.success('Evento actualizado con éxito');
  setEditingEvent(null);
