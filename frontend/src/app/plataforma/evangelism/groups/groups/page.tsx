@@ -230,18 +230,22 @@ apiFetch<AssignmentSummary>('/evangelism/groups/assignment-summary', {
  silent: true,
 }).catch(() => null),
 ])
- .then(([housesData, personasData, summaryData]) => {
- if (cancelled) return;
- setHouses(housesData);
- setPersonas(personasData);
- setSummary(summaryData);
- })
- .catch(() => {
- if (!cancelled) toast.error('Error al cargar datos');
- })
- .finally(() => {
- if (!cancelled) setLoading(false);
- });
+.then(([housesData, personasData, summaryData]) => {
+if (cancelled) return;
+setHouses(housesData);
+setPersonas(personasData);
+setSummary(summaryData);
+})
+.catch(() => {
+if (!cancelled) {
+ setHouses([]);
+ setPersonas([]);
+ setSummary(null);
+}
+})
+.finally(() => {
+if (!cancelled) setLoading(false);
+});
 
  return () => {
  cancelled = true;

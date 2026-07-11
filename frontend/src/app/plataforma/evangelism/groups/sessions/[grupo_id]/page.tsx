@@ -72,6 +72,7 @@ export default function SessionReportPage() {
 
  const [house, setHouse] = useState<Grupo | null>(null);
  const [loading, setLoading] = useState(true);
+ const [loadError, setLoadError] = useState(false);
  const [saving, setSaving] = useState(false);
  const [sessionDate, setSessionDate] = useState(new Date().toISOString().split('T')[0]);
  const [topic, setTopic] = useState('');
@@ -79,8 +80,10 @@ export default function SessionReportPage() {
  const [reportNotes, setReportNotes] = useState('');
  const [people, setPeople] = useState<SessionPerson[]>([]);
  const [newGuests, setNewGuests] = useState<NewGuest[]>([]);
- const [searchQuery, setSearchQuery] = useState('');  const fetchHouse = useCallback(async () => {
+ const [searchQuery, setSearchQuery] = useState('');
+ const fetchHouse = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const data = await apiFetch<Grupo>(`/evangelism/grupos/${grupoId}`, { token: token || '', silent: true });
       setHouse(data);
@@ -122,7 +125,9 @@ export default function SessionReportPage() {
         setPeople([]);
         return;
       }
-      toast.error('Error al cargar el grupo');
+      setHouse(null);
+      setPeople([]);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -223,6 +228,17 @@ method: 'POST', token: token, silent: true, body: attPayload,
  if (loading) return (
  <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos', href: '/plataforma/evangelism/groups' }, { label: 'Reporte' }]}>
  <div className="space-y-3 p-3">{[1, 2, 3].map(i => <div key={i} className="h-16 bg-[hsl(var(--bg-muted))] rounded-lg animate-pulse" />)}</div>
+ </EvangelismShell>
+ );
+
+ if (loadError) return (
+ <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Grupos', href: '/plataforma/evangelism/groups' }, { label: 'Reporte' }]}>
+ <div className="flex flex-col items-center justify-center py-16 text-center">
+ <AlertCircle size={48} className="text-[hsl(var(--text-secondary))] mb-4" />
+ <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">No se pudo cargar el grupo</h2>
+ <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] max-w-md">La plataforma recibió una respuesta inválida al consultar este grupo. Puedes volver a intentarlo desde la lista de grupos.</p>
+ <button onClick={() => router.push('/plataforma/evangelism/groups')} className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">Volver</button>
+ </div>
  </EvangelismShell>
  );
 
