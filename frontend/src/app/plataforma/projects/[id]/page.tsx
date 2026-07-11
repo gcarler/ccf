@@ -294,7 +294,25 @@ export default function ProjectDetailPage() {
         setEditingProject(true);
     };
 
-    if (loading) return <div className="p-4 text-center animate-pulse font-bold text-[hsl(var(--text-secondary))]">Recuperando ecosistema de trabajo...</div>;
+    if (loading) {
+        return (
+            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21]">
+                <div className="p-4 space-y-4 animate-pulse">
+                    <div className="h-10 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg w-1/3" />
+                    <div className="h-6 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg w-2/3" />
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="h-24 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg" />
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div className="h-64 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg lg:col-span-1" />
+                        <div className="h-64 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg lg:col-span-2" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const doneCount = tasks.filter(t => t.status === 'completed').length;
     const progressPercent = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0;
