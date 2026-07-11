@@ -536,6 +536,7 @@ def test_backend_no_hard_deletes_in_transactional_apis():
         "backend/api/admin.py",       # asignaciones de roles (tablas de control, no históricas)
         "backend/api/auth.py",        # refresh tokens revocados
         "backend/api/auth_v3.py",     # tokens de sesión
+        "backend/crud/cms.py",        # media items son archivos estáticos, no datos transaccionales
         "backend/crud/kernel.py",     # relaciones persona-ministerio (tabla de control sin trazabilidad histórica)
     }
     violations = []
