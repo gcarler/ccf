@@ -12,36 +12,16 @@ from typing import Dict, List
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
-from sqlalchemy.orm import Session, load_only
+from sqlalchemy.orm import Session
 
 from backend import models
-from backend.api.evangelism_shared import utc_now
+from backend.api.evangelism_shared import session_read_only_options, utc_now
 from backend.core.database import get_db
 from backend.core.permissions import require_pastor_or_admin
 from backend.crud.crm import get_user_sede_id
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-_SESSION_READ_ONLY_COLUMNS = [
-    models.SesionGrupo.id,
-    models.SesionGrupo.grupo_id,
-    models.SesionGrupo.fecha_sesion,
-    models.SesionGrupo.estado,
-    models.SesionGrupo.motivo_cancelacion,
-    models.SesionGrupo.tema_estudio,
-    models.SesionGrupo.notas_lider,
-    models.SesionGrupo.offering_amount,
-    models.SesionGrupo.season_id,
-    models.SesionGrupo.created_at,
-    models.SesionGrupo.deleted_at,
-    models.SesionGrupo.reported_at,
-    models.SesionGrupo.novelty_type,
-    models.SesionGrupo.novelty_detail,
-    models.SesionGrupo.reported_by_persona_id,
-    models.SesionGrupo.report_deadline,
-]
-
 
 @router.post("/notifications/send-reminders", response_model=Dict)
 def send_reminders(
@@ -84,7 +64,7 @@ def send_reminders(
     user_sede_id = get_user_sede_id(db, current_user.id)
     sessions_q = (
         db.query(models.SesionGrupo)
-        .options(load_only(*_SESSION_READ_ONLY_COLUMNS))
+        .options(session_read_only_options(db))
         .join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id)
         .filter(
             models.SesionGrupo.deleted_at.is_(None),
