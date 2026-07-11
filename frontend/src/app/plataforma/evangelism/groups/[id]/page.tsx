@@ -125,7 +125,7 @@ export default function GroupDetailPage() {
  useEffect(() => {
  if (!token || !id) return;
  setLoading(true);
- apiFetch<HouseDetail>(`/evangelism/grupos/${id}`, { token })
+ apiFetch<HouseDetail>(`/evangelism/grupos/${id}`, { token, silent: true })
  .then(data => {
  setHouse(data);
  // Auto-select the most recent session
