@@ -69,8 +69,8 @@ function CommandCenterHome({ user, token }: any) {
             try {
                 await new Promise(r => setTimeout(r, 400));
                 const [metrics, taskData, insightRes] = await Promise.all([
-                    apiFetch('/dashboard/metrics', { token }).catch(() => ({ cards: [] })),
-                    apiFetch('/projects/1/tasks', { token }).catch(() => []),
+                    apiFetch('/analytics/summary', { token }).catch(() => ({})),
+                    apiFetch('/projects/tasks', { token }).catch(() => []),
                     apiFetch<any[]>('/agents/insights', { token }).catch(() => [])
                 ]);
 
@@ -78,10 +78,10 @@ function CommandCenterHome({ user, token }: any) {
 
                 setStats((metrics as any)?.cards?.length ? metrics : {
                     cards: [
-                        { title: 'Progreso Académico', value: '78%', trend: '+12% este mes' },
-                        { title: 'Tareas Activas', value: '14', trend: '3 vencen hoy' },
-                        { title: 'Menciones', value: '5', trend: 'Sin leer' },
-                        { title: 'Puntos MESH', value: '2,450', trend: '+150 hoy' }
+                        { title: 'Personas', value: String((metrics as any)?.total_personas ?? '0'), trend: 'Resumen operativo' },
+                        { title: 'Proyectos', value: String((metrics as any)?.total_projects ?? '0'), trend: 'Resumen operativo' },
+                        { title: 'Pendientes', value: String((metrics as any)?.pending_agent_tasks ?? '0'), trend: 'Resumen operativo' },
+                        { title: 'Testimonios', value: String((metrics as any)?.pending_testimonials ?? '0'), trend: 'Resumen operativo' }
                     ]
                 });
 
