@@ -201,7 +201,7 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
             .first()
         )
         if not pipeline:
-            logger.error("Pipeline race condition: still missing after savepoint rollback (sede=%s)", sede_id)
+            logger.warning("Pipeline race condition: still missing after savepoint rollback (sede=%s)", sede_id)
             return None
         return pipeline  # pipeline existente ya tiene su etapa — no crear otra
 
@@ -254,7 +254,7 @@ def crear_caso_desde_asistencia(
 
     pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db, sede_id)
     if pipeline is None:
-        logger.error("No se pudo obtener/crear pipeline para sede=%s — skipping caso creation", sede_id)
+        logger.warning("No se pudo obtener/crear pipeline para sede=%s — skipping caso creation", sede_id)
         return None
 
     etapa_options = _crm_etapa_pipeline_read_only_options(db)
@@ -302,7 +302,7 @@ def crear_caso_nuevo_visitante(
     """
     pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db, sede_id)
     if pipeline is None:
-        logger.error("No se pudo obtener/crear pipeline para sede=%s — skipping caso creation", sede_id)
+        logger.warning("No se pudo obtener/crear pipeline para sede=%s — skipping caso creation", sede_id)
         return None
 
     etapa_options = _crm_etapa_pipeline_read_only_options(db)
