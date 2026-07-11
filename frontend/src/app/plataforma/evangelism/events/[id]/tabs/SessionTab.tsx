@@ -204,7 +204,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
     if (!token) return;
     setExportingCsv(true);
     try {
-      const res = await apiFetch<string>(`/evangelism/events/${eventId}/sessions/${sessionDate}/export`, { token });
+      const res = await apiFetch<string>(`/evangelism/events/${eventId}/sessions/${sessionDate}/export`, { token, silent: true });
       const blob = new Blob([res], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
