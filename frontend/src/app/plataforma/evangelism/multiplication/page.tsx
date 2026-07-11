@@ -148,7 +148,7 @@ export default function MultiplicationPage() {
         // Fetch group details to get base attendees
         const groupDetail = await apiFetch<{
           base_attendees?: Array<{ persona_id: string; name: string }>;
-        }>(`/evangelism/grupos/${grupoId}`, { token });
+        }>(`/evangelism/grupos/${grupoId}`, { token, silent: true });
         const attendees = groupDetail?.base_attendees || [];
         setPersonasOptions(
           attendees.map((a) => ({ id: a.persona_id, nombre_completo: a.name }))
