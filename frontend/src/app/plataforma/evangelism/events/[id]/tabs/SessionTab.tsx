@@ -166,7 +166,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
     if (token) {
       apiFetch<Persona[]>('/crm/personas', { token, silent: true, query: { limit: 1000 } })
         .then(setPersonas)
-        .catch(() => toast.error('Error al cargar personas'));
+        .catch(() => setPersonas([]));
     }
   }, [token]);
 
@@ -192,7 +192,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
           offering: off?.persona_id || null,
         }));
       } catch (err) {
-        toast.error("Error al cargar datos de la sesión");
+        setSessionData(null);
       } finally {
         setSessionLoading(false);
       }

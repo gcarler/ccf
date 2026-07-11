@@ -283,14 +283,17 @@ export default function GroupDetailPage() {
  : 'Realizada';
  setReportStatus(nextStatus);
  })
- .catch(() => { toast.error('Error al cargar datos de asistencia'); })
+ .catch(() => {
+ setAttendance(null);
+ setReportPersonas([]);
+ })
  .finally(() => setLoadingAtt(false));
  }, [activeSession, token]);
 
  // Load personas for selector
  useEffect(() => {
  if (!token || !showAddAttendee) return;
- apiFetch<Persona[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(setPersonas).catch(() => { toast.error('Error al cargar personas'); });
+ apiFetch<Persona[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(setPersonas).catch(() => { setPersonas([]); });
  }, [showAddAttendee, token]);
 
  // R2 fix: búsqueda remota con debounce + AbortController.
