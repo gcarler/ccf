@@ -542,7 +542,6 @@ function EventsPage() {
  setAttendedPersonaIds(Array.isArray(data?.attendees) ? data.attendees.map((item) => item.persona_id) : []);
  } catch {
  setAttendedPersonaIds([]);
- addToast("No se pudo cargar la asistencia guardada para esa fecha", "error");
  } finally {
  setAttendanceLoading(false);
  }
