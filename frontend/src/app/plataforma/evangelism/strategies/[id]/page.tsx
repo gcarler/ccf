@@ -512,7 +512,9 @@ export default function StrategyDetailPage() {
  try {
  const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token, silent: true, query: { evangelism_strategy_id: id } });
  setGroups(all || []);
- } catch { toast.error('Error al cargar grupos'); } finally {
+ } catch {
+ setGroups([]);
+ } finally {
  setGroupsLoading(false);
  }
  }, [id, token]);
@@ -526,7 +528,9 @@ export default function StrategyDetailPage() {
  try {
  const m = await apiFetch<StrategyMetrics>(`/evangelism/strategies/${id}/metrics`, { token, silent: true });
  setMetrics(m);
- } catch { toast.error('Error al cargar métricas'); }
+ } catch {
+ setMetrics(null);
+ }
  }, [id, token]);
 
  const fetchSessions = useCallback(async () => {
@@ -534,7 +538,9 @@ export default function StrategyDetailPage() {
  try {
  const data = await apiFetch<SessionRow[]>(`/evangelism/sessions?strategy_id=${id}`, { token, silent: true });
  setSessions(data || []);
- } catch { toast.error('Error al cargar sesiones'); } finally {
+ } catch {
+ setSessions([]);
+ } finally {
  setSessionsLoading(false);
  }
  }, [id, token]);
@@ -738,7 +744,9 @@ export default function StrategyDetailPage() {
    try {
  sessionList = (await apiFetch<SessionRow[]>(`/evangelism/sessions?strategy_id=${id}`, { token, silent: true })) || [];
     setSessions(sessionList);
-   } catch { toast.error('Error al cargar sesiones'); return; }
+   } catch {
+    return;
+   }
   }
   const grpSessions = sessionList
    .filter(s => s.grupo_id === g.id)
@@ -759,7 +767,7 @@ export default function StrategyDetailPage() {
  if (allPersonas.length === 0) {
  apiFetch<any[]>('/crm/personas', { token, silent: true, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(res => {
  if (Array.isArray(res)) setAllPersonas(res);
- }).catch(() => { toast.error('Error al cargar personas'); });
+ }).catch(() => {});
  }
  try {
  // Get house personas to build attendance list
