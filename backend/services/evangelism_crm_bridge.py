@@ -47,6 +47,27 @@ def _crm_casos_live_column_names(db: Session) -> set[str]:
     return {str(column.get("name")) for column in columns if column.get("name")}
 
 
+def _crm_etapa_pipeline_read_only_options(db: Session):
+    live_cols = _crm_etapa_pipeline_live_column_names(db)
+    selectable_names = [
+        name
+        for name in [
+            "id",
+            "pipeline_id",
+            "nombre",
+            "orden",
+            "requiere_accion",
+            "deleted_at",
+            "created_at",
+            "visual_color",
+        ]
+        if name in live_cols and hasattr(EtapaPipeline, name)
+    ]
+    if not selectable_names:
+        return None
+    return load_only(*[getattr(EtapaPipeline, name) for name in selectable_names])
+
+
 def _build_transient_caso(
     *,
     caso_id: uuid.UUID,
@@ -236,27 +257,12 @@ def crear_caso_desde_asistencia(
         logger.error("No se pudo obtener/crear pipeline para sede=%s — skipping caso creation", sede_id)
         return None
 
+    etapa_options = _crm_etapa_pipeline_read_only_options(db)
+    etapa_query = db.query(EtapaPipeline)
+    if etapa_options is not None:
+        etapa_query = etapa_query.options(etapa_options)
     etapa = (
-        db.query(EtapaPipeline)
-        .options(
-            load_only(
-                *[
-                    getattr(EtapaPipeline, name)
-                    for name in [
-                        "id",
-                        "pipeline_id",
-                        "nombre",
-                        "orden",
-                        "requiere_accion",
-                        "deleted_at",
-                        "created_at",
-                        "visual_color",
-                    ]
-                    if name in _crm_etapa_pipeline_live_column_names(db) and hasattr(EtapaPipeline, name)
-                ]
-            )
-        )
-        .filter(EtapaPipeline.pipeline_id == pipeline.id)
+        etapa_query.filter(EtapaPipeline.pipeline_id == pipeline.id)
         .order_by(EtapaPipeline.orden.asc())
         .first()
     )
@@ -299,9 +305,12 @@ def crear_caso_nuevo_visitante(
         logger.error("No se pudo obtener/crear pipeline para sede=%s — skipping caso creation", sede_id)
         return None
 
+    etapa_options = _crm_etapa_pipeline_read_only_options(db)
+    etapa_query = db.query(EtapaPipeline)
+    if etapa_options is not None:
+        etapa_query = etapa_query.options(etapa_options)
     etapa = (
-        db.query(EtapaPipeline)
-        .filter(EtapaPipeline.pipeline_id == pipeline.id)
+        etapa_query.filter(EtapaPipeline.pipeline_id == pipeline.id)
         .order_by(EtapaPipeline.orden.asc())
         .first()
     )
