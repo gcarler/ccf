@@ -34,6 +34,7 @@ export default function EventDetailPage() {
 
   const [event, setEvent] = useState<MinistryEventDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'session' | 'analytics'>('details');
 
   useEffect(() => {
@@ -41,11 +42,13 @@ export default function EventDetailPage() {
     const loadEvent = async () => {
       try {
         setLoading(true);
+        setNotFound(false);
         const data = await apiFetch<MinistryEventDetail>(`/evangelism/events/${id}`, { token, silent: true });
         setEvent(data);
       } catch (err) {
         if (err instanceof ApiError && err.status === 404) {
           setEvent(null);
+          setNotFound(true);
           return;
         }
         toast.error("Error al cargar detalle del evento");
@@ -56,8 +59,33 @@ export default function EventDetailPage() {
     loadEvent();
   }, [id, token]);
 
-  if (loading || !event) {
+  if (loading) {
     return <div className="p-4 text-center animate-pulse font-bold text-[hsl(var(--text-secondary))]">Cargando...</div>;
+  }
+
+  if (notFound) {
+    return (
+      <EvangelismShell breadcrumbs={[{ label: "Evangelismo", href: "/plataforma/evangelism/events" }, { label: "Eventos", href: "/plataforma/evangelism/events" }, { label: "No encontrado" }]}>
+        <div className="p-6">
+          <div className="max-w-xl mx-auto rounded-xl border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-6 text-center shadow-sm">
+            <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">Evento no encontrado</h2>
+            <p className="mt-2 text-sm text-[hsl(var(--text-secondary))]">
+              El evento solicitado no existe o ya fue eliminado.
+            </p>
+            <button
+              onClick={() => router.push('/plataforma/evangelism/events')}
+              className="mt-4 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-sm font-semibold text-white"
+            >
+              Volver a Eventos
+            </button>
+          </div>
+        </div>
+      </EvangelismShell>
+    );
+  }
+
+  if (!event) {
+    return null;
   }
 
   return (
