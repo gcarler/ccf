@@ -166,28 +166,34 @@ export default function CmsThemesPage() {
 
   const activate = async (themeId: string) => {
     if (!token || !canPublish) return;
-    await activateCmsTheme(siteKey, themeId, token);
-    setMessage({ text: "Tema activado.", type: "success" });
-    await load(siteKey);
+    try {
+      await activateCmsTheme(siteKey, themeId, token);
+      setMessage({ text: "Tema activado.", type: "success" });
+      await load(siteKey);
+    } catch { toast.error("Error al activar tema"); }
   };
 
   const archive = async (themeId: string) => {
     if (!token || !canPublish) return;
-    await archiveCmsTheme(siteKey, themeId, token);
-    if (editingThemeId === themeId) {
-      setEditingThemeId(null);
-      setName("Tema personalizado");
-      setTokens(buildDefaultTokens());
-    }
-    setMessage({ text: "Tema archivado.", type: "info" });
-    await load(siteKey);
+    try {
+      await archiveCmsTheme(siteKey, themeId, token);
+      if (editingThemeId === themeId) {
+        setEditingThemeId(null);
+        setName("Tema personalizado");
+        setTokens(buildDefaultTokens());
+      }
+      setMessage({ text: "Tema archivado.", type: "info" });
+      await load(siteKey);
+    } catch { toast.error("Error al archivar tema"); }
   };
 
   const restore = async (themeId: string) => {
     if (!token || !canEdit) return;
-    await patchCmsTheme(siteKey, themeId, { status: "active", is_active: false }, token);
-    setMessage({ text: "Tema restaurado.", type: "success" });
-    await load(siteKey);
+    try {
+      await patchCmsTheme(siteKey, themeId, { status: "active", is_active: false }, token);
+      setMessage({ text: "Tema restaurado.", type: "success" });
+      await load(siteKey);
+    } catch { toast.error("Error al restaurar tema"); }
   };
 
   const applyPresetToEditor = (presetKey: string) => {

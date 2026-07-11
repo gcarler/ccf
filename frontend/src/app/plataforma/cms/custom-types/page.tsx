@@ -40,25 +40,31 @@ export default function CustomTypesPage() {
 
   const createType = async () => {
     if (!typeForm.type_key || !typeForm.label) return;
-    await apiFetch("/cms/v2/custom-types", { method: "POST", body: { site_key: SITE_KEY, supports: ["title", "editor", "excerpt"], ...typeForm }, silent: true });
-    setTypeForm({ type_key: "", label: "", label_plural: "" });
-    setShowTypeForm(false);
-    loadTypes();
+    try {
+      await apiFetch("/cms/v2/custom-types", { method: "POST", body: { site_key: SITE_KEY, supports: ["title", "editor", "excerpt"], ...typeForm }, silent: true });
+      setTypeForm({ type_key: "", label: "", label_plural: "" });
+      setShowTypeForm(false);
+      loadTypes();
+    } catch { toast.error("Error al crear tipo custom"); }
   };
 
   const createEntry = async () => {
     if (!entryForm.slug || !entryForm.title || !selectedType) return;
-    await apiFetch("/cms/v2/custom-entries", { method: "POST", body: { site_key: SITE_KEY, type_key: selectedType, ...entryForm }, silent: true });
-    setEntryForm({ slug: "", title: "", content_html: "", status: "draft" });
-    setShowEntryForm(false);
-    loadEntries(selectedType);
+    try {
+      await apiFetch("/cms/v2/custom-entries", { method: "POST", body: { site_key: SITE_KEY, type_key: selectedType, ...entryForm }, silent: true });
+      setEntryForm({ slug: "", title: "", content_html: "", status: "draft" });
+      setShowEntryForm(false);
+      loadEntries(selectedType);
+    } catch { toast.error("Error al crear entrada"); }
   };
 
   const deleteEntry = async () => {
     if (!pendingArchiveEntry) return;
-    await apiFetch(`/cms/v2/custom-entries/${pendingArchiveEntry.id}`, { method: "DELETE", silent: true });
-    setPendingArchiveEntry(null);
-    if (selectedType) loadEntries(selectedType);
+    try {
+      await apiFetch(`/cms/v2/custom-entries/${pendingArchiveEntry.id}`, { method: "DELETE", silent: true });
+      setPendingArchiveEntry(null);
+      if (selectedType) loadEntries(selectedType);
+    } catch { toast.error("Error al eliminar entrada"); }
   };
 
   const statusColors: Record<string, string> = {

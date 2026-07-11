@@ -62,8 +62,8 @@ export default function CmsPagesManagement() {
         setSiteKey(siteList[0].site_key);
       }
       setPages(nextPages || []);
-    } catch (error: any) {
-      if (error?.status === 401) {
+    } catch (error) {
+      if ((error as { status?: number })?.status === 401) {
         toast.error("Sesión expirada. Inicia sesión nuevamente.");
       } else {
         toast.error("Error al cargar páginas");

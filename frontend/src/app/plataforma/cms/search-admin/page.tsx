@@ -11,7 +11,7 @@ export default function SearchAdminPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [promoted, setPromoted] = useState<Promotion[]>([]);
-  const [_loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [showPromoForm, setShowPromoForm] = useState(false);
   const [promoForm, setPromoForm] = useState({ query_text: "", entity_type: "cms_page", entity_id: "", title: "", boost_score: 100 });
 
@@ -27,7 +27,7 @@ export default function SearchAdminPage() {
 
   const loadPromos = async () => {
     try {
-      const data = await apiFetch<Promotion[]>("/cms/v2/search/promotions?site_key=${SITE_KEY}", { silent: true });
+      const data = await apiFetch<Promotion[]>(`/cms/v2/search/promotions?site_key=${SITE_KEY}`, { silent: true });
       setPromoted(Array.isArray(data) ? data : []);
     } catch { toast.error("Error al cargar datos"); setPromoted([]); }
   };

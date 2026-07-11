@@ -15,7 +15,7 @@ export default function MediaFoldersPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<MediaFolder[]>("/cms/v2/media-folders?site_key=${SITE_KEY}", { silent: true });
+      const data = await apiFetch<MediaFolder[]>(`/cms/v2/media-folders?site_key=${SITE_KEY}`, { silent: true });
       setFolders(Array.isArray(data) ? data : []);
     } catch { toast.error("Error al cargar datos"); setFolders([]); }
     setLoading(false);

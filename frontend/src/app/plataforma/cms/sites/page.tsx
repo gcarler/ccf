@@ -46,19 +46,23 @@ export default function CmsSitesPage() {
 
   const create = async () => {
     if (!token || !name.trim() || !canManage) return;
-    const key = sanitizeSiteKey(siteKey || name);
-    const path = (basePath || `/${key}`).startsWith("/") ? (basePath || `/${key}`) : `/${basePath}`;
-    await createCmsSite({ site_key: key, name: name.trim(), base_path: path, is_active: true }, token);
-    setName("");
-    setSiteKey("");
-    setBasePath("");
-    await load();
+    try {
+      const key = sanitizeSiteKey(siteKey || name);
+      const path = (basePath || `/${key}`).startsWith("/") ? (basePath || `/${key}`) : `/${basePath}`;
+      await createCmsSite({ site_key: key, name: name.trim(), base_path: path, is_active: true }, token);
+      setName("");
+      setSiteKey("");
+      setBasePath("");
+      await load();
+    } catch { toast.error("Error al crear sitio"); }
   };
 
   const toggle = async (target: { site_key: string; is_active: boolean }) => {
     if (!token || !canManage) return;
-    await patchCmsSite(target.site_key, { is_active: !target.is_active }, token);
-    await load();
+    try {
+      await patchCmsSite(target.site_key, { is_active: !target.is_active }, token);
+      await load();
+    } catch { toast.error("Error al cambiar estado del sitio"); }
   };
 
   return (
