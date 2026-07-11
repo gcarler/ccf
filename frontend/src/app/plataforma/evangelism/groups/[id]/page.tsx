@@ -163,8 +163,8 @@ export default function GroupDetailPage() {
  {isPrivileged && <button 
  onClick={async () => {
  try {
-	 const session = await apiFetch<{ id: number }>(`/evangelism/sessions`, {
-	 method: 'POST',
+ const session = await apiFetch<{ id: number }>(`/evangelism/sessions`, {
+ method: 'POST', silent: true,
 	 body: {
 	 grupo_id: house.id,
 	 session_date: `${new Date().toISOString().split('T')[0]}T12:00:00`,
@@ -175,8 +175,9 @@ export default function GroupDetailPage() {
  await apiFetch(`/evangelism/sessions/${session.id}/habilitacion`, {
  method: 'PATCH',
  body: { accion: 'HABILITAR' },
- token
- });
+ token,
+ silent: true
+});
  toast.success('Nueva sesion creada y habilitada');
  window.location.reload();
  } catch {

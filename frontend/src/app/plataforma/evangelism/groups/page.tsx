@@ -70,15 +70,15 @@ export default function GroupPage() {
  setLoading(true);
  try {
  const [s, h]: [GroupSeason[], Grupo[]] = await Promise.all([
- apiFetch<GroupSeason[]>('/evangelism/groups/seasons', { token }).catch(() => [] as GroupSeason[]),
- apiFetch<Grupo[]>('/evangelism/grupos/mine', { token }).catch(() => [] as Grupo[])
+ apiFetch<GroupSeason[]>('/evangelism/groups/seasons', { token, silent: true }).catch(() => [] as GroupSeason[]),
+ apiFetch<Grupo[]>('/evangelism/grupos/mine', { token, silent: true }).catch(() => [] as Grupo[])
  ]);
  setSeasons(s);
  setHouses(h);
  const active = s.find(x => x.status === 'Activa') || s[0] || null;
  setActiveSeason(active);
  if (active) {
- const a = await apiFetch<GroupAnalytics>(`/evangelism/groups/analytics?season_id=${active.id}`, { token }).catch(() => null);
+ const a = await apiFetch<GroupAnalytics>(`/evangelism/groups/analytics?season_id=${active.id}`, { token, silent: true }).catch(() => null);
  setAnalytics(a);
  }
  } catch { toast.error('Error al cargar Grupos en Casa'); }
@@ -91,7 +91,7 @@ export default function GroupPage() {
 
  useEffect(() => {
    if (!token) return;
-   apiFetch<unknown>('/crm/counseling', { token, query: { status: 'open', limit: 1 } })
+   apiFetch<unknown>('/crm/counseling', { token, silent: true, query: { status: 'open', limit: 1 } })
      .then((res: any) => {
        const arr = Array.isArray(res) ? res : Array.isArray(res?.items) ? res.items : [];
        setCounselingCount(arr.length);
@@ -102,7 +102,7 @@ export default function GroupPage() {
  const triggerReminders = async () => {
    setSendingReminders(true);
    try {
-     const res: any = await apiFetch('/evangelism/notifications/send-reminders', { method: 'POST', token });
+     const res: any = await apiFetch('/evangelism/notifications/send-reminders', { method: 'POST', token, silent: true });
      const total = res?.notifications_created ?? res?.created ?? 0;
      const sessionsT = res?.sessions_tomorrow_count ?? 0;
      const inactive = res?.inactive_groups_count ?? 0;
@@ -132,7 +132,7 @@ export default function GroupPage() {
  if (!seasonForm.name || !seasonForm.start_date || !seasonForm.end_date) return toast.error('Completa todos los campos');
  setSavingSeason(true);
  try {
- await apiFetch('/evangelism/groups/seasons', { method: 'POST', body: seasonForm, token });
+ await apiFetch('/evangelism/groups/seasons', { method: 'POST', body: seasonForm, token, silent: true });
  toast.success('Temporada creada');
  setShowNewSeason(false);
  setSeasonForm({ name: '', start_date: '', end_date: '', periodicity: 'SEMANAL' });
@@ -161,7 +161,7 @@ export default function GroupPage() {
    bodyPayload.report_deadline = `${sessionForm.report_deadline}:00Z`;
  }
 
- const res = await apiFetch<{ message: string, created_count: number }>('/evangelism/groups/sessions', { method: 'POST', body: bodyPayload, token });
+ const res = await apiFetch<{ message: string, created_count: number }>('/evangelism/groups/sessions', { method: 'POST', body: bodyPayload, token, silent: true });
  toast.success(res.message || 'Sesión registrada');
  setShowNewSession(false);
  setSessionForm({ grupo_id: '', session_date: new Date().toISOString().split('T')[0], topic: 'S1', report_deadline: '' });
@@ -176,7 +176,7 @@ export default function GroupPage() {
  };
 
  const closeSeason = async (id: number) => {
- await apiFetch(`/evangelism/groups/seasons/${id}`, { method: 'PATCH', body: { status: 'Finalizada' }, token });
+ await apiFetch(`/evangelism/groups/seasons/${id}`, { method: 'PATCH', body: { status: 'Finalizada' }, token, silent: true });
  toast.success('Temporada finalizada');
  load();
  };
