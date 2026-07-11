@@ -82,7 +82,7 @@ export default function SessionReportPage() {
  const [searchQuery, setSearchQuery] = useState('');  const fetchHouse = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<Grupo>(`/evangelism/grupos/${grupoId}`, { token: token || '' });
+      const data = await apiFetch<Grupo>(`/evangelism/grupos/${grupoId}`, { token: token || '', silent: true });
       setHouse(data);
 
       const basePersonas = data.base_attendees || [];
