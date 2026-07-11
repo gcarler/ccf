@@ -178,9 +178,9 @@ export default function SessionReportPage() {
  session_id: sessionId, persona_id: p.persona_id, status: p.status, notes: null,
  }));
 
- const attendanceResult = await apiFetch<AttendanceSaveResult>(`/evangelism/sessions/${sessionId}/attendance`, {
- method: 'POST', token: token, body: attPayload,
- });
+const attendanceResult = await apiFetch<AttendanceSaveResult>(`/evangelism/sessions/${sessionId}/attendance`, {
+method: 'POST', token: token, silent: true, body: attPayload,
+});
 
  if (attendanceResult?.evento_integracion) {
  const caseId = attendanceResult.evento_integracion.crm_consolidacion?.caso_id;
