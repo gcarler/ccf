@@ -137,7 +137,7 @@ const RESOURCES: CmsResource[] = [
         title: "Vida en comunidad",
         items: [
           { url: "/media/servicio-1.jpg", alt: "Servicio dominical", caption: "Domingo en comunidad" },
-          { url: "/media/grupo-1.jpg", alt: "Grupo reunido", caption: "Casas de bendicion" },
+          { url: "/media/grupo-1.jpg", alt: "Grupo reunido", caption: "Grupos" },
         ],
       },
     },
