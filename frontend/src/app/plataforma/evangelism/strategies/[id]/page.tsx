@@ -664,7 +664,7 @@ export default function StrategyDetailPage() {
  useEffect(() => {
  if (!isPersonaDrawerOpen) return;
  setPersonaSearchLoading(true);
- apiFetch<any[]>('/crm/personas', { token, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } })
+ apiFetch<any[]>('/crm/personas', { token, silent: true, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } })
  .then(res => setAllPersonas(res || []))
  .catch(() => {})
  .finally(() => setPersonaSearchLoading(false));

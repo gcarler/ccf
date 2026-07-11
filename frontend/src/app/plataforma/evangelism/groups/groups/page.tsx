@@ -199,9 +199,10 @@ function GroupsContent() {
  while (true) {
  const data = await apiFetch<unknown>('/crm/personas', {
  token,
+ silent: true,
  query: {
- skip,
- limit: pageSize,
+  skip,
+  limit: pageSize,
  sort_by: 'nombre_completo',
  sort_dir: 'asc',
  },
@@ -296,14 +297,15 @@ if (!cancelled) setLoading(false);
  };
  if (isCreating) {
  const res = await apiFetch<Grupo>('/evangelism/grupos', {
- method: 'POST',
- body: payload,
- token,
+  method: 'POST',
+  body: payload,
+  token,
+  silent: true,
  });
  setHouses([res, ...houses]);
  const detail = await apiFetch<Grupo>(
- `/evangelism/grupos/${res.id}`,
- { token }
+  `/evangelism/grupos/${res.id}`,
+   { token, silent: true }
  );
  setSelectedHouse(detail);
  setFormData(detail);
@@ -318,17 +320,18 @@ if (!cancelled) setLoading(false);
  setIsCreating(false);
  } else if (selectedHouse) {
  const res = await apiFetch<Grupo>(
- `/evangelism/grupos/${selectedHouse.id}`,
- {
- method: 'PUT',
- body: payload,
- token,
- }
+  `/evangelism/grupos/${selectedHouse.id}`,
+  {
+   method: 'PUT',
+   body: payload,
+   token,
+   silent: true,
+  }
  );
  setHouses(houses.map(h => (h.id === res.id ? res : h)));
  const detail = await apiFetch<Grupo>(
- `/evangelism/grupos/${res.id}`,
- { token }
+  `/evangelism/grupos/${res.id}`,
+   { token, silent: true }
  );
  setSelectedHouse(detail);
  setFormData(detail);
@@ -398,7 +401,7 @@ if (!cancelled) setLoading(false);
  const updated = await apiFetch<Grupo>(  `/evangelism/grupos/${grupoId}`,
  
  {
- method: 'PUT',
+  method: 'PUT',
  body: {
  code: detail.code,
  name: detail.name,
@@ -414,7 +417,8 @@ if (!cancelled) setLoading(false);
  status: detail.status,
  base_attendee_ids: Array.from(current),
  },
- token,
+  token,
+  silent: true,
  }
  );
  setHouses(prev => prev.map(h => (h.id === updated.id ? updated : h)));

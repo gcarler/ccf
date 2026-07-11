@@ -23,7 +23,8 @@ export default function GlobalEventAnalyticsPage() {
  setLoading(true);
  try {
  const res = await apiFetch<GlobalEventAnalyticsData>(`/evangelism/events/analytics/global?period=${period}&event_type=${eventType}`, {
- token
+ token,
+ silent: true
  });
  setData(res);
  } catch {

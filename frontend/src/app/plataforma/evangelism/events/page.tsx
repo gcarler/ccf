@@ -149,8 +149,9 @@ function EventsPage() {
  setIsScanning(true);
  try {
  const result = await apiFetch<ScanValidationResult>(`/evangelism/scanner/validate/${scannerToken}`, {
- method: 'POST',
- token
+  method: 'POST',
+  token,
+  silent: true
  });
  if (result.valid) {
  const pid = result.persona_id;
@@ -538,7 +539,7 @@ function EventsPage() {
  const loadAttendanceSession = async () => {
  setAttendanceLoading(true);
  try {
- const data = await apiFetch<EventSessionAttendanceData>(`/evangelism/events/${selectedEvent.id}/sessions/${attendanceDate}`, { token });
+ const data = await apiFetch<EventSessionAttendanceData>(`/evangelism/events/${selectedEvent.id}/sessions/${attendanceDate}`, { token, silent: true });
  setAttendedPersonaIds(Array.isArray(data?.attendees) ? data.attendees.map((item) => item.persona_id) : []);
  } catch {
  setAttendedPersonaIds([]);
@@ -570,9 +571,10 @@ function EventsPage() {
  setSavingAttendance(true);
  try {
  const result = await apiFetch<BulkAttendanceSyncResult>('/evangelism/attendance/bulk', {
- method: 'POST',
- token,
- body: {
+  method: 'POST',
+  token,
+  silent: true,
+  body: {
  event_id: selectedEvent.id,
  persona_ids: attendedPersonaIds,
  attendance_date: attendanceDate

@@ -242,7 +242,7 @@ export default function StrategyAnalyticsPage() {
     try {
       const res = await apiFetch<FullAnalytics>(
         `/evangelism/analytics/strategy/${id}/full?weeks=${weeks}`,
-        { token }
+        { token, silent: true }
       );
       if (res) setData(res);
     } catch {
@@ -259,11 +259,11 @@ export default function StrategyAnalyticsPage() {
       const [hm, vc] = await Promise.all([
         apiFetch<{ cells: Array<{ weekday: number; label: string; sessions: number; present: number; total: number; pct: number | null }> }>(
           `/evangelism/analytics/strategy/${id}/heatmap?period=${periodMap[weeks] || '90d'}`,
-          { token }
+          { token, silent: true }
         ).catch(() => null),
         apiFetch<{ stages: typeof velocity }>(
           `/evangelism/analytics/strategy/${id}/velocity`,
-          { token }
+          { token, silent: true }
         ).catch(() => null),
       ]);
       if (hm?.cells) setHeatmap(hm.cells);
