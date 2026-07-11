@@ -43,7 +43,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04, duration: 0.3 }}
             onClick={() => router.push(`/plataforma/projects/${project.id}`)}
-            className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-xl hover:shadow-black/10/60 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]"
+            className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden"
             style={{ '--card-color': color } as React.CSSProperties}
         >
             {/* Color accent bar top */}

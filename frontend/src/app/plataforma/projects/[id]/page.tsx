@@ -296,7 +296,7 @@ export default function ProjectDetailPage() {
 
     if (loading) {
         return (
-            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21]">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))]">
                 <div className="p-4 space-y-4 animate-pulse">
                     <div className="h-10 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg w-1/3" />
                     <div className="h-6 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg w-2/3" />
@@ -334,7 +334,7 @@ export default function ProjectDetailPage() {
     }));
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects' },
@@ -345,19 +345,19 @@ export default function ProjectDetailPage() {
                 availableViews={PROJECT_DETAIL_VIEWS}
                 rightActions={
                     <div className="flex items-center gap-2">
-                        <button onClick={() => setShowTaskModal(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
+                        <button onClick={() => setShowTaskModal(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2">
                             <Plus size={14} /> Nueva Tarea
                         </button>
-                        <button onClick={() => setWhiteboardOpen(true)} className="px-3 py-1.5 bg-[hsl(var(--bg-muted))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2 dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))]">
+                        <button onClick={() => setWhiteboardOpen(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-2 border border-[hsl(var(--border))] dark:border-white/10">
                             <PencilRuler size={14} /> Pizarra
                         </button>
-                        <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2">
+                        <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2">
                             <Edit3 size={14} /> Fases
                         </button>
-                        <button onClick={startEditing} className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2">
+                        <button onClick={startEditing} className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-amber-600 active:scale-95 transition-all flex items-center gap-2">
                             <Edit3 size={14} /> Editar
                         </button>
-                        <button onClick={handleDeleteProject} className="px-3 py-1.5 bg-rose-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2">
+                        <button onClick={handleDeleteProject} className="px-3 py-1.5 bg-rose-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-rose-600 active:scale-95 transition-all flex items-center gap-2">
                             <Trash2 size={14} /> Eliminar
                         </button>
                     </div>
@@ -367,11 +367,11 @@ export default function ProjectDetailPage() {
             <div className="flex min-h-0 flex-1 overflow-hidden">
             <main className={(viewType === 'board' || viewType === 'kanban') ? "flex-1 overflow-hidden" : "flex-1 overflow-y-auto p-4 space-y-3"}>
                 {editingProject ? (
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-3 border border-[hsl(var(--border))] dark:border-white/10 space-y-3">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg p-3 border border-[hsl(var(--border))] dark:border-white/10 space-y-3">
                         <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Editar Proyecto</h3>
-                        <input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-sm font-medium" placeholder="Título del proyecto" />
-                        <textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-sm" placeholder="Descripción" />
-                        <select value={editStatus} onChange={e => setEditStatus(e.target.value)} className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-sm font-medium">
+                        <input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-primary))] text-sm font-medium" placeholder="Título del proyecto" />
+                        <textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-primary))] text-sm" placeholder="Descripción" />
+                        <select value={editStatus} onChange={e => setEditStatus(e.target.value)} className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-primary))] text-sm font-medium">
                             <option value="planning">Planificación</option>
                             <option value="active">En Marcha</option>
                             <option value="on_hold">En Pausa</option>
@@ -384,8 +384,8 @@ export default function ProjectDetailPage() {
                             placeholder="Responsable del proyecto"
                         />
                         <div className="flex gap-2">
-                            <button onClick={handleUpdateProject} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all">Guardar Cambios</button>
-                            <button onClick={() => setEditingProject(false)} className="px-3 py-1.5 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-md text-xs font-bold uppercase tracking-wide hover:scale-105 transition-all">Cancelar</button>
+                            <button onClick={handleUpdateProject} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all">Guardar Cambios</button>
+                            <button onClick={() => setEditingProject(false)} className="px-3 py-1.5 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-md text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] active:scale-95 transition-all">Cancelar</button>
                         </div>
                     </div>
                 ) : (
@@ -523,7 +523,7 @@ export default function ProjectDetailPage() {
                         )}
 
                         {viewType === 'table' && (
-                            <div className="h-[calc(100vh-8rem)] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[#252528] shadow-sm">
+                            <div className="h-[calc(100vh-8rem)] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-sm">
                                 <TaskTableView
                                     projectId={project?.id}
                                     tasks={tasks}
@@ -540,7 +540,7 @@ export default function ProjectDetailPage() {
                                     <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Plan de Acción</h3>
                                     <div className="space-y-2">
                                         {tasks.map(task => (
-                                            <div key={task.id} onClick={() => handleOpenTask(task)} className="p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 transition-all duration-300 active:scale-[0.99] cursor-pointer">
+                                            <div key={task.id} onClick={() => handleOpenTask(task)} className="p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-[hsl(var(--primary))]/40 transition-all duration-300 cursor-pointer">
                                                 <div className="flex items-center gap-4 flex-1">
                                                     <button
                                                         onClick={(event) => {
