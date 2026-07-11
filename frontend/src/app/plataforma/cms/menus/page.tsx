@@ -233,7 +233,6 @@ export default function CmsMenusManagement() {
             fetchNav();
         } catch (error) {
             toast.error('Error al crear item');
-            toast.error('Error al crear item del menú');
         }
     };
 
@@ -249,7 +248,6 @@ export default function CmsMenusManagement() {
             }
             fetchNav();
         } catch (error) {
-            toast.error('Error al actualizar visibilidad');
             toast.error('Error al actualizar visibilidad');
         }
         if (selectedIndex === index) {
@@ -281,7 +279,6 @@ export default function CmsMenusManagement() {
             fetchNav();
         } catch (error) {
             toast.error('Error al actualizar item');
-            toast.error('Error al actualizar item');
         }
     };
 
@@ -305,7 +302,6 @@ export default function CmsMenusManagement() {
             fetchNav();
         } catch (error) {
             toast.error('Error al reordenar');
-            toast.error('Error al reordenar items');
         }
     };
 
@@ -323,7 +319,6 @@ export default function CmsMenusManagement() {
             fetchNav();
         } catch (error) {
             toast.error('Error al aplicar orden');
-            toast.error('Error al aplicar reorden');
         }
     };
 

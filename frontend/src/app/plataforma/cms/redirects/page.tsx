@@ -17,7 +17,7 @@ export default function RedirectsPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<Redirect[]>("/cms/v2/redirects?site_key=${SITE_KEY}", { silent: true });
+      const data = await apiFetch<Redirect[]>(`/cms/v2/redirects?site_key=${SITE_KEY}`, { silent: true });
       setRedirects(Array.isArray(data) ? data : []);
     } catch { toast.error("Error al cargar datos"); setRedirects([]); }
     setLoading(false);
