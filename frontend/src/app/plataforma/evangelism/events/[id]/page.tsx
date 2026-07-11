@@ -8,7 +8,6 @@ import { ApiError, apiFetch } from "@/lib/http";
 import EvangelismShell from "@/components/evangelism/EvangelismShell";
 import { MapPin, ArrowLeft } from "lucide-react";
 import { DSCard } from "@/design/components/DSCard";
-import { toast } from "sonner";
 import clsx from "clsx";
 
 const SessionTab = dynamic(() => import("./tabs/SessionTab"), { ssr: false });
@@ -35,6 +34,7 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<MinistryEventDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'session' | 'analytics'>('details');
 
   useEffect(() => {
@@ -43,6 +43,7 @@ export default function EventDetailPage() {
       try {
         setLoading(true);
         setNotFound(false);
+        setLoadError(false);
         const data = await apiFetch<MinistryEventDetail>(`/evangelism/events/${id}`, { token, silent: true });
         setEvent(data);
       } catch (err) {
@@ -51,7 +52,8 @@ export default function EventDetailPage() {
           setNotFound(true);
           return;
         }
-        toast.error("Error al cargar detalle del evento");
+        setEvent(null);
+        setLoadError(true);
       } finally {
         setLoading(false);
       }
@@ -71,6 +73,27 @@ export default function EventDetailPage() {
             <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">Evento no encontrado</h2>
             <p className="mt-2 text-sm text-[hsl(var(--text-secondary))]">
               El evento solicitado no existe o ya fue eliminado.
+            </p>
+            <button
+              onClick={() => router.push('/plataforma/evangelism/events')}
+              className="mt-4 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-sm font-semibold text-white"
+            >
+              Volver a Eventos
+            </button>
+          </div>
+        </div>
+      </EvangelismShell>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <EvangelismShell breadcrumbs={[{ label: "Evangelismo", href: "/plataforma/evangelism/events" }, { label: "Eventos", href: "/plataforma/evangelism/events" }, { label: "Error" }]}>
+        <div className="p-6">
+          <div className="max-w-xl mx-auto rounded-xl border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-6 text-center shadow-sm">
+            <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">No se pudo cargar el evento</h2>
+            <p className="mt-2 text-sm text-[hsl(var(--text-secondary))]">
+              La plataforma recibió una respuesta inválida al consultar este evento. Puedes volver a intentarlo desde la lista.
             </p>
             <button
               onClick={() => router.push('/plataforma/evangelism/events')}
