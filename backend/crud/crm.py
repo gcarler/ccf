@@ -1,10 +1,11 @@
 """CRM: backward-compatible barrel re-exporting ``backend.crud.crm_``."""
 # ruff: noqa: F401
 
+# health functions live in crm_/health.py which imports from backend.api.crm._shared
+# — not re-exported here to avoid circular imports. Access via:
+#   from backend.crud.crm_.health import calculate_health_score
+
 from backend.crud.crm_ import (
-    calculate_health_score,
-    calculate_pastoral_health,
-    calculate_pastoral_health_score,
     create_communication_log,
     create_community_card,
     create_counseling_ticket,
@@ -80,7 +81,6 @@ from backend.crud.crm_ import (
     update_family,
     update_grupo,
     update_milestone,
-    update_pastoral_health,
     update_persona,
     update_prayer_request,
     update_support_ticket,
