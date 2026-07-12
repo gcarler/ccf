@@ -700,3 +700,42 @@ class SeoAuditResponse(BaseModel):
     site_key: str
     aggregate: SiteSeoStats
     pages: List[PageSeoAudit] = Field(default_factory=list)
+
+
+# ── CMS Readiness / Production Health ────────────────────────────────────────
+
+CmsReadinessSeverity = Literal["info", "warning", "error"]
+CmsReadinessCapabilityStatus = Literal["ready", "partial", "attention"]
+
+
+class CmsReadinessMetric(BaseModel):
+    key: str
+    label: str
+    value: int
+    href: Optional[str] = None
+
+
+class CmsReadinessIssue(BaseModel):
+    code: str
+    severity: CmsReadinessSeverity
+    title: str
+    detail: str
+    count: int = Field(ge=0)
+    href: Optional[str] = None
+
+
+class CmsReadinessCapability(BaseModel):
+    key: str
+    label: str
+    status: CmsReadinessCapabilityStatus
+    detail: str
+    href: Optional[str] = None
+
+
+class CmsReadinessResponse(BaseModel):
+    site_key: str
+    score: int = Field(ge=0, le=100)
+    generated_at: datetime
+    metrics: List[CmsReadinessMetric] = Field(default_factory=list)
+    issues: List[CmsReadinessIssue] = Field(default_factory=list)
+    capabilities: List[CmsReadinessCapability] = Field(default_factory=list)

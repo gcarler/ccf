@@ -17,9 +17,8 @@ from __future__ import annotations
 
 import uuid as _uuid
 
-import pytest
-
 from backend import models
+
 # Gate 6 anti-drift: SeoAudit helpers (incluyendo constantes de peso) viven
 # en ``_shared.py`` desde el merge de ``seo_audit.py``. Los tests consumen
 # la API pública de ese módulo directamente.
@@ -34,8 +33,7 @@ from backend.api._cms_helpers._shared import (
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
 GOOD_DESC = (
-    "Una descripción pastoral bien redactada con suficiente contexto y "
-    "palabras clave relevantes para SEO moderno."
+    "Una descripción pastoral bien redactada con suficiente contexto y palabras clave relevantes para SEO moderno."
 )
 GOOD_TITLE = "Encuentro Pastoral de Avivamiento Semanal"
 GOOD_OG = "https://cdn.example.com/og.png"
@@ -122,6 +120,87 @@ def test_audit_empty_site_returns_zero(client, db_session):
     assert body["pages"] == []
 
 
+def test_readiness_empty_site_flags_publication_contract_gaps(client, db_session):
+    seed_admin(db_session, email="ready-empty@example.com")
+    _seed_site(db_session)
+    db_session.commit()
+    headers = auth_headers(client, email="ready-empty@example.com")
+
+    resp = client.get("/api/cms/v2/sites/ccf/readiness", headers=headers)
+
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["site_key"] == "ccf"
+    assert body["score"] < 100
+    codes = {issue["code"] for issue in body["issues"]}
+    assert "no_published_pages" in codes
+    assert "no_active_theme" in codes
+    assert any(cap["key"] == "pages" for cap in body["capabilities"])
+    assert any(metric["key"] == "published_pages" for metric in body["metrics"])
+
+
+def test_readiness_complete_site_scores_ready(client, db_session):
+    seed_admin(db_session, email="ready-good@example.com")
+    site = _seed_site(db_session)
+    page = _make_page(
+        db_session,
+        site.id,
+        slug="home",
+        title=GOOD_TITLE,
+        status="published",
+        seo={"meta_description": GOOD_DESC, "meta_image": GOOD_OG},
+        sections=[("rich_text", {"body": " ".join(["contenido pastoral"] * 40)})],
+    )
+    version = models.CmsPageVersion(
+        id=_uuid.uuid4(),
+        page_id=page.id,
+        version_number=1,
+        snapshot_json={"page": {"slug": page.slug}, "sections": []},
+    )
+    db_session.add(version)
+    db_session.flush()
+    page.published_version_id = version.id
+    theme = models.CmsTheme(
+        id=_uuid.uuid4(),
+        site_id=site.id,
+        name="Tema activo",
+        tokens_json={"primary": "#2563eb"},
+        is_active=True,
+        status="active",
+    )
+    menu = models.CmsMenu(
+        id=_uuid.uuid4(),
+        site_id=site.id,
+        menu_key="main",
+        name="Principal",
+        is_active=True,
+    )
+    db_session.add_all([theme, menu])
+    db_session.flush()
+    db_session.add(
+        models.CmsMenuItem(
+            id=_uuid.uuid4(),
+            menu_id=menu.id,
+            label="Inicio",
+            href="/",
+            sort_order=0,
+        )
+    )
+    db_session.commit()
+    headers = auth_headers(client, email="ready-good@example.com")
+
+    resp = client.get("/api/cms/v2/sites/ccf/readiness", headers=headers)
+
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["score"] == 100
+    assert body["issues"] == []
+    statuses = {cap["key"]: cap["status"] for cap in body["capabilities"]}
+    assert statuses["pages"] == "ready"
+    assert statuses["themes"] == "ready"
+    assert statuses["menus"] == "ready"
+
+
 def test_audit_unknown_site_returns_404(client, db_session):
     seed_admin(db_session, email="seo-nofound@example.com")
     headers = auth_headers(client, email="seo-nofound@example.com")
@@ -192,9 +271,7 @@ def test_audit_flags_missing_meta_description(client, db_session):
     )
     db_session.commit()
     headers = auth_headers(client, email="seo-nometa@example.com")
-    body = client.get(
-        "/api/cms/v2/sites/ccf/seo-audit", headers=headers
-    ).json()
+    body = client.get("/api/cms/v2/sites/ccf/seo-audit", headers=headers).json()
     page = body["pages"][0]
     codes = {f["code"]: f for f in page["findings"]}
     assert "meta_description_missing" in codes
@@ -217,14 +294,10 @@ def test_audit_flags_short_title(client, db_session):
     )
     db_session.commit()
     headers = auth_headers(client, email="seo-short-title@example.com")
-    body = client.get(
-        "/api/cms/v2/sites/ccf/seo-audit", headers=headers
-    ).json()
+    body = client.get("/api/cms/v2/sites/ccf/seo-audit", headers=headers).json()
     page = body["pages"][0]
     assert any(
-        f["code"] == "title_length_out_of_range"
-        and f["impact_points"] == TITLE_LEN_WEIGHT
-        for f in page["findings"]
+        f["code"] == "title_length_out_of_range" and f["impact_points"] == TITLE_LEN_WEIGHT for f in page["findings"]
     )
 
 
@@ -246,9 +319,7 @@ def test_audit_flags_noindex_on_published(client, db_session):
     )
     db_session.commit()
     headers = auth_headers(client, email="seo-noindex@example.com")
-    body = client.get(
-        "/api/cms/v2/sites/ccf/seo-audit", headers=headers
-    ).json()
+    body = client.get("/api/cms/v2/sites/ccf/seo-audit", headers=headers).json()
     page = body["pages"][0]
     codes = {f["code"] for f in page["findings"]}
     assert "noindex_on_published" in codes
@@ -268,9 +339,7 @@ def test_audit_flags_no_visible_sections(client, db_session):
     )
     db_session.commit()
     headers = auth_headers(client, email="seo-emptybody@example.com")
-    body = client.get(
-        "/api/cms/v2/sites/ccf/seo-audit", headers=headers
-    ).json()
+    body = client.get("/api/cms/v2/sites/ccf/seo-audit", headers=headers).json()
     page = body["pages"][0]
     codes = {f["code"] for f in page["findings"]}
     assert "no_visible_sections" in codes
@@ -344,16 +413,12 @@ def test_audit_flags_missing_alt_on_referenced_image(client, db_session):
     db_session.commit()
 
     headers = auth_headers(client, email="seo-alt-client@example.com")
-    body = client.get(
-        "/api/cms/v2/sites/ccf/seo-audit", headers=headers
-    ).json()
+    body = client.get("/api/cms/v2/sites/ccf/seo-audit", headers=headers).json()
     page_audit = body["pages"][0]
     codes = {f["code"] for f in page_audit["findings"]}
     assert "image_missing_alt" in codes
 
-    finding = next(
-        f for f in page_audit["findings"] if f["code"] == "image_missing_alt"
-    )
+    finding = next(f for f in page_audit["findings"] if f["code"] == "image_missing_alt")
     assert finding["section_id"] == str(image_section_id)
 
 
@@ -386,13 +451,9 @@ def test_audit_flags_missing_alt_for_image_url(client, db_session):
     db_session.commit()
 
     headers = auth_headers(client, email="seo-alt-url@example.com")
-    body = client.get(
-        "/api/cms/v2/sites/ccf/seo-audit", headers=headers
-    ).json()
+    body = client.get("/api/cms/v2/sites/ccf/seo-audit", headers=headers).json()
     page_audit = body["pages"][0]
-    finding = next(
-        f for f in page_audit["findings"] if f["code"] == "image_url_missing_alt"
-    )
+    finding = next(f for f in page_audit["findings"] if f["code"] == "image_url_missing_alt")
     assert finding["section_id"] == str(section_id)
 
 
@@ -403,22 +464,26 @@ def test_audit_min_score_filter_excludes_low_pages(client, db_session):
     seed_admin(db_session, email="seo-filter@example.com")
     site = _seed_site(db_session)
     _make_page(
-        db_session, site.id,
-        slug="buena", title=GOOD_TITLE, status="published",
+        db_session,
+        site.id,
+        slug="buena",
+        title=GOOD_TITLE,
+        status="published",
         seo={"meta_description": GOOD_DESC, "meta_image": GOOD_OG},
         sections=[("rich_text", {"body": " ".join(["t"] * 30)})],
     )
     _make_page(
-        db_session, site.id,
-        slug="mala", title="X", status="published",
+        db_session,
+        site.id,
+        slug="mala",
+        title="X",
+        status="published",
         seo={"robots_meta": "noindex, nofollow"},
         sections=(),
     )
     db_session.commit()
     headers = auth_headers(client, email="seo-filter@example.com")
-    body = client.get(
-        "/api/cms/v2/sites/ccf/seo-audit?min_score=80", headers=headers
-    ).json()
+    body = client.get("/api/cms/v2/sites/ccf/seo-audit?min_score=80", headers=headers).json()
     slugs = [p["slug"] for p in body["pages"]]
     assert "buena" in slugs
     assert "mala" not in slugs
@@ -441,26 +506,27 @@ def test_audit_blocks_non_editor_role(client, db_session):
     )
     headers = auth_headers(client, email="seo-lector@example.com")
     resp = client.get("/api/cms/v2/sites/ccf/seo-audit", headers=headers)
-    assert resp.status_code == 403, (
-        f"Leak: LECTOR pudo llamar al audit endpoint "
-        f"(status {resp.status_code}): {resp.text}"
-    )
+    assert (
+        resp.status_code == 403
+    ), f"Leak: LECTOR pudo llamar al audit endpoint (status {resp.status_code}): {resp.text}"
 
 
 def test_audit_status_filter_excludes_draft(client, db_session):
     seed_admin(db_session, email="seo-status@example.com")
     site = _seed_site(db_session)
-    _make_page(db_session, site.id, slug="draft-one", title=GOOD_TITLE,
-               status="draft")
-    _make_page(db_session, site.id, slug="published-one", title=GOOD_TITLE,
-               status="published",
-               seo={"meta_description": GOOD_DESC, "meta_image": GOOD_OG},
-               sections=[("rich_text", {"body": " ".join(["t"] * 30)})])
+    _make_page(db_session, site.id, slug="draft-one", title=GOOD_TITLE, status="draft")
+    _make_page(
+        db_session,
+        site.id,
+        slug="published-one",
+        title=GOOD_TITLE,
+        status="published",
+        seo={"meta_description": GOOD_DESC, "meta_image": GOOD_OG},
+        sections=[("rich_text", {"body": " ".join(["t"] * 30)})],
+    )
     db_session.commit()
     headers = auth_headers(client, email="seo-status@example.com")
-    body = client.get(
-        "/api/cms/v2/sites/ccf/seo-audit?status=published", headers=headers
-    ).json()
+    body = client.get("/api/cms/v2/sites/ccf/seo-audit?status=published", headers=headers).json()
     slugs = [p["slug"] for p in body["pages"]]
     assert slugs == ["published-one"]
 
@@ -474,8 +540,24 @@ def test_helper_group_sections_by_page_groups_correctly(db_session):
     db_session.add_all([page_a, page_b])
     db_session.flush()
 
-    sec_aa = models.CmsSection(id=_uuid.uuid4(), page_id=page_a.id, section_key="s", type="rich_text", props_json={"body":"hola"}, sort_order=0, is_visible=True)
-    sec_ba = models.CmsSection(id=_uuid.uuid4(), page_id=page_b.id, section_key="s", type="rich_text", props_json={"body":"hola"}, sort_order=0, is_visible=True)
+    sec_aa = models.CmsSection(
+        id=_uuid.uuid4(),
+        page_id=page_a.id,
+        section_key="s",
+        type="rich_text",
+        props_json={"body": "hola"},
+        sort_order=0,
+        is_visible=True,
+    )
+    sec_ba = models.CmsSection(
+        id=_uuid.uuid4(),
+        page_id=page_b.id,
+        section_key="s",
+        type="rich_text",
+        props_json={"body": "hola"},
+        sort_order=0,
+        is_visible=True,
+    )
     db_session.add_all([sec_aa, sec_ba])
     db_session.flush()
 
@@ -488,10 +570,24 @@ def test_helper_collect_media_ids_detects_referenced(db_session):
     page = models.CmsPage(id=_uuid.uuid4(), site_id=_uuid.uuid4(), slug="a", title="A", status="published")
     media_a = _uuid.uuid4()
     media_b = _uuid.uuid4()
-    sec_1 = models.CmsSection(id=_uuid.uuid4(), page_id=page.id, section_key="a", type="hero",
-                              props_json={"media_id": str(media_a), "image_alt": ""}, sort_order=0, is_visible=True)
-    sec_2 = models.CmsSection(id=_uuid.uuid4(), page_id=page.id, section_key="b", type="cards",
-                              props_json={"media_ids": [str(media_b), "not-a-uuid"]}, sort_order=1, is_visible=True)
+    sec_1 = models.CmsSection(
+        id=_uuid.uuid4(),
+        page_id=page.id,
+        section_key="a",
+        type="hero",
+        props_json={"media_id": str(media_a), "image_alt": ""},
+        sort_order=0,
+        is_visible=True,
+    )
+    sec_2 = models.CmsSection(
+        id=_uuid.uuid4(),
+        page_id=page.id,
+        section_key="b",
+        type="cards",
+        props_json={"media_ids": [str(media_b), "not-a-uuid"]},
+        sort_order=1,
+        is_visible=True,
+    )
     db_session.add_all([page, sec_1, sec_2])
     db_session.flush()
     ids = collect_section_media_ids([sec_1, sec_2])
@@ -526,8 +622,12 @@ def test_helper_build_media_alt_lookup_returns_none_when_alternative_is_missing(
     media_id = _uuid.uuid4()
     db_session.add(
         models.CmsMediaItem(
-            id=media_id, url="https://x/y.png", section="hero", alt_text=None,
-            created_by_persona_id=creator.id, sede_id=sede.id,
+            id=media_id,
+            url="https://x/y.png",
+            section="hero",
+            alt_text=None,
+            created_by_persona_id=creator.id,
+            sede_id=sede.id,
         )
     )
     db_session.flush()
@@ -538,12 +638,20 @@ def test_helper_build_media_alt_lookup_returns_none_when_alternative_is_missing(
 def test_helper_audit_pages_returns_aggregate_correctly(db_session):
     site = _seed_site(db_session)
     page_published = models.CmsPage(
-        id=_uuid.uuid4(), site_id=site.id, slug="x", title=GOOD_TITLE,
-        status="published", seo_json={"meta_description": GOOD_DESC, "meta_image": GOOD_OG},
+        id=_uuid.uuid4(),
+        site_id=site.id,
+        slug="x",
+        title=GOOD_TITLE,
+        status="published",
+        seo_json={"meta_description": GOOD_DESC, "meta_image": GOOD_OG},
     )
     page_draft = models.CmsPage(
-        id=_uuid.uuid4(), site_id=site.id, slug="y", title="X",
-        status="draft", seo_json={},
+        id=_uuid.uuid4(),
+        site_id=site.id,
+        slug="y",
+        title="X",
+        status="draft",
+        seo_json={},
     )
     db_session.add_all([page_published, page_draft])
     db_session.flush()
@@ -575,9 +683,11 @@ def test_helper_audit_pages_returns_aggregate_correctly(db_session):
     ]
     db_session.add_all(sections_rows)
     db_session.flush()
-    grouped = _audit.group_sections_by_page(sections_rows)
+    grouped = group_sections_by_page(sections_rows)
     audits, aggregate = audit_pages(
-        [page_published, page_draft], grouped, {},
+        [page_published, page_draft],
+        grouped,
+        {},
     )
     assert aggregate.total_pages == 2
     # Published page: full bonus. Draft: penalized for short title and missing meta

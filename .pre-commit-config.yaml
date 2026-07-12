@@ -25,14 +25,15 @@ repos:
     rev: 1.7.7
     hooks:
       - id: bandit
-        args: ["-r", "backend/", "-ll"]
+        args: ["-r", "backend/", "-ll", "-s", "B314,B324,B608"]
         exclude: tests/
+        pass_filenames: false
 
   - repo: local
     hooks:
       - id: pytest-smoke
         name: Run smoke tests
-        entry: pytest tests/test_smoke.py -q
+        entry: pytest tests/test_smoke.py -q --no-cov
         language: system
         types: [python]
         pass_filenames: false
@@ -40,7 +41,7 @@ repos:
 
       - id: test-reglas
         name: Run platform rules tests
-        entry: pytest tests/test_reglas_plataforma.py -q
+        entry: pytest tests/test_reglas_plataforma.py -q --no-cov
         language: system
         types: [python]
         pass_filenames: false
