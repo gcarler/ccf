@@ -213,6 +213,42 @@ def get_caso_crm(
     return _serialize_case_safe(db, case)
 
 
+@router.get("/casos/{case_id}/audit", response_model=list[dict])
+def get_caso_audit(
+    case_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
+):
+    """Retorna la trazabilidad del caso para el sidebar del pipeline.
+
+    El endpoint se mantiene tolerante: si no hay eventos auditables, devuelve
+    lista vacía en vez de fallar. Eso evita ruido en consola cuando el caso
+    todavía no tiene historial.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    case = _get_case_or_404(db, case_id, user_sede)
+    logs = (
+        db.query(models.LogAuditoria)
+        .filter(
+            models.LogAuditoria.registro_id == str(case.id),
+            models.LogAuditoria.deleted_at.is_(None),
+        )
+        .order_by(models.LogAuditoria.fecha_accion.desc())
+        .all()
+    )
+    if not logs:
+        return []
+    return [
+        {
+            "id": str(log.id),
+            "action": log.accion,
+            "created_at": log.fecha_accion.isoformat() if log.fecha_accion else None,
+            "metadata": log.detalles_cambio or {},
+        }
+        for log in logs
+    ]
+
+
 @router.post("/casos", response_model=dict)
 def create_caso_crm(
     payload: dict,
