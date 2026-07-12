@@ -16,6 +16,57 @@ export interface EmailBlock {
   props: Record<string, unknown>;
 }
 
+export interface HeaderProps {
+  title?: string;
+  subtitle?: string;
+  textAlign?: string;
+  titleColor?: string;
+  bgColor?: string;
+}
+
+export interface TextProps {
+  content?: string;
+  textAlign?: string;
+}
+
+export interface ButtonProps {
+  label?: string;
+  url?: string;
+  align?: string;
+  bgColor?: string;
+  textColor?: string;
+  borderRadius?: number;
+}
+
+export interface ImageProps {
+  src?: string;
+  alt?: string;
+  width?: string;
+  href?: string;
+}
+
+export interface DividerProps {
+  color?: string;
+  thickness?: number;
+  style?: string;
+  width?: string;
+}
+
+export interface SpacerProps {
+  height?: number;
+}
+
+export interface VerseProps {
+  text?: string;
+  reference?: string;
+  textAlign?: string;
+}
+
+export interface ColumnsProps {
+  count?: number;
+  columns?: Array<{ blocks: EmailBlock[] }>;
+}
+
 export const BLOCK_DEFINITIONS: BlockTypeDefinition[] = [
   { type: 'header', label: 'Encabezado', icon: 'Type', category: 'content', defaultProps: { title: 'Tu titulo aqui', subtitle: '', textAlign: 'center', titleColor: '', bgColor: '' } },
   { type: 'text', label: 'Texto', icon: 'AlignLeft', category: 'content', defaultProps: { content: '<p>Escribe tu mensaje aqui...</p>', textAlign: 'left' } },

@@ -2,7 +2,7 @@
 'use client';
 import { useDraggable } from '@dnd-kit/core';
 import { Type, AlignLeft, MousePointerClick, Image, Minus, Space, BookOpen, Columns } from 'lucide-react';
-import { BLOCK_DEFINITIONS, type BlockTypeDefinition } from '../blockTypes';
+import { BLOCK_DEFINITIONS, type BlockTypeDefinition } from './blockTypes';
 
 const ICON_MAP: Record<string, React.ElementType> = { Type, AlignLeft, MousePointerClick, Image, Minus, Space, BookOpen, Columns };
 

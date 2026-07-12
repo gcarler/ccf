@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import clsx from 'clsx';
 import { GripVertical, Trash2, Copy } from 'lucide-react';
-import type { EmailBlock } from '../blockTypes';
+import type { EmailBlock } from './blockTypes';
 
 interface Props { block: EmailBlock; isSelected: boolean; onSelect: () => void; onRemove: () => void; onDuplicate: () => void; children: React.ReactNode; }
 
