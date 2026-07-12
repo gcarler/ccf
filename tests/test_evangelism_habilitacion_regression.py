@@ -543,7 +543,10 @@ class TestHabilitacionSedeIsolation:
 
         # Usuario de sede B intenta habilitar
         _, _, sede_b = seed_user_with_role(
-            db_session, role_name="ADMIN", email="admin_b@ccf.test",
+            db_session,
+            role_name="ADMIN",
+            email="admin_b@ccf.test",
+            sede_id=uuid.uuid4(),
         )
         headers_b = auth_headers(client, email="admin_b@ccf.test")
 
@@ -603,7 +606,12 @@ class TestHabilitacionSedeIsolation:
         db_session.commit()
 
         # Usuario sede B intenta reportar asistencia
-        seed_user_with_role(db_session, role_name="ADMIN", email="admin_b2@ccf.test")
+        seed_user_with_role(
+            db_session,
+            role_name="ADMIN",
+            email="admin_b2@ccf.test",
+            sede_id=uuid.uuid4(),
+        )
         headers_b = auth_headers(client, email="admin_b2@ccf.test")
 
         resp = client.post(
