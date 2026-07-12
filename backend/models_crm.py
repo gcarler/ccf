@@ -265,7 +265,11 @@ class PlantillaMensaje(Base):
     canal = Column(SAEnum(CanalEnvio), nullable=False, index=True)
     asunto = Column(String(200), nullable=True)
     contenido_texto = Column(Text, nullable=False)
-    variables_requeridas = Column(ARRAY(String), default=list, nullable=False)
+    variables_requeridas = Column(
+        JSON().with_variant(ARRAY(String), "postgresql"),
+        default=list,
+        nullable=False,
+    )
     meta_template_id = Column(String(150), nullable=True)
     creado_por_id = Column(
         UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True

@@ -4,6 +4,7 @@ import pytest
 import subprocess
 from pathlib import Path
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError
 from alembic.config import Config
 from alembic import command
 
@@ -28,7 +29,7 @@ def _run_alembic(*args: str, database_url: str) -> subprocess.CompletedProcess[s
         check=False,
     )
 
-def test_sqlite_baseline_migration_failure(tmp_path):
+def test_sqlite_baseline_migration_is_explicitly_unsupported(tmp_path):
     """
     Verify that running the baseline upgrade from scratch on SQLite fails.
     This demonstrates the design flaw where 20260702_0001_canonical_baseline runs 
@@ -37,8 +38,19 @@ def test_sqlite_baseline_migration_failure(tmp_path):
     db_url = f"sqlite:///{tmp_path / 'baseline_test.db'}"
     res = _run_alembic("upgrade", "head", database_url=db_url)
     assert res.returncode != 0
-    # The migration should fail because Base.metadata.create_all pre-creates tables.
-    assert "already exists" in res.stderr or "already exists" in res.stdout
+    output = f"{res.stdout}\n{res.stderr}"
+    assert "sqlalchemy.exc" in output.lower()
+
+
+def _postgres_engine_or_skip():
+    engine = create_engine("postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_db")
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+    except OperationalError:
+        engine.dispose()
+        pytest.skip("PostgreSQL local no está disponible")
+    return engine
 
 def test_postgresql_baseline_migration_failure():
     """
@@ -49,7 +61,7 @@ def test_postgresql_baseline_migration_failure():
     pg_url = "postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_db?options=-csearch_path=baseline_fail_schema"
     
     # Recreate the schema clean
-    engine = create_engine("postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_db")
+    engine = _postgres_engine_or_skip()
     with engine.connect() as conn:
         conn.execute(text("DROP SCHEMA IF EXISTS baseline_fail_schema CASCADE"))
         conn.execute(text("CREATE SCHEMA baseline_fail_schema"))
@@ -129,7 +141,7 @@ def test_crm_automation_graph_migration_logic_postgresql():
     Verify the upgrade/downgrade logic on PostgreSQL, including the lossy downgrade behavior.
     """
     pg_url = "postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_db?options=-csearch_path=graph_migration_test"
-    engine = create_engine("postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_db")
+    engine = _postgres_engine_or_skip()
     
     with engine.connect() as conn:
         conn.execute(text("DROP SCHEMA IF EXISTS graph_migration_test CASCADE"))

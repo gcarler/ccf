@@ -274,6 +274,26 @@ export interface CampaignResult {
   envio_ids: string[];
 }
 
+export interface SystemTemplate {
+  id: string;
+  categoria: string;
+  titulo: string;
+  canal: CanalEnvio;
+  asunto?: string | null;
+  contenido_texto: string;
+  variables_requeridas: string[];
+  descripcion?: string | null;
+}
+
+export interface SystemTemplateCatalog {
+  categorias: Array<{
+    nombre: string;
+    descripcion?: string | null;
+    color_ui_hex: string;
+  }>;
+  plantillas: SystemTemplate[];
+}
+
 export interface MessagingHistoryRow {
   id: number;
   name: string;

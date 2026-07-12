@@ -93,14 +93,7 @@ export default function ResourceBankGallery({
         const created = await apiFetch<PlantillaMensaje>('/crm/resources/system-templates/apply', {
           token,
           method: 'POST',
-          body: {
-            categoria: tpl.categoria,
-            titulo: tpl.titulo,
-            canal: tpl.canal,
-            asunto: tpl.asunto ?? null,
-            contenido_texto: tpl.contenido_texto,
-            variables_requeridas: tpl.variables_requeridas,
-          },
+          body: { template_id: tpl.id },
           headers: { 'Content-Type': 'application/json' },
         });
         if (created) {
