@@ -21,15 +21,17 @@ import { PIPELINE_STAGES } from '@/app/plataforma/crm/pipeline/constants';
 
 interface PipelineKanbanBoardProps {
     leads: any[];
+    stages: any[];
     onLeadClick: (lead: any) => void;
-    onDropLead: (leadId: string, stage: string, reorderPayload: { id: string, sort_order: number, etapa_actual_id: string }[]) => void;
+    onDropLead: (leadId: string, stage: string, stageId: string, reorderPayload: { id: string, sort_order: number, etapa_actual_id: string }[]) => void;
     onNewLead: (stage?: string) => void;
     allowEditing?: boolean;
 }
 
-export function PipelineKanbanBoard({ leads = [], onLeadClick, onDropLead, onNewLead, allowEditing = true }: PipelineKanbanBoardProps) {
+export function PipelineKanbanBoard({ leads = [], stages = [], onLeadClick, onDropLead, onNewLead, allowEditing = true }: PipelineKanbanBoardProps) {
     const [activeLead, setActiveLead] = useState<any | null>(null);
     const safeLeads = Array.isArray(leads) ? leads : [];
+    const safeStages = Array.isArray(stages) ? stages : [];
 
     const sortedLeads = React.useMemo(() => {
         return [...safeLeads].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
@@ -73,7 +75,8 @@ export function PipelineKanbanBoard({ leads = [], onLeadClick, onDropLead, onNew
         const overId = over.id as string;
 
         // Find target stage
-        const overStage = PIPELINE_STAGES.find(s => s.value === overId)?.value;
+        const overStage = safeStages.find(s => s.id?.toString() === overId)?.value || PIPELINE_STAGES.find(s => s.value === overId)?.value;
+        const overStageId = safeStages.find(s => s.id?.toString() === overId)?.id?.toString() || null;
         const overLead = safeLeads.find(l => l.id.toString() === overId);
         const targetStage = overStage || overLead?.stage;
 
@@ -83,6 +86,8 @@ export function PipelineKanbanBoard({ leads = [], onLeadClick, onDropLead, onNew
         if (!activeLead) return;
 
         const sourceStage = activeLead.stage;
+        const sourceStageId = safeStages.find(s => s.value === sourceStage)?.id?.toString() || sourceStage;
+        const targetStageId = overStageId || safeStages.find(s => s.value === targetStage)?.id?.toString() || targetStage;
 
         const getStageLeads = (stageValue: string) => {
             return safeLeads
@@ -107,10 +112,10 @@ export function PipelineKanbanBoard({ leads = [], onLeadClick, onDropLead, onNew
             const reorderPayload = newStageLeads.map((l, index) => ({
                 id: l.id.toString(),
                 sort_order: index,
-                etapa_actual_id: targetStage
+                etapa_actual_id: targetStageId
             }));
 
-            onDropLead(leadId, targetStage, reorderPayload);
+            onDropLead(leadId, targetStage, targetStageId, reorderPayload);
         } else {
             const sourceLeads = getStageLeads(sourceStage);
             const targetLeads = getStageLeads(targetStage);
@@ -129,18 +134,18 @@ export function PipelineKanbanBoard({ leads = [], onLeadClick, onDropLead, onNew
             const targetPayload = newTargetLeads.map((l, index) => ({
                 id: l.id.toString(),
                 sort_order: index,
-                etapa_actual_id: targetStage
+                etapa_actual_id: targetStageId
             }));
 
             const sourcePayload = newSourceLeads.map((l, index) => ({
                 id: l.id.toString(),
                 sort_order: index,
-                etapa_actual_id: sourceStage
+                etapa_actual_id: sourceStageId
             }));
 
             const reorderPayload = [...targetPayload, ...sourcePayload];
 
-            onDropLead(leadId, targetStage, reorderPayload);
+            onDropLead(leadId, targetStage, targetStageId, reorderPayload);
         }
     };
 
@@ -157,11 +162,11 @@ export function PipelineKanbanBoard({ leads = [], onLeadClick, onDropLead, onNew
             onDragCancel={handleDragCancel}
         >
             <div className="flex h-full gap-3 p-4 overflow-x-auto bg-transparent items-start scrollbar-thin pb-12">
-                {PIPELINE_STAGES.map((stage) => (
+                {(safeStages.length > 0 ? safeStages : PIPELINE_STAGES).map((stage) => (
                     <DroppablePipelineColumn
                         key={stage.value}
                         stage={stage}
-                    leads={sortedLeads.filter(l => l.stage === stage.value)}
+                        leads={sortedLeads.filter(l => l.stage === stage.value)}
                         onLeadClick={onLeadClick}
                         onNewLead={() => allowEditing ? onNewLead(stage.value) : undefined}
                     />
@@ -178,15 +183,15 @@ export function PipelineKanbanBoard({ leads = [], onLeadClick, onDropLead, onNew
                     },
                 }),
             }}>
-                {activeLead ? (
-                    <div className="rotate-2 scale-110 opacity-100 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] backdrop-blur-3xl ring-4 ring-blue-500/20 rounded-lg">
-                        <SortableLeadCard 
-                            lead={activeLead} 
-                            stage={PIPELINE_STAGES.find(s => s.value === activeLead.stage)}
-                            onClick={() => onLeadClick(activeLead)}
-                            isDragging={true}
-                        />
-                    </div>
+                        {activeLead ? (
+                            <div className="rotate-2 scale-110 opacity-100 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] backdrop-blur-3xl ring-4 ring-blue-500/20 rounded-lg">
+                                <SortableLeadCard 
+                                    lead={activeLead} 
+                                    stage={(safeStages.find(s => s.value === activeLead.stage) || PIPELINE_STAGES.find(s => s.value === activeLead.stage))}
+                                    onClick={() => onLeadClick(activeLead)}
+                                    isDragging={true}
+                                />
+                            </div>
                 ) : null}
             </DragOverlay>
         </DndContext>

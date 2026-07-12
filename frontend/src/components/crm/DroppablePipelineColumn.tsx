@@ -45,7 +45,7 @@ interface DroppablePipelineColumnProps {
 
 export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, allowEditing = true }: DroppablePipelineColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
-        id: stage.value,
+        id: stage.id || stage.value,
     });
 
     return (
@@ -101,7 +101,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                     className="flex flex-col gap-1 overflow-y-auto scrollbar-none pb-4"
                 >
                     <SortableContext
-                        id={stage.value}
+                        id={stage.id || stage.value}
                         items={leads.map(l => l.id.toString())}
                         strategy={verticalListSortingStrategy}
                     >
