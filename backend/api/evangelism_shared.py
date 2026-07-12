@@ -4,7 +4,7 @@ import datetime
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import inspect
+from sqlalchemy import inspect, or_
 from sqlalchemy.orm import Session, load_only
 
 from backend import models
@@ -96,7 +96,7 @@ def session_read_only_options(db: Session):
 def normalize_attendance_status(value) -> str:
     normalized = str(value or "").strip().lower()
     if normalized in {state.lower() for state in FIRST_TIME_STATES}:
-        return "first_time"
+        return "present"
     if normalized in {state.lower() for state in ATTENDED_STATES}:
         return "present"
     if normalized in {state.lower() for state in ABSENT_STATES}:
@@ -246,13 +246,13 @@ def _check_absence_trigger(db: Session, session_id: UUID, sede_id):
             from backend.models_crm import SupportTicket
 
             ticket = SupportTicket(
-                persona_id=persona_id,
-                ticket_type="consolidation",
-                title=f"Inasistencia recurrente: {p.nombre_completo}",
-                description=f"{p.nombre_completo} ha faltado 3 sesiones consecutivas en {house.name}. Requiere contacto pastoral.",
+                user_id=persona_id,
+                subject=f"Inasistencia recurrente: {p.nombre_completo}",
+                description=(
+                    f"{p.nombre_completo} ha faltado 3 sesiones consecutivas en {house.name}. "
+                    "Requiere contacto pastoral. Severidad sugerida: N2."
+                ),
                 status="open",
-                priority="high",
-                severity="N2",
             )
             db.add(ticket)
             db.commit()
@@ -267,7 +267,10 @@ def _check_first_time_lead_trigger(db: Session, session_id: UUID):
         db.query(Asistencia)
         .filter(
             Asistencia.sesion_id == session_id,
-            Asistencia.estado.in_(FIRST_TIME_STATES),
+            or_(
+                Asistencia.es_primera_vez.is_(True),
+                Asistencia.estado.in_(FIRST_TIME_STATES),
+            ),
         )
         .all()
     )

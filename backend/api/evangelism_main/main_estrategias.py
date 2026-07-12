@@ -310,18 +310,7 @@ def generate_strategy_sessions(
         )
     except ValueError as e:
         logger.warning("No se pudieron validar sesiones para strategy=%s: %s", strategy_id, e)
-        return {
-            "strategy": strat.nombre,
-            "recurrence": strat.frecuencia,
-            "start": str(fecha_inicio),
-            "end": str(strat.fecha_fin),
-            "sessions_per_group": 0,
-            "groups": len(groups),
-            "total_sessions_created": 0,
-            "sesiones_habilitadas": 0,
-            "habilitar_inmediatamente": habilitar_inmediatamente,
-            "warning": str(e),
-        }
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception:
         logger.warning("Failed to generate evangelism sessions for strategy=%s", strategy_id)
         return {
