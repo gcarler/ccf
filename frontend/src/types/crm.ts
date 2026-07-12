@@ -237,6 +237,7 @@ export interface PlantillaMensaje {
   canal: CanalEnvio;
   asunto?: string | null;
   contenido_texto: string;
+  contenido_html?: string | null;
   variables_requeridas: string[];
   meta_template_id?: string | null;
   creado_por_id?: string | null;
@@ -281,6 +282,8 @@ export interface SystemTemplate {
   canal: CanalEnvio;
   asunto?: string | null;
   contenido_texto: string;
+  contenido_html?: string | null;
+  html_template_type?: string | null;
   variables_requeridas: string[];
   descripcion?: string | null;
 }

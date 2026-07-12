@@ -23,6 +23,8 @@ class SystemTemplate:
     variables_requeridas: List[str] = field(default_factory=list)
     asunto: Optional[str] = None
     descripcion: Optional[str] = None
+    contenido_html: Optional[str] = None
+    html_template_type: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -88,9 +90,9 @@ SYSTEM_TEMPLATES: List[SystemTemplate] = [
         categoria="Bienvenida y Conexión",
         titulo="Bienvenida a nuevo visitante",
         canal="WHATSAPP",
-        contenido_texto="""Hola {{nombre}}, ¡qué alegría que nos acompañaras en la pasada reunión!
+        contenido_texto="""Hola {{nombre}}, ¡qué alegría que nos acompañaras! En {{sede}} creemos que Dios tiene un propósito para tu vida y queremos caminar juntos contigo.
 
-Queremos conocerte más y acompañarte en tu caminar espiritual. Si tienes alguna petición de oración o duda, aquí estamos para ti.
+Si tienes alguna petición de oración o duda, escríbenos. Estamos para servirte.
 
 Bendiciones,
 Equipo pastoral de {{sede}}""",
@@ -98,18 +100,20 @@ Equipo pastoral de {{sede}}""",
     ),
     SystemTemplate(
         categoria="Bienvenida y Conexión",
-        titulo="Primeros pasos en la iglesia",
+        titulo="Bienvenida a nuevo visitante (Email HTML)",
         canal="EMAIL",
-        asunto="Nos encantó tenerte en casa, {{nombre}} 🏠",
+        asunto="¡{{nombre}}, bienvenido a la familia! 🏠",
         contenido_texto="""Hola {{nombre}},
 
-Gracias por visitarnos. Creemos en caminar juntos; por eso, el siguiente paso ideal es unirte a un grupo en casa.
+Nos alegra de corazón que nos hayas visitado. En {{sede}} creemos que Dios tiene un propósito para tu vida.
 
-Puedes conocer más aquí: {{link_grupos}}
+Tu siguiente paso ideal es unirte a un grupo en casa: {{link_grupos}}
 
 Que el Señor te bendiga,
 {{sede}}""",
-        variables_requeridas=["nombre", "link_grupos", "sede"],
+        contenido_html="__RENDER__:welcome",
+        html_template_type="welcome",
+        variables_requeridas=["nombre", "sede", "link_grupos"],
     ),
     SystemTemplate(
         categoria="Bienvenida y Conexión",
@@ -124,7 +128,7 @@ Que el Señor te bendiga,
         categoria="Acompañamiento y Cuidado",
         titulo="Re-conexión por ausencia prolongada",
         canal="WHATSAPP",
-        contenido_texto="""Hola {{nombre}}, ¡te hemos extrañado! Queríamos saludarte y recordarte que eres parte valiosa de nuestra familia en la iglesia. Si hay algo en lo que el equipo pastoral pueda orar o apoyarte, aquí estamos.""",
+        contenido_texto="""Hola {{nombre}}, ¡te hemos extrañado! Queríamos saludarte y recordarte que eres parte valiosa de nuestra familia. Si hay algo en lo que el equipo pastoral pueda orar o apoyarte, aquí estamos.""",
         variables_requeridas=["nombre"],
     ),
     SystemTemplate(
@@ -136,16 +140,35 @@ Que el Señor te bendiga,
     ),
     SystemTemplate(
         categoria="Acompañamiento y Cuidado",
-        titulo="Cierre de proceso pastoral",
+        titulo="Seguimiento pastoral (Email HTML)",
+        canal="EMAIL",
+        asunto="Hola {{nombre}}, ¿cómo podemos orar por ti?",
+        contenido_texto="""Hola {{nombre}},
+
+Queremos saber cómo estás. Tu proceso es importante para nosotros y estamos aquí para apoyarte.
+
+¿Cómo podemos orar por ti esta semana? Responde a este mensaje.
+
+Con cariño,
+{{pastor}} — {{sede}}""",
+        contenido_html="__RENDER__:pastoral_followup",
+        html_template_type="pastoral_followup",
+        variables_requeridas=["nombre", "pastor", "sede"],
+    ),
+    SystemTemplate(
+        categoria="Acompañamiento y Cuidado",
+        titulo="Cierre de proceso pastoral (Email HTML)",
         canal="EMAIL",
         asunto="Cerramos tu proceso de acompañamiento, {{nombre}}",
         contenido_texto="""Hola {{nombre}},
 
-Hemos cerrado tu proceso de acompañamiento pastoral. Queremos recordarte que siempre puedes volver a contactarnos.
+Hemos cerrado tu proceso de acompañamiento pastoral. Siempre puedes volver a contactarnos.
 
 Dios te bendiga,
-Equipo pastoral""",
-        variables_requeridas=["nombre"],
+Equipo pastoral — {{sede}}""",
+        contenido_html="__RENDER__:pastoral_close",
+        html_template_type="pastoral_close",
+        variables_requeridas=["nombre", "sede"],
     ),
 
     # ── Fechas Especiales ──────────────────────────────────────────────────
@@ -159,6 +182,23 @@ Equipo pastoral""",
 
 Un abrazo fraterno de parte de tus pastores.""",
         variables_requeridas=["nombre"],
+    ),
+    SystemTemplate(
+        categoria="Fechas Especiales",
+        titulo="Felicitación de cumpleaños (Email HTML)",
+        canal="EMAIL",
+        asunto="¡Feliz cumpleaños, {{nombre}}! 🎂",
+        contenido_texto="""¡Feliz cumpleaños {{nombre}}!
+
+Damos gracias a Dios por tu vida. Oramos para que este nuevo año esté lleno de Su gracia, paz y presencia.
+
+"Porque yo sé los planes que tengo para ti" — Jeremías 29:11
+
+Un abrazo fraterno,
+Tus pastores""",
+        contenido_html="__RENDER__:birthday",
+        html_template_type="birthday",
+        variables_requeridas=["nombre", "sede"],
     ),
     SystemTemplate(
         categoria="Fechas Especiales",
@@ -178,7 +218,7 @@ Un abrazo fraterno de parte de tus pastores.""",
         categoria="Fechas Especiales",
         titulo="Saludo de año nuevo",
         canal="WHATSAPP",
-        contenido_texto="""¡Feliz año {{nombre}}! Oramos para que este nuevo año esté lleno de propósito, paz y presencia de Dios. Te esperamos en nuestras reuniones.""",
+        contenido_texto="""¡Feliz año nuevo, {{nombre}}! Oramos para que este año esté lleno de propósito, paz y presencia de Dios. Te esperamos en nuestras reuniones.""",
         variables_requeridas=["nombre"],
     ),
     SystemTemplate(
@@ -192,10 +232,30 @@ Un abrazo fraterno de parte de tus pastores.""",
     # ── Recordatorios y Avisos ─────────────────────────────────────────────
     SystemTemplate(
         categoria="Recordatorios y Avisos",
-        titulo="Recordatorio de consejería",
+        titulo="Recordatorio de consejería (SMS)",
         canal="SMS",
-        contenido_texto="""Hola {{nombre}}, te recordamos tu espacio de acompañamiento pastoral el día {{fecha}} a las {{hora}}. Por favor confirma respondiendo a este mensaje.""",
+        contenido_texto="""CCF: Hola {{nombre}}, te recordamos tu espacio de acompañamiento pastoral el {{fecha}} a las {{hora}}. Confirma respondiendo a este mensaje.""",
         variables_requeridas=["nombre", "fecha", "hora"],
+    ),
+    SystemTemplate(
+        categoria="Recordatorios y Avisos",
+        titulo="Recordatorio de consejería (Email HTML)",
+        canal="EMAIL",
+        asunto="Recordatorio: tu consejería pastoral — {{fecha}}",
+        contenido_texto="""Hola {{nombre}},
+
+Te recordamos tu espacio de acompañamiento pastoral:
+- Día: {{fecha}}
+- Hora: {{hora}}
+- Con: {{pastoral_name}}
+
+Si no puedes asistir, por favor confirma para reprogramar.
+
+Te esperamos,
+{{pastoral_name}}""",
+        contenido_html="__RENDER__:counseling_reminder",
+        html_template_type="counseling_reminder",
+        variables_requeridas=["nombre", "fecha", "hora", "pastoral_name"],
     ),
     SystemTemplate(
         categoria="Recordatorios y Avisos",
@@ -208,8 +268,27 @@ Un abrazo fraterno de parte de tus pastores.""",
         categoria="Recordatorios y Avisos",
         titulo="Aviso de evento especial",
         canal="WHATSAPP",
-        contenido_texto="""Hola {{nombre}}, te invitamos a nuestro evento especial "{{evento}}" el día {{fecha}} a las {{hora}}. ¡No te lo pierdas! Más info: {{link}}""",
+        contenido_texto="""Hola {{nombre}}, te invitamos a "{{evento}}" el día {{fecha}} a las {{hora}}. ¡No te lo pierdas! Más info: {{link}}""",
         variables_requeridas=["nombre", "evento", "fecha", "hora", "link"],
+    ),
+    SystemTemplate(
+        categoria="Recordatorios y Avisos",
+        titulo="Invitación a evento (Email HTML)",
+        canal="EMAIL",
+        asunto="¡{{nombre}}, estás invitado a {{evento}}!",
+        contenido_texto="""Hola {{nombre}},
+
+Estás invitado a {{evento}}.
+Fecha: {{fecha}}
+Hora: {{hora}}
+Lugar: {{lugar}}
+
+Más información: {{link}}
+
+¡Te esperamos!""",
+        contenido_html="__RENDER__:event_invitation",
+        html_template_type="event_invitation",
+        variables_requeridas=["nombre", "evento", "fecha", "hora", "lugar", "link"],
     ),
 
     # ── Respuestas Rápidas (FAQ) ─────────────────────────────────────────────
@@ -224,7 +303,7 @@ Un abrazo fraterno de parte de tus pastores.""",
         categoria="Respuestas Rápidas (FAQ)",
         titulo="Fuera de horario de atención",
         canal="WHATSAPP",
-        contenido_texto="""Hola {{nombre}}, la paz de Dios. En este momento el equipo de oficina está fuera de horario. Déjanos tu mensaje y te responderemos pronto. Si es una emergencia pastoral, contacta al {{telefono_ayuda}}.""",
+        contenido_texto="""Hola {{nombre}}, la paz de Dios. En este momento el equipo está fuera de horario. Déjanos tu mensaje y te responderemos pronto. Si es una emergencia pastoral, contacta al {{telefono_ayuda}}.""",
         variables_requeridas=["nombre", "telefono_ayuda"],
     ),
     SystemTemplate(
@@ -238,7 +317,7 @@ Un abrazo fraterno de parte de tus pastores.""",
         categoria="Respuestas Rápidas (FAQ)",
         titulo="Información de ofrendas y donaciones",
         canal="WHATSAPP",
-        contenido_texto="""Hola {{nombre}}, puedes realizar tu ofrenda a través de {{metodo}}. Si necesitas más detalles, escríbenos y con gusto te ayudamos. ¡Dios bendiga tu generosidad!""",
+        contenido_texto="""Hola {{nombre}}, puedes realizar tu ofrenda a través de {{metodo}}. Si necesitas más detalles, escríbenos. ¡Dios bendiga tu generosidad!""",
         variables_requeridas=["nombre", "metodo"],
     ),
 
@@ -247,28 +326,28 @@ Un abrazo fraterno de parte de tus pastores.""",
         categoria="Redes Sociales",
         titulo="Respuesta a comentario de agradecimiento",
         canal="WHATSAPP",
-        contenido_texto="""¡Gracias por tu comentario, {{nombre}}! Nos alegra mucho saber que fuiste bendecido. Te invitamos a escribirnos por interno si necesitas oración o acompañamiento.""",
+        contenido_texto="""¡Gracias por tu comentario, {{nombre}}! Nos alegra saber que fuiste bendecido. Si necesitas oración o acompañamiento, escríbenos por interno.""",
         variables_requeridas=["nombre"],
     ),
     SystemTemplate(
         categoria="Redes Sociales",
         titulo="Invitación a mensaje privado",
         canal="WHATSAPP",
-        contenido_texto="""Hola {{nombre}}, gracias por tu interés. Nos encantaría conocerte más y acompañarte. ¿Podemos hablar por interno? Escríbenos y con gusto te atenderemos.""",
+        contenido_texto="""Hola {{nombre}}, gracias por tu interés. Nos encantaría conocerte más. ¿Podemos hablar por interno? Escríbenos y con gusto te atenderemos.""",
         variables_requeridas=["nombre"],
     ),
     SystemTemplate(
         categoria="Redes Sociales",
         titulo="Respuesta a queja o reclamo",
         canal="WHATSAPP",
-        contenido_texto="""Hola {{nombre}}, lamentamos mucho escuchar eso. Queremos atenderte con empatía. Por favor, escríbenos por interno con tus datos para que nuestro equipo pastoral se comunique contigo.""",
+        contenido_texto="""Hola {{nombre}}, lamentamos escuchar eso. Queremos atenderte con empatía. Por favor, escríbenos por interno con tus datos para que nuestro equipo pastoral se comunique contigo.""",
         variables_requeridas=["nombre"],
     ),
 
     # ── Biblioteca de Contenidos ─────────────────────────────────────────────
     SystemTemplate(
         categoria="Biblioteca de Contenidos",
-        titulo="Guía de bienvenida para nuevos",
+        titulo="Guía de bienvenida para nuevos (Email HTML)",
         canal="EMAIL",
         asunto="Tu guía de bienvenida, {{nombre}}",
         contenido_texto="""Hola {{nombre}},
@@ -277,6 +356,8 @@ Te compartimos nuestra guía de bienvenida con los próximos pasos para conectar
 
 Esperamos verte pronto,
 {{sede}}""",
+        contenido_html="__RENDER__:welcome_guide",
+        html_template_type="welcome_guide",
         variables_requeridas=["nombre", "link_guia", "sede"],
     ),
     SystemTemplate(
@@ -299,12 +380,12 @@ Esperamos verte pronto,
         categoria="Automatización y Etiquetas",
         titulo="Asignación automática a nuevo visitante",
         canal="WHATSAPP",
-        contenido_texto="""Hola {{nombre}}, bienvenido a nuestra iglesia. Un líder de nuestra área de nuevos visitantes se pondrá en contacto contigo pronto. ¡Dios te bendiga!""",
+        contenido_texto="""Hola {{nombre}}, bienvenido a nuestra iglesia. Un líder de nuevos visitantes se pondrá en contacto contigo pronto. ¡Dios te bendiga!""",
         variables_requeridas=["nombre"],
     ),
     SystemTemplate(
         categoria="Automatización y Etiquetas",
-        titulo="Mensaje a personas etiquetadas como interesadas en grupo",
+        titulo="Mensaje a personas interesadas en grupo",
         canal="WHATSAPP",
         contenido_texto="""Hola {{nombre}}, vemos que estás interesado en unirte a un grupo en casa. Tenemos varios horarios disponibles. ¿Te gustaría que te enviemos más información?""",
         variables_requeridas=["nombre"],
@@ -313,7 +394,7 @@ Esperamos verte pronto,
         categoria="Automatización y Etiquetas",
         titulo="Mensaje a voluntarios activos",
         canal="WHATSAPP",
-        contenido_texto="""Hola {{nombre}}, gracias por tu servicio en {{ministerio}}. Queremos recordarte la próxima reunión de equipo el {{fecha}} a las {{hora}}. ¡Tu labor es muy valiosa!""",
+        contenido_texto="""Hola {{nombre}}, gracias por tu servicio en {{ministerio}}. Te recordamos la próxima reunión de equipo el {{fecha}} a las {{hora}}. ¡Tu labor es muy valiosa!""",
         variables_requeridas=["nombre", "ministerio", "fecha", "hora"],
     ),
 ]
@@ -343,6 +424,8 @@ def get_system_templates() -> List[Dict]:
             "canal": tpl.canal,
             "asunto": tpl.asunto,
             "contenido_texto": tpl.contenido_texto,
+            "contenido_html": tpl.contenido_html,
+            "html_template_type": tpl.html_template_type,
             "variables_requeridas": tpl.variables_requeridas,
             "descripcion": tpl.descripcion,
         }

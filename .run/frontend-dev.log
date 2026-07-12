@@ -8,206 +8,368 @@
    - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 1764ms
+ ✓ Ready in 1755ms
  ○ Compiling /middleware ...
- ✓ Compiled /middleware in 850ms (158 modules)
+ ✓ Compiled /middleware in 761ms (115 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 9.8s (1713 modules)
+ GET / 200 in 10592ms
  ○ Compiling /plataforma/calendar ...
- ✓ Compiled /plataforma/calendar in 13.5s (3014 modules)
- GET /plataforma/calendar 200 in 14471ms
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app-paths-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/server/app-paths-manifest.json',
-  page: '/plataforma/calendar'
+ ✓ Compiled /plataforma/calendar in 4.2s (3077 modules)
+ GET /plataforma/calendar 200 in 4730ms
+ ○ Compiling /plataforma ...
+ ✓ Compiled /plataforma in 1099ms (3078 modules)
+ GET /plataforma 200 in 1505ms
+ ✓ Compiled /login in 486ms (1652 modules)
+ ✓ Compiled in 599ms (1448 modules)
+ GET /icon.png 200 in 1412ms
+ GET /icon.png?f0297ab3a35751aa 200 in 1439ms
+ GET /login 200 in 1482ms
+ GET /icon.png 200 in 58ms
+ GET /login 200 in 84ms
+ GET /icon.png 200 in 67ms
+ GET /icon.png 200 in 105ms
+ ○ Compiling /auth/callback ...
+ ✓ Compiled /auth/callback in 1005ms (3117 modules)
+ GET /auth/callback?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NmVhNjc5YS1iYTZmLTQ2NzctYTBiZC0xMTE5YWZhYjI2MjEiLCJyb2xlIjoiQURNSU5JU1RSQURPUiIsInBsYXRmb3JtX3JvbGUiOiJBRE1JTklTVFJBRE9SIiwic2VkZV9pZCI6ImJhNmM4MTBkLTkwODUtNGFkNi1hOGRhLTI3ZGI4NWVkNGU3NCIsImp0aSI6IjZhMGYxYTBiZDlhMWYyZjMiLCJleHAiOjE3ODM4Nzk1NzMsImlhdCI6MTc4Mzg3ODY3M30.ozNshRR8h9SEXfmvSHAjRJdE0l_tf2vinUVb4DUBCw4 200 in 1407ms
+ GET /icon.png?f0297ab3a35751aa 200 in 61ms
+ GET /icon.png 200 in 57ms
+ GET /icon.png 200 in 60ms
+ ○ Compiling /plataforma/messages ...
+ ✓ Compiled /plataforma/messages in 6.4s (4153 modules)
+ GET /icon.png 200 in 6414ms
+ GET /login 200 in 3689ms
+ GET /plataforma/messages 200 in 6597ms
+ GET /plataforma/academy 200 in 6783ms
+ GET /icon.png 200 in 64ms
+ GET /icon.png 200 in 57ms
+ GET /plataforma/messages 200 in 92ms
+ GET /plataforma/messages 200 in 71ms
+ ○ Compiling /plataforma/evangelism ...
+ ✓ Compiled /plataforma/evangelism in 1313ms (4165 modules)
+ GET /plataforma/evangelism 200 in 1570ms
+ ○ Compiling /plataforma/evangelism/strategies/[id] ...
+ ✓ Compiled /plataforma/evangelism/strategies/[id] in 4.5s (3090 modules)
+ GET /plataforma/evangelism/strategies/b47c23fc-9da3-48b9-ad6f-e343530ef540 200 in 5403ms
+ GET /plataforma/evangelism/strategies/b47c23fc-9da3-48b9-ad6f-e343530ef540 200 in 158ms
+ GET /plataforma/evangelism/strategies/b47c23fc-9da3-48b9-ad6f-e343530ef540 200 in 77ms
+ GET /plataforma/evangelism/strategies/b47c23fc-9da3-48b9-ad6f-e343530ef540 200 in 100ms
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
  ○ Compiling /_error ...
- ✓ Compiled /_error in 3.4s (3337 modules)
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ GET /plataforma/evangelism 200 in 781ms
+ GET /plataforma/evangelism 200 in 145ms
+ ✓ Compiled /_error in 4.4s (3447 modules)
+ GET /plataforma/evangelism 200 in 901ms
+ GET /api/static/cms/25d775ffc4224efe90b76db63aa25877.webp 500 in 5195ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/25d775ffc4224efe90b76db63aa25877.webp received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+ GET /plataforma/evangelism/strategies/7605cfe0-ae8d-4131-ba12-4b6e6738c2fb 200 in 229ms
+ ○ Compiling /plataforma/evangelism/strategies/[id]/analytics ...
+ ✓ Compiled /plataforma/evangelism/strategies/[id]/analytics in 4.2s (3907 modules)
+ ○ Compiling /plataforma/cms ...
+ GET /plataforma/evangelism/strategies/7605cfe0-ae8d-4131-ba12-4b6e6738c2fb/analytics 200 in 5272ms
+ ✓ Compiled /plataforma/cms in 1175ms (3941 modules)
+ GET /plataforma/cms 200 in 1701ms
+ GET /plataforma/cms 200 in 132ms
+ ○ Compiling /plataforma/cms/pastoral-team ...
+ ✓ Compiled /plataforma/cms/pastoral-team in 1608ms (3961 modules)
+ GET /plataforma/cms/pastoral-team 200 in 1798ms
+ GET /plataforma/cms/pastoral-team 200 in 76ms
+ ○ Compiling / ...
+ ✓ Compiled / in 686ms (1756 modules)
+ GET / 200 in 1757ms
+ ○ Compiling /icon.png ...
+ ✓ Compiled /icon.png in 645ms (1773 modules)
+ GET /icon.png 200 in 819ms
+ GET /icon.png?f0297ab3a35751aa 200 in 881ms
+ GET /icon.png 200 in 56ms
+ GET /icon.png 200 in 60ms
+ GET /icon.png 200 in 65ms
+ GET /icon.png 200 in 52ms
+ GET /icon.png 200 in 78ms
+ ○ Compiling /predicas ...
+ ✓ Compiled /predicas in 2.4s (3490 modules)
+ GET /predicas 200 in 2819ms
+ GET /predicas 200 in 88ms
+ ○ Compiling /robots.txt ...
+ ✓ Compiled /robots.txt in 1172ms (1236 modules)
+ GET /robots.txt 200 in 1582ms
+ ○ Compiling /[...slug] ...
+ ✓ Compiled /[...slug] in 5s (3614 modules)
+ GET /conocer-a-jesus 200 in 7304ms
+ ○ Compiling /sedes ...
+ ✓ Compiled /sedes in 3.9s (3552 modules)
+ GET /sedes 200 in 4485ms
+ ○ Compiling /cursos ...
+ ✓ Compiled /cursos in 3s (3553 modules)
+ GET /cursos 200 in 3522ms
+ GET /predicas 200 in 196ms
+ ○ Compiling /nosotros ...
+ ✓ Compiled /nosotros in 5.1s (3601 modules)
+ GET /nosotros 200 in 5558ms
+ ○ Compiling /pastores ...
+ ✓ Compiled /pastores in 2.1s (3561 modules)
+ GET /pastores 200 in 2517ms
+ ○ Compiling /testimonios ...
+ ✓ Compiled /testimonios in 4.4s (3568 modules)
+ GET /testimonios 200 in 4875ms
+ ○ Compiling /robots.txt ...
+ ✓ Compiled /robots.txt in 2.4s (1236 modules)
+ GET /robots.txt 200 in 2768ms
+ ○ Compiling /eventos ...
+ ✓ Compiled /eventos in 5.8s (3570 modules)
+ GET /eventos 200 in 6971ms
+ GET / 200 in 180ms
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
-[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app-paths-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/server/app-paths-manifest.json',
-  page: '/plataforma/calendar'
+ ○ Compiling /_error ...
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
-[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- GET /plataforma/calendar?view=evangelismo 500 in 6369ms
- GET /plataforma/calendar?view=evangelismo 500 in 278ms
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
-  page: '/plataforma/calendar'
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ ✓ Compiled /_error in 3s (3660 modules)
+ GET /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp 500 in 3367ms
+ GET /api/static/cms/25d775ffc4224efe90b76db63aa25877.webp 500 in 1863ms
+ GET /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg 500 in 1824ms
+ GET /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg 500 in 1813ms
+ GET /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg 500 in 1803ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp received null
+ ⨯ The requested resource isn't a valid image for /api/static/cms/25d775ffc4224efe90b76db63aa25877.webp received null
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg received null
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg received null
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
-[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
-  page: '/plataforma/calendar'
+ GET /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg 500 in 210ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ GET /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg 500 in 211ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
-[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ GET /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg 500 in 209ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+ HEAD / 200 in 453ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 3.2s (1323 modules)
+ GET / 200 in 4150ms
+ GET /login 200 in 4262ms
+ GET / 200 in 137ms
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- GET /plataforma/calendar?view=crm 500 in 643ms
- GET /plataforma/calendar?view=crm 500 in 285ms
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
-  page: '/plataforma/calendar'
+ GET /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg 500 in 279ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ GET /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp 500 in 214ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
-[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
-  page: '/plataforma/calendar'
+ GET /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg 500 in 209ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ GET /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg 500 in 209ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
-[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ GET /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg 500 in 210ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- GET /plataforma/calendar?view=proyectos 500 in 879ms
- GET /plataforma/calendar?view=proyectos 500 in 283ms
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
-  page: '/plataforma/calendar'
+ GET /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg 500 in 216ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ GET /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp 500 in 210ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
-[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
-  page: '/plataforma/calendar'
+ GET /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg 500 in 212ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ GET /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg 500 in 211ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
-[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ GET /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp 500 in 209ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- GET /plataforma/calendar?view=personal 500 in 648ms
- GET /plataforma/calendar?view=personal 500 in 270ms
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
-  page: '/plataforma/calendar'
+ GET /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg 500 in 217ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ GET /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg 500 in 212ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
-[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/server/app/plataforma/calendar/page.js',
-  page: '/plataforma/calendar'
+ GET /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg 500 in 210ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- ⨯ [Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ GET /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp 500 in 213ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
-[Error: ENOENT: no such file or directory, open '/root/ccf/frontend/.next/routes-manifest.json'] {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'open',
-  path: '/root/ccf/frontend/.next/routes-manifest.json'
+ GET /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg 500 in 216ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+ ○ Compiling /robots.txt ...
+ ✓ Compiled /robots.txt in 2.5s (1333 modules)
+ GET /robots.txt 200 in 2967ms
+ ○ Compiling /sedes ...
+ ✓ Compiled /sedes in 1544ms (1342 modules)
+ GET /sedes 200 in 2009ms
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- GET /plataforma/calendar?view=evangelismo 500 in 829ms
- GET /plataforma/calendar?view=evangelismo 500 in 298ms
- ⨯ Error: Cannot find module './1331.js'
-Require stack:
-- /root/ccf/frontend/.next/server/webpack-runtime.js
-- /root/ccf/frontend/.next/server/pages/_document.js
-- /root/ccf/frontend/node_modules/next/dist/server/require.js
-- /root/ccf/frontend/node_modules/next/dist/server/load-components.js
-- /root/ccf/frontend/node_modules/next/dist/build/utils.js
-- /root/ccf/frontend/node_modules/next/dist/build/swc/options.js
-- /root/ccf/frontend/node_modules/next/dist/build/swc/index.js
-- /root/ccf/frontend/node_modules/next/dist/build/analysis/parse-module.js
-- /root/ccf/frontend/node_modules/next/dist/build/analysis/get-page-static-info.js
-- /root/ccf/frontend/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
-- /root/ccf/frontend/node_modules/next/dist/server/lib/router-server.js
-- /root/ccf/frontend/node_modules/next/dist/server/lib/start-server.js
-    at <unknown> (.next/server/app/plataforma/calendar/page.js:2:9774)
-    at Object.<anonymous> (.next/server/app/plataforma/calendar/page.js:2:9854) {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: [Array],
-  page: '/plataforma/calendar'
+ GET /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg 500 in 248ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
 }
- GET /plataforma/calendar?view=evangelismo 500 in 385ms
- ✓ Compiled in 1456ms (3337 modules)
- ✓ Compiled in 1725ms (1670 modules)
- ✓ Compiled in 831ms (1557 modules)
+ GET /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg 500 in 269ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+ GET /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp 500 in 210ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+ GET /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg 500 in 210ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+ GET /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg 500 in 209ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+ GET /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp 500 in 209ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+ GET /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg 500 in 210ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+ GET /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp 500 in 211ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+ GET /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg 500 in 229ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+ GET / 200 in 177ms
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+ GET /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp 500 in 246ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+ GET / 200 in 132ms
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+[TypeError: Invalid value "undefined" for header "x-forwarded-for"] {
+  code: 'ERR_HTTP_INVALID_HEADER_VALUE'
+}
+ GET /api/static/cms/25d775ffc4224efe90b76db63aa25877.webp 500 in 298ms
+ GET /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg 500 in 285ms
+ GET /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg 500 in 272ms
+ GET /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp 500 in 260ms
+ GET /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg 500 in 239ms
+ GET /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg 500 in 227ms
+ ⨯ The requested resource isn't a valid image for /api/static/cms/25d775ffc4224efe90b76db63aa25877.webp received null
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg received null
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/de4a24771bd9f7895462ecb0b3e702d6.jpg received null
+ ⨯ The requested resource isn't a valid image for /api/static/cms/home_banner/a7e9a238a55d464cbf0cb6ff88f29671.webp received null
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg received null
+ ⨯ The requested resource isn't a valid image for /api/static/cms/external/0bf6eeffb86816066af28730e887a814.jpg received null
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
+[Error: The requested resource isn't a valid image.] { statusCode: 400 }
 [?25h

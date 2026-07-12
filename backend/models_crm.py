@@ -265,6 +265,7 @@ class PlantillaMensaje(Base):
     canal = Column(SAEnum(CanalEnvio), nullable=False, index=True)
     asunto = Column(String(200), nullable=True)
     contenido_texto = Column(Text, nullable=False)
+    contenido_html = Column(Text, nullable=True)
     variables_requeridas = Column(
         JSON().with_variant(ARRAY(String), "postgresql"),
         default=list,
