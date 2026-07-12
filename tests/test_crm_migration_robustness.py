@@ -1,12 +1,11 @@
 import os
-import uuid
-import pytest
 import subprocess
+import uuid
 from pathlib import Path
+
+import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
-from alembic.config import Config
-from alembic import command
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,7 +31,7 @@ def _run_alembic(*args: str, database_url: str) -> subprocess.CompletedProcess[s
 def test_sqlite_baseline_migration_is_explicitly_unsupported(tmp_path):
     """
     Verify that running the baseline upgrade from scratch on SQLite fails.
-    This demonstrates the design flaw where 20260702_0001_canonical_baseline runs 
+    This demonstrates the design flaw where 20260702_0001_canonical_baseline runs
     Base.metadata.create_all which creates everything, making subsequent steps fail.
     """
     db_url = f"sqlite:///{tmp_path / 'baseline_test.db'}"
@@ -76,7 +75,7 @@ def test_postgresql_baseline_migration_failure():
 
 def test_crm_automation_graph_migration_logic_sqlite(tmp_path):
     """
-    Simulate the pre-migration state on SQLite and test the upgrade/downgrade logic 
+    Simulate the pre-migration state on SQLite and test the upgrade/downgrade logic
     for 20260710_0002_crm_automation_graph.
     We expect the downgrade to fail on SQLite because of the unnamed foreign key constraint.
     """

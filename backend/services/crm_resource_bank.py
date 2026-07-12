@@ -6,9 +6,9 @@ asi cada sede puede personalizar sus propias copias sin forzar datos globales.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import re
 import unicodedata
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 
