@@ -64,8 +64,8 @@ export default function PrayerDetailPage() {
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                            <DSBadge tone="blue" label={(prayer.category || "General").toUpperCase()} />
-                            <DSBadge tone={prayer.status === "answered" ? "emerald" : "amber"} label={prayer.status.toUpperCase()} />
+                            <DSBadge tone="blue" label={String(prayer.category || "General").toUpperCase()} />
+                            <DSBadge tone={prayer.status === "answered" ? "emerald" : "amber"} label={String(prayer.status || "pending").toUpperCase()} />
                         </div>
                         <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase leading-none">
                             {prayer.requester_name}
