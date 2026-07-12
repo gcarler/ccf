@@ -219,41 +219,53 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
 
                 {/* 📊 Project Metrics */}
                 <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {dashboard?.cards?.map((card: { label: string; title?: string; value: number; trend?: number; icon?: string; color?: string }, idx: number) => (
-                        <DSMetric
-                            key={idx}
-                            label={card.title || card.label}
-                            value={String(card.value)}
-                            trend={card.trend != null ? `${card.trend > 0 ? '+' : ''}${card.trend}%` : undefined}
-                            tone={card.color as "blue" | "emerald" | "amber" | undefined}
-                        />
-                    ))}
+                    {dashboard?.cards?.map((card: { label: string; title?: string; value: number; trend?: number; icon?: string; color?: string }, idx: number) => {
+                        const label = (card.title || card.label).toLowerCase();
+                        let href = '/plataforma/projects';
+                        if (label.includes('tarea')) href = '/plataforma/projects/tasks';
+                        else if (label.includes('actividad') || label.includes('activity')) href = '/plataforma/projects?view=activity';
+                        else if (label.includes('atrasad') || label.includes('delayed')) href = '/plataforma/projects/tasks?status=overdue';
+                        return (
+                            <DSMetric
+                                key={idx}
+                                label={card.title || card.label}
+                                value={String(card.value)}
+                                trend={card.trend != null ? `${card.trend > 0 ? '+' : ''}${card.trend}%` : undefined}
+                                tone={card.color as "blue" | "emerald" | "amber" | undefined}
+                                href={href}
+                            />
+                        );
+                    })}
                 </section>
 
                 {/* 📈 Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                     <div className="lg:col-span-2">
-                        <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Carga de Trabajo del Equipo</h3>
-                            <DSChart type="bar" data={dashboard?.workload_distribution?.map((w: { name: string; tasks: number }) => ({ label: w.name, value: w.tasks }))} color="hsl(var(--warning))" height={220} />
-                        </DSCard>
+                        <a href="/plataforma/projects/team" className="block">
+                            <DSCard className="hover:border-[hsl(var(--primary))]/30 transition-all cursor-pointer">
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Carga de Trabajo del Equipo</h3>
+                                <DSChart type="bar" data={dashboard?.workload_distribution?.map((w: { name: string; tasks: number }) => ({ label: w.name, value: w.tasks }))} color="hsl(var(--warning))" height={220} />
+                            </DSCard>
+                        </a>
                     </div>
                     <div>
-                        <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Tareas</h3>
-                            <div className="space-y-4 pt-4">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">Tareas Atrasadas</span>
-                                    <span className="text-sm font-semibold text-rose-500">{dashboard?.delayed_tasks_count || 0}</span>
+                        <a href="/plataforma/projects/tasks" className="block">
+                            <DSCard className="hover:border-rose-400/30 transition-all cursor-pointer">
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Tareas</h3>
+                                <div className="space-y-4 pt-4">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">Tareas Atrasadas</span>
+                                        <span className="text-sm font-semibold text-rose-500">{dashboard?.delayed_tasks_count || 0}</span>
+                                    </div>
+                                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-rose-500" style={{ width: '15%' }} />
+                                    </div>
+                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] italic">
+                                        Se recomienda revisar los hitos críticos para evitar cuellos de botella.
+                                    </p>
                                 </div>
-                                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-rose-500" style={{ width: '15%' }} />
-                                </div>
-                                <p className="text-[10px] text-[hsl(var(--text-secondary))] italic">
-                                    Se recomienda revisar los hitos críticos para evitar cuellos de botella.
-                                </p>
-                            </div>
-                        </DSCard>
+                            </DSCard>
+                        </a>
                     </div>
                 </div>
 
