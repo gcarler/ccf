@@ -1,4 +1,5 @@
 import uuid
+from types import SimpleNamespace
 from datetime import datetime, timedelta, timezone
 
 from backend import models
@@ -11,6 +12,7 @@ from backend.models_crm_pipeline import (
 from backend.services.evangelism_crm_bridge import (
     _obtener_o_crear_pipeline_nuevos_visitantes,
     crear_caso_desde_asistencia,
+    crear_caso_nuevo_visitante,
 )
 from backend.services.evangelism_projection import proyectar_sesiones
 from tests.conftest import auth_headers, seed_admin
@@ -348,6 +350,49 @@ def test_pipeline_reutilizado_si_ya_existe(db_session):
     pipeline1 = _obtener_o_crear_pipeline_nuevos_visitantes(db_session, sede.id)
     pipeline2 = _obtener_o_crear_pipeline_nuevos_visitantes(db_session, sede.id)
     assert pipeline1.id == pipeline2.id
+
+
+def test_caso_nuevo_visitante_intenta_recrear_etapa_si_falta(monkeypatch):
+    fake_db = SimpleNamespace(commit=lambda: None)
+    sede_id = uuid.uuid4()
+    persona = SimpleNamespace(id=uuid.uuid4(), first_name="Caso", last_name="SinEtapa")
+    pipeline = SimpleNamespace(id=uuid.uuid4())
+    etapa = SimpleNamespace(id=uuid.uuid4())
+    calls = []
+
+    def fake_pipeline(db, target_sede_id):
+        calls.append(("pipeline", target_sede_id))
+        return pipeline
+
+    def fake_stage(db, target_pipeline, target_sede_id):
+        calls.append(("stage", target_pipeline.id, target_sede_id))
+        return etapa
+
+    def fake_insert(**kwargs):
+        calls.append(("insert", kwargs["sede_id"], kwargs["pipeline"].id, kwargs["etapa"].id))
+        return SimpleNamespace(id=uuid.uuid4(), persona_id=persona.id)
+
+    monkeypatch.setattr(
+        "backend.services.evangelism_crm_bridge._obtener_o_crear_pipeline_nuevos_visitantes",
+        fake_pipeline,
+    )
+    monkeypatch.setattr(
+        "backend.services.evangelism_crm_bridge._obtener_o_crear_etapa_nuevo_contacto",
+        fake_stage,
+    )
+    monkeypatch.setattr(
+        "backend.services.evangelism_crm_bridge._insert_caso_nuevo_visitante",
+        fake_insert,
+    )
+
+    caso = crear_caso_nuevo_visitante(fake_db, persona, sede_id)
+
+    assert caso is not None
+    assert calls == [
+        ("pipeline", sede_id),
+        ("stage", pipeline.id, sede_id),
+        ("insert", sede_id, pipeline.id, etapa.id),
+    ]
 
 
 def test_respuesta_json_estructura_correcta(client, db_session):

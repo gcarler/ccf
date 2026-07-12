@@ -25,6 +25,16 @@ from backend.models_evangelism import Asistencia, GrupoEvangelismo, SesionGrupo
 logger = logging.getLogger(__name__)
 
 
+def _stringify_uuid_payload(payload: dict) -> dict:
+    normalized = {}
+    for key, value in payload.items():
+        if isinstance(value, uuid.UUID):
+            normalized[key] = str(value)
+        else:
+            normalized[key] = value
+    return normalized
+
+
 def _crm_etapa_pipeline_live_column_names(db: Session) -> set[str]:
     bind = db.get_bind()
     if bind is None:
@@ -149,7 +159,10 @@ def _insert_caso_nuevo_visitante(
         MetaData(),
         autoload_with=db.get_bind(),
     )
-    db.execute(insert(caso_table), [{k: v for k, v in caso_data.items() if k in live_cols}])
+    db.execute(
+        insert(caso_table),
+        [_stringify_uuid_payload({k: v for k, v in caso_data.items() if k in live_cols})],
+    )
     return _build_transient_caso(
         caso_id=caso_id,
         persona_id=persona.id,
@@ -237,6 +250,90 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
     return pipeline
 
 
+def _obtener_o_crear_etapa_nuevo_contacto(
+    db: Session,
+    pipeline: PipelineCRM,
+    sede_id: uuid.UUID,
+) -> Optional[EtapaPipeline]:
+    etapa_options = _crm_etapa_pipeline_read_only_options(db)
+    etapa_query = db.query(EtapaPipeline)
+    if etapa_options is not None:
+        etapa_query = etapa_query.options(etapa_options)
+    etapa = (
+        etapa_query.filter(EtapaPipeline.pipeline_id == pipeline.id)
+        .order_by(EtapaPipeline.orden.asc())
+        .first()
+    )
+    if etapa:
+        return etapa
+
+    live_cols = _crm_etapa_pipeline_live_column_names(db)
+    etapa_id = uuid.uuid4()
+    etapa_data = {
+        "id": etapa_id,
+        "pipeline_id": pipeline.id,
+        "nombre": "Nuevo Contacto",
+        "orden": 1,
+        "requiere_accion": True,
+        "deleted_at": None,
+        "created_at": datetime.now(timezone.utc),
+    }
+    if "visual_color" in live_cols:
+        etapa_data["visual_color"] = None
+
+    try:
+        sp = db.begin_nested()
+        if "visual_color" in live_cols:
+            db.add(
+                EtapaPipeline(
+                    **{k: v for k, v in etapa_data.items() if hasattr(EtapaPipeline, k)}
+                )
+            )
+            db.flush()
+        else:
+            etapa_table = Table(
+                "crm_etapas_pipeline",
+                MetaData(),
+                autoload_with=db.get_bind(),
+            )
+            db.execute(
+                insert(etapa_table),
+                [_stringify_uuid_payload({k: v for k, v in etapa_data.items() if k in live_cols})],
+            )
+        sp.commit()
+    except IntegrityError:
+        sp.rollback()
+        etapa = (
+            db.query(EtapaPipeline)
+            .filter(EtapaPipeline.pipeline_id == pipeline.id)
+            .order_by(EtapaPipeline.orden.asc())
+            .first()
+        )
+        if etapa:
+            return etapa
+        logger.warning(
+            "Failed to create fallback etapa Nuevo Contacto for pipeline %s (sede=%s)",
+            pipeline.id,
+            sede_id,
+        )
+        return None
+
+    etapa = (
+        db.query(EtapaPipeline)
+        .filter(EtapaPipeline.pipeline_id == pipeline.id)
+        .order_by(EtapaPipeline.orden.asc())
+        .first()
+    )
+    if etapa:
+        return etapa
+    logger.warning(
+        "Fallback etapa Nuevo Contacto missing after creation for pipeline %s (sede=%s)",
+        pipeline.id,
+        sede_id,
+    )
+    return None
+
+
 def crear_caso_desde_asistencia(
     db: Session,
     asistencia: Asistencia,
@@ -257,20 +354,9 @@ def crear_caso_desde_asistencia(
         logger.warning("No se pudo obtener/crear pipeline para sede=%s — skipping caso creation", sede_id)
         return None
 
-    etapa_options = _crm_etapa_pipeline_read_only_options(db)
-    etapa_query = db.query(EtapaPipeline)
-    if etapa_options is not None:
-        etapa_query = etapa_query.options(etapa_options)
-    etapa = (
-        etapa_query.filter(EtapaPipeline.pipeline_id == pipeline.id)
-        .order_by(EtapaPipeline.orden.asc())
-        .first()
-    )
+    etapa = _obtener_o_crear_etapa_nuevo_contacto(db, pipeline, sede_id)
     if not etapa:
-        logger.warning(
-            "No etapas found for pipeline %s (sede=%s) — skipping caso creation",
-            pipeline.id, sede_id,
-        )
+        logger.warning("No se pudo garantizar una etapa inicial para pipeline %s (sede=%s)", pipeline.id, sede_id)
         return None
 
     caso = _insert_caso_nuevo_visitante(
@@ -305,20 +391,9 @@ def crear_caso_nuevo_visitante(
         logger.warning("No se pudo obtener/crear pipeline para sede=%s — skipping caso creation", sede_id)
         return None
 
-    etapa_options = _crm_etapa_pipeline_read_only_options(db)
-    etapa_query = db.query(EtapaPipeline)
-    if etapa_options is not None:
-        etapa_query = etapa_query.options(etapa_options)
-    etapa = (
-        etapa_query.filter(EtapaPipeline.pipeline_id == pipeline.id)
-        .order_by(EtapaPipeline.orden.asc())
-        .first()
-    )
+    etapa = _obtener_o_crear_etapa_nuevo_contacto(db, pipeline, sede_id)
     if not etapa:
-        logger.warning(
-            "No etapas found for pipeline %s (sede=%s) — skipping caso creation",
-            pipeline.id, sede_id,
-        )
+        logger.warning("No se pudo garantizar una etapa inicial para pipeline %s (sede=%s)", pipeline.id, sede_id)
         return None
 
     caso = _insert_caso_nuevo_visitante(
