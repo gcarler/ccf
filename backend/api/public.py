@@ -223,6 +223,7 @@ def public_course_enroll(
 
 class PublicContactCreate(BaseModel):
     full_name: str
+    email: Optional[str] = None
     phone: Optional[str] = None
     notes: Optional[str] = None
     status: Optional[str] = "prospect"

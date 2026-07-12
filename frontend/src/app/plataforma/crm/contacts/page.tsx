@@ -52,7 +52,7 @@ export default function ContactsPage() {
     const { addToast } = useToast();
     const router = useRouter();
 
-    const [leads, setLeads] = useState<any[]>([]);
+    const [leads, setLeads] = useState<Array<{ id: string; nombre_completo?: string; source?: string; phone?: string; telefono?: string; stage?: string; created_at?: string }>>([]);
     const [loading, setLoading] = useState(true);
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_contacts_view', 'list'));
     const [searchQuery, setSearchQuery] = useState('');
@@ -72,7 +72,7 @@ export default function ContactsPage() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any>('/crm/casos', { token, cache: 'no-store' });
+            const data = await apiFetch<Array<{ id: string; nombre_completo?: string; source?: string; phone?: string; telefono?: string; stage?: string; created_at?: string }> | { cases?: Array<{ id: string; nombre_completo?: string; source?: string; phone?: string; telefono?: string; stage?: string; created_at?: string }> }>('/crm/casos', { token, cache: 'no-store' });
             const items = Array.isArray(data) ? data : Array.isArray(data?.cases) ? data.cases : [];
             setLeads(items);
         } catch {
@@ -120,16 +120,17 @@ export default function ContactsPage() {
     });
 
     const groupedByStage = useMemo(() => {
-        const map: Record<string, any[]> = { new: [], call: [], visit: [], discipleship: [], consolidated: [] };
+        const map: Record<string, typeof filtered> = { new: [], call: [], visit: [], discipleship: [], consolidated: [] };
         for (const lead of filtered) {
-            if (!map[lead.stage]) map[lead.stage] = [];
-            map[lead.stage].push(lead);
+            const stage = lead.stage || 'new';
+            if (!map[stage]) map[stage] = [];
+            map[stage].push(lead);
         }
         return map;
     }, [filtered]);
 
     const groupedByDate = useMemo(() => {
-        const map: Record<string, { label: string; items: any[] }> = {};
+        const map: Record<string, { label: string; items: typeof filtered }> = {};
         for (const lead of filtered) {
             const date = lead.created_at ? new Date(lead.created_at) : new Date();
             const isoKey = date.toISOString().slice(0, 10);
@@ -210,7 +211,9 @@ export default function ContactsPage() {
                                 </button>
                             )}
                         </div>
-                    ) : ['list', 'grid'].includes(viewType) ? filtered.map(lead => (
+                    ) : ['list', 'grid'].includes(viewType) ? filtered.map(lead => {
+                        const stage = lead.stage ?? 'new';
+                        return (
                         <div
                             key={lead.id}
                             onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)}
@@ -222,7 +225,7 @@ export default function ContactsPage() {
                                         <div className="size-8 rounded-lg bg-blue-500/10 dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--primary))] dark:text-white font-bold text-sm uppercase group-hover:border-blue-400 transition-colors">
                                             {lead.nombre_completo?.charAt(0) || ''}{(lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0]) || ''}
                                         </div>
-                                        <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white dark:border-[#1e1f21] ${getStatusDot(lead.stage)}`} />
+                                        <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white dark:border-[#1e1f21] ${getStatusDot(stage)}`} />
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-base tracking-tight group-hover:text-[hsl(var(--primary))] transition-colors">
@@ -233,8 +236,8 @@ export default function ContactsPage() {
                                         </p>
                                     </div>
                                 </div>
-                                <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border ${getStatusStyles(lead.stage)}`}>
-                                    {STAGE_LABELS[lead.stage] || lead.stage}
+                                <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border ${getStatusStyles(stage)}`}>
+                                    {STAGE_LABELS[stage] || stage}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between pt-4 border-t border-[hsl(var(--border))] dark:border-white/5">
@@ -266,7 +269,8 @@ export default function ContactsPage() {
                                 </div>
                             </div>
                         </div>
-                    )) : ['board', 'kanban'].includes(viewType) ? (
+                        );
+                    }) : ['board', 'kanban'].includes(viewType) ? (
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                             {PIPELINE_STAGES.map(stage => (
                                 <div key={stage} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))]/60 dark:bg-white/[0.03] p-3">
@@ -275,12 +279,15 @@ export default function ContactsPage() {
                                         <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{groupedByStage[stage]?.length ?? 0}</span>
                                     </div>
                                     <div className="space-y-2">
-                                        {(groupedByStage[stage] ?? []).map(lead => (
+                                        {(groupedByStage[stage] ?? []).map(lead => {
+                                            const leadStage = lead.stage ?? 'new';
+                                            return (
                                             <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
                                                 <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
                                                 <p className="text-[10px] text-[hsl(var(--text-secondary))]">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
                                             </button>
-                                        ))}
+                                            );
+                                        })}
                                         {(groupedByStage[stage] ?? []).length === 0 && (
                                             <div className="py-2 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vacío</div>
                                         )}
@@ -299,12 +306,15 @@ export default function ContactsPage() {
                                 <div key={dateKey} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                     <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{payload.label}</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {payload.items.map(lead => (
+                                        {payload.items.map(lead => {
+                                            const stage = lead.stage ?? 'new';
+                                            return (
                                             <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
                                                 <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
-                                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{STAGE_LABELS[lead.stage] || lead.stage}</p>
+                                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{STAGE_LABELS[stage] || stage}</p>
                                             </button>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             ))}
@@ -312,17 +322,20 @@ export default function ContactsPage() {
                     ) : viewType === 'gantt' ? (
                         <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]"><BarChart3 size={12} /> Progreso por contacto</div>
-                            {filtered.map(lead => (
+                            {filtered.map(lead => {
+                                const stage = lead.stage ?? 'new';
+                                return (
                                 <div key={lead.id} className="space-y-1">
                                     <div className="flex items-center justify-between text-[11px]">
                                         <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</span>
-                                        <span className="font-bold text-[hsl(var(--text-secondary))]">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
+                                        <span className="font-bold text-[hsl(var(--text-secondary))]">{STAGE_PROGRESS[stage] ?? 0}%</span>
                                     </div>
                                     <div className="h-2 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 overflow-hidden">
-                                        <div className="h-full bg-[hsl(var(--primary))]" style={{ width: `${STAGE_PROGRESS[lead.stage] ?? 0}%` }} />
+                                        <div className="h-full bg-[hsl(var(--primary))]" style={{ width: `${STAGE_PROGRESS[stage] ?? 0}%` }} />
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                             {filtered.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin datos</div>}
                         </div>
                     ) : viewType === 'table' ? (
@@ -337,14 +350,17 @@ export default function ContactsPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filtered.map(lead => (
+                                    {filtered.map(lead => {
+                                        const stage = lead.stage ?? 'new';
+                                        return (
                                         <tr key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="cursor-pointer border-t border-[hsl(var(--border))] dark:border-white/5 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02]">
                                             <td className="px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</td>
                                             <td className="px-4 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{lead.source || 'Sin fuente'}</td>
                                             <td className="px-4 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{(lead.telefono ?? lead.phone) || 'Sin telefono'}</td>
-                                            <td className="px-4 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{STAGE_LABELS[lead.stage] || lead.stage}</td>
+                                            <td className="px-4 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{STAGE_LABELS[stage] || stage}</td>
                                         </tr>
-                                    ))}
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
