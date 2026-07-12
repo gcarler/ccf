@@ -17,6 +17,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { CommandsList } from './wiki/CommandsList';
+import { toast } from "sonner";
 
 interface Props {
     project_id: string;
@@ -148,7 +149,7 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
             try {
                 const data = await apiFetch<{content: string}>(`/projects/${project_id}/wiki`, { token });
                 if (data && data.content) editor?.commands.setContent(data.content);
-            } catch (err) { console.error(err); }
+            } catch (err) { toast.error("Error inesperado"); }
         };
         load();
     }, [project_id, token, editor]);
@@ -156,7 +157,7 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
     if (!editor) return null;
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 shadow-xl overflow-hidden font-display relative">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 shadow-xl overflow-hidden font-display relative">
             <div className="flex flex-wrap items-center gap-1 p-2 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-black/20">
                 <MenuButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} icon={Bold} />
                 <MenuButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} icon={Italic} />

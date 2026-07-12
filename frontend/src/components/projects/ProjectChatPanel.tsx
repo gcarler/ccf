@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
 import { Send, Trash2, MessageSquare } from "lucide-react";
+import { toast } from "sonner";
 
 interface ChatMessage {
   id: string;
@@ -111,7 +112,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
       setMessages((prev) => [...prev, msg]);
       setInput("");
     } catch (err) {
-      console.error("Failed to send message", err);
+      toast.error("Failed to send message");
     }
   };
 
@@ -132,7 +133,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
       });
       setMessages((prev) => prev.filter((m) => m.id !== msgId));
     } catch (err) {
-      console.error("Failed to delete message", err);
+      toast.error("Failed to delete message");
     }
   };
 

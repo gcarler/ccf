@@ -40,7 +40,7 @@ export default function ProjectsCommentsPage() {
                 setProjectId(projectList[0].id);
             }
         } catch (error) {
-            console.error(error);
+            toast.error("Error inesperado");
             toast.error('Error al cargar comentarios');
         } finally {
             setLoading(false);
@@ -74,7 +74,7 @@ export default function ProjectsCommentsPage() {
             setComments((prev) => [created, ...prev]);
             setContent('');
         } catch (error) {
-            console.error(error);
+            toast.error("Error inesperado");
             toast.error('Error al publicar comentario');
         } finally {
             setSaving(false);
@@ -91,7 +91,7 @@ export default function ProjectsCommentsPage() {
             });
             setComments((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
         } catch (error) {
-            console.error(error);
+            toast.error("Error inesperado");
         }
     };
 

@@ -7,7 +7,8 @@ import { ViewType } from '@/components/ViewSwitcher';
 export interface BreadcrumbOption {
     label: string;
     href?: string;
-    icon?: any;
+    icon?: React.ComponentType<{ size?: number | string }>;
+
 }
 
 interface ProjectsShellProps {

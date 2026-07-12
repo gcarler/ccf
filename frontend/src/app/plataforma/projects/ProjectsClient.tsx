@@ -34,7 +34,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
     const { token } = useAuth();
     const router = useRouter();
     const [projects, setProjects] = useState<ProjectRecord[]>(initialProjects);
-    const [dashboard, setDashboard] = useState<any>(null);
+    const [dashboard, setDashboard] = useState<{ cards?: Array<{ label: string; value: number; icon?: string; color?: string }>; workload_distribution?: Array<{ name: string; tasks: number }>; delayed_tasks_count?: number } | null>(null);
     const [viewType, setViewType] = useState<ViewType>('grid');
     const [search, setSearch] = useState('');
     const [isCreating, setIsCreating] = useState(false);
@@ -44,10 +44,10 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
         if (!token) return;
         const loadDashboard = async () => {
             try {
-                const data = await apiFetch<any>('/dashboard/projects', { token });
+                const data = await apiFetch<{ cards?: Array<{ label: string; value: number }>; workload_distribution?: Array<{ name: string; tasks: number }>; delayed_tasks_count?: number }>('/dashboard/projects', { token });
                 setDashboard(data);
             } catch (err) {
-                console.error('Error fetching projects dashboard', err);
+                toast.error('Error al cargar dashboard');
             }
         };
         loadDashboard();
@@ -94,8 +94,8 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             toast.success('Proyecto creado');
             window.dispatchEvent(new CustomEvent('project-updated'));
             setTimeout(() => router.push(`/plataforma/projects/${created.id}`), 200);
-        } catch (e: any) {
-            console.error('Error creating project:', e);
+        } catch (e) {
+            toast.error('Error al crear proyecto');
             toast.error('Error al crear el proyecto');
         } finally {
             setIsCreating(false);
@@ -219,13 +219,13 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
 
                 {/* 📊 Project Metrics */}
                 <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {dashboard?.cards.map((card: any, idx: number) => (
-                        <DSMetric 
+                    {dashboard?.cards?.map((card: { label: string; title?: string; value: number; trend?: number; icon?: string; color?: string }, idx: number) => (
+                        <DSMetric
                             key={idx}
-                            label={card.title} 
-                            value={card.value} 
-                            trend={card.trend} 
-                            tone={card.color} 
+                            label={card.title || card.label}
+                            value={String(card.value)}
+                            trend={card.trend != null ? `${card.trend > 0 ? '+' : ''}${card.trend}%` : undefined}
+                            tone={card.color as "blue" | "emerald" | "amber" | undefined}
                         />
                     ))}
                 </section>
@@ -235,7 +235,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                     <div className="lg:col-span-2">
                         <DSCard>
                             <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Carga de Trabajo del Equipo</h3>
-                            <DSChart type="bar" data={dashboard?.workload_distribution} color="#f59e0b" height={220} />
+                            <DSChart type="bar" data={dashboard?.workload_distribution?.map((w: { name: string; tasks: number }) => ({ label: w.name, value: w.tasks }))} color="hsl(var(--warning))" height={220} />
                         </DSCard>
                     </div>
                     <div>

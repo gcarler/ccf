@@ -23,7 +23,7 @@ const PRIORITY_MAP: Record<string, { label: string; cls: string }> = {
     low:    { label: PRIORITY_LABELS.low,    cls: 'text-[hsl(var(--text-secondary))]' },
 };
 
-function TitleRenderer({ value, data }: any) {
+function TitleRenderer({ value, data }: { value: string; data: { id?: string; status?: string } }) {
     const st = data?.status === 'completed';
     return (
         <div className="flex items-center gap-2.5">
@@ -36,17 +36,17 @@ function TitleRenderer({ value, data }: any) {
     );
 }
 
-function StatusRenderer({ value }: any) {
+function StatusRenderer({ value }: { value: string }) {
     const s = STATUS_MAP[value?.toLowerCase()] ?? STATUS_MAP.todo;
     return <span className={clsx('px-2.5 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide border', s.cls)}>{s.label}</span>;
 }
 
-function PriorityRenderer({ value }: any) {
+function PriorityRenderer({ value }: { value: string }) {
     const p = PRIORITY_MAP[value?.toLowerCase()] ?? PRIORITY_MAP.medium;
     return <span className={clsx('text-[11px] font-bold uppercase tracking-wide', p.cls)}>⚑ {p.label}</span>;
 }
 
-function DateRenderer({ value }: any) {
+function DateRenderer({ value }: { value: string }) {
     if (!value) return <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs">—</span>;
     return <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))]">{new Date(value).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}</span>;
 }

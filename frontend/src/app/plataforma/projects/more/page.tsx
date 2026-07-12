@@ -31,7 +31,7 @@ export default function ProjectsMorePage() {
                 setSummary(Array.isArray(summaryRows) ? summaryRows : []);
                 setWorkload(Array.isArray(workloadRows) ? workloadRows : []);
             } catch (error) {
-                console.error(error);
+                toast.error("Error inesperado");
                 toast.error('Error al cargar resumen');
             } finally {
                 setLoading(false);

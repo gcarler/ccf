@@ -19,6 +19,7 @@ import clsx from "clsx";
 import ProjectsShell from "@/components/projects/ProjectsShell";
 import { apiFetch } from "@/lib/http";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 interface AutomationRule {
   id: string;
@@ -96,7 +97,7 @@ export default function AutomationsPage() {
       });
       setRules(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Error loading automations:", err);
+      toast.error("Error loading automations:");
     } finally {
       setLoading(false);
     }
@@ -114,7 +115,7 @@ export default function AutomationsPage() {
         prev.map((r) => (r.id === id ? { ...r, is_active: !active } : r))
       );
     } catch (err) {
-      console.error("Error toggling automation:", err);
+      toast.error("Error toggling automation:");
     }
   };
 
@@ -134,7 +135,7 @@ export default function AutomationsPage() {
       });
       setRules((prev) => [newRule, ...prev]);
     } catch (err) {
-      console.error("Error creating automation:", err);
+      toast.error("Error creating automation:");
     } finally {
       setCreating(false);
     }

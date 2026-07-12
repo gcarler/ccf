@@ -8,8 +8,9 @@ import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import { LayoutDashboard, CheckCircle2, Home, Circle, ChevronLeft } from 'lucide-react';
 import { useParams, usePathname } from 'next/navigation';
 import { GLOBAL_PROJECT_ROUTES } from '@/lib/projects/routes';
+import { toast } from "sonner";
 
-export default function ProjectsLayoutClient({ children, initialProjects }: { children: React.ReactNode, initialProjects: any[] }) {
+export default function ProjectsLayoutClient({ children, initialProjects }: { children: React.ReactNode, initialProjects: Array<{ id: string; title: string; status?: string; color?: string | null }> }) {
     const { token } = useAuth();
     const params = useParams() as { id?: string | string[] } | null;
     const pathname = usePathname();
@@ -28,7 +29,8 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
         !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawId);
     const projectId = isGlobalRoute ? undefined : rawId;
 
-    const [projects, setProjects] = useState<any[]>(initialProjects || []);
+    const [projects, setProjects] = useState<Array<{ id: string; title: string; status?: string; color?: string | null }>>(initialProjects || []);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [currentProject, setCurrentProject] = useState<any>(null);
 
     useEffect(() => {
@@ -37,15 +39,15 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
         const loadData = () => {
             if (projectId) {
                 // Contexto: Dentro de un proyecto
-                apiFetch<any>(`/projects/${projectId}`, { token })
+                apiFetch<Record<string, unknown>>(`/projects/${projectId}`, { token })
                     .then(data => setCurrentProject(data))
-                    .catch(err => console.error("Error fetching project for sidebar", err));
+                    .catch(err => toast.error("Error fetching project for sidebar"));
             } else {
                 // Contexto: Vista global de proyectos
-                apiFetch<any[]>('/projects', { token })
+                apiFetch<Array<{ id: string; title: string }>>('/projects', { token })
                     .then(data => setProjects(Array.isArray(data) ? data : []))
                     .catch(err => {
-                        console.error("Error fetching projects for sidebar", err);
+                        toast.error("Error fetching projects for sidebar");
                         // No vaciamos los proyectos si hay un error para conservar los cargados por SSR
                     });
                 setCurrentProject(null);
@@ -54,20 +56,20 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
 
         loadData();
 
-        const handleProjectUpdated = (e: any) => {
-            // Si hay un proyecto actual y el evento especifica un ID distinto, lo ignoramos
-            if (projectId && e.detail?.projectId && String(e.detail.projectId) !== String(projectId)) return;
+        const handleProjectUpdated = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            if (projectId && detail?.projectId && String(detail.projectId) !== String(projectId)) return;
             loadData();
         };
 
-        window.addEventListener('project-updated', handleProjectUpdated);
-        return () => window.removeEventListener('project-updated', handleProjectUpdated);
+        window.addEventListener('project-updated', handleProjectUpdated as EventListener);
+        return () => window.removeEventListener('project-updated', handleProjectUpdated as EventListener);
     }, [token, projectId]);
 
-    let projectSections: any[] = [];
+    let projectSections: Array<{ id?: string; title: string; items: Array<{ id: string; label: string; href: string; icon?: React.ComponentType<{ size?: number | string }> }> }> = [];
 
     if (projectId && currentProject) {
-        const tasks = Array.isArray(currentProject.tasks) ? currentProject.tasks : [];
+        const tasks: Array<{ id: string; title: string; status?: string }> = Array.isArray(currentProject.tasks) ? currentProject.tasks : [];
         projectSections = [
             {
                 id: 'global',
@@ -84,7 +86,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
             {
                 id: 'tasks',
                 title: 'Plan de Acción',
-                items: tasks.length > 0 ? tasks.map((t: any) => ({
+                items: tasks.length > 0 ? tasks.map((t) => ({
                     id: `task-${t.id}`,
                     label: t.title,
                     icon: t.status === 'completed' ? CheckCircle2 : Circle,

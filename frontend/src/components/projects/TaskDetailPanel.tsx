@@ -40,6 +40,7 @@ UserRound,
 X
 } from 'lucide-react';
 import React,{ useCallback,useEffect,useRef,useState } from 'react';
+import { toast } from "sonner";
 
 // Paleta de colores para etiquetas
 const LABEL_COLORS = [
@@ -607,7 +608,7 @@ export default function TaskDetailPanel({
                 onUpdate?.({ ...task, ...(updated || {}) });
                 onActivityCreated?.();
             } catch (err) {
-                console.error('Error uploading file', err);
+                toast.error('Error al subir archivo');
             }
         }
         setUploading(false);

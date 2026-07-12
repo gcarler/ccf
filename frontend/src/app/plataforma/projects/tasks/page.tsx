@@ -41,7 +41,7 @@ export default function ProjectsTasksPage() {
                 const data = await apiFetch<ProjectTaskRecord[]>('/projects/tasks', { token, cache: 'no-store' });
                 setTasks(Array.isArray(data) ? data : []);
             } catch (error) {
-                console.error(error);
+                toast.error("Error inesperado");
                 toast.error('Error al cargar tareas');
             } finally {
                 setLoading(false);
@@ -89,7 +89,7 @@ export default function ProjectsTasksPage() {
             });
             setTasks((prev) => prev.map((row) => (row.id === task.id ? updated : row)));
         } catch (error) {
-            console.error(error);
+            toast.error("Error inesperado");
             toast.error('Error al cambiar estado de tarea');
         }
     };
