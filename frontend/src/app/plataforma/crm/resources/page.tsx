@@ -13,6 +13,7 @@ import type {
     BitacoraEnvio, CampaignResult, CanalEnvio, CategoriaRecurso,
     PlantillaMensaje, RecursoAdjunto,
 } from '@/types/crm';
+import ResourceBankGallery from './ResourceBankGallery';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -87,7 +88,7 @@ function PlantillaCard({
             <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-1.5 min-w-0">
                     {plantilla.categoria && (
-                        <CategoriaDot color={plantilla.categoria.color_ui_hex} />
+                        <CategoriaDot color={plantilla.categoria.color_ui_hex ?? '#6B7280'} />
                     )}
                     <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{plantilla.titulo}</span>
                 </div>
@@ -100,23 +101,23 @@ function PlantillaCard({
             </p>
 
             {/* Variables */}
-            {plantilla.variables_requeridas.length > 0 && (
+            {(plantilla.variables_requeridas ?? []).length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-3">
-                    {plantilla.variables_requeridas.slice(0, 4).map(v => (
+                    {(plantilla.variables_requeridas ?? []).slice(0, 4).map(v => (
                         <span key={v} className="text-[10px] font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded">
                             {`{{${v}}}`}
                         </span>
                     ))}
-                    {plantilla.variables_requeridas.length > 4 && (
-                        <span className="text-[10px] text-[hsl(var(--text-secondary))]">+{plantilla.variables_requeridas.length - 4}</span>
+                    {(plantilla.variables_requeridas ?? []).length > 4 && (
+                        <span className="text-[10px] text-[hsl(var(--text-secondary))]">+{(plantilla.variables_requeridas ?? []).length - 4}</span>
                     )}
                 </div>
             )}
 
             {/* Footer */}
             <div className="flex items-center justify-between text-[10px] text-[hsl(var(--text-secondary))]">
-                <span>{plantilla.total_envios} envíos</span>
-                <span>{fmt(plantilla.fecha_creacion)}</span>
+                <span>{plantilla.total_envios ?? 0} envíos</span>
+                <span>{plantilla.fecha_creacion ? fmt(plantilla.fecha_creacion) : '—'}</span>
             </div>
 
             {/* Hover actions */}
@@ -160,7 +161,7 @@ function DetailPanel({
 
     useEffect(() => {
         const initial: Record<string, string> = {};
-        plantilla.variables_requeridas.forEach(v => { initial[v] = vars[v] ?? ''; });
+        (plantilla.variables_requeridas ?? []).forEach(v => { initial[v] = vars[v] ?? ''; });
         setVars(initial);
     }, [plantilla.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -208,7 +209,7 @@ function DetailPanel({
 
     const tabs = [
         { key: 'preview',   label: 'Vista previa',    icon: BookOpen },
-        { key: 'adjuntos',  label: `Adjuntos (${plantilla.adjuntos.length})`, icon: Paperclip },
+        { key: 'adjuntos',  label: `Adjuntos (${plantilla.adjuntos?.length ?? 0})`, icon: Paperclip },
         { key: 'historial', label: 'Historial',        icon: Clock },
     ] as const;
 
@@ -220,7 +221,7 @@ function DetailPanel({
                     <div className="flex items-center gap-2 mb-1">
                         <CanalBadge canal={plantilla.canal} />
                         {plantilla.categoria && (
-                            <span className="text-xs font-medium" style={{ color: plantilla.categoria.color_ui_hex }}>
+                            <span className="text-xs font-medium" style={{ color: plantilla.categoria.color_ui_hex ?? '#6B7280' }}>
                                 {plantilla.categoria.nombre}
                             </span>
                         )}
@@ -270,11 +271,11 @@ function DetailPanel({
                         )}
 
                         {/* Variable inputs */}
-                        {plantilla.variables_requeridas.length > 0 && (
+                        {(plantilla.variables_requeridas ?? []).length > 0 && (
                             <div>
                                 <p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2">Variables</p>
                                 <div className="space-y-2">
-                                    {plantilla.variables_requeridas.map(v => (
+                                    {(plantilla.variables_requeridas ?? []).map(v => (
                                         <div key={v} className="flex items-center gap-2">
                                             <span className="text-xs font-mono text-[hsl(var(--text-secondary))] w-24 shrink-0">{`{{${v}}}`}</span>
                                             <input
@@ -319,7 +320,7 @@ function DetailPanel({
                 {tab === 'adjuntos' && (
                     <>
                         <div className="space-y-2">
-                            {plantilla.adjuntos.map(a => (
+                            {(plantilla.adjuntos ?? []).map(a => (
                                 <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
                                     <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/10 flex items-center justify-center shrink-0">
                                         <FileText size={14} className="text-[hsl(var(--text-secondary))]" />
@@ -338,7 +339,7 @@ function DetailPanel({
                                     </button>
                                 </div>
                             ))}
-                            {plantilla.adjuntos.length === 0 && (
+                            {(plantilla.adjuntos ?? []).length === 0 && (
                                 <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-6">Sin adjuntos</p>
                             )}
                         </div>
@@ -1053,6 +1054,7 @@ export default function RecursosPage() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [catDrawerOpen, setCatDrawerOpen] = useState(false);
     const [sendOpen, setSendOpen] = useState(false);
+    const [galleryOpen, setGalleryOpen] = useState(false);
 
     const fetchAll = useCallback(async () => {
         if (!token) return;
@@ -1103,14 +1105,14 @@ export default function RecursosPage() {
 
     function onAdjuntoDeleted(adjuntoId: string) {
         if (!selected) return;
-        const updated = { ...selected, adjuntos: selected.adjuntos.filter(a => a.id !== adjuntoId) };
+        const updated = { ...selected, adjuntos: (selected.adjuntos ?? []).filter(a => a.id !== adjuntoId) };
         setSelected(updated);
         setPlantillas(prev => prev.map(p => p.id === selected.id ? updated : p));
     }
 
     function onSent() {
         if (!selected) return;
-        const updated = { ...selected, total_envios: selected.total_envios + 1 };
+        const updated = { ...selected, total_envios: (selected.total_envios ?? 0) + 1 };
         setSelected(updated);
         setPlantillas(prev => prev.map(p => p.id === selected.id ? updated : p));
     }
@@ -1190,6 +1192,12 @@ export default function RecursosPage() {
                         />
                     </div>
                     <button
+                        onClick={() => setGalleryOpen(true)}
+                        className="h-8 px-3 rounded-lg border border-[hsl(var(--primary))] text-[hsl(var(--primary))] text-xs font-medium flex items-center gap-1.5 hover:bg-[hsl(var(--primary)/0.05)] transition-colors shrink-0"
+                    >
+                        <BookOpen size={13} />Explorar galería
+                    </button>
+                    <button
                         onClick={openCreate}
                         className="h-8 px-3 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-medium flex items-center gap-1.5 hover:opacity-90 transition-opacity shrink-0"
                     >
@@ -1260,6 +1268,12 @@ export default function RecursosPage() {
                 plantilla={selected}
                 token={token ?? ""}
                 onSent={onSent}
+            />
+            <ResourceBankGallery
+                open={galleryOpen}
+                onClose={() => setGalleryOpen(false)}
+                token={token ?? ""}
+                onApplied={p => { onSaved(p); setSelected(p); }}
             />
         </div>
     );

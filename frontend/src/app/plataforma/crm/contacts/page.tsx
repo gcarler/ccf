@@ -280,7 +280,6 @@ export default function ContactsPage() {
                                     </div>
                                     <div className="space-y-2">
                                         {(groupedByStage[stage] ?? []).map(lead => {
-                                            const leadStage = lead.stage ?? 'new';
                                             return (
                                             <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
                                                 <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
