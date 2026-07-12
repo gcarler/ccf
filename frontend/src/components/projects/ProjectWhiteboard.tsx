@@ -5,8 +5,8 @@ import { createPortal } from 'react-dom';
 import * as fabric from 'fabric';
 import {
     MousePointer2, Pencil, Square, Circle, Type,
-    Trash2, ZoomIn, ZoomOut,
-    Cloud, Loader2, Sparkles,
+    Trash2, ZoomIn, ZoomOut, RotateCcw, RotateCw,
+    Cloud, Loader2, Sparkles, Download, Eraser,
     X, Layers, PencilRuler
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -30,6 +30,9 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
     const projectIdRef = useRef(project_id);
     const tokenRef = useRef(token);
     const restoringRef = useRef(false);
+    const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const historyRef = useRef<string[]>([]);
+    const historyIndexRef = useRef(-1);
     const [isMounted, setIsMounted] = useState(false);
     const [tool, setTool] = useState<'select' | 'pencil' | 'rect' | 'circle' | 'text'>('select');
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -37,6 +40,8 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
     const [zoom, setZoom] = useState(100);
     const [diagramPromptOpen, setDiagramPromptOpen] = useState(false);
     const [diagramPromptDraft, setDiagramPromptDraft] = useState('');
+    const [canUndo, setCanUndo] = useState(false);
+    const [canRedo, setCanRedo] = useState(false);
 
     useEffect(() => {
         projectIdRef.current = project_id;
@@ -73,24 +78,55 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
         });
         fabricRef.current = canvas;
 
+        // ── History (undo/redo) ──────────────────────────────────────────
+        const pushHistory = () => {
+            if (restoringRef.current) return;
+            const json = JSON.stringify(canvas.toJSON());
+            const idx = historyIndexRef.current;
+            historyRef.current = historyRef.current.slice(0, idx + 1);
+            historyRef.current.push(json);
+            // Keep max 50 states
+            if (historyRef.current.length > 50) historyRef.current.shift();
+            historyIndexRef.current = historyRef.current.length - 1;
+            setCanUndo(historyIndexRef.current > 0);
+            setCanRedo(false);
+        };
+
+        // ── Debounced save ─────────────────────────────────────────────
         const save = () => {
             if (restoringRef.current) return;
-            const activeProjectId = projectIdRef.current;
-            if (!activeProjectId) return;
-            setSaveStatus('saving');
-            apiFetch(`/projects/${activeProjectId}/whiteboard`, {
-                method: 'POST',
-                token: tokenRef.current,
-                body: { title: 'Pizarra Estrategica', elements_json: JSON.stringify(canvas.toJSON()) },
-            }).then(() => {
-                setSaveStatus('saved');
-                setTimeout(() => setSaveStatus('idle'), 2000);
-            }).catch(() => setSaveStatus('idle'));
+            pushHistory();
+            if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+            saveTimerRef.current = setTimeout(() => {
+                const activeProjectId = projectIdRef.current;
+                if (!activeProjectId) return;
+                setSaveStatus('saving');
+                apiFetch(`/projects/${activeProjectId}/whiteboard`, {
+                    method: 'POST',
+                    token: tokenRef.current,
+                    body: { title: 'Pizarra Estrategica', elements_json: JSON.stringify(canvas.toJSON()) },
+                }).then(() => {
+                    setSaveStatus('saved');
+                    setTimeout(() => setSaveStatus('idle'), 2000);
+                }).catch(() => setSaveStatus('idle'));
+            }, 1000);
         };
 
         canvas.on('object:modified', save);
         canvas.on('object:added', save);
         canvas.on('object:removed', save);
+
+        // Insert shapes at click position
+        canvas.on('mouse:down', (opt: fabric.TPointerEventInfo) => {
+            const currentTool = document.querySelector('[data-active-tool]')?.getAttribute('data-active-tool');
+            // Only insert on click (not drag) for shape tools
+            if (currentTool === 'rect' || currentTool === 'circle' || currentTool === 'text') {
+                const pointer = canvas.getScenePoint(opt.e);
+                if (currentTool === 'rect') addRect(pointer.x, pointer.y);
+                else if (currentTool === 'circle') addCircle(pointer.x, pointer.y);
+                else if (currentTool === 'text') addText(pointer.x, pointer.y);
+            }
+        });
 
         const onResize = () => {
             canvas.setDimensions(getCanvasSize());
@@ -158,6 +194,8 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                 fc.discardActiveObject();
                 fc.renderAll();
             }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); }
         };
         window.addEventListener('keydown', handler);
         return () => window.removeEventListener('keydown', handler);
@@ -174,22 +212,16 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             brush.width = 3;
             brush.color = '#2563eb';
             fc.freeDrawingBrush = brush;
-        } else if (t === 'rect') {
-            addRect();
-        } else if (t === 'circle') {
-            addCircle();
-        } else if (t === 'text') {
-            addText();
         } else {
             fc.isDrawingMode = false;
         }
     };
 
-    const addRect = () => {
+    const addRect = (x = 120, y = 120) => {
         const fc = fabricRef.current;
         if (!fc) return;
         const rect = new fabric.Rect({
-            left: 120, top: 120, width: 160, height: 100,
+            left: x, top: y, width: 160, height: 100,
             fill: 'rgba(37,99,235,0.08)', stroke: '#2563eb', strokeWidth: 2, rx: 10, ry: 10,
         });
         fc.add(rect);
@@ -197,11 +229,11 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
         setActiveTool('select');
     };
 
-    const addCircle = () => {
+    const addCircle = (x = 140, y = 140) => {
         const fc = fabricRef.current;
         if (!fc) return;
         const circle = new fabric.Circle({
-            left: 140, top: 140, radius: 50,
+            left: x, top: y, radius: 50,
             fill: 'rgba(16,185,129,0.1)', stroke: '#10b981', strokeWidth: 2,
         });
         fc.add(circle);
@@ -209,11 +241,11 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
         setActiveTool('select');
     };
 
-    const addText = () => {
+    const addText = (x = 160, y = 160) => {
         const fc = fabricRef.current;
         if (!fc) return;
         const t = new fabric.IText('Escribe aquí', {
-            left: 160, top: 160, fontSize: 20, fill: '#0f172a', fontFamily: 'Manrope',
+            left: x, top: y, fontSize: 20, fill: '#0f172a', fontFamily: 'Manrope',
         });
         fc.add(t);
         fc.setActiveObject(t);
@@ -227,6 +259,58 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
         fc.remove(...fc.getActiveObjects());
         fc.discardActiveObject();
         fc.renderAll();
+    };
+
+    const undo = () => {
+        const fc = fabricRef.current;
+        if (!fc || historyIndexRef.current <= 0) return;
+        historyIndexRef.current--;
+        restoringRef.current = true;
+        fc.loadFromJSON(JSON.parse(historyRef.current[historyIndexRef.current])).then(() => {
+            fc.renderAll();
+            restoringRef.current = false;
+            setCanUndo(historyIndexRef.current > 0);
+            setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
+        });
+    };
+
+    const redo = () => {
+        const fc = fabricRef.current;
+        if (!fc || historyIndexRef.current >= historyRef.current.length - 1) return;
+        historyIndexRef.current++;
+        restoringRef.current = true;
+        fc.loadFromJSON(JSON.parse(historyRef.current[historyIndexRef.current])).then(() => {
+            fc.renderAll();
+            restoringRef.current = false;
+            setCanUndo(historyIndexRef.current > 0);
+            setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
+        });
+    };
+
+    const exportPng = () => {
+        const fc = fabricRef.current;
+        if (!fc) return;
+        const dataUrl = fc.toDataURL({ format: 'png', multiplier: 2 });
+        const link = document.createElement('a');
+        link.download = `pizarra-${project_id.slice(0, 8)}.png`;
+        link.href = dataUrl;
+        link.click();
+        toast.success('Pizarra exportada como PNG');
+    };
+
+    const clearCanvas = () => {
+        if (!confirm('¿Limpiar toda la pizarra? Esta acción no se puede deshacer.')) return;
+        const fc = fabricRef.current;
+        if (!fc) return;
+        fc.clear();
+        fc.backgroundColor = '#fafafa';
+        fc.renderAll();
+        // Save empty state
+        apiFetch(`/projects/${project_id}/whiteboard`, {
+            method: 'POST',
+            token,
+            body: { title: 'Pizarra Estrategica', elements_json: JSON.stringify(fc.toJSON()) },
+        }).catch(() => toast.error('Error al guardar'));
     };
 
     const handleZoom = (delta: number) => {
@@ -327,6 +411,18 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                         {isAiDrawing ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
                         Diagramar con IA
                     </button>
+                    <button
+                        onClick={exportPng}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] transition-colors border border-[hsl(var(--border))] dark:border-white/10"
+                    >
+                        <Download size={11} /> Exportar
+                    </button>
+                    <button
+                        onClick={clearCanvas}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 rounded-md text-[10px] font-bold uppercase tracking-wide hover:bg-rose-100 transition-colors border border-rose-200 dark:border-rose-500/20"
+                    >
+                        <Eraser size={11} /> Limpiar
+                    </button>
                     <div className="w-px h-5 bg-[hsl(var(--surface-3))] dark:bg-white/10" />
                     <button
                         onClick={onClose}
@@ -350,6 +446,9 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                     <ToolBtn active={tool === 'text'} onClick={() => setActiveTool('text')}   icon={Type}   label="Texto (T)" />
                     <div className="h-px w-7 bg-[hsl(var(--surface-2))] dark:bg-white/10 mx-auto my-0.5" />
                     <ToolBtn active={false} onClick={deleteSelected} icon={Trash2} label="Eliminar (Del)" color="text-rose-500" />
+                    <div className="h-px w-7 bg-[hsl(var(--surface-2))] dark:bg-white/10 mx-auto my-0.5" />
+                    <ToolBtn active={false} onClick={undo} icon={RotateCcw} label="Deshacer (Ctrl+Z)" color="text-[hsl(var(--text-secondary))]" disabled={!canUndo} />
+                    <ToolBtn active={false} onClick={redo} icon={RotateCw} label="Rehacer (Ctrl+Y)" color="text-[hsl(var(--text-secondary))]" disabled={!canRedo} />
                 </div>
 
                 {/* Canvas — fills the full drawing area */}
@@ -372,16 +471,18 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
     return createPortal(whiteboard, document.body);
 }
 
-function ToolBtn({ active, onClick, icon: Icon, label, color = 'text-[hsl(var(--text-secondary))]' }: {
-    active: boolean; onClick: () => void; icon: React.ElementType; label: string; color?: string;
+function ToolBtn({ active, onClick, icon: Icon, label, color = 'text-[hsl(var(--text-secondary))]', disabled }: {
+    active: boolean; onClick: () => void; icon: React.ElementType; label: string; color?: string; disabled?: boolean;
 }) {
     return (
         <button
             onClick={onClick}
             title={label}
+            disabled={disabled}
             className={clsx(
                 'p-2 rounded-lg transition-all relative group',
-                active ? 'bg-[hsl(var(--primary))] text-white shadow-md' : `hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 ${color}`
+                active ? 'bg-[hsl(var(--primary))] text-white shadow-md' : `hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 ${color}`,
+                disabled && 'opacity-30 cursor-not-allowed'
             )}
         >
             <Icon size={18} />
