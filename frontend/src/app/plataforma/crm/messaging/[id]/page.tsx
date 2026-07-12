@@ -68,6 +68,7 @@ export default function MessagingDetailPage() {
     }
 
     const title = campaign.name ?? campaign.campaign_name ?? "Campana";
+    const channel = String(campaign.channel || "whatsapp").toLowerCase();
     const sentAtLabel = campaign.sent_at ? new Date(campaign.sent_at).toLocaleString() : "Sin fecha";
     const deliveryRate = Math.round((campaign.delivered_count / Math.max(campaign.target_count, 1)) * 100);
 
@@ -95,12 +96,12 @@ export default function MessagingDetailPage() {
                                 Enviado el {sentAtLabel}
                             </span>
                             <span className="flex items-center gap-2">
-                                {campaign.channel === "whatsapp" ? (
+                                {channel === "whatsapp" ? (
                                     <MessageSquare size={18} className="text-emerald-500" />
                                 ) : (
                                     <Mail size={18} className="text-[hsl(var(--primary))]" />
                                 )}
-                                {String(campaign.channel || "whatsapp").toUpperCase()}
+                                {channel.toUpperCase()}
                             </span>
                         </div>
                     </div>
@@ -123,7 +124,7 @@ export default function MessagingDetailPage() {
                             <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Contenido del Mensaje</h3>
                             <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5">
                                 <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">
-                                    {campaign.content}
+                                    {campaign.content || ''}
                                 </p>
                             </div>
                         </DSCard>
