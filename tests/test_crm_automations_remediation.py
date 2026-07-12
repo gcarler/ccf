@@ -1,8 +1,9 @@
-import pytest
 import uuid
+
 from backend import models
 from backend.models_crm import CrmAutomationEdge, validate_three_node_path
 from tests.conftest import auth_headers, seed_admin
+
 
 # Test the genuine model validation function directly
 def test_validate_three_node_path_function():
@@ -19,8 +20,9 @@ def test_validate_three_node_path_function():
     assert CrmAutomationEdge.__table__.validate_three_node_path([1, 2, 3]) is True
 
 
-def test_automations_palette(client):
-    response = client.get("/api/crm/automations/palette")
+def test_automations_palette(client, db_session):
+    seed_admin(db_session)
+    response = client.get("/api/crm/automations/palette", headers=auth_headers(client))
     assert response.status_code == 200
     data = response.json()
     assert "triggers" in data
@@ -30,8 +32,9 @@ def test_automations_palette(client):
 
 
 def test_save_automation_flow(client, db_session):
+    seed_admin(db_session)
     payload = {"name": "Test flow remediation", "is_active": True}
-    response = client.post("/api/crm/automations/flows", json=payload)
+    response = client.post("/api/crm/automations/flows", json=payload, headers=auth_headers(client))
     assert response.status_code == 200
     data = response.json()
     assert "id" in data

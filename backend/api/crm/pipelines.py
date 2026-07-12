@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.api.crm._shared import case_query
 from backend.core.database import get_db
-from backend.core.permissions import require_pastor_or_admin
+from backend.core.permissions import require_module_access, require_pastor_or_admin
 from backend.core.tenant import require_user_sede_id
 from backend.crud.crm_ import pipeline as crm_pipeline
 from backend.schemas.crm.pipeline import (
@@ -528,7 +528,9 @@ def evaluate_condition(key: str, op: str, expected_val: Any, variables: dict) ->
 
 
 @router.get("/automations/palette")
-def automations_palette():
+def automations_palette(
+    _current_user=Depends(require_module_access("crm", "read")),
+):
     """Returns the genuine list of available trigger events and action types."""
     return {
         "triggers": [
@@ -549,7 +551,11 @@ def automations_palette():
 
 
 @router.post("/automations/flows")
-def automations_flows(payload: dict, db: Session = Depends(get_db)):
+def automations_flows(
+    payload: dict,
+    db: Session = Depends(get_db),
+    _current_user=Depends(require_module_access("crm", "edit")),
+):
     """Saves automation flow metadata into the database."""
     name = payload.get("name", "Unnamed Flow")
     is_active = payload.get("is_active", True)

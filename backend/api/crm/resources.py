@@ -507,6 +507,10 @@ def get_bitacora_plantilla(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm")),
 ):
+    plantilla = get_plantilla(db, plantilla_id)
+    sede_id = get_user_sede_id(db, str(user.id))
+    if not plantilla or str(plantilla.sede_id) != str(sede_id):
+        raise HTTPException(404, "Plantilla no encontrada")
     rows = list_envios_plantilla(db, plantilla_id=plantilla_id, skip=skip, limit=limit)
     return [BitacoraEnvioOut.from_orm_safe(r) for r in rows]
 

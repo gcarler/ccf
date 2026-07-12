@@ -1,7 +1,14 @@
 import uuid
 from datetime import datetime, timezone
+
 from backend.core.database import Base
-from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
+from backend.models_crm_pipeline import (
+    CanalOrigenEnum,
+    CasoCRM,
+    EtapaPipeline,
+    PipelineCRM,
+    TipoPipelineEnum,
+)
 from tests.conftest import auth_headers, seed_admin
 
 
@@ -191,12 +198,18 @@ def test_tier1_f5_flow_builder_canvas():
 def test_tier1_f5_flow_builder_nodes():
     assert "crm_automation_nodes" in Base.metadata.tables, "F5: crm_automation_nodes table not implemented"
 
-def test_tier1_f5_flow_builder_palette(client):
-    response = client.get("/api/crm/automations/palette")
+def test_tier1_f5_flow_builder_palette(client, db_session):
+    seed_admin(db_session)
+    response = client.get("/api/crm/automations/palette", headers=auth_headers(client))
     assert response.status_code == 200, "F5: Flow Builder palette endpoint not implemented"
 
-def test_tier1_f5_flow_builder_state_save(client):
-    response = client.post("/api/crm/automations/flows", json={"name": "test"})
+def test_tier1_f5_flow_builder_state_save(client, db_session):
+    seed_admin(db_session)
+    response = client.post(
+        "/api/crm/automations/flows",
+        json={"name": "test"},
+        headers=auth_headers(client),
+    )
     assert response.status_code == 200, "F5: Flow Builder state save endpoint not implemented"
 
 def test_tier1_f5_flow_builder_zoom_pan():
