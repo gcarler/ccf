@@ -124,10 +124,10 @@ export default function PrayerSupportCenter() {
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
                     <div className="size-8 rounded-md bg-rose-500 flex items-center justify-center text-white text-[10px] font-bold shadow-lg shadow-rose-500/20">
-                        {row.original.name.substring(0, 1)}
+                        {(row.original.name ?? '?').substring(0, 1)}
                     </div>
                     <div>
-                        <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{row.original.name}</p>
+                        <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{row.original.name ?? 'Anónimo'}</p>
                         <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium uppercase tracking-wide">{row.original.time}</p>
                     </div>
                 </div>
@@ -145,7 +145,7 @@ export default function PrayerSupportCenter() {
             cell: ({ row }) => canEditCrm ? (
                 <StatusPicker currentValue={row.original.status} options={PRAYER_STATUS_OPTIONS} onSelect={(val) => updateRequestStatus(row.original.id, val)} />
             ) : (
-                <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{row.original.status}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{row.original.status ?? 'pending'}</span>
             )
         },
         {
@@ -183,7 +183,7 @@ export default function PrayerSupportCenter() {
     }), [requests]);
 
     const filtered = useMemo(() =>
-        requests.filter(r => r.name.toLowerCase().includes(search.toLowerCase()) || r.request.toLowerCase().includes(search.toLowerCase())),
+        requests.filter(r => String(r.name ?? '').toLowerCase().includes(search.toLowerCase()) || String(r.request ?? '').toLowerCase().includes(search.toLowerCase())),
         [requests, search]
     );
 
@@ -371,7 +371,7 @@ export default function PrayerSupportCenter() {
             <WorkspaceDrawer
                 isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}
                 title={selectedRequest?.name || 'Detalle de Petición'}
-                subtitle={`CATEGORÍA: ${selectedRequest?.category?.toUpperCase()}`}
+                subtitle={`CATEGORÍA: ${String(selectedRequest?.category || 'General').toUpperCase()}`}
                 actions={
                     <>
                         <button onClick={() => setIsDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))]">Cerrar</button>
