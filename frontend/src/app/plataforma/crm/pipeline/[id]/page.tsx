@@ -127,7 +127,15 @@ export default function LeadDetailPage() {
                             <div className="space-y-3">
                                 <div className="space-y-2">
                                     <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Etapa Actual</p>
-                                    <DSBadge tone={lead.stage === 'consolidated' || lead.stage === 'integrated' ? 'emerald' : 'blue'} label={STAGE_LABELS[lead.stage] || lead.stage.toUpperCase()} />
+                                    {(() => {
+                                        const stageValue = lead.stage ?? 'new';
+                                        return (
+                                            <DSBadge
+                                                tone={stageValue === 'consolidated' || stageValue === 'integrated' ? 'emerald' : 'blue'}
+                                                label={STAGE_LABELS[stageValue] || stageValue.toUpperCase()}
+                                            />
+                                        );
+                                    })()}
                                 </div>
                                 
                                 <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />

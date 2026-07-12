@@ -397,7 +397,7 @@ export default function CrmTasksPage() {
                 isOpen={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
                 title={selectedTask?.title ?? 'Detalle de Tarea'}
-                subtitle={`${selectedTask?.category?.toUpperCase()} · ${selectedTask?.priority?.toUpperCase()}`}
+                subtitle={`${String(selectedTask?.category ?? 'general').toUpperCase()} · ${String(selectedTask?.priority ?? 'normal').toUpperCase()}`}
                 actions={
                     <>
                         <button onClick={() => setIsDetailOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))]">Cerrar</button>
@@ -420,7 +420,7 @@ export default function CrmTasksPage() {
                         <div className="grid grid-cols-2 gap-3">
                             {[
                                 { label: 'Persona', val: selectedTask.persona_name || '—' },
-                                { label: 'Prioridad', val: selectedTask.priority.toUpperCase() },
+                                { label: 'Prioridad', val: String(selectedTask.priority ?? 'normal').toUpperCase() },
                                 { label: 'Categoría', val: selectedTask.category },
                                 { label: 'Vence', val: selectedTask.due_date ? new Date(selectedTask.due_date).toLocaleDateString() : '—' },
                                 { label: 'Creada', val: new Date(selectedTask.created_at).toLocaleDateString() },

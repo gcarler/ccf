@@ -66,8 +66,8 @@ export default function CrmTaskDetailPage() {
                     <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <DSBadge tone="blue" label={task.category.toUpperCase()} />
-                                <DSBadge tone={task.status === 'completed' ? 'emerald' : 'amber'} label={task.status.toUpperCase()} />
+                                <DSBadge tone="blue" label={String(task.category ?? 'general').toUpperCase()} />
+                                <DSBadge tone={task.status === 'completed' ? 'emerald' : 'amber'} label={String(task.status ?? 'pending').toUpperCase()} />
                             </div>
                             <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase leading-none">
                                 {task.title}
