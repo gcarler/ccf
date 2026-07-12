@@ -159,6 +159,9 @@ export default function CrmGroupsPage() {
         setAssigningPersonaId(personaId);
         try {
             const detail = await apiFetch<Grupo>(`/crm/grupos/${inviteGroup.id}`, { token });
+            const leaderId = detail.lider_id ?? detail.leader_id ?? '';
+            const assistantId = detail.asistente_id ?? detail.assistant_id ?? '';
+            const hostId = detail.anfitrion_id ?? detail.host_id ?? '';
             const current = new Set(
                 (detail.base_attendee_ids || detail.base_attendees?.map(persona => persona.persona_id) || [])
                     .map(String)
@@ -172,9 +175,9 @@ export default function CrmGroupsPage() {
                     name: detail.name,
                     zone: detail.zone,
                     address: detail.address,
-                    leader_id: detail.leader_id,
-                    assistant_id: detail.assistant_id,
-                    host_id: detail.host_id,
+                    leader_id: leaderId,
+                    assistant_id: assistantId,
+                    host_id: hostId,
                     capacity: detail.capacity,
                     day_of_week: detail.day_of_week,
                     start_time: detail.start_time,

@@ -64,10 +64,19 @@ export default function GrupoAdmin() {
             ]);
             const nextSeasons = Array.isArray(seasonData) ? seasonData : [];
             const baseAttendees = Array.isArray(detail.base_attendees) ? detail.base_attendees : [];
+            const leaderId = detail.lider_id ?? detail.leader_id ?? '';
+            const assistantId = detail.asistente_id ?? detail.assistant_id ?? '';
+            const hostId = detail.anfitrion_id ?? detail.host_id ?? '';
             setSeasons(nextSeasons);
             setSeasonId((nextSeasons.find((season) => season.status === "Activa") || nextSeasons[0])?.id || "");
             setAttendees(baseAttendees);
             setSelectedIds(baseAttendees.map((persona: Attendee) => persona.persona_id));
+            setSelectedGrupo((prev) => prev ? {
+                ...prev,
+                leader_id: leaderId,
+                assistant_id: assistantId,
+                host_id: hostId,
+            } : prev);
         } catch {
             addToast("No se pudo preparar el reporte", "error");
         }
