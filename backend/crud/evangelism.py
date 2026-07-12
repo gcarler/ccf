@@ -831,21 +831,10 @@ def seed_motivos_excusa(
 ) -> list[models.MotivoExcusa]:
     """Inserta las excusas base del sistema si no existen.
 
-    Axioma 3 — ``MotivoExcusa`` es lookup-table global (cross-sede por
-    naturaleza). Por tanto solo un actor sin sede (``actor_sede is None``
-    → superadmin) puede ejecutar el seed. Cualquier pastor o admin
-    con sede queda bloqueado con 403, evitando que una sede personalizada
-    cree ``MotivoExcusa.es_del_sistema=True``.
+    ``MotivoExcusa`` es lookup-table global (cross-sede por naturaleza),
+    por lo que cualquier actor autorizado del módulo puede ejecutar el
+    seed. La operación es idempotente y solo crea filas faltantes.
     """
-    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
-    if actor_sede is not None:
-        raise HTTPException(
-            status_code=403,
-            detail=(
-                "seed_motivos_excusa solo lo puede ejecutar superadmin "
-                "sin sede (MotivoExcusa es lookup-table cross-sede)"
-            ),
-        )
     base = ["SALUD", "TRABAJO", "FAMILIA", "OTRA (VER DETALLE)"]
     created = []
     for desc in base:
@@ -853,12 +842,14 @@ def seed_motivos_excusa(
             models.MotivoExcusa.descripcion == desc
         ).first()
         if not existing:
-            created.append(
-                create_motivo_excusa(
-                    db,
-                    desc,
-                    es_del_sistema=True,
-                    actor_user_id=actor_user_id,
-                )
+            row = models.MotivoExcusa(
+                descripcion=desc.upper(),
+                es_del_sistema=True,
+                activo=True,
             )
+            db.add(row)
+            created.append(row)
+    db.commit()
+    for row in created:
+        db.refresh(row)
     return created

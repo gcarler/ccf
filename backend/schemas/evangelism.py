@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 from backend.schemas._common import orm_config
 
@@ -504,12 +504,22 @@ class AsistenciaGrupoCreate(BaseModel):
     # "present" que es la semántica asumida por los formularios del
     # frontend.
     status: StatusAsistenciaCanonico = StatusAsistenciaCanonico.PRESENT
+    es_primera_vez: bool = False
     notes: Optional[str] = None
 
-    @field_validator("status", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def _v_status_alias(cls, value: Any) -> str:
-        return _normalize_status_alias(value)
+    def _v_status_alias(cls, value: Any):
+        if not isinstance(value, dict):
+            return value
+        raw_status = value.get("status")
+        canonical = _normalize_status_alias(raw_status)
+        result = dict(value)
+        result["status"] = canonical
+        raw_text = str(raw_status or "").strip().lower()
+        if raw_text in {"primera_vez", "first_time"}:
+            result["es_primera_vez"] = True
+        return result
 
 
 # ──────────────────────────────────────────────

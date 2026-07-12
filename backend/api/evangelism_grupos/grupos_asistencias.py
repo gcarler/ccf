@@ -342,7 +342,7 @@ def submit_attendance(
     trigger_candidates: list[dict] = []
     for att in attendance_data:
         raw_status = getattr(att.status, "value", att.status)
-        is_first_time = raw_status == "first_time"
+        is_first_time = bool(getattr(att, "es_primera_vez", False)) or raw_status == "first_time"
         requires_follow_up = bool(getattr(att, "requiere_seguimiento", False))
         # Map schema fields (status/notes) to model fields
         absence_reason_detail = None
