@@ -31,6 +31,7 @@ from backend.core.cache_v2 import cached_public
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access
+from backend.core.rate_limit import rate_limiter
 from backend.core.seo import (
     auto_json_ld_for_page,
     build_breadcrumb_items_from_slug,
@@ -39,14 +40,12 @@ from backend.core.seo import (
     build_sitemap_xml,
 )
 from backend.models_shared import _utcnow
+from backend.schemas import cms as cms_schemas
 from backend.schemas._common import PaginatedResponse
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
-
-from backend import models as cms_models
-from backend.core.rate_limit import rate_limiter
 
 # ── Section Types (platform-wide catalog admin endpoints) ─────────────────
 #
@@ -57,11 +56,7 @@ from backend.core.rate_limit import rate_limiter
 
 def _get_section_type_or_404(db: Session, name: str) -> models.CmsSectionType:
     """Look up by name (the public identifier) or raise 404."""
-    row = (
-        db.query(models.CmsSectionType)
-        .filter(models.CmsSectionType.name == name.strip().lower())
-        .first()
-    )
+    row = db.query(models.CmsSectionType).filter(models.CmsSectionType.name == name.strip().lower()).first()
     if not row:
         raise HTTPException(status_code=404, detail="section type not found")
     return row
@@ -116,11 +111,7 @@ def create_section_type(
     name = payload.name.strip().lower()
     if not name:
         raise HTTPException(status_code=422, detail="name is required")
-    if (
-        db.query(models.CmsSectionType)
-        .filter(models.CmsSectionType.name == name)
-        .first()
-    ):
+    if db.query(models.CmsSectionType).filter(models.CmsSectionType.name == name).first():
         raise HTTPException(status_code=409, detail="section type already exists")
     row = models.CmsSectionType(
         name=name,
@@ -181,7 +172,7 @@ def delete_section_type(
 def get_allowed_section_types(db: Session) -> set[str]:
     """Return set of active section type names from DB, fallback to hardcoded."""
     try:
-        rows = db.query(cms_models.CmsSectionType.name).filter(cms_models.CmsSectionType.is_active == True).all()
+        rows = db.query(models.CmsSectionType.name).filter(models.CmsSectionType.is_active.is_(True)).all()
         types = {row[0] for row in rows}
         if types:
             return types
@@ -227,13 +218,13 @@ def get_allowed_section_types(db: Session) -> set[str]:
         "civic_data_table",
         "civic_alert_banner",
     }
+
+
 CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "pastor"}
 CMS_PUBLISHER_ROLES = {"admin", "coordinador", "pastor"}
 
 
-def _assert_role(
-    user: models.User, allowed_roles: set[str], detail: str = "Not enough permissions"
-) -> None:
+def _assert_role(user: models.User, allowed_roles: set[str], detail: str = "Not enough permissions") -> None:
     """Validate that the user belongs to one of the allowed role groups.
 
     Args:
@@ -285,7 +276,9 @@ def _get_site_or_404(db: Session, site_key: str) -> models.CmsSite:
 
 
 def _get_scoped_site_or_404(
-    db: Session, site_key: str, current_user: models.User,
+    db: Session,
+    site_key: str,
+    current_user: models.User,
 ) -> models.CmsSite:
     """Axioma 3 — retrieve site + enforce sede scope in one call.
 
@@ -390,6 +383,7 @@ def _snapshot_section_read(
     props_json = section_data.get("props_json")
 
     import uuid as py_uuid
+
     valid_id = None
     if section_id:
         if isinstance(section_id, py_uuid.UUID):
@@ -522,9 +516,7 @@ def get_theme(
     return row
 
 
-@router.post(
-    "/sites/{site_key}/themes", response_model=schemas.CmsThemeRead, status_code=201
-)
+@router.post("/sites/{site_key}/themes", response_model=schemas.CmsThemeRead, status_code=201)
 def create_theme(
     site_key: str,
     payload: schemas.CmsThemeCreate,
@@ -542,9 +534,7 @@ def create_theme(
     return crud.create_cms_theme(db, site.id, payload, created_by=current_user.id)
 
 
-@router.patch(
-    "/sites/{site_key}/themes/{theme_id}", response_model=schemas.CmsThemeRead
-)
+@router.patch("/sites/{site_key}/themes/{theme_id}", response_model=schemas.CmsThemeRead)
 def patch_theme(
     site_key: str,
     theme_id: uuid.UUID,
@@ -566,9 +556,7 @@ def patch_theme(
     return crud.update_cms_theme(db, row, payload)
 
 
-@router.post(
-    "/sites/{site_key}/themes/{theme_id}/activate", response_model=schemas.CmsThemeRead
-)
+@router.post("/sites/{site_key}/themes/{theme_id}/activate", response_model=schemas.CmsThemeRead)
 def activate_theme(
     site_key: str,
     theme_id: uuid.UUID,
@@ -610,9 +598,7 @@ def list_menus(
     return crud.list_cms_menus(db, site.id)
 
 
-@router.post(
-    "/sites/{site_key}/menus", response_model=schemas.CmsMenuRead, status_code=201
-)
+@router.post("/sites/{site_key}/menus", response_model=schemas.CmsMenuRead, status_code=201)
 def create_menu(
     site_key: str,
     payload: schemas.CmsMenuCreate,
@@ -768,14 +754,10 @@ def list_pages(
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     pages, total = crud.list_cms_pages(db, site.id, skip=skip, limit=limit, status=status)
-    return PaginatedResponse[schemas.CmsPageRead](
-        items=pages, total=total, skip=skip, limit=limit
-    )
+    return PaginatedResponse[schemas.CmsPageRead](items=pages, total=total, skip=skip, limit=limit)
 
 
-@router.post(
-    "/sites/{site_key}/pages", response_model=schemas.CmsPageRead, status_code=201
-)
+@router.post("/sites/{site_key}/pages", response_model=schemas.CmsPageRead, status_code=201)
 def create_page(
     site_key: str,
     payload: schemas.CmsPageCreate,
@@ -815,20 +797,14 @@ def patch_page(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.status is not None:
-        raise HTTPException(
-            status_code=422, detail="use workflow endpoint to change status"
-        )
+        raise HTTPException(status_code=422, detail="use workflow endpoint to change status")
     # Scheduled publish + auto-archive (2026-07-06): validaciones del
     # scheduling window. La regla estricta es ``expires_at >= publish_at``
     # sólo si ambos están presentes; ``null`` representa el reset (sin
     # programación). ``publish_at`` no necesita ser futuro aquí — el
     # cliente puede dejar una fecha pasada para cancelar flujo. Pero
     # ``expires_at`` < ``publish_at`` es claramente un error de typo.
-    if (
-        payload.publish_at is not None
-        and payload.expires_at is not None
-        and payload.expires_at < payload.publish_at
-    ):
+    if payload.publish_at is not None and payload.expires_at is not None and payload.expires_at < payload.publish_at:
         raise HTTPException(
             status_code=422,
             detail="expires_at must be >= publish_at",
@@ -842,10 +818,7 @@ def patch_page(
     # (``find_pages_due_for_publish`` filters require ``status='scheduled'``).
     # The previous POST endpoint already does this; we mirror it here for
     # the modern PATCH path so the recommended flow isn't inert.
-    if (
-        payload.publish_at is not None
-        and updated.status in {"draft", "in_review", "approved"}
-    ):
+    if payload.publish_at is not None and updated.status in {"draft", "in_review", "approved"}:
         updated.status = "scheduled"
         db.commit()
         db.refresh(updated)
@@ -881,11 +854,7 @@ def list_sections(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     items, total = crud.list_cms_sections(db, page.id, skip=skip, limit=limit, section_type=section_type)
-    return PaginatedResponse[schemas.CmsSectionRead](
-        items=items, total=total, skip=skip, limit=limit
-    )
-
-
+    return PaginatedResponse[schemas.CmsSectionRead](items=items, total=total, skip=skip, limit=limit)
 
 
 @router.post(
@@ -906,6 +875,7 @@ def create_section(
         raise HTTPException(status_code=422, detail="unsupported section type")
     # Validate props against section type schema
     from backend.schemas.cms_v2_sections import validate_section_props
+
     try:
         props = payload.props_json or {}
         validated_props = validate_section_props(payload.type, props)
@@ -980,6 +950,8 @@ def reorder_sections(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     return crud.reorder_cms_sections(db, page.id, payload.items)
+
+
 @router.get(
     "/sites/{site_key}/pages/{slug}/versions",
     response_model=PaginatedResponse[schemas.CmsPageVersionRead],
@@ -995,11 +967,7 @@ def list_versions(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     items, total = crud.list_cms_page_versions(db, page.id, skip=skip, limit=limit)
-    return PaginatedResponse[schemas.CmsPageVersionRead](
-        items=items, total=total, skip=skip, limit=limit
-    )
-
-
+    return PaginatedResponse[schemas.CmsPageVersionRead](items=items, total=total, skip=skip, limit=limit)
 
 
 @router.get(
@@ -1017,11 +985,7 @@ def list_publish_log(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     items, total = crud.list_cms_publish_logs(db, site.id, page_id=page.id, skip=skip, limit=limit)
-    return PaginatedResponse[schemas.CmsPublishLogRead](
-        items=items, total=total, skip=skip, limit=limit
-    )
-
-
+    return PaginatedResponse[schemas.CmsPublishLogRead](items=items, total=total, skip=skip, limit=limit)
 
 
 @router.get(
@@ -1056,12 +1020,7 @@ def seo_audit(
     pages_query = db.query(models.CmsPage).options(lazyload("*")).filter(models.CmsPage.site_id == site.id)
     if status:
         pages_query = pages_query.filter(models.CmsPage.status == status)
-    pages = (
-        pages_query.order_by(models.CmsPage.updated_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    pages = pages_query.order_by(models.CmsPage.updated_at.desc()).offset(skip).limit(limit).all()
     page_ids = [page.id for page in pages]
     sections_by_page = group_sections_by_page([])
     if page_ids:
@@ -1073,13 +1032,13 @@ def seo_audit(
         )
         sections_by_page = group_sections_by_page(sections_rows)
 
-    media_ids = collect_section_media_ids(
-        section for rows in sections_by_page.values() for section in rows
-    )
+    media_ids = collect_section_media_ids(section for rows in sections_by_page.values() for section in rows)
     media_alt_lookup = build_media_alt_lookup(db, media_ids)
 
     audits, aggregate = audit_pages(
-        pages, sections_by_page, media_alt_lookup,
+        pages,
+        sections_by_page,
+        media_alt_lookup,
     )
     if min_score is not None:
         audits = [audit for audit in audits if audit.score >= min_score]
@@ -1091,9 +1050,373 @@ def seo_audit(
     )
 
 
+def _cms_readiness_issue(
+    *,
+    code: str,
+    severity: str,
+    title: str,
+    detail: str,
+    count: int,
+    href: str | None = None,
+) -> cms_schemas.CmsReadinessIssue:
+    return cms_schemas.CmsReadinessIssue(
+        code=code,
+        severity=severity,
+        title=title,
+        detail=detail,
+        count=count,
+        href=href,
+    )
+
+
 @router.get(
-    "/sites/{site_key}/pages/{slug}/preview", response_model=schemas.CmsPublicPageRead
+    "/sites/{site_key}/readiness",
+    response_model=cms_schemas.CmsReadinessResponse,
 )
+def cms_readiness(
+    site_key: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """Production-readiness snapshot for the CMS site.
+
+    The endpoint intentionally reads existing CMS v2 contracts instead of
+    creating a parallel content model. It helps editors see whether the CMS is
+    ready to feed public pages: published content, active theme/menu, visible
+    sections, SEO/media hygiene, supported section types, redirects and broken
+    link checks.
+    """
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
+
+    page_base = db.query(models.CmsPage).filter(models.CmsPage.site_id == site.id)
+    total_pages = page_base.count()
+    published_pages = page_base.filter(models.CmsPage.status == "published").count()
+    draft_pages = page_base.filter(models.CmsPage.status == "draft").count()
+    in_review_pages = page_base.filter(models.CmsPage.status == "in_review").count()
+    archived_pages = page_base.filter(models.CmsPage.status == "archived").count()
+    scheduled_without_date = page_base.filter(
+        models.CmsPage.status == "scheduled",
+        models.CmsPage.publish_at.is_(None),
+    ).count()
+    published_without_version = page_base.filter(
+        models.CmsPage.status == "published",
+        models.CmsPage.published_version_id.is_(None),
+    ).count()
+
+    section_base = (
+        db.query(models.CmsSection)
+        .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
+        .filter(models.CmsPage.site_id == site.id)
+    )
+    visible_sections = section_base.filter(
+        models.CmsSection.is_visible.is_(True),
+        models.CmsSection.status != "archived",
+        models.CmsSection.deleted_at.is_(None),
+    ).count()
+    hidden_sections = section_base.filter(
+        (models.CmsSection.is_visible.is_(False))
+        | (models.CmsSection.status == "archived")
+        | (models.CmsSection.deleted_at.isnot(None))
+    ).count()
+    pages_without_visible_sections = (
+        db.query(models.CmsPage.id)
+        .filter(models.CmsPage.site_id == site.id)
+        .outerjoin(
+            models.CmsSection,
+            (models.CmsSection.page_id == models.CmsPage.id)
+            & (models.CmsSection.is_visible.is_(True))
+            & (models.CmsSection.status != "archived")
+            & (models.CmsSection.deleted_at.is_(None)),
+        )
+        .group_by(models.CmsPage.id)
+        .having(func.count(models.CmsSection.id) == 0)
+        .count()
+    )
+
+    allowed_section_types = get_allowed_section_types(db)
+    unsupported_sections = section_base.filter(
+        models.CmsSection.deleted_at.is_(None),
+        ~models.CmsSection.type.in_(allowed_section_types),
+    ).count()
+
+    active_themes = (
+        db.query(models.CmsTheme)
+        .filter(
+            models.CmsTheme.site_id == site.id,
+            models.CmsTheme.is_active.is_(True),
+            models.CmsTheme.status != "archived",
+        )
+        .count()
+    )
+    active_menus = (
+        db.query(models.CmsMenu).filter(models.CmsMenu.site_id == site.id, models.CmsMenu.is_active.is_(True)).count()
+    )
+    menu_items = (
+        db.query(models.CmsMenuItem)
+        .join(models.CmsMenu, models.CmsMenuItem.menu_id == models.CmsMenu.id)
+        .filter(models.CmsMenu.site_id == site.id, models.CmsMenu.is_active.is_(True))
+        .count()
+    )
+
+    media_query = db.query(models.CmsMediaItem).filter(models.CmsMediaItem.status != "archived")
+    if site.sede_id is not None:
+        media_query = media_query.filter(models.CmsMediaItem.sede_id == site.sede_id)
+    media_total = media_query.count()
+    media_without_alt = media_query.filter(
+        (models.CmsMediaItem.alt_text.is_(None)) | (func.length(func.trim(models.CmsMediaItem.alt_text)) == 0)
+    ).count()
+
+    recent_publish_events = db.query(models.CmsPublishLog).filter(models.CmsPublishLog.site_id == site.id).count()
+
+    active_redirects = 0
+    unresolved_broken_links = 0
+    try:
+        active_redirects = (
+            db.query(models.CmsRedirect)
+            .filter(models.CmsRedirect.site_key == site.site_key, models.CmsRedirect.is_active.is_(True))
+            .count()
+        )
+        unresolved_broken_links = (
+            db.query(models.BrokenLinkCheck)
+            .filter(
+                models.BrokenLinkCheck.site_key == site.site_key,
+                models.BrokenLinkCheck.is_broken.is_(True),
+                models.BrokenLinkCheck.resolved_at.is_(None),
+            )
+            .count()
+        )
+    except Exception:
+        db.rollback()
+
+    issues: list[cms_schemas.CmsReadinessIssue] = []
+    if published_pages == 0:
+        issues.append(
+            _cms_readiness_issue(
+                code="no_published_pages",
+                severity="error",
+                title="Sin páginas publicadas",
+                detail="El sitio no tiene contenido CMS publicado para alimentar las páginas públicas.",
+                count=1,
+                href="/cms/pages",
+            )
+        )
+    if active_themes == 0:
+        issues.append(
+            _cms_readiness_issue(
+                code="no_active_theme",
+                severity="error",
+                title="Sin tema activo",
+                detail="El render público necesita un tema activo para resolver tokens visuales del sitio.",
+                count=1,
+                href="/cms/themes",
+            )
+        )
+    if unsupported_sections:
+        issues.append(
+            _cms_readiness_issue(
+                code="unsupported_sections",
+                severity="error",
+                title="Secciones no soportadas",
+                detail="Hay secciones cuyo tipo no está activo en el catálogo CMS.",
+                count=unsupported_sections,
+                href="/cms/section-types",
+            )
+        )
+    if unresolved_broken_links:
+        issues.append(
+            _cms_readiness_issue(
+                code="broken_links",
+                severity="error",
+                title="Links rotos pendientes",
+                detail="Hay enlaces marcados como rotos que pueden producir 404 en navegación pública.",
+                count=unresolved_broken_links,
+                href="/cms/broken-links",
+            )
+        )
+    if active_menus == 0:
+        issues.append(
+            _cms_readiness_issue(
+                code="no_active_menus",
+                severity="warning",
+                title="Sin menús activos",
+                detail="La navegación pública queda limitada si no hay menús activos configurados.",
+                count=1,
+                href="/cms/menus",
+            )
+        )
+    if pages_without_visible_sections:
+        issues.append(
+            _cms_readiness_issue(
+                code="pages_without_visible_sections",
+                severity="warning",
+                title="Páginas sin secciones visibles",
+                detail="Estas páginas pueden publicar una experiencia vacía o depender de fallback anterior.",
+                count=pages_without_visible_sections,
+                href="/cms/pages",
+            )
+        )
+    if published_without_version:
+        issues.append(
+            _cms_readiness_issue(
+                code="published_without_version",
+                severity="warning",
+                title="Publicadas sin versión fijada",
+                detail="Conviene publicar con snapshot para proteger la salida pública ante cambios de borrador.",
+                count=published_without_version,
+                href="/cms/pages",
+            )
+        )
+    if media_without_alt:
+        issues.append(
+            _cms_readiness_issue(
+                code="media_without_alt",
+                severity="warning",
+                title="Media sin alt text",
+                detail="Las imágenes sin texto alternativo reducen accesibilidad y calidad SEO.",
+                count=media_without_alt,
+                href="/cms/media",
+            )
+        )
+    if scheduled_without_date:
+        issues.append(
+            _cms_readiness_issue(
+                code="scheduled_without_date",
+                severity="warning",
+                title="Programadas sin fecha",
+                detail=(
+                    "Hay páginas en estado scheduled sin publish_at, por lo que no "
+                    "podrán publicarse automáticamente."
+                ),
+                count=scheduled_without_date,
+                href="/cms/pages",
+            )
+        )
+
+    penalty = sum(20 if issue.severity == "error" else 8 for issue in issues)
+    score = max(0, 100 - penalty)
+
+    capabilities = [
+        cms_schemas.CmsReadinessCapability(
+            key="pages",
+            label="Gestión de páginas",
+            status="ready" if total_pages else "partial",
+            detail=f"{total_pages} páginas, {published_pages} publicadas.",
+            href="/cms/pages",
+        ),
+        cms_schemas.CmsReadinessCapability(
+            key="builder",
+            label="Constructor de secciones",
+            status="ready" if visible_sections and not unsupported_sections else "attention",
+            detail=f"{visible_sections} visibles, {unsupported_sections} no soportadas.",
+            href="/cms/builder",
+        ),
+        cms_schemas.CmsReadinessCapability(
+            key="media",
+            label="Media y recursos",
+            status=("ready" if media_total and not media_without_alt else ("partial" if media_total else "attention")),
+            detail=f"{media_total} archivos activos, {media_without_alt} sin alt.",
+            href="/cms/media",
+        ),
+        cms_schemas.CmsReadinessCapability(
+            key="seo",
+            label="SEO y publicación",
+            status="ready" if published_pages and not published_without_version else "partial",
+            detail=f"{published_pages} publicadas, {published_without_version} sin snapshot.",
+            href="/cms/seo-audit",
+        ),
+        cms_schemas.CmsReadinessCapability(
+            key="menus",
+            label="Menús y navegación",
+            status="ready" if active_menus and menu_items else "attention",
+            detail=f"{active_menus} menús activos, {menu_items} ítems.",
+            href="/cms/menus",
+        ),
+        cms_schemas.CmsReadinessCapability(
+            key="themes",
+            label="Temas y tokens",
+            status="ready" if active_themes else "attention",
+            detail=f"{active_themes} temas activos.",
+            href="/cms/themes",
+        ),
+        cms_schemas.CmsReadinessCapability(
+            key="operations",
+            label="Operación y auditoría",
+            status=(
+                "ready" if recent_publish_events or active_redirects or unresolved_broken_links == 0 else "partial"
+            ),
+            detail=(
+                f"{recent_publish_events} eventos, {active_redirects} redirects, {unresolved_broken_links} links rotos."
+            ),
+            href="/cms/audit",
+        ),
+    ]
+
+    metrics = [
+        cms_schemas.CmsReadinessMetric(key="total_pages", label="Páginas", value=total_pages, href="/cms/pages"),
+        cms_schemas.CmsReadinessMetric(
+            key="published_pages",
+            label="Publicadas",
+            value=published_pages,
+            href="/cms/pages",
+        ),
+        cms_schemas.CmsReadinessMetric(key="draft_pages", label="Borradores", value=draft_pages, href="/cms/pages"),
+        cms_schemas.CmsReadinessMetric(
+            key="in_review_pages",
+            label="En revisión",
+            value=in_review_pages,
+            href="/cms/pages",
+        ),
+        cms_schemas.CmsReadinessMetric(
+            key="archived_pages",
+            label="Archivadas",
+            value=archived_pages,
+            href="/cms/pages",
+        ),
+        cms_schemas.CmsReadinessMetric(
+            key="visible_sections",
+            label="Secciones visibles",
+            value=visible_sections,
+            href="/cms/builder",
+        ),
+        cms_schemas.CmsReadinessMetric(
+            key="hidden_sections",
+            label="Secciones ocultas",
+            value=hidden_sections,
+            href="/cms/builder",
+        ),
+        cms_schemas.CmsReadinessMetric(key="media_total", label="Media activa", value=media_total, href="/cms/media"),
+        cms_schemas.CmsReadinessMetric(
+            key="active_menus",
+            label="Menús activos",
+            value=active_menus,
+            href="/cms/menus",
+        ),
+        cms_schemas.CmsReadinessMetric(
+            key="active_themes",
+            label="Temas activos",
+            value=active_themes,
+            href="/cms/themes",
+        ),
+        cms_schemas.CmsReadinessMetric(
+            key="broken_links",
+            label="Links rotos",
+            value=unresolved_broken_links,
+            href="/cms/broken-links",
+        ),
+    ]
+
+    return cms_schemas.CmsReadinessResponse(
+        site_key=site.site_key,
+        score=score,
+        generated_at=datetime.now(timezone.utc),
+        metrics=metrics,
+        issues=issues,
+        capabilities=capabilities,
+    )
+
+
+@router.get("/sites/{site_key}/pages/{slug}/preview", response_model=schemas.CmsPublicPageRead)
 def preview_page(
     site_key: str,
     slug: str,
@@ -1121,7 +1444,10 @@ def preview_page(
     page_url = f"{base_url}/{page.slug.lstrip('/')}"
     canonical = (page.seo_json or {}).get("canonical_url") if isinstance(page.seo_json, dict) else None
     json_ld_data = auto_json_ld_for_page(
-        page, site, sections=sections, base_url=base_url,
+        page,
+        site,
+        sections=sections,
+        base_url=base_url,
         site_name=_get_system_var(db, site_key, "church_name", site.name),
     )
     # Allow manual override of JSON-LD from seo_json
@@ -1167,9 +1493,7 @@ def rollback_page(
     return crud.restore_cms_page_version(db, page, version, user_id=current_user.id)
 
 
-@router.post(
-    "/sites/{site_key}/pages/{slug}/workflow", response_model=schemas.CmsPageRead
-)
+@router.post("/sites/{site_key}/pages/{slug}/workflow", response_model=schemas.CmsPageRead)
 def workflow_page(
     site_key: str,
     slug: str,
@@ -1184,9 +1508,7 @@ def workflow_page(
         _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
-    row = crud.transition_cms_page_status(
-        db, page, payload.action, current_user.id, notes=payload.notes
-    )
+    row = crud.transition_cms_page_status(db, page, payload.action, current_user.id, notes=payload.notes)
     if not row:
         raise HTTPException(status_code=422, detail="invalid workflow action")
     return row
@@ -1245,7 +1567,11 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
         .all()
     )
     public_ids = {item.id for item in all_items if item.visibility == "public"}
-    items = [item for item in all_items if item.visibility == "public" and (item.parent_id is None or item.parent_id in public_ids)]
+    items = [
+        item
+        for item in all_items
+        if item.visibility == "public" and (item.parent_id is None or item.parent_id in public_ids)
+    ]
     visible_ids = {item.id for item in items}
     serialized = [
         {
@@ -1281,11 +1607,7 @@ def _get_system_var(db, site_key: str, var_key: str, default: str = "") -> str:
         cached_time, cached_val = _system_var_cache[cache_key]
         if now - cached_time < _SYSTEM_VAR_TTL:
             return cached_val
-    row = (
-        db.query(models.SystemVariable)
-        .filter(models.SystemVariable.key == f"{site_key}_{var_key}")
-        .first()
-    )
+    row = db.query(models.SystemVariable).filter(models.SystemVariable.key == f"{site_key}_{var_key}").first()
     val = row.value if row and row.value else default
     _system_var_cache[cache_key] = (now, val)
     return val
@@ -1298,7 +1620,24 @@ def _build_section_defaults(
     # If the section already has meaningful content, skip defaults
     if props and any(
         key in props
-        for key in ("title", "subtitle", "body", "content", "items", "personas", "pastors", "stats", "testimonials", "faqs", "embed_url", "map_url", "eyebrow", "title_lead", "primary_cta", "bg_image")
+        for key in (
+            "title",
+            "subtitle",
+            "body",
+            "content",
+            "items",
+            "personas",
+            "pastors",
+            "stats",
+            "testimonials",
+            "faqs",
+            "embed_url",
+            "map_url",
+            "eyebrow",
+            "title_lead",
+            "primary_cta",
+            "bg_image",
+        )
     ):
         return props or {}
 
@@ -1319,11 +1658,11 @@ def _build_section_defaults(
 
     if section_type == "cta_banner":
         return {
-            "title": _get_system_var(
-                db, site_key, "cta_title", "Únete a nuestra comunidad"
-            ),
+            "title": _get_system_var(db, site_key, "cta_title", "Únete a nuestra comunidad"),
             "description": _get_system_var(
-                db, site_key, "cta_description",
+                db,
+                site_key,
+                "cta_description",
                 "Te invitamos a ser parte de nuestra familia. Todos son bienvenidos.",
             ),
             "button_text": "Visítanos",
@@ -1331,11 +1670,7 @@ def _build_section_defaults(
         }
 
     if section_type == "stats":
-        active_personas = (
-            db.query(models.Persona)
-            .filter(models.Persona.estado_vital == "ACTIVO")
-            .count()
-        )
+        active_personas = db.query(models.Persona).filter(models.Persona.estado_vital == "ACTIVO").count()
         group_count = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.status == "Activo").count()
         return {
             "stats": [
@@ -1356,15 +1691,25 @@ def _build_section_defaults(
         for p in leaders:
             name = p.nombre_completo
             slug = _slugify(name)
-            personas.append({
-                "name": name,
-                "role": "Pastor Principal" if p.is_main_pastor else "Pastor",
-                "photo_url": p.photo_url or "",
-                "slug": slug,
-                "bio_short": p.bio_short or "",
-            })
+            personas.append(
+                {
+                    "name": name,
+                    "role": "Pastor Principal" if p.is_main_pastor else "Pastor",
+                    "photo_url": p.photo_url or "",
+                    "slug": slug,
+                    "bio_short": p.bio_short or "",
+                }
+            )
         if not personas:
-            personas = [{"name": "Pastor", "role": "Pastor Principal", "photo_url": "", "slug": "pastor", "bio_short": ""}]
+            personas = [
+                {
+                    "name": "Pastor",
+                    "role": "Pastor Principal",
+                    "photo_url": "",
+                    "slug": "pastor",
+                    "bio_short": "",
+                }
+            ]
         return {"personas": personas, "title": "Nuestro Equipo Pastoral"}
 
     if section_type == "testimonials":
@@ -1381,15 +1726,22 @@ def _build_section_defaults(
         testimonials = []
         for t in rows:
             author_name = t.author.nombre_completo if t.author else "Anónimo"
-            testimonials.append({
-                "content": t.content,
-                "author": author_name,
-                "emotion": t.emotion or "Gratitud",
-                "image_url": t.image_url or "",
-            })
+            testimonials.append(
+                {
+                    "content": t.content,
+                    "author": author_name,
+                    "emotion": t.emotion or "Gratitud",
+                    "image_url": t.image_url or "",
+                }
+            )
         if not testimonials:
             testimonials = [
-                {"content": "Dios ha sido fiel en cada etapa. Bendigo a esta iglesia por su amor y apoyo.", "author": "Miembro de la Iglesia", "emotion": "Gratitud", "image_url": ""},
+                {
+                    "content": ("Dios ha sido fiel en cada etapa. Bendigo a esta iglesia por su amor y apoyo."),
+                    "author": "Miembro de la Iglesia",
+                    "emotion": "Gratitud",
+                    "image_url": "",
+                },
             ]
         return {"testimonials": testimonials, "title": "Testimonios"}
 
@@ -1398,8 +1750,16 @@ def _build_section_defaults(
             "faqs": [
                 {"question": "¿A qué hora son los servicios?", "answer": service_time},
                 {"question": "¿Dónde están ubicados?", "answer": address},
-                {"question": "¿Qué debo esperar en mi primera visita?", "answer": "Una comunidad cálida que te recibirá con los brazos abiertos. Ven tal como eres."},
-                {"question": "¿Tienen grupos de estudio?", "answer": "Sí, tenemos grupos de casa que se reúnen durante la semana. Contáctanos para más información."},
+                {
+                    "question": "¿Qué debo esperar en mi primera visita?",
+                    "answer": ("Una comunidad cálida que te recibirá con los brazos abiertos. Ven tal como eres."),
+                },
+                {
+                    "question": "¿Tienen grupos de estudio?",
+                    "answer": (
+                        "Sí, tenemos grupos de casa que se reúnen durante la semana. Contáctanos para más información."
+                    ),
+                },
             ],
             "title": "Preguntas Frecuentes",
         }
@@ -1435,9 +1795,7 @@ def public_pages_list(
     )
     total = query.count()
     pages = query.order_by(models.CmsPage.updated_at.desc()).offset(skip).limit(limit).all()
-    return PaginatedResponse[schemas.CmsPageRead](
-        items=pages, total=total, skip=skip, limit=limit
-    )
+    return PaginatedResponse[schemas.CmsPageRead](items=pages, total=total, skip=skip, limit=limit)
 
 
 @router.get(
@@ -1475,9 +1833,7 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
     if published_version:
         snapshot = published_version.snapshot_json or {}
         page_snapshot = snapshot.get("page") if isinstance(snapshot, dict) else {}
-        sections_snapshot = (
-            snapshot.get("sections") if isinstance(snapshot, dict) else []
-        )
+        sections_snapshot = snapshot.get("sections") if isinstance(snapshot, dict) else []
         section_rows = [
             _snapshot_section_read(
                 section_data,
@@ -1488,39 +1844,24 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
             for index, section_data in enumerate(
                 sorted(
                     [item for item in sections_snapshot if isinstance(item, dict)],
-                    key=lambda item: (
-                        item.get("sort_order")
-                        if isinstance(item.get("sort_order"), int)
-                        else 0
-                    ),
+                    key=lambda item: item.get("sort_order") if isinstance(item.get("sort_order"), int) else 0,
                 )
             )
-            if section_data.get("is_visible", True) is not False
-            and section_data.get("status", "active") != "archived"
+            if section_data.get("is_visible", True) is not False and section_data.get("status", "active") != "archived"
         ]
         # ── Inject default props for empty sections (published version path) ──
         section_rows = [
             schemas.CmsSectionRead(
                 **{
                     **s.model_dump(),
-                    "props_json": _build_section_defaults(
-                        db, site_key, s.type, s.props_json
-                    ),
+                    "props_json": _build_section_defaults(db, site_key, s.type, s.props_json),
                 }
             )
             for s in section_rows
         ]
 
-        slug_val = (
-            str(page_snapshot.get("slug") or page.slug)
-            if isinstance(page_snapshot, dict)
-            else page.slug
-        )
-        title_val = (
-            str(page_snapshot.get("title") or page.title)
-            if isinstance(page_snapshot, dict)
-            else page.title
-        )
+        slug_val = str(page_snapshot.get("slug") or page.slug) if isinstance(page_snapshot, dict) else page.slug
+        title_val = str(page_snapshot.get("title") or page.title) if isinstance(page_snapshot, dict) else page.title
         settings = get_settings()
         base_url = settings.frontend_url.rstrip("/")
         breadcrumb_items = build_breadcrumb_items_from_slug(
@@ -1535,14 +1876,16 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
             else None
         )
         json_ld_data = auto_json_ld_for_page(
-            page, site, sections=section_rows, base_url=base_url,
+            page,
+            site,
+            sections=section_rows,
+            base_url=base_url,
             site_name=_get_system_var(db, site_key, "church_name", site.name),
         )
         # Allow manual override of JSON-LD from seo_json in snapshot
         snapshot_seo = (
             page_snapshot.get("seo_json")
-            if isinstance(page_snapshot, dict)
-            and isinstance(page_snapshot.get("seo_json"), dict)
+            if isinstance(page_snapshot, dict) and isinstance(page_snapshot.get("seo_json"), dict)
             else {}
         )
         if snapshot_seo.get("json_ld"):
@@ -1577,7 +1920,10 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
     page_url = f"{base_url}/{page.slug.lstrip('/')}"
     canonical = (page.seo_json or {}).get("canonical_url") if isinstance(page.seo_json, dict) else None
     json_ld_data = auto_json_ld_for_page(
-        page, site, sections=sections, base_url=base_url,
+        page,
+        site,
+        sections=sections,
+        base_url=base_url,
         site_name=_get_system_var(db, site_key, "church_name", site.name),
     )
     # Allow manual override of JSON-LD from seo_json
@@ -1632,7 +1978,7 @@ def public_sitemap(site_key: str, db: Session = Depends(get_db)):
 @cached_public(ttl=300)
 def public_robots(site_key: str, db: Session = Depends(get_db)):
     """Public endpoint: generate robots.txt for the site."""
-    site = _get_public_site_or_404(db, site_key)
+    _get_public_site_or_404(db, site_key)
     settings = get_settings()
     base_url = settings.frontend_url.rstrip("/")
     sitemap_url = f"{base_url.rstrip('/')}/api/cms/v2/public/sites/{site_key}/sitemap.xml"
@@ -1669,14 +2015,18 @@ def public_pastoral_team(site_key: str, db: Session = Depends(get_db)):
     """
     # Verify site exists (no auth required for public)
     _get_public_site_or_404(db, site_key)
-    base_query = db.query(models.Persona).options(lazyload("*")).filter(
-        models.Persona.is_pastoral_leader.is_(True),
-        models.Persona.is_pastoral_published.is_(True),
+    base_query = (
+        db.query(models.Persona)
+        .options(lazyload("*"))
+        .filter(
+            models.Persona.is_pastoral_leader.is_(True),
+            models.Persona.is_pastoral_published.is_(True),
+        )
     )
     leaders = base_query.order_by(
         models.Persona.pastoral_sort_order.asc(),
         models.Persona.is_main_pastor.desc(),
-        models.Persona.nombre_completo.asc()
+        models.Persona.nombre_completo.asc(),
     ).all()
     result = []
     for p in leaders:
@@ -1694,8 +2044,8 @@ def public_pastoral_team(site_key: str, db: Session = Depends(get_db)):
                 social_facebook=p.social_facebook,
                 social_twitter=p.social_twitter,
                 is_main_pastor=p.is_main_pastor or False,
-                pastoral_sort_order=getattr(p, 'pastoral_sort_order', 0) or 0,
-                is_pastoral_published=getattr(p, 'is_pastoral_published', True),
+                pastoral_sort_order=getattr(p, "pastoral_sort_order", 0) or 0,
+                is_pastoral_published=getattr(p, "is_pastoral_published", True),
             )
         )
     return result
@@ -1718,14 +2068,12 @@ def cms_pastoral_team_list(
     (superadmin / anterior) sigue viendo el agregado global.
     """
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    base_query = db.query(models.Persona).options(lazyload("*")).filter(
-        models.Persona.is_pastoral_leader.is_(True)
-    )
+    base_query = db.query(models.Persona).options(lazyload("*")).filter(models.Persona.is_pastoral_leader.is_(True))
     base_query = _scope_cms_pastoral_team_by_user_sede(db, current_user, base_query)
     leaders = base_query.order_by(
         models.Persona.pastoral_sort_order.asc(),
         models.Persona.is_main_pastor.desc(),
-        models.Persona.nombre_completo.asc()
+        models.Persona.nombre_completo.asc(),
     ).all()
     result = []
     for p in leaders:
@@ -1743,8 +2091,8 @@ def cms_pastoral_team_list(
                 social_facebook=p.social_facebook,
                 social_twitter=p.social_twitter,
                 is_main_pastor=p.is_main_pastor or False,
-                pastoral_sort_order=getattr(p, 'pastoral_sort_order', 0) or 0,
-                is_pastoral_published=getattr(p, 'is_pastoral_published', True),
+                pastoral_sort_order=getattr(p, "pastoral_sort_order", 0) or 0,
+                is_pastoral_published=getattr(p, "is_pastoral_published", True),
             )
         )
     return result
@@ -1798,8 +2146,8 @@ def cms_pastoral_profile_update(
         social_facebook=persona.social_facebook,
         social_twitter=persona.social_twitter,
         is_main_pastor=persona.is_main_pastor or False,
-        pastoral_sort_order=getattr(persona, 'pastoral_sort_order', 0) or 0,
-        is_pastoral_published=getattr(persona, 'is_pastoral_published', True),
+        pastoral_sort_order=getattr(persona, "pastoral_sort_order", 0) or 0,
+        is_pastoral_published=getattr(persona, "is_pastoral_published", True),
     )
 
 
@@ -1845,19 +2193,27 @@ def create_global_block(
     if payload.type not in allowed_types:
         raise HTTPException(status_code=422, detail="unsupported section type")
     from backend.schemas.cms_v2_sections import validate_section_props
+
     try:
         validated_props = validate_section_props(payload.type, payload.props_json or {})
         payload.props_json = validated_props
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     site = _get_scoped_site_or_404(db, site_key, current_user)
-    page = db.query(models.CmsPage).filter(
-        models.CmsPage.site_id == site.id,
-        models.CmsPage.slug == "_global_blocks",
-    ).first()
+    page = (
+        db.query(models.CmsPage)
+        .filter(
+            models.CmsPage.site_id == site.id,
+            models.CmsPage.slug == "_global_blocks",
+        )
+        .first()
+    )
     if not page:
         page = models.CmsPage(
-            site_id=site.id, slug="_global_blocks", title="Global Blocks", status="draft",
+            site_id=site.id,
+            slug="_global_blocks",
+            title="Global Blocks",
+            status="draft",
         )
         db.add(page)
         db.flush()
@@ -1871,14 +2227,21 @@ def create_global_block(
 
 @router.patch("/global-blocks/{section_id}", response_model=schemas.CmsSectionRead)
 def patch_global_block(
-    site_key: str, section_id: uuid.UUID, payload: schemas.CmsSectionUpdate,
+    site_key: str,
+    section_id: uuid.UUID,
+    payload: schemas.CmsSectionUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    block = db.query(models.CmsSection).filter(
-        models.CmsSection.id == section_id, models.CmsSection.is_global,
-    ).first()
+    block = (
+        db.query(models.CmsSection)
+        .filter(
+            models.CmsSection.id == section_id,
+            models.CmsSection.is_global,
+        )
+        .first()
+    )
     if not block:
         raise HTTPException(status_code=404, detail="Global block not found")
     data = payload.model_dump(exclude_unset=True)
@@ -1892,14 +2255,20 @@ def patch_global_block(
 
 @router.delete("/global-blocks/{section_id}", status_code=204)
 def delete_global_block(
-    site_key: str, section_id: uuid.UUID,
+    site_key: str,
+    section_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    block = db.query(models.CmsSection).filter(
-        models.CmsSection.id == section_id, models.CmsSection.is_global,
-    ).first()
+    block = (
+        db.query(models.CmsSection)
+        .filter(
+            models.CmsSection.id == section_id,
+            models.CmsSection.is_global,
+        )
+        .first()
+    )
     if not block:
         raise HTTPException(status_code=404, detail="Global block not found")
     block.deleted_at = _utcnow()
@@ -1947,6 +2316,7 @@ def _get_post_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsPost:
 
 
 # ── Categories ────────────────────────────────────────────────────────────
+
 
 @router.get("/sites/{site_key}/categories", response_model=list[schemas.CmsCategoryRead])
 def list_categories(
@@ -2015,6 +2385,7 @@ def delete_category(
 
 # ── Tags ──────────────────────────────────────────────────────────────────
 
+
 @router.get("/sites/{site_key}/tags", response_model=list[schemas.CmsTagRead])
 def list_tags(
     site_key: str,
@@ -2082,6 +2453,7 @@ def delete_tag(
 
 # ── Posts (Admin) ─────────────────────────────────────────────────────────
 
+
 @router.get(
     "/sites/{site_key}/posts",
     response_model=PaginatedResponse[schemas.CmsPostReadWithTaxonomies],
@@ -2098,8 +2470,13 @@ def list_posts(
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     items, total = crud.list_cms_posts(
-        db, site.id, skip=skip, limit=limit, status=status,
-        category_id=category_id, tag_id=tag_id,
+        db,
+        site.id,
+        skip=skip,
+        limit=limit,
+        status=status,
+        category_id=category_id,
+        tag_id=tag_id,
     )
     # Batch-fetch categories and tags to avoid N+1 queries
     post_ids = [post.id for post in items]
@@ -2111,9 +2488,7 @@ def list_posts(
         p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in cats_by_post.get(str(post.id), [])]
         p.tags = [schemas.CmsTagRead.model_validate(t) for t in tags_by_post.get(str(post.id), [])]
         enriched.append(p)
-    return PaginatedResponse[schemas.CmsPostReadWithTaxonomies](
-        items=enriched, total=total, skip=skip, limit=limit
-    )
+    return PaginatedResponse[schemas.CmsPostReadWithTaxonomies](items=enriched, total=total, skip=skip, limit=limit)
 
 
 @router.post("/sites/{site_key}/posts", response_model=schemas.CmsPostReadWithTaxonomies, status_code=201)
@@ -2165,7 +2540,13 @@ def patch_post(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_post_or_404(db, site.id, slug)
-    if payload.status is not None and payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
+    if payload.status is not None and payload.status.strip().lower() not in {
+        "draft",
+        "in_review",
+        "approved",
+        "published",
+        "archived",
+    }:
         raise HTTPException(status_code=422, detail="invalid status")
     # Scheduled publish + auto-archive (2026-07-06): posts manejan
     # ``expires_at`` opcional; no tienen pre-condition con ``published_at``
@@ -2193,6 +2574,7 @@ def delete_post(
 
 # ── Posts (Public) ────────────────────────────────────────────────────────
 
+
 @router.get(
     "/public/sites/{site_key}/posts",
     response_model=PaginatedResponse[schemas.CmsPublicPostRead],
@@ -2217,7 +2599,9 @@ def public_posts_list(
         )
     )
     if category_slug:
-        query = query.join(models.CmsPostCategory).join(models.CmsCategory).filter(models.CmsCategory.slug == category_slug)
+        query = (
+            query.join(models.CmsPostCategory).join(models.CmsCategory).filter(models.CmsCategory.slug == category_slug)
+        )
     if tag_slug:
         query = query.join(models.CmsPostTag).join(models.CmsTag).filter(models.CmsTag.slug == tag_slug)
     total = query.count()
@@ -2237,9 +2621,7 @@ def public_posts_list(
         base_url = settings.frontend_url.rstrip("/")
         p.canonical_url = f"{base_url}/blog/{post.slug}"
         enriched.append(p)
-    return PaginatedResponse[schemas.CmsPublicPostRead](
-        items=enriched, total=total, skip=skip, limit=limit
-    )
+    return PaginatedResponse[schemas.CmsPublicPostRead](items=enriched, total=total, skip=skip, limit=limit)
 
 
 @router.get(
@@ -2283,6 +2665,7 @@ def public_post(
 
 # ── PAGE VIEWS TRACKING (Phase 6 Analytics) ────────────────────────────────────
 
+
 @router.post(
     "/track/{page_key}",
     response_model=dict,
@@ -2296,17 +2679,24 @@ def track_page_view(page_key: str, request: Request, db: Session = Depends(get_d
     no sensitive data exposed.
     """
     try:
-        page = db.query(models.CmsPage).join(models.CmsSite).filter(
-            models.CmsPage.slug == page_key,
-            models.CmsSite.is_active == True,
-        ).first()
+        page = (
+            db.query(models.CmsPage)
+            .join(models.CmsSite)
+            .filter(
+                models.CmsPage.slug == page_key,
+                models.CmsSite.is_active.is_(True),
+            )
+            .first()
+        )
         if page:
-            db.add(models.CmsPageView(
-                page_id=page.id,
-                ip_address=request.client.host if request.client else None,
-                user_agent=request.headers.get("user-agent", ""),
-                referrer=request.headers.get("referer", ""),
-            ))
+            db.add(
+                models.CmsPageView(
+                    page_id=page.id,
+                    ip_address=request.client.host if request.client else None,
+                    user_agent=request.headers.get("user-agent", ""),
+                    referrer=request.headers.get("referer", ""),
+                )
+            )
             db.commit()
     except Exception:
         logger.warning("Analytics tracking failed for page_key=%s", page_key, exc_info=True)
@@ -2315,21 +2705,28 @@ def track_page_view(page_key: str, request: Request, db: Session = Depends(get_d
 
 @router.get("/analytics/{page_key}", response_model=dict)
 def get_page_analytics(
-    page_key: str, days: int = Query(30, le=365),
+    page_key: str,
+    days: int = Query(30, le=365),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     """Get page view analytics."""
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    page = db.query(models.CmsPage).join(models.CmsSite).filter(
-        models.CmsPage.slug == page_key,
-    ).first()
+    page = (
+        db.query(models.CmsPage)
+        .join(models.CmsSite)
+        .filter(
+            models.CmsPage.slug == page_key,
+        )
+        .first()
+    )
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
     total = (
         db.query(func.count(models.CmsPageView.id))
         .filter(models.CmsPageView.page_id == page.id, models.CmsPageView.created_at >= cutoff)
-        .scalar() or 0
+        .scalar()
+        or 0
     )
     daily = (
         db.query(
@@ -2341,15 +2738,22 @@ def get_page_analytics(
         .order_by(func.date(models.CmsPageView.created_at))
         .all()
     )
-    return {"page_key": page_key, "total_views": total, "days": days,
-            "daily_views": [{"date": str(d), "views": v} for d, v in daily]}
+    return {
+        "page_key": page_key,
+        "total_views": total,
+        "days": days,
+        "daily_views": [{"date": str(d), "views": v} for d, v in daily],
+    }
 
 
 # ── SCHEDULED PUBLISHING (Phase 4) ─────────────────────────────────────────────
 
+
 @router.post("/pages/{page_id}/schedule", response_model=Dict[str, Any])
 def schedule_page_publish(
-    site_key: str, page_id: uuid.UUID, payload: schemas.SchedulePagePublish,
+    site_key: str,
+    page_id: uuid.UUID,
+    payload: schemas.SchedulePagePublish,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
@@ -2400,10 +2804,14 @@ def get_resized_image(
     """
     # Validate media belongs to CCF site and is not archived
     ccf_site = _get_public_site_or_404(db, "ccf")
-    media = db.query(models.CmsMediaItem).filter(
-        models.CmsMediaItem.id == media_id,
-        models.CmsMediaItem.sede_id == ccf_site.sede_id,
-    ).first()
+    media = (
+        db.query(models.CmsMediaItem)
+        .filter(
+            models.CmsMediaItem.id == media_id,
+            models.CmsMediaItem.sede_id == ccf_site.sede_id,
+        )
+        .first()
+    )
     if not media or (media.status or "") == "archived":
         raise HTTPException(status_code=404, detail="Media not found")
     # For now return the original URL with resize params
@@ -2490,6 +2898,3 @@ async def optimize_uploaded_image(
         "max_width": max_width,
         "quality": quality,
     }
-
-
-

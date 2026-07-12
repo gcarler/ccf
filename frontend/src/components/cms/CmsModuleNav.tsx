@@ -24,6 +24,7 @@ import {
   FolderTree,
   RotateCcw,
   AlertTriangle,
+  Gauge,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { canEditCms, canManageSites } from "@/lib/cms/permissions";
@@ -32,6 +33,7 @@ import { apiFetch } from "@/lib/http";
 const CMS_TABS = [
   { id: "resumen", label: "Resumen", href: "/cms", icon: LayoutDashboard },
   { id: "paginas", label: "Paginas", href: "/cms/pages", icon: FileText },
+  { id: "readiness", label: "Readiness", href: "/cms/readiness", icon: Gauge },
   { id: "testimonios", label: "Testimonios", href: "/cms/testimonials", icon: MessageCircle },
   { id: "menus", label: "Menus", href: "/cms/menus", icon: Link2 },
   { id: "media", label: "Media", href: "/cms/media", icon: ImageIcon },

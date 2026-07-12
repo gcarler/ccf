@@ -683,6 +683,52 @@ export async function getSeoAudit(
   });
 }
 
+export type CmsReadinessSeverity = "info" | "warning" | "error";
+export type CmsReadinessCapabilityStatus = "ready" | "partial" | "attention";
+
+export interface CmsReadinessMetric {
+  key: string;
+  label: string;
+  value: number;
+  href: string | null;
+}
+
+export interface CmsReadinessIssue {
+  code: string;
+  severity: CmsReadinessSeverity;
+  title: string;
+  detail: string;
+  count: number;
+  href: string | null;
+}
+
+export interface CmsReadinessCapability {
+  key: string;
+  label: string;
+  status: CmsReadinessCapabilityStatus;
+  detail: string;
+  href: string | null;
+}
+
+export interface CmsReadinessResponse {
+  site_key: string;
+  score: number;
+  generated_at: string;
+  metrics: CmsReadinessMetric[];
+  issues: CmsReadinessIssue[];
+  capabilities: CmsReadinessCapability[];
+}
+
+export async function getCmsReadiness(
+  siteKey: string,
+  token?: string | null,
+): Promise<CmsReadinessResponse> {
+  return apiFetch<CmsReadinessResponse>(`/cms/v2/sites/${siteKey}/readiness`, {
+    token,
+    cache: "no-store",
+  });
+}
+
 export interface PageAnalytics {
   page_key: string;
   total_views: number;
