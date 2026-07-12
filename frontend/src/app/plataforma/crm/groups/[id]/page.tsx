@@ -23,11 +23,11 @@ export default function GroupDetailPage() {
         const loadGroup = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<GrupoDetail>(`/evangelism/grupos/${id}`, { token });
+                const data = await apiFetch<GrupoDetail>(`/crm/grupos/${id}`, { token });
                 setGroup(data);
             } catch (err) {
                 console.error(err);
-                toast.error("Error al cargar detalle de la Casa");
+                toast.error("Error al cargar detalle del grupo");
             } finally {
                 setLoading(false);
             }
@@ -46,7 +46,7 @@ export default function GroupDetailPage() {
     if (!group) {
         return (
             <div className="p-4 text-center font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                No se pudo cargar la Casa.
+                No se pudo cargar el grupo.
             </div>
         );
     }
