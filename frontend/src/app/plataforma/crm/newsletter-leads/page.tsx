@@ -260,7 +260,9 @@ export default function NewsletterLeadsPage() {
                             <p className="text-[hsl(var(--text-secondary))] text-sm max-w-[250px]">Los suscriptores del newsletter aparecerán aquí cuando se registren desde el sitio web.</p>
                         </div>
                     ) : viewType === 'list' ? (
-                        filteredLeads.map(lead => (
+                        filteredLeads.map(lead => {
+                            const stageValue = lead.stage ?? 'new';
+                            return (
                             <div
                                 key={lead.case_id}
                                 onClick={() => router.push(`/plataforma/crm/contacts/${lead.case_id}`)}
@@ -281,8 +283,8 @@ export default function NewsletterLeadsPage() {
                                             </p>
                                         </div>
                                     </div>
-                                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border ${STAGE_COLORS[lead.stage] || 'bg-[hsl(var(--surface-2))]/10 text-[hsl(var(--text-secondary))]'}`}>
-                                        {STAGE_LABELS[lead.stage] || lead.stage}
+                                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border ${STAGE_COLORS[stageValue] || 'bg-[hsl(var(--surface-2))]/10 text-[hsl(var(--text-secondary))]'}`}>
+                                        {STAGE_LABELS[stageValue] || stageValue}
                                     </span>
                                 </div>
                                 {lead.notes && (
@@ -299,7 +301,8 @@ export default function NewsletterLeadsPage() {
                                     </span>
                                 </div>
                             </div>
-                        ))
+                            );
+                        })
                     ) : viewType === 'table' ? (
                         <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
                             <table className="w-full text-left">
@@ -315,7 +318,9 @@ export default function NewsletterLeadsPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredLeads.map(lead => (
+                                    {filteredLeads.map(lead => {
+                                        const stageValue = lead.stage ?? 'new';
+                                        return (
                                         <tr
                                             key={lead.case_id}
                                             onClick={() => router.push(`/plataforma/crm/contacts/${lead.case_id}`)}
@@ -332,8 +337,8 @@ export default function NewsletterLeadsPage() {
                                                 </span>
                                             </td>
                                             <td className="px-4 py-2">
-                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${STAGE_COLORS[lead.stage]}`}>
-                                                    {STAGE_LABELS[lead.stage] || lead.stage}
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${STAGE_COLORS[stageValue] || ''}`}>
+                                                    {STAGE_LABELS[stageValue] || stageValue}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-2 text-xs text-[hsl(var(--text-secondary))] max-w-[200px] truncate">
@@ -343,7 +348,8 @@ export default function NewsletterLeadsPage() {
                                                 {lead.created_at ? new Date(lead.created_at).toLocaleDateString('es-CO') : '—'}
                                             </td>
                                         </tr>
-                                    ))}
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
