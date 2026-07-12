@@ -34,6 +34,8 @@ from backend.models_evangelism import (
     RolPersonalizadoEstrategia,
     SesionGrupo,
 )
+from backend.models_crm_pipeline import CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
+from backend.models_crm_pipeline import CanalOrigenEnum
 from tests.conftest import TestingSessionLocal, auth_headers, seed_admin, seed_user_with_role
 
 
@@ -191,6 +193,93 @@ class TestHabilitacionFlujoCompleto:
         fresh.close()
         assert asistencia is not None
         assert asistencia.estado == "presente"
+
+    def test_registro_de_visitante_en_grupo_crea_caso_crm(self, client, db_session):
+        admin, admin_persona, sede = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email, password="testpass123")
+
+        categoria = CategoriaEstrategia(nombre="Cat Visitante")
+        db_session.add(categoria)
+        db_session.flush()
+
+        estrategia = EstrategiaEvangelismo(
+            nombre="Estrategia Visitante",
+            sede_id=sede.id,
+            categoria_id=categoria.id,
+            typology="relacional",
+            strategy_type="geografica",
+            frecuencia="SEMANAL",
+            fecha_inicio=datetime(2026, 6, 1, tzinfo=timezone.utc),
+            fecha_fin=datetime(2026, 7, 1, tzinfo=timezone.utc),
+            activa=True,
+        )
+        db_session.add(estrategia)
+        db_session.flush()
+
+        grupo = GrupoEvangelismo(
+            nombre="Grupo Visitantes",
+            codigo=f"GV-{uuid.uuid4().hex[:6]}",
+            sede_id=sede.id,
+            estrategia_id=estrategia.id,
+            lider_persona_id=admin_persona.id,
+            activo=True,
+        )
+        db_session.add(grupo)
+        db_session.commit()
+        db_session.refresh(grupo)
+
+        resp = client.post(
+            "/api/evangelism/groups/visitors",
+            json={
+                "first_name": "Nuevo",
+                "last_name": "Visitante",
+                "phone": "+573001234567",
+                "grupo_id": str(grupo.id),
+            },
+            headers=headers,
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "created"
+        assert body["first_name"] == "Nuevo"
+        assert body["last_name"] == "Visitante"
+
+        fresh = TestingSessionLocal()
+        try:
+            persona = (
+                fresh.query(models.Persona)
+                .filter(models.Persona.phone == "+573001234567")
+                .first()
+            )
+            assert persona is not None
+            assert str(persona.id) == body["persona_id"]
+            assert persona.church_role == "Visitante"
+            assert persona.origen_grupo_id == grupo.id
+            case = (
+                fresh.query(CasoCRM)
+                .filter(CasoCRM.persona_id == persona.id)
+                .filter(CasoCRM.origen_grupo_id == grupo.id)
+                .first()
+            )
+            assert case is not None
+            assert case.origen_canal == CanalOrigenEnum.EVANGELISMO
+            assert case.titulo_caso.startswith("Seguimiento:")
+            pipeline = (
+                fresh.query(PipelineCRM)
+                .filter(PipelineCRM.sede_id == sede.id)
+                .filter(PipelineCRM.tipo == TipoPipelineEnum.NUEVOS_VISITANTES)
+                .first()
+            )
+            assert pipeline is not None
+            stage = (
+                fresh.query(EtapaPipeline)
+                .filter(EtapaPipeline.pipeline_id == pipeline.id)
+                .filter(EtapaPipeline.deleted_at.is_(None))
+                .first()
+            )
+            assert stage is not None
+        finally:
+            fresh.close()
 
     def test_deshabilitar_despues_de_habilitar_bloquea_asistencia(self, client, db_session):
         seed_admin(db_session)
