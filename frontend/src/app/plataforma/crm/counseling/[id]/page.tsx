@@ -123,8 +123,8 @@ export default function CounselingDetailPage() {
                     <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
-                                <DSBadge tone={session.priority_level === "HIGH" ? "amber" : "emerald"} label={session.priority_level} />
-                                <DSBadge tone={session.status === "open" ? "blue" : "slate"} label={session.status.toUpperCase()} />
+                                <DSBadge tone={session.priority_level === "HIGH" ? "amber" : "emerald"} label={session.priority_level ?? 'NORMAL'} />
+                                <DSBadge tone={session.status === "open" ? "blue" : "slate"} label={String(session.status ?? 'open').toUpperCase()} />
                             </div>
                             <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase leading-none">
                                 {session.topic}
