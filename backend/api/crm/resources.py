@@ -77,6 +77,9 @@ from backend.services.crm_resource_bank import (
     get_system_categories,
     get_system_templates,
 )
+from backend.services.email import resolve_brand_colors
+from backend.services.email_block_renderer import is_blocks_json, render_blocks_to_html
+from backend.services.email_templates import render_email
 from backend.services.messaging import (
     CommunicationOutcome,
     MessagingGateway,
@@ -315,6 +318,29 @@ async def enviar_plantilla(
     canal_val = plantilla.canal.value if hasattr(plantilla.canal, "value") else str(plantilla.canal)
     payload_log: dict = {"variables": payload.variables, "texto_hidratado": texto, "canal": canal_val}
 
+    # Renderizar HTML si el template tiene contenido_html
+    html_content = None
+    contenido_html_raw = getattr(plantilla, "contenido_html", None)
+    if contenido_html_raw:
+        brand = resolve_brand_colors(db, sede_id)
+        if contenido_html_raw.startswith("__RENDER__:"):
+            # Template con renderer dinámico
+            template_type = contenido_html_raw.replace("__RENDER__:", "")
+            html_content = render_email(template_type, payload.variables, brand)
+        elif is_blocks_json(contenido_html_raw):
+            # Blocks JSON del editor visual
+            import json
+            blocks = json.loads(contenido_html_raw)
+            html_content = render_blocks_to_html(blocks, brand)
+            # Hidratar variables en el HTML renderizado
+            for var, valor in payload.variables.items():
+                html_content = html_content.replace(f"{{{{{var}}}}}", valor)
+        else:
+            # HTML estático (ya hidratado)
+            html_content = contenido_html_raw
+            for var, valor in payload.variables.items():
+                html_content = html_content.replace(f"{{{{{var}}}}}", valor)
+
     persona_id = resolve_persona_id_from_identity(db, str(user.id))
 
     # ── Send through gateway ───────────────────────────────────────────
@@ -340,6 +366,7 @@ async def enviar_plantilla(
                 texto,
                 str(user.id),
                 campaign_name=plantilla.titulo,
+                html=html_content,
             )
         else:
             comms = await gateway.send_sms(
@@ -421,6 +448,25 @@ async def send_plantilla_campaign(
         for var, valor in merged_vars.items():
             texto = texto.replace(f"{{{{{var}}}}}", valor)
 
+        # Renderizar HTML para email si disponible
+        html_content = None
+        contenido_html_raw = getattr(plantilla, "contenido_html", None)
+        if canal_lower == "email" and contenido_html_raw:
+            brand = resolve_brand_colors(db, sede_id)
+            if contenido_html_raw.startswith("__RENDER__:"):
+                template_type = contenido_html_raw.replace("__RENDER__:", "")
+                html_content = render_email(template_type, merged_vars, brand)
+            elif is_blocks_json(contenido_html_raw):
+                import json
+                blocks = json.loads(contenido_html_raw)
+                html_content = render_blocks_to_html(blocks, brand)
+                for var, valor in merged_vars.items():
+                    html_content = html_content.replace(f"{{{{{var}}}}}", valor)
+            else:
+                html_content = contenido_html_raw
+                for var, valor in merged_vars.items():
+                    html_content = html_content.replace(f"{{{{{var}}}}}", valor)
+
         try:
             if canal_lower == "whatsapp":
                 await gateway.send_whatsapp(
@@ -439,6 +485,7 @@ async def send_plantilla_campaign(
                     str(user.id),
                     campaign_name=payload.campaign_name,
                     external_id=campaign_id,
+                    html=html_content,
                 )
             else:
                 await gateway.send_sms(
@@ -804,6 +851,7 @@ def apply_system_template(
         canal=template.canal,
         asunto=template.asunto,
         contenido_texto=template.contenido_texto,
+        contenido_html=template.contenido_html,
         variables_requeridas=template.variables_requeridas,
     )
     obj = create_plantilla(
@@ -812,4 +860,12 @@ def apply_system_template(
         sede_id=sede_id,
         creado_por_id=str(persona_id),
     )
+    # Si el template tiene html_template_type, renderizar el HTML con branding dinámico
+    if template.html_template_type and not obj.contenido_html:
+        brand = resolve_brand_colors(db, sede_id)
+        rendered = render_email(template.html_template_type, {}, brand)
+        if rendered:
+            obj.contenido_html = rendered
+            db.commit()
+            db.refresh(obj)
     return PlantillaMensajeOut.from_orm_safe(obj, total_envios=0)

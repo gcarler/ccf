@@ -10,11 +10,59 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from html import escape
+from typing import Dict, Optional
 
 from backend.core.config import get_settings
 
 log = logging.getLogger(__name__)
 settings = get_settings()
+
+
+# ── Branding dinámico ─────────────────────────────────────────────────────────
+
+_FALLBACK_BRAND: Dict[str, str] = {
+    "primary": "#018ABD",
+    "dark": "#001B48",
+    "medium": "#004581",
+    "pale": "#DDE8F0",
+    "church_name": "CCF Ministerio",
+    "logo_url": "",
+}
+
+
+def resolve_brand_colors(db=None, sede_id=None) -> Dict[str, str]:
+    """Resuelve colores de branding desde CMS theme con fallback a constantes CCF.
+
+    Intenta leer CmsTheme.tokens_json para la sede. Si no hay tema o falta
+    algún token, usa los valores de _FALLBACK_BRAND.
+    """
+    brand = dict(_FALLBACK_BRAND)
+    if db is None or sede_id is None:
+        return brand
+
+    try:
+        from backend.models_cms import CmsTheme
+
+        theme = (
+            db.query(CmsTheme)
+            .filter(CmsTheme.is_active.is_(True))
+            .order_by(CmsTheme.version.desc())
+            .first()
+        )
+        if theme and theme.tokens_json:
+            tokens = theme.tokens_json
+            if "--site-primary-color" in tokens:
+                brand["primary"] = tokens["--site-primary-color"]
+            if "--site-dark-color" in tokens:
+                brand["dark"] = tokens["--site-dark-color"]
+            if "--site-logo-url" in tokens:
+                brand["logo_url"] = tokens["--site-logo-url"]
+            if "--site-logo-name" in tokens:
+                brand["church_name"] = tokens["--site-logo-name"]
+    except Exception:
+        log.debug("No se pudo resolver brand desde CMS theme, usando fallback")
+
+    return brand
 
 
 def _build_message(to: str, subject: str, html: str, text: str = "") -> MIMEMultipart:
@@ -128,11 +176,68 @@ _BRAND_FOOTER = """\
 </table>"""
 
 
-def _brand_wrap(html_body: str) -> str:
-    """Envuelve el contenido en el layout corporativo de CCF."""
-    header = _BRAND_HEADER.format(dark=_CCF_DARK, blue=_CCF_BLUE)
-    verse = _BRAND_VERSE.format(pale=_CCF_PALE, medium=_CCF_MEDIUM, dark=_CCF_DARK)
-    footer = _BRAND_FOOTER.format(dark=_CCF_DARK)
+def _brand_wrap(html_body: str, brand: Optional[Dict[str, str]] = None) -> str:
+    """Envuelve el contenido en el layout corporativo de la iglesia.
+
+    Si se pasa ``brand``, usa esos colores. De lo contrario usa las
+    constantes CCF por defecto.
+    """
+    b = brand or _FALLBACK_BRAND
+    dark = b.get("dark", _CCF_DARK)
+    blue = b.get("primary", _CCF_BLUE)
+    medium = b.get("medium", _CCF_MEDIUM)
+    pale = b.get("pale", _CCF_PALE)
+    church = b.get("church_name", "CCF Ministerio")
+    logo_url = b.get("logo_url", "")
+
+    logo_html = ""
+    if logo_url:
+        logo_html = f'<img src="{escape(logo_url)}" alt="{escape(church)}" style="max-height:48px;margin-bottom:16px;" />'
+
+    header = f"""\
+<table width="100%" cellpadding="0" cellspacing="0" style="background:{dark};padding:48px 40px 40px 40px;position:relative;">
+  <div style="position:absolute;top:-20%;right:-20%;width:140%;height:140%;pointer-events:none;background:radial-gradient(circle at 70% 30%, rgba(1,138,189,0.2) 0%, transparent 60%);"></div>
+  <table cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+    <tr>
+      <td style="border:1px solid rgba(255,255,255,0.2);border-radius:100px;padding:8px 20px;background:rgba(255,255,255,0.06);">
+        <span style="color:#ffffff;font-size:10px;font-weight:800;letter-spacing:3px;text-transform:uppercase;">Ministerio Internacional</span>
+      </td>
+    </tr>
+  </table>
+  {logo_html}
+  <h1 style="font-size:52px;font-weight:900;letter-spacing:-2px;line-height:0.88;color:#ffffff;margin:0 0 6px 0;">{escape(church.split()[0] if church else 'CCF')}</h1>
+  <p style="font-size:18px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:{blue};margin:16px 0 0 0;line-height:1.4;">{'<br/>'.join(church.split()[1:]) if len(church.split()) > 1 else 'Ministerio'}</p>
+  <div style="width:64px;height:4px;background:#ffffff;border-radius:4px;margin-top:24px;"></div>
+</table>"""
+
+    verse = f"""\
+<table width="100%" cellpadding="0" cellspacing="0" style="background:{pale};padding:32px 40px;text-align:center;">
+  <tr>
+    <td>
+      <p style="font-size:16px;color:{medium};line-height:1.7;font-style:italic;margin:0 0 8px 0;">
+        &ldquo;Mirad cu&aacute;n bueno y cu&aacute;n delicioso es<br/>
+        habitar los hermanos juntos en armon&iacute;a.&rdquo;
+      </p>
+      <p style="font-size:13px;font-weight:700;color:{dark};letter-spacing:2px;text-transform:uppercase;margin:0;">
+        &mdash; Salmos 133:1
+      </p>
+    </td>
+  </tr>
+</table>"""
+
+    footer = f"""\
+<table width="100%" cellpadding="0" cellspacing="0" style="background:{dark};padding:28px 40px;text-align:center;">
+  <tr>
+    <td>
+      <p style="font-size:14px;color:rgba(255,255,255,0.7);margin:0 0 4px 0;font-weight:500;">
+        Guiando a las naciones hacia la luz de la verdad.
+      </p>
+      <p style="font-size:11px;color:rgba(255,255,255,0.4);margin:12px 0 0 0;">
+        &copy; 2026 {escape(church)} &mdash; Todos los derechos reservados.
+      </p>
+    </td>
+  </tr>
+</table>"""
 
     return f"""\
 <!DOCTYPE html>
@@ -140,7 +245,7 @@ def _brand_wrap(html_body: str) -> str:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CCF Ministerio</title>
+  <title>{escape(church)}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f4f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f9;padding:40px 20px;">

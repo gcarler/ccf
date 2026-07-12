@@ -56,15 +56,30 @@ function parseDateOrNull(value: string): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function parseNonNegativeInt(value: string, fallback: number): number {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : fallback;
+}
+
+function parsePositiveInt(value: string, fallback: number): number {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? Math.max(1, parsed) : fallback;
+}
+
 // ─── Hero ──────────────────────────────────────────────────────────────────────
 
 function HeroSection({ section }: { section: CmsSection }) {
   const props = section.props_json || {};
-  const title = val(props, "title", "Bienvenidos");
-  const body = val(props, "body", "");
-  const ctaLabel = val(props, "cta_label", "");
-  const ctaHref = val(props, "cta_href", "/");
-  const imageUrl = val(props, "image_url", "");
+  const titleLead = val(props, "title_lead", "");
+  const titleAccent = val(props, "title_accent", "");
+  const titleTail = val(props, "title_tail", "");
+  const title = val(props, "title", titleLead || titleAccent || titleTail ? "" : "Bienvenidos");
+  const body = val(props, "description", val(props, "body", ""));
+  const primaryLabel = val(props, "primary_cta", val(props, "cta_label", ""));
+  const primaryHref = val(props, "primary_cta_href", val(props, "cta_href", "/")) || "/";
+  const secondaryLabel = val(props, "secondary_cta", "");
+  const secondaryHref = val(props, "secondary_cta_href", "/") || "/";
+  const imageUrl = val(props, "bg_image", val(props, "image_url", ""));
   const imageAlt = val(props, "image_alt", title);
   const items = asItems(props) as Array<{ url?: string; src?: string; alt?: string; caption?: string; title?: string; href?: string }>;
   const rawSlides = Array.isArray(props.slides)
@@ -92,9 +107,14 @@ function HeroSection({ section }: { section: CmsSection }) {
 
   return (
     <PublicHeroWithSlides
-      title={title}
+      eyebrow={val(props, "eyebrow", "")}
+      title={title || undefined}
+      titleLead={titleLead}
+      titleAccent={titleAccent}
+      titleTail={titleTail}
       description={body}
-      primaryCta={ctaLabel ? { label: ctaLabel, href: ctaHref } : undefined}
+      primaryCta={primaryLabel ? { label: primaryLabel, href: primaryHref } : undefined}
+      secondaryCta={secondaryLabel ? { label: secondaryLabel, href: secondaryHref } : undefined}
       slides={slides}
     />
   );
@@ -933,15 +953,18 @@ function PopupBlock({ section }: { section: CmsSection }) {
   const body = val(props, "body", "");
   const ctaLabel = val(props, "cta_label", "Ver Más");
   const ctaHref = val(props, "cta_href", "/");
-  const delayMs = Math.max(0, parseInt(val(props, "delay_ms", "2000"), 10) || 2000);
+  const delayMs = parseNonNegativeInt(val(props, "delay_ms", "2000"), 2000);
   const pathname = usePathname() || "/";
   const startAt = val(props, "start_at", "");
   const endAt = val(props, "end_at", "");
   const showOnPaths = asStringList(props, "show_on_paths");
   const hideOnPaths = asStringList(props, "hide_on_paths");
-  const dismissMode = val(props, "dismiss_mode", "local").toLowerCase();
-  const dismissDays = Math.max(1, parseInt(val(props, "dismiss_days", "30"), 10) || 30);
+  const rawDismissMode = val(props, "dismiss_mode", "local").toLowerCase();
+  const dismissMode = ["local", "session", "none"].includes(rawDismissMode) ? rawDismissMode : "local";
+  const dismissDays = parsePositiveInt(val(props, "dismiss_days", "30"), 30);
   const dismissKey = val(props, "dismiss_key", "") || `cms_popup_${section.id}`;
+  const titleId = `cms-popup-title-${section.id}`;
+  const bodyId = `cms-popup-body-${section.id}`;
   const [isVisible, setIsVisible] = useState(false);
   const shouldRenderForRoute = useMemo(() => {
     const current = pathname || "/";
@@ -979,16 +1002,7 @@ function PopupBlock({ section }: { section: CmsSection }) {
     }
   }, [dismissKey, dismissMode]);
 
-  useEffect(() => {
-    if (!shouldRenderForRoute || isDismissed()) {
-      setIsVisible(false);
-      return;
-    }
-    const timer = setTimeout(() => setIsVisible(true), delayMs);
-    return () => clearTimeout(timer);
-  }, [delayMs, isDismissed, shouldRenderForRoute]);
-
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsVisible(false);
     if (dismissMode === "none") return;
     if (typeof window === "undefined") return;
@@ -1005,7 +1019,34 @@ function PopupBlock({ section }: { section: CmsSection }) {
     } catch {
       // ignore storage failures
     }
-  };
+  }, [dismissDays, dismissKey, dismissMode]);
+
+  useEffect(() => {
+    if (!shouldRenderForRoute || isDismissed()) {
+      setIsVisible(false);
+      return;
+    }
+    const timer = setTimeout(() => setIsVisible(true), delayMs);
+    return () => clearTimeout(timer);
+  }, [delayMs, isDismissed, shouldRenderForRoute]);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleClose, isVisible]);
 
   if (!shouldRenderForRoute) {
     return null;
@@ -1029,27 +1070,36 @@ function PopupBlock({ section }: { section: CmsSection }) {
             exit={{ opacity: 0, scale: 0.92, y: 24 }}
             className="relative w-full max-w-md rounded-2xl p-8 shadow-2xl"
             style={{ background: "var(--site-surface-container)" }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={body ? bodyId : undefined}
           >
             <button
+              type="button"
               onClick={handleClose}
+              aria-label="Cerrar pop-up"
               className="absolute top-4 right-4 p-2 rounded-full transition-colors"
               style={{ background: "var(--site-surface-container-high, rgba(0,0,0,0.05))" }}
             >
               <X size={18} style={{ color: "var(--site-on-surface-variant)" }} />
             </button>
             <div className="text-center mt-2">
-              <h2 className="text-xl font-black mb-3" style={{ color: "var(--site-on-surface)" }}>{title}</h2>
-              <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>
+              <h2 id={titleId} className="text-xl font-black mb-3" style={{ color: "var(--site-on-surface)" }}>{title}</h2>
+              {body && <p id={bodyId} className="text-sm leading-relaxed mb-6" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
               <div className="flex flex-col gap-3">
-                <Link
-                  href={ctaHref}
-                  onClick={handleClose}
-                  className="w-full py-3 rounded-full text-sm font-black uppercase tracking-widest text-white text-center transition-transform hover:scale-[1.02]"
-                  style={{ background: "var(--site-cta-gradient)" }}
-                >
-                  {ctaLabel}
-                </Link>
+                {ctaLabel && ctaHref && (
+                  <Link
+                    href={ctaHref}
+                    onClick={handleClose}
+                    className="w-full py-3 rounded-full text-sm font-black uppercase tracking-widest text-white text-center transition-transform hover:scale-[1.02]"
+                    style={{ background: "var(--site-cta-gradient)" }}
+                  >
+                    {ctaLabel}
+                  </Link>
+                )}
                 <button
+                  type="button"
                   onClick={handleClose}
                   className="w-full py-3 rounded-full text-sm font-bold transition-opacity hover:opacity-70"
                   style={{ color: "var(--site-on-surface-variant)" }}

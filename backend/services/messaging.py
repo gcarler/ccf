@@ -162,11 +162,12 @@ class MessagingGateway:
         leader_id: uuid.UUID | str | None,
         campaign_name: str | None = None,
         external_id: str | None = None,
+        html: str | None = None,
     ):
         """Envía email real vía SMTP (si configurado).
 
-        Si SMTP está configurado intenta la entrega real y registra el outcome.
-        Si no, registra como ``pending_smtp_config``.
+        Si ``html`` se provee, envía como multipart (text/plain + text/html).
+        Si no, envía solo plain text.
         """
         persona = self._persona_or_raise(db, persona_id, require_email=True)
 
@@ -178,10 +179,16 @@ class MessagingGateway:
 
         if smtp_host and smtp_user and smtp_pass:
             try:
-                msg = MIMEText(content, "plain", "utf-8")
+                from email.mime.multipart import MIMEMultipart
+                from email.mime.text import MIMEText
+
+                msg = MIMEMultipart("alternative")
                 msg["Subject"] = campaign_name or "Comunicacion CCF"
                 msg["From"] = smtp_user
                 msg["To"] = persona.email
+                msg.attach(MIMEText(content, "plain", "utf-8"))
+                if html:
+                    msg.attach(MIMEText(html, "html", "utf-8"))
 
                 with smtplib.SMTP(smtp_host, smtp_port) as server:
                     server.starttls()
@@ -291,6 +298,7 @@ class StubMessagingGateway(MessagingGateway):
         leader_id: uuid.UUID | str | None,
         campaign_name: str | None = None,
         external_id: str | None = None,
+        html: str | None = None,
     ):
         pid = self._resolve_to_uuid(persona_id)
         persona = db.query(models.Persona).filter(models.Persona.id == pid).first()
@@ -305,7 +313,7 @@ class StubMessagingGateway(MessagingGateway):
             )
             return await super().send_email(
                 db, persona_id, content, leader_id,
-                campaign_name=campaign_name, external_id=external_id,
+                campaign_name=campaign_name, external_id=external_id, html=html,
             )
 
         logger.info(

@@ -75,6 +75,7 @@ class PlantillaMensajeCreate(BaseModel):
     canal: str  # WHATSAPP | EMAIL | SMS
     asunto: Optional[str] = None
     contenido_texto: str
+    contenido_html: Optional[str] = None
     variables_requeridas: List[str] = []
     meta_template_id: Optional[str] = None
 
@@ -85,6 +86,7 @@ class PlantillaMensajeUpdate(BaseModel):
     canal: Optional[str] = None
     asunto: Optional[str] = None
     contenido_texto: Optional[str] = None
+    contenido_html: Optional[str] = None
     variables_requeridas: Optional[List[str]] = None
     meta_template_id: Optional[str] = None
 
@@ -97,6 +99,7 @@ class PlantillaMensajeOut(BaseModel):
     canal: str
     asunto: Optional[str] = None
     contenido_texto: str
+    contenido_html: Optional[str] = None
     variables_requeridas: List[str]
     meta_template_id: Optional[str] = None
     creado_por_id: Optional[str] = None
@@ -117,6 +120,7 @@ class PlantillaMensajeOut(BaseModel):
             canal=obj.canal.value if hasattr(obj.canal, "value") else str(obj.canal),
             asunto=obj.asunto,
             contenido_texto=obj.contenido_texto,
+            contenido_html=getattr(obj, "contenido_html", None),
             variables_requeridas=obj.variables_requeridas or [],
             meta_template_id=obj.meta_template_id,
             creado_por_id=str(obj.creado_por_id) if obj.creado_por_id else None,
@@ -204,6 +208,8 @@ class SystemTemplateOut(BaseModel):
     canal: str
     asunto: Optional[str] = None
     contenido_texto: str
+    contenido_html: Optional[str] = None
+    html_template_type: Optional[str] = None
     variables_requeridas: List[str]
     descripcion: Optional[str] = None
 

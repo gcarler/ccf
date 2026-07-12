@@ -4,6 +4,7 @@
  * Tests: sanitizeCmsHtml, RichText, PublicSectionRenderer, CmsPageOverride, SeoHead
  */
 import { describe, it, expect } from "vitest";
+import { SECTION_TEMPLATES, SECTION_TYPES } from "../src/components/cms/builder/constants";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. SANITIZE HTML
@@ -133,20 +134,49 @@ describe("SEO Meta Blocks", () => {
 
 describe("PublicSectionRenderer Section Types", () => {
   it("should support all 30 section types", () => {
-    const sectionTypes = [
-      "hero", "video_hero", "rich_text", "rich_text_columns",
-      "cards", "cta_banner", "gallery", "faq", "embed",
-      "testimonials", "stats", "team", "countdown", "pricing",
-      "image_text", "timeline", "icon_grid", "newsletter",
-      "popup_banner", "button", "toc", "divider", "collapsible",
-      "social_links", "spacer", "calendar", "map",
-      "document_upload", "content_blocks", "accordion",
-    ];
+    const sectionTypes = SECTION_TYPES.filter((type) => !type.startsWith("civic_"));
 
     expect(sectionTypes.length).toBe(30);
     sectionTypes.forEach((type) => {
       expect(type).toBeTruthy();
     });
+  });
+
+  it("keeps hero, video hero, and popup banner available in the builder catalog", () => {
+    expect(SECTION_TYPES).toContain("hero");
+    expect(SECTION_TYPES).toContain("video_hero");
+    expect(SECTION_TYPES).toContain("popup_banner");
+  });
+
+  it("provides production-ready templates for hero, video hero, and popup banner", () => {
+    const hero = SECTION_TEMPLATES.find((template) => template.type === "hero");
+    const videoHero = SECTION_TEMPLATES.find((template) => template.type === "video_hero");
+    const popup = SECTION_TEMPLATES.find((template) => template.type === "popup_banner");
+
+    expect(hero?.props_json).toMatchObject({
+      title_lead: expect.any(String),
+      title_accent: expect.any(String),
+      title_tail: expect.any(String),
+      description: expect.any(String),
+      primary_cta: expect.any(String),
+      primary_cta_href: expect.stringMatching(/^\//),
+      bg_image: expect.stringMatching(/^\/images\//),
+    });
+    expect(videoHero?.props_json).toMatchObject({
+      title: expect.any(String),
+      body: expect.any(String),
+      video_url: expect.any(String),
+    });
+    expect(popup?.props_json).toMatchObject({
+      title: expect.any(String),
+      body: expect.any(String),
+      cta_href: expect.stringMatching(/^\//),
+      delay_ms: expect.any(Number),
+      dismiss_mode: "local",
+      dismiss_days: expect.any(Number),
+    });
+    expect(Array.isArray(popup?.props_json.show_on_paths)).toBe(true);
+    expect(Array.isArray(popup?.props_json.hide_on_paths)).toBe(true);
   });
 });
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import {
     BookOpen, Check, ChevronRight, Download, FileText,
-    Loader2, Mail, Megaphone, MessageSquare, Paperclip, Plus,
+    Loader2, Mail, Megaphone, MessageSquare, Palette, Paperclip, Plus,
     Search, Send, Trash2, Upload, Users, X, Pencil, Clock,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -293,9 +293,23 @@ function DetailPanel({
                         {/* Preview */}
                         <div>
                             <p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2">Vista previa</p>
-                            <div className="rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 p-3 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] whitespace-pre-wrap leading-relaxed">
-                                {previewText}
-                            </div>
+                            {plantilla.contenido_html ? (
+                                <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary)/0.05)] dark:bg-[hsl(var(--primary)/0.1)] border-b border-[hsl(var(--border))] dark:border-white/10">
+                                        <span className="text-[10px] font-medium text-[hsl(var(--primary))]">Vista previa HTML</span>
+                                    </div>
+                                    <iframe
+                                        srcDoc={plantilla.contenido_html}
+                                        title="Vista previa HTML"
+                                        className="w-full h-[400px] bg-white"
+                                        sandbox="allow-same-origin"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 p-3 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] whitespace-pre-wrap leading-relaxed">
+                                    {previewText}
+                                </div>
+                            )}
                         </div>
 
                         {/* Actions */}
@@ -307,6 +321,14 @@ function DetailPanel({
                                 {copied ? <Check size={12} className="text-emerald-500" /> : null}
                                 {copied ? 'Copiado' : 'Copiar texto'}
                             </button>
+                            {plantilla.canal === 'EMAIL' && (
+                                <a
+                                    href={`/plataforma/crm/resources/builder/${plantilla.id}`}
+                                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium h-8 rounded-lg border border-[hsl(var(--primary)/0.3)] dark:border-[hsl(var(--primary)/0.4)] bg-[hsl(var(--primary)/0.05)] dark:bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] dark:hover:bg-[hsl(var(--primary)/0.15)] transition-colors"
+                                >
+                                    <Palette size={12} />Diseñar
+                                </a>
+                            )}
                             <button
                                 onClick={onSend}
                                 className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium h-8 rounded-lg bg-[hsl(var(--primary))] text-white hover:opacity-90 transition-opacity"
@@ -1016,9 +1038,23 @@ function SendDrawer({
                     {/* Preview */}
                     <div>
                         <p className="text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-2">Mensaje hidratado</p>
-                        <div className="rounded-xl bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 p-3 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] whitespace-pre-wrap leading-relaxed min-h-[80px]">
-                            {previewText}
-                        </div>
+                        {plantilla?.contenido_html ? (
+                            <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
+                                <div className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary)/0.05)] dark:bg-[hsl(var(--primary)/0.1)] border-b border-[hsl(var(--border))] dark:border-white/10">
+                                    <span className="text-[10px] font-medium text-[hsl(var(--primary))]">Vista previa HTML</span>
+                                </div>
+                                <iframe
+                                    srcDoc={plantilla.contenido_html}
+                                    title="Vista previa HTML"
+                                    className="w-full h-[300px] bg-white"
+                                    sandbox="allow-same-origin"
+                                />
+                            </div>
+                        ) : (
+                            <div className="rounded-xl bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 p-3 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] whitespace-pre-wrap leading-relaxed min-h-[80px]">
+                                {previewText}
+                            </div>
+                        )}
                     </div>
                 </div>
 

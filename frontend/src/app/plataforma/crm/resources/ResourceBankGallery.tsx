@@ -208,16 +208,23 @@ export default function ResourceBankGallery({
                   className="group rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 hover:border-[hsl(var(--primary)/0.5)] hover:shadow-lg transition-all flex flex-col"
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <span
-                      className={clsx(
-                        'inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full',
-                        canalMeta.bg,
-                        canalMeta.color
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={clsx(
+                          'inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full',
+                          canalMeta.bg,
+                          canalMeta.color
+                        )}
+                      >
+                        <Icon size={11} />
+                        {canalMeta.label}
+                      </span>
+                      {tpl.html_template_type && (
+                        <span className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
+                          HTML
+                        </span>
                       )}
-                    >
-                      <Icon size={11} />
-                      {canalMeta.label}
-                    </span>
+                    </div>
                     <span className="text-[10px] text-[hsl(var(--text-secondary))] truncate max-w-[120px]">
                       {tpl.categoria ?? 'Sin categoría'}
                     </span>
