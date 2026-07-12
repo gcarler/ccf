@@ -309,7 +309,13 @@ export default function VolunteersPage() {
 
                                                 <div className="flex items-start justify-between mb-3">
                                                     <div className={`size-8 rounded-md bg-gradient-to-br ${getTeamColor(team)} flex items-center justify-center text-white text-xs font-bold shadow-md`}>
-                                                        {(v.name || '?').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                                        {String(v.name || '?')
+                                                            .split(' ')
+                                                            .filter(Boolean)
+                                                            .map(n => n[0] ?? '')
+                                                            .join('')
+                                                            .slice(0, 2)
+                                                            .toUpperCase()}
                                                     </div>
                                                     <div className="flex items-center gap-1.5">
                                                         <CircleDot size={10} className={`${!v.status || v.status === 'active' ? 'text-emerald-500' : 'text-[hsl(var(--text-secondary))]'}`} />

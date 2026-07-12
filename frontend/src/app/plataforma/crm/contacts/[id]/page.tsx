@@ -200,7 +200,7 @@ export default function LeadDetail() {
     }, [callLogs, counselingSessions, lead?.created_at]);
 
     const noteRows = timeline.filter(item => item.type === 'note' || item.message);
-    const stage = lead?.stage || 'new';
+    const stage = String(lead?.stage ?? 'new');
     const initials = (lead?.nombre_completo || 'Contacto')
         .split(/\s+/)
         .filter(Boolean)
