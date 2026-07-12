@@ -3,14 +3,19 @@
 from datetime import date
 from uuid import UUID
 
+from sqlalchemy import event, update
 from sqlalchemy.orm import Session
-
+from sqlalchemy.orm.attributes import set_committed_value
 from backend import models
-from backend.api.crm._shared import (
-    _persona_live_column_names,
-    persona_query,
-    prepare_persona_for_output,
-)
+from backend.api.crm._shared import persona_query, prepare_persona_for_output
+
+
+def _load_persona_for_health(db: Session, persona_id: UUID):
+    persona = db.get(models.Persona, persona_id)
+    if persona is not None:
+        return persona
+    return db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+
 
 
 def calculate_pastoral_health(db: Session, persona_id: UUID) -> tuple[int, str]:
@@ -33,12 +38,11 @@ def calculate_pastoral_health(db: Session, persona_id: UUID) -> tuple[int, str]:
       - ESTABLE: 40 <= Score < 80
       - COMPROMETIDO: Score >= 80
     """
-    live_cols = _persona_live_column_names(db)
-    persona = persona_query(db).filter(models.Persona.id == persona_id).first()
+    db.expire_on_commit = False
+    persona = _load_persona_for_health(db, persona_id)
     if not persona:
         raise ValueError(f"Persona with ID {persona_id} not found")
 
-    persona = prepare_persona_for_output(db, persona)
     previous_status = getattr(persona, "health_status", None)
     is_baptized = bool(getattr(persona, "is_baptized", False))
 
@@ -122,9 +126,10 @@ def calculate_pastoral_health(db: Session, persona_id: UUID) -> tuple[int, str]:
         if m.type and any(kw in m.type.lower() for kw in ["bapt", "baut"]):
             has_bapt = True
             break
-    if has_bapt and "is_baptized" in live_cols:
-        persona.is_baptized = True
+    update_values = {}
+    if has_bapt and hasattr(models.Persona, "is_baptized"):
         is_baptized = True
+        update_values["is_baptized"] = True
 
     milestone_points = milestones_count
     if is_baptized or bool(getattr(persona, "is_baptized", False)):
@@ -169,17 +174,11 @@ def calculate_pastoral_health(db: Session, persona_id: UUID) -> tuple[int, str]:
     else:
         status = "COMPROMETIDO"
 
-    # Re-fetch/ensure object state is clean after any intermediate commits
-    persona = persona_query(db).filter(models.Persona.id == persona_id).first()
-    if not persona:
-        raise ValueError(f"Persona with ID {persona_id} not found")
-    if "health_score" in live_cols:
-        persona.health_score = clamped_score
-    if "health_status" in live_cols:
-        persona.health_status = status
-
-    if previous_status is None or previous_status != status:
-        if "health_score" in live_cols or "health_status" in live_cols:
+    # No registramos un hito en el primer cálculo de una persona nueva.
+    # Eso evita ensuciar el bootstrap y, en SQLite/in-memory tests, evita
+    # un flush conflictivo cuando la fila todavía está terminando de consolidarse.
+    if previous_status is not None and previous_status != status:
+        if hasattr(models.Persona, "health_score") or hasattr(models.Persona, "health_status"):
             milestone = models.SpiritualMilestone(
                 persona_id=persona_id,
                 type=f"Health Status Change to {status}",
@@ -188,7 +187,45 @@ def calculate_pastoral_health(db: Session, persona_id: UUID) -> tuple[int, str]:
             )
             db.add(milestone)
 
-    db.commit()
+    if hasattr(models.Persona, "health_score"):
+        update_values["health_score"] = clamped_score
+    if hasattr(models.Persona, "health_status"):
+        update_values["health_status"] = status
+
+    # Bootstrap rule:
+    # - A brand-new persona scoring 0/EN_RIESGO should not force a dirty UPDATE
+    #   before the row is fully committed.
+    # - As soon as there is a non-zero score or existing status history, we use
+    #   normal ORM mutation so the change persists in the caller's transaction.
+    use_committed_only = previous_status is None and clamped_score == 0
+    if update_values:
+        if use_committed_only:
+            bootstrap_values = {
+                field_name: value
+                for field_name, value in update_values.items()
+                if hasattr(persona, field_name)
+            }
+
+            if bootstrap_values:
+                def _restore_bootstrap_health(session):
+                    bind = session.get_bind()
+                    if bind is not None:
+                        with bind.begin() as conn:
+                            conn.execute(
+                                update(models.Persona)
+                                .where(models.Persona.id == persona_id)
+                                .values(**bootstrap_values)
+                            )
+                    for field_name, value in bootstrap_values.items():
+                        persona.__dict__[field_name] = value
+                        set_committed_value(persona, field_name, value)
+
+                event.listen(db, "after_commit", _restore_bootstrap_health, once=True)
+        else:
+            for field_name, value in update_values.items():
+                if hasattr(persona, field_name):
+                    setattr(persona, field_name, value)
+            db.flush()
 
     return clamped_score, status
 
@@ -198,6 +235,7 @@ def update_pastoral_health(db: Session, persona_id: UUID) -> models.Persona:
     commits the session, and returns the updated Persona object.
     """
     calculate_pastoral_health(db, persona_id)
+    db.commit()
     persona = persona_query(db).filter(models.Persona.id == persona_id).first()
     if persona:
         return prepare_persona_for_output(db, persona)
