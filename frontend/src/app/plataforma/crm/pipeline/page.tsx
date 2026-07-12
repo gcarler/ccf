@@ -78,7 +78,11 @@ export default function ConsolidationPipelinePage() {
         setLoading(true);
         try {
             const data = await apiFetch<any>('/crm/casos', { token, cache: 'no-store' });
-            const items = Array.isArray(data) ? data : Array.isArray(data?.cases) ? data.cases : [];
+            const items = Array.isArray(data)
+                ? data
+                : Array.isArray(data?.cases)
+                    ? data.cases
+                    : [];
             setLeads(items);
         } catch (err) {
             console.error(err);
@@ -247,7 +251,10 @@ export default function ConsolidationPipelinePage() {
         return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
     }, [filteredLeads]);
 
-    const sourceKeys = useMemo(() => Object.keys(SOURCES ?? {}), []);
+    const sourceKeys = useMemo(
+        () => ['Visitante', 'Referido', 'Web', 'Redes Sociales', 'Evento', 'Otro'],
+        []
+    );
 
 
 

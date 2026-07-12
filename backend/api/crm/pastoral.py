@@ -155,6 +155,48 @@ def _serialize_core_interaction_as_call(row: models.InteraccionCRM) -> dict:
     }
 
 
+def _serialize_case_safe(db: Session, case: models.CasoCRM) -> dict:
+    try:
+        return _serialize_case(prepare_case_for_output(db, case))
+    except Exception as exc:
+        logger.warning("Fallback CRM case serialization for %s: %s", getattr(case, "id", "unknown"), exc)
+        payload = case.payload_web if isinstance(getattr(case, "payload_web", None), dict) else {}
+        created_at = getattr(case, "created_at", None) or getattr(case, "fecha_creacion", None)
+        updated_at = getattr(case, "updated_at", None) or getattr(case, "fecha_creacion", None)
+        notes = getattr(case, "notes", None) or payload.get(_payload_key("notes"))
+        last_contact_at = getattr(case, "last_contact_at", None) or payload.get(_payload_key("last_contact_at"))
+        next_contact_at = (
+            getattr(case, "next_contact_at", None)
+            or payload.get(_payload_key("next_contact_at"))
+            or getattr(case, "sla_vencimiento_contacto", None)
+        )
+        source = (
+            getattr(case, "source", None)
+            or payload.get(_payload_key("source"))
+            or _enum_value(getattr(case, "origen_canal", None))
+        )
+        return {
+            "id": str(getattr(case, "id", "")),
+            "persona_id": str(getattr(case, "persona_id", "")) if getattr(case, "persona_id", None) else None,
+            "nombre_completo": "",
+            "telefono": None,
+            "stage": _case_stage(case),
+            "status": _case_status(case),
+            "source": source,
+            "last_contact_at": last_contact_at.isoformat() if hasattr(last_contact_at, "isoformat") else last_contact_at,
+            "next_contact_at": next_contact_at.isoformat() if hasattr(next_contact_at, "isoformat") else next_contact_at,
+            "assigned_pastor": None,
+            "assigned_leader": None,
+            "assignments_count": 0,
+            "interactions_count": 0,
+            "open_tasks_count": 0,
+            "notes": notes if notes is not None else "",
+            "sort_order": getattr(case, "sort_order", 0) or 0,
+            "created_at": created_at.isoformat() if created_at else None,
+            "updated_at": updated_at.isoformat() if updated_at else None,
+        }
+
+
 # ═══════════════════════════════════════════════════════════════════
 # REDIRECTS: Old CRM endpoints → new CRM Core
 # ═══════════════════════════════════════════════════════════════════
@@ -168,7 +210,7 @@ def get_caso_crm(
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     case = _get_case_or_404(db, case_id, user_sede)
-    return _serialize_case(case)
+    return _serialize_case_safe(db, case)
 
 
 @router.post("/casos", response_model=dict)
@@ -222,7 +264,7 @@ def create_caso_crm(
         _update_case_field(case, "notes", payload.get("notes"))
         db.commit()
         db.refresh(case)
-        return _serialize_case(case)
+        return _serialize_case_safe(db, case)
 
     p_uuid = uuid.UUID(payload["persona_id"]) if isinstance(payload["persona_id"], str) else payload["persona_id"]
     persona = persona_query(db).filter(models.Persona.id == p_uuid).first()
@@ -244,7 +286,7 @@ def create_caso_crm(
             _update_case_field(case, key, payload[key])
     db.commit()
     db.refresh(case)
-    return _serialize_case(case)
+    return _serialize_case_safe(db, case)
 
 
 @router.patch("/casos/{case_id}", response_model=dict)
@@ -262,7 +304,7 @@ def update_caso_crm(
         _update_case_field(case, key, value)
     db.commit()
     db.refresh(case)
-    return _serialize_case(case)
+    return _serialize_case_safe(db, case)
 
 
 @router.post("/casos/{case_id}/interactions", response_model=dict)
@@ -381,7 +423,7 @@ def list_crm_casos(
     )
 
     return {
-        "cases": [_serialize_case(prepare_case_for_output(db, c)) for c in cases],
+        "cases": [_serialize_case_safe(db, c) for c in cases],
         "total": total,
         "page": page,
         "page_size": page_size,

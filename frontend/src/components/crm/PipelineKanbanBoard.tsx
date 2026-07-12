@@ -27,12 +27,13 @@ interface PipelineKanbanBoardProps {
     allowEditing?: boolean;
 }
 
-export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead, allowEditing = true }: PipelineKanbanBoardProps) {
+export function PipelineKanbanBoard({ leads = [], onLeadClick, onDropLead, onNewLead, allowEditing = true }: PipelineKanbanBoardProps) {
     const [activeLead, setActiveLead] = useState<any | null>(null);
+    const safeLeads = Array.isArray(leads) ? leads : [];
 
     const sortedLeads = React.useMemo(() => {
-        return [...leads].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-    }, [leads]);
+        return [...safeLeads].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    }, [safeLeads]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -53,7 +54,7 @@ export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead,
 
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event;
-        const lead = leads.find(l => l.id.toString() === active.id.toString());
+        const lead = safeLeads.find(l => l.id.toString() === active.id.toString());
         setActiveLead(lead || null);
     };
 
@@ -73,24 +74,24 @@ export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead,
 
         // Find target stage
         const overStage = PIPELINE_STAGES.find(s => s.value === overId)?.value;
-        const overLead = leads.find(l => l.id.toString() === overId);
+        const overLead = safeLeads.find(l => l.id.toString() === overId);
         const targetStage = overStage || overLead?.stage;
 
         if (!targetStage) return;
 
-        const activeLead = leads.find(l => l.id.toString() === leadId);
+        const activeLead = safeLeads.find(l => l.id.toString() === leadId);
         if (!activeLead) return;
 
         const sourceStage = activeLead.stage;
 
         const getStageLeads = (stageValue: string) => {
-            return leads
+            return safeLeads
                 .filter(l => l.stage === stageValue)
                 .sort((a, b) => {
                     const valA = a.sort_order ?? 0;
                     const valB = b.sort_order ?? 0;
                     if (valA !== valB) return valA - valB;
-                    return leads.indexOf(a) - leads.indexOf(b);
+                    return safeLeads.indexOf(a) - safeLeads.indexOf(b);
                 });
         };
 
@@ -160,7 +161,7 @@ export function PipelineKanbanBoard({ leads, onLeadClick, onDropLead, onNewLead,
                     <DroppablePipelineColumn
                         key={stage.value}
                         stage={stage}
-                        leads={sortedLeads.filter(l => l.stage === stage.value)}
+                    leads={sortedLeads.filter(l => l.stage === stage.value)}
                         onLeadClick={onLeadClick}
                         onNewLead={() => allowEditing ? onNewLead(stage.value) : undefined}
                     />

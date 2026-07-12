@@ -31,7 +31,10 @@ def get_counseling_tickets(
 
     for t in tickets:
         if t.notes:
-            t.notes = decrypt_data(t.notes)
+            try:
+                t.notes = decrypt_data(t.notes)
+            except Exception:
+                pass
 
     return tickets
 
@@ -58,7 +61,10 @@ def create_counseling_ticket(db: Session, payload: schemas.CounselingTicketCreat
         db.commit()
         db.refresh(row)
 
-        row.notes = decrypt_data(row.notes)
+        try:
+            row.notes = decrypt_data(row.notes)
+        except Exception:
+            pass
         return row
     except Exception as e:
         db.rollback()
@@ -75,7 +81,10 @@ def get_counseling_ticket(db: Session, ticket_id: UUID) -> Optional[models.Couns
         .first()
     )
     if row and row.notes:
-        row.notes = decrypt_data(row.notes)
+        try:
+            row.notes = decrypt_data(row.notes)
+        except Exception:
+            pass
     return row
 
 
@@ -97,7 +106,10 @@ def update_counseling_ticket(
     db.commit()
     db.refresh(row)
     if row.notes:
-        row.notes = decrypt_data(row.notes)
+        try:
+            row.notes = decrypt_data(row.notes)
+        except Exception:
+            pass
     return row
 
 
