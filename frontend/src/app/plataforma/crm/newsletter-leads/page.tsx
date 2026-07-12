@@ -124,7 +124,11 @@ export default function NewsletterLeadsPage() {
                 addToast('No hay datos para exportar', 'warning');
                 return;
             }
-            const headers = Object.keys(res.rows[0]);
+            const headers = Object.keys(res.rows.find(Boolean) ?? {});
+            if (headers.length === 0) {
+                addToast('No se pudo determinar la estructura del CSV', 'error');
+                return;
+            }
             const csv = [
                 headers.join(','),
                 ...res.rows.map(r => headers.map(h => `"${(r[h] || '').replace(/"/g, '""')}"`).join(',')),
