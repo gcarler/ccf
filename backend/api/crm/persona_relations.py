@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.crm._shared import (
+    _case_created_column,
     _get_scoped_family,
     _get_scoped_persona,
     case_query,
@@ -126,9 +127,12 @@ def get_persona_crm_profile(
             models.CasoCRM.persona_id == persona_uuid,
             models.CasoCRM.deleted_at.is_(None),
         )
-        .order_by(models.CasoCRM.fecha_creacion.desc())
-        .all()
     )
+    created_col = _case_created_column(db)
+    if created_col is not None:
+        cases = cases.order_by(created_col.desc()).all()
+    else:
+        cases = cases.order_by(models.CasoCRM.id.desc()).all()
     case_rows = [_serialize_case(prepare_case_for_output(db, case)) for case in cases]
 
     position_rows = []
