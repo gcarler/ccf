@@ -141,7 +141,7 @@ export interface GrupoPersona {
 }
 
 export type GrupoApi = Grupo & { personas_count?: number };
-export type Season = { id: number; name: string; status: string };
+export type Season = { id: string; name: string; status: string };
 export type Attendee = { persona_id: string; name: string };
 
 // ── Tasks ─────────────────────────────────────────────────────────────────

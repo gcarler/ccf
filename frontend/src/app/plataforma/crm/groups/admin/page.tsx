@@ -20,7 +20,7 @@ export default function GrupoAdmin() {
     const [selectedGrupo, setSelectedGrupo] = useState<Grupo | null>(null);
     const [reportDate, setReportDate] = useState(new Date().toISOString().split("T")[0]);
     const [seasons, setSeasons] = useState<Season[]>([]);
-    const [seasonId, setSeasonId] = useState<number | "">("");
+    const [seasonId, setSeasonId] = useState<string>("");
     const [attendees, setAttendees] = useState<Attendee[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
@@ -182,7 +182,7 @@ export default function GrupoAdmin() {
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="Fecha"><input type="date" value={reportDate} onChange={(event) => setReportDate(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none" /></Field>
                         <Field label="Temporada">
-                            <select value={seasonId} onChange={(event) => setSeasonId(Number(event.target.value) || "")} className="w-full bg-transparent text-sm font-bold outline-none">
+                            <select value={seasonId} onChange={(event) => setSeasonId(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none">
                                 <option value="">Selecciona</option>
                                 {seasons.map((season) => <option key={season.id} value={season.id}>{season.name}</option>)}
                             </select>
