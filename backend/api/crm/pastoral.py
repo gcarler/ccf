@@ -16,6 +16,7 @@ from backend.api.crm._shared import (
     _get_scoped_persona,
     _get_scoped_prayer_request,
     _get_scoped_task,
+    _case_created_column,
     case_query,
     _persona_full_name,
     persona_query,
@@ -427,6 +428,7 @@ def list_crm_casos(
     """Lista casos CRM con paginación y filtros."""
     user_sede = get_user_sede_id(db, current_user.id)
     q = case_query(db).filter(models.CasoCRM.deleted_at.is_(None))
+    created_col = _case_created_column(db)
     if user_sede:
         q = q.filter(models.CasoCRM.sede_id == user_sede)
 
@@ -451,8 +453,12 @@ def list_crm_casos(
     if persona_id:
         total = total.filter(models.CasoCRM.persona_id == persona_id)
     total = int(total.scalar() or 0)
+    if created_col is not None:
+        cases_query = q.order_by(created_col.desc())
+    else:
+        cases_query = q.order_by(models.CasoCRM.id.desc())
     cases = (
-        q.order_by(models.CasoCRM.fecha_creacion.desc())
+        cases_query
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
@@ -2153,6 +2159,7 @@ def get_newsletter_leads(
         )
     )
     query = _scope_by_user_sede_via_persona(db, current_user, query)
+    created_col = _case_created_column(db)
 
     if source:
         query = query.filter(models.CasoCRM.origen_detalle_id == source)
@@ -2163,12 +2170,17 @@ def get_newsletter_leads(
     if campaign:
         query = query.filter(cast(models.CasoCRM.payload_web, String).ilike(f"%{campaign}%"))
     if date_from:
-        query = query.filter(models.CasoCRM.fecha_creacion >= date_from)
+        if created_col is not None:
+            query = query.filter(created_col >= date_from)
     if date_to:
-        query = query.filter(models.CasoCRM.fecha_creacion <= date_to)
+        if created_col is not None:
+            query = query.filter(created_col <= date_to)
 
     total = int(query.order_by(None).with_entities(func.count(models.CasoCRM.id)).scalar() or 0)
-    cases = query.order_by(models.CasoCRM.fecha_creacion.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    if created_col is not None:
+        cases = query.order_by(created_col.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    else:
+        cases = query.order_by(models.CasoCRM.id.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
     leads = []
     for case in cases:
@@ -2221,15 +2233,21 @@ def export_newsletter_leads_csv(
         )
     )
     query = _scope_by_user_sede_via_persona(db, current_user, query)
+    created_col = _case_created_column(db)
 
     if source:
         query = query.filter(models.CasoCRM.origen_detalle_id == source)
     if date_from:
-        query = query.filter(models.CasoCRM.fecha_creacion >= date_from)
+        if created_col is not None:
+            query = query.filter(created_col >= date_from)
     if date_to:
-        query = query.filter(models.CasoCRM.fecha_creacion <= date_to)
+        if created_col is not None:
+            query = query.filter(created_col <= date_to)
 
-    cases = query.order_by(models.CasoCRM.fecha_creacion.desc()).all()
+    if created_col is not None:
+        cases = query.order_by(created_col.desc()).all()
+    else:
+        cases = query.order_by(models.CasoCRM.id.desc()).all()
 
     rows = []
     for case in cases:

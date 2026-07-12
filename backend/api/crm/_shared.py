@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session, load_only, selectinload
+from sqlalchemy.sql import literal_column
 
 from backend import models
 from backend.crud._utils import _to_uuid
@@ -44,6 +45,19 @@ def _case_live_column_names(db: Session) -> set[str]:
     except Exception:
         return set()
     return {str(column.get("name")) for column in columns if column.get("name")}
+
+
+def _case_created_column(db: Session):
+    live_cols = _case_live_column_names(db)
+    if "fecha_creacion" in live_cols and hasattr(models.CasoCRM, "fecha_creacion"):
+        return models.CasoCRM.fecha_creacion
+    if "created_at" in live_cols:
+        return literal_column("crm_casos.created_at")
+    if "fecha_creacion" in live_cols:
+        return literal_column("crm_casos.fecha_creacion")
+    if hasattr(models.CasoCRM, "fecha_creacion"):
+        return models.CasoCRM.fecha_creacion
+    return None
 
 
 def _stage_live_column_names(db: Session) -> set[str]:
