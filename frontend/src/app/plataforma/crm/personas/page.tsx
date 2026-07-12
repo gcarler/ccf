@@ -83,11 +83,16 @@ export default function PersonasPage() {
                     apiFetch<any[]>('/crm/roles', { token }).catch(() => []),
                     apiFetch<Department[]>('/crm/colombian-departments', { token }).catch(() => []),
                 ]);
-                setPersonas(personasData);
+                const normalizedPersonas = Array.isArray(personasData)
+                    ? personasData
+                    : Array.isArray((personasData as any)?.items)
+                        ? (personasData as any).items
+                        : [];
+                setPersonas(normalizedPersonas);
                 setRoles(rolesData);
                 setDepartments(deptData);
                 // Extract unique group names for filter
-                const groups = [...new Set(personasData.map((m: any) => m.group_name).filter(Boolean))] as string[];
+                const groups = [...new Set(normalizedPersonas.map((m: any) => m.group_name).filter(Boolean))] as string[];
                 groups.sort();
                 setUniqueGroups(groups);
             } catch {

@@ -27,10 +27,11 @@ interface PipelineLeadSidebarProps {
     onViewFullProfile: (leadId: string) => void;
 }
 
-export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onViewFullProfile }: PipelineLeadSidebarProps) {
+export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, onViewFullProfile }: PipelineLeadSidebarProps) {
     const { token } = useAuth();
     const [auditLogs, setAuditLogs] = useState<any[]>([]);
     const [loadingAudit, setLoadingAudit] = useState(false);
+    const safeStages = Array.isArray(stages) ? stages : [];
 
     useEffect(() => {
         if (!lead?.id || !token) return;
@@ -52,7 +53,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
 
     if (!lead) return null;
 
-    const currentStage = stages.find(s => s.value === lead.stage);
+    const currentStage = safeStages.find(s => s.value === lead.stage);
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113]">
@@ -133,7 +134,7 @@ export default function PipelineLeadSidebar({ lead, stages, onUpdateStage, onVie
                         <History size={14} className="text-[hsl(var(--primary))]" /> Modificar Etapa
                     </h3>
                     <div className="grid grid-cols-1 gap-1.5 focus-within:ring-2 focus-within:ring-blue-500/10 p-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/[0.05]">
-                        {stages.map(s => (
+                        {safeStages.map(s => (
                             <button
                                 key={s.value}
                                 onClick={() => onUpdateStage(lead.id, s.value)}
