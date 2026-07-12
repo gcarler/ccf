@@ -425,7 +425,8 @@ export default function ConsolidationPipelinePage() {
                                 <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {filteredLeads.map((lead: any) => {
-                                            const stage = PIPELINE_STAGES.find(s => s.value === lead.stage);
+                                            const stageValue = lead.stage ?? 'new';
+                                            const stage = PIPELINE_STAGES.find(s => s.value === stageValue);
                                             return (
                                                 <div
                                                     key={lead.id}
@@ -465,12 +466,15 @@ export default function ConsolidationPipelinePage() {
                                         <div key={key} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                             <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{payload.label}</p>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {payload.items.map((lead: any) => (
-                                                    <button key={lead.id} onClick={() => setSelectedLead(lead)} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
-                                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
-                                                        <p className="text-[10px] text-[hsl(var(--text-secondary))]">{STAGE_LABEL[lead.stage] ?? lead.stage}</p>
-                                                    </button>
-                                                ))}
+                                                {payload.items.map((lead: any) => {
+                                                    const stageValue = lead.stage ?? 'new';
+                                                    return (
+                                                        <button key={lead.id} onClick={() => setSelectedLead(lead)} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
+                                                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">{STAGE_LABEL[stageValue] ?? stageValue}</p>
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     ))}
@@ -479,17 +483,20 @@ export default function ConsolidationPipelinePage() {
                                 <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto">
                                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                                         <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Evolucion de prospectos</p>
-                                        {filteredLeads.map((lead: any) => (
+                                        {filteredLeads.map((lead: any) => {
+                                            const stageValue = lead.stage ?? 'new';
+                                            return (
                                             <div key={lead.id} className="space-y-1">
                                                 <div className="flex items-center justify-between text-[11px]">
                                                     <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</span>
-                                                    <span className="font-bold text-[hsl(var(--text-secondary))]">{STAGE_PROGRESS[lead.stage] ?? 0}%</span>
+                                                    <span className="font-bold text-[hsl(var(--text-secondary))]">{STAGE_PROGRESS[stageValue] ?? 0}%</span>
                                                 </div>
                                                 <div className="h-2 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 overflow-hidden">
-                                                    <div className="h-full bg-[hsl(var(--primary))]" style={{ width: `${STAGE_PROGRESS[lead.stage] ?? 0}%` }} />
+                                                    <div className="h-full bg-[hsl(var(--primary))]" style={{ width: `${STAGE_PROGRESS[stageValue] ?? 0}%` }} />
                                                 </div>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                         {filteredLeads.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin prospectos</div>}
                                     </div>
                                 </motion.div>
