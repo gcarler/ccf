@@ -1008,8 +1008,12 @@ def register_groups_visitor(
     db.add(new_persona)
     db.flush()  # obtener ID sin commitear — todo en una sola transacción
     db.refresh(new_persona)
+    new_persona_id = str(new_persona.id)
+    new_persona_first_name = new_persona.first_name
+    new_persona_last_name = new_persona.last_name
 
     _ensure_group_visitor_link(db, visitor.grupo_id, new_persona.id)
+    db.commit()
 
     from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
     crm_case = None
@@ -1021,12 +1025,12 @@ def register_groups_visitor(
             origen_sesion_id=visitor.session_id,
         )
     except Exception:
-        logger.warning("Failed to create CRM follow-up for group visitor %s", new_persona.id)
+        logger.warning("Failed to create CRM follow-up for group visitor %s", new_persona_id)
         db.commit()
     if crm_case is None:
         logger.warning(
             "CRM follow-up not created for group visitor %s (group=%s, strategy=%s)",
-            new_persona.id,
+            new_persona_id,
             grupo.id,
             grupo.estrategia_id,
         )
@@ -1034,9 +1038,9 @@ def register_groups_visitor(
 
     return GroupVisitorResponse(
         status="created",
-        persona_id=str(new_persona.id),
-        first_name=new_persona.first_name,
-        last_name=new_persona.last_name,
+        persona_id=new_persona_id,
+        first_name=new_persona_first_name,
+        last_name=new_persona_last_name,
     )
 
 
