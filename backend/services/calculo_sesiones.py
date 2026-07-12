@@ -44,6 +44,16 @@ from backend.api.evangelism_shared import _sessions_grupo_live_column_names
 _IncT = Union[timedelta, relativedelta]
 
 
+def _stringify_uuid_payload(payload: dict) -> dict:
+    normalized = {}
+    for key, value in payload.items():
+        if isinstance(value, uuid.UUID):
+            normalized[key] = str(value)
+        else:
+            normalized[key] = value
+    return normalized
+
+
 class _IncProvider:
     """Provee el incremento y la estrategia de generación para una frecuencia."""
 
@@ -230,6 +240,9 @@ def calcular_sesiones(
 
     created = 0
     rows_to_insert: list[dict] = []
+    sqlite_bind = db.get_bind()
+    use_orm = sqlite_bind is not None and getattr(sqlite_bind.dialect, "name", "") == "sqlite"
+    orm_sessions: list[SesionGrupo] = []
     for grupo_id in grupos_validos:
         for fecha in fechas:
             if (grupo_id, _a_utc(fecha)) not in existing_pairs:
@@ -269,11 +282,19 @@ def calcular_sesiones(
                     row["reported_by_persona_id"] = None
                 if "report_deadline" in live_columns:
                     row["report_deadline"] = None
-                rows_to_insert.append({k: v for k, v in row.items() if k in live_columns})
+                payload = {k: v for k, v in row.items() if k in live_columns}
+                if use_orm:
+                    orm_sessions.append(SesionGrupo(**payload))
+                else:
+                    rows_to_insert.append(_stringify_uuid_payload(payload))
                 created += 1
 
     try:
-        if rows_to_insert:
+        if use_orm:
+            if orm_sessions:
+                db.add_all(orm_sessions)
+                db.flush()
+        elif rows_to_insert:
             if reflected_table is None:
                 raise RuntimeError("Cannot reflect sesiones_grupo table for insert")
             db.execute(insert(reflected_table), rows_to_insert)

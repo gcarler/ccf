@@ -381,6 +381,7 @@ def submit_attendance(
             }
         )
 
+    live_columns = _session_live_columns(db)
     if "reported_at" in live_columns:
         session.reported_at = utc_now()
 
