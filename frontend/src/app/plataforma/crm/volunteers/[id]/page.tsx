@@ -142,8 +142,8 @@ export default function VolunteerDetailPage() {
                         <div className="flex-1 min-w-0">
                             <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{volunteer.name}</h1>
                             <div className="flex items-center gap-2 mt-2">
-                                <Badge label={volunteer.role?.toUpperCase() || "SIN ROL"} tone="blue" />
-                                <Badge label={(volunteer.status || "inactive").toUpperCase()} tone="emerald" />
+                                <Badge label={String(volunteer.role || "SIN ROL").toUpperCase()} tone="blue" />
+                                <Badge label={String(volunteer.status || "inactive").toUpperCase()} tone="emerald" />
                             </div>
                         </div>
                         {canEditCrm && (
@@ -188,8 +188,8 @@ export default function VolunteerDetailPage() {
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Habilidades y Dones</p>
                                 <div className="flex flex-wrap gap-2">
-                                    {volunteer.skills.length > 0
-                                        ? volunteer.skills.map((s) => <Badge key={s} label={s} tone="blue" />)
+                                    {(volunteer.skills ?? []).length > 0
+                                        ? (volunteer.skills ?? []).map((s) => <Badge key={s} label={s} tone="blue" />)
                                         : <p className="text-sm text-[hsl(var(--text-secondary))]">Sin habilidades registradas.</p>}
                                 </div>
                             </div>
