@@ -123,7 +123,7 @@ export default function CrmTaskDetailPage() {
                                             'flex items-center gap-2 px-3 py-2 rounded-md text-xs font-bold',
                                             task.priority === 'high' ? 'bg-rose-500/10 text-rose-600' : 'bg-amber-500/10 text-amber-600'
                                         )}>
-                                            <Flag size={14} /> {task.priority.toUpperCase()}
+                                            <Flag size={14} /> {String(task.priority ?? 'normal').toUpperCase()}
                                         </div>
                                     </div>
 
