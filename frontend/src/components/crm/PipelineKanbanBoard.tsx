@@ -30,7 +30,7 @@ interface PipelineKanbanBoardProps {
 
 export function PipelineKanbanBoard({ leads = [], stages = [], onLeadClick, onDropLead, onNewLead, allowEditing = true }: PipelineKanbanBoardProps) {
     const [activeLead, setActiveLead] = useState<any | null>(null);
-    const safeLeads = Array.isArray(leads) ? leads : [];
+    const safeLeads = React.useMemo(() => Array.isArray(leads) ? leads : [], [leads]);
     const safeStages = Array.isArray(stages) ? stages : [];
 
     const sortedLeads = React.useMemo(() => {

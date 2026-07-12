@@ -20,8 +20,7 @@ import '@xyflow/react/dist/style.css';
 
 import {
     Zap, Plus, Trash2, Save, ArrowLeft,
-    Clock, Settings, AlertTriangle, Play,
-    MessageSquare, CheckSquare, Send, Bell, Heart, GitBranch
+    Clock, Settings, AlertTriangle, GitBranch
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';

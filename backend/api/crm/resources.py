@@ -13,9 +13,8 @@ from backend.api.crm._shared import _resolve_campaign_personas
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
 from backend.core.storage import storage_service
-from backend.core.uploads import ensure_allowed_extension, sanitize_filename
 from backend.core.tenant import get_user_sede_id
-from backend.crud.crm_.shared import resolve_persona_id_from_identity
+from backend.core.uploads import ensure_allowed_extension, sanitize_filename
 from backend.crud.crm_.extended import (
     create_crm_automation,
     create_crm_automation_edge,
@@ -45,6 +44,8 @@ from backend.crud.crm_.resources import (
     update_estado_envio,
     update_plantilla,
 )
+from backend.crud.crm_.shared import resolve_persona_id_from_identity
+from backend.models_crm import CategoriaRecurso
 from backend.schemas.crm.automation import (
     AutomationTriggerPayload,
     AutomationTriggerResult,
@@ -55,6 +56,7 @@ from backend.schemas.crm.automation import (
     CrmAutomationUpdate,
 )
 from backend.schemas.crm.resources import (
+    ApplySystemTemplatePayload,
     BitacoraEnvioOut,
     CampaignFromPlantillaPayload,
     CampaignResultOut,
@@ -66,6 +68,14 @@ from backend.schemas.crm.resources import (
     PlantillaMensajeOut,
     PlantillaMensajeUpdate,
     RecursoAdjuntoOut,
+    SystemTemplateCatalogOut,
+    SystemTemplateOut,
+)
+from backend.services.crm_resource_bank import (
+    find_system_category,
+    find_system_template,
+    get_system_categories,
+    get_system_templates,
 )
 from backend.services.messaging import (
     CommunicationOutcome,
@@ -82,7 +92,7 @@ router = APIRouter(prefix="/resources", tags=["CRM Recursos"])
 @router.get("/categorias", response_model=List[CategoriaRecursoOut])
 def get_categorias(
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "read")),
 ):
     return [CategoriaRecursoOut.from_orm_safe(c) for c in list_categorias(db)]
 
@@ -91,7 +101,7 @@ def get_categorias(
 def post_categoria(
     payload: CategoriaRecursoCreate,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     obj = create_categoria(db, payload)
     return CategoriaRecursoOut.from_orm_safe(obj)
@@ -102,7 +112,7 @@ def patch_categoria(
     categoria_id: str,
     payload: CategoriaRecursoUpdate,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     obj = update_categoria(db, categoria_id, payload)
     if not obj:
@@ -114,7 +124,7 @@ def patch_categoria(
 def del_categoria(
     categoria_id: str,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     if not delete_categoria(db, categoria_id):
         raise HTTPException(404, "Categoría no encontrada")
@@ -142,7 +152,7 @@ def get_plantillas(
 def post_plantilla(
     payload: PlantillaMensajeCreate,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     sede_id = get_user_sede_id(db, str(user.id))
     persona_id = resolve_persona_id_from_identity(db, str(user.id))
@@ -170,7 +180,7 @@ def patch_plantilla(
     plantilla_id: str,
     payload: PlantillaMensajeUpdate,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     obj = get_plantilla(db, plantilla_id)
     if not obj:
@@ -186,7 +196,7 @@ def patch_plantilla(
 def del_plantilla(
     plantilla_id: str,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     obj = get_plantilla(db, plantilla_id)
     if not obj:
@@ -222,7 +232,7 @@ async def upload_adjunto(
     file: UploadFile = File(...),
     nombre_recurso: str = Form(...),
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     plantilla = get_plantilla(db, plantilla_id)
     if not plantilla:
@@ -264,7 +274,7 @@ async def upload_adjunto(
 def del_adjunto(
     adjunto_id: str,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     import uuid
 
@@ -288,7 +298,7 @@ async def enviar_plantilla(
     plantilla_id: str,
     payload: EnviarPlantillaPayload,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
     gateway: MessagingGateway = Depends(get_messaging_gateway),
 ):
     plantilla = get_plantilla(db, plantilla_id)
@@ -380,7 +390,7 @@ async def send_plantilla_campaign(
     plantilla_id: str,
     payload: CampaignFromPlantillaPayload,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
     gateway: MessagingGateway = Depends(get_messaging_gateway),
 ):
     plantilla = get_plantilla(db, plantilla_id)
@@ -531,7 +541,7 @@ def list_automations(
 def create_automation(
     payload: CrmAutomationCreate,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     obj = create_crm_automation(db, payload)
     return CrmAutomationOut.from_orm_safe(obj)
@@ -554,7 +564,7 @@ def patch_automation(
     automation_id: UUID,
     payload: CrmAutomationUpdate,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     obj = update_crm_automation(db, automation_id, payload)
     if not obj:
@@ -566,7 +576,7 @@ def patch_automation(
 def del_automation(
     automation_id: UUID,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     if not delete_crm_automation(db, automation_id):
         raise HTTPException(404, "Automatizacion no encontrada")
@@ -587,7 +597,7 @@ def list_automation_edges(
 def create_automation_edge(
     payload: CrmAutomationEdgeCreate,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     # Validate source automation exists
     source = get_crm_automation(db, payload.source_id)
@@ -607,7 +617,7 @@ def create_automation_edge(
 def delete_automation_edge(
     edge_id: UUID,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
 ):
     if not delete_crm_automation_edge(db, edge_id):
         raise HTTPException(404, "Edge not found")
@@ -617,7 +627,7 @@ def delete_automation_edge(
 async def trigger_automations(
     payload: AutomationTriggerPayload,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
+    user=Depends(require_module_access("crm", "edit")),
     gateway: MessagingGateway = Depends(get_messaging_gateway),
 ):
     automations = get_crm_automations(db, only_active=True, trigger_event=payload.trigger_event)
@@ -730,3 +740,72 @@ async def trigger_automations(
             )
 
     return results
+
+
+# ── Banco de recursos del sistema ─────────────────────────────────────────────
+
+
+@router.get("/system-templates", response_model=SystemTemplateCatalogOut)
+def list_system_templates(
+    user=Depends(require_module_access("crm")),
+):
+    """Devuelve el catálogo global de plantillas y categorías predefinidas del CRM."""
+    return SystemTemplateCatalogOut(
+        categorias=[CategoriaRecursoCreate(**c) for c in get_system_categories()],
+        plantillas=[SystemTemplateOut(**t) for t in get_system_templates()],
+    )
+
+
+@router.post("/system-templates/apply", response_model=PlantillaMensajeOut, status_code=201)
+def apply_system_template(
+    payload: ApplySystemTemplatePayload,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm", "edit")),
+):
+    """Crea en la sede del usuario una copia de una plantilla del catálogo global."""
+    template = find_system_template(payload.template_id)
+    if not template:
+        raise HTTPException(404, "Plantilla del sistema no encontrada")
+
+    sede_id = get_user_sede_id(db, str(user.id))
+    persona_id = resolve_persona_id_from_identity(db, str(user.id))
+    if not persona_id:
+        raise HTTPException(409, "El usuario no tiene una persona CRM asociada")
+
+    # Las categorías son un catálogo global; las plantillas copiadas sí pertenecen a una sede.
+    categoria = (
+        db.query(CategoriaRecurso)
+        .filter(
+            CategoriaRecurso.nombre == template.categoria,
+            CategoriaRecurso.activo == True,  # noqa: E712
+        )
+        .first()
+    )
+    if not categoria:
+        system_cat = find_system_category(template.categoria)
+        if not system_cat:
+            raise HTTPException(400, "Categoría del sistema no encontrada")
+        categoria = create_categoria(
+            db,
+            CategoriaRecursoCreate(
+                nombre=system_cat.nombre,
+                descripcion=system_cat.descripcion,
+                color_ui_hex=system_cat.color_ui_hex,
+            ),
+        )
+
+    create_payload = PlantillaMensajeCreate(
+        categoria_id=str(categoria.id),
+        titulo=template.titulo,
+        canal=template.canal,
+        asunto=template.asunto,
+        contenido_texto=template.contenido_texto,
+        variables_requeridas=template.variables_requeridas,
+    )
+    obj = create_plantilla(
+        db,
+        create_payload,
+        sede_id=sede_id,
+        creado_por_id=str(persona_id),
+    )
+    return PlantillaMensajeOut.from_orm_safe(obj, total_envios=0)

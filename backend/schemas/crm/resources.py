@@ -189,3 +189,25 @@ class CampaignResultOut(BaseModel):
     delivered_count: int
     failed_count: int
     envio_ids: List[str]
+
+
+# ── Banco de recursos del sistema ─────────────────────────────────────────────
+
+class ApplySystemTemplatePayload(BaseModel):
+    template_id: str
+
+
+class SystemTemplateOut(BaseModel):
+    id: str
+    categoria: str
+    titulo: str
+    canal: str
+    asunto: Optional[str] = None
+    contenido_texto: str
+    variables_requeridas: List[str]
+    descripcion: Optional[str] = None
+
+
+class SystemTemplateCatalogOut(BaseModel):
+    categorias: List[CategoriaRecursoCreate]
+    plantillas: List[SystemTemplateOut]

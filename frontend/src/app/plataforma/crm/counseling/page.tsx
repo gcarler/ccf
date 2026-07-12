@@ -9,7 +9,6 @@ import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import CrmShell from '@/components/crm/CrmShell';
-import AdminHero from '@/components/admin/AdminHero';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
@@ -24,7 +23,7 @@ const STATUS_ORDER = ['Pendiente', 'Realizada', 'Cancelada'];
 const STATUS_PROGRESS: Record<string, number> = { Pendiente: 30, Realizada: 100, Cancelada: 0 };
 
 export default function CounselingPage() {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
     const { theme } = useTheme();
     const { addToast } = useToast();
     const router = useRouter();
@@ -58,8 +57,6 @@ export default function CounselingPage() {
             return matchesSearch && matchesStatus;
         });
     }, [sessions, searchTerm, filterStatus]);
-
-    const heroWatchers = ['Equipo de Consolidación', 'Optimus Brain'];
 
     const fetchSessions = useCallback(async () => {
         if (!token) {

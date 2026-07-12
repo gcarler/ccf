@@ -339,7 +339,7 @@ export default function ConsolidationPipelinePage() {
                 />
             )
         });
-    }, [selectedLead, pushSidebarPanel, router, handleUpdateStage]);
+    }, [selectedLead, pushSidebarPanel, router, handleUpdateStage, stageTargets]);
 
     // ── Push filters panel when no lead is selected (Level 3) ─────────────────
     useEffect(() => {
