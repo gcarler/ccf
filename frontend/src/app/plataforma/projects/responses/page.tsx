@@ -32,7 +32,7 @@ export default function ProjectsResponsesPage() {
                 const data = await apiFetch<ProjectInboxItem[]>('/projects/inbox?unread_only=true', { token, cache: 'no-store' });
                 setItems(Array.isArray(data) ? data : []);
             } catch (error) {
-                console.error(error);
+                toast.error("Error inesperado");
                 toast.error('Error al cargar respuestas');
             } finally {
                 setLoading(false);
@@ -67,7 +67,7 @@ export default function ProjectsResponsesPage() {
             });
             setItems((prev) => prev.map((row) => (row.id === item.id ? { ...row, is_read: true } : row)));
         } catch (error) {
-            console.error(error);
+            toast.error("Error inesperado");
             toast.error('Error al resolver respuesta');
         } finally {
             setResolvingId(null);

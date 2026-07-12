@@ -34,7 +34,7 @@ export default function ProjectsInboxPage() {
             try {
                 const data = await apiFetch<ProjectInboxItem[]>('/projects/inbox', { token, cache: 'no-store' });
                 setMessages(Array.isArray(data) ? data : []);
-            } catch (err) { console.error(err); toast.error('Error al cargar inbox'); }
+            } catch (err) { toast.error("Error inesperado"); toast.error('Error al cargar inbox'); }
             finally { setLoading(false); }
         };
         fetchInbox();
@@ -70,7 +70,7 @@ export default function ProjectsInboxPage() {
             });
             setMessages((prev) => prev.map((row) => (row.id === msg.id ? { ...row, is_read: true } : row)));
         } catch (err) {
-            console.error(err);
+            toast.error("Error inesperado");
             toast.error('Error al resolver elemento');
         } finally {
             setResolvingId(null);
@@ -188,7 +188,7 @@ function formatRelative(rawDate: string) {
     return diffDays === 1 ? 'Ayer' : `Hace ${diffDays}d`;
 }
 
-function Tab({ active, label, onClick }: any) {
+function Tab({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
     return (
         <button onClick={onClick} className={clsx("px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-all border-b-2", active ? "text-[hsl(var(--primary))] border-blue-600" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]")}>{label}</button>
     );

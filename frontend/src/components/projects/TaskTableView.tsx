@@ -89,7 +89,7 @@ function InlineStatusCell({ value, onChange }: { value: string; onChange: (v: st
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content className="z-[500] min-w-[180px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                <Popover.Content className="z-[500] min-w-[180px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
                     <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">Estado</p>
                     {STATUS_OPTIONS.map(s => (
                         <button key={s.value} onClick={() => { onChange(s.value); setOpen(false); }}
@@ -117,7 +117,7 @@ function InlinePriorityCell({ value, onChange }: { value: string; onChange: (v: 
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content className="z-[500] min-w-[160px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                <Popover.Content className="z-[500] min-w-[160px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
                     <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">Prioridad</p>
                     {PRIORITY_OPTIONS.map(p => (
                         <button key={p.value} onClick={() => { onChange(p.value); setOpen(false); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
@@ -157,7 +157,7 @@ function InlineDateCell({ value, onChange }: { value?: string | null; onChange: 
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-3 select-none" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                <Popover.Content className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-3 select-none" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
                     <div className="flex items-center justify-between mb-3">
                         <button onClick={() => { let m=viewMonth-1,y=viewYear; if(m<0){m=11;y--;} setViewMonth(m);setViewYear(y); }} className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))]"><ChevronLeft size={14}/></button>
                         <span className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{MONTHS_ES[viewMonth]} {viewYear}</span>
@@ -218,7 +218,7 @@ function InlineUserCell({ value, token, onChange }: { value?: string | null; tok
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content className="z-[500] w-[240px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 overflow-hidden" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
+                <Popover.Content className="z-[500] w-[240px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 overflow-hidden" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
                     <div className="flex items-center gap-2 px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5">
                         <Search size={13} className="text-[hsl(var(--text-secondary))] shrink-0" />
                         <input autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar usuario..." className="flex-1 text-[12px] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent outline-none placeholder:text-[hsl(var(--text-secondary))]" />
@@ -461,7 +461,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     };
 
     return (
-        <div className="flex min-w-0 flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] font-sans overflow-hidden">
+        <div className="flex min-w-0 flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] font-sans overflow-hidden">
 
             {/* ── TOOLBAR ── */}
             <div className="shrink-0 flex min-w-0 items-center gap-1.5 px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/[0.06] bg-[hsl(var(--surface-1))]/60 dark:bg-black/10 flex-wrap">
@@ -474,7 +474,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
-                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-2">
+                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-2">
                             <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5">Columnas visibles</p>
                             {ALL_COLUMNS.map(col => (
                                 <button key={col.id} onClick={() => setVisibleCols(prev => { const n = new Set(prev); if (n.has(col.id)) { if (col.id !== 'title') n.delete(col.id); } else n.add(col.id); return n; })}
@@ -498,7 +498,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
-                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5">
+                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5">
                             <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">Agrupar por</p>
                             {([['status','Estado'],['priority','Prioridad'],['none','Sin agrupación']] as const).map(([k, lbl]) => (
                                 <button key={k} onClick={() => { setGroupBy(k); setGroupOpen(false); }}
@@ -519,7 +519,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
-                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-2">
+                        <Popover.Content sideOffset={6} align="start" className="z-[500] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-2">
                             <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5">Por Estado</p>
                             <div className="flex flex-wrap gap-1.5 px-2 pb-2">
                                 {STATUS_OPTIONS.map(s => {

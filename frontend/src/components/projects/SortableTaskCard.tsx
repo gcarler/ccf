@@ -58,7 +58,7 @@ export function SortableTaskCard({ task, onOpen }: Props) {
             style={style}
             onClick={() => onOpen(task)}
             className={clsx(
-                'bg-[hsl(var(--bg-primary))] dark:bg-[#25262b] rounded-md shadow-sm border cursor-pointer',
+                'bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] rounded-md shadow-sm border cursor-pointer',
                 'hover:shadow-md hover:border-blue-400/50 dark:hover:border-blue-500/40',
                 'transition-all duration-150 group/card relative overflow-hidden',
                 isDragging

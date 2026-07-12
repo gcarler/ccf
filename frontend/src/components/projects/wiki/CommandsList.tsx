@@ -46,7 +46,7 @@ export const CommandsList = forwardRef((props: any, ref) => {
     }));
 
     return (
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-2xl overflow-hidden p-1.5 min-w-[240px] animate-in fade-in zoom-in-95 duration-100 font-display">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-2xl overflow-hidden p-1.5 min-w-[240px] animate-in fade-in zoom-in-95 duration-100 font-display">
             <div className="px-2 py-1.5 mb-1">
                 <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comandos Rápidos</span>
             </div>

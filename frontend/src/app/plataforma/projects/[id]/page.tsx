@@ -32,7 +32,7 @@ import { DSBadge } from '@/design/components/DSBadge';
 import { DSMetric } from '@/design/components/DSMetric';
 import TaskTableView from '@/components/projects/TaskTableView';
 import type { ViewType } from '@/components/ViewSwitcher';
-import type { ProjectActivityItem, ProjectMilestoneRecord, ProjectTaskRecord } from '@/types/projects';
+import type { ProjectActivityItem, ProjectMilestoneRecord, ProjectTaskRecord, ProjectRecord } from '@/types/projects';
 import { ProjectKanbanBoard, type PhaseDef } from '@/components/projects/ProjectKanbanBoard';
 import { PhaseManagerDrawer } from '@/components/projects/PhaseManagerDrawer';
 import { toast } from 'sonner';
@@ -47,6 +47,7 @@ export default function ProjectDetailPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [project, setProject] = useState<any>(null);
     const [tasks, setTasks] = useState<ProjectTaskRecord[]>([]);
     const [activities, setActivities] = useState<ProjectActivityItem[]>([]);
@@ -76,7 +77,7 @@ export default function ProjectDetailPage() {
         try {
             setLoading(true);
             const [projData, tasksData, activityRows, phasesData] = await Promise.all([
-                apiFetch<any>(`/projects/${id}`, { token }),
+                apiFetch<ProjectRecord>(`/projects/${id}`, { token }),
                 apiFetch<ProjectTaskRecord[]>(`/projects/${id}/tasks`, { token }).catch(() => []),
                 apiFetch<ProjectActivityItem[]>(`/projects/activities?project_id=${id}&limit=20`, { token }).catch(() => []),
                 apiFetch<PhaseDef[]>(`/projects/${id}/phases`, { token }).catch(() => []),

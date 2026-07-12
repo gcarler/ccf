@@ -113,7 +113,7 @@ function InlineUserPicker({
         try {
             const data = await apiFetch<any[]>('/admin/users/', { token });
             if (Array.isArray(data)) {
-                setUsers(data.map((u: any) => ({
+                setUsers(data.map((u) => ({
                     id: u.id,
                     username: u.nombre_completo || `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.username,
                     email: u.email,
@@ -155,7 +155,7 @@ function InlineUserPicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden"
+                    className="z-[500] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden"
                     sideOffset={6}
                     align="start"
                     onOpenAutoFocus={e => e.preventDefault()}
@@ -268,7 +268,7 @@ function InlineDatePicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-3 select-none"
+                    className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-3 select-none"
                     sideOffset={6}
                     align="start"
                     onOpenAutoFocus={e => e.preventDefault()}
@@ -378,7 +378,7 @@ function InlinePriorityPicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-44 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 p-1"
+                    className="z-[500] w-44 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 p-1"
                     sideOffset={6}
                     align="start"
                 >
@@ -441,7 +441,7 @@ function InlineStatusPicker({
 
             <Popover.Portal>
                 <Popover.Content
-                    className="z-[500] w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 p-1"
+                    className="z-[500] w-48 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 p-1"
                     sideOffset={6}
                     align="start"
                 >
@@ -866,7 +866,7 @@ export default function ProjectListView({
     });
 
     return (
-        <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] scrollbar-thin">
+        <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] scrollbar-thin">
 
             {/* ── STICKY QUICK-ADD BAR ── */}
             <AnimatePresence>

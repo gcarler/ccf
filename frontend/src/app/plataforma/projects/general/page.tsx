@@ -37,7 +37,7 @@ export default function ProjectsGeneralPage() {
             setProjects(projectsList);
             if (!projectId && projectsList.length > 0) setProjectId(projectsList[0].id);
         } catch (error) {
-            console.error(error);
+            toast.error("Error inesperado");
             toast.error('Error al cargar el canal general');
         } finally {
             setLoading(false);
@@ -61,7 +61,7 @@ export default function ProjectsGeneralPage() {
             setContent('');
             await load();
         } catch (error) {
-            console.error(error);
+            toast.error("Error inesperado");
             toast.error('Error al publicar en el canal');
         } finally {
             setSaving(false);

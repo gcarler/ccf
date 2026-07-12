@@ -40,10 +40,10 @@ interface FormValues {
 /** Paleta curada para usar como color semilla del proyecto.
  *  Equivale a la paleta categórica permitida por AGENTS_FRONTEND.md §4. */
 const COLOR_OPTIONS = [
-    { value: '#2563eb', label: 'Azul ministerial', preview: 'bg-[#2563eb]' },
+    { value: '#2563eb', label: 'Azul ministerial', preview: 'bg-[hsl(var(--primary))]' },
     { value: '#0891b2', label: 'Cyan teal', preview: 'bg-[#0891b2]' },
     { value: '#16a34a', label: 'Verde pastoral', preview: 'bg-[#16a34a]' },
-    { value: '#f59e0b', label: 'Ámbar misión', preview: 'bg-[#f59e0b]' },
+    { value: '#f59e0b', label: 'Ámbar misión', preview: 'bg-[hsl(var(--warning))]' },
     { value: '#ef4444', label: 'Rojo urgente', preview: 'bg-[#ef4444]' },
 ];
 

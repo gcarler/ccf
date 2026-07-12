@@ -341,7 +341,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
             {/* Drawing Area */}
             <div ref={drawingAreaRef} className="flex-1 relative overflow-hidden bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))]">
                 {/* Vertical toolbar */}
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-1 p-1.5 bg-white/95 dark:bg-[#1e1f21]/95 backdrop-blur-xl border border-[hsl(var(--border))] dark:border-white/10 rounded-xl shadow-2xl">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-1 p-1.5 bg-white/95 dark:bg-[hsl(var(--admin-bg-secondary))]/95 backdrop-blur-xl border border-[hsl(var(--border))] dark:border-white/10 rounded-xl shadow-2xl">
                     <ToolBtn active={tool === 'select'} onClick={() => setActiveTool('select')} icon={MousePointer2} label="Seleccionar (V)" />
                     <ToolBtn active={tool === 'pencil'} onClick={() => setActiveTool('pencil')} icon={Pencil} label="Dibujar libre (P)" />
                     <div className="h-px w-7 bg-[hsl(var(--surface-2))] dark:bg-white/10 mx-auto my-0.5" />
@@ -356,7 +356,7 @@ export default function ProjectWhiteboard({ project_id, isOpen, onClose }: Props
                 <canvas ref={canvasRef} />
 
                 {/* Zoom controls */}
-                <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 dark:bg-[#1e1f21]/90 backdrop-blur-xl px-3 py-2 rounded-full border border-[hsl(var(--border))] dark:border-white/10 shadow-lg">
+                <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 dark:bg-[hsl(var(--admin-bg-secondary))]/90 backdrop-blur-xl px-3 py-2 rounded-full border border-[hsl(var(--border))] dark:border-white/10 shadow-lg">
                     <button onClick={() => handleZoom(-25)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><ZoomOut size={16} /></button>
                     <span className="text-[11px] font-bold w-10 text-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] tabular-nums">{zoom}%</span>
                     <button onClick={() => handleZoom(+25)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><ZoomIn size={16} /></button>

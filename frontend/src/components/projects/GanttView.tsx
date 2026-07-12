@@ -23,6 +23,7 @@ import {
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface GanttViewProps {
     tasks: any[];
     onTaskClick: (task: any) => void;
@@ -47,6 +48,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
     }, [days]);
 
     const months = useMemo(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result: any[] = [];
         let current = startOfMonth(viewDate);
         result.push({ date: current, days: eachDayOfInterval({ start: current, end: endOfMonth(current) }) });
@@ -57,6 +59,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
 
     const dayWidth = 40; // Pixels per day
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getTaskStyles = (task: any) => {
         const startRaw = task.start_date || task.created_at || new Date().toISOString();
         const endRaw = task.due_date;
@@ -89,7 +92,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden select-none">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] overflow-hidden select-none">
             {/* Gantt Header Control */}
             <div className="h-10 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between px-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0">
                 <div className="flex items-center gap-3">
@@ -112,7 +115,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
 
             <div className="flex-1 flex overflow-hidden">
                 {/* Task Sidebar */}
-                <aside className="w-72 border-r border-[hsl(var(--border))] dark:border-white/5 flex flex-col shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] z-20 shadow-[10px_0_30px_rgba(0,0,0,0.02)]">
+                <aside className="w-72 border-r border-[hsl(var(--border))] dark:border-white/5 flex flex-col shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] z-20 shadow-[10px_0_30px_rgba(0,0,0,0.02)]">
                     <div className="h-10 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-3 bg-[hsl(var(--surface-1))]/30 dark:bg-white/5">
                         <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre de Tarea</span>
                     </div>
@@ -136,7 +139,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
                 <div className="flex-1 overflow-x-auto scrollbar-thin relative bg-[hsl(var(--surface-1))]/20 dark:bg-[#1a1b1d]" ref={timelineRef}>
                     {/* Month/Day Header */}
                     <div className="sticky top-0 z-10">
-                        <div className="h-10 flex border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
+                        <div className="h-10 flex border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))]">
                             {months.map((m, i) => (
                                 <div 
                                     key={i} 
@@ -147,7 +150,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
                                 </div>
                             ))}
                         </div>
-                        <div className="h-10 flex bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border-b border-[hsl(var(--border))] dark:border-white/5">
+                        <div className="h-10 flex bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border-b border-[hsl(var(--border))] dark:border-white/5">
                             {days.map((day) => (
                                 <div 
                                     key={day.toISOString()} 
@@ -221,6 +224,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
     );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CheckCircle({ size, className }: any) {
     return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 6 9 17l-5-5"/></svg>;
 }

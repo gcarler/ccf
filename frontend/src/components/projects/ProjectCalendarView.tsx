@@ -29,7 +29,9 @@ import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
 interface CalendarProps {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     tasks: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onTaskClick: (task: any) => void;
 }
 
@@ -51,7 +53,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] overflow-hidden animate-fade-in font-display">
             {/* Calendar Header */}
             <div className="h-10 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between px-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0">
                 <div className="flex items-center gap-3">
@@ -71,7 +73,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
             </div>
 
             {/* Weekday Labels */}
-            <div className="grid grid-cols-7 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] z-10">
+            <div className="grid grid-cols-7 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] z-10">
                 {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
                     <div key={day} className="py-2 text-center font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{day}</div>
                 ))}
@@ -88,7 +90,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                                 <div 
                                     className={clsx(
                                         "min-h-12 p-1.5 border-r border-b border-[hsl(var(--border))] dark:border-white/5 transition-colors relative group cursor-pointer",
-                                        !isSameMonth(day, currentMonth) ? "bg-[hsl(var(--surface-1))]/50 dark:bg-black/10" : "bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]",
+                                        !isSameMonth(day, currentMonth) ? "bg-[hsl(var(--surface-1))]/50 dark:bg-black/10" : "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))]",
                                         isToday(day) && "bg-blue-50/20 dark:bg-blue-500/5",
                                         openPopoverDay === dayKey && "ring-2 ring-inset ring-blue-500/50"
                                     )}
@@ -140,7 +142,7 @@ export default function ProjectCalendarView({ tasks, onTaskClick }: CalendarProp
                                     side="right" 
                                     align="start" 
                                     sideOffset={8}
-                                    className="z-[60] w-[340px] bg-[hsl(var(--bg-primary))] dark:bg-[#25262b] rounded-lg shadow-2xl shadow-black/10 dark:shadow-black/40 border border-[hsl(var(--border))] dark:border-white/10 p-3 font-display flex flex-col gap-3 animate-in fade-in zoom-in-95 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
+                                    className="z-[60] w-[340px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] rounded-lg shadow-2xl shadow-black/10 dark:shadow-black/40 border border-[hsl(var(--border))] dark:border-white/10 p-3 font-display flex flex-col gap-3 animate-in fade-in zoom-in-95 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <div className="flex flex-col gap-1">
