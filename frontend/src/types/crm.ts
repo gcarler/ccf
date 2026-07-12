@@ -131,6 +131,8 @@ export interface Grupo {
   end_time?: string;
   base_attendee_ids?: string[];
   base_attendees?: Array<{ persona_id: string }>;
+  participante_ids?: string[];
+  participantes?: Array<{ persona_id: string; role?: string }>;
   total_personas?: number;
 }
 

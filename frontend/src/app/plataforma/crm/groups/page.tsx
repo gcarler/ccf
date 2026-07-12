@@ -163,7 +163,7 @@ export default function CrmGroupsPage() {
             const assistantId = detail.asistente_id ?? detail.assistant_id ?? '';
             const hostId = detail.anfitrion_id ?? detail.host_id ?? '';
             const current = new Set(
-                (detail.base_attendee_ids || detail.base_attendees?.map(persona => persona.persona_id) || [])
+                (detail.participante_ids || detail.participantes?.map(persona => persona.persona_id) || [])
                     .map(String)
             );
             current.add(personaId);
@@ -183,7 +183,7 @@ export default function CrmGroupsPage() {
                     start_time: detail.start_time,
                     end_time: detail.end_time,
                     status: detail.status,
-                    base_attendee_ids: Array.from(current),
+                    participante_ids: Array.from(current),
                 },
             });
             setGroups(prev => prev.map(group => group.id === updated.id ? { ...group, ...updated } : group));
