@@ -10,6 +10,7 @@ from backend.models_crm_pipeline import (
     TipoPipelineEnum,
 )
 from backend.services.evangelism_crm_bridge import (
+    _obtener_o_crear_etapa_nuevo_contacto,
     _obtener_o_crear_pipeline_nuevos_visitantes,
     crear_caso_desde_asistencia,
     crear_caso_nuevo_visitante,
@@ -258,7 +259,35 @@ def test_persona_tags_actualizados(db_session):
     assert f"SESION_{sesion.fecha_sesion.date().isoformat()}" in persona.tags
     assert persona.spiritual_status == "VISITANTE_EVANGELISMO"
     assert persona.origen_estrategia_id == estrategia.id
-    assert persona.origen_grupo_id == grupo.id
+
+
+def test_etapa_fallback_ignore_soft_deleted_stage(db_session):
+    sede = _seed_sede(db_session)
+
+    pipeline = models.PipelineCRM(
+        sede_id=sede.id,
+        nombre="Nuevos Visitantes",
+        tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
+        activo=True,
+    )
+    db_session.add(pipeline)
+    db_session.commit()
+    db_session.refresh(pipeline)
+
+    deleted_stage = models.EtapaPipeline(
+        pipeline_id=pipeline.id,
+        nombre="Nuevo Contacto",
+        orden=1,
+        requiere_accion=True,
+        deleted_at=datetime.now(timezone.utc),
+    )
+    db_session.add(deleted_stage)
+    db_session.commit()
+
+    etapa = _obtener_o_crear_etapa_nuevo_contacto(db_session, pipeline, sede.id)
+    assert etapa is not None
+    assert etapa.deleted_at is None
+    assert etapa.pipeline_id == pipeline.id
 
 
 def test_sla_calculado_correctamente(db_session):

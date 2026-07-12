@@ -1012,8 +1012,9 @@ def register_groups_visitor(
     _ensure_group_visitor_link(db, visitor.grupo_id, new_persona.id)
 
     from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
+    crm_case = None
     try:
-        crear_caso_nuevo_visitante(  # hace el db.commit() final
+        crm_case = crear_caso_nuevo_visitante(  # hace el db.commit() final
             db, new_persona, grupo.sede_id,
             origen_grupo_id=grupo.id,
             origen_estrategia_id=grupo.estrategia_id,
@@ -1021,6 +1022,14 @@ def register_groups_visitor(
         )
     except Exception:
         logger.warning("Failed to create CRM follow-up for group visitor %s", new_persona.id)
+        db.commit()
+    if crm_case is None:
+        logger.warning(
+            "CRM follow-up not created for group visitor %s (group=%s, strategy=%s)",
+            new_persona.id,
+            grupo.id,
+            grupo.estrategia_id,
+        )
         db.commit()
 
     return GroupVisitorResponse(

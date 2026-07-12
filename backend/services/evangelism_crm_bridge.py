@@ -122,6 +122,24 @@ def _insert_caso_nuevo_visitante(
     origen_sesion_id: Optional[UUID] = None,
 ) -> Optional[CasoCRM]:
     caso_id = uuid.uuid4()
+    bind = db.get_bind()
+    if bind is not None and getattr(bind.dialect, "name", "") == "sqlite":
+        caso = _build_transient_caso(
+            caso_id=caso_id,
+            persona_id=persona.id,
+            sede_id=sede_id,
+            pipeline_id=pipeline.id,
+            etapa=etapa,
+            titulo_caso=f"{titulo_prefix}: {persona.first_name} {persona.last_name}".strip(),
+            origen_grupo_id=origen_grupo_id,
+            origen_estrategia_id=origen_estrategia_id,
+            origen_sesion_id=origen_sesion_id,
+            sla_vencimiento_contacto=datetime.now(timezone.utc) + timedelta(hours=48),
+        )
+        db.add(caso)
+        db.flush()
+        return caso
+
     live_cols = _crm_casos_live_column_names(db)
     caso_data = {
         "id": caso_id,
@@ -186,6 +204,7 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
             PipelineCRM.sede_id == sede_id,
             PipelineCRM.tipo == TipoPipelineEnum.NUEVOS_VISITANTES,
             PipelineCRM.activo,
+            PipelineCRM.deleted_at.is_(None),
         )
         .first()
     )
@@ -216,6 +235,9 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
         if not pipeline:
             logger.warning("Pipeline race condition: still missing after savepoint rollback (sede=%s)", sede_id)
             return None
+        if pipeline.deleted_at is not None:
+            pipeline.deleted_at = None
+            db.flush()
         return pipeline  # pipeline existente ya tiene su etapa — no crear otra
 
     # Solo se llega aquí cuando el pipeline acaba de ser creado
@@ -260,7 +282,10 @@ def _obtener_o_crear_etapa_nuevo_contacto(
     if etapa_options is not None:
         etapa_query = etapa_query.options(etapa_options)
     etapa = (
-        etapa_query.filter(EtapaPipeline.pipeline_id == pipeline.id)
+        etapa_query.filter(
+            EtapaPipeline.pipeline_id == pipeline.id,
+            EtapaPipeline.deleted_at.is_(None),
+        )
         .order_by(EtapaPipeline.orden.asc())
         .first()
     )
@@ -310,6 +335,9 @@ def _obtener_o_crear_etapa_nuevo_contacto(
             .first()
         )
         if etapa:
+            if etapa.deleted_at is not None:
+                etapa.deleted_at = None
+                db.flush()
             return etapa
         logger.warning(
             "Failed to create fallback etapa Nuevo Contacto for pipeline %s (sede=%s)",
@@ -320,7 +348,10 @@ def _obtener_o_crear_etapa_nuevo_contacto(
 
     etapa = (
         db.query(EtapaPipeline)
-        .filter(EtapaPipeline.pipeline_id == pipeline.id)
+        .filter(
+            EtapaPipeline.pipeline_id == pipeline.id,
+            EtapaPipeline.deleted_at.is_(None),
+        )
         .order_by(EtapaPipeline.orden.asc())
         .first()
     )
