@@ -1,4 +1,6 @@
 """Tests for the CRM resource bank (system templates catalog)."""
+import uuid
+
 import pytest
 
 from backend.models_auth import RolPlataforma
@@ -96,3 +98,37 @@ class TestCRMResourceBank:
             headers=headers,
         )
         assert resp.status_code == 403
+
+    def test_template_log_is_hidden_from_another_sede(self, client, db_session, admin_data):
+        admin_headers = auth_headers(client)
+        category = client.post(
+            "/api/crm/resources/categorias",
+            json={"nombre": "Privada", "color_ui_hex": "#123456"},
+            headers=admin_headers,
+        ).json()
+        _, _, other_sede = seed_user_with_role(
+            db_session,
+            role_name="ADMIN",
+            email="other-admin@example.com",
+            sede_id=uuid.uuid4(),
+        )
+        other_headers = auth_headers(client, email="other-admin@example.com")
+        created = client.post(
+            "/api/crm/resources/plantillas",
+            json={
+                "categoria_id": category["id"],
+                "titulo": "Solo otra sede",
+                "canal": "EMAIL",
+                "contenido_texto": "Contenido privado",
+                "variables_requeridas": [],
+            },
+            headers=other_headers,
+        )
+        assert created.status_code == 201
+        assert other_sede.id != admin_data[2].id
+
+        response = client.get(
+            f"/api/crm/resources/plantillas/{created.json()['id']}/bitacora",
+            headers=admin_headers,
+        )
+        assert response.status_code == 404
