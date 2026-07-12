@@ -272,7 +272,7 @@ function DataTable({ rows, title }: { rows: TableRow[]; title?: string }) {
         );
     }
 
-    const columns = Object.keys(rows[0].columns);
+    const columns = Object.keys(rows[0].columns ?? {});
 
     return (
         <div className="overflow-x-auto">
