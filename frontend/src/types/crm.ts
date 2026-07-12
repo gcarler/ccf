@@ -120,13 +120,16 @@ export interface Grupo {
   latitude?: number;
   longitude?: number;
   code?: string;
-  leader_id?: number;
-  assistant_id?: number;
-  host_id?: number;
+  leader_id?: string;
+  assistant_id?: string;
+  host_id?: string;
+  lider_id?: string;
+  asistente_id?: string;
+  anfitrion_id?: string;
   day_of_week?: string;
   start_time?: string;
   end_time?: string;
-  base_attendee_ids?: number[];
+  base_attendee_ids?: string[];
   base_attendees?: Array<{ persona_id: string }>;
   total_personas?: number;
 }
