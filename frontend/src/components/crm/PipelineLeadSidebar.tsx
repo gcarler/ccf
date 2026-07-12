@@ -23,7 +23,7 @@ import { STAGE_LABEL } from '@/app/plataforma/crm/pipeline/constants';
 interface PipelineLeadSidebarProps {
     lead: any;
     stages: any[];
-    onUpdateStage: (leadId: string, stage: string) => void;
+    onUpdateStage: (leadId: string, stage: string, stageId?: string) => void;
     onViewFullProfile: (leadId: string) => void;
 }
 
@@ -137,7 +137,7 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                         {safeStages.map(s => (
                             <button
                                 key={s.value}
-                                onClick={() => onUpdateStage(lead.id, s.value)}
+                                onClick={() => onUpdateStage(lead.id, s.value, s.id?.toString())}
                                 className={clsx(
                                     "w-full flex items-center gap-3 px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all group",
                                     lead.stage === s.value

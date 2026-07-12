@@ -57,10 +57,18 @@ export default function ConsolidationPipelinePage() {
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_pipeline_view', 'board'));
     const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
     const [selectedLead, setSelectedLead] = useState<any>(null);
+    const [pipelineStages, setPipelineStages] = useState<any[]>([]);
     const { pushSidebarPanel, resetSidebarStack } = useSidebarLayers();
 
     const handleLeadSelect = useCallback((lead: any) => {
         setSelectedLead(lead);
+    }, []);
+    const normalizeStageName = useCallback((value?: string | null) => {
+        return String(value ?? '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '');
     }, []);
     const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_pipeline_wiki_notes', {
         title: 'Wiki del pipeline CRM',
@@ -93,6 +101,43 @@ export default function ConsolidationPipelinePage() {
 
     useEffect(() => { fetchPipeline(); }, [fetchPipeline]);
 
+    const fetchPipelineStages = useCallback(async () => {
+        if (!token) {
+            setPipelineStages([]);
+            return;
+        }
+        try {
+            const data = await apiFetch<any[]>('/crm/pipeline/kanban/stages', { token, cache: 'no-store' });
+            setPipelineStages(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error(err);
+            setPipelineStages([]);
+        }
+    }, [token]);
+
+    useEffect(() => { fetchPipelineStages(); }, [fetchPipelineStages]);
+
+    const resolveStageId = useCallback((stageValue: string) => {
+        const backendStages = [...pipelineStages].sort((a, b) => (a?.order_index ?? 0) - (b?.order_index ?? 0));
+        const normalizedTarget = normalizeStageName(stageValue);
+
+        const directMatch = backendStages.find((candidate) => {
+            const normalizedName = normalizeStageName(candidate?.name);
+            return normalizedName === normalizedTarget;
+        });
+
+        if (directMatch?.id) {
+            return String(directMatch.id);
+        }
+
+        const labelMatch = backendStages.find((candidate) => {
+            const normalizedName = normalizeStageName(candidate?.name);
+            return normalizedName === normalizeStageName(PIPELINE_STAGES.find(stage => stage.value === stageValue)?.label);
+        });
+
+        return String(labelMatch?.id ?? stageValue);
+    }, [normalizeStageName, pipelineStages]);
+
 
     const handleCreateLead = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -116,9 +161,11 @@ export default function ConsolidationPipelinePage() {
     const handleUpdateStage = useCallback(async (
         leadId: string, 
         newStage: string, 
+        targetStageId?: string,
         reorderPayload?: { id: string, sort_order: number, etapa_actual_id: string }[]
     ) => {
         if (!canEditCrm) return;
+        const resolvedStageId = targetStageId || resolveStageId(newStage);
 
         // Optimistic update
         setLeads(prev => prev.map(l => {
@@ -131,7 +178,7 @@ export default function ConsolidationPipelinePage() {
         try {
             const payload = reorderPayload && reorderPayload.length > 0
                 ? reorderPayload
-                : [{ id: leadId, etapa_actual_id: newStage }];
+                : [{ id: leadId, etapa_actual_id: resolvedStageId }];
 
             await apiFetch('/crm/pipeline/casos/reorder', {
                 method: 'PATCH',
@@ -143,7 +190,7 @@ export default function ConsolidationPipelinePage() {
             addToast('Error al actualizar etapa', 'error');
             fetchPipeline(); // Revert
         }
-    }, [token, addToast, fetchPipeline, canEditCrm]);
+    }, [token, addToast, fetchPipeline, canEditCrm, resolveStageId]);
 
     // Table columns with proper labels
     const columns = useMemo<ColumnDef<any>[]>(() => [
@@ -251,10 +298,25 @@ export default function ConsolidationPipelinePage() {
         return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
     }, [filteredLeads]);
 
-    const sourceKeys = useMemo(
-        () => ['Visitante', 'Referido', 'Web', 'Redes Sociales', 'Evento', 'Otro'],
-        []
-    );
+    const stageTargets = useMemo(() => {
+        const backendStages = [...pipelineStages].sort((a, b) => (a?.order_index ?? 0) - (b?.order_index ?? 0));
+
+        return PIPELINE_STAGES.map((stage, index) => {
+            const backendStage = backendStages[index]
+                ?? backendStages.find((candidate) => {
+                    const normalizedName = normalizeStageName(candidate?.name);
+                    return normalizedName === normalizeStageName(stage.label) || normalizedName === normalizeStageName(stage.value);
+                });
+
+            return {
+                ...stage,
+                id: backendStage?.id ? String(backendStage.id) : stage.value,
+                backendName: backendStage?.name ?? stage.label,
+            };
+        });
+    }, [normalizeStageName, pipelineStages]);
+
+    const sourceKeys = useMemo(() => ['Visitante', 'Referido', 'Web', 'Redes Sociales', 'Evento', 'Otro'], []);
 
 
 
@@ -262,15 +324,15 @@ export default function ConsolidationPipelinePage() {
     useEffect(() => {
         if (!selectedLead) return;
         pushSidebarPanel({
-            id: `pipeline-lead-${selectedLead.id}`,
+                id: `pipeline-lead-${selectedLead.id}`,
             title: selectedLead.nombre_completo || '',
             onBack: () => setSelectedLead(null),
             content: (
                 <PipelineLeadSidebar 
                     lead={selectedLead}
-                    stages={PIPELINE_STAGES}
-                    onUpdateStage={(leadId, newStage) => {
-                        handleUpdateStage(leadId, newStage);
+                    stages={stageTargets}
+                    onUpdateStage={(leadId, newStage, targetStageId) => {
+                        handleUpdateStage(leadId, newStage, targetStageId);
                         setSelectedLead((prev: any) => ({ ...prev, stage: newStage }));
                     }}
                     onViewFullProfile={(id) => router.push(`/plataforma/crm/contacts/${id}`)}
@@ -345,8 +407,12 @@ export default function ConsolidationPipelinePage() {
                                 <motion.div key="board" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-hidden">
                                     <PipelineKanbanBoard
                                         leads={filteredLeads}
+                                        stages={stageTargets}
                                         onLeadClick={handleLeadSelect}
-                                        onDropLead={handleUpdateStage}
+                                        onDropLead={(leadId, stageValue, stageId, reorderPayload) => {
+                                            handleUpdateStage(leadId, stageValue, stageId, reorderPayload);
+                                            setSelectedLead((prev: any) => prev ? { ...prev, stage: stageValue } : prev);
+                                        }}
                                         onNewLead={(s) => {
                                             if (!canEditCrm) return;
                                             if (s) setNewLeadForm(prev => ({ ...prev, stage: s }));
