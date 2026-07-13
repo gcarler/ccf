@@ -89,7 +89,7 @@ def _run_scheduling_pass(db_session, dry_run: bool) -> dict[str, int | dict]:
     día siguiente a uno con captura, ``skipped`` vale N>0 y un flat
     check lo consideraría "trabajo realizado").
     """
-    from backend.crud.cms import process_due_content, capture_daily_seo_snapshots
+    from backend.crud.cms import capture_daily_seo_snapshots, process_due_content
 
     counts = process_due_content(db_session, dry_run=dry_run)
     snapshot_counts = capture_daily_seo_snapshots(

@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend import crud, models
+from backend.api.evangelism_shared import sessions_grupo_has_estado_habilitacion
 from backend.core.database import get_db
 from backend.core.permissions import require_pastor_or_admin
 from backend.crud.evangelism import (
@@ -20,7 +21,6 @@ from backend.crud.evangelism import (
 from backend.crud.evangelism import (
     update_estrategia as update_evangelism_strategy,
 )
-from backend.api.evangelism_shared import sessions_grupo_has_estado_habilitacion
 from backend.schemas.crm.base import (
     EvangelismStrategy,
     EvangelismStrategyCreate,

@@ -61,6 +61,7 @@ from backend.crud.crm_.groups import (
     get_grupos,
     update_grupo,
 )
+
 # health.py imports from backend.api.crm._shared — not imported here
 # to avoid circular dependency. Access directly:
 #   from backend.crud.crm_.health import calculate_health_score

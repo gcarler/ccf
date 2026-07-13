@@ -11,7 +11,6 @@ from pydantic import BaseModel, field_validator, model_validator
 
 from backend.schemas._common import orm_config
 
-
 # ──────────────────────────────────────────────
 # CALIDAD FIX (R1 — riesgo residual audit)
 # ──────────────────────────────────────────────

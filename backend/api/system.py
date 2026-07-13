@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from typing import Dict, List
 
@@ -8,7 +9,6 @@ from sqlalchemy import case, func, or_, text
 from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session
 
-import logging
 from backend import models
 from backend.core.ai import generate_ministerial_content
 from backend.core.database import get_db

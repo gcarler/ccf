@@ -29,8 +29,8 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import MetaData, Table, insert
 from sqlalchemy.orm import Session
 
-from backend.models_evangelism import FrecuenciaEnum, GrupoEvangelismo, SesionGrupo
 from backend.api.evangelism_shared import _sessions_grupo_live_column_names
+from backend.models_evangelism import FrecuenciaEnum, GrupoEvangelismo, SesionGrupo
 
 # ──────────────────────────────────────────────
 # Estrategia de incremento

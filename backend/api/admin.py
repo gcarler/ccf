@@ -1239,6 +1239,7 @@ def provision_personas_sin_cuenta(
     """
     import secrets
     import string
+
     from backend.core.permissions import hash_password
     from backend.models_auth import RolPlataforma, Usuario
 

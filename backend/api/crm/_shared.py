@@ -9,9 +9,9 @@ from sqlalchemy.orm import Session, load_only, selectinload
 from sqlalchemy.sql import literal_column
 
 from backend import models
+from backend.core.tenant import get_user_sede_id
 from backend.crud._utils import _to_uuid
 from backend.schemas.crm.base import PersonaResponse
-from backend.core.tenant import get_user_sede_id
 from backend.services.messaging_outcomes import (
     DELIVERED_OUTCOMES,
     CommunicationOutcome,

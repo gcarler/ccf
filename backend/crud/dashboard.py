@@ -587,13 +587,6 @@ def get_cms_dashboard(db: Session, sede_id: Optional[str] = None) -> CmsDashboar
     in_review = db.execute(sqlt(
         f"SELECT COUNT(*) FROM cms_pages p JOIN cms_sites s ON p.site_id = s.id WHERE p.status = 'review' {site_where}"
     ), params).scalar() or 0
-    versions = db.execute(sqlt(
-        f"""SELECT COUNT(*) FROM cms_page_versions v
-        JOIN cms_pages p ON v.page_id = p.id
-        JOIN cms_sites s ON p.site_id = s.id
-        WHERE 1=1 {site_where}"""
-    ), params).scalar() or 0
-
     # ── Page Views ──
     now = _utcnow()
     cutoff_7d = now - timedelta(days=7)

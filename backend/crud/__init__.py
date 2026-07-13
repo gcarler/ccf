@@ -65,7 +65,6 @@ from backend.crud.cms import (
     get_active_cms_theme,
     get_announcement,
     get_cms_category,
-    get_cms_media_item,
     get_cms_menu,
     get_cms_menu_item,
     get_cms_media_item,

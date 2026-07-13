@@ -42,8 +42,7 @@ Cierre de IDORs multi-tenant en evangelismo:
 
 from __future__ import annotations
 
-import uuid
-from typing import Any, Optional
+from typing import Optional
 
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy.orm import Query, Session
@@ -61,7 +60,6 @@ from backend.models_evangelism import (
     RegistroSeguimiento,
     SesionGrupo,
 )
-
 
 # ────────────────────────────────────────────────────────────────
 # 1) Actor → sede resolution

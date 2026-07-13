@@ -5,6 +5,7 @@ from uuid import UUID
 
 from sqlalchemy import update
 from sqlalchemy.orm import Session
+
 from backend import models
 from backend.api.crm._shared import persona_query, prepare_persona_for_output
 

@@ -6,8 +6,8 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from backend.analytics.proactive_ia import run_proactive_analysis
-from backend.core.database import SessionLocal
 from backend.api.evangelism_shared import sessions_grupo_has_estado_habilitacion
+from backend.core.database import SessionLocal
 
 log = logging.getLogger(__name__)
 

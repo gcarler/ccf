@@ -21,9 +21,13 @@ from backend.core.storage import storage_service
 from backend.core.uploads import MAX_UPLOAD_SIZE, sanitize_filename
 from backend.crud.crm import get_user_sede_id
 from backend.crud.projects import (
-    get_user_persona_id,
     create_milestone as _projects_create_milestone,
+)
+from backend.crud.projects import (
     delete_milestone as _projects_delete_milestone,
+)
+from backend.crud.projects import (
+    get_user_persona_id,
 )
 from backend.mesh_websockets import manager
 from backend.services.task_notifications import notify_task_assigned
