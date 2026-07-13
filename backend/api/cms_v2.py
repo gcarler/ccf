@@ -46,6 +46,7 @@ from backend.schemas._common import PaginatedResponse
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
+PUBLIC_CMS_RATE_LIMIT = 240
 
 # ── Section Types (platform-wide catalog admin endpoints) ─────────────────
 #
@@ -1517,7 +1518,7 @@ def workflow_page(
 @router.get(
     "/public/sites/{site_key}/theme",
     response_model=schemas.CmsThemeRead,
-    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_CMS_RATE_LIMIT, window_seconds=60))],
 )
 @cached_public(ttl=300)
 def public_theme(site_key: str, db: Session = Depends(get_db)):
@@ -1551,7 +1552,7 @@ def public_theme(site_key: str, db: Session = Depends(get_db)):
 
 @router.get(
     "/public/sites/{site_key}/menus/{menu_key}",
-    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_CMS_RATE_LIMIT, window_seconds=60))],
 )
 @cached_public(ttl=300)
 def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
@@ -1777,7 +1778,7 @@ def _build_section_defaults(
 @router.get(
     "/public/sites/{site_key}/pages",
     response_model=PaginatedResponse[schemas.CmsPageRead],
-    dependencies=[Depends(rate_limiter(limit=20, window_seconds=60))],
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_CMS_RATE_LIMIT, window_seconds=60))],
 )
 @cached_public(ttl=300)
 def public_pages_list(
@@ -1801,7 +1802,7 @@ def public_pages_list(
 @router.get(
     "/public/sites/{site_key}/pages/{slug}",
     response_model=schemas.CmsPublicPageRead,
-    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_CMS_RATE_LIMIT, window_seconds=60))],
 )
 @cached_public(ttl=300)
 def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
