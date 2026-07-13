@@ -16,6 +16,8 @@ import {
     Loader2,
     MousePointer2,
     Pencil,
+    RotateCcw,
+    RotateCw,
     Save,
     Share2,
     Sparkles,
@@ -35,8 +37,11 @@ import {
     saveProjectWhiteboard,
     GridStyle,
     GridSize,
+    WHITEBOARD_COLORS,
+    WHITEBOARD_COLOR_PRESETS,
 } from "@/lib/whiteboards";
 import { useAuth } from "@/context/AuthContext";
+import { useWhiteboardHistory } from "@/hooks/useWhiteboardHistory";
 
 type WhiteboardTool = "select" | "draw";
 
@@ -46,16 +51,7 @@ interface LayerRow {
     label: string;
 }
 
-const COLOR_PRESETS = [
-    "#2563eb", // blue-600
-    "#10b981", // emerald-500
-    "#f59e0b", // amber-500
-    "#f43f5e", // rose-500
-    "#8b5cf6", // #8b5cf6
-    "#f97316", // orange-500
-    "#64748b", // neutral-500
-    "#ffffff", // white
-];
+const COLOR_PRESETS = WHITEBOARD_COLOR_PRESETS;
 
 const FONT_FAMILIES = [
     { label: "Manrope", value: "Manrope" },
@@ -81,8 +77,8 @@ const GRID_SIZES: { label: string; value: GridSize }[] = [
 ];
 
 function getGridBackground(style: GridStyle, size: GridSize, isDark: boolean): string {
-    const color = isDark ? "#1e293b" : "#e5e7eb";
-    const dotColor = isDark ? "#334155" : "#cbd5e1";
+    const color = isDark ? WHITEBOARD_COLORS.gridDark : WHITEBOARD_COLORS.gridLight;
+    const dotColor = isDark ? WHITEBOARD_COLORS.gridDarkDot : WHITEBOARD_COLORS.gridLightDot;
     switch (style) {
         case "dots":
             return `radial-gradient(${dotColor} 1px, transparent 1px)`;
@@ -109,6 +105,9 @@ export default function WhiteboardSessionPage() {
     const saveTimerRef = useRef<number | null>(null);
     const { token } = useAuth();
 
+    // History hook for undo/redo
+    const history = useWhiteboardHistory({ maxStates: 50 });
+
     const [title, setTitle] = useState("Lienzo colaborativo");
     const [tool, setTool] = useState<WhiteboardTool>("select");
     const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -121,9 +120,9 @@ export default function WhiteboardSessionPage() {
     const [showGridMenu, setShowGridMenu] = useState(false);
 
     // Fill/Stroke/Text color state
-    const [fillColor, setFillColor] = useState("#2563eb");
-    const [strokeColor, setStrokeColor] = useState("#2563eb");
-    const [textColor, setTextColor] = useState("#0f172a");
+    const [fillColor, setFillColor] = useState(WHITEBOARD_COLORS.primary);
+    const [strokeColor, setStrokeColor] = useState(WHITEBOARD_COLORS.primary);
+    const [textColor, setTextColor] = useState(WHITEBOARD_COLORS.textPrimary);
 
     // Text properties
     const [textFontFamily, setTextFontFamily] = useState("Manrope");
@@ -183,8 +182,8 @@ export default function WhiteboardSessionPage() {
             return;
         }
         setSelectedObjectProps({ type: active.type });
-        setFillColor((active.fill as string) || "#2563eb");
-        setStrokeColor((active.stroke as string) || "#2563eb");
+        setFillColor((active.fill as string) || WHITEBOARD_COLORS.primary);
+        setStrokeColor((active.stroke as string) || WHITEBOARD_COLORS.primary);
         setStrokeWidth((active.strokeWidth as number) || 2);
         setOpacity(Math.round(((active.opacity as number) ?? 1) * 100));
         setObjLeft(Math.round((active.left as number) || 0));
@@ -262,9 +261,12 @@ export default function WhiteboardSessionPage() {
         if (!canvasRef.current || typeof window === "undefined" || !projectId || !token) return;
 
         const canvas = new fabric.Canvas(canvasRef.current, {
-            backgroundColor: "#ffffff",
+            backgroundColor: WHITEBOARD_COLORS.canvasDark,
             preserveObjectStacking: true,
             selection: true,
+            selectionColor: "rgba(37, 99, 235, 0.1)",
+            selectionBorderColor: WHITEBOARD_COLORS.primary,
+            selectionLineWidth: 1,
         });
         fabricCanvas.current = canvas;
 
@@ -303,6 +305,10 @@ export default function WhiteboardSessionPage() {
         loadSaved();
 
         const handleChanged = () => {
+            // Push to history stack (unless restoring)
+            if (!restoringRef.current) {
+                history.pushHistory(canvas);
+            }
             syncLayers();
             persistCanvas();
         };
@@ -342,6 +348,15 @@ export default function WhiteboardSessionPage() {
                 removeSelection();
                 e.preventDefault();
             }
+            // Undo/Redo shortcuts
+            else if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+                e.preventDefault();
+                history.undo(canvas);
+            }
+            else if ((e.ctrlKey || e.metaKey) && e.key === "y") {
+                e.preventDefault();
+                history.redo(canvas);
+            }
         };
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
@@ -356,7 +371,7 @@ export default function WhiteboardSessionPage() {
         if (next === "draw") {
             canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
             canvas.freeDrawingBrush.width = 3;
-            canvas.freeDrawingBrush.color = "#2563eb";
+            canvas.freeDrawingBrush.color = WHITEBOARD_COLORS.primary;
         }
     };
 
@@ -370,8 +385,8 @@ export default function WhiteboardSessionPage() {
             height: 110,
             rx: 18,
             ry: 18,
-            fill: "rgba(37, 99, 235, 0.08)",
-            stroke: "#2563eb",
+            fill: WHITEBOARD_COLORS.primaryLight,
+            stroke: WHITEBOARD_COLORS.primary,
             strokeWidth: 2,
         });
         canvas.add(rect);
@@ -386,8 +401,8 @@ export default function WhiteboardSessionPage() {
             left: 140,
             top: 150,
             radius: 54,
-            fill: "rgba(16, 185, 129, 0.1)",
-            stroke: "#10b981",
+            fill: WHITEBOARD_COLORS.successLight,
+            stroke: WHITEBOARD_COLORS.success,
             strokeWidth: 2,
         });
         canvas.add(circle);
@@ -402,7 +417,7 @@ export default function WhiteboardSessionPage() {
             left: 160,
             top: 170,
             fontSize: 24,
-            fill: "#0f172a",
+            fill: WHITEBOARD_COLORS.textPrimary,
             fontFamily: "Manrope",
         });
         canvas.add(text);
@@ -531,6 +546,22 @@ export default function WhiteboardSessionPage() {
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     <ToolbarButton icon={Eraser} active={false} onClick={removeSelection} label="Borrar selección" />
                     <ToolbarButton icon={Trash2} active={false} onClick={clearCanvas} label="Limpiar lienzo" tone="danger" />
+                    <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                    {/* Undo/Redo buttons */}
+                    <ToolbarButton
+                        icon={RotateCcw}
+                        active={false}
+                        onClick={() => fabricCanvas.current && history.undo(fabricCanvas.current)}
+                        label="Deshacer (Ctrl+Z)"
+                        disabled={!history.canUndo}
+                    />
+                    <ToolbarButton
+                        icon={RotateCw}
+                        active={false}
+                        onClick={() => fabricCanvas.current && history.redo(fabricCanvas.current)}
+                        label="Rehacer (Ctrl+Y)"
+                        disabled={!history.canRedo}
+                    />
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     {/* Grid style toggle */}
                     <div className="relative">
@@ -880,7 +911,7 @@ function addStarterObjects(canvas: fabric.Canvas) {
         left: 96,
         top: 80,
         fontSize: 28,
-        fill: "#0f172a",
+        fill: WHITEBOARD_COLORS.textPrimary,
         fontFamily: "Manrope",
         fontWeight: "bold",
     });
@@ -891,15 +922,15 @@ function addStarterObjects(canvas: fabric.Canvas) {
         height: 120,
         rx: 20,
         ry: 20,
-        fill: "rgba(37, 99, 235, 0.08)",
-        stroke: "#2563eb",
+        fill: WHITEBOARD_COLORS.primaryLight,
+        stroke: WHITEBOARD_COLORS.primary,
         strokeWidth: 2,
     });
     const text = new fabric.IText("Doble clic para editar", {
         left: 118,
         top: 195,
         fontSize: 18,
-        fill: "#1e293b",
+        fill: WHITEBOARD_COLORS.textSecondary,
         fontFamily: "Manrope",
     });
     canvas.add(title, box, text);
@@ -923,24 +954,28 @@ function ToolbarButton({
     onClick,
     label,
     tone = "default",
+    disabled = false,
 }: {
     icon: React.ElementType;
     active: boolean;
     onClick: () => void;
     label: string;
     tone?: "default" | "danger";
+    disabled?: boolean;
 }) {
     return (
         <button
             onClick={onClick}
             title={label}
+            disabled={disabled}
             className={clsx(
                 "group relative flex size-10 items-center justify-center rounded-lg transition-all",
                 active
                     ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20"
                     : tone === "danger"
                         ? "text-rose-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
-                        : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
+                        : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5",
+                disabled && "opacity-30 cursor-not-allowed"
             )}
         >
             <Icon size={20} />
