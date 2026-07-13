@@ -16,11 +16,17 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "crm_plantillas_mensaje",
-        sa.Column("contenido_html", sa.Text(), nullable=True),
-    )
+    bind = op.get_bind()
+    columns = {col["name"] for col in sa.inspect(bind).get_columns("crm_plantillas_mensaje")}
+    if "contenido_html" not in columns:
+        op.add_column(
+            "crm_plantillas_mensaje",
+            sa.Column("contenido_html", sa.Text(), nullable=True),
+        )
 
 
 def downgrade() -> None:
-    op.drop_column("crm_plantillas_mensaje", "contenido_html")
+    bind = op.get_bind()
+    columns = {col["name"] for col in sa.inspect(bind).get_columns("crm_plantillas_mensaje")}
+    if "contenido_html" in columns:
+        op.drop_column("crm_plantillas_mensaje", "contenido_html")
