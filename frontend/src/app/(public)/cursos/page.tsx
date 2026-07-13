@@ -6,7 +6,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle2, Clock, User } from "lucide-react";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
-import { apiFetch } from "@/lib/http";
 import PublicHeroWithSlides, { type PublicSlide } from "@/components/public/PublicHeroWithSlides";
 import type { CourseSummary } from "@/types/academy";
 
@@ -50,22 +49,8 @@ export default function CursosPage() {
     : "";
 
   useEffect(() => {
-    let alive = true;
-    apiFetch<PublicCourse[]>("/academy/courses", { silent: true })
-      .then((data) => {
-        if (!alive) return;
-        setCourses(Array.isArray(data) ? data.filter((c) => Boolean(c.id) && Boolean(c.title)) : []);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setCourses([]);
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
+    setCourses([]);
+    setLoading(false);
   }, []);
 
   const featured = courses[0];
