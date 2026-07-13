@@ -71,9 +71,10 @@
 - [ ] 1. `git status --short` — sin cambios locales no deseados
 - [ ] 2. Tests pasan localmente: `python3 -m pytest tests/ -q --tb=short`
 - [ ] 3. Quality gate: `python3 scripts/auditing/quality_gate.py`
-- [ ] 4. Migraciones Alembic generadas: `alembic revision --autogenerate -m "..."` si aplica
-- [ ] 5. Migraciones aplicadas en staging: `alembic upgrade head`
-- [ ] 6. Backup de BD ejecutado antes del deploy
+- [ ] 4. Production readiness: `python3 scripts/auditing/production_readiness.py --strict`
+- [ ] 5. Migraciones Alembic generadas: `alembic revision --autogenerate -m "..."` si aplica
+- [ ] 6. Migraciones aplicadas en staging: `alembic upgrade head`
+- [ ] 7. Backup de BD ejecutado antes del deploy
 
 ### Deploy Paso a Paso (VPS Directo)
 
@@ -99,6 +100,7 @@ git pull origin main
 curl -f https://elfarocc.tech/healthz
 curl -f https://elfarocc.tech/api/system/health
 curl -f https://elfarocc.tech/
+python3 scripts/auditing/production_readiness.py
 ```
 
 ### Deploy Rápido (Hotfix — solo backend)
@@ -165,6 +167,12 @@ curl -f https://elfarocc.tech/api/system/health
 ```bash
 # Estado de procesos
 ./stopccf --status        # o ver .started_pids
+pm2 list
+
+# Readiness global
+cd /root/ccf
+python3 scripts/auditing/production_readiness.py
+cat test_artifacts/production_readiness.md
 
 # Logs del backend
 tail -f /root/ccf/backend.log
