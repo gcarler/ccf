@@ -231,8 +231,13 @@ def test_grade_submission_blocks_cross_sede(client, db_session):
         db_session, email="editorA@example.com", password="testpass123"
     )
     # Estudiante + sede B independientes (cada seed crea su propia Sede).
+    sede_b_id = _uuid.uuid4()
     _student_b, persona_b, sede_b = seed_user_with_role(
-        db_session, role_name="academy_student", email="studentB@example.com", password="testpass123"
+        db_session,
+        role_name="academy_student",
+        email="studentB@example.com",
+        password="testpass123",
+        sede_id=sede_b_id,
     )
     assert sede_a.id != sede_b.id, "Las sedes A y B deben ser distintas"
 

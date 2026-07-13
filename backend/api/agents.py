@@ -348,6 +348,21 @@ def search_agents(
     return agents
 
 
+@router.get("", response_model=TypingList[AgentResponse])
+def list_agents(
+    limit: int = 100,
+    db=Depends(get_db),
+    _user: models.User = Depends(require_active_user),
+):
+    return (
+        db.query(AgentModel)
+        .filter(AgentModel.is_active)
+        .order_by(AgentModel.first_name.asc(), AgentModel.last_name.asc())
+        .limit(limit)
+        .all()
+    )
+
+
 @router.get("/profile/{agent_id}", response_model=AgentProfileResponse)
 def get_agent_profile(
     agent_id: uuid.UUID,
