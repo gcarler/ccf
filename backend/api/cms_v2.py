@@ -177,9 +177,9 @@ def get_allowed_section_types(db: Session) -> set[str]:
         types = {row[0] for row in rows}
         if types:
             return types
-    except Exception:
+    except Exception as exc:
         # If table missing or any error, fall back
-        logger.debug("Section type catalog query failed, using hardcoded fallback")
+        logger.debug("Section type catalog query failed, using hardcoded fallback: %s", exc)
     # Fallback hardcoded list (kept in sync with scripts/seed_cms_section_types.py)
     return {
         "hero",
@@ -1187,7 +1187,8 @@ def cms_readiness(
             )
             .count()
         )
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to query redirects or broken links for CMS readiness")
         db.rollback()
 
     issues: list[cms_schemas.CmsReadinessIssue] = []
@@ -2699,8 +2700,8 @@ def track_page_view(page_key: str, request: Request, db: Session = Depends(get_d
                 )
             )
             db.commit()
-    except Exception:
-        logger.warning("Analytics tracking failed for page_key=%s", page_key, exc_info=True)
+    except Exception as exc:
+        logger.warning("Analytics tracking failed for page_key=%s: %s", page_key, exc)
     return {"ok": True}
 
 

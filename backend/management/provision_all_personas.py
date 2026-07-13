@@ -4,7 +4,7 @@ One-shot provisioning script:
   create a Usuario with:
     - same UUID as Persona
     - username derived from email prefix
-    - default password: 1234567
+    - random 12-char password (printed for admin distribution)
     - role: MIEMBRO (profile + academy only)
     - is_active: true
 
@@ -12,6 +12,8 @@ Run:  python -m backend.management.provision_all_personas
 """
 
 import logging
+import secrets
+import string
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -22,8 +24,16 @@ from backend.models_auth import RolPlataforma, Usuario
 
 log = logging.getLogger(__name__)
 
-DEFAULT_PASSWORD = "1234567"
 DEFAULT_PERSONA_ROLE_NAME = "MIEMBRO"
+
+
+def _generate_password(length: int = 12) -> str:
+    alphabet = string.ascii_letters + string.digits + "!@#$%&*"
+    while True:
+        pw = "".join(secrets.choice(alphabet) for _ in range(length))
+        if (any(c.islower() for c in pw) and any(c.isupper() for c in pw)
+                and any(c.isdigit() for c in pw) and any(c in "!@#$%&*" for c in pw)):
+            return pw
 
 
 def _resolve_persona_default_role(db: Session) -> RolPlataforma:
@@ -44,9 +54,9 @@ def _resolve_persona_default_role(db: Session) -> RolPlataforma:
     return role
 
 
-def provision_all(db: Session) -> int:
+def provision_all(db: Session) -> tuple[int, list[dict[str, str]]]:
     """Create auth_users for every Persona with email that lacks one.
-    Returns the count of newly created users.
+    Returns the count of newly created users and one-time credentials.
     """
     persona_default_role = _resolve_persona_default_role(db)
 
@@ -90,6 +100,7 @@ def provision_all(db: Session) -> int:
 
     created = 0
     skipped = 0
+    credentials: list[dict[str, str]] = []
     for row in rows:
         pid, email, full_name, first_name, last_name = row
         # derive username from email prefix (remove dots for uniqueness)
@@ -122,12 +133,13 @@ def provision_all(db: Session) -> int:
 
         display_name = full_name or f"{first_name or ''} {last_name or ''}".strip() or username
 
+        temp_password = _generate_password()
         usuario = Usuario(
             id=pid,
             sede_id=sede_id,
             username=username,
             email=email,
-            password_hash=hash_password(DEFAULT_PASSWORD),
+            password_hash=hash_password(temp_password),
             rol_plataforma_id=persona_default_role.id,
             is_active=True,
             is_email_verified=False,
@@ -136,6 +148,7 @@ def provision_all(db: Session) -> int:
 
         try:
             db.flush()
+            credentials.append({"username": username, "email": email, "temp_password": temp_password})
             log.info("Created user: %s (%s) — %s", username, email, display_name)
             created += 1
         except Exception as e:
@@ -146,7 +159,7 @@ def provision_all(db: Session) -> int:
 
     db.commit()
     log.info("Done. Created: %d  Skipped: %d", created, skipped)
-    return created
+    return created, credentials
 
 
 if __name__ == "__main__":
@@ -154,8 +167,10 @@ if __name__ == "__main__":
     from backend.core.database import get_db
     db = next(get_db())
     try:
-        count = provision_all(db)
-        print(f"\n✅ {count} usuarios creados con contraseña predeterminada '{DEFAULT_PASSWORD}'")
+        count, credentials = provision_all(db)
+        print(f"\n✅ {count} usuarios creados con contraseñas aleatorias")
+        for item in credentials:
+            print(f"{item['email']}\t{item['username']}\t{item['temp_password']}")
     except Exception as e:
         print(f"\n❌ Error: {e}")
         raise

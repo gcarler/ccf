@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime as _datetime
 from datetime import timezone as _timezone
 from types import SimpleNamespace
@@ -28,6 +29,7 @@ from backend.core.tenant import require_user_sede_id
 from backend.models import Asistencia, GrupoEvangelismo, SesionGrupo
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 def _session_read_options(db: Session):
     return session_read_only_options(db)
@@ -294,7 +296,8 @@ def add_groups_attendance(
 
     try:
         db.commit()
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to commit attendance for session=%s", session_id)
         db.rollback()
         raise
     return {"status": "success", "processed": processed, "session_id": session_id}
@@ -407,7 +410,8 @@ def submit_attendance(
 
     try:
         db.commit()
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to commit attendance submission for session=%s", session_id)
         db.rollback()
         raise
     for att in submitted:

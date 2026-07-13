@@ -1,3 +1,4 @@
+import logging
 import uuid as _uuid
 from datetime import datetime, timezone
 from uuid import UUID
@@ -16,6 +17,8 @@ from backend.services.messaging_outcomes import (
     CommunicationOutcome,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def _payload_key(name: str) -> str:
     return name
@@ -31,7 +34,8 @@ def _persona_live_column_names(db: Session) -> set[str]:
         return set()
     try:
         columns = inspect(bind).get_columns("personas")
-    except Exception:
+    except Exception as exc:
+        logger.debug("Failed to inspect personas columns: %s", exc)
         return set()
     return {str(column.get("name")) for column in columns if column.get("name")}
 
@@ -42,7 +46,8 @@ def _case_live_column_names(db: Session) -> set[str]:
         return set()
     try:
         columns = inspect(bind).get_columns("crm_casos")
-    except Exception:
+    except Exception as exc:
+        logger.debug("Failed to inspect crm_casos columns: %s", exc)
         return set()
     return {str(column.get("name")) for column in columns if column.get("name")}
 
@@ -66,7 +71,8 @@ def _stage_live_column_names(db: Session) -> set[str]:
         return set()
     try:
         columns = inspect(bind).get_columns("crm_etapas_pipeline")
-    except Exception:
+    except Exception as exc:
+        logger.debug("Failed to inspect crm_etapas_pipeline columns: %s", exc)
         return set()
     return {str(column.get("name")) for column in columns if column.get("name")}
 
@@ -131,7 +137,8 @@ def prepare_persona_for_output(db: Session, persona: models.Persona):
         if hasattr(models.Persona, field_name):
             try:
                 setattr(persona, field_name, None)
-            except Exception:
+            except Exception as exc:
+                logger.debug("Failed to set persona field %s to None: %s", field_name, exc)
                 persona.__dict__[field_name] = None
     return persona
 
@@ -144,7 +151,8 @@ def prepare_case_for_output(db: Session, case: models.CasoCRM):
         if hasattr(models.CasoCRM, field_name):
             try:
                 setattr(case, field_name, None)
-            except Exception:
+            except Exception as exc:
+                logger.debug("Failed to set case field %s to None: %s", field_name, exc)
                 case.__dict__[field_name] = None
     persona = getattr(case, "persona", None)
     if persona is not None:

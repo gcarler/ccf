@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Any, Dict
 
@@ -15,6 +16,8 @@ from backend.api.workspace_shared import (
     SNAPSHOT_HISTORY_FILE,
 )
 from backend.core.file_lock import file_lock
+
+logger = logging.getLogger(__name__)
 
 
 def _now_iso() -> str:
@@ -100,7 +103,8 @@ def _load_workspace_config() -> Dict[str, Any]:
             return merged
     except MemoryError:
         raise
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to load workspace config from %s", FLAGS_FILE)
         return DEFAULT_WORKSPACE_CONFIG
     return DEFAULT_WORKSPACE_CONFIG
 
@@ -125,7 +129,8 @@ def _load_incidents() -> list[Dict[str, Any]]:
         payload = json.loads(INCIDENTS_FILE.read_text(encoding="utf-8"))
     except MemoryError:
         raise
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to load incidents from %s", INCIDENTS_FILE)
         return []
     if not isinstance(payload, list):
         return []

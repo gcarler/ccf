@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any, Dict, List
 
@@ -21,6 +22,7 @@ from backend.core.permissions import (
 from backend.models_shared import _utcnow
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _serialize_automation(rule: models.AutomationRule) -> schemas.AutomationRuleRead:
@@ -1006,7 +1008,8 @@ def list_auth_role_definitions(
             {"id": str(r.id), "nombre": r.nombre, "permisos": r.permisos}
             for r in roles
         ]
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to list auth role definitions")
         return []
 
 
@@ -1110,7 +1113,8 @@ def list_user_module_roles(
             }
             for umr, r in rows
         ]
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to list user module roles")
         return []
 
 
@@ -1230,11 +1234,21 @@ def provision_personas_sin_cuenta(
 ):
     """Crea cuentas de plataforma para todas las personas con email que aún no tienen auth_user.
     - username = prefijo del email
-    - password por defecto = 1234567
+    - password = aleatoria de 12 caracteres (el admin la distribuye; el usuario puede usar forgot-password)
     - rol = MIEMBRO
     """
+    import secrets
+    import string
     from backend.core.permissions import hash_password
     from backend.models_auth import RolPlataforma, Usuario
+
+    def _generate_password(length: int = 12) -> str:
+        alphabet = string.ascii_letters + string.digits + "!@#$%&*"
+        while True:
+            pw = "".join(secrets.choice(alphabet) for _ in range(length))
+            if (any(c.islower() for c in pw) and any(c.isupper() for c in pw)
+                    and any(c.isdigit() for c in pw) and any(c in "!@#$%&*" for c in pw)):
+                return pw
 
     default_role = db.query(RolPlataforma).filter(
         RolPlataforma.nombre == "MIEMBRO"
@@ -1263,6 +1277,7 @@ def provision_personas_sin_cuenta(
     created = 0
     skipped = 0
     errors = []
+    accounts_created = []
 
     for row in rows:
         pid, email, full_name, first_name, last_name = row
@@ -1289,12 +1304,13 @@ def provision_personas_sin_cuenta(
             continue
 
         try:
+            temp_password = _generate_password()
             usuario = Usuario(
                 id=pid,
                 sede_id=sede.id,
                 username=username,
                 email=email,
-                password_hash=hash_password("1234567"),
+                password_hash=hash_password(temp_password),
                 rol_plataforma_id=default_role.id,
                 is_active=True,
                 is_email_verified=False,
@@ -1302,6 +1318,11 @@ def provision_personas_sin_cuenta(
             db.add(usuario)
             db.flush()
             created += 1
+            accounts_created.append({
+                "email": email,
+                "username": username,
+                "temp_password": temp_password,
+            })
         except Exception as e:
             db.rollback()
             skipped += 1
@@ -1313,5 +1334,6 @@ def provision_personas_sin_cuenta(
         "created": created,
         "skipped": skipped,
         "errors": errors,
-        "message": f"{created} cuentas creadas. {skipped} omitidas.",
+        "accounts": accounts_created,
+        "message": f"{created} cuentas creadas. {skipped} omitidas. Distribuir contraseñas temporales a cada usuario.",
     }

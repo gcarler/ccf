@@ -13,6 +13,7 @@ Endpoints:
 from __future__ import annotations
 
 import datetime as _dt
+import logging
 import math as _math
 import uuid as _uuid
 from collections import defaultdict
@@ -29,6 +30,7 @@ from backend.core.permissions import require_active_user
 from backend.core.tenant import get_user_sede_id
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────────────────
 # Constants
@@ -393,7 +395,8 @@ def _bucket_label(key: str, use_weeks: bool) -> str:
     try:
         year, month = key.split("-")
         return f"{_months[int(month)]} {year[2:]}"
-    except Exception:
+    except Exception as exc:
+        logger.debug("Failed to parse bucket key=%r: %s", key, exc)
         return key
 
 
@@ -1014,7 +1017,8 @@ def _age_bucket(birthday) -> str:
     try:
         bday = birthday.date() if hasattr(birthday, "date") else birthday
         age = today.year - bday.year - ((today.month, today.day) < (bday.month, bday.day))
-    except Exception:
+    except Exception as exc:
+        logger.debug("Failed to calculate age from birthday=%r: %s", birthday, exc)
         return "Desconocido"
     if age < 12:
         return "Niños"

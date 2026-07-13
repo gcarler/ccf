@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 from typing import Optional
 from uuid import UUID
 
@@ -9,6 +10,8 @@ from sqlalchemy.orm import Session, load_only
 
 from backend import models
 from backend.services.messaging_outcomes import DELIVERED_OUTCOMES, CommunicationOutcome
+
+logger = logging.getLogger(__name__)
 
 ABSENTEES_PREVIEW_LIMIT = 50
 ABSENCE_REASON_LABELS = {
@@ -36,7 +39,8 @@ def _sessions_grupo_live_column_names(db: Session) -> set[str]:
         return set()
     try:
         columns = inspect(bind).get_columns("sesiones_grupo")
-    except Exception:
+    except Exception as exc:
+        logger.debug("Failed to inspect sesiones_grupo columns: %s", exc)
         return set()
     return {str(column.get("name")) for column in columns if column.get("name")}
 
@@ -281,13 +285,11 @@ def _check_first_time_lead_trigger(db: Session, session_id: UUID):
             try:
                 p.church_role = "lead_nuevo"
                 db.commit()
-            except Exception:
-                import logging
-                logger = logging.getLogger(__name__)
+            except Exception as exc:
                 logger.warning(
-                    "Failed to update church_role to lead_nuevo for persona %s",
+                    "Failed to update church_role to lead_nuevo for persona %s: %s",
                     att.persona_id,
-                    exc_info=True,
+                    exc,
                 )
 
 

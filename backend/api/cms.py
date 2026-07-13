@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import uuid
 from datetime import datetime, timezone
@@ -30,6 +31,7 @@ from backend.services.image_optimizer import ImageOptimizer
 
 # CMS endpoints — preferir /cms/v2/* en integraciones nuevas.
 router = APIRouter(tags=["cms"])
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
@@ -516,8 +518,8 @@ async def upload_cms_media(
                 original_name = os.path.splitext(original_name)[0] + output_ext
                 mime_type = f"image/{output_ext.lstrip('.')}"
             content = optimized_bytes
-        except Exception:
-            pass  # Fall back to original if optimization fails
+        except Exception as exc:
+            logger.debug("Image optimization failed for %s, falling back to original: %s", original_name, exc)
 
     url = storage_service.save_file(content, original_name, subfolder="cms")
     parsed_tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
