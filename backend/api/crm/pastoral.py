@@ -11,24 +11,24 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.crm._shared import (
+    _case_created_column,
+    _case_stage,
+    _case_status,
+    _enum_value,
     _get_scoped_counseling_ticket,
     _get_scoped_grupo,
     _get_scoped_persona,
     _get_scoped_prayer_request,
     _get_scoped_task,
-    _case_created_column,
-    _case_stage,
-    _case_status,
-    _enum_value,
-    case_query,
     _persona_full_name,
-    persona_query,
-    prepare_case_for_output,
     _resolve_assignee_for_task,
     _scope_by_user_sede_via_persona,
     _serialize_case,
     _serialize_message_group,
     _serialize_task,
+    case_query,
+    persona_query,
+    prepare_case_for_output,
     utc_now,
 )
 from backend.core.database import get_db
@@ -1104,6 +1104,7 @@ def get_copilot_draft(
     )
 
     import os
+
     from backend.core.config import get_settings
     settings = get_settings()
     openai_api_key = (
@@ -1115,6 +1116,7 @@ def get_copilot_draft(
     is_mock = False
     try:
         from unittest.mock import MagicMock, Mock
+
         from openai import OpenAI
         if isinstance(OpenAI, (MagicMock, Mock)) or hasattr(OpenAI, "_mock_return_value"):
             is_mock = True
@@ -1660,21 +1662,26 @@ def update_crm_role(
 @router.delete("/roles/{role_id}", response_model=dict)
 def delete_crm_role(
     role_id: UUID,
-    fallback_id: UUID,
+    fallback_id: UUID | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
+    role = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
+    if not role:
+        raise HTTPException(status_code=404, detail="Rol a eliminar no encontrado")
+    if fallback_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Debe indicar un rol de reemplazo para eliminar este rol",
+        )
     if fallback_id == role_id:
         raise HTTPException(
             status_code=400,
             detail="El rol de reemplazo no puede ser el mismo rol a eliminar",
         )
-    role = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
     fallback = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == fallback_id).first()
-    if not role:
-        raise HTTPException(status_code=404, detail="Rol a eliminar no encontrado")
     if not fallback:
-        raise HTTPException(status_code=400, detail="Rol de reemplazo no valido")
+        raise HTTPException(status_code=404, detail="Rol de reemplazo no encontrado")
     db.query(models.Persona).filter(models.Persona.church_role == role.name).update({"church_role": fallback.name})
     role.deleted_at = utc_now()
     db.commit()

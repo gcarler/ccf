@@ -10,15 +10,15 @@ from backend.api.crm._shared import (
     _case_created_column,
     _get_scoped_family,
     _get_scoped_persona,
-    case_query,
     _scope_by_user_sede_via_persona,
-    prepare_case_for_output,
     _serialize_case,
+    _serialize_task,
+    case_query,
+    prepare_case_for_output,
 )
 from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access
 from backend.core.tenant import get_user_sede_id
-from backend.crud.crm_.shared import resolve_persona_id_for_user
 
 router = APIRouter(tags=["CRM"])
 
@@ -34,6 +34,28 @@ def _get_user_role(user: models.User) -> str:
     if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
         role = normalize_role(user.rol_plataforma.nombre)
     return role
+
+
+def _serialize_persona_position(persona_position, position) -> dict:
+    return {
+        "id": persona_position.id,
+        "persona_id": persona_position.persona_id,
+        "position_id": persona_position.position_id,
+        "position_name": position.name if position else None,
+        "category": position.category if position else None,
+        "start_date": (
+            persona_position.start_date.isoformat()
+            if persona_position.start_date
+            else None
+        ),
+        "end_date": (
+            persona_position.end_date.isoformat()
+            if persona_position.end_date
+            else None
+        ),
+        "is_active": persona_position.is_active,
+        "notes": persona_position.notes,
+    }
 
 
 @router.get("/personas/{persona_id}/communications", response_model=List[schemas.CommunicationLog])
@@ -135,29 +157,10 @@ def get_persona_crm_profile(
         cases = cases.order_by(models.CasoCRM.id.desc()).all()
     case_rows = [_serialize_case(prepare_case_for_output(db, case)) for case in cases]
 
-    position_rows = []
-    for persona_position, position in positions:
-        position_rows.append(
-            {
-                "id": persona_position.id,
-                "persona_id": persona_position.persona_id,
-                "position_id": persona_position.position_id,
-                "position_name": position.name if position else None,
-                "category": position.category if position else None,
-                "start_date": (
-                    persona_position.start_date.isoformat()
-                    if persona_position.start_date
-                    else None
-                ),
-                "end_date": (
-                    persona_position.end_date.isoformat()
-                    if persona_position.end_date
-                    else None
-                ),
-                "is_active": persona_position.is_active,
-                "notes": persona_position.notes,
-            }
-        )
+    position_rows = [
+        _serialize_persona_position(persona_position, position)
+        for persona_position, position in positions
+    ]
 
     return {
         "persona": {
@@ -169,6 +172,89 @@ def get_persona_crm_profile(
         },
         "positions": position_rows,
         "cases": case_rows,
+    }
+
+
+@router.get("/personas/{persona_id}/positions", response_model=List[dict])
+def get_persona_positions(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
+):
+    """Devuelve los cargos de una persona, siempre limitado por sede."""
+    persona = _get_scoped_persona(db, current_user, persona_id)
+    rows = (
+        db.query(models.PersonaPosition, models.Position)
+        .join(models.Position, models.Position.id == models.PersonaPosition.position_id)
+        .filter(models.PersonaPosition.persona_id == persona.id)
+        .order_by(
+            models.PersonaPosition.is_active.desc(),
+            models.PersonaPosition.start_date.desc(),
+        )
+        .all()
+    )
+    return [
+        _serialize_persona_position(persona_position, position)
+        for persona_position, position in rows
+    ]
+
+
+@router.get("/personas/{persona_id}/consolidation", response_model=dict)
+def get_persona_consolidation(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
+):
+    """Resumen de seguimiento pastoral/consolidacion de una persona por sede."""
+    persona = _get_scoped_persona(db, current_user, persona_id)
+
+    cases_q = case_query(db).filter(
+        models.CasoCRM.persona_id == persona.id,
+        models.CasoCRM.deleted_at.is_(None),
+    )
+    created_col = _case_created_column(db)
+    if created_col is not None:
+        cases = cases_q.order_by(created_col.desc()).all()
+    else:
+        cases = cases_q.order_by(models.CasoCRM.id.desc()).all()
+
+    tasks = (
+        db.query(models.TareaCRM)
+        .filter(
+            models.TareaCRM.persona_id == persona.id,
+            models.TareaCRM.deleted_at.is_(None),
+        )
+        .order_by(models.TareaCRM.created_at.desc())
+        .all()
+    )
+
+    communications_count = (
+        db.query(models.CommunicationLog)
+        .filter(models.CommunicationLog.persona_id == persona.id)
+        .count()
+    )
+
+    open_tasks_count = sum(1 for task in tasks if task.status != "completed")
+    case_rows = [_serialize_case(prepare_case_for_output(db, case)) for case in cases]
+    task_rows = [_serialize_task(task) for task in tasks]
+
+    return {
+        "persona_id": str(persona.id),
+        "persona": {
+            "id": str(persona.id),
+            "first_name": persona.first_name,
+            "last_name": persona.last_name,
+            "church_role": persona.church_role,
+            "spiritual_status": persona.spiritual_status,
+        },
+        "summary": {
+            "cases_count": len(case_rows),
+            "tasks_count": len(task_rows),
+            "open_tasks_count": open_tasks_count,
+            "communications_count": communications_count,
+        },
+        "cases": case_rows,
+        "tasks": task_rows,
     }
 
 
