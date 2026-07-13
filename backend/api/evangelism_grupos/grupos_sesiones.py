@@ -629,17 +629,18 @@ def toggle_session_habilitacion(
 
     # Resolver persona del usuario actual
     persona = _get_persona_for_user(db, current_user.id)
+    habilitado_en = utc_now()
 
     if sessions_grupo_has_estado_habilitacion(db):
         session.estado_habilitacion = nuevo_estado
         session.habilitado_por = persona.id if persona else None
-        session.habilitado_en = utc_now()
+        session.habilitado_en = habilitado_en
         db.commit()
 
     return {
         "session_id": session_id,
-        "estado_habilitacion": session_estado_habilitacion(session, default=nuevo_estado),
-        "habilitado_en": session.habilitado_en.isoformat() if session.habilitado_en else None,
+        "estado_habilitacion": nuevo_estado,
+        "habilitado_en": habilitado_en.isoformat(),
     }
 
 
