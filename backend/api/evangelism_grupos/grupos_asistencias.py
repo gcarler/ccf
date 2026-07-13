@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime as _datetime
 from datetime import timezone as _timezone
+from types import SimpleNamespace
 from typing import List
 from uuid import UUID
 
@@ -385,6 +386,25 @@ def submit_attendance(
     if "reported_at" in live_columns:
         session.reported_at = utc_now()
 
+    session_fecha_sesion = session_read_value(session, "fecha_sesion")
+    bridge_group = (
+        db.query(GrupoEvangelismo)
+        .filter(
+            models.GrupoEvangelismo.id == session.grupo_id,
+            models.GrupoEvangelismo.sede_id == user_sede,
+            models.GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .first()
+    )
+    bridge_group_snapshot = None
+    if bridge_group:
+        bridge_group_snapshot = {
+            "id": bridge_group.id,
+            "nombre": bridge_group.nombre,
+            "sede_id": bridge_group.sede_id,
+            "estrategia_id": bridge_group.estrategia_id,
+        }
+
     try:
         db.commit()
     except Exception:
@@ -407,25 +427,30 @@ def submit_attendance(
             persona = db.query(Persona).filter(Persona.id == candidate["persona_id"]).first()
             if not persona:
                 continue
-            grupo = session.grupo
-            if not grupo:
+            if not bridge_group_snapshot:
                 continue
-            sede_id = grupo.sede_id
+            sede_id = bridge_group_snapshot["sede_id"]
             if not sede_id:
                 continue
-            caso = crear_caso_desde_asistencia(db, att, persona, grupo, session, sede_id)
-            estrategia = grupo.estrategia
+            grupo_ref = SimpleNamespace(
+                id=bridge_group_snapshot["id"],
+                nombre=bridge_group_snapshot["nombre"],
+                estrategia_id=bridge_group_snapshot["estrategia_id"],
+            )
+            session_ref = SimpleNamespace(id=session_id)
+            caso = crear_caso_desde_asistencia(db, att, persona, grupo_ref, session_ref, sede_id)
+            estrategia_id = bridge_group_snapshot["estrategia_id"]
             tags_nuevos = [
-                f"VISITANTE_ESTRATEGIA_{estrategia.id}" if estrategia else "VISITANTE_ESTRATEGIA_NONE",
-                f"GRUPO_{grupo.nombre}",
-                f"SESION_{session.fecha_sesion.date().isoformat()}"
-                if session.fecha_sesion
-                else f"SESION_{session.id}",
+                f"VISITANTE_ESTRATEGIA_{estrategia_id}" if estrategia_id else "VISITANTE_ESTRATEGIA_NONE",
+                f"GRUPO_{bridge_group_snapshot['nombre']}",
+                f"SESION_{session_fecha_sesion.date().isoformat()}"
+                if session_fecha_sesion
+                else f"SESION_{session_id}",
             ]
             persona.tags = list(set((persona.tags or []) + tags_nuevos))
-            if estrategia:
-                persona.origen_estrategia_id = estrategia.id
-            persona.origen_grupo_id = grupo.id
+            if estrategia_id:
+                persona.origen_estrategia_id = estrategia_id
+            persona.origen_grupo_id = bridge_group_snapshot["id"]
             persona.origen_fecha = _datetime.now(_timezone.utc)
             persona.spiritual_status = "VISITANTE_EVANGELISMO"
             db.commit()
@@ -433,8 +458,8 @@ def submit_attendance(
 
             evento = {
                 "origen_modulo": "EVANGELISMO",
-                "grupo_id": str(grupo.id),
-                "sesion_id": str(session.id),
+                "grupo_id": str(bridge_group_snapshot["id"]),
+                "sesion_id": str(session_id),
                 "estado": "CREADO" if caso else "TRIGGERED_SIN_CASO",
                 "visitante_kernel": {
                     "persona_id": str(persona.id),
