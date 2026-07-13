@@ -91,14 +91,31 @@ export default function LeadDetail() {
         if (!token || !leadId) return;
         setLoading(true);
         try {
-            const [leadData, logsData, counselingData] = await Promise.allSettled([
+            const [leadData, logsData] = await Promise.allSettled([
                 apiFetch(`/crm/casos/${leadId}`, { token, cache: 'no-store' }),
                 apiFetch<CallLog[]>(`/crm/casos/${leadId}/calls`, { token, cache: 'no-store' }),
-                apiFetch(`/crm/counseling/lead/${leadId}`, { token, cache: 'no-store' }),
             ]);
-            if (leadData.status === 'fulfilled') setLead(leadData.value);
+            if (leadData.status === 'fulfilled') {
+                const leadValue = leadData.value as { persona_id?: string | null };
+                setLead(leadValue);
+                if (leadValue.persona_id) {
+                    try {
+                        const counselingData = await apiFetch(`/crm/counseling/lead/${leadValue.persona_id}`, {
+                            token,
+                            cache: 'no-store',
+                        });
+                        setCounselingSessions(Array.isArray(counselingData) ? counselingData : []);
+                    } catch {
+                        setCounselingSessions([]);
+                    }
+                } else {
+                    setCounselingSessions([]);
+                }
+            } else {
+                setLead(null);
+                setCounselingSessions([]);
+            }
             setCallLogs(logsData.status === 'fulfilled' && Array.isArray(logsData.value) ? logsData.value : []);
-            setCounselingSessions(counselingData.status === 'fulfilled' && Array.isArray(counselingData.value) ? counselingData.value : []);
         } catch (err) {
             console.error(err);
             addToast('No se pudo cargar el contacto', 'error');
