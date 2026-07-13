@@ -17,6 +17,7 @@ Idempotent: safe to re-run without side effects.
 
 from __future__ import annotations
 
+import uuid
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -78,10 +79,10 @@ def upgrade() -> None:
         for name in current_types - existing:
             conn.execute(
                 sa.text(
-                    "INSERT INTO cms_section_types (name, is_active) "
-                    "VALUES (:name, true) ON CONFLICT (name) DO NOTHING"
+                    "INSERT INTO cms_section_types (id, name, is_active) "
+                    "VALUES (:id, :name, true) ON CONFLICT (name) DO NOTHING"
                 ),
-                {"name": name},
+                {"id": str(uuid.uuid4()), "name": name},
             )
 
 

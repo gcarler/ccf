@@ -7,8 +7,8 @@ Create Date: 2026-07-10 04:55:14.309619
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 
 # revision identifiers, used by Alembic.
@@ -19,25 +19,35 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
     # Add new columns to crm_automations
-    op.add_column('crm_automations', sa.Column('delay_minutes', sa.Integer(), nullable=False, server_default='0'))
-    op.add_column('crm_automations', sa.Column('next_automation_id', sa.UUID(), nullable=True))
-    op.create_foreign_key(None, 'crm_automations', 'crm_automations', ['next_automation_id'], ['id'])
+    automation_cols = {
+        column["name"] for column in inspector.get_columns("crm_automations")
+    } if inspector.has_table("crm_automations") else set()
+    if "delay_minutes" not in automation_cols:
+        op.add_column('crm_automations', sa.Column('delay_minutes', sa.Integer(), nullable=False, server_default='0'))
+    if "next_automation_id" not in automation_cols:
+        op.add_column('crm_automations', sa.Column('next_automation_id', sa.UUID(), nullable=True))
+        if bind.dialect.name != "sqlite":
+            op.create_foreign_key(None, 'crm_automations', 'crm_automations', ['next_automation_id'], ['id'])
 
     # Create crm_pending_actions table
-    op.create_table(
-        'crm_pending_actions',
-        sa.Column('id', sa.UUID(), nullable=False),
-        sa.Column('automation_id', sa.UUID(), nullable=False),
-        sa.Column('target_persona_id', sa.UUID(), nullable=False),
-        sa.Column('execute_at', sa.DateTime(timezone=True), nullable=False),
-        sa.Column('status', sa.String(length=30), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(['automation_id'], ['crm_automations.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_crm_pending_actions_execute_at'), 'crm_pending_actions', ['execute_at'], unique=False)
-    op.create_index(op.f('ix_crm_pending_actions_status'), 'crm_pending_actions', ['status'], unique=False)
+    if not inspector.has_table("crm_pending_actions"):
+        op.create_table(
+            'crm_pending_actions',
+            sa.Column('id', sa.UUID(), nullable=False),
+            sa.Column('automation_id', sa.UUID(), nullable=False),
+            sa.Column('target_persona_id', sa.UUID(), nullable=False),
+            sa.Column('execute_at', sa.DateTime(timezone=True), nullable=False),
+            sa.Column('status', sa.String(length=30), nullable=True),
+            sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
+            sa.ForeignKeyConstraint(['automation_id'], ['crm_automations.id'], ),
+            sa.PrimaryKeyConstraint('id')
+        )
+        op.create_index(op.f('ix_crm_pending_actions_execute_at'), 'crm_pending_actions', ['execute_at'], unique=False)
+        op.create_index(op.f('ix_crm_pending_actions_status'), 'crm_pending_actions', ['status'], unique=False)
 
 
 def downgrade() -> None:

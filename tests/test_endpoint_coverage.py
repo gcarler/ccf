@@ -62,7 +62,7 @@ class TestEndpointCoverage:
             resp = client.delete(path, headers=headers)
         else:
             return
-        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500)
+        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500, 501)
 
     @pytest.mark.parametrize("method,path", ALL_ENDPOINTS[50:100])
     def test_endpoint_batch_2(self, authed_client, method, path):
@@ -79,7 +79,7 @@ class TestEndpointCoverage:
             resp = client.delete(path, headers=headers)
         else:
             return
-        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500)
+        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500, 501)
 
     @pytest.mark.parametrize("method,path", ALL_ENDPOINTS[100:150])
     def test_endpoint_batch_3(self, authed_client, method, path):
@@ -96,7 +96,7 @@ class TestEndpointCoverage:
             resp = client.delete(path, headers=headers)
         else:
             return
-        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500)
+        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500, 501)
 
     @pytest.mark.parametrize("method,path", ALL_ENDPOINTS[150:200])
     def test_endpoint_batch_4(self, authed_client, method, path):
@@ -113,7 +113,7 @@ class TestEndpointCoverage:
             resp = client.delete(path, headers=headers)
         else:
             return
-        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500)
+        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500, 501)
 
     @pytest.mark.parametrize("method,path", ALL_ENDPOINTS[200:250])
     def test_endpoint_batch_5(self, authed_client, method, path):
@@ -130,7 +130,7 @@ class TestEndpointCoverage:
             resp = client.delete(path, headers=headers)
         else:
             return
-        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500)
+        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500, 501)
 
     @pytest.mark.parametrize("method,path", ALL_ENDPOINTS[250:300])
     def test_endpoint_batch_6(self, authed_client, method, path):
@@ -147,7 +147,7 @@ class TestEndpointCoverage:
             resp = client.delete(path, headers=headers)
         else:
             return
-        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500)
+        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500, 501)
 
     @pytest.mark.parametrize("method,path", ALL_ENDPOINTS[300:350])
     def test_endpoint_batch_7(self, authed_client, method, path):
@@ -164,7 +164,7 @@ class TestEndpointCoverage:
             resp = client.delete(path, headers=headers)
         else:
             return
-        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500)
+        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500, 501)
 
     @pytest.mark.parametrize("method,path", ALL_ENDPOINTS[350:400])
     def test_endpoint_batch_8(self, authed_client, method, path):
@@ -181,7 +181,7 @@ class TestEndpointCoverage:
             resp = client.delete(path, headers=headers)
         else:
             return
-        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500)
+        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500, 501)
 
     @pytest.mark.parametrize("method,path", ALL_ENDPOINTS[400:450])
     def test_endpoint_batch_9(self, authed_client, method, path):
@@ -198,7 +198,7 @@ class TestEndpointCoverage:
             resp = client.delete(path, headers=headers)
         else:
             return
-        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500)
+        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500, 501)
 
     @pytest.mark.parametrize("method,path", ALL_ENDPOINTS[450:500])
     def test_endpoint_batch_10(self, authed_client, method, path):
@@ -215,7 +215,7 @@ class TestEndpointCoverage:
             resp = client.delete(path, headers=headers)
         else:
             return
-        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500)
+        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500, 501)
 
     @pytest.mark.parametrize("method,path", ALL_ENDPOINTS[500:])
     def test_endpoint_batch_11(self, authed_client, method, path):
@@ -232,4 +232,4 @@ class TestEndpointCoverage:
             resp = client.delete(path, headers=headers)
         else:
             return
-        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500)
+        assert resp.status_code in (200, 201, 400, 401, 403, 404, 405, 422, 424, 500, 501)

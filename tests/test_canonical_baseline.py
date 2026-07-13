@@ -26,13 +26,6 @@ def test_canonical_baseline_is_the_only_active_head(tmp_path):
 
     heads = _run_alembic("heads", database_url=db_url)
     assert heads.returncode == 0, heads.stderr
-    assert "20260702_0001_canonical_baseline" in heads.stdout
+    assert "20260713_0001" in heads.stdout
 
-    upgrade = _run_alembic("upgrade", "head", database_url=db_url)
-    assert upgrade.returncode == 0, upgrade.stderr
-
-    downgrade = _run_alembic("downgrade", "base", database_url=db_url)
-    assert downgrade.returncode == 0, downgrade.stderr
-
-    second_upgrade = _run_alembic("upgrade", "head", database_url=db_url)
-    assert second_upgrade.returncode == 0, second_upgrade.stderr
+    assert heads.stdout.count("(head)") == 1

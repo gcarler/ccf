@@ -11,6 +11,7 @@ create Date: 2026-07-06 12:00:00
 
 from __future__ import annotations
 
+import uuid
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -62,9 +63,9 @@ def upgrade() -> None:
         for name in PHASE2_SECTION_TYPES:
             op.execute(
                 sa.text(
-                    "INSERT INTO cms_section_types (name, is_active) VALUES (:name, true) "
+                    "INSERT INTO cms_section_types (id, name, is_active) VALUES (:id, :name, true) "
                     "ON CONFLICT (name) DO NOTHING"
-                ).bindparams(name=name)
+                ).bindparams(id=str(uuid.uuid4()), name=name)
             )
 
 
