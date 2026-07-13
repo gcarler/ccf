@@ -6,8 +6,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy import MetaData, Table, insert, inspect
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, load_only
 
 from backend.models_crm import Persona

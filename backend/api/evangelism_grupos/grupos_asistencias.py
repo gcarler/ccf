@@ -15,12 +15,12 @@ from backend.api.evangelism_shared import (
     _can_manage_grupo,
     _check_absence_trigger,
     _check_first_time_lead_trigger,
+    _sessions_grupo_live_column_names,
     expected_group_rows,
     persona_payload,
     session_estado_habilitacion,
     session_read_only_options,
     session_read_value,
-    _sessions_grupo_live_column_names,
     utc_now,
 )
 from backend.core.database import get_db

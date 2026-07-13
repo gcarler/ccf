@@ -19,7 +19,6 @@ from backend.models_evangelism import (
     Asistencia,
     EstrategiaEvangelismo,
     GrupoEvangelismo,
-    MotivoExcusa,
     ParticipanteGrupo,
     RegistroSeguimiento,
     RolPersonalizadoEstrategia,

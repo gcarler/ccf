@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 
 from backend import models
 
-
 SITE_KEY = "ccf"
 PAGE_SLUG = "pastors"
 SECTION_KEY = "pastors"

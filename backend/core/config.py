@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Dict, List
 
-from pydantic import Field, AliasChoices, model_validator
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

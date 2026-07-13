@@ -36,9 +36,8 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.api.crm._shared import _get_scoped_persona
+from backend.api.crm._shared import _get_scoped_persona  # noqa: F401
 from backend.crud.crm import get_user_sede_id
-
 
 # ─────────────────────────────────────────────────────────────────
 # 1) MULTI-TENANT SCOPE HELPERS (Axioma 3)

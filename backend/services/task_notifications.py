@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud.crm import resolve_persona_id_for_user
+
 # Import the email MODULE (not the function name) so test suites can
 # `monkeypatch.setattr(backend.services.email, "send_email", _stub)`
 # and have the patch reach this caller. If we did
@@ -208,7 +209,7 @@ def notify_task_assigned(
                 task.id, assignee.id,
             )
         return True
-    except Exception as exc:
+    except Exception:
         # Atomic rollback: drops the entire batch so we never persist a row
         # without its accompanying audit log. This is the pivotal Sprint 1
         # contract that fixes the orphan-NotificacionUsuario pattern.
