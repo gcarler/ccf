@@ -40,6 +40,9 @@ def _uuid_type() -> sa.types.TypeEngine:
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    if sa.inspect(bind).has_table("cms_seo_snapshots"):
+        return
     uuid_t = _uuid_type()
     op.create_table(
         "cms_seo_snapshots",

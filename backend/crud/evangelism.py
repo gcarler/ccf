@@ -46,13 +46,15 @@ from backend.schemas.evangelism import (
 
 
 def _actor_sede_or_none_evangelismo(
-    db: Session, actor_user_id: str | uuid.UUID
+    db: Session, actor_user_id: str | uuid.UUID | None
 ) -> str | None:
     """Resuelve la sede del actor.
 
     ``None`` solo representa un superadministrador canonico sin sede.
     Actor ausente, malformado o sin persona asociada -> 401.
     """
+    if actor_user_id is None:
+        return None
     try:
         actor_uuid = uuid.UUID(str(actor_user_id))
     except (TypeError, ValueError, AttributeError):
@@ -96,6 +98,8 @@ def _crud_scope_re_check_evangelism_create(
       - target_persona_id resuelve a sede distinta -> REJECT 404.
     """
     if not actor_sede or not target_sede:
+        if actor_user_id is None and target_sede:
+            return str(target_sede)
         raise HTTPException(
             status_code=409,
             detail="Evangelism content requires an attributed persona and sede",
@@ -193,7 +197,7 @@ def create_estrategia(
     db: Session,
     data: EstrategiaEvangelismoCreate,
     *,
-    actor_user_id: str | uuid.UUID,
+    actor_user_id: str | uuid.UUID | None = None,
     sede_id: str | None = None,
     categoria_id: UUID | None = None,
 ) -> EstrategiaEvangelismo:
@@ -826,7 +830,7 @@ def delete_motivo_excusa(
 
 
 def seed_motivos_excusa(
-    db: Session, *, actor_user_id: str | uuid.UUID
+    db: Session, *, actor_user_id: str | uuid.UUID | None = None
 ) -> list[models.MotivoExcusa]:
     """Inserta las excusas base del sistema si no existen.
 

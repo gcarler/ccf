@@ -194,10 +194,10 @@ def test_public_contact_tracker_writes_only_canonical_crm_fields(db_session):
     assert result.case.payload_web["landing_page"] == "/inicio"
 
 
-def test_project_task_contract_rejects_scalar_labels_and_old_priorities():
+def test_project_task_contract_rejects_scalar_labels_and_normalizes_compat_priority():
     from backend.schemas.projects import ProjectTaskCreate
 
     with pytest.raises(ValidationError):
         ProjectTaskCreate(title="Inválida", labels="urgent")
-    with pytest.raises(ValidationError):
-        ProjectTaskCreate(title="Inválida", priority="normal")
+    task = ProjectTaskCreate(title="Compat priority", priority="normal")
+    assert task.priority == "medium"
