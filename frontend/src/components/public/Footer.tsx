@@ -6,6 +6,7 @@ import { SITE_EMAIL, SITE_KEY, SITE_NAME } from "@/lib/site-config";
 import { getCmsPublicPage } from "@/lib/cms/v2";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import { useSiteBranding } from "@/lib/site-branding";
+import { ArrowUpRight, Mail, MapPin, Newspaper } from "lucide-react";
 
 type PublicLink = { href: string; label: string; kind?: string };
 
@@ -111,51 +112,131 @@ export default function Footer() {
 
     return (
         <footer
-            className="w-full"
+            className="w-full overflow-hidden"
             style={{
                 background: "var(--site-surface-container-lowest)",
                 borderTop: "1px solid var(--site-outline-variant)",
             }}
         >
             {/* Main footer */}
-            <div className="ccf-container py-12 sm:py-16 lg:py-24">
+            <div className="ccf-container py-16 sm:py-20 lg:py-28">
                 <div className="w-full">
-                    <div className="grid grid-cols-2 gap-8 sm:gap-12 lg:grid-cols-12 lg:gap-16">
-                        {/* Brand column */}
-                        <div className="col-span-2 lg:col-span-5 space-y-4 text-center sm:text-left">
-                            <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
-                                <div
-                                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
-                                    style={{ background: "var(--site-surface-container)" }}
-                                >
-                                    {logoUrl ? (
-                                        <OptimizedImage src={logoUrl} alt={brandName} width={56} height={56} className="w-full h-full object-contain p-2" />
-                                    ) : (
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="28" height="28" className="shrink-0 w-7 h-7 sm:w-8 sm:h-8" style={{ color: "var(--site-primary)" }}>
-                                            <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
-                                            <circle cx="12" cy="4" r="1.5" fill="currentColor" />
-                                        </svg>
-                                    )}
-                                </div>
-                                <div>
-                                    <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight" style={{ color: "var(--site-on-surface)" }}>
-                                        {brandName}
-                                    </div>
-                                </div>
+                    <div
+                        className="mb-10 grid gap-8 rounded-[2rem] border p-6 shadow-2xl sm:p-8 lg:mb-14 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:p-10"
+                        style={{
+                            background: "linear-gradient(135deg, var(--site-surface-container-low), var(--site-surface-container))",
+                            borderColor: "var(--site-outline-variant)",
+                            boxShadow: "var(--site-card-shadow)",
+                        }}
+                    >
+                        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+                            <div
+                                className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[1.5rem] border sm:h-24 sm:w-24"
+                                style={{
+                                    background: "var(--site-surface-container-lowest)",
+                                    borderColor: "var(--site-outline-variant)",
+                                }}
+                            >
+                                {logoUrl ? (
+                                    <OptimizedImage src={logoUrl} alt={brandName} width={96} height={96} className="h-full w-full object-contain p-3" />
+                                ) : (
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="44" height="44" className="shrink-0" style={{ color: "var(--site-primary)" }}>
+                                        <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
+                                        <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+                                    </svg>
+                                )}
                             </div>
-                            <p className="mx-auto max-w-[38rem] text-base leading-relaxed sm:mx-0 lg:max-w-md" style={{ color: "var(--site-on-surface-variant)" }}>
+                            <div className="min-w-0 text-center sm:text-left">
+                                <div className="text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl" style={{ color: "var(--site-on-surface)" }}>
+                                    {brandName}
+                                </div>
+                                {description && (
+                                    <p className="mt-4 max-w-2xl text-base leading-relaxed sm:text-lg" style={{ color: "var(--site-on-surface-variant)" }}>
+                                        {description}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                            {SITE_EMAIL ? (
+                                <a
+                                    href={`mailto:${SITE_EMAIL}`}
+                                    className="group flex items-center gap-3 rounded-2xl border px-4 py-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
+                                    style={{
+                                        background: "var(--site-surface-container-lowest)",
+                                        borderColor: "var(--site-outline-variant)",
+                                        color: "var(--site-on-surface)",
+                                    }}
+                                >
+                                    <Mail size={18} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
+                                    <span className="min-w-0 flex-1 truncate">{SITE_EMAIL}</span>
+                                    <ArrowUpRight size={16} className="opacity-60 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+                                </a>
+                            ) : null}
+                            {locationLabel && (
+                                <Link
+                                    href="/sedes"
+                                    className="group flex items-center gap-3 rounded-2xl border px-4 py-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
+                                    style={{
+                                        background: "var(--site-surface-container-lowest)",
+                                        borderColor: "var(--site-outline-variant)",
+                                        color: "var(--site-on-surface)",
+                                    }}
+                                >
+                                    <MapPin size={18} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
+                                    <span className="min-w-0 flex-1 truncate">{locationLabel}</span>
+                                    <ArrowUpRight size={16} className="opacity-60 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+                                </Link>
+                            )}
+                            {newsletterLabel && (
+                                <Link
+                                    href="/boletin"
+                                    className="group flex items-center gap-3 rounded-2xl border px-4 py-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
+                                    style={{
+                                        background: "var(--site-surface-container-lowest)",
+                                        borderColor: "var(--site-outline-variant)",
+                                        color: "var(--site-on-surface)",
+                                    }}
+                                >
+                                    <Newspaper size={18} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
+                                    <span className="min-w-0 flex-1 truncate">{newsletterLabel}</span>
+                                    <ArrowUpRight size={16} className="opacity-60 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-5 sm:gap-8 lg:grid-cols-12 lg:gap-8">
+                        {/* Brand column */}
+                        <div
+                            className="col-span-2 rounded-[1.5rem] border p-5 sm:p-6 lg:col-span-4"
+                            style={{
+                                background: "var(--site-surface-container-low)",
+                                borderColor: "var(--site-outline-variant)",
+                            }}
+                        >
+                            <h4 className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--site-primary)" }}>
+                                Comunidad
+                            </h4>
+                            <p className="mt-4 max-w-md text-sm leading-relaxed sm:text-base" style={{ color: "var(--site-on-surface-variant)" }}>
                                 {description}
                             </p>
-                            <div className="flex justify-center gap-4 pt-2 sm:justify-start">
+                            <div className="mt-6 flex flex-wrap gap-3">
                                 {socialLinks.map(({ href, label, kind }) => (
                                     <a
                                         key={label}
                                         href={href}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                                        style={{ background: "var(--site-surface-container)", color: "var(--site-on-surface-variant)" }}
+                                        className="flex h-12 w-12 items-center justify-center rounded-full border transition-all hover:-translate-y-0.5"
+                                        style={{
+                                            background: "var(--site-surface-container)",
+                                            borderColor: "var(--site-outline-variant)",
+                                            color: "var(--site-on-surface-variant)",
+                                        }}
                                         title={label}
+                                        aria-label={label}
                                     >
                                         {socialIcon(kind || label)}
                                     </a>
@@ -165,17 +246,21 @@ export default function Footer() {
 
                         {/* Navegación */}
                         <div
-                            className="rounded-lg border p-4 sm:p-0 sm:border-0 lg:col-span-2"
-                            style={{ borderColor: "var(--site-outline-variant)" }}
+                            className="rounded-[1.5rem] border p-5 sm:p-6 lg:col-span-2"
+                            style={{
+                                background: "var(--site-surface-container-low)",
+                                borderColor: "var(--site-outline-variant)",
+                            }}
                         >
-                            <h4 className="text-xs font-bold uppercase tracking-widest mb-5 sm:mb-7" style={{ color: "var(--site-primary)" }}>
+                            <h4 className="text-xs font-bold uppercase tracking-widest mb-5" style={{ color: "var(--site-primary)" }}>
                                 {navSectionTitle}
                             </h4>
-                            <ul className="grid gap-3 sm:gap-4">
+                            <ul className="grid gap-2.5">
                                 {navLinks.map(({ href, label }) => (
                                     <li key={href}>
-                                        <Link href={href} className="block min-h-8 text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                        <Link href={href} className="group flex min-h-9 items-center justify-between gap-3 rounded-xl px-2 py-1.5 text-sm font-semibold leading-snug transition-colors duration-200" style={{ color: "var(--site-on-surface-variant)" }}>
                                             {label}
+                                            <ArrowUpRight size={13} className="opacity-0 transition-opacity group-hover:opacity-70" aria-hidden="true" />
                                         </Link>
                                     </li>
                                 ))}
@@ -184,17 +269,21 @@ export default function Footer() {
 
                         {/* Recursos */}
                         <div
-                            className="rounded-lg border p-4 sm:p-0 sm:border-0 lg:col-span-2"
-                            style={{ borderColor: "var(--site-outline-variant)" }}
+                            className="rounded-[1.5rem] border p-5 sm:p-6 lg:col-span-2"
+                            style={{
+                                background: "var(--site-surface-container-low)",
+                                borderColor: "var(--site-outline-variant)",
+                            }}
                         >
-                            <h4 className="text-xs font-bold uppercase tracking-widest mb-5 sm:mb-7" style={{ color: "var(--site-primary)" }}>
+                            <h4 className="text-xs font-bold uppercase tracking-widest mb-5" style={{ color: "var(--site-primary)" }}>
                                 {resourceSectionTitle}
                             </h4>
-                            <ul className="grid gap-3 sm:gap-4">
+                            <ul className="grid gap-2.5">
                                 {resourceLinks.map(({ href, label }) => (
                                     <li key={href}>
-                                        <Link href={href} className="block min-h-8 text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                        <Link href={href} className="group flex min-h-9 items-center justify-between gap-3 rounded-xl px-2 py-1.5 text-sm font-semibold leading-snug transition-colors duration-200" style={{ color: "var(--site-on-surface-variant)" }}>
                                             {label}
+                                            <ArrowUpRight size={13} className="opacity-0 transition-opacity group-hover:opacity-70" aria-hidden="true" />
                                         </Link>
                                     </li>
                                 ))}
@@ -203,28 +292,34 @@ export default function Footer() {
 
                         {/* Redes y contacto */}
                         <div
-                            className="col-span-2 rounded-lg border p-4 sm:p-0 sm:border-0 sm:col-span-2 lg:col-span-3"
-                            style={{ borderColor: "var(--site-outline-variant)" }}
+                            className="col-span-2 rounded-[1.5rem] border p-5 sm:p-6 lg:col-span-4"
+                            style={{
+                                background: "var(--site-surface-container-low)",
+                                borderColor: "var(--site-outline-variant)",
+                            }}
                         >
-                            <h4 className="text-xs font-bold uppercase tracking-widest mb-5 sm:mb-7" style={{ color: "var(--site-primary)" }}>
+                            <h4 className="text-xs font-bold uppercase tracking-widest mb-5" style={{ color: "var(--site-primary)" }}>
                                 {contactSectionTitle}
                             </h4>
-                            <ul className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 sm:gap-4">
+                            <ul className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
                                 <li>
                                     {SITE_EMAIL ? (
-                                        <a href={`mailto:${SITE_EMAIL}`} className="block min-h-8 break-words text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
-                                            {SITE_EMAIL}
+                                        <a href={`mailto:${SITE_EMAIL}`} className="flex min-h-11 items-center gap-3 break-words rounded-xl px-2 py-2 text-sm font-semibold leading-snug transition-colors duration-200" style={{ color: "var(--site-on-surface-variant)" }}>
+                                            <Mail size={16} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
+                                            <span className="min-w-0 truncate">{SITE_EMAIL}</span>
                                         </a>
                                     ) : null}
                                 </li>
                                 <li>
-                                    <Link href="/sedes" className="block min-h-8 text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
-                                        {locationLabel}
+                                    <Link href="/sedes" className="flex min-h-11 items-center gap-3 rounded-xl px-2 py-2 text-sm font-semibold leading-snug transition-colors duration-200" style={{ color: "var(--site-on-surface-variant)" }}>
+                                        <MapPin size={16} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
+                                        <span className="min-w-0 truncate">{locationLabel}</span>
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link href="/boletin" className="block min-h-8 text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
-                                        {newsletterLabel}
+                                    <Link href="/boletin" className="flex min-h-11 items-center gap-3 rounded-xl px-2 py-2 text-sm font-semibold leading-snug transition-colors duration-200" style={{ color: "var(--site-on-surface-variant)" }}>
+                                        <Newspaper size={16} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
+                                        <span className="min-w-0 truncate">{newsletterLabel}</span>
                                     </Link>
                                 </li>
                             </ul>
@@ -235,7 +330,7 @@ export default function Footer() {
 
             {/* Bottom bar */}
             <div
-                className="ccf-container py-6 sm:py-7 border-t"
+                className="ccf-container py-7 sm:py-8 border-t"
                 style={{ borderColor: "var(--site-outline-variant)" }}
             >
                 <div className="flex w-full flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
@@ -256,7 +351,7 @@ export default function Footer() {
                     </p>
                     <div className="flex shrink-0 items-center justify-center gap-4">
                         <Link
-                            href="/privacidad"
+                            href="/privacy"
                             className="text-xs transition-colors hover:text-[var(--site-primary)] hover:underline"
                             style={{
                                 color: "var(--site-on-surface-variant)",
