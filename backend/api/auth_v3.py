@@ -100,7 +100,8 @@ def _log_security(db, user_id, evento, ip=None, ua=None, detalles=None):
         )
         db.add(ls)
         db.commit()
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to log security event=%s", evento)
         db.rollback()
 
 
@@ -344,7 +345,8 @@ def google_callback(
         persona = db.query(models.Persona).filter(models.Persona.id == user.id).first()
         if persona and persona.sede_id:
             sede_id = str(persona.sede_id)
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to resolve sede_id for user=%s", user.id)
         db.rollback()
 
     # 8. Generate tokens with sede_id
@@ -772,8 +774,8 @@ def refresh_token(
         persona = db.query(models.Persona).filter(models.Persona.id == user.id).first()
         if persona and persona.sede_id:
             sede_id = str(persona.sede_id)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.exception("Failed to resolve sede_id for refresh token user=%s", user.id)
 
     # Rotate refresh token (security best practice)
     rt.revoked = True

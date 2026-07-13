@@ -380,9 +380,10 @@ def _normalize_dates(obj):
                 )
             except MemoryError:
                 raise
-            except Exception:
+            except Exception as exc:
                 logger.debug(
-                    "Failed to normalize project date",
+                    "Failed to normalize project date: %s",
+                    exc,
                     extra={"attribute": attr, "value": val},
                 )
                 if attr == "created_at":

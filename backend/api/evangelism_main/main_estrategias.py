@@ -153,14 +153,15 @@ def create_strategy(
         result = create_evangelism_strategy(db=db, data=strategy, sede_id=sede_id, categoria_id=primera_categoria.id, actor_user_id=str(current_user.id))
     except HTTPException:
         raise
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to create evangelism strategy")
         db.rollback()
         raise
     # ── Phase scheduling trigger ──
     if strategy.typology == "evento_masivo" and strategy.phases:
         try:
             _project_phases_as_tasks(db, result.id, result.name, strategy.phases, strategy.start_date)
-        except Exception:
+        except Exception as exc:
             db.rollback()
             logger.warning(
                 "Phase task generation failed for evangelism strategy=%s; keeping strategy saved",
@@ -195,7 +196,8 @@ def update_strategy(
                     detail="El rol por defecto debe pertenecer a esta estrategia",
                 )
         db_obj = update_evangelism_strategy(db=db, strategy_id=strategy_id, data=strategy, actor_user_id=str(_user.id))
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to update evangelism strategy=%s", strategy_id)
         db.rollback()
         raise
     if not db_obj:
@@ -205,9 +207,9 @@ def update_strategy(
     if strategy.typology == "evento_masivo" and strategy.phases:
         try:
             _project_phases_as_tasks(db, strategy_id, result.name, strategy.phases, strategy.start_date)
-        except Exception:
+        except Exception as exc:
             db.rollback()
-            logger.warning(
+            logger.exception(
                 "Phase task regeneration failed for evangelism strategy=%s; keeping update saved",
                 strategy_id,
             )
@@ -311,8 +313,8 @@ def generate_strategy_sessions(
     except ValueError as e:
         logger.warning("No se pudieron validar sesiones para strategy=%s: %s", strategy_id, e)
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
-        logger.warning("Failed to generate evangelism sessions for strategy=%s", strategy_id)
+    except Exception as exc:
+        logger.exception("Failed to generate evangelism sessions for strategy=%s", strategy_id)
         return {
             "strategy": strat.nombre,
             "recurrence": strat.frecuencia,
@@ -415,11 +417,13 @@ def _project_phases_as_tasks(db, strategy_id: UUID, strategy_name: str, phases: 
 
         try:
             sd = dt.fromisoformat(phase_start.replace("Z", "+00:00")) if phase_start else None
-        except Exception:
+        except Exception as exc:
+            logger.debug("Failed to parse phase start_date=%r: %s", phase_start, exc)
             sd = None
         try:
             dd = dt.fromisoformat(phase_end.replace("Z", "+00:00")) if phase_end else None
-        except Exception:
+        except Exception as exc:
+            logger.debug("Failed to parse phase end_date=%r: %s", phase_end, exc)
             dd = None
 
         task = ProjectTask(

@@ -697,10 +697,10 @@ async def send_crm_message(
             raise
         except MemoryError:
             raise
-        except Exception:
+        except Exception as exc:
             failed_count += 1
             if len(target_personas) == 1:
-                logger.exception("Messaging gateway failure")
+                logger.exception("Messaging gateway failure for channel=%s", channel)
                 raise HTTPException(status_code=502, detail="No se pudo enviar el mensaje")
 
     return {
@@ -1113,8 +1113,8 @@ def get_copilot_draft(
         from openai import OpenAI
         if isinstance(OpenAI, (MagicMock, Mock)) or hasattr(OpenAI, "_mock_return_value"):
             is_mock = True
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("OpenAI mock detection failed (likely import error): %s", exc)
 
     if is_mock:
         openai_api_key = openai_api_key or "mock_key_for_testing"

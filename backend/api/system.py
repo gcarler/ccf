@@ -8,6 +8,7 @@ from sqlalchemy import case, func, or_, text
 from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session
 
+import logging
 from backend import models
 from backend.core.ai import generate_ministerial_content
 from backend.core.database import get_db
@@ -15,6 +16,8 @@ from backend.core.permissions import require_active_user, require_admin
 from backend.crud.crm import get_user_sede_id
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 
 @router.get("/search")
@@ -292,7 +295,8 @@ def get_global_calendar(
                 )
                 .all()
             )
-        except Exception:
+        except Exception as exc:
+            logger.exception("Failed to query birthdays for calendar")
             personas_bday = []
 
         for m in personas_bday:
@@ -313,7 +317,8 @@ def get_global_calendar(
                     "allDay": True,
                     "href": f"/plataforma/crm/personas/{m.id}",
                 })
-            except Exception:
+            except Exception as exc:
+                logger.debug("Failed to process birthday for persona=%s: %s", m.id, exc)
                 continue
 
     return events
@@ -652,8 +657,8 @@ def run_db_maintenance(
             with engine.connect() as conn:
                 conn = conn.execution_options(isolation_level="AUTOCOMMIT")
                 conn.execute(text("VACUUM ANALYZE;"))
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.exception("Background VACUUM ANALYZE failed")
 
     # 1. Refresh materialized views (fast, runs inline)
     try:
@@ -662,7 +667,8 @@ def run_db_maintenance(
             execution_options={"autocommit": True},
         )
         refresh_ok = True
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to refresh materialized views")
         refresh_ok = False
 
     # 2. Start VACUUM in background (non-blocking)
@@ -687,7 +693,8 @@ def run_db_maintenance(
             }
             for r in rows
         ]
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to query dead tuple statistics")
         tables_with_dead = []
 
     return {

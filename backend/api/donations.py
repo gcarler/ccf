@@ -172,7 +172,8 @@ async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
     """
     try:
         data = await request.json()
-    except Exception:
+    except Exception as exc:
+        logger.debug("Failed to parse MercadoPago webhook JSON: %s", exc)
         data = {}
 
     logger.info("Webhook MP recibido: %s", json.dumps(data)[:500])

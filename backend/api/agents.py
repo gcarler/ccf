@@ -37,6 +37,7 @@ Cualquier cambio futuro que quiera introducir scope multi-tenant sobre
 y aceptado por el Cierre Arquitectónico.
 """
 
+import logging
 import uuid
 from typing import List, Optional
 
@@ -54,6 +55,7 @@ from backend.models_shared import _utcnow
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 analytics_router = APIRouter(prefix="/analytics", tags=["analytics"])
+logger = logging.getLogger(__name__)
 
 
 def _resolve_persona_id(user, db):
@@ -288,7 +290,8 @@ def ask_optimus(
         return {"answer": insight.payload, "sources": sources}
     except MemoryError:
         raise
-    except Exception:
+    except Exception as exc:
+        logger.exception("Neural MESH engine failed for query=%r", payload.query)
         # Fallback to basic KB retrieval if AI fails or is not configured
         if kb_results:
             return {

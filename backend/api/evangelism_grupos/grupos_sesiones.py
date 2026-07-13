@@ -322,7 +322,8 @@ def create_groups_session(
 
     try:
         db.commit()
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to commit group sessions creation")
         db.rollback()
         raise
 
