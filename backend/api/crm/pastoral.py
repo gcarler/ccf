@@ -17,6 +17,9 @@ from backend.api.crm._shared import (
     _get_scoped_prayer_request,
     _get_scoped_task,
     _case_created_column,
+    _case_stage,
+    _case_status,
+    _enum_value,
     case_query,
     _persona_full_name,
     persona_query,
@@ -128,7 +131,9 @@ def _get_persona_or_404(db: Session, persona_ref: str, user_sede: Optional[uuid.
     return persona
 
 
-def _resolve_actor_persona_uuid(db: Session, current_user: models.User):
+def _resolve_actor_persona_uuid(db: Session, current_user: models.User, persona_id: str | None = None):
+    if persona_id is not None and str(persona_id) != str(current_user.id):
+        raise HTTPException(status_code=400, detail="La persona responsable no coincide con el usuario actual")
     persona = db.query(models.Persona.id).filter(models.Persona.id == current_user.id).first()
     if not persona:
         raise HTTPException(status_code=400, detail="No se pudo resolver la persona responsable")
@@ -697,7 +702,7 @@ async def send_crm_message(
             raise
         except MemoryError:
             raise
-        except Exception as exc:
+        except Exception:
             failed_count += 1
             if len(target_personas) == 1:
                 logger.exception("Messaging gateway failure for channel=%s", channel)

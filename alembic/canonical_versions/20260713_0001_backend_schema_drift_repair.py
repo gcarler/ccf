@@ -46,6 +46,12 @@ def _add_column_if_missing(table: str, column: sa.Column) -> None:
         op.add_column(table, column)
 
 
+def _index_exists(table: str, index: str) -> bool:
+    if not _table_exists(table):
+        return False
+    return index in {idx["name"] for idx in sa.inspect(op.get_bind()).get_indexes(table)}
+
+
 def upgrade() -> None:
     uuid_t = _uuid_type()
 
@@ -117,6 +123,8 @@ def downgrade() -> None:
             op.drop_column(table, column)
 
     if _table_exists("public_contact_submissions"):
-        op.drop_index("ix_public_contact_submissions_sede_id", table_name="public_contact_submissions")
-        op.drop_index("ix_public_contact_submissions_status", table_name="public_contact_submissions")
+        if _index_exists("public_contact_submissions", "ix_public_contact_submissions_sede_id"):
+            op.drop_index("ix_public_contact_submissions_sede_id", table_name="public_contact_submissions")
+        if _index_exists("public_contact_submissions", "ix_public_contact_submissions_status"):
+            op.drop_index("ix_public_contact_submissions_status", table_name="public_contact_submissions")
         op.drop_table("public_contact_submissions")

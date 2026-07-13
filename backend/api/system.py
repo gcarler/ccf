@@ -295,7 +295,7 @@ def get_global_calendar(
                 )
                 .all()
             )
-        except Exception as exc:
+        except Exception:
             logger.exception("Failed to query birthdays for calendar")
             personas_bday = []
 
@@ -657,7 +657,7 @@ def run_db_maintenance(
             with engine.connect() as conn:
                 conn = conn.execution_options(isolation_level="AUTOCOMMIT")
                 conn.execute(text("VACUUM ANALYZE;"))
-        except Exception as exc:
+        except Exception:
             logger.exception("Background VACUUM ANALYZE failed")
 
     # 1. Refresh materialized views (fast, runs inline)
@@ -667,7 +667,7 @@ def run_db_maintenance(
             execution_options={"autocommit": True},
         )
         refresh_ok = True
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to refresh materialized views")
         refresh_ok = False
 
@@ -693,7 +693,7 @@ def run_db_maintenance(
             }
             for r in rows
         ]
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to query dead tuple statistics")
         tables_with_dead = []
 
