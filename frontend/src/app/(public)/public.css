@@ -274,7 +274,10 @@
     --ccf-hero-min-h: min(92svh, 920px);
     --ccf-container-max: 92rem;
     --ccf-title-spacing: 1.25em;
-    --ccf-body-leading: 1.75;
+    --ccf-display-leading: 1.02;
+    --ccf-heading-leading: 1.18;
+    --ccf-body-leading: 1.62;
+    --ccf-copy-max: 68ch;
     --ccf-radius-xl: 1.75rem;
     --ccf-radius-2xl: 2.5rem;
 }
@@ -316,12 +319,16 @@
 /* Sophisticated display typography */
 .ccf-display {
     letter-spacing: 0;
-    line-height: 0.92;
+    line-height: var(--ccf-display-leading);
+    font-weight: 500;
+    text-wrap: balance;
 }
 
 .ccf-headline {
     letter-spacing: 0;
-    line-height: 1.05;
+    line-height: var(--ccf-heading-leading);
+    font-weight: 500;
+    text-wrap: balance;
 }
 
 .theme-light .tracking-tight,
@@ -330,9 +337,60 @@
     letter-spacing: 0;
 }
 
+.theme-light :where(main, footer) :where(h1, h2),
+.theme-institutional :where(main, footer) :where(h1, h2),
+.theme-dark :where(main, footer) :where(h1, h2) {
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: var(--ccf-heading-leading);
+    text-wrap: balance;
+}
+
+.theme-light :where(main, footer) :where(h3, h4),
+.theme-institutional :where(main, footer) :where(h3, h4),
+.theme-dark :where(main, footer) :where(h3, h4) {
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1.22;
+    text-wrap: balance;
+}
+
+.theme-light :where(main, footer) :where(p),
+.theme-institutional :where(main, footer) :where(p),
+.theme-dark :where(main, footer) :where(p) {
+    letter-spacing: 0;
+    line-height: var(--ccf-body-leading);
+    text-wrap: pretty;
+}
+
+.theme-light :where(main, footer) .ccf-display,
+.theme-institutional :where(main, footer) .ccf-display,
+.theme-dark :where(main, footer) .ccf-display {
+    line-height: var(--ccf-display-leading);
+    font-weight: 500;
+}
+
 .ccf-body {
     line-height: var(--ccf-body-leading);
-    max-width: 70ch;
+    max-width: var(--ccf-copy-max);
+    font-size: clamp(1rem, 0.34vw + 0.94rem, 1.125rem);
+    text-wrap: pretty;
+}
+
+.ccf-copy {
+    max-width: var(--ccf-copy-max);
+    font-size: clamp(1rem, 0.34vw + 0.94rem, 1.125rem);
+    line-height: var(--ccf-body-leading);
+    text-wrap: pretty;
+}
+
+.ccf-title-block {
+    max-width: 62rem;
+}
+
+.ccf-kicker {
+    letter-spacing: 0.08em;
+    font-weight: 600;
 }
 
 /* Elegant glass cards */
@@ -373,6 +431,32 @@
 .ccf-section-panel > :where(h1, h2, h3):first-child,
 .ccf-section-panel > :where(.ccf-section-title):first-child {
     margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.ccf-section-panel > :where(h1, h2):first-child {
+    max-width: 20ch;
+    font-size: clamp(2rem, 3.2vw, 3rem);
+    font-weight: 500;
+    line-height: 1.12;
+}
+
+.ccf-section-panel > :where(h3):first-child {
+    max-width: 26ch;
+    font-size: clamp(1.35rem, 1.7vw, 1.75rem);
+    font-weight: 600;
+    line-height: 1.18;
+}
+
+.ccf-section-panel > :where(h1, h2, h3).text-center:first-child {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.ccf-section-panel :where(p, .prose, .ccf-copy) {
+    max-width: var(--ccf-copy-max);
+    font-size: clamp(1rem, 0.34vw + 0.94rem, 1.125rem);
+    line-height: var(--ccf-body-leading);
+    text-wrap: pretty;
 }
 
 .ccf-section-header {

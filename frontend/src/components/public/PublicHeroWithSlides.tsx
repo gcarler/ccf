@@ -96,17 +96,17 @@ export default function PublicHeroWithSlides({
               className="max-w-5xl text-white"
             >
               {eyebrow && (
-                <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.32em] mb-5 px-4 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur">
+                <span className="ccf-kicker inline-flex items-center gap-2 text-xs uppercase mb-5 px-4 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur">
                   {eyebrow}
                 </span>
               )}
               {titleBlock && (
-                <h1 className={`font-bold ccf-display max-w-4xl ${home ? "text-5xl sm:text-6xl lg:text-7xl xl:text-8xl" : "text-4xl sm:text-5xl lg:text-6xl"}`}>
+                <h1 className={`ccf-display max-w-4xl ${home ? "text-5xl sm:text-6xl lg:text-7xl xl:text-8xl" : "text-4xl sm:text-5xl lg:text-6xl"}`}>
                   {titleBlock}
                 </h1>
               )}
               {description && (
-                <p className="ccf-body mt-5 text-base sm:text-lg max-w-2xl text-white/90">
+                <p className="ccf-body mt-6 max-w-2xl text-white/90">
                   {description}
                 </p>
               )}
@@ -130,11 +130,11 @@ export default function PublicHeroWithSlides({
           </div>
         </div>
         <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between p-4 md:p-6 text-white/90">
-          <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.35em] backdrop-blur">
+          <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] uppercase backdrop-blur">
             Home
           </span>
           {totalSlides > 1 && (
-            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.35em] backdrop-blur">
+            <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] uppercase backdrop-blur">
               {String(activeIndex + 1).padStart(2, "0")} / {String(totalSlides).padStart(2, "0")}
             </span>
           )}
@@ -166,17 +166,17 @@ export default function PublicHeroWithSlides({
           className="order-1 max-w-3xl lg:py-8"
         >
           {eyebrow && (
-            <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.32em] mb-5 px-4 py-2 rounded-full border" style={{ color: "var(--site-primary)", borderColor: "var(--site-primary-container)", background: "var(--site-surface-container-low)" }}>
+            <span className="ccf-kicker inline-flex items-center gap-2 text-xs uppercase mb-5 px-4 py-2 rounded-full border" style={{ color: "var(--site-primary)", borderColor: "var(--site-primary-container)", background: "var(--site-surface-container-low)" }}>
               {eyebrow}
             </span>
           )}
           {titleBlock && (
-            <h1 className="font-bold ccf-display text-4xl sm:text-5xl lg:text-6xl" style={{ color: "var(--site-on-background)" }}>
+            <h1 className="ccf-display text-4xl sm:text-5xl lg:text-6xl" style={{ color: "var(--site-on-background)" }}>
               {titleBlock}
             </h1>
           )}
           {description && (
-            <p className="ccf-body mt-5 text-base sm:text-lg max-w-2xl" style={{ color: "var(--site-on-surface-variant)" }}>
+            <p className="ccf-body mt-6 max-w-2xl" style={{ color: "var(--site-on-surface-variant)" }}>
               {description}
             </p>
           )}
@@ -220,18 +220,18 @@ export default function PublicHeroWithSlides({
             </AnimatePresence>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.2),transparent_30%),linear-gradient(to_top,rgba(0,0,0,0.9)_0%,rgba(0,0,0,0.42)_45%,transparent_100%)]" />
             <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4 md:p-6 text-white/90">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.35em] backdrop-blur">
+              <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] uppercase backdrop-blur">
                 Banner
               </span>
               {totalSlides > 1 && (
-                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.35em] backdrop-blur">
+                <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] uppercase backdrop-blur">
                   {String(activeIndex + 1).padStart(2, "0")} / {String(totalSlides).padStart(2, "0")}
                 </span>
               )}
             </div>
             <div className="absolute inset-x-0 bottom-0 p-5 md:p-8 text-white">
-              {activeSlide?.title && <h2 className="text-xl md:text-3xl font-black mb-2 leading-tight max-w-xl">{activeSlide.title}</h2>}
-              {activeSlide?.caption && <p className="text-sm md:text-base text-white/86 max-w-2xl leading-relaxed">{activeSlide.caption}</p>}
+              {activeSlide?.title && <h2 className="text-xl md:text-3xl mb-3 max-w-xl">{activeSlide.title}</h2>}
+              {activeSlide?.caption && <p className="ccf-copy text-white/86 max-w-2xl">{activeSlide.caption}</p>}
             </div>
           </div>
           {totalSlides > 1 && (
