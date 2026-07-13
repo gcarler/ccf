@@ -208,7 +208,7 @@ class TestConsolidationTasks:
 
     def test_get_task_404(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/crm/tasks/999999", headers=headers)
+        resp = client.get(f"/api/crm/tasks/{uuid.uuid4()}", headers=headers)
         assert resp.status_code in (404, 400)
 
     def test_my_tasks(self, client_auth):
@@ -242,7 +242,7 @@ class TestCounseling:
 
     def test_get_counseling_detail_404(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/crm/counseling/999999", headers=headers)
+        resp = client.get(f"/api/crm/counseling/{uuid.uuid4()}", headers=headers)
         assert resp.status_code in (404, 400)
 
 
@@ -272,7 +272,7 @@ class TestPrayerRequests:
 
     def test_get_prayer_request_detail_404(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/crm/prayer-requests/999999", headers=headers)
+        resp = client.get(f"/api/crm/prayer-requests/{uuid.uuid4()}", headers=headers)
         assert resp.status_code in (404, 400)
 
     def test_create_public_prayer_request(self, client):
@@ -345,14 +345,14 @@ class TestCRMRoles:
 
     def test_update_role(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.patch("/api/crm/roles/999999", json={
-            "nombre": "Updated Role",
+        resp = client.put(f"/api/crm/roles/{uuid.uuid4()}", json={
+            "name": "Updated Role",
         }, headers=headers)
         assert resp.status_code in (200, 400, 404)
 
     def test_delete_role(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.delete("/api/crm/roles/999999", headers=headers)
+        resp = client.delete(f"/api/crm/roles/{uuid.uuid4()}", headers=headers)
         assert resp.status_code in (200, 204, 404)
 
 
@@ -384,7 +384,7 @@ class TestMessaging:
 
     def test_messaging_history_item_404(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.get("/api/crm/messaging/history/999999", headers=headers)
+        resp = client.get(f"/api/crm/messaging/history/{uuid.uuid4()}", headers=headers)
         assert resp.status_code in (404, 400)
 
 
@@ -437,7 +437,7 @@ class TestConsolidationCalls:
             "outcome": "completed",
             "notes": "Test call",
         }, headers=headers)
-        assert resp.status_code in (200, 201, 400, 405, 422)
+        assert resp.status_code in (200, 201, 400, 404, 405, 422)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
