@@ -89,7 +89,7 @@ class ProjectTaskBase(BaseModel):
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
     labels: List[str] = Field(default_factory=list)
-    attachments: List[Any] = Field(default_factory=list)
+    attachments: List[ProjectAttachment] = Field(default_factory=list)
 
 class ProjectTaskCreate(ProjectTaskBase):
     project_id: Optional[UUIDStr] = None
