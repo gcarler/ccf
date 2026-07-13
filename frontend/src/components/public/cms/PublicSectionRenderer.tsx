@@ -10,112 +10,39 @@ import React,{ useCallback,useEffect,useMemo,useRef,useState } from "react";
 import { sanitizeCmsHtml } from "@/lib/cms/sanitize";
 import { apiFetch } from "@/lib/http";
 import PublicHeroWithSlides, { type PublicSlide } from "@/components/public/PublicHeroWithSlides";
+import {
+  cmsItems,
+  cmsValue,
+  normalizeHeroProps,
+  normalizePopupProps,
+  shouldRenderCmsPopup,
+} from "@/lib/cms/heroPopup";
 
 function val(props: Record<string, unknown>, key: string, fallback = "") {
-  const value = props?.[key];
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  return fallback;
+  return cmsValue(props, key, fallback);
 }
 
 function asItems(props: Record<string, unknown>): Array<Record<string, unknown>> {
-  return Array.isArray(props.items)
-    ? (props.items as Array<Record<string, unknown>>).filter(
-        (item) => Boolean(item) && (item as { status?: string }).status !== "archived"
-      )
-    : [];
-}
-
-function asStringList(props: Record<string, unknown>, key: string): string[] {
-  const value = props?.[key];
-  if (Array.isArray(value)) {
-    return value.map((item) => String(item).trim()).filter(Boolean);
-  }
-  if (typeof value === "string") {
-    return value
-      .split(/[\n,]/)
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-  return [];
-}
-
-function matchesPathRule(pathname: string, rule: string): boolean {
-  const normalizedRule = rule.trim();
-  if (!normalizedRule) return false;
-  if (normalizedRule === "/") return true;
-  if (normalizedRule.endsWith("*")) {
-    return pathname.startsWith(normalizedRule.slice(0, -1));
-  }
-  return pathname === normalizedRule || pathname.startsWith(`${normalizedRule}/`);
-}
-
-function parseDateOrNull(value: string): Date | null {
-  if (!value) return null;
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function parseNonNegativeInt(value: string, fallback: number): number {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) ? Math.max(0, parsed) : fallback;
-}
-
-function parsePositiveInt(value: string, fallback: number): number {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) ? Math.max(1, parsed) : fallback;
+  return cmsItems(props);
 }
 
 // ─── Hero ──────────────────────────────────────────────────────────────────────
 
 function HeroSection({ section }: { section: CmsSection }) {
   const props = section.props_json || {};
-  const titleLead = val(props, "title_lead", "");
-  const titleAccent = val(props, "title_accent", "");
-  const titleTail = val(props, "title_tail", "");
-  const title = val(props, "title", titleLead || titleAccent || titleTail ? "" : "Bienvenidos");
-  const body = val(props, "description", val(props, "body", ""));
-  const primaryLabel = val(props, "primary_cta", val(props, "cta_label", ""));
-  const primaryHref = val(props, "primary_cta_href", val(props, "cta_href", "/")) || "/";
-  const secondaryLabel = val(props, "secondary_cta", "");
-  const secondaryHref = val(props, "secondary_cta_href", "/") || "/";
-  const imageUrl = val(props, "bg_image", val(props, "image_url", ""));
-  const imageAlt = val(props, "image_alt", title);
-  const items = asItems(props) as Array<{ url?: string; src?: string; alt?: string; caption?: string; title?: string; href?: string }>;
-  const rawSlides = Array.isArray(props.slides)
-    ? (props.slides as Array<Record<string, unknown>>)
-    : [];
-  const slidesFromProps = rawSlides.map((item) => ({
-    src: String(item.src || item.url || ""),
-    alt: String(item.alt || item.title || title),
-    title: String(item.title || title),
-    caption: String(item.caption || body || ""),
-    href: typeof item.href === "string" ? item.href : undefined,
-  })).filter((slide) => slide.src);
-  const slides: PublicSlide[] = [
-    ...slidesFromProps,
-    ...(imageUrl ? [{ src: imageUrl, alt: imageAlt, title, caption: body || undefined }] : []),
-    ...items
-      .filter((item) => item.url)
-      .map((item) => ({
-        src: String(item.url),
-        alt: String(item.alt || item.title || title),
-        title: String(item.title || title),
-        caption: String(item.caption || body || ""),
-      })),
-  ];
+  const hero = normalizeHeroProps(props);
 
   return (
     <PublicHeroWithSlides
-      eyebrow={val(props, "eyebrow", "")}
-      title={title || undefined}
-      titleLead={titleLead}
-      titleAccent={titleAccent}
-      titleTail={titleTail}
-      description={body}
-      primaryCta={primaryLabel ? { label: primaryLabel, href: primaryHref } : undefined}
-      secondaryCta={secondaryLabel ? { label: secondaryLabel, href: secondaryHref } : undefined}
-      slides={slides}
+      eyebrow={hero.eyebrow}
+      title={hero.title}
+      titleLead={hero.titleLead}
+      titleAccent={hero.titleAccent}
+      titleTail={hero.titleTail}
+      description={hero.description}
+      primaryCta={hero.primaryCta}
+      secondaryCta={hero.secondaryCta}
+      slides={hero.slides as PublicSlide[]}
     />
   );
 }
@@ -949,86 +876,62 @@ function NewsletterSection({ section }: { section: CmsSection }) {
 
 function PopupBlock({ section }: { section: CmsSection }) {
   const props = section.props_json || {};
-  const title = val(props, "title", "Aviso Importante");
-  const body = val(props, "body", "");
-  const ctaLabel = val(props, "cta_label", "Ver Más");
-  const ctaHref = val(props, "cta_href", "/");
-  const delayMs = parseNonNegativeInt(val(props, "delay_ms", "2000"), 2000);
+  const popup = normalizePopupProps(props, section.id);
   const pathname = usePathname() || "/";
-  const startAt = val(props, "start_at", "");
-  const endAt = val(props, "end_at", "");
-  const showOnPaths = asStringList(props, "show_on_paths");
-  const hideOnPaths = asStringList(props, "hide_on_paths");
-  const rawDismissMode = val(props, "dismiss_mode", "local").toLowerCase();
-  const dismissMode = ["local", "session", "none"].includes(rawDismissMode) ? rawDismissMode : "local";
-  const dismissDays = parsePositiveInt(val(props, "dismiss_days", "30"), 30);
-  const dismissKey = val(props, "dismiss_key", "") || `cms_popup_${section.id}`;
   const titleId = `cms-popup-title-${section.id}`;
   const bodyId = `cms-popup-body-${section.id}`;
   const [isVisible, setIsVisible] = useState(false);
   const shouldRenderForRoute = useMemo(() => {
-    const current = pathname || "/";
-    if (showOnPaths.length > 0 && !showOnPaths.some((rule) => matchesPathRule(current, rule))) {
-      return false;
-    }
-    if (hideOnPaths.some((rule) => matchesPathRule(current, rule))) {
-      return false;
-    }
-    const now = new Date();
-    const startDate = parseDateOrNull(startAt);
-    const endDate = parseDateOrNull(endAt);
-    if (startDate && now < startDate) return false;
-    if (endDate && now > endDate) return false;
-    return true;
-  }, [endAt, hideOnPaths, pathname, showOnPaths, startAt]);
+    return shouldRenderCmsPopup(popup, pathname);
+  }, [pathname, popup]);
 
   const isDismissed = useCallback(() => {
-    if (dismissMode === "none") return false;
+    if (popup.dismissMode === "none") return false;
     if (typeof window === "undefined") return false;
     try {
-      const storage = dismissMode === "session" ? window.sessionStorage : window.localStorage;
-      const raw = storage.getItem(dismissKey);
+      const storage = popup.dismissMode === "session" ? window.sessionStorage : window.localStorage;
+      const raw = storage.getItem(popup.dismissKey);
       if (!raw) return false;
-      if (dismissMode === "session") return raw === "closed";
+      if (popup.dismissMode === "session") return raw === "closed";
       const parsed = JSON.parse(raw) as { expiresAt?: number } | string;
       if (typeof parsed === "string") return parsed === "closed";
       if (parsed?.expiresAt && Date.now() > parsed.expiresAt) {
-        storage.removeItem(dismissKey);
+        storage.removeItem(popup.dismissKey);
         return false;
       }
       return true;
     } catch {
       return false;
     }
-  }, [dismissKey, dismissMode]);
+  }, [popup.dismissKey, popup.dismissMode]);
 
   const handleClose = useCallback(() => {
     setIsVisible(false);
-    if (dismissMode === "none") return;
+    if (popup.dismissMode === "none") return;
     if (typeof window === "undefined") return;
     try {
-      const storage = dismissMode === "session" ? window.sessionStorage : window.localStorage;
-      if (dismissMode === "session") {
-        storage.setItem(dismissKey, "closed");
+      const storage = popup.dismissMode === "session" ? window.sessionStorage : window.localStorage;
+      if (popup.dismissMode === "session") {
+        storage.setItem(popup.dismissKey, "closed");
       } else {
-        storage.setItem(dismissKey, JSON.stringify({
+        storage.setItem(popup.dismissKey, JSON.stringify({
           closedAt: Date.now(),
-          expiresAt: Date.now() + dismissDays * 24 * 60 * 60 * 1000,
+          expiresAt: Date.now() + popup.dismissDays * 24 * 60 * 60 * 1000,
         }));
       }
     } catch {
       // ignore storage failures
     }
-  }, [dismissDays, dismissKey, dismissMode]);
+  }, [popup.dismissDays, popup.dismissKey, popup.dismissMode]);
 
   useEffect(() => {
     if (!shouldRenderForRoute || isDismissed()) {
       setIsVisible(false);
       return;
     }
-    const timer = setTimeout(() => setIsVisible(true), delayMs);
+    const timer = setTimeout(() => setIsVisible(true), popup.delayMs);
     return () => clearTimeout(timer);
-  }, [delayMs, isDismissed, shouldRenderForRoute]);
+  }, [isDismissed, popup.delayMs, shouldRenderForRoute]);
 
   useEffect(() => {
     if (!isVisible) return;
@@ -1073,7 +976,7 @@ function PopupBlock({ section }: { section: CmsSection }) {
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            aria-describedby={body ? bodyId : undefined}
+            aria-describedby={popup.body ? bodyId : undefined}
           >
             <button
               type="button"
@@ -1085,17 +988,17 @@ function PopupBlock({ section }: { section: CmsSection }) {
               <X size={18} style={{ color: "var(--site-on-surface-variant)" }} />
             </button>
             <div className="text-center mt-2">
-              <h2 id={titleId} className="text-xl font-black mb-3" style={{ color: "var(--site-on-surface)" }}>{title}</h2>
-              {body && <p id={bodyId} className="text-sm leading-relaxed mb-6" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
+              <h2 id={titleId} className="text-xl font-black mb-3" style={{ color: "var(--site-on-surface)" }}>{popup.title}</h2>
+              {popup.body && <p id={bodyId} className="text-sm leading-relaxed mb-6" style={{ color: "var(--site-on-surface-variant)" }}>{popup.body}</p>}
               <div className="flex flex-col gap-3">
-                {ctaLabel && ctaHref && (
+                {popup.ctaLabel && popup.ctaHref && (
                   <Link
-                    href={ctaHref}
+                    href={popup.ctaHref}
                     onClick={handleClose}
                     className="w-full py-3 rounded-full text-sm font-black uppercase tracking-widest text-white text-center transition-transform hover:scale-[1.02]"
                     style={{ background: "var(--site-cta-gradient)" }}
                   >
-                    {ctaLabel}
+                    {popup.ctaLabel}
                   </Link>
                 )}
                 <button
