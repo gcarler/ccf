@@ -7,6 +7,10 @@ const apiProxyTarget =
 const nextConfig = {
     allowedDevOrigins: ['elfarocc.tech', 'www.elfarocc.tech'],
     images: {
+        // CMS media is already served by the backend as immutable WebP assets.
+        // Avoid Next's image proxy for /api/static media to prevent noisy 400s
+        // when the optimizer receives proxied local URLs.
+        unoptimized: true,
         // Enable WebP and AVIF automatic format negotiation
         formats: ['image/webp', 'image/avif'],
         deviceSizes: [640, 768, 1024, 1280, 1536, 1920],
