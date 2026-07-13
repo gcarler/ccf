@@ -137,17 +137,16 @@ export default function Footer() {
     const socialLinks = asPublicLinks(cfg.social_links);
 
     return (
-        <footer className="w-full overflow-hidden" style={{ background: "var(--site-surface-container-lowest)" }}>
-            <div className="ccf-container py-16 sm:py-20 lg:py-24">
-                <div
-                    className="overflow-hidden rounded-[2rem] border"
-                    style={{
-                        background: "linear-gradient(135deg, var(--site-surface-container-low), var(--site-surface-container-lowest))",
-                        borderColor: "var(--site-outline-variant)",
-                        boxShadow: "var(--site-card-shadow)",
-                    }}
-                >
-                    <div className="grid gap-8 px-6 py-8 sm:px-8 sm:py-10 lg:grid-cols-[1.15fr_0.85fr] lg:px-10 lg:py-12">
+        <footer
+            className="w-full overflow-hidden border-t"
+            style={{
+                background: "linear-gradient(135deg, var(--site-surface-container-low), var(--site-surface-container-lowest))",
+                borderColor: "var(--site-outline-variant)",
+            }}
+        >
+            <div className="w-full">
+                <div className="ccf-container max-w-[1500px]">
+                    <div className="grid gap-10 py-14 sm:py-16 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:py-20">
                         <div className="min-w-0">
                             <Link href="/" className="inline-flex max-w-full items-center gap-4">
                                 <span
@@ -206,13 +205,7 @@ export default function Footer() {
                             ) : null}
                         </div>
 
-                        <div
-                            className="grid gap-3 rounded-[1.5rem] border p-3 sm:grid-cols-3 lg:grid-cols-1"
-                            style={{
-                                background: "color-mix(in srgb, var(--site-surface-container-lowest) 64%, transparent)",
-                                borderColor: "var(--site-outline-variant)",
-                            }}
-                        >
+                        <div className="grid gap-2 border-y py-4 sm:grid-cols-3 lg:grid-cols-1 lg:border-y-0 lg:border-l lg:py-2 lg:pl-10" style={{ borderColor: "var(--site-outline-variant)" }}>
                             {SITE_EMAIL ? (
                                 <a href={`mailto:${SITE_EMAIL}`} className="group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors" style={{ color: "var(--site-on-surface)" }}>
                                     <Mail size={18} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
@@ -236,8 +229,10 @@ export default function Footer() {
                             ) : null}
                         </div>
                     </div>
+                </div>
 
-                    <div className="grid gap-10 border-t px-6 py-8 sm:grid-cols-2 sm:px-8 lg:grid-cols-[1fr_1fr_1.15fr] lg:px-10 lg:py-10" style={{ borderColor: "var(--site-outline-variant)" }}>
+                <div className="w-full border-t" style={{ borderColor: "var(--site-outline-variant)" }}>
+                    <div className="ccf-container grid max-w-[1500px] gap-10 py-10 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.15fr] lg:py-12">
                         <FooterLinkColumn title={navSectionTitle} links={navLinks} />
                         <FooterLinkColumn title={resourceSectionTitle} links={resourceLinks} />
 
@@ -267,8 +262,10 @@ export default function Footer() {
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div className="flex flex-col gap-4 border-t px-6 py-5 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10" style={{ borderColor: "var(--site-outline-variant)" }}>
+                <div className="w-full border-t" style={{ borderColor: "var(--site-outline-variant)" }}>
+                    <div className="ccf-container flex max-w-[1500px] flex-col gap-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between">
                         <p className="max-w-[44rem] leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
                             © {new Date().getFullYear()}{" "}
                             <a href={copyrightCompanyUrl} target="_blank" rel="noopener noreferrer" className="font-semibold transition-colors hover:text-[var(--site-primary)]">
