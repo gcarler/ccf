@@ -1,0 +1,75 @@
+{
+  "database_url_driver": "postgresql",
+  "db_table_count": 193,
+  "extra_tables": [
+    "alembic_version",
+    "content_metrics",
+    "content_publications",
+    "media_assets",
+    "page_content_versions",
+    "page_contents"
+  ],
+  "missing_tables": [
+    "public_contact_submissions"
+  ],
+  "model_table_count": 188,
+  "table_diffs": {
+    "crm_automation_edges": {
+      "extra_columns": [],
+      "missing_columns": [
+        "on_delete_cascade",
+        "source_node_id",
+        "target_node_id"
+      ]
+    },
+    "crm_casos": {
+      "extra_columns": [],
+      "missing_columns": [
+        "drag_source_etapa_id",
+        "drag_target_etapa_id",
+        "is_locked_for_reorder",
+        "last_reorder_failed"
+      ]
+    },
+    "event_assignments": {
+      "extra_columns": [],
+      "missing_columns": [
+        "deleted_at"
+      ]
+    },
+    "persona_church_roles": {
+      "extra_columns": [],
+      "missing_columns": [
+        "assigned_by_persona_id"
+      ]
+    },
+    "persona_ministries": {
+      "extra_columns": [
+        "created_at"
+      ],
+      "missing_columns": []
+    },
+    "project_whiteboards": {
+      "extra_columns": [],
+      "missing_columns": [
+        "deleted_at"
+      ]
+    },
+    "sedes": {
+      "extra_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "missing_columns": []
+    },
+    "sesiones_grupo": {
+      "extra_columns": [],
+      "missing_columns": [
+        "novelty_detail",
+        "novelty_type",
+        "report_deadline",
+        "reported_by_persona_id"
+      ]
+    }
+  }
+}

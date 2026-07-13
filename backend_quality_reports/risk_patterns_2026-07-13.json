@@ -1,0 +1,1116 @@
+{
+  "file_count": 221,
+  "findings": {
+    "backend/api/academy.py": {
+      "hard_delete": [
+        {
+          "line": 904,
+          "text": "@router.delete(\"/admin/courses/{course_id}\", status_code=status.HTTP_204_NO_CONTENT)"
+        },
+        {
+          "line": 990,
+          "text": "@router.delete(\"/admin/lessons/{lesson_id}\", status_code=status.HTTP_204_NO_CONTENT)"
+        }
+      ]
+    },
+    "backend/api/admin.py": {
+      "hard_delete": [
+        {
+          "line": 111,
+          "text": "@router.delete(\"/roles/{role_id}\", status_code=204)"
+        },
+        {
+          "line": 659,
+          "text": "@router.delete(\"/users/{user_id}\", status_code=204)"
+        },
+        {
+          "line": 788,
+          "text": "@router.delete(\"/comments/{comment_id}\")"
+        },
+        {
+          "line": 975,
+          "text": "@router.delete(\"/automations/{rule_id}\")"
+        },
+        {
+          "line": 1065,
+          "text": "@router.delete(\"/auth-role-definitions/{role_id}\", status_code=204)"
+        },
+        {
+          "line": 1163,
+          "text": "@router.delete(\"/user-module-roles/{assignment_id}\", status_code=204)"
+        }
+      ],
+      "response_model_dict": [
+        {
+          "line": 71,
+          "text": "@router.post(\"/roles\", response_model=Dict[str, Any])"
+        },
+        {
+          "line": 481,
+          "text": "@router.get(\"/users/{user_id}\", response_model=Dict[str, Any])"
+        },
+        {
+          "line": 510,
+          "text": "@router.post(\"/users\", response_model=Dict[str, Any])"
+        },
+        {
+          "line": 592,
+          "text": "@router.patch(\"/users/{user_id}\", response_model=Dict[str, Any])"
+        },
+        {
+          "line": 1230,
+          "text": "@router.post(\"/provision-accounts\", response_model=Dict[str, Any])"
+        }
+      ]
+    },
+    "backend/api/agenda.py": {
+      "hard_delete": [
+        {
+          "line": 160,
+          "text": "@router.delete(\"/events/{event_id}\", status_code=status.HTTP_204_NO_CONTENT)"
+        },
+        {
+          "line": 224,
+          "text": "@router.delete(\"/resources/{resource_id}\", status_code=status.HTTP_204_NO_CONTENT)"
+        },
+        {
+          "line": 299,
+          "text": "@router.delete(\"/participants/{participant_id}\", status_code=status.HTTP_204_NO_CONTENT)"
+        },
+        {
+          "line": 393,
+          "text": "@router.delete(\"/reservations/{reservation_id}\", status_code=status.HTTP_204_NO_CONTENT)"
+        }
+      ]
+    },
+    "backend/api/agents.py": {
+      "hard_delete": [
+        {
+          "line": 170,
+          "text": "@router.delete(\"/tasks/{task_id}\", status_code=204)"
+        },
+        {
+          "line": 231,
+          "text": "@router.delete(\"/insights/{insight_id}\", status_code=204)"
+        },
+        {
+          "line": 669,
+          "text": "@router.delete(\"/conversations/{conv_id}\")"
+        }
+      ],
+      "response_model_dict": [
+        {
+          "line": 437,
+          "text": "@router.put(\"/{agent_id}/stage\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/auth_v3.py": {
+      "response_model_dict": [
+        {
+          "line": 465,
+          "text": "@router.post(\"/initialize-password\", response_model=dict)"
+        },
+        {
+          "line": 513,
+          "text": "@router.post(\"/change-password\", response_model=dict)"
+        },
+        {
+          "line": 711,
+          "text": "@router.post(\"/refresh\", response_model=dict)"
+        },
+        {
+          "line": 817,
+          "text": "@router.post(\"/logout\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/chat.py": {
+      "hard_delete": [
+        {
+          "line": 689,
+          "text": "@router.delete(\"/chat/messages/{message_id}\")"
+        }
+      ]
+    },
+    "backend/api/cms.py": {
+      "hard_delete": [
+        {
+          "line": 156,
+          "text": "@router.delete(\"/admin/testimonials/{testimonial_id}\", status_code=204)"
+        },
+        {
+          "line": 267,
+          "text": "@router.delete(\"/admin/announcements/{announcement_id}\", status_code=204)"
+        },
+        {
+          "line": 390,
+          "text": "@router.delete(\"/cms/media/{item_id}\", status_code=204)"
+        }
+      ]
+    },
+    "backend/api/cms_v2.py": {
+      "hard_delete": [
+        {
+          "line": 151,
+          "text": "@router.delete(\"/section-types/{name}\", status_code=204)"
+        },
+        {
+          "line": 483,
+          "text": "@router.delete(\"/sites/{site_key}\", status_code=204)"
+        },
+        {
+          "line": 575,
+          "text": "@router.delete(\"/sites/{site_key}/themes/{theme_id}\", status_code=204)"
+        },
+        {
+          "line": 641,
+          "text": "@router.delete(\"/sites/{site_key}/menus/{menu_key}\", status_code=204)"
+        },
+        {
+          "line": 709,
+          "text": "@router.delete(\"/sites/{site_key}/menus/{menu_key}/items/{item_id}\", status_code=204)"
+        },
+        {
+          "line": 829,
+          "text": "@router.delete(\"/sites/{site_key}/pages/{slug}\", status_code=204)"
+        },
+        {
+          "line": 922,
+          "text": "@router.delete(\"/sites/{site_key}/pages/{slug}/sections/{section_id}\", status_code=204)"
+        },
+        {
+          "line": 2258,
+          "text": "@router.delete(\"/global-blocks/{section_id}\", status_code=204)"
+        },
+        {
+          "line": 2375,
+          "text": "@router.delete(\"/sites/{site_key}/categories/{slug}\", status_code=204)"
+        },
+        {
+          "line": 2443,
+          "text": "@router.delete(\"/sites/{site_key}/tags/{slug}\", status_code=204)"
+        },
+        {
+          "line": 2564,
+          "text": "@router.delete(\"/sites/{site_key}/posts/{slug}\", status_code=204)"
+        }
+      ],
+      "response_model_dict": [
+        {
+          "line": 2673,
+          "text": "response_model=dict,"
+        },
+        {
+          "line": 2708,
+          "text": "@router.get(\"/analytics/{page_key}\", response_model=dict)"
+        },
+        {
+          "line": 2754,
+          "text": "@router.post(\"/pages/{page_id}/schedule\", response_model=Dict[str, Any])"
+        },
+        {
+          "line": 2789,
+          "text": "response_model=dict,"
+        },
+        {
+          "line": 2823,
+          "text": "@router.post(\"/images/optimize\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/community.py": {
+      "hard_delete": [
+        {
+          "line": 41,
+          "text": "@router.delete(\"/cards/{card_id}\", status_code=204)"
+        }
+      ],
+      "response_model_dict": [
+        {
+          "line": 55,
+          "text": "@router.get(\"/grupos\", response_model=List[dict])"
+        },
+        {
+          "line": 101,
+          "text": "@router.get(\"/events\", response_model=List[dict])"
+        },
+        {
+          "line": 141,
+          "text": "@router.post(\"/grupos\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/crm/_shared.py": {
+      "raw_model_dict_mutation": [
+        {
+          "line": 142,
+          "text": "persona.__dict__[field_name] = None"
+        },
+        {
+          "line": 156,
+          "text": "case.__dict__[field_name] = None"
+        }
+      ]
+    },
+    "backend/api/crm/pastoral.py": {
+      "hard_delete": [
+        {
+          "line": 476,
+          "text": "@router.delete(\"/casos/{case_id}\", status_code=204)"
+        },
+        {
+          "line": 1005,
+          "text": "@router.delete(\"/tasks/{task_id}\", status_code=204)"
+        },
+        {
+          "line": 1655,
+          "text": "@router.delete(\"/roles/{role_id}\", response_model=dict)"
+        },
+        {
+          "line": 2042,
+          "text": "@router.delete(\"/volunteers/{persona_id}\", status_code=204)"
+        }
+      ],
+      "response_model_dict": [
+        {
+          "line": 206,
+          "text": "@router.get(\"/casos/{case_id}\", response_model=dict)"
+        },
+        {
+          "line": 217,
+          "text": "@router.get(\"/casos/{case_id}/audit\", response_model=list[dict])"
+        },
+        {
+          "line": 253,
+          "text": "@router.post(\"/casos\", response_model=dict)"
+        },
+        {
+          "line": 329,
+          "text": "@router.patch(\"/casos/{case_id}\", response_model=dict)"
+        },
+        {
+          "line": 347,
+          "text": "@router.post(\"/casos/{case_id}/interactions\", response_model=dict)"
+        },
+        {
+          "line": 381,
+          "text": "@router.post(\"/casos/{case_id}/tasks\", response_model=dict)"
+        },
+        {
+          "line": 417,
+          "text": "@router.get(\"/casos\", response_model=dict)"
+        },
+        {
+          "line": 490,
+          "text": "@router.get(\"/casos/{case_id}/tasks\", response_model=List[dict])"
+        },
+        {
+          "line": 526,
+          "text": "@router.patch(\"/casos/{case_id}/tasks/{task_id}\", response_model=dict)"
+        },
+        {
+          "line": 577,
+          "text": "@router.get(\"/casos/{case_id}/interactions\", response_model=List[dict])"
+        },
+        {
+          "line": 610,
+          "text": "@router.post(\"/messaging/send\", response_model=dict)"
+        },
+        {
+          "line": 715,
+          "text": "@router.get(\"/messaging/history\", response_model=List[dict])"
+        },
+        {
+          "line": 730,
+          "text": "@router.get(\"/messaging/history/{log_id}\", response_model=dict)"
+        },
+        {
+          "line": 761,
+          "text": "@router.get(\"/tasks\", response_model=List[dict])"
+        },
+        {
+          "line": 779,
+          "text": "@router.post(\"/tasks/\", response_model=dict)"
+        },
+        {
+          "line": 863,
+          "text": "@router.get(\"/tasks/mine\", response_model=List[dict])"
+        },
+        {
+          "line": 880,
+          "text": "@router.get(\"/tasks/{task_id}\", response_model=dict)"
+        },
+        {
+          "line": 903,
+          "text": "@router.patch(\"/tasks/{task_id}\", response_model=dict)"
+        },
+        {
+          "line": 1025,
+          "text": "@router.get(\"/counseling/{ticket_id}\", response_model=dict)"
+        },
+        {
+          "line": 1064,
+          "text": "@router.get(\"/counseling/{ticket_id}/copilot-draft\", response_model=dict)"
+        },
+        {
+          "line": 1065,
+          "text": "@router.post(\"/counseling/{ticket_id}/copilot-draft\", response_model=dict)"
+        },
+        {
+          "line": 1210,
+          "text": "@router.get(\"/grupos/{grupo_id}\", response_model=dict)"
+        },
+        {
+          "line": 1244,
+          "text": "@router.get(\"/grupos\", response_model=List[dict])"
+        },
+        {
+          "line": 1269,
+          "text": "@router.put(\"/grupos/{grupo_id}\", response_model=dict)"
+        },
+        {
+          "line": 1350,
+          "text": "@router.get(\"/prayer-requests/{request_id}\", response_model=dict)"
+        },
+        {
+          "line": 1370,
+          "text": "@router.get(\"/counseling/\", response_model=List[dict])"
+        },
+        {
+          "line": 1403,
+          "text": "@router.post(\"/counseling/\", response_model=dict, status_code=201)"
+        },
+        {
+          "line": 1439,
+          "text": "@router.get(\"/counseling/lead/{lead_id}\", response_model=List[dict])"
+        },
+        {
+          "line": 1469,
+          "text": "@router.patch(\"/counseling/{ticket_id}\", response_model=dict)"
+        },
+        {
+          "line": 1531,
+          "text": "@router.get(\"/settings\", response_model=dict)"
+        },
+        {
+          "line": 1539,
+          "text": "@router.post(\"/settings\", response_model=dict)"
+        },
+        {
+          "line": 1561,
+          "text": "@router.get(\"/roles\", response_model=List[dict])"
+        },
+        {
+          "line": 1582,
+          "text": "@router.post(\"/roles\", response_model=dict, status_code=201)"
+        },
+        {
+          "line": 1611,
+          "text": "@router.put(\"/roles/{role_id}\", response_model=dict)"
+        },
+        {
+          "line": 1655,
+          "text": "@router.delete(\"/roles/{role_id}\", response_model=dict)"
+        },
+        {
+          "line": 1682,
+          "text": "@router.get(\"/analytics\", response_model=dict)"
+        },
+        {
+          "line": 1737,
+          "text": "@router.post(\"/prayer-requests/public\", response_model=dict, status_code=201)"
+        },
+        {
+          "line": 1791,
+          "text": "@router.get(\"/prayer-requests\", response_model=List[dict])"
+        },
+        {
+          "line": 1820,
+          "text": "@router.post(\"/prayer-requests\", response_model=dict, status_code=201)"
+        },
+        {
+          "line": 1853,
+          "text": "@router.patch(\"/prayer-requests/{request_id}\", response_model=dict)"
+        },
+        {
+          "line": 1878,
+          "text": "@router.post(\"/volunteers\", response_model=dict, status_code=201)"
+        },
+        {
+          "line": 1939,
+          "text": "@router.get(\"/volunteers\", response_model=List[dict])"
+        },
+        {
+          "line": 1976,
+          "text": "@router.get(\"/volunteers/{persona_id}\", response_model=dict)"
+        },
+        {
+          "line": 2020,
+          "text": "@router.patch(\"/volunteers/{persona_id}\", response_model=dict)"
+        },
+        {
+          "line": 2063,
+          "text": "@router.get(\"/groups\", response_model=List[dict])"
+        },
+        {
+          "line": 2082,
+          "text": "@router.get(\"/radar\", response_model=dict)"
+        },
+        {
+          "line": 2129,
+          "text": "@router.get(\"/leads/newsletter\", response_model=dict)"
+        },
+        {
+          "line": 2211,
+          "text": "@router.get(\"/leads/export-newsletter\", response_model=dict)"
+        },
+        {
+          "line": 2275,
+          "text": "@router.get(\"/casos/{case_id}/calls\", response_model=List[dict])"
+        },
+        {
+          "line": 2294,
+          "text": "@router.post(\"/casos/{case_id}/calls\", response_model=dict, status_code=201)"
+        }
+      ]
+    },
+    "backend/api/crm/persona_relations.py": {
+      "response_model_dict": [
+        {
+          "line": 56,
+          "text": "@router.get(\"/personas/{persona_id}/ministries\", response_model=List[dict])"
+        },
+        {
+          "line": 101,
+          "text": "@router.get(\"/personas/{persona_id}/crm-perfil\", response_model=dict)"
+        },
+        {
+          "line": 222,
+          "text": "@router.post(\"/personas/{persona_id}/positions\", response_model=dict)"
+        },
+        {
+          "line": 271,
+          "text": "@router.patch(\"/personas/{persona_id}/positions/{persona_position_id}\", response_model=dict)"
+        },
+        {
+          "line": 298,
+          "text": "@router.post(\"/personas/{persona_id}/ministries\", response_model=dict)"
+        },
+        {
+          "line": 338,
+          "text": "@router.patch(\"/personas/{persona_id}/ministries/{mm_id}\", response_model=dict)"
+        },
+        {
+          "line": 441,
+          "text": "@router.post(\"/families/\", response_model=dict)"
+        },
+        {
+          "line": 454,
+          "text": "@router.get(\"/family/{family_id}\", response_model=List[dict])"
+        }
+      ]
+    },
+    "backend/api/crm/personas.py": {
+      "hard_delete": [
+        {
+          "line": 139,
+          "text": "@router.delete(\"/personas/{persona_id}\")"
+        }
+      ]
+    },
+    "backend/api/crm/pipelines.py": {
+      "hard_delete": [
+        {
+          "line": 117,
+          "text": "@router.delete(\"/pipelines/{pipeline_id}\", status_code=status.HTTP_204_NO_CONTENT)"
+        },
+        {
+          "line": 184,
+          "text": "@router.delete(\"/pipeline-stages/{stage_id}\", status_code=status.HTTP_204_NO_CONTENT)"
+        },
+        {
+          "line": 924,
+          "text": "db.query(models.CrmReorderLock).filter(models.CrmReorderLock.locked_at < ten_seconds_ago).delete()"
+        },
+        {
+          "line": 944,
+          "text": "db.query(models.CrmReorderLock).filter(models.CrmReorderLock.id == lock.id).delete()"
+        },
+        {
+          "line": 958,
+          "text": "db.query(models.CrmReorderLock).filter(models.CrmReorderLock.locked_at < ten_seconds_ago).delete()"
+        }
+      ]
+    },
+    "backend/api/crm/resources.py": {
+      "hard_delete": [
+        {
+          "line": 126,
+          "text": "@router.delete(\"/categorias/{categoria_id}\", status_code=204)"
+        },
+        {
+          "line": 198,
+          "text": "@router.delete(\"/plantillas/{plantilla_id}\", status_code=204)"
+        },
+        {
+          "line": 276,
+          "text": "@router.delete(\"/adjuntos/{adjunto_id}\", status_code=204)"
+        },
+        {
+          "line": 626,
+          "text": "@router.delete(\"/automations/{automation_id}\", status_code=204)"
+        },
+        {
+          "line": 667,
+          "text": "@router.delete(\"/automations/edges/{edge_id}\", status_code=204)"
+        }
+      ]
+    },
+    "backend/api/enterprise_cms.py": {
+      "hard_delete": [
+        {
+          "line": 241,
+          "text": "@router.delete(\"/content-permissions/{perm_id}\")"
+        },
+        {
+          "line": 418,
+          "text": "@router.delete(\"/webhooks/{hook_id}\")"
+        },
+        {
+          "line": 675,
+          "text": "@router.delete(\"/custom-entries/{entry_id}\")"
+        },
+        {
+          "line": 1061,
+          "text": "@router.delete(\"/redirects/{redirect_id}\")"
+        }
+      ]
+    },
+    "backend/api/evangelism.py": {
+      "response_model_dict": [
+        {
+          "line": 52,
+          "text": "@router.post(\"/scanner/generate/{persona_id}\", response_model=dict)"
+        },
+        {
+          "line": 61,
+          "text": "@router.post(\"/scanner/validate/{token}\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/evangelism_analytics.py": {
+      "response_model_dict": [
+        {
+          "line": 1042,
+          "text": "@router.get(\"/analytics/strategy/{strategy_id}/full\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/evangelism_events/events_main.py": {
+      "hard_delete": [
+        {
+          "line": 163,
+          "text": "@dynamic_router.delete(\"/events/{event_id}\", response_model=dict)"
+        },
+        {
+          "line": 590,
+          "text": "@static_router.delete(\"/events/roles/{role_id}\")"
+        },
+        {
+          "line": 591,
+          "text": "@static_router.delete(\"/roles/{role_id}\")"
+        }
+      ],
+      "response_model_dict": [
+        {
+          "line": 111,
+          "text": "@dynamic_router.put(\"/events/{event_id}\", response_model=dict)"
+        },
+        {
+          "line": 163,
+          "text": "@dynamic_router.delete(\"/events/{event_id}\", response_model=dict)"
+        },
+        {
+          "line": 187,
+          "text": "@dynamic_router.get(\"/events/{event_id}\", response_model=dict)"
+        },
+        {
+          "line": 524,
+          "text": "@static_router.get(\"/events/roles\", response_model=List[dict])"
+        },
+        {
+          "line": 629,
+          "text": "@static_router.get(\"/events/personas/{persona_id}/attendance-history\", response_model=dict)"
+        },
+        {
+          "line": 630,
+          "text": "@static_router.get(\"/personas/{persona_id}/attendance-history\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/evangelism_events/events_participantes.py": {
+      "response_model_dict": [
+        {
+          "line": 37,
+          "text": "@router.get(\"/events/{event_id}/attendance\", response_model=dict)"
+        },
+        {
+          "line": 97,
+          "text": "@router.post(\"/attendance/bulk\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/evangelism_grupos/grupos_asistencias.py": {
+      "response_model_dict": [
+        {
+          "line": 133,
+          "text": "@router.post(\"/grupos/sessions/{session_id}/attendance\", response_model=dict)"
+        },
+        {
+          "line": 134,
+          "text": "@router.post(\"/groups/sessions/{session_id}/attendance\", response_model=dict)"
+        },
+        {
+          "line": 309,
+          "text": "@router.post(\"/sessions/{session_id}/attendance\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/evangelism_grupos/grupos_main.py": {
+      "hard_delete": [
+        {
+          "line": 631,
+          "text": "@dynamic_router.delete(\"/grupos/{grupo_id:uuid}\", status_code=204)"
+        },
+        {
+          "line": 632,
+          "text": "@dynamic_router.delete(\"/groups/{grupo_id:uuid}\", status_code=204)"
+        }
+      ],
+      "response_model_dict": [
+        {
+          "line": 130,
+          "text": "@static_router.get(\"/grupos\", response_model=List[dict])"
+        },
+        {
+          "line": 131,
+          "text": "@static_router.get(\"/groups\", response_model=List[dict])"
+        },
+        {
+          "line": 150,
+          "text": "``response_model=List[dict]``. Reutilizado por list_grupos y"
+        },
+        {
+          "line": 171,
+          "text": "@static_router.get(\"/grupos/mine\", response_model=List[dict])"
+        },
+        {
+          "line": 172,
+          "text": "@static_router.get(\"/groups/mine\", response_model=List[dict])"
+        },
+        {
+          "line": 197,
+          "text": "@dynamic_router.get(\"/grupos/assignment-summary\", response_model=dict)"
+        },
+        {
+          "line": 198,
+          "text": "@dynamic_router.get(\"/groups/assignment-summary\", response_model=dict)"
+        },
+        {
+          "line": 297,
+          "text": "@dynamic_router.get(\"/grupos/{grupo_id:uuid}\", response_model=dict)"
+        },
+        {
+          "line": 298,
+          "text": "@dynamic_router.get(\"/groups/{grupo_id:uuid}\", response_model=dict)"
+        },
+        {
+          "line": 299,
+          "text": "@dynamic_router.get(\"/micro/{grupo_id:uuid}\", response_model=dict)"
+        },
+        {
+          "line": 532,
+          "text": "@static_router.post(\"/grupos\", response_model=dict)"
+        },
+        {
+          "line": 533,
+          "text": "@static_router.post(\"/groups\", response_model=dict)"
+        },
+        {
+          "line": 565,
+          "text": "@dynamic_router.put(\"/grupos/{grupo_id:uuid}\", response_model=dict)"
+        },
+        {
+          "line": 566,
+          "text": "@dynamic_router.put(\"/groups/{grupo_id:uuid}\", response_model=dict)"
+        },
+        {
+          "line": 677,
+          "text": "@dynamic_router.post(\"/grupos/seasons\", response_model=dict)"
+        },
+        {
+          "line": 678,
+          "text": "@dynamic_router.post(\"/groups/seasons\", response_model=dict)"
+        },
+        {
+          "line": 713,
+          "text": "@dynamic_router.patch(\"/grupos/seasons/{season_id:uuid}\", response_model=dict)"
+        },
+        {
+          "line": 714,
+          "text": "@dynamic_router.patch(\"/groups/seasons/{season_id}\", response_model=dict)"
+        },
+        {
+          "line": 789,
+          "text": "@dynamic_router.get(\"/macro-despliegue\", response_model=dict)"
+        },
+        {
+          "line": 790,
+          "text": "@dynamic_router.get(\"/macro/despliegue\", response_model=dict)"
+        },
+        {
+          "line": 1050,
+          "text": "@dynamic_router.get(\"/strategies/{strategy_id}/metrics\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/evangelism_grupos/grupos_sesiones.py": {
+      "hard_delete": [
+        {
+          "line": 568,
+          "text": "@dynamic_router.delete(\"/sessions/{session_id}\")"
+        }
+      ],
+      "response_model_dict": [
+        {
+          "line": 220,
+          "text": "@static_router.post(\"/grupos/sessions\", response_model=dict)"
+        },
+        {
+          "line": 221,
+          "text": "@static_router.post(\"/groups/sessions\", response_model=dict)"
+        },
+        {
+          "line": 340,
+          "text": "@static_router.get(\"/sessions\", response_model=List[dict])"
+        },
+        {
+          "line": 390,
+          "text": "@static_router.post(\"/sessions\", response_model=dict)"
+        },
+        {
+          "line": 449,
+          "text": "@dynamic_router.get(\"/sessions/{session_id}\", response_model=dict)"
+        },
+        {
+          "line": 599,
+          "text": "@dynamic_router.patch(\"/sessions/{session_id}/habilitacion\", response_model=dict)"
+        },
+        {
+          "line": 648,
+          "text": "@dynamic_router.post(\"/strategies/{strategy_id}/habilitar-todas\", response_model=dict)"
+        },
+        {
+          "line": 684,
+          "text": "@dynamic_router.post(\"/strategies/{strategy_id}/deshabilitar-todas\", response_model=dict)"
+        },
+        {
+          "line": 734,
+          "text": "@static_router.get(\"/personas/search\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/evangelism_main/main_estrategias.py": {
+      "hard_delete": [
+        {
+          "line": 385,
+          "text": "@estrategias_router.delete(\"/strategies/{strategy_id}\", status_code=status.HTTP_204_NO_CONTENT)"
+        }
+      ],
+      "response_model_dict": [
+        {
+          "line": 219,
+          "text": "@estrategias_router.post(\"/strategies/{strategy_id}/generate-sessions\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/evangelism_main/main_roles.py": {
+      "hard_delete": [
+        {
+          "line": 72,
+          "text": "@roles_router.delete(\"/strategies/{strategy_id}/roles/{role_id}\")"
+        },
+        {
+          "line": 137,
+          "text": "@roles_router.delete(\"/excuses/{excusa_id}\")"
+        }
+      ]
+    },
+    "backend/api/finance.py": {
+      "hard_delete": [
+        {
+          "line": 217,
+          "text": "@router.delete(\"/admin/funds/{fund_id}\", status_code=204)"
+        }
+      ]
+    },
+    "backend/api/finance_suite.py": {
+      "hard_delete": [
+        {
+          "line": 718,
+          "text": "db.query(models.DocumentTagLink).filter(models.DocumentTagLink.document_id == doc.id).delete()"
+        },
+        {
+          "line": 729,
+          "text": "@router.delete(\"/documents/{document_id}\", status_code=204)"
+        }
+      ]
+    },
+    "backend/api/kernel.py": {
+      "hard_delete": [
+        {
+          "line": 206,
+          "text": "@router.delete(\"/ministries/{persona_id}/{ministry}\")"
+        }
+      ]
+    },
+    "backend/api/projects.py": {
+      "hard_delete": [
+        {
+          "line": 1185,
+          "text": "@router.delete(\"/{project_id}/whiteboard\", status_code=status.HTTP_204_NO_CONTENT)"
+        },
+        {
+          "line": 1247,
+          "text": "@router.delete(\"/{project_id}/tasks/{task_id}/attachments/{attachment_id}\", response_model=dict)"
+        },
+        {
+          "line": 1380,
+          "text": "@router.delete(\"/{project_id}/tasks/{task_id}/supplies/{supply_id}\", response_model=dict)"
+        },
+        {
+          "line": 1497,
+          "text": "@router.delete(\"/{project_id}/tasks/{task_id}/subtasks/{subtask_id}\")"
+        },
+        {
+          "line": 1697,
+          "text": "@router.delete(\"/{project_id}\")"
+        },
+        {
+          "line": 1711,
+          "text": "@router.delete(\"/{project_id}/tasks/{task_id}\")"
+        },
+        {
+          "line": 1727,
+          "text": "@router.delete(\"/comments/{comment_id}\")"
+        },
+        {
+          "line": 1885,
+          "text": "@router.delete(\"/{project_id}/messages/{message_id}\")"
+        },
+        {
+          "line": 1970,
+          "text": "@router.delete(\"/{project_id}/milestones/{milestone_id}\", response_model=dict)"
+        }
+      ],
+      "raw_model_dict_mutation": [
+        {
+          "line": 331,
+          "text": "task.__dict__[\"attachments\"] = ["
+        }
+      ],
+      "response_model_dict": [
+        {
+          "line": 1008,
+          "text": "@router.post(\"/inbox/{item_id}/read\", response_model=dict)"
+        },
+        {
+          "line": 1247,
+          "text": "@router.delete(\"/{project_id}/tasks/{task_id}/attachments/{attachment_id}\", response_model=dict)"
+        },
+        {
+          "line": 1380,
+          "text": "@router.delete(\"/{project_id}/tasks/{task_id}/supplies/{supply_id}\", response_model=dict)"
+        },
+        {
+          "line": 1970,
+          "text": "@router.delete(\"/{project_id}/milestones/{milestone_id}\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/public.py": {
+      "response_model_dict": [
+        {
+          "line": 179,
+          "text": "@router.post(\"/courses/{course_slug}/enroll\", response_model=dict)"
+        },
+        {
+          "line": 233,
+          "text": "@router.post(\"/contact\", response_model=dict)"
+        },
+        {
+          "line": 276,
+          "text": "@router.post(\"/wishlist\", response_model=dict)"
+        },
+        {
+          "line": 316,
+          "text": "@router.post(\"/documents\", response_model=dict, status_code=201)"
+        }
+      ]
+    },
+    "backend/api/support_kb.py": {
+      "response_model_dict": [
+        {
+          "line": 17,
+          "text": "@router.get(\"/categories\", response_model=List[dict])"
+        },
+        {
+          "line": 39,
+          "text": "@router.get(\"/articles\", response_model=List[dict])"
+        },
+        {
+          "line": 71,
+          "text": "@router.get(\"/articles/{article_id}\", response_model=dict)"
+        }
+      ]
+    },
+    "backend/api/tables.py": {
+      "hard_delete": [
+        {
+          "line": 125,
+          "text": "@router.delete(\"/schemas/{view_id}\", response_model=Dict[str, Any])"
+        }
+      ],
+      "response_model_dict": [
+        {
+          "line": 69,
+          "text": "@router.post(\"/schemas\", response_model=Dict[str, Any], status_code=201)"
+        },
+        {
+          "line": 93,
+          "text": "@router.patch(\"/schemas/{view_id}\", response_model=Dict[str, Any])"
+        },
+        {
+          "line": 125,
+          "text": "@router.delete(\"/schemas/{view_id}\", response_model=Dict[str, Any])"
+        }
+      ]
+    },
+    "backend/api/wiki.py": {
+      "hard_delete": [
+        {
+          "line": 134,
+          "text": "@router.delete(\"/pages/{page_key}\", status_code=status.HTTP_204_NO_CONTENT)"
+        }
+      ]
+    },
+    "backend/api/workspace_compliance.py": {
+      "hard_delete": [
+        {
+          "line": 202,
+          "text": "@router.delete("
+        }
+      ]
+    },
+    "backend/crud/academy.py": {
+      "orm_all_return": [
+        {
+          "line": 203,
+          "text": "return db.query(models.ForumThread).order_by(models.ForumThread.created_at.desc()).all()"
+        }
+      ]
+    },
+    "backend/crud/cms.py": {
+      "hard_delete": [
+        {
+          "line": 397,
+          "text": "db.delete(row)"
+        },
+        {
+          "line": 1027,
+          "text": "db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete("
+        },
+        {
+          "line": 1878,
+          "text": "db.query(models.CmsPostCategory).filter(models.CmsPostCategory.post_id == post_id).delete("
+        },
+        {
+          "line": 1886,
+          "text": "db.query(models.CmsPostTag).filter(models.CmsPostTag.post_id == post_id).delete("
+        }
+      ],
+      "orm_all_return": [
+        {
+          "line": 464,
+          "text": "return ("
+        }
+      ]
+    },
+    "backend/crud/crm_/personas.py": {
+      "raw_model_dict_mutation": [
+        {
+          "line": 47,
+          "text": "persona.__dict__[field_name] = None"
+        }
+      ]
+    },
+    "backend/crud/identity.py": {
+      "orm_all_return": [
+        {
+          "line": 37,
+          "text": "return db.query(models.User).offset(skip).limit(limit).all()"
+        }
+      ]
+    },
+    "backend/crud/kernel.py": {
+      "hard_delete": [
+        {
+          "line": 162,
+          "text": "db.delete(row)"
+        }
+      ]
+    },
+    "backend/crud/ops.py": {
+      "orm_all_return": [
+        {
+          "line": 166,
+          "text": "return db.query(models.SystemVariable).all()"
+        }
+      ]
+    },
+    "backend/crud/projects.py": {
+      "orm_all_return": [
+        {
+          "line": 431,
+          "text": "return ("
+        }
+      ]
+    },
+    "backend/schemas/finance_suite.py": {
+      "schema_list_any": [
+        {
+          "line": 21,
+          "text": "items: List[Any]"
+        }
+      ]
+    },
+    "backend/services/knowledge_base.py": {
+      "orm_all_return": [
+        {
+          "line": 54,
+          "text": "return 0"
+        }
+      ]
+    }
+  },
+  "pattern_counts": {
+    "hard_delete": 80,
+    "orm_all_return": 6,
+    "raw_model_dict_mutation": 4,
+    "response_model_dict": 135,
+    "schema_list_any": 1,
+    "users_fk": 0
+  },
+  "scanned_root": "backend"
+}
