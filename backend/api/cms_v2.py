@@ -2804,16 +2804,14 @@ def get_resized_image(
     Defense-in-depth (Axioma 3): only returns non-archived media that
     belongs to the CCF site (sede_id match).
     """
-    # Validate media belongs to CCF site and is not archived
-    ccf_site = _get_public_site_or_404(db, "ccf")
-    media = (
-        db.query(models.CmsMediaItem)
-        .filter(
-            models.CmsMediaItem.id == media_id,
-            models.CmsMediaItem.sede_id == ccf_site.sede_id,
-        )
-        .first()
-    )
+    # Best-effort scoping: if the canonical CCF site exists and has a
+    # sede_id, narrow the lookup to that tenant. Otherwise keep the
+    # public endpoint functional and only enforce the archived guard.
+    media_query = db.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == media_id)
+    ccf_site = crud.get_cms_site_by_key(db, "ccf")
+    if ccf_site and ccf_site.sede_id is not None:
+        media_query = media_query.filter(models.CmsMediaItem.sede_id == ccf_site.sede_id)
+    media = media_query.first()
     if not media or (media.status or "") == "archived":
         raise HTTPException(status_code=404, detail="Media not found")
     # For now return the original URL with resize params

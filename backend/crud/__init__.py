@@ -14,6 +14,8 @@ from backend.crud import (
 
     kernel,  # noqa: F401
 )
+from backend.crud.crm_ import extended as crm_extended  # noqa: F401
+from backend.crud.crm_ import resources as crm_resources  # noqa: F401
 
 # ── Agents ─────────────────────────────────────────────────────────────────
 from backend.crud.agents import (
@@ -98,6 +100,7 @@ from backend.crud.cms import (
     list_cms_sites,
     list_cms_tags,
     list_cms_themes,
+    list_pastoral_team,
     list_testimonials,
     process_due_content,
     reorder_cms_menu_items,

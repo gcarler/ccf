@@ -6,9 +6,6 @@ but not exported in __init__.py, causing AttributeError at runtime.
 import importlib
 import inspect
 
-import pytest
-
-
 # SQLAlchemy symbols that appear in dir() but aren't CRUD functions
 _SKIP_NAMES = {"func", "or_", "and_", "not_", "true", "false", "null", "literal_column"}
 
