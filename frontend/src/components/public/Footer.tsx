@@ -67,6 +67,32 @@ function asPublicLinks(value: unknown): PublicLink[] {
   });
 }
 
+function FooterLinkColumn({ title, links }: { title: string; links: PublicLink[] }) {
+    if (!links.length) return null;
+
+    return (
+        <div className="min-w-0">
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-primary)" }}>
+                {title}
+            </h4>
+            <ul className="mt-5 grid gap-1.5">
+                {links.map(({ href, label }) => (
+                    <li key={href}>
+                        <Link
+                            href={href}
+                            className="group flex min-h-10 items-center justify-between gap-3 rounded-xl px-0 py-1.5 text-sm font-medium leading-snug transition-colors sm:text-[15px]"
+                            style={{ color: "var(--site-on-surface-variant)" }}
+                        >
+                            <span className="min-w-0 truncate">{label}</span>
+                            <ArrowUpRight size={14} className="shrink-0 opacity-0 transition-opacity group-hover:opacity-70" aria-hidden="true" />
+                        </Link>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
 export default function Footer() {
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const [footerConfig, setFooterConfig] = useState<FooterConfig | null>(null);
@@ -95,268 +121,162 @@ export default function Footer() {
     const brandName = logoName || SITE_NAME;
     const description = asString(cfg.description);
     const sectionTitles = asRecord(cfg.section_titles);
-    const navSectionTitle = asString(sectionTitles.nav);
-    const resourceSectionTitle = asString(sectionTitles.resources);
-    const contactSectionTitle = asString(sectionTitles.contact);
+    const navSectionTitle = asString(sectionTitles.nav, "Navegacion");
+    const resourceSectionTitle = asString(sectionTitles.resources, "Recursos");
+    const contactSectionTitle = asString(sectionTitles.contact, "Contacto");
     const contact = asRecord(cfg.contact);
     const locationLabel = asString(contact.location_label);
     const newsletterLabel = asString(contact.newsletter_label);
     const copyright = asRecord(cfg.copyright);
-    const copyrightCompany = asString(copyright.company);
-    const copyrightCompanyUrl = asString(copyright.company_url);
-    const copyrightText = asString(copyright.text);
-    const privacyLabel = asString(cfg.privacy_label);
+    const copyrightCompany = asString(copyright.company, brandName);
+    const copyrightCompanyUrl = asString(copyright.company_url, "/");
+    const copyrightText = asString(copyright.text, "Todos los derechos reservados.");
+    const privacyLabel = asString(cfg.privacy_label, "Privacidad");
     const navLinks = asPublicLinks(cfg.nav_links);
     const resourceLinks = asPublicLinks(cfg.resource_links);
     const socialLinks = asPublicLinks(cfg.social_links);
 
     return (
-        <footer
-            className="w-full overflow-hidden"
-            style={{
-                background: "var(--site-surface-container-lowest)",
-                borderTop: "1px solid var(--site-outline-variant)",
-            }}
-        >
-            {/* Main footer */}
-            <div className="ccf-container py-16 sm:py-20 lg:py-28">
-                <div className="w-full">
-                    <div
-                        className="mb-10 grid gap-8 rounded-[2rem] border p-6 shadow-2xl sm:p-8 lg:mb-14 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:p-10"
-                        style={{
-                            background: "linear-gradient(135deg, var(--site-surface-container-low), var(--site-surface-container))",
-                            borderColor: "var(--site-outline-variant)",
-                            boxShadow: "var(--site-card-shadow)",
-                        }}
-                    >
-                        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-                            <div
-                                className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[1.5rem] border sm:h-24 sm:w-24"
-                                style={{
-                                    background: "var(--site-surface-container-lowest)",
-                                    borderColor: "var(--site-outline-variant)",
-                                }}
-                            >
-                                {logoUrl ? (
-                                    <OptimizedImage src={logoUrl} alt={brandName} width={96} height={96} className="h-full w-full object-contain p-3" />
-                                ) : (
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="44" height="44" className="shrink-0" style={{ color: "var(--site-primary)" }}>
-                                        <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
-                                        <circle cx="12" cy="4" r="1.5" fill="currentColor" />
-                                    </svg>
-                                )}
-                            </div>
-                            <div className="min-w-0 text-center sm:text-left">
-                                <div className="text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl" style={{ color: "var(--site-on-surface)" }}>
-                                    {brandName}
-                                </div>
-                                {description && (
-                                    <p className="mt-4 max-w-2xl text-base leading-relaxed sm:text-lg" style={{ color: "var(--site-on-surface-variant)" }}>
-                                        {description}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                            {SITE_EMAIL ? (
-                                <a
-                                    href={`mailto:${SITE_EMAIL}`}
-                                    className="group flex items-center gap-3 rounded-2xl border px-4 py-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
+        <footer className="w-full overflow-hidden" style={{ background: "var(--site-surface-container-lowest)" }}>
+            <div className="ccf-container py-16 sm:py-20 lg:py-24">
+                <div
+                    className="overflow-hidden rounded-[2rem] border"
+                    style={{
+                        background: "linear-gradient(135deg, var(--site-surface-container-low), var(--site-surface-container-lowest))",
+                        borderColor: "var(--site-outline-variant)",
+                        boxShadow: "var(--site-card-shadow)",
+                    }}
+                >
+                    <div className="grid gap-8 px-6 py-8 sm:px-8 sm:py-10 lg:grid-cols-[1.15fr_0.85fr] lg:px-10 lg:py-12">
+                        <div className="min-w-0">
+                            <Link href="/" className="inline-flex max-w-full items-center gap-4">
+                                <span
+                                    className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border sm:h-20 sm:w-20"
                                     style={{
                                         background: "var(--site-surface-container-lowest)",
                                         borderColor: "var(--site-outline-variant)",
-                                        color: "var(--site-on-surface)",
                                     }}
                                 >
+                                    {logoUrl ? (
+                                        <OptimizedImage src={logoUrl} alt={brandName} width={80} height={80} className="h-full w-full object-contain p-3" />
+                                    ) : (
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="38" height="38" className="shrink-0" style={{ color: "var(--site-primary)" }}>
+                                            <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
+                                            <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+                                        </svg>
+                                    )}
+                                </span>
+                                <span className="min-w-0">
+                                    <span className="block truncate text-2xl font-semibold leading-tight sm:text-3xl" style={{ color: "var(--site-on-surface)" }}>
+                                        {brandName}
+                                    </span>
+                                    <span className="mt-1 block text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-primary)" }}>
+                                        Comunidad cristiana
+                                    </span>
+                                </span>
+                            </Link>
+
+                            {description && (
+                                <p className="mt-7 max-w-2xl text-base leading-relaxed sm:text-lg" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    {description}
+                                </p>
+                            )}
+
+                            {socialLinks.length ? (
+                                <div className="mt-8 flex flex-wrap gap-3">
+                                    {socialLinks.map(({ href, label, kind }) => (
+                                        <a
+                                            key={`${href}-${label}`}
+                                            href={href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex h-11 w-11 items-center justify-center rounded-full border transition-all hover:-translate-y-0.5"
+                                            style={{
+                                                background: "var(--site-surface-container)",
+                                                borderColor: "var(--site-outline-variant)",
+                                                color: "var(--site-on-surface-variant)",
+                                            }}
+                                            title={label}
+                                            aria-label={label}
+                                        >
+                                            {socialIcon(kind || label)}
+                                        </a>
+                                    ))}
+                                </div>
+                            ) : null}
+                        </div>
+
+                        <div
+                            className="grid gap-3 rounded-[1.5rem] border p-3 sm:grid-cols-3 lg:grid-cols-1"
+                            style={{
+                                background: "color-mix(in srgb, var(--site-surface-container-lowest) 64%, transparent)",
+                                borderColor: "var(--site-outline-variant)",
+                            }}
+                        >
+                            {SITE_EMAIL ? (
+                                <a href={`mailto:${SITE_EMAIL}`} className="group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors" style={{ color: "var(--site-on-surface)" }}>
                                     <Mail size={18} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
                                     <span className="min-w-0 flex-1 truncate">{SITE_EMAIL}</span>
-                                    <ArrowUpRight size={16} className="opacity-60 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+                                    <ArrowUpRight size={15} className="shrink-0 opacity-50 transition-opacity group-hover:opacity-100" aria-hidden="true" />
                                 </a>
                             ) : null}
-                            {locationLabel && (
-                                <Link
-                                    href="/sedes"
-                                    className="group flex items-center gap-3 rounded-2xl border px-4 py-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
-                                    style={{
-                                        background: "var(--site-surface-container-lowest)",
-                                        borderColor: "var(--site-outline-variant)",
-                                        color: "var(--site-on-surface)",
-                                    }}
-                                >
+                            {locationLabel ? (
+                                <Link href="/sedes" className="group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors" style={{ color: "var(--site-on-surface)" }}>
                                     <MapPin size={18} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
                                     <span className="min-w-0 flex-1 truncate">{locationLabel}</span>
-                                    <ArrowUpRight size={16} className="opacity-60 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+                                    <ArrowUpRight size={15} className="shrink-0 opacity-50 transition-opacity group-hover:opacity-100" aria-hidden="true" />
                                 </Link>
-                            )}
-                            {newsletterLabel && (
-                                <Link
-                                    href="/boletin"
-                                    className="group flex items-center gap-3 rounded-2xl border px-4 py-4 text-sm font-bold transition-transform hover:-translate-y-0.5"
-                                    style={{
-                                        background: "var(--site-surface-container-lowest)",
-                                        borderColor: "var(--site-outline-variant)",
-                                        color: "var(--site-on-surface)",
-                                    }}
-                                >
+                            ) : null}
+                            {newsletterLabel ? (
+                                <Link href="/boletin" className="group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors" style={{ color: "var(--site-on-surface)" }}>
                                     <Newspaper size={18} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
                                     <span className="min-w-0 flex-1 truncate">{newsletterLabel}</span>
-                                    <ArrowUpRight size={16} className="opacity-60 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+                                    <ArrowUpRight size={15} className="shrink-0 opacity-50 transition-opacity group-hover:opacity-100" aria-hidden="true" />
                                 </Link>
-                            )}
+                            ) : null}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-5 sm:gap-8 lg:grid-cols-12 lg:gap-8">
-                        {/* Brand column */}
-                        <div
-                            className="col-span-2 rounded-[1.5rem] border p-5 sm:p-6 lg:col-span-4"
-                            style={{
-                                background: "var(--site-surface-container-low)",
-                                borderColor: "var(--site-outline-variant)",
-                            }}
-                        >
-                            <h4 className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--site-primary)" }}>
-                                Comunidad
-                            </h4>
-                            <p className="mt-4 max-w-md text-sm leading-relaxed sm:text-base" style={{ color: "var(--site-on-surface-variant)" }}>
-                                {description}
-                            </p>
-                            <div className="mt-6 flex flex-wrap gap-3">
-                                {socialLinks.map(({ href, label, kind }) => (
-                                    <a
-                                        key={label}
-                                        href={href}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex h-12 w-12 items-center justify-center rounded-full border transition-all hover:-translate-y-0.5"
-                                        style={{
-                                            background: "var(--site-surface-container)",
-                                            borderColor: "var(--site-outline-variant)",
-                                            color: "var(--site-on-surface-variant)",
-                                        }}
-                                        title={label}
-                                        aria-label={label}
-                                    >
-                                        {socialIcon(kind || label)}
-                                    </a>
-                                ))}
-                            </div>
-                        </div>
+                    <div className="grid gap-10 border-t px-6 py-8 sm:grid-cols-2 sm:px-8 lg:grid-cols-[1fr_1fr_1.15fr] lg:px-10 lg:py-10" style={{ borderColor: "var(--site-outline-variant)" }}>
+                        <FooterLinkColumn title={navSectionTitle} links={navLinks} />
+                        <FooterLinkColumn title={resourceSectionTitle} links={resourceLinks} />
 
-                        {/* Navegación */}
-                        <div
-                            className="rounded-[1.5rem] border p-5 sm:p-6 lg:col-span-2"
-                            style={{
-                                background: "var(--site-surface-container-low)",
-                                borderColor: "var(--site-outline-variant)",
-                            }}
-                        >
-                            <h4 className="text-xs font-bold uppercase tracking-widest mb-5" style={{ color: "var(--site-primary)" }}>
-                                {navSectionTitle}
-                            </h4>
-                            <ul className="grid gap-2.5">
-                                {navLinks.map(({ href, label }) => (
-                                    <li key={href}>
-                                        <Link href={href} className="group flex min-h-9 items-center justify-between gap-3 rounded-xl px-2 py-1.5 text-sm font-semibold leading-snug transition-colors duration-200" style={{ color: "var(--site-on-surface-variant)" }}>
-                                            {label}
-                                            <ArrowUpRight size={13} className="opacity-0 transition-opacity group-hover:opacity-70" aria-hidden="true" />
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {/* Recursos */}
-                        <div
-                            className="rounded-[1.5rem] border p-5 sm:p-6 lg:col-span-2"
-                            style={{
-                                background: "var(--site-surface-container-low)",
-                                borderColor: "var(--site-outline-variant)",
-                            }}
-                        >
-                            <h4 className="text-xs font-bold uppercase tracking-widest mb-5" style={{ color: "var(--site-primary)" }}>
-                                {resourceSectionTitle}
-                            </h4>
-                            <ul className="grid gap-2.5">
-                                {resourceLinks.map(({ href, label }) => (
-                                    <li key={href}>
-                                        <Link href={href} className="group flex min-h-9 items-center justify-between gap-3 rounded-xl px-2 py-1.5 text-sm font-semibold leading-snug transition-colors duration-200" style={{ color: "var(--site-on-surface-variant)" }}>
-                                            {label}
-                                            <ArrowUpRight size={13} className="opacity-0 transition-opacity group-hover:opacity-70" aria-hidden="true" />
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {/* Redes y contacto */}
-                        <div
-                            className="col-span-2 rounded-[1.5rem] border p-5 sm:p-6 lg:col-span-4"
-                            style={{
-                                background: "var(--site-surface-container-low)",
-                                borderColor: "var(--site-outline-variant)",
-                            }}
-                        >
-                            <h4 className="text-xs font-bold uppercase tracking-widest mb-5" style={{ color: "var(--site-primary)" }}>
+                        <div className="min-w-0 sm:col-span-2 lg:col-span-1">
+                            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-primary)" }}>
                                 {contactSectionTitle}
                             </h4>
-                            <ul className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                                <li>
-                                    {SITE_EMAIL ? (
-                                        <a href={`mailto:${SITE_EMAIL}`} className="flex min-h-11 items-center gap-3 break-words rounded-xl px-2 py-2 text-sm font-semibold leading-snug transition-colors duration-200" style={{ color: "var(--site-on-surface-variant)" }}>
-                                            <Mail size={16} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
-                                            <span className="min-w-0 truncate">{SITE_EMAIL}</span>
-                                        </a>
-                                    ) : null}
-                                </li>
-                                <li>
-                                    <Link href="/sedes" className="flex min-h-11 items-center gap-3 rounded-xl px-2 py-2 text-sm font-semibold leading-snug transition-colors duration-200" style={{ color: "var(--site-on-surface-variant)" }}>
-                                        <MapPin size={16} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
+                            <div className="mt-5 grid gap-2">
+                                {SITE_EMAIL ? (
+                                    <a href={`mailto:${SITE_EMAIL}`} className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-[15px]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                        <Mail size={16} className="shrink-0" aria-hidden="true" style={{ color: "var(--site-primary)" }} />
+                                        <span className="min-w-0 truncate">{SITE_EMAIL}</span>
+                                    </a>
+                                ) : null}
+                                {locationLabel ? (
+                                    <Link href="/sedes" className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-[15px]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                        <MapPin size={16} className="shrink-0" aria-hidden="true" style={{ color: "var(--site-primary)" }} />
                                         <span className="min-w-0 truncate">{locationLabel}</span>
                                     </Link>
-                                </li>
-                                <li>
-                                    <Link href="/boletin" className="flex min-h-11 items-center gap-3 rounded-xl px-2 py-2 text-sm font-semibold leading-snug transition-colors duration-200" style={{ color: "var(--site-on-surface-variant)" }}>
-                                        <Newspaper size={16} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
+                                ) : null}
+                                {newsletterLabel ? (
+                                    <Link href="/boletin" className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-[15px]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                        <Newspaper size={16} className="shrink-0" aria-hidden="true" style={{ color: "var(--site-primary)" }} />
                                         <span className="min-w-0 truncate">{newsletterLabel}</span>
                                     </Link>
-                                </li>
-                            </ul>
+                                ) : null}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            {/* Bottom bar */}
-            <div
-                className="ccf-container py-7 sm:py-8 border-t"
-                style={{ borderColor: "var(--site-outline-variant)" }}
-            >
-                <div className="flex w-full flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
-                    <p
-                        className="max-w-[36rem] text-xs leading-relaxed sm:text-sm"
-                        style={{ color: "var(--site-on-surface-variant)" }}
-                    >
-                        © {new Date().getFullYear()}{" "}
-                        <a
-                            href={copyrightCompanyUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:underline hover:text-[var(--site-primary)] transition-colors"
-                        >
-                            {copyrightCompany}
-                        </a>
-                        {" "}— {copyrightText}
-                    </p>
-                    <div className="flex shrink-0 items-center justify-center gap-4">
-                        <Link
-                            href="/privacy"
-                            className="text-xs transition-colors hover:text-[var(--site-primary)] hover:underline"
-                            style={{
-                                color: "var(--site-on-surface-variant)",
-                            }}
-                        >
+                    <div className="flex flex-col gap-4 border-t px-6 py-5 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10" style={{ borderColor: "var(--site-outline-variant)" }}>
+                        <p className="max-w-[44rem] leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
+                            © {new Date().getFullYear()}{" "}
+                            <a href={copyrightCompanyUrl} target="_blank" rel="noopener noreferrer" className="font-semibold transition-colors hover:text-[var(--site-primary)]">
+                                {copyrightCompany}
+                            </a>
+                            {" "}— {copyrightText}
+                        </p>
+                        <Link href="/privacy" className="shrink-0 font-semibold transition-colors hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
                             {privacyLabel}
                         </Link>
                     </div>
