@@ -71,7 +71,7 @@ export default function PublicHeroWithSlides({
 
   if (home) {
     return (
-      <section className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden" style={{ minHeight: "100svh" }}>
+      <section className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden" style={{ minHeight: "var(--ccf-hero-min-h)" }}>
         <AnimatePresence mode="wait">
           {activeSlide && (
             <motion.div
@@ -88,7 +88,7 @@ export default function PublicHeroWithSlides({
         </AnimatePresence>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.14),transparent_24%),linear-gradient(to_top,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.46)_50%,rgba(0,0,0,0.18)_100%)]" />
         <div className="absolute inset-0 z-10">
-          <div className="flex h-full w-full items-end px-5 sm:px-8 md:px-12 lg:px-16 pb-12 md:pb-16">
+          <div className="flex h-full w-full items-end px-5 sm:px-8 md:px-12 lg:px-16 pb-16 md:pb-20">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
@@ -157,13 +157,13 @@ export default function PublicHeroWithSlides({
   }
 
   return (
-    <section className="ccf-section-tight">
-      <div className="ccf-container grid gap-8 lg:grid-cols-[1fr_1.08fr] lg:items-center">
+    <section className="ccf-section">
+      <div className="ccf-container grid gap-10 lg:grid-cols-[1fr_1.08fr] lg:items-center lg:gap-16">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="order-1 max-w-3xl"
+          className="order-1 max-w-3xl lg:py-8"
         >
           {eyebrow && (
             <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.32em] mb-5 px-4 py-2 rounded-full border" style={{ color: "var(--site-primary)", borderColor: "var(--site-primary-container)", background: "var(--site-surface-container-low)" }}>
@@ -203,7 +203,7 @@ export default function PublicHeroWithSlides({
           transition={{ duration: 0.9, ease: "easeOut", delay: 0.08 }}
           className="order-2 relative"
         >
-          <div className="relative overflow-hidden rounded-[2rem] shadow-2xl min-h-[26rem] lg:min-h-[34rem]">
+          <div className="relative overflow-hidden rounded-[2rem] shadow-2xl min-h-[28rem] lg:min-h-[38rem]">
             <AnimatePresence mode="wait">
               {activeSlide && (
                 <motion.div

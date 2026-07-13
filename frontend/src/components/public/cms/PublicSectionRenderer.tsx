@@ -94,7 +94,7 @@ function RichTextSection({ section }: { section: CmsSection }) {
   const ctaHref = val(props, "cta_href", "");
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && (
         <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-4" style={{ color: "var(--site-on-surface)" }}>
           {title}
@@ -127,7 +127,7 @@ function RichTextColumnsSection({ section }: { section: CmsSection }) {
   const body2 = val(props, "body_2", body);
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && (
         <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-6" style={{ color: "var(--site-on-surface)" }}>
           {title}
@@ -154,14 +154,14 @@ function CardsSection({ section }: { section: CmsSection }) {
   const items = asItems(props).slice(0, 9) as Array<{ title?: string; body?: string; href?: string; icon?: string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {(title || body) && (
-        <div className="mb-8">
+        <div className="mb-10 md:mb-12">
           {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
           {body && <p className="mt-3 text-base max-w-2xl" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
         </div>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {items.map((card, i) => {
           const inner = (
             <>
@@ -200,7 +200,7 @@ function CtaBannerSection({ section }: { section: CmsSection }) {
 
   return (
     <section
-      className="rounded-2xl p-8 md:p-12 text-center"
+      className="ccf-section-panel p-8 md:p-14 lg:p-16 text-center"
       style={{ background: "linear-gradient(135deg, var(--site-primary-container), var(--site-secondary-container, var(--site-primary-container)))" }}
     >
       {title && (
@@ -258,7 +258,7 @@ function GallerySection({ section }: { section: CmsSection }) {
   const isGrid = images.length > 1;
 
   return (
-    <section className="rounded-2xl overflow-hidden" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel overflow-hidden" style={{ background: "var(--site-surface-container-low)" }}>
       {isGrid ? (
         <div className={`grid gap-1 ${images.length === 2 ? "grid-cols-2" : images.length === 3 ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4"}`}>
           {images.map((img, i) => (
@@ -294,7 +294,7 @@ function FaqSection({ section }: { section: CmsSection }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-6" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       <div className="space-y-2">
         {items.map((item, i) => {
@@ -346,7 +346,7 @@ function EmbedSection({ section }: { section: CmsSection }) {
   const embedUrl = val(props, "embed_url", "");
 
   return (
-    <section className="rounded-2xl p-6" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h3 className="text-xl font-bold mb-3" style={{ color: "var(--site-on-surface)" }}>{title}</h3>}
       {body && <p className="mb-4 text-sm leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
       {embedUrl ? (
@@ -370,17 +370,17 @@ function TestimonialsSection({ section }: { section: CmsSection }) {
   const items = asItems(props).slice(0, 6) as Array<{ author?: string; role?: string; content?: string; stars?: number | string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && (
-        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-8" style={{ color: "var(--site-on-surface)" }}>
+        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-10 md:mb-12" style={{ color: "var(--site-on-surface)" }}>
           {title}
         </h2>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {items.map((item, i) => {
           const stars = typeof item.stars === "number" ? item.stars : typeof item.stars === "string" ? parseInt(item.stars, 10) : 5;
           return (
-            <article key={i} className="rounded-xl p-6 flex flex-col gap-4" style={{ background: "var(--site-surface-container)" }}>
+            <article key={i} className="rounded-xl p-6 flex flex-col gap-4 md:gap-5" style={{ background: "var(--site-surface-container)" }}>
               <div className="flex gap-0.5">
                 {Array.from({ length: 5 }).map((_, si) => (
                   <Star key={si} size={14} fill={si < stars ? "var(--site-primary)" : "none"} stroke={si < stars ? "var(--site-primary)" : "var(--site-on-surface-variant)"} />
@@ -466,11 +466,11 @@ function StatsSection({ section }: { section: CmsSection }) {
 
   return (
     <section
-      className="rounded-2xl p-8 md:p-12"
+      className="ccf-section-panel p-8 md:p-14 lg:p-16"
       style={{ background: "var(--site-cta-gradient)" }}
     >
       {title && (
-        <h2 className="text-xl md:text-2xl font-black tracking-tight text-center text-white mb-8">{title}</h2>
+        <h2 className="text-xl md:text-2xl font-black tracking-tight text-center text-white mb-10 md:mb-12">{title}</h2>
       )}
       <div className={`grid gap-6 text-center ${items.length <= 2 ? "grid-cols-2" : items.length === 3 ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4"}`}>
         {items.map((item, i) => (
@@ -494,9 +494,9 @@ function TeamSection({ section }: { section: CmsSection }) {
   const items = asItems(props).slice(0, 12) as Array<{ name?: string; role?: string; image?: string; bio?: string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && (
-        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-8" style={{ color: "var(--site-on-surface)" }}>
+        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-10 md:mb-12" style={{ color: "var(--site-on-surface)" }}>
           {title}
         </h2>
       )}
@@ -568,7 +568,7 @@ function CountdownSection({ section }: { section: CmsSection }) {
 
   return (
     <section
-      className="rounded-2xl p-8 md:p-12 text-center"
+      className="ccf-section-panel p-8 md:p-14 lg:p-16 text-center"
       style={{ background: "var(--site-cta-gradient)" }}
     >
       <h2 className="text-2xl md:text-3xl font-black text-white">{title}</h2>
@@ -607,9 +607,9 @@ function PricingSection({ section }: { section: CmsSection }) {
   const items = asItems(props).slice(0, 4) as Array<{ name?: string; price?: string; features?: string; btn?: string; btn_href?: string; featured?: boolean | string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && (
-        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-8" style={{ color: "var(--site-on-surface)" }}>
+        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-center mb-10 md:mb-12" style={{ color: "var(--site-on-surface)" }}>
           {title}
         </h2>
       )}
@@ -707,7 +707,7 @@ function ImageTextSection({ section }: { section: CmsSection }) {
   ) : null;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
         {side === "left" && imgCol}
         {textCol}
@@ -725,8 +725,8 @@ function TimelineSection({ section }: { section: CmsSection }) {
   const items = asItems(props) as Array<{ year?: string; title?: string; body?: string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
-      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-8" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-10 md:mb-12" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       <div className="relative">
         <div className="absolute left-6 top-0 bottom-0 w-0.5" style={{ background: "var(--site-primary)", opacity: 0.3 }} />
         <div className="space-y-6">
@@ -759,14 +759,14 @@ function IconGridSection({ section }: { section: CmsSection }) {
   const items = asItems(props).slice(0, 12) as Array<{ icon?: string; title?: string; body?: string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {(title || body) && (
         <div className="mb-8 text-center">
           {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
           {body && <p className="mt-3 text-base max-w-2xl mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
         </div>
       )}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 md:gap-8">
         {items.map((item, i) => (
           <div key={i} className="rounded-xl p-5 flex flex-col items-center text-center gap-3" style={{ background: "var(--site-surface-container)" }}>
             {item.icon && <span className="text-4xl">{item.icon}</span>}
@@ -826,7 +826,7 @@ function NewsletterSection({ section }: { section: CmsSection }) {
 
   return (
     <section
-      className="rounded-2xl p-8 md:p-12 text-center"
+      className="ccf-section-panel p-8 md:p-14 lg:p-16 text-center"
       style={{ background: "linear-gradient(135deg, var(--site-primary-container), var(--site-surface-container))" }}
     >
       <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>
@@ -1025,8 +1025,8 @@ function ButtonSection({ section }: { section: CmsSection }) {
   const buttons = (Array.isArray(props.buttons) ? props.buttons : [{ label: "Click", href: "/" }]) as Array<{ label: string; href: string; variant?: string; size?: string; icon?: string }>;
   const align = val(props, "align", "center");
   const gapRaw = val(props, "gap", "4");
-  const gapClass: Record<string, string> = { "2": "gap-2", "3": "gap-3", "4": "gap-4", "6": "gap-6", "8": "gap-8" };
-  const gap = gapClass[gapRaw] ?? "gap-4";
+  const gapClass: Record<string, string> = { "2": "gap-2", "3": "gap-3", "4": "gap-6 md:gap-8", "6": "gap-6", "8": "gap-8" };
+  const gap = gapClass[gapRaw] ?? "gap-6 md:gap-8";
 
   const sizeClasses: Record<string, string> = { sm: "text-xs px-3 py-1.5", md: "text-sm px-4 py-2", lg: "text-base px-6 py-3" };
   const variantBg: Record<string, string> = { primary: "var(--site-primary)", outline: "transparent", ghost: "transparent" };
@@ -1150,7 +1150,7 @@ function SocialLinksSection({ section }: { section: CmsSection }) {
     twitter: <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>,
   };
 
-  const containerClass = layout === "row" ? "flex flex-wrap gap-4" : layout === "grid" ? "grid grid-cols-2 md:grid-cols-4 gap-4" : "space-y-3";
+  const containerClass = layout === "row" ? "flex flex-wrap gap-6 md:gap-8" : layout === "grid" ? "grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8" : "space-y-3";
 
   return (
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
@@ -1593,12 +1593,12 @@ function CivicConvocatoriaCardsSection({ section }: { section: CmsSection }) {
   return (
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
       {(title || body) && (
-        <div className="mb-8">
+        <div className="mb-10 md:mb-12">
           {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
           {body && <p className="mt-2 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
         </div>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {items.length === 0 && (
           <div className="col-span-full rounded-xl border-2 border-dashed p-12 text-center" style={{ borderColor: "var(--site-outline-variant)" }}>
             <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>Agrega convocatorias usando el campo <strong>items</strong>.</p>
@@ -1799,7 +1799,7 @@ function EventsCalendarSection({ section }: { section: CmsSection }) {
   const title = val(props, "title", "Próximos Eventos");
   const subtitle = val(props, "subtitle", "");
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
       <div className="mt-6 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
@@ -1818,7 +1818,7 @@ function VideoGridSection({ section }: { section: CmsSection }) {
   const title = val(props, "title", "Prédicas & Mensajes");
   const subtitle = val(props, "subtitle", "");
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
       <div className="mt-6 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
@@ -1837,7 +1837,7 @@ function LocationsListSection({ section }: { section: CmsSection }) {
   const title = val(props, "title", "Nuestras Sedes");
   const subtitle = val(props, "subtitle", "");
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
       <div className="mt-6 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
@@ -1858,7 +1858,7 @@ function ContactFormSection({ section }: { section: CmsSection }) {
   const [sent, setSent] = useState(false);
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
       {sent ? (
@@ -1889,7 +1889,7 @@ function PrayerFormSection({ section }: { section: CmsSection }) {
   const [sent, setSent] = useState(false);
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
       {sent ? (
@@ -1914,7 +1914,7 @@ function CourseGridSection({ section }: { section: CmsSection }) {
   const title = val(props, "title", "Cursos & Academia");
   const subtitle = val(props, "subtitle", "");
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
       <div className="mt-6 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
@@ -1933,7 +1933,7 @@ function BookShopSection({ section }: { section: CmsSection }) {
   const title = val(props, "title", "Nuestra Librería");
   const subtitle = val(props, "subtitle", "");
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
       <div className="mt-6 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
@@ -1952,7 +1952,7 @@ function TestimonialsMasonrySection({ section }: { section: CmsSection }) {
   const title = val(props, "title", "Historias de Transformación");
   const subtitle = val(props, "subtitle", "");
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
       <div className="mt-6 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
@@ -1974,7 +1974,7 @@ function PolicyDocumentSection({ section }: { section: CmsSection }) {
   const items = asItems(props).slice(0, 50) as Array<{ id?: string; title?: string; content?: string }>;
 
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h1 className="text-3xl md:text-4xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h1>}
       {lastUpdate && <p className="mt-2 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>Última actualización: {lastUpdate}</p>}
       {summary && <p className="mt-4 text-base leading-relaxed" style={{ color: "var(--site-on-surface)" }}>{summary}</p>}
@@ -1999,7 +1999,7 @@ function FooterConfigSection({ section }: { section: CmsSection }) {
   const description = val(props, "brand_description", "");
   const copyright = val(props, "copyright", "");
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       {description && <p className="text-sm leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>{description}</p>}
       {copyright && <p className="mt-4 text-xs" style={{ color: "var(--site-on-surface-variant)" }}>{copyright}</p>}
     </section>
@@ -2012,7 +2012,7 @@ function MobileMenuConfigSection({ section }: { section: CmsSection }) {
   const props = section.props_json || {};
   const items = asItems(props).slice(0, 8) as Array<{ label?: string; href?: string; icon?: string }>;
   return (
-    <section className="rounded-2xl p-6 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {items.map((item, i) => (
           <Link key={i} href={item.href || "/"} className="rounded-xl p-4 text-center text-sm font-bold" style={{ background: "var(--site-surface-container)", color: "var(--site-on-surface)" }}>
