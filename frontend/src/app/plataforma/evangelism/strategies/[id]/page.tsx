@@ -751,12 +751,19 @@ export default function StrategyDetailPage() {
   const grpSessions = sessionList
    .filter(s => s.grupo_id === g.id)
    .sort((a, b) => b.session_date.localeCompare(a.session_date));
-  const target = grpSessions.find(s => s.estado_habilitacion === 'HABILITADO') ?? grpSessions[0];
-  if (!target) { toast.error('Este grupo no tiene sesiones registradas'); return; }
+  const target = grpSessions.find(s => s.estado_habilitacion === 'HABILITADO');
+  if (!target) {
+   toast.error(grpSessions.length === 0 ? 'Este grupo no tiene sesiones registradas' : 'Habilita una sesión antes de registrar asistencia');
+   return;
+  }
   openAttendanceDrawer(target);
  };
 
  const openAttendanceDrawer = async (session: SessionRow) => {
+ if (session.estado_habilitacion !== 'HABILITADO') {
+  toast.error('Habilita la sesión antes de registrar asistencia');
+  return;
+ }
  setAttendanceSession(session);
  setIsAttendanceDrawerOpen(true);
  setShowVisitorSearch(false);
@@ -793,6 +800,10 @@ export default function StrategyDetailPage() {
 
  const handleSaveAttendance = async () => {
  if (!attendanceSession) return;
+ if (attendanceSession.estado_habilitacion !== 'HABILITADO') {
+ toast.error('Habilita la sesión antes de registrar asistencia');
+ return;
+ }
  setAttendanceSaving(true);
  try {
  const res = await apiFetch<AttendanceSaveResult>(`/evangelism/sessions/${attendanceSession.id}/attendance`, {
@@ -1970,17 +1981,13 @@ export default function StrategyDetailPage() {
            <span>{grp.personas_count} personas</span>
           </div>
          </div>
-         {latest && (
+         {latest && isHabilitado && (
           <button
            onClick={() => openAttendanceDrawer(latest)}
-           className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all active:scale-95 ${
-            isHabilitado
-             ? 'bg-[hsl(var(--primary))] text-white hover:opacity-90 shadow-sm'
-             : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20'
-           }`}
+           className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all active:scale-95 bg-[hsl(var(--primary))] text-white hover:opacity-90 shadow-sm"
           >
            <ClipboardList size={12} />
-           {isHabilitado ? 'Registrar' : 'Ver sesión'}
+           Registrar
           </button>
          )}
         </div>
@@ -2009,7 +2016,7 @@ export default function StrategyDetailPage() {
               {dateStr}{s.topic ? ` · ${s.topic}` : ''}
              </p>
             </div>
-            {!isClosed && (
+            {s.estado_habilitacion === 'HABILITADO' && (
              <button
               onClick={() => openAttendanceDrawer(s)}
               className="shrink-0 text-[11px] font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
