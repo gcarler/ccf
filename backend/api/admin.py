@@ -1008,7 +1008,7 @@ def list_auth_role_definitions(
             {"id": str(r.id), "nombre": r.nombre, "permisos": r.permisos}
             for r in roles
         ]
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to list auth role definitions")
         return []
 
@@ -1113,7 +1113,7 @@ def list_user_module_roles(
             }
             for umr, r in rows
         ]
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to list user module roles")
         return []
 

@@ -68,7 +68,6 @@ def read_evangelism_strategies(
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     from backend.crud.evangelism import get_estrategias
-    from backend.models_evangelism import GrupoEvangelismo
 
     strategies = get_estrategias(
         db,
@@ -115,7 +114,6 @@ def read_strategy(
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     from backend.models_evangelism import EstrategiaEvangelismo as StrategyModel
-    from backend.models_evangelism import GrupoEvangelismo
 
     db_obj = db.query(StrategyModel).filter(StrategyModel.id == strategy_id).first()
     if not db_obj:
@@ -153,7 +151,7 @@ def create_strategy(
         result = create_evangelism_strategy(db=db, data=strategy, sede_id=sede_id, categoria_id=primera_categoria.id, actor_user_id=str(current_user.id))
     except HTTPException:
         raise
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to create evangelism strategy")
         db.rollback()
         raise
@@ -161,7 +159,7 @@ def create_strategy(
     if strategy.typology == "evento_masivo" and strategy.phases:
         try:
             _project_phases_as_tasks(db, result.id, result.name, strategy.phases, strategy.start_date)
-        except Exception as exc:
+        except Exception:
             db.rollback()
             logger.warning(
                 "Phase task generation failed for evangelism strategy=%s; keeping strategy saved",
@@ -196,7 +194,7 @@ def update_strategy(
                     detail="El rol por defecto debe pertenecer a esta estrategia",
                 )
         db_obj = update_evangelism_strategy(db=db, strategy_id=strategy_id, data=strategy, actor_user_id=str(_user.id))
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to update evangelism strategy=%s", strategy_id)
         db.rollback()
         raise
@@ -207,7 +205,7 @@ def update_strategy(
     if strategy.typology == "evento_masivo" and strategy.phases:
         try:
             _project_phases_as_tasks(db, strategy_id, result.name, strategy.phases, strategy.start_date)
-        except Exception as exc:
+        except Exception:
             db.rollback()
             logger.exception(
                 "Phase task regeneration failed for evangelism strategy=%s; keeping update saved",
@@ -313,7 +311,7 @@ def generate_strategy_sessions(
     except ValueError as e:
         logger.warning("No se pudieron validar sesiones para strategy=%s: %s", strategy_id, e)
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to generate evangelism sessions for strategy=%s", strategy_id)
         return {
             "strategy": strat.nombre,

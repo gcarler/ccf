@@ -296,7 +296,7 @@ def add_groups_attendance(
 
     try:
         db.commit()
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to commit attendance for session=%s", session_id)
         db.rollback()
         raise
@@ -410,7 +410,7 @@ def submit_attendance(
 
     try:
         db.commit()
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to commit attendance submission for session=%s", session_id)
         db.rollback()
         raise

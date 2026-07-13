@@ -1187,7 +1187,7 @@ def cms_readiness(
             )
             .count()
         )
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to query redirects or broken links for CMS readiness")
         db.rollback()
 

@@ -66,7 +66,7 @@ def provision_all(db: Session) -> tuple[int, list[dict[str, str]]]:
     ).scalar()
     if not sede_id:
         log.error("No sedes found in DB.")
-        return 0
+        return 0, []
 
     # Normalize any account that still lacks its canonical Auth role.
     existing_persona_users = (

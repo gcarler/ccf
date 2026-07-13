@@ -290,7 +290,7 @@ def ask_optimus(
         return {"answer": insight.payload, "sources": sources}
     except MemoryError:
         raise
-    except Exception as exc:
+    except Exception:
         logger.exception("Neural MESH engine failed for query=%r", payload.query)
         # Fallback to basic KB retrieval if AI fails or is not configured
         if kb_results:

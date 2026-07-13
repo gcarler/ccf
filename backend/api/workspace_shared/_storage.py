@@ -103,7 +103,7 @@ def _load_workspace_config() -> Dict[str, Any]:
             return merged
     except MemoryError:
         raise
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to load workspace config from %s", FLAGS_FILE)
         return DEFAULT_WORKSPACE_CONFIG
     return DEFAULT_WORKSPACE_CONFIG
@@ -129,7 +129,7 @@ def _load_incidents() -> list[Dict[str, Any]]:
         payload = json.loads(INCIDENTS_FILE.read_text(encoding="utf-8"))
     except MemoryError:
         raise
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to load incidents from %s", INCIDENTS_FILE)
         return []
     if not isinstance(payload, list):
