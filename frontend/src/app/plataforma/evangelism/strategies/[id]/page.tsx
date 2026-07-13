@@ -545,6 +545,26 @@ export default function StrategyDetailPage() {
  }
  }, [id, token]);
 
+ const toggleSessionHabilitacion = useCallback(async (session: SessionRow) => {
+ if (session.estado_habilitacion === 'CERRADO' || session.estado_habilitacion === 'CANCELADA') {
+ toast.error('Esta sesión no se puede habilitar');
+ return;
+ }
+ const accion = session.estado_habilitacion === 'HABILITADO' ? 'DESHABILITAR' : 'HABILITAR';
+ try {
+ await apiFetch(`/evangelism/sessions/${session.id}/habilitacion`, {
+ method: 'PATCH',
+ token,
+ silent: true,
+ body: { accion },
+ });
+ toast.success(accion === 'HABILITAR' ? 'Sesión habilitada' : 'Sesión bloqueada');
+ fetchSessions();
+ } catch {
+ toast.error('Error al cambiar estado');
+ }
+ }, [fetchSessions, token]);
+
  useEffect(() => {
  if (activeTab === 'groups') fetchGroups();
  if (activeTab === 'metrics') fetchMetrics();
@@ -1454,14 +1474,7 @@ export default function StrategyDetailPage() {
  </button>
  {item.estado_habilitacion !== 'CERRADO' && item.estado_habilitacion !== 'CANCELADA' && (
  <button
- onClick={async (e) => {
- e.stopPropagation();
- const accion = item.estado_habilitacion === 'HABILITADO' ? 'DESHABILITAR' : 'HABILITAR';
- try {
- await apiFetch(`/evangelism/sessions/${item.id}/habilitacion`, { method: 'PATCH', token, silent: true, body: { accion } });
- fetchSessions();
- } catch { toast.error('Error al cambiar estado'); }
- }}
+ onClick={(e) => { e.stopPropagation(); toggleSessionHabilitacion(item); }}
  title={item.estado_habilitacion === 'HABILITADO' ? 'Cerrar sesión' : 'Abrir sesión'}
  className={`w-6 h-6 inline-flex items-center justify-center rounded font-bold text-[11px] transition-colors ${
  item.estado_habilitacion === 'HABILITADO'
@@ -1895,18 +1908,7 @@ export default function StrategyDetailPage() {
  <div className="flex items-center gap-2">
  {/* Toggle habilitación individual */}
  <button
- onClick={async () => {
- const accion = s.estado_habilitacion === 'HABILITADO' ? 'DESHABILITAR' : 'HABILITAR';
- try {
- await apiFetch(`/evangelism/sessions/${s.id}/habilitacion`, {
- method: 'PATCH',
- token,
- silent: true,
- body: { accion },
- });
- fetchSessions();
- } catch { toast.error('Error al cambiar estado'); }
- }}
+ onClick={() => toggleSessionHabilitacion(s)}
  title={s.estado_habilitacion === 'HABILITADO' ? 'Bloquear sesión' : 'Habilitar sesión'}
  className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors text-[11px] font-bold ${
  s.estado_habilitacion === 'HABILITADO'
@@ -2016,13 +2018,25 @@ export default function StrategyDetailPage() {
               {dateStr}{s.topic ? ` · ${s.topic}` : ''}
              </p>
             </div>
-            {s.estado_habilitacion === 'HABILITADO' && (
-             <button
-              onClick={() => openAttendanceDrawer(s)}
-              className="shrink-0 text-[11px] font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
-             >
-              Reportar
-             </button>
+            {!isClosed && (
+             <div className="shrink-0 flex items-center gap-2">
+              {s.estado_habilitacion !== 'HABILITADO' && (
+               <button
+                onClick={() => toggleSessionHabilitacion(s)}
+                className="text-[11px] font-semibold text-amber-600 hover:text-emerald-700 transition-colors whitespace-nowrap"
+               >
+                Habilitar
+               </button>
+              )}
+              {s.estado_habilitacion === 'HABILITADO' && (
+               <button
+                onClick={() => openAttendanceDrawer(s)}
+                className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
+               >
+                Reportar
+               </button>
+              )}
+             </div>
             )}
            </div>
           );
