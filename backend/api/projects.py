@@ -80,8 +80,7 @@ def list_all_my_tasks(
         q = q.filter(models.Project.sede_id == user_sede)
     tasks = q.all()
     for t in tasks:
-        _normalize_task_enums(t)
-        _normalize_dates(t)
+        _prepare_task_for_response(t)
     return tasks
 
 
@@ -130,7 +129,9 @@ def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Proj
     project = (
         db.query(models.Project)
         .options(
-            selectinload(models.Project.tasks),
+            selectinload(models.Project.tasks).selectinload(models.ProjectTask.attachments),
+            selectinload(models.Project.tasks).selectinload(models.ProjectTask.supplies),
+            selectinload(models.Project.tasks).selectinload(models.ProjectTask.subtasks),
             selectinload(models.Project.milestones),
             selectinload(models.Project.activity_logs),
         )
@@ -314,20 +315,45 @@ def _normalize_task_enums(task: models.ProjectTask) -> None:
         task.status = _COMPAT_STATUS_MAP[task.status]
 
 
+def _serialize_attachment(attachment: models.ProjectAttachment) -> dict:
+    return {
+        "id": attachment.id,
+        "task_id": attachment.task_id,
+        "filename": attachment.filename,
+        "file_url": attachment.file_url,
+        "file_type": attachment.file_type,
+        "file_size": attachment.file_size,
+        "created_at": attachment.created_at,
+    }
+
+
 def _serialize_task_attachments(task: models.ProjectTask) -> models.ProjectTask:
     task.__dict__["attachments"] = [
-        {
-            "id": attachment.id,
-            "task_id": attachment.task_id,
-            "filename": attachment.filename,
-            "file_url": attachment.file_url,
-            "file_type": attachment.file_type,
-            "file_size": attachment.file_size,
-            "created_at": attachment.created_at,
-        }
+        _serialize_attachment(attachment)
         for attachment in (task.attachments or [])
+        if getattr(attachment, "deleted_at", None) is None
     ]
     return task
+
+
+def _prepare_task_for_response(task: models.ProjectTask) -> models.ProjectTask:
+    _normalize_task_enums(task)
+    _normalize_dates(task)
+    _serialize_task_attachments(task)
+    if hasattr(task, "supplies") and task.supplies:
+        task.supplies = [s for s in task.supplies if s.deleted_at is None]
+    if hasattr(task, "subtasks") and task.subtasks:
+        task.subtasks = [_prepare_task_for_response(sub) for sub in task.subtasks if sub.deleted_at is None]
+    return task
+
+
+def _prepare_project_for_response(project: models.Project) -> models.Project:
+    _normalize_dates(project)
+    for milestone in project.milestones:
+        _normalize_dates(milestone)
+    for task in project.tasks:
+        _prepare_task_for_response(task)
+    return project
 
 
 def _normalize_dates(obj):
@@ -389,27 +415,7 @@ def list_projects(
 
     projects = query.order_by(models.Project.created_at.desc()).all()
     for p in projects:
-        _normalize_dates(p)
-        for m in p.milestones:
-            _normalize_dates(m)
-        for t in p.tasks:
-            _normalize_task_enums(t)
-            _normalize_dates(t)
-            # Normalize attachments from ORM objects to dicts for Pydantic serialization
-            if hasattr(t, "attachments") and t.attachments:
-                t.__dict__["attachments"] = [
-                    {
-                        "id": a.id,
-                        "task_id": a.task_id,
-                        "filename": a.filename,
-                        "file_url": a.file_url,
-                        "file_type": a.file_type,
-                        "file_size": a.file_size,
-                    }
-                    for a in t.attachments
-                ]
-            else:
-                t.__dict__.setdefault("attachments", [])
+        _prepare_project_for_response(p)
     return projects
 
 
@@ -1062,11 +1068,7 @@ def get_project(
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     p = _ensure_project(db, project_id, user_sede=user_sede)
-    _normalize_dates(p)
-    for m in p.milestones:
-        _normalize_dates(m)
-    for t in p.tasks:
-        _normalize_dates(t)
+    _prepare_project_for_response(p)
     for log in p.activity_logs:
         _normalize_dates(log)
         log.user_name = log.persona.nombre_completo if log.persona else "Sistema"
@@ -1663,26 +1665,7 @@ def list_project_tasks(
     tasks = q.order_by(models.ProjectTask.order_index.asc()).all()
 
     for t in tasks:
-        _normalize_task_enums(t)
-        _normalize_dates(t)
-        if hasattr(t, "attachments") and t.attachments:
-            t.__dict__["attachments"] = [
-                {
-                    "id": a.id,
-                    "task_id": a.task_id,
-                    "filename": a.filename,
-                    "file_url": a.file_url,
-                    "file_type": a.file_type,
-                    "file_size": a.file_size,
-                }
-                for a in t.attachments if a.deleted_at is None
-            ]
-        else:
-            t.__dict__.setdefault("attachments", [])
-        if hasattr(t, "supplies") and t.supplies:
-            t.supplies = [s for s in t.supplies if s.deleted_at is None]
-        if hasattr(t, "subtasks") and t.subtasks:
-            t.subtasks = [sub for sub in t.subtasks if sub.deleted_at is None]
+        _prepare_task_for_response(t)
 
     return tasks
 

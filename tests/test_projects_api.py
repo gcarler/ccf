@@ -106,6 +106,7 @@ class TestProjectsCRUD:
         """GET /api/projects/{id} returns the project with tasks and milestones."""
         _, _, sede = seed_admin(db_session)
         data = setup_project_with_all_relations(db_session)
+        attachment = create_attachment_factory(db_session, data["tasks"][0].id, filename="detalle.pdf")
         headers = auth_headers(client)
         project_id = str(data["project"].id)
 
@@ -115,6 +116,8 @@ class TestProjectsCRUD:
         assert body["id"] == project_id
         assert len(body["tasks"]) >= 1
         assert len(body["milestones"]) >= 1
+        first_task = next(task for task in body["tasks"] if task["id"] == str(data["tasks"][0].id))
+        assert any(item["id"] == str(attachment.id) and item["filename"] == "detalle.pdf" for item in first_task["attachments"])
 
     def test_get_project_not_found(self, client, db_session):
         """GET /api/projects/{nonexistent} returns 404."""
