@@ -1,0 +1,30 @@
+{
+  "blocking_table_diffs": {},
+  "database_url_driver": "postgresql",
+  "db_table_count": 194,
+  "extra_tables": [
+    "alembic_version",
+    "content_metrics",
+    "content_publications",
+    "media_assets",
+    "page_content_versions",
+    "page_contents"
+  ],
+  "missing_tables": [],
+  "model_table_count": 188,
+  "table_diffs": {
+    "persona_ministries": {
+      "extra_columns": [
+        "created_at"
+      ],
+      "missing_columns": []
+    },
+    "sedes": {
+      "extra_columns": [
+        "created_at",
+        "updated_at"
+      ],
+      "missing_columns": []
+    }
+  }
+}
