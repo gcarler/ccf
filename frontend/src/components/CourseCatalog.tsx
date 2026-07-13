@@ -84,6 +84,12 @@ export default function CourseCatalog({
     }
 
     const loadCourses = async () => {
+      if (!token) {
+        setCourses(initialCourses ?? []);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
         const data = await apiFetch<Course[]>("/academy/courses/", {
