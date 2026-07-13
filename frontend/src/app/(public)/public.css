@@ -270,8 +270,8 @@
 .theme-light,
 .theme-institutional,
 .theme-dark {
-    --ccf-section-py: clamp(5rem, 10vw, 9rem);
-    --ccf-hero-min-h: 95svh;
+    --ccf-section-py: clamp(6rem, 12vw, 11rem);
+    --ccf-hero-min-h: min(92svh, 920px);
     --ccf-container-max: 92rem;
     --ccf-title-spacing: 1.25em;
     --ccf-body-leading: 1.75;
@@ -294,8 +294,8 @@
 }
 
 .ccf-section-tight {
-    padding-top: calc(var(--ccf-section-py) * 0.6);
-    padding-bottom: calc(var(--ccf-section-py) * 0.6);
+    padding-top: calc(var(--ccf-section-py) * 0.72);
+    padding-bottom: calc(var(--ccf-section-py) * 0.72);
 }
 
 /* Wide, editorial container */
@@ -315,13 +315,19 @@
 
 /* Sophisticated display typography */
 .ccf-display {
-    letter-spacing: -0.035em;
+    letter-spacing: 0;
     line-height: 0.92;
 }
 
 .ccf-headline {
-    letter-spacing: -0.025em;
+    letter-spacing: 0;
     line-height: 1.05;
+}
+
+.theme-light .tracking-tight,
+.theme-institutional .tracking-tight,
+.theme-dark .tracking-tight {
+    letter-spacing: 0;
 }
 
 .ccf-body {
@@ -344,6 +350,48 @@
 .ccf-card:hover {
     transform: translateY(-6px);
     box-shadow: 0 48px 80px -24px rgba(0, 0, 0, 0.18);
+}
+
+.ccf-page-flow {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4.5rem, 9vw, 8rem);
+}
+
+.ccf-dynamic-main {
+    padding-top: clamp(7rem, 12vw, 10rem);
+    padding-bottom: clamp(6rem, 10vw, 9rem);
+}
+
+.ccf-section-panel {
+    background: var(--site-surface-container-low);
+    border: 1px solid color-mix(in srgb, var(--site-outline-variant) 42%, transparent);
+    border-radius: var(--ccf-radius-xl);
+    box-shadow: var(--site-card-shadow);
+}
+
+.ccf-section-panel > :where(h1, h2, h3):first-child,
+.ccf-section-panel > :where(.ccf-section-title):first-child {
+    margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.ccf-section-header {
+    margin-bottom: clamp(2rem, 4vw, 3.5rem);
+}
+
+.ccf-grid-relaxed {
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+@media (max-width: 767px) {
+    .ccf-page-flow {
+        gap: clamp(3rem, 12vw, 4.5rem);
+    }
+
+    .ccf-dynamic-main {
+        padding-top: 6.5rem;
+        padding-bottom: 5rem;
+    }
 }
 
 /* Cinematic reveal animation */

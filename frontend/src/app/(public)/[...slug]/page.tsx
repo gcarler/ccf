@@ -88,15 +88,17 @@ export default async function CcfDynamicPage({ params }: { params: Promise<{ slu
       {jsonLdScripts.length > 0 && (
         <head dangerouslySetInnerHTML={{ __html: jsonLdScripts.join("") }} />
       )}
-      <main className="flex-1 px-3 md:px-6 lg:px-8 xl:px-12 pt-[100px] pb-16 space-y-8">
+      <main className="ccf-dynamic-main flex-1 px-4 md:px-8 lg:px-12">
         {page.breadcrumbs && page.breadcrumbs.length > 1 && (
-          <div className="max-w-7xl mx-auto w-full">
+          <div className="ccf-container mb-10">
             <BreadcrumbNav items={page.breadcrumbs} />
           </div>
         )}
-        {page.sections.filter((section) => section.is_visible).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((section) => (
-          <PublicSectionRenderer key={section.id} section={section} />
-        ))}
+        <div className="ccf-container ccf-page-flow">
+          {page.sections.filter((section) => section.is_visible).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((section) => (
+            <PublicSectionRenderer key={section.id} section={section} />
+          ))}
+        </div>
       </main>
     </>
   );
