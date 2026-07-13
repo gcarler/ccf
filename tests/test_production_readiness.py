@@ -2,7 +2,6 @@ from scripts.auditing.production_readiness import (
     Check,
     ModuleReadiness,
     markdown_report,
-    readiness_score,
     serialize_report,
 )
 
