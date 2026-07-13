@@ -138,10 +138,9 @@ export default function Footer() {
 
     return (
         <footer
-            className="w-full overflow-hidden border-t"
+            className="w-full overflow-hidden"
             style={{
                 background: "linear-gradient(135deg, var(--site-surface-container-low), var(--site-surface-container-lowest))",
-                borderColor: "var(--site-outline-variant)",
             }}
         >
             <div className="w-full">
@@ -231,7 +230,7 @@ export default function Footer() {
                     </div>
                 </div>
 
-                <div className="w-full border-t" style={{ borderColor: "var(--site-outline-variant)" }}>
+                <div className="w-full">
                     <div className="ccf-container grid max-w-[1500px] gap-10 py-10 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.15fr] lg:py-12">
                         <FooterLinkColumn title={navSectionTitle} links={navLinks} />
                         <FooterLinkColumn title={resourceSectionTitle} links={resourceLinks} />
@@ -264,7 +263,7 @@ export default function Footer() {
                     </div>
                 </div>
 
-                <div className="w-full border-t" style={{ borderColor: "var(--site-outline-variant)" }}>
+                <div className="w-full">
                     <div className="ccf-container flex max-w-[1500px] flex-col gap-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between">
                         <p className="max-w-[44rem] leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
                             © {new Date().getFullYear()}{" "}
