@@ -3,6 +3,48 @@ import { apiFetch } from "./http";
 export type GridStyle = "dots" | "lines" | "ruled" | "none";
 export type GridSize = 16 | 24 | 32;
 
+// ═════════════════════════════════════════════════════════════════════════════
+// Whiteboard color constants — use these instead of hardcoded hex values
+// ═════════════════════════════════════════════════════════════════════════════
+
+export const WHITEBOARD_COLORS = {
+  // Primary palette
+  primary: "#2563eb",
+  primaryLight: "rgba(37, 99, 235, 0.08)",
+  success: "#10b981",
+  successLight: "rgba(16, 185, 129, 0.1)",
+  warning: "#f59e0b",
+  danger: "#f43f5e",
+  purple: "#8b5cf6",
+  orange: "#f97316",
+  neutral: "#64748b",
+
+  // Text colors
+  textPrimary: "#0f172a",
+  textSecondary: "#1e293b",
+
+  // Background colors
+  canvasLight: "#fafafa",
+  canvasDark: "#ffffff",
+
+  // Grid colors
+  gridLight: "#e5e7eb",
+  gridLightDot: "#cbd5e1",
+  gridDark: "#1e293b",
+  gridDarkDot: "#334155",
+} as const;
+
+export const WHITEBOARD_COLOR_PRESETS = [
+  WHITEBOARD_COLORS.primary,
+  WHITEBOARD_COLORS.success,
+  WHITEBOARD_COLORS.warning,
+  WHITEBOARD_COLORS.danger,
+  WHITEBOARD_COLORS.purple,
+  WHITEBOARD_COLORS.orange,
+  WHITEBOARD_COLORS.neutral,
+  "#ffffff",
+] as const;
+
 export interface WhiteboardRecord {
   id: string;
   title: string;
