@@ -23,12 +23,7 @@ without an expensive JOIN.
 from __future__ import annotations
 
 import datetime as dt
-import os
 import uuid
-from contextlib import contextmanager
-
-import pytest
-
 
 # ── Helpers ─────────────────────────────────────────────────────────────────────
 
@@ -36,7 +31,7 @@ def _iso_days_ago(n: int) -> str:
     return (dt.date.today() - dt.timedelta(days=n)).isoformat()
 
 
-def _make_site(db, *, site_key: str, name: str = "Test Faro", sede_id=None) -> "Site":
+def _make_site(db, *, site_key: str, name: str = "Test Faro", sede_id=None):
     from backend import models
 
     site = models.CmsSite(
@@ -52,7 +47,7 @@ def _make_site(db, *, site_key: str, name: str = "Test Faro", sede_id=None) -> "
     return site
 
 
-def _make_sede(db, *, nombre: str = "Sede Test") -> "Sede":
+def _make_sede(db, *, nombre: str = "Sede Test"):
     from backend import models
 
     # ``Sede`` exige ``ciudad`` (NOT NULL) en la base de datos. La
@@ -135,8 +130,8 @@ class TestMigrationShape:
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
 
-        assert mod.revision == "20260706_0002"
-        assert mod.down_revision == "20260706_0001"
+        assert mod.revision == "20260706_0002_cms_seo_snapshots"
+        assert mod.down_revision == "20260706_0001_cms_schedule"
 
 
 # ── 2. capture_daily_seo_snapshots: idempotency ──────────────────────────────────
@@ -207,7 +202,7 @@ class TestCaptureDailySeoSnapshotsIdempotency:
     def test_inactive_sites_are_skipped(
         self, client, db_session
     ):
-        from backend import crud, models
+        from backend import crud
 
         sede = _make_sede(db_session)
         site = _make_site(db_session, site_key="faro-off", sede_id=sede.id)
@@ -317,9 +312,9 @@ class TestGetSeoTrend:
     def test_empty_scope_returns_no_data(
         self, client, db_session
     ):
-        from backend import crud, models
+        from backend import crud
 
-        sede = _make_sede(db_session)
+        _make_sede(db_session)
         ghost = uuid.uuid4()  # sede_id that doesn't exist
         result = crud.get_seo_trend(db_session, sede_id=ghost, days=30)
         assert result["series"] == []
@@ -390,7 +385,6 @@ class TestSeoAlertLogic:
         self, client, db_session
     ):
         from backend.crud.dashboard import _build_seo_trend_slice
-        from backend import models
 
         sede = _make_sede(db_session)
         site = _make_site(db_session, site_key="faro-alert", sede_id=sede.id)

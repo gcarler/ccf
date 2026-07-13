@@ -1759,6 +1759,30 @@ def update_pastoral_profile(
     return persona
 
 
+def list_pastoral_team(
+    db: Session,
+    *,
+    published_only: bool = False,
+    sede_id: uuid.UUID | None = None,
+):
+    """Return personas that have pastoral profile data."""
+    query = db.query(models.Persona).filter(
+        or_(
+            models.Persona.is_main_pastor.is_(True),
+            models.Persona.is_pastoral_leader.is_(True),
+        )
+    )
+    if published_only:
+        query = query.filter(models.Persona.is_pastoral_published.is_(True))
+    if sede_id is not None:
+        query = query.filter(models.Persona.sede_id == sede_id)
+    return query.order_by(
+        models.Persona.pastoral_sort_order.asc(),
+        models.Persona.last_name.asc(),
+        models.Persona.first_name.asc(),
+    ).all()
+
+
 # ── CMS Posts & Taxonomías ─────────────────────────────────────────────────
 
 

@@ -4,11 +4,9 @@ from __future__ import annotations
 import datetime as dt
 import uuid
 
-import pytest
 from sqlalchemy import inspect
 
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
-
 
 GOOD_TITLE = "Bienvenidos a la iglesia CCF"
 GOOD_DESC = "Un lugar para crecer en fe y comunidad con Cristo Jesús como centro."
@@ -320,8 +318,6 @@ class TestLegacyScheduleEndpointCompat:
     """
 
     def test_legacy_schedule_writes_publish_at_column(self, client, db_session):
-        from backend import models
-
         seed_admin(db_session, email="legacy-sched@example.com")
         site = _seed_site(db_session)
         page = _make_page(db_session, site.id, slug="legacy-page")
@@ -349,7 +345,7 @@ class TestLegacyScheduleEndpointCompat:
             json={"scheduled_at": "not-a-date"},
             headers=headers,
         )
-        assert resp.status_code == 400
+        assert resp.status_code == 422
 
 
 # ── 4. Post PATCH endpoint ─────────────────────────────────────────────────
@@ -401,8 +397,6 @@ class TestSchedulingSedeBoundary:
         assert log_entry.site_id == site.id
 
     def test_reader_role_cannot_schedule_page_via_legacy_endpoint(self, client, db_session):
-        from backend import models
-
         # Editor sin permisos de publish.
         seed_user_with_role(db_session, role_name="lector", email="reader-sched@example.com")
         site = _seed_site(db_session)

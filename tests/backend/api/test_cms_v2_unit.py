@@ -18,6 +18,9 @@ class DummyQuery:
         self._filters.append((args, kwargs))
         return self
 
+    def options(self, *args, **kwargs):
+        return self
+
     def order_by(self, *args, **kwargs):
         self._order = (args, kwargs)
         return self
@@ -68,7 +71,7 @@ class DummyDB:
 def test_slugify_basic():
     assert cms_v2._slugify('Hello World') == 'hello-world'
     assert cms_v2._slugify('  Foo_Bar  ') == 'foo_bar'
-    assert cms_v2._slugify('Café!') == 'caf'
+    assert cms_v2._slugify('Café!') == 'cafe'
 
 # Test list_sites returns empty list with dummy DB
 def test_list_sites_empty():

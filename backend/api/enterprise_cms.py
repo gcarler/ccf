@@ -817,6 +817,29 @@ class SearchRequest(BaseModel):
     limit: int = 20
 
 
+@router.get("/search")
+def search_content_get(
+    q: str = Query(default=""),
+    site_key: str = Query(default="ccf"),
+    entity_type: str | None = None,
+    category: str | None = None,
+    limit: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return search_content(
+        SearchRequest(
+            site_key=site_key,
+            query=q,
+            entity_type=entity_type,
+            category=category,
+            limit=limit,
+        ),
+        db=db,
+        user=user,
+    )
+
+
 @router.post("/search")
 def search_content(
     body: SearchRequest,
@@ -869,6 +892,33 @@ class SearchPromotionCreate(BaseModel):
     entity_slug: str | None = None
     title: str | None = None
     boost_score: int = 100
+
+
+@router.get("/search/promotions")
+def list_search_promotions(
+    site_key: str = Query(default="ccf"),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    rows = (
+        db.query(SearchPromotion)
+        .filter(SearchPromotion.site_key == site_key)
+        .order_by(desc(SearchPromotion.created_at))
+        .all()
+    )
+    return [
+        {
+            "id": str(row.id),
+            "query_text": row.query_text,
+            "entity_type": row.entity_type,
+            "entity_id": row.entity_id,
+            "entity_slug": row.entity_slug,
+            "title": row.title,
+            "boost_score": row.boost_score,
+            "is_active": row.is_active,
+        }
+        for row in rows
+    ]
 
 
 @router.post("/search/promotions")
