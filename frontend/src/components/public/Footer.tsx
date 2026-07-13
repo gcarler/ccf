@@ -205,7 +205,7 @@ export default function Footer() {
                             ) : null}
                         </div>
 
-                        <div className="grid gap-2 border-y py-4 sm:grid-cols-3 lg:grid-cols-1 lg:border-y-0 lg:border-l lg:py-2 lg:pl-10" style={{ borderColor: "var(--site-outline-variant)" }}>
+                        <div className="grid gap-2 py-4 sm:grid-cols-3 lg:grid-cols-1 lg:py-2 lg:pl-10">
                             {SITE_EMAIL ? (
                                 <a href={`mailto:${SITE_EMAIL}`} className="group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors" style={{ color: "var(--site-on-surface)" }}>
                                     <Mail size={18} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
