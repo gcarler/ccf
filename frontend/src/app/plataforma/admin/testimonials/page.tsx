@@ -9,7 +9,7 @@ export default function AdminTestimonialsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/cms/testimonials");
+    router.replace("/plataforma/cms/testimonials");
   }, [router]);
 
   return (
@@ -21,10 +21,10 @@ export default function AdminTestimonialsPage() {
           Este acceso redirige al flujo real para gestionar texto, aprobacion, archivo, imagenes, videos y podcasts sin paneles duplicados.
         </p>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Link href="/cms/testimonials" className="rounded-lg border border-white/10 p-4 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-primary">
+          <Link href="/plataforma/cms/testimonials" className="rounded-lg border border-white/10 p-4 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-primary">
             <MessageCircle size={16} className="mb-2 text-primary" /> Testimonios
           </Link>
-          <Link href="/cms/media" className="rounded-lg border border-white/10 p-4 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-primary">
+          <Link href="/plataforma/cms/media" className="rounded-lg border border-white/10 p-4 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-primary">
             <ImageIcon size={16} className="mb-2 text-primary" /> Biblioteca media
           </Link>
         </div>

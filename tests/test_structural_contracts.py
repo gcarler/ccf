@@ -807,3 +807,43 @@ def test_frontend_no_direct_fetch_calls():
                 ):
                     violations.append(f"{rel}:{line_no}: {stripped[:80]}")
     assert violations == [], "Usar apiFetch() de @/lib/http en vez de fetch() directo"
+
+
+def test_frontend_no_legacy_cms_ui_routes():
+    """La UI del CMS debe enlazar solo rutas canónicas bajo /plataforma/cms.
+
+    Este test cubre navegación, redirecciones y enlaces visibles. No inspecciona
+    apiFetch() porque los endpoints REST siguen viviendo bajo /cms.
+    """
+    root = Path(__file__).resolve().parents[1]
+    scan_roots = [
+        root / "frontend" / "src" / "app" / "plataforma",
+        root / "frontend" / "src" / "components",
+    ]
+    patterns = (
+        'href="/cms',
+        "href='/cms",
+        'router.push("/cms',
+        "router.push('/cms",
+        'router.replace("/cms',
+        "router.replace('/cms",
+        'window.location.assign("/cms',
+        "window.location.assign('/cms",
+        'window.location.href = "/cms',
+        "window.location.href = '/cms",
+        'redirect("/cms',
+        "redirect('/cms",
+    )
+    violations = []
+    for scan_root in scan_roots:
+        for path in scan_root.rglob("*"):
+            if path.suffix not in {".ts", ".tsx"}:
+                continue
+            rel = str(path.relative_to(root)).replace("\\", "/")
+            for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                stripped = line.strip()
+                if stripped.startswith("//") or stripped.startswith("*"):
+                    continue
+                if any(pattern in line for pattern in patterns):
+                    violations.append(f"{rel}:{line_no}: {stripped[:120]}")
+    assert violations == [], "Usar solo rutas canónicas /plataforma/cms en la UI"

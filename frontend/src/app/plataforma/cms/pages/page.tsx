@@ -102,7 +102,7 @@ export default function CmsPagesManagement() {
       meta?: Record<string, string>;
     }> = [];
     for (const page of visiblePages) {
-      const slugHref = `/${page.slug}`;
+      const slugHref = `/plataforma/cms/pages/${page.slug}`;
       // 1) Publish event: scheduled.publish_at OR a published page's first seen date.
       if (isScheduledPage(page) && page.publish_at) {
         const iso = page.publish_at;
@@ -138,7 +138,7 @@ export default function CmsPagesManagement() {
         title: page.title,
         date: (page.updated_at || page.created_at || new Date().toISOString()).split("T")[0],
         color: page.status === "published" ? "emerald" as const : page.status === "in_review" ? "amber" as const : page.status === "archived" ? "rose" as const : "blue" as const,
-        location: `/${page.slug}`,
+        location: `/plataforma/cms/pages/${page.slug}`,
       });
     }
     return events;
@@ -275,7 +275,7 @@ export default function CmsPagesManagement() {
     });
   };
 
-  const openPage = (page: CmsPage) => router.push(`/cms/pages/${page.slug}`);
+  const openPage = (page: CmsPage) => router.push(`/plataforma/cms/pages/${page.slug}`);
 
   const openPreview = (page: CmsPage) => {
     window.open(`/plataforma/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(page.slug)}`, "_blank");
@@ -313,7 +313,7 @@ export default function CmsPagesManagement() {
                       <Eye size={11} /> Preview
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); router.push(`/cms/builder?site=${siteKey}&page=${page.slug}`); }}
+                      onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`); }}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide hover:bg-blue-100 transition-all"
                     >
                       <PenTool size={11} /> Editar
@@ -453,13 +453,13 @@ export default function CmsPagesManagement() {
                   </button>
 
                   <div
-                    onClick={() => router.push(`/cms/pages/${page.slug}`)}
+                    onClick={() => router.push(`/plataforma/cms/pages/${page.slug}`)}
                     className="size-7 rounded-md bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] flex items-center justify-center shrink-0 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all cursor-pointer"
                   >
                     <FileText size={20} />
                   </div>
 
-                  <div className="flex-1 min-w-0 cursor-pointer" onClick={() => router.push(`/cms/pages/${page.slug}`)}>
+                  <div className="flex-1 min-w-0 cursor-pointer" onClick={() => router.push(`/plataforma/cms/pages/${page.slug}`)}>
                     <div className="flex items-center gap-2 mb-0.5">
                       <h3 className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{page.title}</h3>
                       <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
@@ -482,7 +482,7 @@ export default function CmsPagesManagement() {
                       <Eye size={11} /> Preview
                     </button>
                     <button
-                      onClick={() => router.push(`/cms/builder?site=${siteKey}&page=${page.slug}`)}
+                      onClick={() => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide hover:bg-blue-100 transition-all"
                     >
                       <PenTool size={11} /> Editar
@@ -645,7 +645,7 @@ export default function CmsPagesManagement() {
                             <Eye size={10} /> Preview
                           </button>
                           <button
-                            onClick={() => router.push(`/cms/builder?site=${siteKey}&page=${page.slug}`)}
+                            onClick={() => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`)}
                             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase hover:bg-blue-100 transition-all"
                           >
                             <PenTool size={10} /> Editar
@@ -694,7 +694,7 @@ export default function CmsPagesManagement() {
         onClose={() => setSelectedPage(null)}
         title={selectedPage?.title || ""}
         subtitle={selectedPage ? `Slug: /${selectedPage.slug}` : undefined}
-        fullViewHref={selectedPage ? `/cms/builder?site=${siteKey}&page=${selectedPage.slug}` : undefined}
+        fullViewHref={selectedPage ? `/plataforma/cms/builder?site=${siteKey}&page=${selectedPage.slug}` : undefined}
       >
         {selectedPage && (
           <div className="space-y-3">

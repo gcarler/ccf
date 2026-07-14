@@ -157,14 +157,14 @@ export default function CmsSeoAuditPage() {
   }, [audit, search]);
 
   const openPageInBuilder = (page: PageSeoAudit) => {
-    router.push(`/cms/builder?site=${siteKey}&page=${page.slug}`);
+    router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`);
   };
 
   const openSectionInBuilder = (page: PageSeoAudit, sectionId: string) => {
     // Drawer-stack-consistent (AGENTS_FRONTEND.md §3): navegar dentro del
     // mismo tab con el builder deep-link a la sección afectada.
     router.push(
-      `/cms/builder?site=${siteKey}&page=${page.slug}&section=${sectionId}`,
+      `/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&section=${sectionId}`,
     );
   };
 
@@ -383,7 +383,7 @@ export default function CmsSeoAuditPage() {
         subtitle={selectedPage ? `/${selectedPage.slug}` : undefined}
         fullViewHref={
           selectedPage && canEdit
-            ? `/cms/builder?site=${siteKey}&page=${selectedPage.slug}`
+            ? `/plataforma/cms/builder?site=${siteKey}&page=${selectedPage.slug}`
             : undefined
         }
       >
@@ -496,10 +496,10 @@ export default function CmsSeoAuditPage() {
                 </button>
               ) : (
                 <Link
-                  href="/cms/pages"
+                  href="/plataforma/cms/pages"
                   className="block w-full text-center px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
                 >
-                  Ver listado completo en /cms/pages
+                  Ver listado completo en /plataforma/cms/pages
                 </Link>
               )}
             </div>
