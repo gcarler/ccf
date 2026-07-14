@@ -16,35 +16,35 @@ import { useAuth } from '@/context/AuthContext';
 import { DSCard } from '@/design/components/DSCard';
 import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/http';
+import { getWorkspaceAuditEventKey, type WorkspaceAuditEvent } from '@/lib/workspaceAudit';
 
 export default function AuditDetailPage() {
     const params = useParams();
-    const id = params?.id as string;
+    const rawId = params?.id;
+    const id = decodeURIComponent((Array.isArray(rawId) ? rawId[0] : rawId) || '');
     const { token } = useAuth();
 
-    const [log, setLog] = useState<any>(null);
+    const [log, setLog] = useState<WorkspaceAuditEvent | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!token || !id) return;
+        if (!token || !id) {
+            setLoading(false);
+            return;
+        }
 
         const loadLog = async () => {
             try {
                 setLoading(true);
-                setLog({
-                    id,
-                    action: 'UPDATE_ROLE',
-                    actor: 'Admin_Master',
-                    target: 'persona: juan.perez',
-                    timestamp: '2026-04-13T15:20:00Z',
-                    description: 'Cambio de rol de "Estudiante" a "Docente" para el usuario juan.perez',
-                    ip_address: '192.168.1.45',
-                    metadata: {
-                        old_role: 'student',
-                        new_role: 'teacher',
-                        reason: 'Promoción académica'
-                    }
+                const data = await apiFetch<{ events?: WorkspaceAuditEvent[] }>('/workspace/flags/audit', {
+                    token,
+                    query: { limit: 1000 },
+                    cache: 'no-store',
                 });
+                const rows = Array.isArray(data?.events) ? data.events : [];
+                const match = rows.find((event) => getWorkspaceAuditEventKey(event) === id) || null;
+                setLog(match);
             } catch {
                 toast.error('Error al cargar el log de auditoría');
             } finally {
@@ -57,6 +57,14 @@ export default function AuditDetailPage() {
 
     if (loading) {
         return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Consultando bitácora de seguridad...</div>;
+    }
+
+    if (!log) {
+        return (
+            <div className="p-4 text-center font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                No se encontró el evento de auditoría.
+            </div>
+        );
     }
 
     return (
@@ -86,7 +94,12 @@ export default function AuditDetailPage() {
                             <DSCard>
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Descripción del Evento</h3>
                                 <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
-                                    {log.description}
+                                    {JSON.stringify({
+                                        action: log.action,
+                                        feature_id: log.feature_id,
+                                        updated_by: log.updated_by,
+                                        changes: log.changes || {},
+                                    })}
                                 </p>
                             </DSCard>
 
@@ -94,7 +107,7 @@ export default function AuditDetailPage() {
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Metadatos de la Transacción</h3>
                                 <div className="bg-[hsl(var(--bg-muted))] rounded-lg p-3 overflow-x-auto">
                                     <pre className="text-emerald-400 text-xs font-mono">
-                                        {JSON.stringify(log.metadata, null, 4)}
+                                        {JSON.stringify(log, null, 4)}
                                     </pre>
                                 </div>
                             </DSCard>
@@ -109,7 +122,7 @@ export default function AuditDetailPage() {
                                             <div className="size-8 rounded-lg bg-[hsl(var(--bg-muted))] text-white flex items-center justify-center">
                                                 <User size={16} />
                                             </div>
-                                            <span className="text-xs font-semibold uppercase">{log.actor}</span>
+                                            <span className="text-xs font-semibold uppercase">{log.updated_by || 'SYS'}</span>
                                         </div>
                                     </div>
 
@@ -121,9 +134,9 @@ export default function AuditDetailPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Dirección IP</p>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Feature</p>
                                         <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-                                            <Globe size={14} /> {log.ip_address}
+                                            <Globe size={14} /> {log.feature_id || 'global'}
                                         </div>
                                     </div>
 
