@@ -690,7 +690,7 @@ export default function CmsTestimonialsPage() {
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
                       <div className="mb-2 flex items-center justify-between gap-3">
                         <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Seleccionar desde media</p>
-                        <Link href="/cms/media" className="text-[9px] font-semibold uppercase tracking-wide text-rose-500 hover:underline">
+                        <Link href="/plataforma/cms/media" className="text-[9px] font-semibold uppercase tracking-wide text-rose-500 hover:underline">
                           Subir archivo
                         </Link>
                       </div>

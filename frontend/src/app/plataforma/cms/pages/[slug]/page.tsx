@@ -64,7 +64,7 @@ export default function CmsPageDetailPage() {
     const slug = page.slug || id;
 
     if (countdown <= 0) {
-      router.replace(`/cms/builder?site=${siteKey}&page=${slug}`);
+      router.replace(`/plataforma/cms/builder?site=${siteKey}&page=${slug}`);
       return;
     }
 
@@ -75,7 +75,7 @@ export default function CmsPageDetailPage() {
   const handleGoNow = () => {
     if (!page) return;
     const siteKey = page.site_key || SITE_KEY;
-    router.replace(`/cms/builder?site=${siteKey}&page=${page.slug}`);
+    router.replace(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`);
   };
 
   if (loading) {
@@ -180,7 +180,7 @@ export default function CmsPageDetailPage() {
           </button>
 
           <button
-            onClick={() => router.push("/cms/pages")}
+            onClick={() => router.push("/plataforma/cms/pages")}
             className="w-full py-2.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide transition-colors"
           >
             ← Volver a páginas

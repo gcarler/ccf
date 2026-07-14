@@ -172,7 +172,7 @@ export default function PageVersionsDiffPage() {
   };
 
   const goToBuilder = () => {
-    router.push(`/cms/builder?site=${siteKey}&page=${slug}`);
+    router.push(`/plataforma/cms/builder?site=${siteKey}&page=${slug}`);
   };
 
   // ── Render ───────────────────────────────────────────────────────

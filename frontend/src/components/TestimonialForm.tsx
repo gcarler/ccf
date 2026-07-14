@@ -200,7 +200,7 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
               <div className="rounded-lg border border-[hsl(var(--border))] bg-white/70 p-3">
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Biblioteca CMS</span>
-                  <Link href="/cms/media" className="text-[10px] font-semibold uppercase tracking-wide text-primary hover:underline">
+                  <Link href="/plataforma/cms/media" className="text-[10px] font-semibold uppercase tracking-wide text-primary hover:underline">
                     Subir media
                   </Link>
                 </div>

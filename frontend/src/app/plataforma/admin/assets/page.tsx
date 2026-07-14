@@ -104,7 +104,7 @@ export default function AssetLibrary() {
                 tags={["CMS Media", "Upload Real", "Inventario"]}
                 watchers={["Media Team", "Creative Director"]}
                 primaryAction={{ label: uploading ? "Subiendo..." : "Subir Recurso", icon: uploading ? Loader2 : Upload, onClick: () => fileInputRef.current?.click() }}
-                secondaryAction={{ label: "Abrir Medios CMS", icon: Plus, onClick: () => window.location.assign("/cms/media") }}
+                secondaryAction={{ label: "Abrir Medios CMS", icon: Plus, onClick: () => window.location.assign("/plataforma/cms/media") }}
             />
 
             <div className="space-y-3 pb-4">
