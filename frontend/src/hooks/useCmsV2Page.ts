@@ -30,6 +30,7 @@
 //    section, matching the call-site access pattern.
 import { useEffect, useState } from "react";
 import { getCmsPublicPage } from "@/lib/cms/v2";
+import { buildCmsPageBlocks } from "@/lib/cms/pageBlocks";
 import { SITE_KEY } from "@/lib/site-config";
 import type { CmsPublicPage } from "@/types/cms-v2";
 
@@ -43,16 +44,7 @@ export function useCmsV2Page(slug: string): CmsPublicPage | null {
     getCmsPublicPage(SITE_KEY, slug)
       .then((p) => {
         if (!alive) return;
-        // Derive a `blocks` index keyed by `section_key` so call sites can do
-        // `page?.blocks?.hero?.eyebrow` instead of hunting the array. Last
-        // section with a duplicate key wins (CMS schema reserves uniqueness).
-        const blocks: Record<string, Record<string, unknown>> = {};
-        for (const section of p.sections ?? []) {
-          if (section.section_key) {
-            blocks[section.section_key] = section.props_json ?? {};
-          }
-        }
-        setPage({ ...p, blocks });
+        setPage({ ...p, blocks: buildCmsPageBlocks(p.sections) });
       })
       .catch(() => {
         /* fallback handled by call-site defaults */

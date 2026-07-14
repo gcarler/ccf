@@ -283,10 +283,15 @@ class TestEnterpriseCrudDirect:
 
     def test_create_user_session(self, authed_client):
         client, headers, sede, persona, db = authed_client
-        from datetime import datetime, timedelta
+        from datetime import datetime, timedelta, timezone
 
         from backend.models_enterprise import UserSession
-        session = UserSession(id=uuid.uuid4(), persona_id=persona.id, session_token="test-token", expires_at=datetime.utcnow() + timedelta(hours=1))
+        session = UserSession(
+            id=uuid.uuid4(),
+            persona_id=persona.id,
+            session_token="test-token",
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        )
         db.add(session)
         db.flush()
         assert session.id is not None

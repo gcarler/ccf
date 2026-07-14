@@ -29,6 +29,8 @@ from backend import models  # noqa: F401,E402
 from backend.core.database import engine  # noqa: E402
 from backend.models_shared import Base  # noqa: E402
 
+IGNORED_EXTRA_TABLES = {"alembic_version"}
+
 
 def _column_names(table: Any) -> set[str]:
     return {column.name for column in table.columns}
@@ -40,8 +42,9 @@ def main() -> int:
     model_tables = set(Base.metadata.tables)
 
     missing_tables = sorted(model_tables - db_tables)
-    extra_tables = sorted(db_tables - model_tables)
-
+    extra_tables = sorted(
+        table for table in (db_tables - model_tables) if table not in IGNORED_EXTRA_TABLES
+    )
     table_diffs: dict[str, dict[str, list[str]]] = {}
     for table_name in sorted(model_tables & db_tables):
         model_columns = _column_names(Base.metadata.tables[table_name])
@@ -64,11 +67,12 @@ def main() -> int:
         "db_table_count": len(db_tables),
         "missing_tables": missing_tables,
         "extra_tables": extra_tables,
+        "legacy_tables": [],
         "table_diffs": table_diffs,
         "blocking_table_diffs": blocking_table_diffs,
     }
     print(json.dumps(payload, indent=2, sort_keys=True, default=str))
-    return 1 if missing_tables or blocking_table_diffs else 0
+    return 1 if missing_tables or extra_tables or blocking_table_diffs else 0
 
 
 if __name__ == "__main__":

@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 
-import RichText from "@/components/public/RichText";
 import PublicHeroWithSlides from "@/components/public/PublicHeroWithSlides";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { Bell, ChevronLeft, ChevronRight, MapPin, Star } from "lucide-react";
@@ -42,8 +41,9 @@ export default function EventosPage() {
     const eventsContent = feedContent;
     const [activeFilter, setActiveFilter] = useState("Todos");
     const [calendarView, setCalendarView] = useState<"Semanal" | "Mensual" | "Anual">("Mensual");
-    const [currentMonth, setCurrentMonth] = useState(5); // June (0-indexed)
-    const [currentYear, setCurrentYear] = useState(2026);
+    const today = useMemo(() => new Date(), []);
+    const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+    const [currentYear, setCurrentYear] = useState(today.getFullYear());
 
     const heroEyebrow = typeof heroContent?.eyebrow === "string" ? heroContent.eyebrow : "";
     const heroTitle = typeof heroContent?.title === "string" ? heroContent.title : "";
@@ -122,6 +122,7 @@ export default function EventosPage() {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
     const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
+    const isCurrentMonth = currentMonth === today.getMonth() && currentYear === today.getFullYear();
 
     const calendarDays: CalendarDay[] = [
         ...Array.from({ length: firstDayOfWeek }, (_, i) => ({
@@ -571,7 +572,7 @@ export default function EventosPage() {
                                         key={index}
                                         className="aspect-square p-1 flex flex-col items-center justify-between rounded-md cursor-pointer transition-all hover:scale-105"
                                         style={
-                                            day.n === 24 && !day.prev
+                                            day.n === today.getDate() && !day.prev && isCurrentMonth
                                                 ? {
                                                       background: "var(--site-card-highlight)",
                                                       border: "2px solid var(--site-primary)",
@@ -585,7 +586,7 @@ export default function EventosPage() {
                                             className="text-sm font-bold"
                                             style={{
                                                 color:
-                                                    day.n === 24 && !day.prev
+                                                    day.n === today.getDate() && !day.prev && isCurrentMonth
                                                         ? "var(--site-primary)"
                                                         : "var(--site-on-surface)",
                                             }}

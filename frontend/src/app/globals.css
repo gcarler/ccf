@@ -43,6 +43,18 @@
   --danger-muted: 0 84.2% 95%;
   --danger-text: 0 70% 28%;
 
+  /* Whiteboard color tokens */
+  --whiteboard-bg: 0 0% 98%; /* #fafafa */
+  --whiteboard-canvas: 0 0% 100%; /* #ffffff */
+  --whiteboard-primary: 217 91% 60%; /* #2563eb */
+  --whiteboard-primary-light: 217 91% 60% / 0.08;
+  --whiteboard-success: 160 84% 39%; /* #10b981 */
+  --whiteboard-success-light: 160 84% 39% / 0.1;
+  --whiteboard-text: 222 47% 11%; /* #0f172a */
+  --whiteboard-text-secondary: 215 25% 21%; /* #1e293b */
+  --whiteboard-grid: 220 13% 91%; /* #e5e7eb */
+  --whiteboard-grid-dot: 214 20% 80%; /* #cbd5e1 */
+
   /* Compact radii: 4-8px for cards/buttons, 9999px only for avatars */
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
@@ -98,6 +110,18 @@
   --danger-foreground: 0 0% 100%;
   --danger-muted: 0 62.8% 15%;
   --danger-text: 0 70% 75%;
+
+  /* Whiteboard color tokens (dark mode) */
+  --whiteboard-bg: 222 47% 4%; /* #0b0d11 */
+  --whiteboard-canvas: 0 0% 100%; /* #ffffff */
+  --whiteboard-primary: 217 91% 60%; /* #2563eb */
+  --whiteboard-primary-light: 217 91% 60% / 0.08;
+  --whiteboard-success: 160 84% 39%; /* #10b981 */
+  --whiteboard-success-light: 160 84% 39% / 0.1;
+  --whiteboard-text: 210 40% 98%; /* #f8fafc */
+  --whiteboard-text-secondary: 215 20% 65%; /* #94a3b8 */
+  --whiteboard-grid: 222 47% 15%; /* #1e293b */
+  --whiteboard-grid-dot: 215 25% 27%; /* #334155 */
 
   /* Surface tokens */
   --surface-card: 220 6% 12%;
@@ -507,3 +531,34 @@
   transition: all 0.2s;
 }
 .login-google-btn:hover { background-color: #f8fafc; border-color: #d1d5db; }
+
+/* Whiteboard canvas touch support */
+.whiteboard-canvas {
+  touch-action: none; /* Prevent browser scroll/zoom on canvas */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Whiteboard mobile toolbar (bottom bar on small screens) */
+@media (max-width: 768px) {
+  .whiteboard-mobile-toolbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: hsl(var(--bg-primary));
+    border-top: 1px solid hsl(var(--border));
+    backdrop-filter: blur(12px);
+  }
+
+  .whiteboard-mobile-toolbar button {
+    min-width: 44px;
+    min-height: 44px; /* Touch-friendly target size */
+  }
+}

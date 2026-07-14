@@ -18,6 +18,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from backend.core.database import Base
+from backend.models_shared import _utcnow
 
 
 def _utcnow():
@@ -74,6 +75,7 @@ class PersonaMinistry(Base):
     recognized_at = Column(DateTime(timezone=True), default=_utcnow, name="recognition_date")
     recognized_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     persona = relationship("Persona", foreign_keys=[persona_id], back_populates="ministerios_kernel")
     recognized_by_persona = relationship("Persona", foreign_keys=[recognized_by_persona_id])
@@ -141,4 +143,3 @@ class PersonaRoleHistory(Base):
     __table_args__ = (
         Index("ix_persona_role_history_lookup", "persona_id", "changed_at"),
     )
-

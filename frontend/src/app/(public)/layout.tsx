@@ -17,7 +17,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <PublicSeoManager />
             <div className="min-h-screen overflow-x-clip bg-site-background text-site-on-background font-body antialiased selection:bg-site-primary/30">
                 <Navbar />
-                <main className="relative">
+                <main className="relative min-h-screen">
                     {children}
                 </main>
                 <Footer />

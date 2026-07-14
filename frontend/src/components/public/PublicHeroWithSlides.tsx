@@ -139,11 +139,11 @@ export default function PublicHeroWithSlides({
             </span>
           )}
         </div>
-        {totalSlides > 1 && (
+          {totalSlides > 1 && (
           <div className="absolute bottom-4 right-4 z-20 flex gap-2">
             {safeSlides.slice(0, 6).map((slide, index) => (
               <button
-                key={slide.src}
+                key={`${slide.src}-${index}`}
                 type="button"
                 onClick={() => setActiveIndex(index)}
                 aria-label={`Ir al slide ${index + 1}`}
@@ -207,7 +207,7 @@ export default function PublicHeroWithSlides({
             <AnimatePresence mode="wait">
               {activeSlide && (
                 <motion.div
-                  key={activeSlide.src}
+                  key={`${activeSlide.src}-${activeIndex}`}
                   initial={{ opacity: 0, scale: 1.02 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
@@ -238,7 +238,7 @@ export default function PublicHeroWithSlides({
             <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
               {safeSlides.slice(0, 4).map((slide, index) => (
                 <button
-                  key={slide.src}
+                  key={`${slide.src}-${index}`}
                   type="button"
                   onClick={() => setActiveIndex(index)}
                   className={`relative aspect-[4/3] overflow-hidden rounded-2xl border transition-all duration-300 ${index === activeIndex ? "border-[hsl(var(--primary))] ring-2 ring-[hsl(var(--primary))/0.18] scale-[1.03] opacity-100" : "border-[hsl(var(--border))] opacity-70 hover:opacity-95"}`}

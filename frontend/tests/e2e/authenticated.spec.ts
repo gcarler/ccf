@@ -5,6 +5,8 @@ const password = process.env.E2E_PASSWORD || '';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.E2E_API_URL || '';
 const authE2eEnabled = process.env.E2E_AUTH_ENABLED === '1';
 const expectEvangelismRestricted = process.env.E2E_EXPECT_EVANGELISM_RESTRICTED === '1';
+let cachedAccessToken = '';
+let cachedRefreshToken: string | null = null;
 
 test.describe('authenticated routes', () => {
   test.skip(
@@ -18,22 +20,28 @@ test.describe('authenticated routes', () => {
       return;
     }
     try {
-      const response = await request.post(`${apiUrl.replace(/\/$/, '')}/auth/login`, {
-        form: { username: email, password },
+      const response = await request.post(`${apiUrl.replace(/\/$/, '')}/v3/auth/login`, {
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        data: { email, password },
         timeout: 10_000,
       });
-      test.skip(!response.ok(), `Preflight login failed against ${apiUrl}/auth/login`);
+      test.skip(!response.ok(), `Preflight login failed against ${apiUrl}/v3/auth/login`);
+      const payload = await response.json();
+      cachedAccessToken = payload.access_token;
+      cachedRefreshToken = payload.refresh_token ?? null;
     } catch {
-      test.skip(true, `Preflight login timeout/unreachable at ${apiUrl}/auth/login`);
+      test.skip(true, `Preflight login timeout/unreachable at ${apiUrl}/v3/auth/login`);
     }
   });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.locator('input[type="text"]').first().fill(email);
-    await page.locator('input[type="password"]').first().fill(password);
-    await page.locator('button[type="submit"]').first().click();
-    await expect(page).not.toHaveURL(/\/login(?:\?|$)/i);
+    await page.addInitScript(({ accessToken, refreshToken }) => {
+      sessionStorage.setItem('ccf_token', accessToken);
+      if (refreshToken) sessionStorage.setItem('ccf_refresh_token', refreshToken);
+    }, {
+      accessToken: cachedAccessToken,
+      refreshToken: cachedRefreshToken,
+    });
   });
 
   test('@auth academy route loads for authenticated user', async ({ page }) => {

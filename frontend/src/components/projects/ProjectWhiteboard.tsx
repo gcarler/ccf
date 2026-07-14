@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import * as fabric from "fabric";
 import {
@@ -22,6 +22,7 @@ import {
   X,
   Layers,
   PencilRuler,
+  History,
 } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "@/context/AuthContext";
@@ -32,6 +33,7 @@ import { useWhiteboardHistory } from "@/hooks/useWhiteboardHistory";
 import { useWhiteboardCanvas } from "@/hooks/useWhiteboardCanvas";
 import { useWhiteboardSave } from "@/hooks/useWhiteboardSave";
 import { WHITEBOARD_COLORS } from "@/lib/whiteboards";
+import { exportToPng, exportToSvg } from "@/lib/whiteboardExport";
 
 interface Props {
   project_id: string;
@@ -76,10 +78,40 @@ export default function ProjectWhiteboard({
   const [isAiDrawing, setIsAiDrawing] = useState(false);
   const [diagramPromptOpen, setDiagramPromptOpen] = useState(false);
   const [diagramPromptDraft, setDiagramPromptDraft] = useState("");
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showLayers, setShowLayers] = useState(false);
+  const [layers, setLayers] = useState<{ index: number; type: string; label: string }[]>([]);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Sync layers from canvas
+  const syncLayers = useCallback(() => {
+    const canvas = fabricCanvas.current;
+    if (!canvas) return;
+    const next = canvas.getObjects().map((object, index) => ({
+      index,
+      type: object.type || "object",
+      label: getObjectLabel(object, index),
+    })).reverse();
+    setLayers(next);
+  }, [fabricCanvas]);
+
+  const setActiveTool = useCallback((t: typeof tool) => {
+    const fc = fabricCanvas.current;
+    if (!fc) return;
+    setTool(t);
+    if (t === "pencil") {
+      fc.isDrawingMode = true;
+      const brush = new fabric.PencilBrush(fc);
+      brush.width = 3;
+      brush.color = WHITEBOARD_COLORS.primary;
+      fc.freeDrawingBrush = brush;
+    } else {
+      fc.isDrawingMode = false;
+    }
+  }, [fabricCanvas]);
 
   // Wire up history with canvas events
   useEffect(() => {
@@ -89,7 +121,10 @@ export default function ProjectWhiteboard({
 
     const handleObjectChange = () => {
       history.pushHistory(canvas);
-      save(canvas);
+      if (!history.restoringRef.current) {
+        save(canvas);
+      }
+      syncLayers();
     };
 
     canvas.on("object:modified", handleObjectChange);
@@ -102,7 +137,7 @@ export default function ProjectWhiteboard({
       canvas.off("object:removed", handleObjectChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady]);
+  }, [fabricCanvas, history, isReady, save, syncLayers]);
 
   // Load whiteboard data when opening
   useEffect(() => {
@@ -127,11 +162,12 @@ export default function ProjectWhiteboard({
           }
         }
         loadedFor.current = project_id;
+        syncLayers();
       })
       .catch(() => {
         loadedFor.current = project_id;
       });
-  }, [isOpen, project_id, token, history.restoringRef]);
+  }, [fabricCanvas, history.restoringRef, isOpen, project_id, syncLayers, token]);
 
   // Resize on open
   useEffect(() => {
@@ -148,7 +184,7 @@ export default function ProjectWhiteboard({
       canvas.renderAll();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [isOpen, canvasRef]);
+  }, [canvasRef, fabricCanvas, isOpen]);
 
   // Esc to close + keyboard shortcuts
   useEffect(() => {
@@ -179,29 +215,15 @@ export default function ProjectWhiteboard({
     return () => window.removeEventListener("keydown", handler);
   }, [
     isOpen,
+    addCircle,
+    addRect,
+    addText,
+    fabricCanvas,
     onClose,
     removeSelected,
     history,
-    addRect,
-    addCircle,
-    addText,
+    setActiveTool,
   ]);
-
-  // Tools
-  const setActiveTool = (t: typeof tool) => {
-    const fc = fabricCanvas.current;
-    if (!fc) return;
-    setTool(t);
-    if (t === "pencil") {
-      fc.isDrawingMode = true;
-      const brush = new fabric.PencilBrush(fc);
-      brush.width = 3;
-      brush.color = WHITEBOARD_COLORS.primary;
-      fc.freeDrawingBrush = brush;
-    } else {
-      fc.isDrawingMode = false;
-    }
-  };
 
   const deleteSelected = () => {
     removeSelected();
@@ -215,15 +237,25 @@ export default function ProjectWhiteboard({
     if (fabricCanvas.current) history.redo(fabricCanvas.current);
   };
 
-  const exportPng = () => {
+  const handleExportPng = () => {
     const fc = fabricCanvas.current;
     if (!fc) return;
-    const dataUrl = fc.toDataURL({ format: "png", multiplier: 2 });
-    const link = document.createElement("a");
-    link.download = `pizarra-${project_id.slice(0, 8)}.png`;
-    link.href = dataUrl;
-    link.click();
-    toast.success("Pizarra exportada como PNG");
+    exportToPng(fc, `pizarra-${project_id.slice(0, 8)}`);
+  };
+
+  const handleExportSvg = () => {
+    const fc = fabricCanvas.current;
+    if (!fc) return;
+    exportToSvg(fc, `pizarra-${project_id.slice(0, 8)}`);
+  };
+
+  const focusLayer = (index: number) => {
+    const canvas = fabricCanvas.current;
+    if (!canvas) return;
+    const object = canvas.getObjects()[index];
+    if (!object) return;
+    canvas.setActiveObject(object);
+    canvas.renderAll();
   };
 
   const clearCanvas = () => {
@@ -333,12 +365,30 @@ export default function ProjectWhiteboard({
             )}
             Diagramar con IA
           </button>
-          <button
-            onClick={exportPng}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] transition-colors border border-[hsl(var(--border))] dark:border-white/10"
-          >
-            <Download size={11} /> Exportar
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] transition-colors border border-[hsl(var(--border))] dark:border-white/10"
+            >
+              <Download size={11} /> Exportar
+            </button>
+            {showExportMenu && (
+              <div className="absolute right-0 top-full mt-1 z-50 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-1 shadow-lg dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]">
+                <button
+                  onClick={() => { handleExportPng(); setShowExportMenu(false); }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-[11px] font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+                >
+                  <Download size={12} /> PNG
+                </button>
+                <button
+                  onClick={() => { handleExportSvg(); setShowExportMenu(false); }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-[11px] font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+                >
+                  <Download size={12} /> SVG
+                </button>
+              </div>
+            )}
+          </div>
           <button
             onClick={clearCanvas}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 rounded-md text-[10px] font-bold uppercase tracking-wide hover:bg-rose-100 transition-colors border border-rose-200 dark:border-rose-500/20"
@@ -419,7 +469,7 @@ export default function ProjectWhiteboard({
         </div>
 
         {/* Canvas */}
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasRef as React.RefObject<HTMLCanvasElement>} className="whiteboard-canvas" />
 
         {/* Zoom controls */}
         <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 dark:bg-[hsl(var(--admin-bg-secondary))]/90 backdrop-blur-xl px-3 py-2 rounded-full border border-[hsl(var(--border))] dark:border-white/10 shadow-lg">
@@ -440,12 +490,54 @@ export default function ProjectWhiteboard({
           </button>
           <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
           <button
-            className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
+            onClick={() => setShowLayers(!showLayers)}
+            className={clsx(
+              "transition-colors",
+              showLayers
+                ? "text-[hsl(var(--primary))]"
+                : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]"
+            )}
             title="Capas"
           >
             <Layers size={16} />
           </button>
         </div>
+
+        {/* Layers panel */}
+        {showLayers && (
+          <div className="absolute bottom-4 left-4 z-50 w-64 max-h-80 overflow-y-auto bg-white/95 dark:bg-[hsl(var(--admin-bg-secondary))]/95 backdrop-blur-xl border border-[hsl(var(--border))] dark:border-white/10 rounded-xl shadow-2xl p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                Capas
+              </h3>
+              <button
+                onClick={() => setShowLayers(false)}
+                className="p-1 rounded hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+              >
+                <X size={12} className="text-[hsl(var(--text-secondary))]" />
+              </button>
+            </div>
+            <div className="space-y-1">
+              {layers.map((layer) => (
+                <button
+                  key={`${layer.type}-${layer.index}`}
+                  onClick={() => focusLayer(layer.index)}
+                  className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] p-2 text-left text-[11px] font-medium text-[hsl(var(--text-secondary))] transition-all hover:border-blue-200 hover:bg-blue-50/40 dark:border-white/5 dark:hover:bg-blue-500/10"
+                >
+                  <span className="flex items-center gap-2">
+                    <History size={12} /> {layer.label}
+                  </span>
+                  <span className="text-[8px] font-bold opacity-40">#{layer.index + 1}</span>
+                </button>
+              ))}
+              {layers.length === 0 && (
+                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:border-white/10">
+                  No hay objetos en el lienzo.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -487,4 +579,15 @@ function ToolBtn({
       </span>
     </button>
   );
+}
+
+function getObjectLabel(object: fabric.FabricObject, index: number): string {
+  if (object.type === "i-text" || object.type === "textbox") {
+    const text = "text" in object ? String(object.text || "").trim() : "";
+    return text || `Texto ${index + 1}`;
+  }
+  if (object.type === "rect") return `Rectángulo ${index + 1}`;
+  if (object.type === "circle") return `Círculo ${index + 1}`;
+  if (object.type === "path") return `Trazo ${index + 1}`;
+  return `Objeto ${index + 1}`;
 }

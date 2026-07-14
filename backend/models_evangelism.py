@@ -105,6 +105,8 @@ class Sede(Base):
     ciudad = Column(String(100), nullable=False)
     es_activa = Column(Boolean, default=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 # ──────────────────────────────────────────────

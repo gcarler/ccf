@@ -274,7 +274,7 @@ export default function CmsHomePage() {
       setLoading(false);
     };
 
-    fetchData().catch((error) => {
+    fetchData().catch(() => {
       toast.error("Error al cargar dashboard");
       setDataIssue("No se pudo cargar el resumen del sitio.");
       setRecentTestimonials([]);

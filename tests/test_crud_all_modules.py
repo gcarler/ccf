@@ -380,7 +380,6 @@ class TestProjects:
             description="Test project",
         ), owner_persona_id=str(persona.id), sede_id=str(sede.id))
         assert project is not None
-        return project
 
     def test_get_projects(self, db_session):
         from backend.crud.projects import get_projects

@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from backend import models
 from backend.crud.crm_.health import calculate_pastoral_health, update_pastoral_health
@@ -35,7 +35,11 @@ def test_calculate_pastoral_health_attendance_details(db_session):
     asist2 = models.Asistencia(id=uuid.uuid4(), persona_id=persona.id, sesion_id=uuid.uuid4(), estado="falto")
     # Opportunity 3: Deleted, present (should NOT count as opportunity)
     asist3 = models.Asistencia(
-        id=uuid.uuid4(), persona_id=persona.id, sesion_id=uuid.uuid4(), estado="presente", deleted_at=datetime.utcnow()
+        id=uuid.uuid4(),
+        persona_id=persona.id,
+        sesion_id=uuid.uuid4(),
+        estado="presente",
+        deleted_at=datetime.now(timezone.utc),
     )
     db_session.add_all([asist1, asist2, asist3])
     db_session.commit()
@@ -78,18 +82,28 @@ def test_calculate_pastoral_health_attendance_details(db_session):
     enrollment = models.Enrollment(id=uuid.uuid4(), persona_id=persona.id, course_id=course_id, status="active")
     # Setup Enrollment (deleted - should NOT link CourseAttendance)
     enrollment_deleted = models.Enrollment(
-        id=uuid.uuid4(), persona_id=persona.id, course_id=uuid.uuid4(), status="active", deleted_at=datetime.utcnow()
+        id=uuid.uuid4(),
+        persona_id=persona.id,
+        course_id=uuid.uuid4(),
+        status="active",
+        deleted_at=datetime.now(timezone.utc),
     )
     db_session.add_all([enrollment, enrollment_deleted])
     db_session.commit()
 
     # Opportunity 6: CourseAttendance, status = present
     course_att1 = models.CourseAttendance(
-        id=uuid.uuid4(), enrollment_id=enrollment.id, session_date=datetime.utcnow(), status="present"
+        id=uuid.uuid4(),
+        enrollment_id=enrollment.id,
+        session_date=datetime.now(timezone.utc),
+        status="present",
     )
     # Opportunity 7: CourseAttendance under deleted enrollment (should NOT count)
     course_att2 = models.CourseAttendance(
-        id=uuid.uuid4(), enrollment_id=enrollment_deleted.id, session_date=datetime.utcnow(), status="present"
+        id=uuid.uuid4(),
+        enrollment_id=enrollment_deleted.id,
+        session_date=datetime.now(timezone.utc),
+        status="present",
     )
     db_session.add_all([course_att1, course_att2])
     db_session.commit()
@@ -128,7 +142,7 @@ def test_calculate_pastoral_health_milestone_and_communication(db_session):
         sede_id=sede.id,
         type="Bautismo",
         event_date=date.today(),
-        deleted_at=datetime.utcnow(),
+        deleted_at=datetime.now(timezone.utc),
     )
     db_session.add_all([milestone1, milestone2])
     db_session.commit()
@@ -187,7 +201,7 @@ def test_calculate_pastoral_health_milestone_and_communication(db_session):
         etapa_actual_id=etapa.id,
         titulo_caso="Caso Deleted",
         origen_canal="WEB_FORM",
-        deleted_at=datetime.utcnow(),
+        deleted_at=datetime.now(timezone.utc),
     )
     db_session.add_all([caso, caso_deleted])
     db_session.commit()
@@ -446,10 +460,30 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     db_session.commit()
 
     # 1 present, 1 present-cased with spaces, 1 absent, 1 presente (should NOT count as present since it doesn't match 'present')
-    course_att1 = models.CourseAttendance(id=uuid.uuid4(), enrollment_id=enrollment.id, session_date=datetime.utcnow(), status="present")
-    course_att2 = models.CourseAttendance(id=uuid.uuid4(), enrollment_id=enrollment.id, session_date=datetime.utcnow(), status="  PRESENT  ")
-    course_att3 = models.CourseAttendance(id=uuid.uuid4(), enrollment_id=enrollment.id, session_date=datetime.utcnow(), status="absent")
-    course_att4 = models.CourseAttendance(id=uuid.uuid4(), enrollment_id=enrollment.id, session_date=datetime.utcnow(), status="presente")
+    course_att1 = models.CourseAttendance(
+        id=uuid.uuid4(),
+        enrollment_id=enrollment.id,
+        session_date=datetime.now(timezone.utc),
+        status="present",
+    )
+    course_att2 = models.CourseAttendance(
+        id=uuid.uuid4(),
+        enrollment_id=enrollment.id,
+        session_date=datetime.now(timezone.utc),
+        status="  PRESENT  ",
+    )
+    course_att3 = models.CourseAttendance(
+        id=uuid.uuid4(),
+        enrollment_id=enrollment.id,
+        session_date=datetime.now(timezone.utc),
+        status="absent",
+    )
+    course_att4 = models.CourseAttendance(
+        id=uuid.uuid4(),
+        enrollment_id=enrollment.id,
+        session_date=datetime.now(timezone.utc),
+        status="presente",
+    )
     db_session.add_all([course_att1, course_att2, course_att3, course_att4])
     db_session.commit()
 
@@ -619,4 +653,3 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     score_b, status_b = calculate_pastoral_health(db_session, persona_b.id)
     assert score_b == 100
     assert status_b == "COMPROMETIDO"
-

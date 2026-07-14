@@ -60,6 +60,7 @@ def schema_drift_report() -> dict[str, Any]:
         "metadata_tables": sorted(metadata_tables),
         "missing_in_db": sorted(metadata_tables - database_tables),
         "extra_in_db": extra_tables,
+        "legacy_in_db": [],
     }
 
 
@@ -73,6 +74,7 @@ def print_schema_drift_report() -> None:
     print(f"Extra tables in DB: {len(report['extra_in_db'])}")
     for table in report["extra_in_db"]:
         print(f"  - {table}")
+    print(f"Legacy tables in DB: {len(report['legacy_in_db'])}")
 
 
 def bootstrap_missing_tables() -> list[str]:

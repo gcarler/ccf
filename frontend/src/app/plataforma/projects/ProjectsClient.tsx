@@ -5,6 +5,7 @@ Folder,
 Layers,
 Plus
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React,{ useEffect,useMemo,useState } from 'react';
 
@@ -95,7 +96,6 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             window.dispatchEvent(new CustomEvent('project-updated'));
             setTimeout(() => router.push(`/plataforma/projects/${created.id}`), 200);
         } catch (e) {
-            toast.error('Error al crear proyecto');
             toast.error('Error al crear el proyecto');
         } finally {
             setIsCreating(false);
@@ -241,15 +241,15 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                 {/* 📈 Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                     <div className="lg:col-span-2">
-                        <a href="/plataforma/projects/team" className="block">
+                        <Link href="/plataforma/projects/team" className="block">
                             <DSCard className="hover:border-[hsl(var(--primary))]/30 transition-all cursor-pointer">
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Carga de Trabajo del Equipo</h3>
                                 <DSChart type="bar" data={dashboard?.workload_distribution?.map((w: { name: string; tasks: number }) => ({ label: w.name, value: w.tasks }))} color="hsl(var(--warning))" height={220} />
                             </DSCard>
-                        </a>
+                        </Link>
                     </div>
                     <div>
-                        <a href="/plataforma/projects/tasks" className="block">
+                        <Link href="/plataforma/projects/tasks" className="block">
                             <DSCard className="hover:border-rose-400/30 transition-all cursor-pointer">
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Tareas</h3>
                                 <div className="space-y-4 pt-4">
@@ -265,7 +265,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                                     </p>
                                 </div>
                             </DSCard>
-                        </a>
+                        </Link>
                     </div>
                 </div>
 
@@ -338,4 +338,3 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
         </ProjectsShell>
     );
 }
-

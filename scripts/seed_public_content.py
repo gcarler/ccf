@@ -1,3 +1,15 @@
+#!/usr/bin/env python3
+"""Canonical public content blocks used by the CMS seeding pipeline.
+
+This module keeps the historical ``BLOCKS`` payloads as a data source for the
+CMS v2 seeders. The old raw-SQL bootstrap that wrote into ``page_contents`` and
+``page_content_versions`` has been retired.
+
+Usage:
+    cd /root/ccf && source venv/bin/activate && python scripts/seed_public_content.py
+"""
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -13,25 +25,6 @@ if _PROJECT_ROOT is None:
     raise RuntimeError(f"backend package not found above {_HERE}")
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
-
-#!/usr/bin/env python3
-"""
-Seed page_contents con el contenido real de todas las páginas públicas.
-Hace UPSERT: si ya existe el registro lo actualiza, si no lo crea.
-
-Uso:
-    cd /root/ccf && source venv/bin/activate && python scripts/seed_public_content.py
-"""
-import json
-import os
-import sys
-
-sys.path.insert(0, "/root/ccf")
-os.environ.setdefault("DATABASE_URL", "")
-
-from sqlalchemy import text
-
-from backend.core.database import engine
 
 # ── Contenido de cada bloque ────────────────────────────────────────────────
 
@@ -414,72 +407,11 @@ BLOCKS = {
 }
 
 
-# ── Runner ───────────────────────────────────────────────────────────────────
-
-def upsert_block(conn, page_key: str, title: str, content: dict | list):
-    content_str = json.dumps(content, ensure_ascii=False)
-    
-    # Query existing row
-    row = conn.execute(
-        text("SELECT page_key, title, content FROM page_contents WHERE page_key = :page_key"),
-        {"page_key": page_key}
-    ).fetchone()
-    
-    if row:
-        # Save previous version
-        conn.execute(
-            text("""
-                INSERT INTO page_content_versions (page_key, title, content, created_at)
-                VALUES (:page_key, :title, :content, NOW())
-            """),
-            {"page_key": row[0], "title": row[1], "content": row[2]}
-        )
-        # Update current row
-        conn.execute(
-            text("""
-                UPDATE page_contents
-                SET title = :title, content = :content, updated_at = NOW()
-                WHERE page_key = :page_key
-            """),
-            {"title": title, "content": content_str, "page_key": page_key}
-        )
-        action = "updated"
-    else:
-        # Insert current row
-        conn.execute(
-            text("""
-                INSERT INTO page_contents (page_key, title, content, created_at, updated_at)
-                VALUES (:page_key, :title, :content, NOW(), NOW())
-            """),
-            {"page_key": page_key, "title": title, "content": content_str}
-        )
-        action = "created"
-    
-    return action
-
-
 def run():
-    conn = engine.connect()
-    trans = conn.begin()
-    try:
-        print(f"\n{'='*60}")
-        print("  Seed — Contenido público CMS (Raw SQL Mode)")
-        print(f"{'='*60}\n")
-        ok = err = 0
-        for key, data in BLOCKS.items():
-            try:
-                action = upsert_block(conn, key, data["title"], data["content"])
-                print(f"  ✓  [{action:7}]  {key}")
-                ok += 1
-            except Exception as e:
-                print(f"  ✗  [error  ]  {key}: {e}")
-                trans.rollback()
-                trans = conn.begin()
-                err += 1
-        trans.commit()
-        print(f"\n  Total: {ok} OK, {err} errores\n")
-    finally:
-        conn.close()
+    from seed_public_cms_v2_sections import main as seed_cms_v2_main
+
+    print("seed_public_content.py is deprecated; running CMS v2 public seeding instead.")
+    raise SystemExit(seed_cms_v2_main())
 
 
 if __name__ == "__main__":

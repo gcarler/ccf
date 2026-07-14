@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ExternalLink, Loader2, Monitor, RefreshCw, Pause, Play } from "lucide-react";
@@ -124,7 +124,7 @@ function CmsPreviewInner() {
     if (seconds < 5) return "ahora";
     if (seconds < 60) return `hace ${seconds}s`;
     return `hace ${Math.floor(seconds / 60)}m`;
-  }, [lastRefresh, autoRefresh]);
+  }, [lastRefresh]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-[#0b0d11]">

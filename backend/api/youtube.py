@@ -175,11 +175,9 @@ def start_background_refresh():
     logger.info("YouTube background refresh iniciado (cada %ds)", _BG_REFRESH_INTERVAL)
 
 
-@router.on_event("startup")
-async def _youtube_startup():
-    start_background_refresh()
-    # Warm-up: cargar la caché en el arranque para que la primera request sea rápida
-    asyncio.create_task(_refresh_cache())
+async def warm_youtube_cache():
+    """Carga la caché inicial de YouTube sin bloquear el arranque."""
+    await _refresh_cache()
 
 
 @router.get("/youtube/videos")

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import time
@@ -139,6 +140,9 @@ async def lifespan(_: FastAPI):
             db.close()
     except Exception as exc:
         logger.warning("KB rebuild failed: %s", exc)
+
+    youtube.start_background_refresh()
+    asyncio.create_task(youtube.warm_youtube_cache())
 
     yield
 

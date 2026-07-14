@@ -10,6 +10,26 @@ import { ArrowUpRight, Mail, MapPin, Newspaper } from "lucide-react";
 
 type PublicLink = { href: string; label: string; kind?: string };
 
+const FALLBACK_NAV_LINKS: PublicLink[] = [
+    { href: "/", label: "Inicio" },
+    { href: "/nosotros", label: "Quiénes Somos" },
+    { href: "/pastores", label: "Pastores" },
+    { href: "/eventos", label: "Eventos" },
+];
+
+const FALLBACK_RESOURCE_LINKS: PublicLink[] = [
+    { href: "/predicas", label: "Prédicas" },
+    { href: "/cursos", label: "Cursos" },
+    { href: "/sedes", label: "Sedes" },
+    { href: "/boletin", label: "Boletín" },
+];
+
+const FALLBACK_SOCIAL_LINKS: PublicLink[] = [
+    { href: "https://facebook.com/comunidadccf", label: "Facebook", kind: "facebook" },
+    { href: "https://instagram.com/comunidadccf", label: "Instagram", kind: "instagram" },
+    { href: "https://youtube.com/comunidadccf", label: "YouTube", kind: "youtube" },
+];
+
 type FooterConfig = {
   description?: string;
   nav_links?: unknown;
@@ -65,6 +85,20 @@ function asPublicLinks(value: unknown): PublicLink[] {
     const candidate = item as PublicLink;
     return typeof candidate.href === "string" && typeof candidate.label === "string";
   });
+}
+
+function mergePublicLinks(primary: PublicLink[], fallback: PublicLink[]) {
+    const merged: PublicLink[] = [];
+    const seen = new Set<string>();
+
+    for (const link of [...primary, ...fallback]) {
+        const key = `${link.href}|${link.label}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(link);
+    }
+
+    return merged;
 }
 
 function FooterLinkColumn({ title, links }: { title: string; links: PublicLink[] }) {
@@ -135,6 +169,9 @@ export default function Footer() {
     const navLinks = asPublicLinks(cfg.nav_links);
     const resourceLinks = asPublicLinks(cfg.resource_links);
     const socialLinks = asPublicLinks(cfg.social_links);
+    const visibleNavLinks = mergePublicLinks(navLinks, FALLBACK_NAV_LINKS);
+    const visibleResourceLinks = mergePublicLinks(resourceLinks, FALLBACK_RESOURCE_LINKS);
+    const visibleSocialLinks = mergePublicLinks(socialLinks, FALLBACK_SOCIAL_LINKS);
 
     return (
         <footer
@@ -180,9 +217,9 @@ export default function Footer() {
                                 </p>
                             )}
 
-                            {socialLinks.length ? (
+                            {visibleSocialLinks.length ? (
                                 <div className="mt-8 flex flex-wrap gap-3">
-                                    {socialLinks.map(({ href, label, kind }) => (
+                                    {visibleSocialLinks.map(({ href, label, kind }) => (
                                         <a
                                             key={`${href}-${label}`}
                                             href={href}
@@ -232,8 +269,8 @@ export default function Footer() {
 
                 <div className="w-full">
                     <div className="ccf-container grid max-w-[1500px] gap-10 py-10 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.15fr] lg:py-12">
-                        <FooterLinkColumn title={navSectionTitle} links={navLinks} />
-                        <FooterLinkColumn title={resourceSectionTitle} links={resourceLinks} />
+                        <FooterLinkColumn title={navSectionTitle} links={visibleNavLinks} />
+                        <FooterLinkColumn title={resourceSectionTitle} links={visibleResourceLinks} />
 
                         <div className="min-w-0 sm:col-span-2 lg:col-span-1">
                             <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-primary)" }}>

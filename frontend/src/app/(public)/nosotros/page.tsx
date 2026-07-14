@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Target, Sparkles, Quote, Heart, Users, BookOpen, Cross, ChevronRight, ArrowRight } from "lucide-react";
+import { Target, Sparkles, Quote, Heart, Users, BookOpen, Cross, ArrowRight } from "lucide-react";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 
 import RichText from "@/components/public/RichText";
@@ -56,8 +56,6 @@ export default function NosotrosPage() {
 
     const ctaViewSedes = typeof about?.cta_view_sedes === "string" ? about.cta_view_sedes : "";
     const ctaViewEvents = typeof about?.cta_view_events === "string" ? about.cta_view_events : "";
-    const breadcrumbInicio = typeof about?.breadcrumbInicio === "string" ? about.breadcrumbInicio : "";
-    const breadcrumbPage = typeof about?.breadcrumbPage === "string" ? about.breadcrumbPage : "";
 
     const founderLabel = typeof about?.founder_label === "string" ? about.founder_label : "";
     const founderTitle = typeof about?.founder_title === "string" ? about.founder_title : "";

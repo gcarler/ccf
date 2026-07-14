@@ -25,29 +25,30 @@ export default function EmailBuilderPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
   const builder = useEmailBuilder([]);
+  const { setBlocks, getBlocksJson, selectedBlock, selectedId, updateBlockProps } = builder;
 
   useEffect(() => {
     if (!plantillaId || !token) { setLoading(false); return; }
     apiFetch<PlantillaMensaje>(`/crm/resources/plantillas/${plantillaId}`, { token })
-      .then(data => { if (data) { setTemplateName(data.titulo); try { const parsed = JSON.parse(data.contenido_html || '[]'); if (Array.isArray(parsed) && parsed.length > 0) builder.setBlocks(parsed); } catch {} } })
+      .then(data => { if (data) { setTemplateName(data.titulo); try { const parsed = JSON.parse(data.contenido_html || '[]'); if (Array.isArray(parsed) && parsed.length > 0) setBlocks(parsed); } catch {} } })
       .finally(() => setLoading(false));
-  }, [plantillaId, token]);
+  }, [plantillaId, setBlocks, token]);
 
   const handleSave = useCallback(async () => {
     if (!token || !plantillaId) return;
     setSaving(true);
     try {
-      await apiFetch(`/crm/resources/plantillas/${plantillaId}`, { token, method: 'PATCH', body: { titulo: templateName, contenido_html: JSON.stringify(builder.getBlocksJson()) }, headers: { 'Content-Type': 'application/json' } });
+      await apiFetch(`/crm/resources/plantillas/${plantillaId}`, { token, method: 'PATCH', body: { titulo: templateName, contenido_html: JSON.stringify(getBlocksJson()) }, headers: { 'Content-Type': 'application/json' } });
       toast.success('Plantilla guardada');
     } catch { toast.error('Error al guardar'); } finally { setSaving(false); }
-  }, [plantillaId, templateName, token, builder]);
+  }, [getBlocksJson, plantillaId, templateName, token]);
 
   const handlePreview = useCallback(() => {
-    const blocks = builder.getBlocksJson();
+    const blocks = getBlocksJson();
     const body = blocks.map(b => renderBlockToHtml(b)).join('\n');
     setPreviewHtml(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 20px;"><tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">${body}</table></td></tr></table></body></html>`);
     setShowPreview(true);
-  }, [builder]);
+  }, [getBlocksJson]);
 
   if (loading) return <div className="flex items-center justify-center h-screen"><p className="text-sm text-[hsl(var(--text-secondary))]">Cargando editor...</p></div>;
 
@@ -62,7 +63,7 @@ export default function EmailBuilderPage() {
         <EmailCanvas builder={builder} />
         <div className="w-[300px] border-l border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] overflow-y-auto p-4">
           <h2 className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white mb-3">Propiedades</h2>
-          <PropertiesPanel block={builder.selectedBlock} onUpdate={(props) => { if (builder.selectedId) builder.updateBlockProps(builder.selectedId, props); }} />
+          <PropertiesPanel block={selectedBlock} onUpdate={(props) => { if (selectedId) updateBlockProps(selectedId, props); }} />
         </div>
       </div>
       {showPreview && <HtmlPreview html={previewHtml} onClose={() => setShowPreview(false)} />}
@@ -81,7 +82,7 @@ function renderBlockToHtml(block: EmailBlock): string {
     case 'divider': return `<tr><td style="padding:8px 24px;"><hr style="border:none;border-top:${p.thickness || 1}px ${p.style || 'solid'} ${p.color || '#e5e7eb'};width:${p.width || '100%'};" /></td></tr>`;
     case 'spacer': return `<tr><td style="height:${p.height || 24}px;"></td></tr>`;
     case 'verse': return `<tr><td style="padding:16px 24px;"><div style="background:#f0f5fa;border-radius:12px;padding:20px;text-align:${p.textAlign || 'center'};"><p style="margin:0;font-size:16px;font-style:italic;color:#004581;line-height:1.7;">&ldquo;${esc(String(p.text || ''))}&rdquo;</p>${p.reference ? `<p style="margin:8px 0 0;font-size:12px;font-weight:bold;color:#001B48;letter-spacing:2px;text-transform:uppercase;">&mdash; ${esc(String(p.reference))}</p>` : ''}</div></td></tr>`;
-    case 'columns': return `<tr><td style="padding:16px 24px;"><table width="100%" cellpadding="0" cellspacing="0"><tr>${Array.from({ length: Number(p.count || 2) }).map((_, i) => `<td style="width:${100 / Number(p.count || 2)}%;padding:0 4px;vertical-align:top;border:1px dashed #e5e7eb;"></td>`).join('')}</tr></table></td></tr>`;
+    case 'columns': return `<tr><td style="padding:16px 24px;"><table width="100%" cellpadding="0" cellspacing="0"><tr>${Array.from({ length: Number(p.count || 2) }).map(() => `<td style="width:${100 / Number(p.count || 2)}%;padding:0 4px;vertical-align:top;border:1px dashed #e5e7eb;"></td>`).join('')}</tr></table></td></tr>`;
     default: return '';
   }
 }
