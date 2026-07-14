@@ -31,27 +31,27 @@ import { canEditCms, canManageSites } from "@/lib/cms/permissions";
 import { apiFetch } from "@/lib/http";
 
 const CMS_TABS = [
-  { id: "resumen", label: "Resumen", href: "/cms", icon: LayoutDashboard },
-  { id: "paginas", label: "Paginas", href: "/cms/pages", icon: FileText },
-  { id: "readiness", label: "Readiness", href: "/cms/readiness", icon: Gauge },
-  { id: "testimonios", label: "Testimonios", href: "/cms/testimonials", icon: MessageCircle },
-  { id: "menus", label: "Menus", href: "/cms/menus", icon: Link2 },
-  { id: "media", label: "Media", href: "/cms/media", icon: ImageIcon },
-  { id: "builder", label: "Builder", href: "/cms/builder", icon: PanelsTopLeft },
-  { id: "resources", label: "Recursos", href: "/cms/resources", icon: PackageOpen },
-  { id: "themes", label: "Temas", href: "/cms/themes", icon: Palette },
-  { id: "sites", label: "Sitios", href: "/cms/sites", icon: Globe },
-  { id: "audit", label: "Auditoria", href: "/cms/audit", icon: Shield },
-  { id: "notifications", label: "Notificaciones", href: "/cms/notifications", icon: Bell },
-  { id: "webhooks", label: "Webhooks", href: "/cms/webhooks", icon: Webhook },
-  { id: "custom-types", label: "Tipos Custom", href: "/cms/custom-types", icon: Puzzle },
-  { id: "section-types", label: "Tipos Seccion", href: "/cms/section-types", icon: Layers3 },
-  { id: "glossary", label: "Glosario", href: "/cms/glossary", icon: FileText },
-  { id: "search-admin", label: "Busqueda", href: "/cms/search-admin", icon: Search },
-  { id: "sessions", label: "Sesiones", href: "/cms/sessions", icon: Shield },
-  { id: "media-folders", label: "Carpetas", href: "/cms/media-folders", icon: FolderTree },
-  { id: "redirects", label: "Redirecciones", href: "/cms/redirects", icon: RotateCcw },
-  { id: "broken-links", label: "Links Rotos", href: "/cms/broken-links", icon: AlertTriangle },
+  { id: "resumen", label: "Resumen", href: "/plataforma/cms", icon: LayoutDashboard },
+  { id: "paginas", label: "Paginas", href: "/plataforma/cms/pages", icon: FileText },
+  { id: "readiness", label: "Readiness", href: "/plataforma/cms/readiness", icon: Gauge },
+  { id: "testimonios", label: "Testimonios", href: "/plataforma/cms/testimonials", icon: MessageCircle },
+  { id: "menus", label: "Menus", href: "/plataforma/cms/menus", icon: Link2 },
+  { id: "media", label: "Media", href: "/plataforma/cms/media", icon: ImageIcon },
+  { id: "builder", label: "Builder", href: "/plataforma/cms/builder", icon: PanelsTopLeft },
+  { id: "resources", label: "Recursos", href: "/plataforma/cms/resources", icon: PackageOpen },
+  { id: "themes", label: "Temas", href: "/plataforma/cms/themes", icon: Palette },
+  { id: "sites", label: "Sitios", href: "/plataforma/cms/sites", icon: Globe },
+  { id: "audit", label: "Auditoria", href: "/plataforma/cms/audit", icon: Shield },
+  { id: "notifications", label: "Notificaciones", href: "/plataforma/cms/notifications", icon: Bell },
+  { id: "webhooks", label: "Webhooks", href: "/plataforma/cms/webhooks", icon: Webhook },
+  { id: "custom-types", label: "Tipos Custom", href: "/plataforma/cms/custom-types", icon: Puzzle },
+  { id: "section-types", label: "Tipos Seccion", href: "/plataforma/cms/section-types", icon: Layers3 },
+  { id: "glossary", label: "Glosario", href: "/plataforma/cms/glossary", icon: FileText },
+  { id: "search-admin", label: "Busqueda", href: "/plataforma/cms/search-admin", icon: Search },
+  { id: "sessions", label: "Sesiones", href: "/plataforma/cms/sessions", icon: Shield },
+  { id: "media-folders", label: "Carpetas", href: "/plataforma/cms/media-folders", icon: FolderTree },
+  { id: "redirects", label: "Redirecciones", href: "/plataforma/cms/redirects", icon: RotateCcw },
+  { id: "broken-links", label: "Links Rotos", href: "/plataforma/cms/broken-links", icon: AlertTriangle },
 ] as const;
 
 interface CmsNavStats {
@@ -96,7 +96,7 @@ export function CmsModuleNav() {
 
   const activeTab =
     availableTabs.find((tab) => {
-      if (tab.href === "/cms") return pathname === "/cms";
+      if (tab.href === "/plataforma/cms") return pathname === "/plataforma/cms";
       return pathname ? pathname.startsWith(tab.href) : false;
     }) ?? availableTabs[0];
 
@@ -138,19 +138,19 @@ export function CmsModuleNav() {
 
       {stats && (
         <div className="flex items-center gap-4 px-4 py-1.5 border-t border-[hsl(var(--border))] dark:border-white/[0.03] overflow-x-auto">
-          <Link href="/cms/pages" className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+          <Link href="/plataforma/cms/pages" className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
             <FileText size={10} />
             <span className="font-semibold">{stats.pagesTotal}</span> paginas
           </Link>
-          <Link href="/cms/media" className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+          <Link href="/plataforma/cms/media" className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
             <ImageIcon size={10} />
             <span className="font-semibold">{stats.mediaTotal}</span> media
           </Link>
-          <Link href="/cms/testimonials" className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+          <Link href="/plataforma/cms/testimonials" className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
             <MessageCircle size={10} />
             <span className="font-semibold">{stats.testimonialsTotal}</span> testimonios
           </Link>
-          <Link href="/cms/posts" className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+          <Link href="/plataforma/cms/posts" className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
             <PackageOpen size={10} />
             <span className="font-semibold">{stats.postsTotal}</span> posts
           </Link>
