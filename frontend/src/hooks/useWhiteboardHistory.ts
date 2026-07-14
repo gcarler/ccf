@@ -10,10 +10,11 @@ interface UseWhiteboardHistoryOptions {
 interface UseWhiteboardHistoryReturn {
   canUndo: boolean;
   canRedo: boolean;
-  undo: () => void;
-  redo: () => void;
+  undo: (canvas: Canvas) => void;
+  redo: (canvas: Canvas) => void;
   pushHistory: (canvas: Canvas) => void;
   clearHistory: () => void;
+  restoringRef: React.MutableRefObject<boolean>;
 }
 
 export function useWhiteboardHistory(
@@ -59,15 +60,23 @@ export function useWhiteboardHistory(
     (canvas: Canvas) => {
       if (!canvas || historyIndexRef.current <= 0) return;
 
-      historyIndexRef.current--;
+      const previousIndex = historyIndexRef.current;
+      const targetIndex = previousIndex - 1;
+      historyIndexRef.current = targetIndex;
       restoringRef.current = true;
 
       canvas
-        .loadFromJSON(JSON.parse(historyRef.current[historyIndexRef.current]))
+        .loadFromJSON(JSON.parse(historyRef.current[targetIndex]))
         .then(() => {
           canvas.renderAll();
-          restoringRef.current = false;
           updateStates();
+        })
+        .catch(() => {
+          historyIndexRef.current = previousIndex;
+          updateStates();
+        })
+        .finally(() => {
+          restoringRef.current = false;
         });
     },
     [updateStates]
@@ -78,15 +87,23 @@ export function useWhiteboardHistory(
       if (!canvas || historyIndexRef.current >= historyRef.current.length - 1)
         return;
 
-      historyIndexRef.current++;
+      const previousIndex = historyIndexRef.current;
+      const targetIndex = previousIndex + 1;
+      historyIndexRef.current = targetIndex;
       restoringRef.current = true;
 
       canvas
-        .loadFromJSON(JSON.parse(historyRef.current[historyIndexRef.current]))
+        .loadFromJSON(JSON.parse(historyRef.current[targetIndex]))
         .then(() => {
           canvas.renderAll();
-          restoringRef.current = false;
           updateStates();
+        })
+        .catch(() => {
+          historyIndexRef.current = previousIndex;
+          updateStates();
+        })
+        .finally(() => {
+          restoringRef.current = false;
         });
     },
     [updateStates]

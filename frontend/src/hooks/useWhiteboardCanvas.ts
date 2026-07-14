@@ -82,8 +82,59 @@ export function useWhiteboardCanvas(
       canvas.on("object:removed", () => onObjectRemoved(canvas));
     }
 
+    // Pinch-to-zoom support
+    let lastDistance = 0;
+    let currentZoom = 100;
+
+    const getDistance = (touch1: Touch, touch2: Touch) => {
+      const dx = touch1.clientX - touch2.clientX;
+      const dy = touch1.clientY - touch2.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        lastDistance = getDistance(e.touches[0], e.touches[1]);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const distance = getDistance(e.touches[0], e.touches[1]);
+        const delta = distance - lastDistance;
+
+        // Adjust zoom based on pinch distance change
+        const zoomDelta = delta * 0.1;
+        currentZoom = Math.min(400, Math.max(25, currentZoom + zoomDelta));
+        canvas.setZoom(currentZoom / 100);
+        canvas.renderAll();
+
+        lastDistance = distance;
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        lastDistance = 0;
+      }
+    };
+
+    const canvasElement = canvasRef.current;
+    if (canvasElement) {
+      canvasElement.addEventListener("touchstart", handleTouchStart, { passive: false });
+      canvasElement.addEventListener("touchmove", handleTouchMove, { passive: false });
+      canvasElement.addEventListener("touchend", handleTouchEnd);
+    }
+
     return () => {
       window.removeEventListener("resize", resizeCanvas);
+      if (canvasElement) {
+        canvasElement.removeEventListener("touchstart", handleTouchStart);
+        canvasElement.removeEventListener("touchmove", handleTouchMove);
+        canvasElement.removeEventListener("touchend", handleTouchEnd);
+      }
       canvas.dispose();
       fabricCanvas.current = null;
       setIsReady(false);

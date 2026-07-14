@@ -3,7 +3,7 @@
 import Link from "next/link";
 import React from "react";
 import Image from "next/image";
-import { ArrowRight, Play, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { SITE_NAME } from "@/lib/site-config";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
@@ -71,9 +71,22 @@ export default function PublicHomePage() {
     const homeCards = Array.isArray(homeFeed?.cards)
         ? homeFeed.cards as Array<Record<string, unknown>>
         : [];
-    const homeGallery = Array.isArray(homeGallerySource?.props_json?.items)
-        ? (homeGallerySource.props_json.items as Array<Record<string, unknown>>)
-        : [];
+    const homeGallery = (() => {
+        if (!homeGallerySource) return [];
+        if ("parsed" in homeGallerySource) {
+            const parsed = homeGallerySource.parsed;
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && Array.isArray((parsed as Record<string, unknown>).items)) {
+                return (parsed as { items: Array<Record<string, unknown>> }).items;
+            }
+        }
+        if ("props_json" in homeGallerySource) {
+            const propsJson = homeGallerySource.props_json;
+            if (propsJson && typeof propsJson === "object" && !Array.isArray(propsJson) && Array.isArray((propsJson as Record<string, unknown>).items)) {
+                return (propsJson as { items: Array<Record<string, unknown>> }).items;
+            }
+        }
+        return [];
+    })();
 
     const hasBento = homeFeaturedCard?.title || homeFeaturedCard?.desc || homeCards.length > 0;
     const hasNewsletter = newsletterTitle || newsletterDescription;

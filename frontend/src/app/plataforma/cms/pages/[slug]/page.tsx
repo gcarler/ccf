@@ -9,7 +9,6 @@ import { Layout, FileText, PenTool, ArrowRight, Globe, Clock, Layers } from "luc
 import { motion } from "framer-motion";
 import clsx from "clsx";
 import { DSCard } from "@/design/components/DSCard";
-import { DSSectionHeader } from "@/design/components/DSSectionHeader";
 
 interface PageData {
   id: string;

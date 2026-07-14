@@ -120,9 +120,9 @@ export default function WhiteboardSessionPage() {
     const [showGridMenu, setShowGridMenu] = useState(false);
 
     // Fill/Stroke/Text color state
-    const [fillColor, setFillColor] = useState(WHITEBOARD_COLORS.primary);
-    const [strokeColor, setStrokeColor] = useState(WHITEBOARD_COLORS.primary);
-    const [textColor, setTextColor] = useState(WHITEBOARD_COLORS.textPrimary);
+    const [fillColor, setFillColor] = useState<string>(WHITEBOARD_COLORS.primary);
+    const [strokeColor, setStrokeColor] = useState<string>(WHITEBOARD_COLORS.primary);
+    const [textColor, setTextColor] = useState<string>(WHITEBOARD_COLORS.textPrimary);
 
     // Text properties
     const [textFontFamily, setTextFontFamily] = useState("Manrope");
@@ -622,7 +622,7 @@ export default function WhiteboardSessionPage() {
                     }}
                 >
                     <div className="inline-block overflow-hidden rounded-xl border-8 border-white bg-[hsl(var(--bg-primary))] shadow-[0_48px_96px_-32px_rgba(15,23,42,0.4)] dark:border-[#1e1f21]">
-                        <canvas ref={canvasRef} />
+                        <canvas ref={canvasRef} className="whiteboard-canvas" />
                     </div>
                 </main>
 

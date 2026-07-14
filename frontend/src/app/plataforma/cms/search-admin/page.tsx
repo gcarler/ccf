@@ -11,18 +11,15 @@ export default function SearchAdminPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [promoted, setPromoted] = useState<Promotion[]>([]);
-  const [loading, setLoading] = useState(false);
   const [showPromoForm, setShowPromoForm] = useState(false);
   const [promoForm, setPromoForm] = useState({ query_text: "", entity_type: "cms_page", entity_id: "", title: "", boost_score: 100 });
 
   const search = async () => {
     if (!query.trim()) return;
-    setLoading(true);
     try {
       const data = await apiFetch<{ results: SearchResult[]; promoted: Promotion[] }>(`/cms/v2/search`, { method: "POST", body: { site_key: SITE_KEY, query }, silent: true });
       setResults(data?.results || []);
     } catch { toast.error("Error al cargar datos"); setResults([]); }
-    setLoading(false);
   };
 
   const loadPromos = async () => {

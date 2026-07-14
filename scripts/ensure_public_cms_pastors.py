@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import func, text
+from sqlalchemy import func
 
 _HERE = Path(__file__).resolve()
 _PROJECT_ROOT = next((p for p in _HERE.parents if (p / "backend" / "__init__.py").is_file()), None)
@@ -36,9 +36,13 @@ if _PROJECT_ROOT is None:
     raise RuntimeError(f"backend package not found above {_HERE}")
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
+_SCRIPTS_DIR = _PROJECT_ROOT / "scripts"
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
 
 from backend import models  # noqa: E402
 from backend.core.database import SessionLocal  # noqa: E402
+import ensure_public_content_blocks as public_blocks  # noqa: E402
 
 
 # Sites that must always have an active CmsTheme + CmsMenu("main") +
@@ -75,21 +79,25 @@ THEME_TOKENS = {
     "--site-outline-variant": "rgba(0,0,0,0.1)",
 }
 
+PASTORS_PAGE_META = {
+    "title": "Liderazgo Pastoral",
+    "description": "Hombres y mujeres llamados por Dios para servir, guiar y amar a esta casa.",
+}
+PASTORS_PAGE_HERO = {
+    "eyebrow": "Nuestro Equipo",
+    "title": "Liderazgo Pastoral",
+    "description": "Personas llamadas a servir y guiar a la comunidad.",
+}
 
-def _load_page_content(db, page_key: str) -> tuple[str, dict[str, Any]]:
-    row = db.execute(
-        text("SELECT title, content FROM page_contents WHERE page_key = :page_key"),
-        {"page_key": page_key},
-    ).fetchone()
-    if row is None:
-        raise RuntimeError(f"page_contents row not found for {page_key!r}")
-    try:
-        payload = json.loads(row.content or "{}")
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f"page_contents row {page_key!r} has invalid JSON") from exc
-    if not isinstance(payload, dict):
-        raise RuntimeError(f"page_contents row {page_key!r} must decode to an object")
-    return str(row.title or page_key), payload
+
+def _content_block(key: str) -> dict[str, Any]:
+    block = public_blocks.BLOCKS.get(key)
+    if not isinstance(block, dict):
+        raise RuntimeError(f"canonical block {key!r} not found")
+    content = block.get("content")
+    if not isinstance(content, dict):
+        raise RuntimeError(f"canonical block {key!r} must contain an object content payload")
+    return content
 
 
 def _stable_json(value: Any) -> str:
@@ -227,10 +235,21 @@ def _ensure_theme(db, site: models.CmsSite) -> tuple[bool, bool]:
 
 
 def _ensure_page(db, site: models.CmsSite) -> tuple[bool, bool]:
-    meta_title, meta = _load_page_content(db, "ccf_pastores_meta")
-    hero_title, hero = _load_page_content(db, "ccf_pastores_hero")
-    feed_title, feed = _load_page_content(db, "ccf_pastores_index")
-    pastors_title, pastors = _load_page_content(db, "ccf_pastores_feed")
+    hero = dict(PASTORS_PAGE_HERO)
+    feed = _content_block("ccf_pastores_index")
+    pastors = _content_block("ccf_pastores_feed")
+    first_image = next(
+        (
+            str(item.get("image"))
+            for item in pastors.get("pastors", [])
+            if isinstance(item, dict) and isinstance(item.get("image"), str) and item.get("image")
+        ),
+        "",
+    )
+    meta = dict(PASTORS_PAGE_META)
+    if first_image:
+        meta["image"] = first_image
+        hero["bg_image"] = first_image
 
     desired_sections = [
         _section_payload(
@@ -274,7 +293,7 @@ def _ensure_page(db, site: models.CmsSite) -> tuple[bool, bool]:
         page = models.CmsPage(
             site_id=site.id,
             slug=PAGE_SLUG,
-            title=meta.get("title") or meta_title,
+            title=meta.get("title") or PASTORS_PAGE_META["title"],
             status="draft",
             seo_json=meta,
         )
@@ -283,8 +302,8 @@ def _ensure_page(db, site: models.CmsSite) -> tuple[bool, bool]:
         created = True
         changed = True
     else:
-        if page.title != (meta.get("title") or meta_title):
-            page.title = meta.get("title") or meta_title
+        if page.title != (meta.get("title") or PASTORS_PAGE_META["title"]):
+            page.title = meta.get("title") or PASTORS_PAGE_META["title"]
             changed = True
         if (page.seo_json or {}) != meta:
             page.seo_json = meta
@@ -402,7 +421,8 @@ def _ensure_site(db, site_key: str) -> tuple[models.CmsSite, bool]:
 
 def main() -> int:
     with SessionLocal() as db:
-        menu_title, nav_payload = _load_page_content(db, "ccf_nav_items")
+        nav_payload = _content_block("ccf_nav_items")
+        menu_title = str(public_blocks.BLOCKS.get("ccf_nav_items", {}).get("title", "Menú de Navegación"))
 
         themes_active = 0
         for site_key in TARGET_SITES:
@@ -411,23 +431,11 @@ def main() -> int:
             theme_created, theme_changed = _ensure_theme(db, site)
             if theme_created or theme_changed:
                 themes_active += 1
-            # The pastors page depends on legacy ``page_contents`` rows that
-            # an environment without the canonical bootstrap never had. Wrap
-            # the page ensure so a missing bootstrap never blocks the
-            # critical theme/site/menu ensure — the theme is what unblocks
-            # ``GET /cms/v2/public/sites/{site_key}/theme``.
-            try:
-                page_created, page_changed = _ensure_page(db, site)
-                page_status = (
-                    f"{'created' if page_created else 'exists'}; "
-                    f"{'updated/published' if page_changed else 'unchanged'}"
-                )
-            except RuntimeError as exc:
-                page_status = f"skipped (legacy page_contents missing: {exc})"
-                db.rollback()  # leave a clean tx for the theme+site+menu commit
-            except Exception:
-                page_status = "skipped (unexpected error in _ensure_page)"
-                db.rollback()
+            page_created, page_changed = _ensure_page(db, site)
+            page_status = (
+                f"{'created' if page_created else 'exists'}; "
+                f"{'updated/published' if page_changed else 'unchanged'}"
+            )
 
             print(f"--- Site: {site_key} ---")
             print(f"Site: {'created' if site_created else 'exists'}")

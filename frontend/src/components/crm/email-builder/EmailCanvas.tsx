@@ -1,6 +1,6 @@
 /** EmailCanvas — canvas del editor con DnD. */
 'use client';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Plus } from 'lucide-react';

@@ -4,13 +4,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, Sparkles } from 'lucide-react';
-import RichText from "@/components/public/RichText";
 import { useCmsV2Page } from '@/hooks/useCmsV2Page';
 import PublicHeroWithSlides from '@/components/public/PublicHeroWithSlides';
 import { getPublicPastoralTeam, type PastoralProfile } from '@/lib/cms/v2';
 import { SITE_KEY } from '@/lib/site-config';
-
-import { sanitizeCmsHtml } from '@/lib/cms/sanitize';
 
 type CmsPastor = {
     id?: string;

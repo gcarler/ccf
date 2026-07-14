@@ -110,7 +110,6 @@ export default function PastoralTeamPage() {
     setSuccessMsg(null);
 
     const formData = new FormData(e.currentTarget);
-    const photoUrl = formData.get("photo_url") as string;
     const bioShort = formData.get("bio_short") as string;
     const bioFull = formData.get("bio_full") as string;
     const socialInstagram = formData.get("social_instagram") as string;

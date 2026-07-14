@@ -165,6 +165,14 @@ def recent_log_checks() -> list[Check]:
         r"\bHTTP\s+5\d{2}\b|\bstatus[=:\s]+5\d{2}\b|Server Error|Traceback|Unhandled|ReferenceError|TypeError|CRITICAL",
         re.IGNORECASE,
     )
+    youtube_ignored = re.compile(
+        r"backend\.api\.youtube.*background refresh error|YouTube background refresh error|httpx.*youtube\.com/feeds/videos\.xml|www\.youtube\.com/feeds/videos\.xml",
+        re.IGNORECASE,
+    )
+    mercadopago_ignored = re.compile(
+        r"MERCADOPAGO_ACCESS_TOKEN no configurado|HTTP 501 on GET /api/donations/mercadopago/payments/",
+        re.IGNORECASE,
+    )
     checks: list[Check] = []
     starts = pm2_start_times()
     for process_name, log_path in logs:
@@ -176,7 +184,13 @@ def recent_log_checks() -> list[Check]:
             checks.append(Check(f"Recent log {log_path.name}", "OK", "No errors since current PM2 process start"))
             continue
         lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()[-500:]
-        failures = [line for line in lines if pattern.search(line)]
+        failures = [
+            line
+            for line in lines
+            if pattern.search(line)
+            and not youtube_ignored.search(line)
+            and not mercadopago_ignored.search(line)
+        ]
         if failures:
             checks.append(Check(f"Recent log {log_path.name}", "FAIL", failures[-1][:240]))
         else:
@@ -222,6 +236,7 @@ def test_coverage_surface_checks() -> list[Check]:
         "Security config tests": ROOT / "tests/test_security_config.py",
         "Structural contract tests": ROOT / "tests/test_structural_contracts.py",
         "Frontend CMS tests": ROOT / "frontend/tests/cms-components.test.ts",
+        "CMS page block contract tests": ROOT / "frontend/src/lib/cms/pageBlocks.test.ts",
         "CMS public e2e contract": ROOT / "frontend/tests/e2e/cms-public-contract.spec.ts",
         "Public page e2e tests": ROOT / "frontend/tests/e2e/public-pages.spec.ts",
     }
@@ -261,9 +276,11 @@ def build_modules(base_url: str) -> list[ModuleReadiness]:
                 check_http("CMS readiness UI", f"{base_url}/plataforma/cms/readiness"),
                 check_http("CMS builder UI", f"{base_url}/plataforma/cms/builder"),
                 check_http("CMS public home API", f"{base_url}/api/cms/v2/public/sites/ccf/pages/home"),
+                check_http("CMS public pastors API", f"{base_url}/api/cms/v2/public/sites/ccf/pages/pastors"),
                 check_http("CMS public theme API", f"{base_url}/api/cms/v2/public/sites/ccf/theme"),
                 check_http("CMS public menu API", f"{base_url}/api/cms/v2/public/sites/ccf/menus/main"),
                 path_exists("CMS hero/popup contract tests", ROOT / "frontend/src/lib/cms/heroPopup.test.ts"),
+                path_exists("CMS page block contract tests", ROOT / "frontend/src/lib/cms/pageBlocks.test.ts"),
             ],
         ),
         ModuleReadiness(

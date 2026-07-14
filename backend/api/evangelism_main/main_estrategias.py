@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import timezone as _tz
+from datetime import datetime, timezone as _tz
 from typing import List, Optional
 from uuid import UUID
 
@@ -293,8 +293,7 @@ def generate_strategy_sessions(
     # creadas (``created_at > _before_call``). Sin este desplazamiento
     # el filtro no encuentra nada porque ``calcular_sesiones`` ya hizo
     # su propio ``db.commit()`` con ``created_at = now()`` previo.
-    from datetime import datetime as _dt_now
-    _before_call = _dt_now.utcnow()
+    _before_call = datetime.now(_tz.utc)
 
     created = 0
     sesiones_habilitadas = 0

@@ -201,6 +201,13 @@ export interface BreadcrumbItem {
   item?: string;
 }
 
+export interface CmsPageBlock extends Record<string, unknown> {
+  parsed: Record<string, unknown>;
+  content: string;
+}
+
+export type CmsPageBlocks = Record<string, CmsPageBlock>;
+
 export interface CmsPublicPage {
   site_key: string;
   slug: string;
@@ -224,5 +231,5 @@ export interface CmsPublicPage {
    * ``sections`` only; this field is optional for backward compat with
    * the catch-all renderer that iterates ``page.sections``.
    */
-  blocks?: Record<string, any>;
+  blocks?: CmsPageBlocks;
 }

@@ -6,7 +6,6 @@ import {
     CheckSquare,
     Type,
     AlignLeft,
-    Flag,
     Loader2,
     User,
     Palette,
@@ -52,13 +51,14 @@ const STATUS_OPTIONS = [
     { value: 'active', label: 'En Marcha', dot: 'bg-emerald-500' },
 ];
 
-export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit }: Props) {
+export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defaultStatus }: Props) {
+    const initialStatus = (typeof defaultStatus === 'string' && defaultStatus.trim()) ? defaultStatus : 'planning';
     const { register, handleSubmit, reset, setValue, watch, formState: { isSubmitting } } =
         useForm<FormValues>({
             defaultValues: {
                 title: '',
                 description: '',
-                status: 'planning',
+                status: initialStatus,
                 owner_id: null,
                 color: COLOR_OPTIONS[0].value,
             },
@@ -73,12 +73,12 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit }: Pro
             reset({
                 title: '',
                 description: '',
-                status: 'planning',
+                status: initialStatus,
                 owner_id: null,
                 color: COLOR_OPTIONS[0].value,
             });
         }
-    }, [isOpen, reset]);
+    }, [initialStatus, isOpen, reset]);
 
     const handleFormSubmit = async (data: FormValues) => {
         await onSubmit(data);

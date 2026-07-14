@@ -5,7 +5,6 @@ import Link from "next/link";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import { Quote, ArrowRight, Sparkles, Search, Users, Headphones, ImageIcon, PlayCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import RichText from "@/components/public/RichText";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import PublicHeroWithSlides from "@/components/public/PublicHeroWithSlides";
 

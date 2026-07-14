@@ -41,12 +41,12 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
                 // Contexto: Dentro de un proyecto
                 apiFetch<Record<string, unknown>>(`/projects/${projectId}`, { token })
                     .then(data => setCurrentProject(data))
-                    .catch(err => toast.error("Error fetching project for sidebar"));
+                    .catch(() => toast.error("Error fetching project for sidebar"));
             } else {
                 // Contexto: Vista global de proyectos
                 apiFetch<Array<{ id: string; title: string }>>('/projects', { token })
                     .then(data => setProjects(Array.isArray(data) ? data : []))
-                    .catch(err => {
+                    .catch(() => {
                         toast.error("Error fetching projects for sidebar");
                         // No vaciamos los proyectos si hay un error para conservar los cargados por SSR
                     });

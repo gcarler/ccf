@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  CheckCircle2,
   Church,
   Image as ImageIcon,
   Loader2,
