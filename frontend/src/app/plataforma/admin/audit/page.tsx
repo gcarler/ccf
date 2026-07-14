@@ -5,19 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import AdminShell from '@/components/admin/AdminShell';
+import { getWorkspaceAuditEventKey, type WorkspaceAuditEvent } from '@/lib/workspaceAudit';
 import { ShieldAlert, Terminal, Lock, User, Activity, RefreshCw, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
-interface AuditLog {
-    id: number;
+type AuditLog = WorkspaceAuditEvent & {
     actor_persona_id?: string | null;
-    action: string;
-    resource_type: string;
-    resource_id: string;
-    created_at: string;
-    metadata: any;
-}
+};
 
 export default function SecurityAuditPage() {
     const router = useRouter();
@@ -26,11 +21,18 @@ export default function SecurityAuditPage() {
     const [loading, setLoading] = useState(true);
 
     const fetchLogs = async () => {
-        if (!token) return;
+        if (!token) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
-            const data = await apiFetch<AuditLog[]>('/admin/audit', { token, cache: 'no-store' });
-            setLogs(Array.isArray(data) ? data : []);
+            const data = await apiFetch<{ events?: AuditLog[] }>('/workspace/flags/audit', {
+                token,
+                query: { limit: 100 },
+                cache: 'no-store',
+            });
+            setLogs(Array.isArray(data?.events) ? data.events : []);
         } catch (error) {
             console.error(error);
         } finally {
@@ -122,12 +124,12 @@ export default function SecurityAuditPage() {
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: idx * 0.05 }}
-                                            key={log.id}
-                                            onClick={() => router.push(`/admin/audit/${log.id}`)}
+                                            key={getWorkspaceAuditEventKey(log)}
+                                            onClick={() => router.push(`/plataforma/admin/audit/${encodeURIComponent(getWorkspaceAuditEventKey(log))}`)}
                                             className="group flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-md bg-black/40 border border-emerald-900/20 hover:border-emerald-500/50 hover:bg-emerald-950/20 transition-all cursor-crosshair"
                                         >
                                             <div className="flex items-center gap-4 w-full md:w-auto md:min-w-[200px] shrink-0">
-                                                <span className="text-emerald-700 text-[10px]">[{new Date(log.created_at).toLocaleTimeString('en-US', { hour12: false })}]</span>
+                                                <span className="text-emerald-700 text-[10px]">[{new Date(log.timestamp).toLocaleTimeString('en-US', { hour12: false })}]</span>
                                                 <span className={clsx(
                                                     "px-2 py-0.5 rounded text-[9px] uppercase tracking-wide font-black",
                                                     log.action.includes('delete') || log.action.includes('remove') ? "bg-rose-950/50 text-rose-500 border border-rose-900" :
@@ -140,17 +142,17 @@ export default function SecurityAuditPage() {
 
                                             <div className="flex-1 flex items-center gap-4 text-emerald-400/80 text-xs">
                                                 <User size={12} className="opacity-50" /> 
-                                                <span>{log.actor_persona_id ? `PERSONA: ${log.actor_persona_id.slice(0, 8)}` : 'SYS'}</span>
+                                                <span>{log.actor_persona_id ? `PERSONA: ${String(log.actor_persona_id).slice(0, 8)}` : log.updated_by ? `USER: ${String(log.updated_by).slice(0, 8)}` : 'SYS'}</span>
                                                 <span className="opacity-30">|</span>
-                                                <span>Target: <span className="text-emerald-300 font-bold">{log.resource_type?.toUpperCase()}</span> #{log.resource_id}</span>
+                                                <span>Target: <span className="text-emerald-300 font-bold">{String(log.feature_id || 'GLOBAL').toUpperCase()}</span></span>
                                             </div>
 
                                             <div className="shrink-0 flex items-center gap-3">
                                                 <div className="text-[9px] text-emerald-600/50 uppercase tracking-wide hidden lg:block truncate max-w-[200px]">
-                                                    {JSON.stringify(log.metadata)}
+                                                    {JSON.stringify(log.changes || log.after || {})}
                                                 </div>
                                                 <button 
-                                                    onClick={(e) => { e.stopPropagation(); router.push(`/admin/audit/${log.id}`); }}
+                                                    onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/admin/audit/${encodeURIComponent(getWorkspaceAuditEventKey(log))}`); }}
                                                     className="p-2 bg-emerald-950/50 rounded-lg text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-emerald-900"
                                                 >
                                                     <Eye size={14} />

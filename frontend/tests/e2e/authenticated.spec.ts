@@ -64,6 +64,11 @@ test.describe('authenticated routes', () => {
     await expect(page.locator('body')).toContainText(/pipeline|consolidaci[oó]n|lead/i);
   });
 
+  test('@auth admin audit route loads for authenticated user', async ({ page }) => {
+    await page.goto('/plataforma/admin/audit');
+    await expect(page.locator('body')).toContainText(/auditor[ií]a|registro inmutable|control de acceso maestro/i);
+  });
+
   test('@auth new groups and theme routes load for authenticated user', async ({ page }) => {
     await page.goto('/groups/map');
     await expect(page.locator('body')).toContainText(/mapa|coordenadas|casas/i);
