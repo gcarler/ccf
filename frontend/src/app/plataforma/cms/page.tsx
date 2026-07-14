@@ -285,18 +285,18 @@ export default function CmsHomePage() {
 
   const quickLinks = useMemo(
     () => [
-      { label: "Paginas", href: "/cms/pages", description: "Contenido, SEO y estados", icon: FileText, show: canEdit },
-      { label: "Posts / Blog", href: "/cms/posts", description: "Articulos y noticias", icon: BookOpen, show: canEdit },
-      { label: "Categorias", href: "/cms/categories", description: "Taxonomias de posts", icon: Globe, show: canEdit },
-      { label: "Etiquetas", href: "/cms/tags", description: "Tags de posts", icon: Tag, show: canEdit },
-      { label: "Menus", href: "/cms/menus", description: "Navegacion publica", icon: Link2, show: canEdit },
-      { label: "Testimonios", href: "/cms/testimonials", description: "Aprobacion y portada", icon: MessageCircle, show: canEdit },
-      { label: "Builder", href: "/cms/builder", description: "Secciones visuales", icon: PanelsTopLeft, show: canEdit },
-      { label: "Media", href: "/cms/media", description: "Archivos y accesibilidad", icon: ImageIcon, show: canEdit },
-      { label: "Temas", href: "/cms/themes", description: "Tokens por sitio", icon: Palette, show: canEdit },
-      { label: "Equipo Pastoral", href: "/cms/pastoral-team", description: "Perfiles y redes sociales", icon: Users, show: canEdit },
-      { label: "Sitios", href: "/cms/sites", description: "Portales y dominios", icon: Globe, show: canManage },
-      { label: "Auditoría SEO", href: "/cms/seo-audit", description: "Score y hallazgos por página", icon: Gauge, show: canEdit },
+      { label: "Paginas", href: "/plataforma/cms/pages", description: "Contenido, SEO y estados", icon: FileText, show: canEdit },
+      { label: "Posts / Blog", href: "/plataforma/cms/posts", description: "Articulos y noticias", icon: BookOpen, show: canEdit },
+      { label: "Categorias", href: "/plataforma/cms/categories", description: "Taxonomias de posts", icon: Globe, show: canEdit },
+      { label: "Etiquetas", href: "/plataforma/cms/tags", description: "Tags de posts", icon: Tag, show: canEdit },
+      { label: "Menus", href: "/plataforma/cms/menus", description: "Navegacion publica", icon: Link2, show: canEdit },
+      { label: "Testimonios", href: "/plataforma/cms/testimonials", description: "Aprobacion y portada", icon: MessageCircle, show: canEdit },
+      { label: "Builder", href: "/plataforma/cms/builder", description: "Secciones visuales", icon: PanelsTopLeft, show: canEdit },
+      { label: "Media", href: "/plataforma/cms/media", description: "Archivos y accesibilidad", icon: ImageIcon, show: canEdit },
+      { label: "Temas", href: "/plataforma/cms/themes", description: "Tokens por sitio", icon: Palette, show: canEdit },
+      { label: "Equipo Pastoral", href: "/plataforma/cms/pastoral-team", description: "Perfiles y redes sociales", icon: Users, show: canEdit },
+      { label: "Sitios", href: "/plataforma/cms/sites", description: "Portales y dominios", icon: Globe, show: canManage },
+      { label: "Auditoría SEO", href: "/plataforma/cms/seo-audit", description: "Score y hallazgos por página", icon: Gauge, show: canEdit },
     ].filter((link) => link.show),
     [canEdit, canManage],
   );
@@ -307,7 +307,7 @@ export default function CmsHomePage() {
         label: "Testimonios pendientes",
         description: stats.pendingTestimonials > 0 ? "Historias esperando revision editorial" : "Cola de testimonios limpia",
         value: stats.pendingTestimonials,
-        href: "/cms/testimonials",
+        href: "/plataforma/cms/testimonials",
         tone: stats.pendingTestimonials > 0 ? "warning" : "success",
         icon: MessageCircle,
       },
@@ -315,7 +315,7 @@ export default function CmsHomePage() {
         label: "Bloques en revision",
         description: stats.inReviewBlocks > 0 ? "Contenido listo para aprobar o devolver" : "Sin bloque esperando aprobacion",
         value: stats.inReviewBlocks,
-        href: "/cms/pages",
+        href: "/plataforma/cms/pages",
         tone: stats.inReviewBlocks > 0 ? "warning" : "success",
         icon: Clock3,
       },
@@ -323,7 +323,7 @@ export default function CmsHomePage() {
         label: "Imagenes sin alt",
         description: stats.mediaWithoutAlt > 0 ? "Completa metadata accesible en media" : "Imagenes activas con texto alternativo",
         value: stats.mediaWithoutAlt,
-        href: "/cms/media",
+        href: "/plataforma/cms/media",
         tone: stats.mediaWithoutAlt > 0 ? "warning" : "success",
         icon: ImageIcon,
       },
@@ -331,7 +331,7 @@ export default function CmsHomePage() {
         label: "Bloques publicados",
         description: stats.publishedBlocks > 0 ? "Contenido visible para el sitio" : "Aun no hay bloques publicados",
         value: stats.publishedBlocks,
-        href: "/cms/pages",
+        href: "/plataforma/cms/pages",
         tone: stats.publishedBlocks > 0 ? "success" : "warning",
         icon: Layers3,
       },
@@ -346,23 +346,23 @@ export default function CmsHomePage() {
   }, [loading, qualityChecks]);
 
   const metricCards = [
-    { label: "Testimonios publicados", value: stats.approvedTestimonials, icon: MessageCircle, href: "/cms/testimonials" },
-    { label: "Pendientes", value: stats.pendingTestimonials, icon: AlertCircle, href: "/cms/testimonials" },
-    { label: "Media total", value: stats.mediaTotal, icon: ImageIcon, href: "/cms/media" },
-    { label: "Imagenes", value: stats.mediaImages, icon: ImageIcon, href: "/cms/media" },
-    { label: "Videos", value: stats.mediaVideos, icon: Video, href: "/cms/media" },
-    { label: "Podcasts", value: stats.mediaAudio, icon: Volume2, href: "/cms/media" },
-    { label: "Bloques del sitio", value: stats.sections, icon: Layers3, href: "/cms/builder" },
-    { label: "Publicados", value: stats.publishedBlocks, icon: CheckCircle2, href: "/cms/pages" },
-    { label: "En revision", value: stats.inReviewBlocks, icon: Clock3, href: "/cms/pages" },
-    { label: "Anuncios activos", value: stats.activeAnnouncements, icon: Megaphone, href: "/cms/pages" },
-    { label: "Vistas totales", value: stats.pageViewsTotal, icon: Eye, href: "/cms/audit" },
-    { label: "Vistas 7d", value: stats.pageViews7d, icon: TrendingUp, href: "/cms/audit" },
-    { label: "Vistas 30d", value: stats.pageViews30d, icon: TrendingUp, href: "/cms/audit" },
-    { label: "Posts", value: stats.postsTotal, icon: BookOpen, href: "/cms/posts" },
-    { label: "Posts publicados", value: stats.postsPublished, icon: CheckCircle2, href: "/cms/posts" },
-    { label: "Categorías", value: stats.categoriesTotal, icon: Globe, href: "/cms/categories" },
-    { label: "Etiquetas", value: stats.tagsTotal, icon: Tag, href: "/cms/tags" },
+    { label: "Testimonios publicados", value: stats.approvedTestimonials, icon: MessageCircle, href: "/plataforma/cms/testimonials" },
+    { label: "Pendientes", value: stats.pendingTestimonials, icon: AlertCircle, href: "/plataforma/cms/testimonials" },
+    { label: "Media total", value: stats.mediaTotal, icon: ImageIcon, href: "/plataforma/cms/media" },
+    { label: "Imagenes", value: stats.mediaImages, icon: ImageIcon, href: "/plataforma/cms/media" },
+    { label: "Videos", value: stats.mediaVideos, icon: Video, href: "/plataforma/cms/media" },
+    { label: "Podcasts", value: stats.mediaAudio, icon: Volume2, href: "/plataforma/cms/media" },
+    { label: "Bloques del sitio", value: stats.sections, icon: Layers3, href: "/plataforma/cms/builder" },
+    { label: "Publicados", value: stats.publishedBlocks, icon: CheckCircle2, href: "/plataforma/cms/pages" },
+    { label: "En revision", value: stats.inReviewBlocks, icon: Clock3, href: "/plataforma/cms/pages" },
+    { label: "Anuncios activos", value: stats.activeAnnouncements, icon: Megaphone, href: "/plataforma/cms/pages" },
+    { label: "Vistas totales", value: stats.pageViewsTotal, icon: Eye, href: "/plataforma/cms/audit" },
+    { label: "Vistas 7d", value: stats.pageViews7d, icon: TrendingUp, href: "/plataforma/cms/audit" },
+    { label: "Vistas 30d", value: stats.pageViews30d, icon: TrendingUp, href: "/plataforma/cms/audit" },
+    { label: "Posts", value: stats.postsTotal, icon: BookOpen, href: "/plataforma/cms/posts" },
+    { label: "Posts publicados", value: stats.postsPublished, icon: CheckCircle2, href: "/plataforma/cms/posts" },
+    { label: "Categorías", value: stats.categoriesTotal, icon: Globe, href: "/plataforma/cms/categories" },
+    { label: "Etiquetas", value: stats.tagsTotal, icon: Tag, href: "/plataforma/cms/tags" },
   ];
 
   const maxPubValue = useMemo(() => {
@@ -606,7 +606,7 @@ export default function CmsHomePage() {
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Últimos publicados.</p>
               </div>
               {canEdit && (
-                <Link href="/cms/posts" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-blue-300 hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
+                <Link href="/plataforma/cms/posts" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-blue-300 hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
                   Ver todo
                 </Link>
               )}
@@ -683,7 +683,7 @@ export default function CmsHomePage() {
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Ultimas historias recibidas para revision y publicacion.</p>
               </div>
               {canEdit && (
-                <Link href="/cms/testimonials" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-blue-300 hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
+                <Link href="/plataforma/cms/testimonials" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-blue-300 hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
                   Ver todo
                 </Link>
               )}
@@ -723,9 +723,9 @@ export default function CmsHomePage() {
             </div>
             <div className="mt-5 space-y-3">
               {[
-                { label: "Editar estructura", detail: "Paginas, menus y secciones del builder.", href: "/cms/pages" },
-                { label: "Completar media", detail: "Alt text, etiquetas y archivos reutilizables.", href: "/cms/media" },
-                { label: "Revisar contenido", detail: "Testimonios, bloques en revision y eventos.", href: "/cms/pages" },
+                { label: "Editar estructura", detail: "Paginas, menus y secciones del builder.", href: "/plataforma/cms/pages" },
+                { label: "Completar media", detail: "Alt text, etiquetas y archivos reutilizables.", href: "/plataforma/cms/media" },
+                { label: "Revisar contenido", detail: "Testimonios, bloques en revision y eventos.", href: "/plataforma/cms/pages" },
                 { label: "Publicar", detail: "Aprobar, publicar y revisar el sitio en vivo.", href: "/", external: true },
               ].map((step, index) => (
                 <Link

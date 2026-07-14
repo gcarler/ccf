@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function AdminCmsPage() {
-  redirect("/cms");
+  redirect("/plataforma/cms");
 }
-

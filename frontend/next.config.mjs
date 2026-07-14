@@ -103,6 +103,16 @@ const nextConfig = {
     async redirects() {
         return [
             {
+                source: '/cms',
+                destination: '/plataforma/cms',
+                permanent: true,
+            },
+            {
+                source: '/cms/:path*',
+                destination: '/plataforma/cms/:path*',
+                permanent: true,
+            },
+            {
                 source: '/faro',
                 destination: '/',
                 permanent: true,
