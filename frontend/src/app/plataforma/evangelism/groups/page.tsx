@@ -18,7 +18,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback,useEffect,useState } from 'react';
 import { toast } from 'sonner';
 
-interface GroupSeason { id: number; name: string; start_date: string; end_date: string; periodicity: string; status: string; }
+interface GroupSeason { id: string; name: string; start_date: string; end_date: string; periodicity: string; status: string; }
 interface Grupo { id: string; name: string; leader_name?: string; zone?: string; day_of_week?: string; time?: string; status?: string; }
 interface GroupAnalytics {
  active_groups: number;
@@ -58,10 +58,16 @@ export default function GroupPage() {
  const [counselingCount, setCounselingCount] = useState<number | null>(null);
  const [confirmReminders, setConfirmReminders] = useState<ConfirmActionState>(null);
  const [sendingReminders, setSendingReminders] = useState(false);
- const [sessionForm, setSessionForm] = useState({ grupo_id: '', session_date: new Date().toISOString().split('T')[0], topic: 'S1', report_deadline: '' });
+ const [sessionForm, setSessionForm] = useState({
+   grupo_id: '',
+   create_for_all_groups: false,
+   session_date: new Date().toISOString().split('T')[0],
+   topic: 'S1',
+   report_deadline: '',
+ });
  const [seasonForm, setSeasonForm] = useState<SeasonForm>({ name: '', start_date: '', end_date: '', periodicity: 'SEMANAL' });
  const isSeasonFormValid = Boolean(seasonForm.name.trim() && seasonForm.start_date && seasonForm.end_date);
- const isSessionFormValid = Boolean(sessionForm.grupo_id && sessionForm.session_date && activeSeason);
+ const isSessionFormValid = Boolean(sessionForm.session_date && activeSeason && (sessionForm.create_for_all_groups || sessionForm.grupo_id));
  const role = String(user?.role || '').toLowerCase();
  const isPrivileged = ['admin', 'administrador', 'pastor'].includes(role);
 
@@ -152,16 +158,21 @@ export default function GroupPage() {
  };
 
  const handleCreateSession = async () => {
- if (!sessionForm.grupo_id || !sessionForm.session_date || !activeSeason) return toast.error('Selecciona el grupo y la fecha');
+ if (!sessionForm.session_date || !activeSeason || (!sessionForm.create_for_all_groups && !sessionForm.grupo_id)) {
+   return toast.error('Selecciona el grupo y la fecha');
+ }
  setSavingSession(true);
  try {
  const bodyPayload: any = {
    season_id: activeSeason.id,
-   grupo_id: sessionForm.grupo_id === 'all' ? null : sessionForm.grupo_id,
+   create_for_all_groups: sessionForm.create_for_all_groups,
    session_date: sessionForm.session_date,
    topic: sessionForm.topic || null,
    report_deadline: sessionForm.report_deadline || null,
  };
+ if (!sessionForm.create_for_all_groups) {
+   bodyPayload.grupo_id = sessionForm.grupo_id;
+ }
  if (sessionForm.report_deadline) {
    bodyPayload.report_deadline = `${sessionForm.report_deadline}:00Z`;
  }
@@ -169,7 +180,13 @@ export default function GroupPage() {
  const res = await apiFetch<{ message: string, created_count: number }>('/evangelism/groups/sessions', { method: 'POST', body: bodyPayload, token, silent: true });
  toast.success(res.message || 'Sesión registrada');
  setShowNewSession(false);
- setSessionForm({ grupo_id: '', session_date: new Date().toISOString().split('T')[0], topic: 'S1', report_deadline: '' });
+ setSessionForm({
+   grupo_id: '',
+   create_for_all_groups: false,
+   session_date: new Date().toISOString().split('T')[0],
+   topic: 'S1',
+   report_deadline: '',
+ });
  load();
  } catch (e) {
  const detail = e instanceof ApiError && typeof e.detail === 'object' && e.detail && 'detail' in e.detail
@@ -180,13 +197,13 @@ export default function GroupPage() {
  finally { setSavingSession(false); }
  };
 
- const closeSeason = async (id: number) => {
+ const closeSeason = async (id: string) => {
  await apiFetch(`/evangelism/groups/seasons/${id}`, { method: 'PATCH', body: { status: 'Finalizada' }, token, silent: true });
  toast.success('Temporada finalizada');
  load();
  };
 
- const handleCloseSeason = (id: number) => {
+ const handleCloseSeason = (id: string) => {
  setConfirmAction({
  title: 'Finalizar temporada',
  description: 'La temporada quedará finalizada y dejará de aparecer como activa para nuevos reportes.',
@@ -448,7 +465,7 @@ export default function GroupPage() {
  
  <div className="space-y-1.5">
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Grupo</label>
- <select value={sessionForm.grupo_id} onChange={e => setSessionForm(p => ({ ...p, grupo_id: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+ <select value={sessionForm.grupo_id} onChange={e => setSessionForm(p => ({ ...p, grupo_id: e.target.value, create_for_all_groups: e.target.value === 'all' }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
  <option value="">— Seleccionar Grupo —</option>
  {isPrivileged && <option value="all" className="font-bold">✨ TODOS LOS GRUPOS ACTIVOS</option>}
  {houses.map(h => <option key={h.id} value={h.id}>{h.name} {h.leader_name ? `· Líder: ${h.leader_name}` : ''}</option>)}

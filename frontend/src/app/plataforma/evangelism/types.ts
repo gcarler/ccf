@@ -105,7 +105,7 @@ export interface Strategy {
 }
 
 export interface StrategyGroup {
- id: number;
+ id: string;
  name: string;
  zone: string | null;
  address?: string | null;
@@ -122,8 +122,8 @@ export interface StrategyGroup {
 }
 
 export interface SessionRow {
- id: number;
- grupo_id: number;
+ id: string;
+ grupo_id: string;
  session_date: string;
  status: string;
  estado_habilitacion: string;
@@ -159,7 +159,7 @@ export interface StrategyMetrics {
 }
 
 export interface HabilitacionResponse {
- session_id: number;
+ session_id: string;
  estado_habilitacion: string;
  habilitado_en: string | null;
 }
@@ -173,39 +173,39 @@ export interface BulkHabilitacionResponse {
 export interface GenerateSessionsResponse {
  message: string;
  created_count: number;
- session_ids?: number[];
+ session_ids?: string[];
  sessions_per_group?: number;
  total_sessions_created?: number;
 }
 
 export interface SessionDetailResponse {
  session: {
- id: number;
- grupo_id: number;
+ id: string;
+ grupo_id: string;
  session_date: string | null;
  topic: string | null;
  offering_amount: number | null;
  status: string;
  report_notes: string | null;
  };
- attendance: Array<{
- id: number;
- session_id: number;
+  attendance: Array<{
+ id: string;
+ session_id: string;
  persona_id: string;
  persona_name: string;
  status: string;
  notes: string | null;
  attended: boolean;
  }>;
- grupo: {
- id: number;
+  grupo: {
+ id: string;
  name: string;
  leader_name: string;
  } | null;
 }
 
 export interface GroupDetailResponse {
- id: number;
+ id: string;
  code?: string | null;
  name: string;
  zone?: string | null;
@@ -239,7 +239,7 @@ export interface GroupDetailResponse {
  average_attendance: number;
  average_attendance_rate: number;
  attendance_trend: Array<{
- session_id: number;
+ session_id: string;
  session_date: string;
  status: string;
  attendance_rate: number;
@@ -247,7 +247,7 @@ export interface GroupDetailResponse {
  absent_count: number;
  }>;
  recent_sessions: Array<{
- session_id: number;
+ session_id: string;
  session_date: string;
  status: string;
  present_count: number;
@@ -262,7 +262,7 @@ export interface GroupDetailResponse {
  name: string;
  absences: number;
  details: Array<{
- session_id: number;
+ session_id: string;
  session_date: string | null;
  reason: string | null;
  reason_detail: string | null;
