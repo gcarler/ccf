@@ -772,7 +772,7 @@ def list_crm_tasks(
     """Lista tareas CRM con scope Axioma 3 (JOIN Persona + validate assignee)."""
     q = db.query(models.TareaCRM).join(
         models.Persona, models.TareaCRM.persona_id == models.Persona.id
-    )
+    ).filter(models.TareaCRM.deleted_at.is_(None))
     q = _scope_by_user_sede_via_persona(db, current_user, q)
     if assignee_persona_id:
         _get_scoped_persona(db, current_user, assignee_persona_id)
@@ -875,7 +875,10 @@ def list_my_crm_tasks(
         return []
     tasks = (
         db.query(models.TareaCRM)
-        .filter(models.TareaCRM.assignee_id == my_persona_id)
+        .filter(
+            models.TareaCRM.assignee_id == my_persona_id,
+            models.TareaCRM.deleted_at.is_(None),
+        )
         .order_by(models.TareaCRM.created_at.desc())
         .all()
     )
@@ -1039,7 +1042,10 @@ def get_counseling_detail(
     ticket = _get_scoped_counseling_ticket(db, current_user, ticket_id)
     history_rows = (
         db.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.persona_id == ticket.persona_id)
+        .filter(
+            models.CounselingTicket.persona_id == ticket.persona_id,
+            models.CounselingTicket.deleted_at.is_(None),
+        )
         .order_by(models.CounselingTicket.created_at.desc(), models.CounselingTicket.id.desc())
         .all()
     )
@@ -1454,7 +1460,10 @@ def get_counseling_by_lead(
     q = (
         db.query(models.CounselingTicket)
         .join(models.Persona, models.CounselingTicket.persona_id == models.Persona.id)
-        .filter(models.CounselingTicket.persona_id == lead.id)
+        .filter(
+            models.CounselingTicket.persona_id == lead.id,
+            models.CounselingTicket.deleted_at.is_(None),
+        )
     )
     q = _scope_by_user_sede_via_persona(db, current_user, q)
     tickets = q.order_by(models.CounselingTicket.created_at.desc()).all()

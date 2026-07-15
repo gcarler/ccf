@@ -570,7 +570,10 @@ def update_grupo(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    house_db = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_id).first()
+    house_db = db.query(GrupoEvangelismo).filter(
+        models.GrupoEvangelismo.id == grupo_id,
+        models.GrupoEvangelismo.deleted_at.is_(None),
+    ).first()
     if not house_db:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house_db):
@@ -944,7 +947,10 @@ def register_groups_visitor(
     current_user: models.User = Depends(require_active_user),
 ):
     """Register a new guest from a Group session report as a Persona + CRM lead."""
-    grupo = db.query(GrupoEvangelismo).filter(models.GrupoEvangelismo.id == visitor.grupo_id).first()
+    grupo = db.query(GrupoEvangelismo).filter(
+        models.GrupoEvangelismo.id == visitor.grupo_id,
+        models.GrupoEvangelismo.deleted_at.is_(None),
+    ).first()
     if not grupo:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
 

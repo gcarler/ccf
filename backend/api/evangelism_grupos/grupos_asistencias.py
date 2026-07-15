@@ -552,7 +552,10 @@ def create_seguimiento(
     """Crea un registro de seguimiento para una asistencia."""
     from backend.crud.evangelism import create_seguimiento
 
-    asistencia = db.query(Asistencia).filter(models.Asistencia.id == asistencia_id).first()
+    asistencia = db.query(Asistencia).filter(
+        models.Asistencia.id == asistencia_id,
+        models.Asistencia.deleted_at.is_(None),
+    ).first()
     if not asistencia:
         raise HTTPException(status_code=404, detail="Asistencia no encontrada")
 

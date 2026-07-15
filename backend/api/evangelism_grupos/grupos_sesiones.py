@@ -84,6 +84,15 @@ def list_groups_sessions(
         )
     else:
         att_counts = {}
+    season_ids = list({s.season_id for s in sessions if s.season_id is not None})
+    season_map: dict = {}
+    if season_ids:
+        season_map = {
+            row.id: row.name
+            for row in db.query(models.CampaignSeason)
+            .filter(models.CampaignSeason.id.in_(season_ids))
+            .all()
+        }
 
     return [
         {
@@ -91,7 +100,7 @@ def list_groups_sessions(
             "grupo_id": str(session.grupo_id) if session.grupo_id else None,
             "grupo_name": (session.grupo.name if session.grupo else None),
             "season_id": str(session.season_id) if session.season_id else None,
-            "season_name": session.season.name if session.season else None,
+            "season_name": season_map.get(session.season_id),
             "session_date": session.session_date.isoformat(),
             "status": session.status,
             "attendance_count": att_counts.get(session.id, 0),
@@ -468,7 +477,10 @@ def get_session_detail(
     if not session:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
 
-    attendance_rows = db.query(Asistencia).filter(models.Asistencia.sesion_id == session_id).all()
+    attendance_rows = db.query(Asistencia).filter(
+        models.Asistencia.sesion_id == session_id,
+        models.Asistencia.deleted_at.is_(None),
+    ).all()
 
     # Build persona name lookup for this session's grupo
     persona_map: dict[str, str] = {}

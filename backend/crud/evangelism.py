@@ -258,7 +258,10 @@ def update_estrategia(
     actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = (
         db.query(EstrategiaEvangelismo)
-        .filter(EstrategiaEvangelismo.id == strategy_id)
+        .filter(
+            EstrategiaEvangelismo.id == strategy_id,
+            EstrategiaEvangelismo.deleted_at.is_(None),
+        )
         .first()
     )
     if not db_obj:
@@ -313,7 +316,10 @@ def delete_estrategia(
     actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = (
         db.query(EstrategiaEvangelismo)
-        .filter(EstrategiaEvangelismo.id == strategy_id)
+        .filter(
+            EstrategiaEvangelismo.id == strategy_id,
+            EstrategiaEvangelismo.deleted_at.is_(None),
+        )
         .first()
     )
     if not db_obj:
@@ -370,7 +376,10 @@ def create_rol_personalizado(
         )
         strategy_row = (
             db.query(EstrategiaEvangelismo.sede_id)
-            .filter(EstrategiaEvangelismo.id == strategy_uuid)
+            .filter(
+                EstrategiaEvangelismo.id == strategy_uuid,
+                EstrategiaEvangelismo.deleted_at.is_(None),
+            )
             .first()
         )
         target_sede = (
@@ -399,7 +408,10 @@ def delete_rol_personalizado(
     actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = (
         db.query(RolPersonalizadoEstrategia)
-        .filter(RolPersonalizadoEstrategia.id == role_id)
+        .filter(
+            RolPersonalizadoEstrategia.id == role_id,
+            RolPersonalizadoEstrategia.deleted_at.is_(None),
+        )
         .first()
     )
     if not db_obj:
@@ -657,9 +669,11 @@ def create_seguimiento(
             db.query(Asistencia.id, GrupoEvangelismo.sede_id)
             .join(SesionGrupo, SesionGrupo.id == Asistencia.sesion_id)
             .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
-            .filter(Asistencia.id == asist_uuid)
+            .filter(Asistencia.id == asist_uuid, Asistencia.deleted_at.is_(None))
             .first()
         )
+        if not asist_row:
+            raise HTTPException(status_code=404, detail="Asistencia no encontrada")
         target_sede = str(asist_row[1]) if asist_row and asist_row[1] else None
     _crud_scope_re_check_evangelism_create(
         db,
@@ -678,7 +692,10 @@ def create_seguimiento(
     # Marcar la asistencia como requiere_seguimiento = True
     asistencia = (
         db.query(Asistencia)
-        .filter(Asistencia.id == data.asistencia_id)
+        .filter(
+            Asistencia.id == data.asistencia_id,
+            Asistencia.deleted_at.is_(None),
+        )
         .first()
     )
     if asistencia:

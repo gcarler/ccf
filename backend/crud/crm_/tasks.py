@@ -18,7 +18,7 @@ def get_crm_tasks(
     assignee_persona_id: Optional[uuid.UUID] = None,
     persona_id: Optional[uuid.UUID] = None,
 ) -> List[models.TareaCRM]:
-    query = db.query(models.TareaCRM)
+    query = db.query(models.TareaCRM).filter(models.TareaCRM.deleted_at.is_(None))
     if assignee_persona_id:
         query = query.filter(models.TareaCRM.assignee_id == assignee_persona_id)
     if persona_id:
@@ -114,7 +114,14 @@ def update_crm_task(
     callers no-API (workers, scripts) sin re-implementar la lógica de
     scope.
     """
-    row = db.query(models.TareaCRM).filter(models.TareaCRM.id == task_id).first()
+    row = (
+        db.query(models.TareaCRM)
+        .filter(
+            models.TareaCRM.id == task_id,
+            models.TareaCRM.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row:
         return None
 
@@ -210,7 +217,14 @@ def _value_for_audit(value):
 
 
 def delete_crm_task(db: Session, task_id: uuid.UUID) -> bool:
-    row = db.query(models.TareaCRM).filter(models.TareaCRM.id == task_id).first()
+    row = (
+        db.query(models.TareaCRM)
+        .filter(
+            models.TareaCRM.id == task_id,
+            models.TareaCRM.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row:
         return False
     row.deleted_at = _utcnow()

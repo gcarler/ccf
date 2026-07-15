@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
+from backend import crud
 from backend.core.database import get_db
 from backend.core.permissions import require_pastor_or_admin
 
@@ -33,7 +34,14 @@ def list_strategy_roles(
     """Lista los roles personalizados de una estrategia."""
     from backend.crud.evangelism import get_roles_personalizados
 
-    strategy = db.query(models.EstrategiaEvangelismo).filter(models.EstrategiaEvangelismo.id == strategy_id).first()
+    user_sede_id = crud.get_user_sede_id(db, _user.id)
+    strategy_query = db.query(models.EstrategiaEvangelismo).filter(
+        models.EstrategiaEvangelismo.id == strategy_id,
+        models.EstrategiaEvangelismo.deleted_at.is_(None),
+    )
+    if user_sede_id is not None:
+        strategy_query = strategy_query.filter(models.EstrategiaEvangelismo.sede_id == user_sede_id)
+    strategy = strategy_query.first()
     if not strategy:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
     rows = get_roles_personalizados(db, estrategia_id=strategy_id)
@@ -62,7 +70,14 @@ def create_strategy_role(
     """Crea un rol personalizado para una estrategia."""
     from backend.crud.evangelism import create_rol_personalizado
 
-    strategy = db.query(models.EstrategiaEvangelismo).filter(models.EstrategiaEvangelismo.id == strategy_id).first()
+    user_sede_id = crud.get_user_sede_id(db, _user.id)
+    strategy_query = db.query(models.EstrategiaEvangelismo).filter(
+        models.EstrategiaEvangelismo.id == strategy_id,
+        models.EstrategiaEvangelismo.deleted_at.is_(None),
+    )
+    if user_sede_id is not None:
+        strategy_query = strategy_query.filter(models.EstrategiaEvangelismo.sede_id == user_sede_id)
+    strategy = strategy_query.first()
     if not strategy:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
     payload.estrategia_id = strategy_id
@@ -79,7 +94,14 @@ def delete_strategy_role(
     """Elimina un rol personalizado de una estrategia."""
     from backend.crud.evangelism import delete_rol_personalizado
 
-    strategy = db.query(models.EstrategiaEvangelismo).filter(models.EstrategiaEvangelismo.id == strategy_id).first()
+    user_sede_id = crud.get_user_sede_id(db, _user.id)
+    strategy_query = db.query(models.EstrategiaEvangelismo).filter(
+        models.EstrategiaEvangelismo.id == strategy_id,
+        models.EstrategiaEvangelismo.deleted_at.is_(None),
+    )
+    if user_sede_id is not None:
+        strategy_query = strategy_query.filter(models.EstrategiaEvangelismo.sede_id == user_sede_id)
+    strategy = strategy_query.first()
     if not strategy:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
     if strategy.default_role_id == role_id:
