@@ -226,6 +226,7 @@ def get_event_session_detail(
         .filter(
             models.EventAssignment.event_id == event_id,
             models.EventAssignment.session_date == session_date,
+            models.EventAssignment.deleted_at.is_(None),
         )
         .all()
     )
@@ -324,6 +325,7 @@ def sync_event_assignments(
     db.query(models.EventAssignment).filter(
         models.EventAssignment.event_id == event_id,
         models.EventAssignment.session_date == payload.session_date,
+        models.EventAssignment.deleted_at.is_(None),
     ).update({models.EventAssignment.deleted_at: _utcnow()}, synchronize_session=False)
 
     for assignment in payload.assignments:

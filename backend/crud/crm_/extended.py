@@ -302,7 +302,7 @@ def get_event_assignments(
     persona_id: str | None = None,
     role: str | None = None,
 ) -> List[models.EventAssignment]:
-    q = db.query(models.EventAssignment)
+    q = db.query(models.EventAssignment).filter(models.EventAssignment.deleted_at.is_(None))
     if event_id is not None:
         q = q.filter(models.EventAssignment.event_id == event_id)
     if persona_id is not None:
@@ -315,7 +315,10 @@ def get_event_assignments(
 def get_event_assignment(db: Session, ea_id: UUID) -> Optional[models.EventAssignment]:
     return (
         db.query(models.EventAssignment)
-        .filter(models.EventAssignment.id == ea_id)
+        .filter(
+            models.EventAssignment.id == ea_id,
+            models.EventAssignment.deleted_at.is_(None),
+        )
         .first()
     )
 
@@ -335,7 +338,10 @@ def update_event_assignment(
 ) -> Optional[models.EventAssignment]:
     row = (
         db.query(models.EventAssignment)
-        .filter(models.EventAssignment.id == ea_id)
+        .filter(
+            models.EventAssignment.id == ea_id,
+            models.EventAssignment.deleted_at.is_(None),
+        )
         .first()
     )
     if not row:
@@ -350,7 +356,10 @@ def update_event_assignment(
 def delete_event_assignment(db: Session, ea_id: UUID) -> bool:
     row = (
         db.query(models.EventAssignment)
-        .filter(models.EventAssignment.id == ea_id)
+        .filter(
+            models.EventAssignment.id == ea_id,
+            models.EventAssignment.deleted_at.is_(None),
+        )
         .first()
     )
     if not row:
@@ -808,7 +817,7 @@ def get_chat_messages(
     sender_id: UUID | None = None,
     limit: int = 50,
 ) -> List[models.ChatMessage]:
-    q = db.query(models.ChatMessage)
+    q = db.query(models.ChatMessage).filter(models.ChatMessage.deleted_at.is_(None))
     if room_id:
         q = q.filter(models.ChatMessage.room_id == room_id)
     if sender_id is not None:
@@ -818,7 +827,12 @@ def get_chat_messages(
 
 def get_chat_message(db: Session, message_id: UUID) -> Optional[models.ChatMessage]:
     return (
-        db.query(models.ChatMessage).filter(models.ChatMessage.id == message_id).first()
+        db.query(models.ChatMessage)
+        .filter(
+            models.ChatMessage.id == message_id,
+            models.ChatMessage.deleted_at.is_(None),
+        )
+        .first()
     )
 
 
@@ -832,7 +846,12 @@ def create_chat_message(db: Session, payload: ChatMessageCreate) -> models.ChatM
 
 def delete_chat_message(db: Session, message_id: UUID) -> bool:
     row = (
-        db.query(models.ChatMessage).filter(models.ChatMessage.id == message_id).first()
+        db.query(models.ChatMessage)
+        .filter(
+            models.ChatMessage.id == message_id,
+            models.ChatMessage.deleted_at.is_(None),
+        )
+        .first()
     )
     if not row:
         return False

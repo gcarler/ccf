@@ -44,11 +44,9 @@ def delete_community_card(
     db: Session = Depends(get_db),
 ):
     """Elimina una tarjeta del tablero comunitario."""
-    card = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
-    if not card:
+    deleted = crud.delete_community_card(db, card_id)
+    if not deleted:
         raise HTTPException(status_code=404, detail="Card not found")
-    card.deleted_at = datetime.now(timezone.utc)
-    db.commit()
     return None
 
 

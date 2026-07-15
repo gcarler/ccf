@@ -708,7 +708,14 @@ def delete_chat_message_endpoint(
        al nivel de sede. 404 si mismatch.
     6. Soft-delete + commit.
     """
-    msg = db.query(models.ChatMessage).filter(models.ChatMessage.id == message_id).first()
+    msg = (
+        db.query(models.ChatMessage)
+        .filter(
+            models.ChatMessage.id == message_id,
+            models.ChatMessage.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not msg:
         raise HTTPException(status_code=404, detail="Message not found")
     persona_id = _get_persona_id(db, current_user)

@@ -45,6 +45,7 @@ def is_event_assignee(db: Session, user: models.User, event_id: UUID) -> bool:
         .filter(
             models.EventAssignment.event_id == event_id,
             models.EventAssignment.persona_id == persona.id,
+            models.EventAssignment.deleted_at.is_(None),
         )
         .first()
     )
