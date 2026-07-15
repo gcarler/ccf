@@ -19,7 +19,7 @@ const ROUTE_META_MAP: Record<string, { slug: string }> = {
     "/sedes":             { slug: "locations" },
     "/boletin":           { slug: "newsletter" },
     "/testimonios":       { slug: "testimonials" },
-    "/privacidad":        { slug: "privacy" },
+    "/privacy":           { slug: "privacy" },
 };
 
 function matchRoute(pathname: string): { slug: string } | null {

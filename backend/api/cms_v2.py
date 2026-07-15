@@ -2768,8 +2768,13 @@ def schedule_page_publish(
     ``seo_json['_scheduled_at']``. ``scheduled_at`` is required.
     """
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     parsed = payload.scheduled_at
-    page = db.query(models.CmsPage).filter(models.CmsPage.id == page_id).first()
+    page = (
+        db.query(models.CmsPage)
+        .filter(models.CmsPage.id == page_id, models.CmsPage.site_id == site.id)
+        .first()
+    )
     if not page:
         raise HTTPException(status_code=404, detail="Page not found")
     page.publish_at = parsed
