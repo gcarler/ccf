@@ -28,7 +28,7 @@ Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect,useState } from 'react';
-import { getPlatformMetricHref } from './metricRoutes';
+import { getPlatformMetricHref, getPlatformTaskHref } from './metricRoutes';
 
 const DASHBOARD_SECTIONS = [
     {
@@ -216,34 +216,41 @@ function CommandCenterHome({ user, token }: any) {
                                 {loading ? (
                                     [1,2].map(i => <div key={i} className="h-32 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 animate-pulse" />)
                                 ) : tasks.length > 0 ? (
-                                    tasks.map((task) => (
-                                        <div key={task.id} className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))]/70 dark:border-white/5 rounded-lg shadow-sm hover:shadow-md hover:border-[hsl(var(--border))] dark:hover:border-white/10 transition-all group cursor-pointer flex flex-col justify-between min-h-[140px] active:scale-[0.99]">
-                                            <div className="space-y-2.5">
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <div className="px-2 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded flex text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] max-w-fit">
-                                                        {task.project || 'General'}
-                                                    </div>
-                                                    {task.priority === 'high' && (
-                                                        <div className="size-5 rounded bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
-                                                            <Activity size={10} strokeWidth={3} />
+                                    tasks.map((task) => {
+                                        const href = getPlatformTaskHref(String(task.id));
+                                        return (
+                                            <Link
+                                                key={task.id}
+                                                href={href}
+                                                className="group p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))]/70 dark:border-white/5 rounded-lg shadow-sm hover:shadow-md hover:border-[hsl(var(--border))] dark:hover:border-white/10 transition-all cursor-pointer flex flex-col justify-between min-h-[140px] active:scale-[0.99]"
+                                            >
+                                                <div className="space-y-2.5">
+                                                    <div className="flex items-start justify-between gap-4">
+                                                        <div className="px-2 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded flex text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] max-w-fit">
+                                                            {task.project || 'General'}
                                                         </div>
-                                                    )}
+                                                        {task.priority === 'high' && (
+                                                            <div className="size-5 rounded bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                                                                <Activity size={10} strokeWidth={3} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <h3 className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-snug group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-2">
+                                                        {task.title}
+                                                    </h3>
                                                 </div>
-                                                <h3 className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-snug group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-2">
-                                                    {task.title}
-                                                </h3>
-                                            </div>
-                                            <div className="flex items-center justify-between pt-3 mt-3 border-t border-[hsl(var(--border))] dark:border-white/5">
-                                                <div className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-                                                    <Clock size={12} />
-                                                    <span className="text-[11px] font-medium">Vence pronto</span>
+                                                <div className="flex items-center justify-between pt-3 mt-3 border-t border-[hsl(var(--border))] dark:border-white/5">
+                                                    <div className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                                        <Clock size={12} />
+                                                        <span className="text-[11px] font-medium">Vence pronto</span>
+                                                    </div>
+                                                    <div className="size-6 rounded bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] flex items-center justify-center font-semibold">
+                                                        {user?.username ? user.username.substring(0, 2).toUpperCase() : 'ME'}
+                                                    </div>
                                                 </div>
-                                                <div className="size-6 rounded bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] flex items-center justify-center font-semibold">
-                                                    {user?.username ? user.username.substring(0, 2).toUpperCase() : 'ME'}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
+                                            </Link>
+                                        );
+                                    })
                                 ) : (
                                     <div className="col-span-full py-1.5 text-center bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg">
                                         <div className="size-10 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg flex items-center justify-center mx-auto mb-3">
