@@ -8,6 +8,7 @@ Plus
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React,{ useEffect,useMemo,useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import type { ViewType } from '@/components/ViewSwitcher';
 import ProjectsShell from '@/components/projects/ProjectsShell';
@@ -34,6 +35,7 @@ const PROJECT_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', '
 export default function ProjectsClient({ initialProjects }: { initialProjects: ProjectRecord[] }) {
     const { token } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [projects, setProjects] = useState<ProjectRecord[]>(initialProjects);
     const [dashboard, setDashboard] = useState<{ cards?: Array<{ label: string; value: number; icon?: string; color?: string }>; workload_distribution?: Array<{ name: string; tasks: number }>; delayed_tasks_count?: number } | null>(null);
     const [viewType, setViewType] = useState<ViewType>('grid');
@@ -53,6 +55,14 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
         };
         loadDashboard();
     }, [token]);
+
+    useEffect(() => {
+        const view = searchParams?.get('view');
+        if (!view) return;
+        if ((PROJECT_VIEWS as string[]).includes(view)) {
+            setViewType(view as ViewType);
+        }
+    }, [searchParams]);
 
     // Quality filter: hide projects with nonsensical/test names
     const isValidProject = (p: ProjectRecord) => {
@@ -221,10 +231,10 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                 <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {dashboard?.cards?.map((card: { label: string; title?: string; value: number; trend?: number; icon?: string; color?: string }, idx: number) => {
                         const label = (card.title || card.label).toLowerCase();
-                        let href = '/plataforma/projects';
-                        if (label.includes('tarea')) href = '/plataforma/projects/tasks';
-                        else if (label.includes('actividad') || label.includes('activity')) href = '/plataforma/projects?view=activity';
-                        else if (label.includes('atrasad') || label.includes('delayed')) href = '/plataforma/projects/tasks?status=overdue';
+                        let href = '/plataforma/projects?view=list';
+                        if (label.includes('tarea')) href = '/plataforma/projects/tasks?view=list';
+                        else if (label.includes('actividad') || label.includes('activity')) href = '/plataforma/projects/general?view=list';
+                        else if (label.includes('atrasad') || label.includes('delayed')) href = '/plataforma/projects/tasks?status=overdue&view=list';
                         return (
                             <DSMetric
                                 key={idx}
@@ -249,7 +259,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                         </Link>
                     </div>
                     <div>
-                        <Link href="/plataforma/projects/tasks" className="block">
+                        <Link href="/plataforma/projects/tasks?view=list" className="block">
                             <DSCard className="hover:border-rose-400/30 transition-all cursor-pointer">
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Tareas</h3>
                                 <div className="space-y-4 pt-4">

@@ -14,6 +14,7 @@ import type { ProjectTaskRecord } from '@/types/projects';
 import { CheckCircle2, Layout } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
+import { useSearchParams } from 'next/navigation';
 
 const STATUS_FLOW: TaskStatus[] = ['todo', 'in_progress', 'review', 'completed'];
 // `as const` preserves the literal 'all' union; without it, TS widens the
@@ -29,6 +30,7 @@ function formatStatusFilter(value: StatusFilter): string {
 
 export default function ProjectsTasksPage() {
     const { token } = useAuth();
+    const searchParams = useSearchParams();
     const [tasks, setTasks] = useState<ProjectTaskRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState<StatusFilter>('all');
@@ -49,6 +51,15 @@ export default function ProjectsTasksPage() {
         };
         load();
     }, [token]);
+
+    useEffect(() => {
+        const view = searchParams?.get('view');
+        if (!view) return;
+        const allowedViews: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
+        if (allowedViews.includes(view as ViewType)) {
+            setViewType(view as ViewType);
+        }
+    }, [searchParams]);
 
     const filtered = useMemo(() => {
         if (status === 'all') return tasks;
@@ -198,4 +209,3 @@ export default function ProjectsTasksPage() {
         </ProjectsShell>
     );
 }
-
