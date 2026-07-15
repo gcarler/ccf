@@ -35,7 +35,7 @@ class TaskSupplyUpdate(BaseModel):
 
 
 class TaskSupply(TaskSupplyBase):
-    id: UUID
+    id: UUIDStr
     task_id: UUIDStr
     model_config = orm_config
 
@@ -57,7 +57,7 @@ class ProjectPhaseInput(BaseModel):
 
 
 class ProjectAttachment(BaseModel):
-    id: UUID
+    id: UUIDStr
     task_id: UUIDStr
     filename: str
     file_url: str
@@ -160,7 +160,7 @@ class ProjectMilestone(ProjectMilestoneBase):
 
 
 class ProjectActivityLog(BaseModel):
-    id: UUID
+    id: UUIDStr
     project_id: UUIDStr
     persona_id: Optional[UUIDStr] = None
     user_name: Optional[str] = "Sistema"
@@ -239,7 +239,7 @@ class ProjectCommentUpdate(BaseModel):
 
 
 class ProjectCommentItem(ProjectCommentBase):
-    id: UUID
+    id: UUIDStr
     project_id: UUIDStr
     author_id: Optional[UUIDStr] = None
     author_name: str
@@ -253,7 +253,7 @@ class InboxReadToggle(BaseModel):
 
 
 class ProjectDocument(BaseModel):
-    id: UUID
+    id: UUIDStr
     project_id: UUIDStr
     title: str
     content: Optional[str] = None
@@ -280,7 +280,7 @@ ProjectDocumentRead = ProjectDocument
 
 
 class ProjectWhiteboard(BaseModel):
-    id: UUID
+    id: UUIDStr
     project_id: UUIDStr
     title: str
     elements_json: str = "[]"
@@ -320,7 +320,7 @@ class ProjectMessageCreate(BaseModel):
 
 
 class ProjectMessageItem(BaseModel):
-    id: UUID
+    id: UUIDStr
     sender_id: str
     sender_name: str = ""
     content: str

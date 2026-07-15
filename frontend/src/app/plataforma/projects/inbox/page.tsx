@@ -56,7 +56,7 @@ export default function ProjectsInboxPage() {
         if (!token) return;
         setResolvingId(msg.id);
         try {
-            if (msg.task_id) {
+            if (msg.type === 'task_assigned' && msg.task_id) {
                 await apiFetch(`/projects/tasks/${msg.task_id}`, {
                     method: 'PATCH',
                     token,
@@ -193,4 +193,3 @@ function Tab({ active, label, onClick }: { active: boolean; label: string; onCli
         <button onClick={onClick} className={clsx("px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-all border-b-2", active ? "text-[hsl(var(--primary))] border-blue-600" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]")}>{label}</button>
     );
 }
-
