@@ -802,7 +802,7 @@ export default function PersonaDetailPage() {
                                 const metrics = insight?.metrics ?? [];
                                 const currentMentor = insight?.current_mentorship ?? persona.current_mentorship;
                                 return (
-                                    <div className="p-4 bg-gradient-to-br from-sky-600 via-blue-600 to-indigo-700 rounded-md text-white shadow-xl relative overflow-hidden group">
+                                    <div className="p-4 bg-gradient-to-br from-sky-600 via-blue-600 to-sky-800 rounded-md text-white shadow-xl relative overflow-hidden group">
                                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700"><Sparkles size={100} /></div>
                                         <div className="relative z-10 space-y-4">
                                             <div className="flex items-center gap-2">
