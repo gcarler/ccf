@@ -14,6 +14,7 @@
         "test": "vitest run",
         "test:e2e": "playwright test",
         "test:e2e:auth": "playwright test --grep @auth",
+        "test:e2e:seed-projects-demo": "node tests/e2e/seed-projects-demo.mjs",
         "test:e2e:auth:managed": "powershell -Command \"$env:PLAYWRIGHT_BASE_URL='http://localhost:4173'; $env:E2E_AUTH_ENABLED='1'; $env:NEXT_PUBLIC_API_URL='http://127.0.0.1:8000/api'; $env:API_BASE_URL='http://127.0.0.1:8000/api'; $p = Start-Process -FilePath npm.cmd -ArgumentList @('run','dev','--','-p','4173') -PassThru -WindowStyle Hidden; try { Start-Sleep -Seconds 15; npx.cmd playwright test --grep '@auth' --workers 1 --reporter line } finally { if ($p -and -not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } }\"",
         "test:e2e:seed-user": "node tests/e2e/seed-auth-user.mjs",
         "storybook": "storybook dev -p 6006",
