@@ -2,40 +2,20 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    ChevronDown, ChevronRight, Plus, Calendar,
+    ChevronDown, ChevronRight, Plus,
     MessageSquare, MoreHorizontal, CheckCircle2, X, Send,
-    Paperclip, AtSign, Smile, User, Check, Search, Loader2,
-    AlertCircle, ChevronLeft,
+    Paperclip, AtSign, Smile, Check,
 } from 'lucide-react';
-import * as Popover from '@radix-ui/react-popover';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import type { ProjectTaskRecord } from '@/types/projects';
-import { apiFetch } from '@/lib/http';
-import { useAuth } from '@/context/AuthContext';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
-
-// ─── Tiny date helpers ────────────────────────────────────────────────────────
-const DAYS_ES = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'];
-const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
-function getDaysInMonth(year: number, month: number) {
-    return new Date(year, month + 1, 0).getDate();
-}
-function getFirstDayOfMonth(year: number, month: number) {
-    return new Date(year, month, 1).getDay();
-}
-function formatRelative(date: Date): string {
-    const today = new Date(); today.setHours(0,0,0,0);
-    const d = new Date(date); d.setHours(0,0,0,0);
-    const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
-    if (diff === 0) return 'Hoy';
-    if (diff === 1) return 'Mañana';
-    if (diff === -1) return 'Ayer';
-    if (diff < 0) return d.toLocaleDateString('es-PE', { day:'2-digit', month:'short' });
-    if (diff <= 7) return `En ${diff}d`;
-    return d.toLocaleDateString('es-PE', { day:'2-digit', month:'short' });
-}
+import {
+    InlineStatusPicker,
+    InlinePriorityPicker,
+    InlineDatePicker,
+    InlineUserPicker,
+} from '@/components/ui/inline-editors';
 
 // ─── Status Config ────────────────────────────────────────────────────────────
 const STATUS_OPTIONS = [
@@ -46,17 +26,6 @@ const STATUS_OPTIONS = [
 ] as const;
 function getStatus(val: string) {
     return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0];
-}
-
-// ─── Priority Config ──────────────────────────────────────────────────────────
-const PRIORITY_OPTIONS = [
-    { value: 'low',    label: 'Baja',    color: 'text-[hsl(var(--text-secondary))]',   fill: '#94a3b8' },
-    { value: 'medium', label: 'Media',   color: 'text-[hsl(var(--primary))]',    fill: '#3b82f6' },
-    { value: 'high',   label: 'Alta',    color: 'text-orange-500',  fill: '#f97316' },
-    { value: 'urgent', label: 'Urgente', color: 'text-rose-500',    fill: '#ef4444' },
-] as const;
-function getPriority(val: string) {
-    return PRIORITY_OPTIONS.find(p => p.value === val) ?? PRIORITY_OPTIONS[1];
 }
 
 // ─── Group header pill styles ─────────────────────────────────────────────────
@@ -86,386 +55,12 @@ interface Props {
     onOpenTask: (task: ProjectTaskRecord) => void;
     onAddTask: (status: string) => void;
     onTasksChange?: (tasks: ProjectTaskRecord[]) => void;
+    onTaskUpdate?: (taskId: string, patch: Partial<ProjectTaskRecord>) => void;
     quickAddStatus?: string | null;
     quickAddTitle?: string;
     onQuickAddTitleChange?: (v: string) => void;
     onQuickAddConfirm?: () => void;
     onQuickAddCancel?: () => void;
-}
-
-// ─── Inline User Picker ───────────────────────────────────────────────────────
-function InlineUserPicker({
-    currentUser,
-    onSelect,
-}: {
-    currentUser?: TaskUser | null;
-    onSelect: (user: TaskUser) => void;
-}) {
-    const { token } = useAuth();
-    const [open, setOpen] = useState(false);
-    const [users, setUsers] = useState<TaskUser[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [search, setSearch] = useState('');
-
-    const fetchUsers = async () => {
-        if (!token || users.length > 0) return;
-        setLoading(true);
-        try {
-            const data = await apiFetch<any[]>('/admin/users/', { token });
-            if (Array.isArray(data)) {
-                setUsers(data.map((u) => ({
-                    id: u.id,
-                    username: u.nombre_completo || `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.username,
-                    email: u.email,
-                })));
-            }
-        } catch { /* silencioso */ }
-        finally { setLoading(false); }
-    };
-
-    const filtered = search
-        ? users.filter(u => u.username.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()))
-        : users;
-
-    const initials = currentUser?.username?.slice(0, 2).toUpperCase() || '';
-
-    return (
-        <Popover.Root open={open} onOpenChange={(v) => { setOpen(v); if (v) fetchUsers(); }}>
-            <Popover.Trigger asChild>
-                <button
-                    className={clsx(
-                        'group flex items-center justify-center min-w-[40px] min-h-[40px] rounded-lg transition-all',
-                        'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
-                        open && 'bg-blue-50 dark:bg-blue-500/10 ring-1 ring-blue-300 dark:ring-blue-500/40'
-                    )}
-                    title={currentUser ? `Asignado a ${currentUser.username}` : 'Asignar persona'}
-                    aria-label="Selector de persona asignada"
-                >
-                    {currentUser ? (
-                        <div className="size-6 rounded-full bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center font-semibold text-white shrink-0 shadow-sm">
-                            {initials}
-                        </div>
-                    ) : (
-                        <div className="size-6 rounded-full bg-[hsl(var(--surface-3))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:bg-blue-100 dark:group-hover:bg-blue-500/20 group-hover:text-[hsl(var(--primary))] transition-colors">
-                            <User size={12} />
-                        </div>
-                    )}
-                </button>
-            </Popover.Trigger>
-
-            <Popover.Portal>
-                <Popover.Content
-                    className="z-[500] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden"
-                    sideOffset={6}
-                    align="start"
-                    onOpenAutoFocus={e => e.preventDefault()}
-                >
-                    {/* Search */}
-                    <div className="flex items-center gap-2 px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5">
-                        <Search size={13} className="text-[hsl(var(--text-secondary))] shrink-0" />
-                        <input
-                            autoFocus
-                            type="text"
-                            placeholder="Buscar usuario..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="flex-1 text-[12px] bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
-                        />
-                    </div>
-
-                    {/* List */}
-                    <div className="max-h-52 overflow-y-auto p-1 scrollbar-thin">
-                        {loading ? (
-                            <div className="flex items-center justify-center py-2">
-                                <Loader2 size={16} className="animate-spin text-[hsl(var(--primary))]" />
-                            </div>
-                        ) : filtered.length === 0 ? (
-                            <p className="text-center text-[11px] text-[hsl(var(--text-secondary))] py-1.5">
-                                {search ? 'Sin resultados' : 'No hay usuarios disponibles'}
-                            </p>
-                        ) : filtered.map(user => (
-                            <button
-                                key={user.id}
-                                onClick={() => { onSelect(user); setOpen(false); setSearch(''); }}
-                                className={clsx(
-                                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] font-medium transition-colors text-left',
-                                    currentUser?.id === user.id
-                                        ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300'
-                                        : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
-                                )}
-                            >
-                                <div className="size-6 rounded-full bg-gradient-to-br from-[hsl(var(--surface-3))] to-[hsl(var(--bg-muted))] flex items-center justify-center font-semibold text-white shrink-0">
-                                    {user.username.slice(0, 2).toUpperCase()}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="truncate font-semibold">{user.username}</p>
-                                    <p className="truncate text-[10px] text-[hsl(var(--text-secondary))]">{user.email}</p>
-                                </div>
-                                {currentUser?.id === user.id && <Check size={13} className="text-[hsl(var(--primary))] shrink-0" />}
-                            </button>
-                        ))}
-                    </div>
-                </Popover.Content>
-            </Popover.Portal>
-        </Popover.Root>
-    );
-}
-
-// ─── Mini Calendar Date Picker ────────────────────────────────────────────────
-function InlineDatePicker({
-    currentDate,
-    onSelect,
-}: {
-    currentDate?: string | null;
-    onSelect: (date: string | null) => void;
-}) {
-    const [open, setOpen] = useState(false);
-    const today = new Date(); today.setHours(0,0,0,0);
-    const parsed = currentDate ? new Date(currentDate + 'T00:00:00') : null;
-    const [viewYear, setViewYear] = useState((parsed ?? today).getFullYear());
-    const [viewMonth, setViewMonth] = useState((parsed ?? today).getMonth());
-
-    const isOverdue = parsed && parsed < today;
-    const isToday2 = parsed && parsed.toDateString() === today.toDateString();
-    const label = parsed ? formatRelative(parsed) : null;
-
-    const daysInMonth = getDaysInMonth(viewYear, viewMonth);
-    const rawFirstDay = getFirstDayOfMonth(viewYear, viewMonth);
-    const firstDay = isNaN(rawFirstDay) ? 0 : Math.max(0, Math.min(6, rawFirstDay));
-    const cells: (number | null)[] = [
-        ...Array(firstDay).fill(null),
-        ...Array.from({length: Math.max(0, daysInMonth)}, (_, i) => i + 1)
-    ];
-
-    const selectDay = (day: number) => {
-        const d = new Date(viewYear, viewMonth, day);
-        const iso = d.toLocaleDateString('en-CA');
-        onSelect(iso);
-        setOpen(false);
-    };
-
-    return (
-        <Popover.Root open={open} onOpenChange={(v) => { setOpen(v); if (!v) return; if (parsed) { setViewYear(parsed.getFullYear()); setViewMonth(parsed.getMonth()); }}}>
-            <Popover.Trigger asChild>
-                <button
-                    className={clsx(
-                        'group flex items-center gap-1.5 px-2 min-h-[40px] rounded-lg transition-all text-[12px] font-medium whitespace-nowrap',
-                        'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
-                        open && 'bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10',
-                        isOverdue ? 'text-rose-500 dark:text-rose-400'
-                            : isToday2 ? 'text-amber-500 dark:text-amber-400'
-                            : parsed ? 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]'
-                            : 'text-[hsl(var(--text-secondary))] dark:text-white/20'
-                    )}
-                    aria-label="Seleccionar fecha límite"
-                >
-                    {isOverdue
-                        ? <AlertCircle size={13} className="shrink-0" />
-                        : <Calendar size={13} className={clsx('shrink-0 transition-colors', !parsed && 'group-hover:text-[hsl(var(--text-secondary))]')} />}
-                    {label && <span>{label}</span>}
-                </button>
-            </Popover.Trigger>
-
-            <Popover.Portal>
-                <Popover.Content
-                    className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-3 select-none"
-                    sideOffset={6}
-                    align="start"
-                    onOpenAutoFocus={e => e.preventDefault()}
-                >
-                    {/* Month navigator */}
-                    <div className="flex items-center justify-between mb-3">
-                        <button onClick={() => { let m = viewMonth-1; let y = viewYear; if(m<0){m=11;y--;} setViewMonth(m); setViewYear(y); }} className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
-                            <ChevronLeft size={14}/>
-                        </button>
-                        <span className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
-                            {MONTHS_ES[viewMonth]} {viewYear}
-                        </span>
-                        <button onClick={() => { let m = viewMonth+1; let y = viewYear; if(m>11){m=0;y++;} setViewMonth(m); setViewYear(y); }} className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
-                            <ChevronDown size={14}/>
-                        </button>
-                    </div>
-
-                    {/* Day names */}
-                    <div className="grid grid-cols-7 mb-1">
-                        {DAYS_ES.map(d => (
-                            <div key={d} className="text-[9px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center py-0.5">{d}</div>
-                        ))}
-                    </div>
-
-                    {/* Calendar grid */}
-                    <div className="grid grid-cols-7 gap-y-0.5">
-                        {cells.map((day, i) => {
-                            if (!day) return <div key={`e-${i}`} />;
-                            const cellDate = new Date(viewYear, viewMonth, day);
-                            const isSelected = parsed && cellDate.toDateString() === parsed.toDateString();
-                            const isTodayCell = cellDate.toDateString() === today.toDateString();
-                            const isPast = cellDate < today && !isTodayCell;
-                            return (
-                                <button
-                                    key={day}
-                                    onClick={() => selectDay(day)}
-                                    className={clsx(
-                                        'size-8 rounded-lg text-[12px] font-medium transition-all mx-auto flex items-center justify-center',
-                                        isSelected
-                                            ? 'bg-[hsl(var(--primary))] text-white font-bold shadow-sm'
-                                            : isTodayCell
-                                            ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold ring-1 ring-blue-200 dark:ring-blue-500/30'
-                                            : isPast
-                                            ? 'text-[hsl(var(--text-secondary))] dark:text-white/20 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
-                                            : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5'
-                                    )}
-                                >
-                                    {day}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 mt-3 pt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
-                        <button
-                            onClick={() => selectDay(today.getDate())}
-                            className="flex-1 text-[11px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
-                        >
-                            Hoy
-                        </button>
-                        {currentDate && (
-                            <button
-                                onClick={() => { onSelect(null); setOpen(false); }}
-                                className="flex-1 text-[11px] font-bold text-rose-500 dark:text-rose-400 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
-                            >
-                                Quitar
-                            </button>
-                        )}
-                    </div>
-                </Popover.Content>
-            </Popover.Portal>
-        </Popover.Root>
-    );
-}
-
-// ─── Inline Priority Picker ───────────────────────────────────────────────────
-function InlinePriorityPicker({
-    currentPriority,
-    onSelect,
-}: {
-    currentPriority: string;
-    onSelect: (priority: string) => void;
-}) {
-    const [open, setOpen] = useState(false);
-    const prio = getPriority(currentPriority);
-
-    return (
-        <Popover.Root open={open} onOpenChange={setOpen}>
-            <Popover.Trigger asChild>
-                <button
-                    className={clsx(
-                        'group flex items-center justify-center min-w-[40px] min-h-[40px] rounded-lg transition-all',
-                        'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
-                        open && 'bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10'
-                    )}
-                    title={`Prioridad: ${prio.label}`}
-                    aria-label="Selector de prioridad"
-                >
-                    {/* Flag SVG coloreable */}
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill={prio.fill} stroke={prio.fill} strokeWidth="0" className="transition-all duration-150">
-                        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
-                        <line x1="4" y1="22" x2="4" y2="15" stroke={prio.fill} strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                </button>
-            </Popover.Trigger>
-
-            <Popover.Portal>
-                <Popover.Content
-                    className="z-[500] w-44 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 p-1"
-                    sideOffset={6}
-                    align="start"
-                >
-                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-3 py-1.5">Prioridad</p>
-                    {PRIORITY_OPTIONS.map(opt => (
-                        <button
-                            key={opt.value}
-                            onClick={() => { onSelect(opt.value); setOpen(false); }}
-                            className={clsx(
-                                'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-semibold transition-colors',
-                                currentPriority === opt.value
-                                    ? 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white'
-                                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
-                            )}
-                        >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill={opt.fill} strokeWidth="0">
-                                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
-                                <line x1="4" y1="22" x2="4" y2="15" stroke={opt.fill} strokeWidth="2" strokeLinecap="round"/>
-                            </svg>
-                            {opt.label}
-                            {currentPriority === opt.value && <Check size={12} className="ml-auto text-[hsl(var(--primary))]" />}
-                        </button>
-                    ))}
-                </Popover.Content>
-            </Popover.Portal>
-        </Popover.Root>
-    );
-}
-
-// ─── Inline Status Picker ─────────────────────────────────────────────────────
-function InlineStatusPicker({
-    currentStatus,
-    onSelect,
-}: {
-    currentStatus: string;
-    onSelect: (status: string) => void;
-}) {
-    const [open, setOpen] = useState(false);
-    const cfg = getStatus(currentStatus);
-
-    return (
-        <Popover.Root open={open} onOpenChange={setOpen}>
-            <Popover.Trigger asChild>
-                <button
-                    className={clsx(
-                        'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all min-h-[28px]',
-                        cfg.bg, cfg.text,
-                        'border',
-                        open ? 'ring-2 ring-blue-500/30 border-blue-400' : cfg.border,
-                        'hover:brightness-95 dark:hover:brightness-110'
-                    )}
-                    aria-label="Selector de estado"
-                    aria-expanded={open}
-                >
-                    <span className={clsx('size-1.5 rounded-full shrink-0', cfg.dot)} />
-                    {cfg.label}
-                    <ChevronDown size={9} className={clsx('ml-0.5 transition-transform duration-200', open && 'rotate-180')} />
-                </button>
-            </Popover.Trigger>
-
-            <Popover.Portal>
-                <Popover.Content
-                    className="z-[500] w-48 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))] dark:border-white/10 p-1"
-                    sideOffset={6}
-                    align="start"
-                >
-                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-3 py-1.5">Estado</p>
-                    {STATUS_OPTIONS.filter((s, i, arr) => arr.findIndex(x => x.label === s.label) === i).map(opt => (
-                        <button
-                            key={opt.value}
-                            onClick={() => { onSelect(opt.value); setOpen(false); }}
-                            className={clsx(
-                                'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-semibold transition-colors',
-                                currentStatus === opt.value
-                                    ? 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white'
-                                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
-                            )}
-                        >
-                            <span className={clsx('size-2 rounded-full shrink-0', opt.dot)} />
-                            {opt.label}
-                            {currentStatus === opt.value && <Check size={12} className="ml-auto text-[hsl(var(--primary))]" />}
-                        </button>
-                    ))}
-                </Popover.Content>
-            </Popover.Portal>
-        </Popover.Root>
-    );
 }
 
 // ─── Quick Comment Popover ────────────────────────────────────────────────────
@@ -542,7 +137,7 @@ function TaskRow({
     const status = task._status ?? task.status ?? 'todo';
     const priority = task._priority ?? task.priority ?? 'medium';
     const dueDate = task._due_date !== undefined ? task._due_date : task.due_date;
-    const assignedUser = task._assignedUser ?? null;
+    const assignedUserId = task._assignedUser?.id != null ? String(task._assignedUser.id) : (task.assignee_id ?? null);
 
     // Close comment popover on outside click
     useEffect(() => {
@@ -605,32 +200,32 @@ function TaskRow({
             {/* ── PERSONA ASIGNADA ─────── */}
             <div className="w-28 flex-shrink-0 flex items-center justify-center px-1">
                 <InlineUserPicker
-                    currentUser={assignedUser}
-                    onSelect={(user) => onChange({ _assignedUser: user })}
+                    value={assignedUserId}
+                    onChange={(userId, userName) => onChange({ _assignedUser: userId ? { id: Number(userId), username: userName || '', email: '' } : null })}
                 />
             </div>
 
             {/* ── FECHA LÍMITE ─────────── */}
             <div className="w-32 flex-shrink-0 flex items-center px-1">
                 <InlineDatePicker
-                    currentDate={dueDate as string | null}
-                    onSelect={(date) => onChange({ _due_date: date })}
+                    value={dueDate as string | null}
+                    onChange={(date) => onChange({ _due_date: date })}
                 />
             </div>
 
             {/* ── PRIORIDAD ────────────── */}
             <div className="w-20 flex-shrink-0 flex items-center justify-center px-1">
                 <InlinePriorityPicker
-                    currentPriority={priority}
-                    onSelect={(p) => onChange({ _priority: p })}
+                    value={priority}
+                    onChange={(p) => onChange({ _priority: p })}
                 />
             </div>
 
             {/* ── ESTADO ───────────────── */}
             <div className="w-36 flex-shrink-0 flex items-center px-2">
                 <InlineStatusPicker
-                    currentStatus={status}
-                    onSelect={(s) => onChange({ _status: s })}
+                    value={status}
+                    onChange={(s) => onChange({ _status: s })}
                 />
             </div>
 
@@ -819,6 +414,7 @@ export default function ProjectListView({
     onOpenTask,
     onAddTask,
     onTasksChange,
+    onTaskUpdate,
     quickAddStatus,
     quickAddTitle,
     onQuickAddTitleChange,
@@ -840,6 +436,17 @@ export default function ProjectListView({
             [taskId]: { ...(prev[taskId] ?? {}), ...patch },
         }));
 
+        // Map local overlay fields to real task fields for persistence
+        const apiPatch: Partial<ProjectTaskRecord> = {};
+        if (patch._status !== undefined) apiPatch.status = patch._status;
+        if (patch._priority !== undefined) apiPatch.priority = patch._priority;
+        if (patch._due_date !== undefined) apiPatch.due_date = patch._due_date;
+        if (patch._assignedUser !== undefined) apiPatch.assignee_id = patch._assignedUser ? String(patch._assignedUser.id) : null;
+
+        if (Object.keys(apiPatch).length > 0) {
+            onTaskUpdate?.(String(taskId), apiPatch);
+        }
+
         // Also propagate upward if caller wants to persist
         if (onTasksChange) {
             const updated = propTasks.map(t =>
@@ -847,7 +454,7 @@ export default function ProjectListView({
             );
             onTasksChange(updated as ProjectTaskRecord[]);
         }
-    }, [propTasks, onTasksChange]);
+    }, [onTaskUpdate, propTasks, onTasksChange]);
 
     const groups = STATUS_ORDER.map(status => ({
         status,
