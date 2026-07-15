@@ -26,13 +26,13 @@ interface Grupo {
  status: string;
  evangelism_strategy_id: string | null;
  base_attendees?: {
- persona_id: string;
- name?: string;
- role: string;
- role_label?: string;
- rol_personalizado_id?: number | null;
- phone?: string;
- persona?: { nombre_completo: string; telefono?: string };
+  persona_id: string;
+  name?: string;
+  role: string;
+  role_label?: string;
+  rol_personalizado_id?: string | null;
+  phone?: string;
+  persona?: { nombre_completo: string; telefono?: string };
  }[];
 }
 

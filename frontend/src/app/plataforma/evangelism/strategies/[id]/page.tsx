@@ -58,7 +58,7 @@ interface Strategy {
  codigo?: string;
  clase_raiz?: string;
  activa: boolean;
- default_role_id?: number | null;
+ default_role_id?: string | null;
  typology: string;
  recurrence: string | null;
  day_of_week: string | null;
@@ -75,7 +75,7 @@ interface Strategy {
 }
 
 interface CustomRole {
- id: number;
+ id: string;
  estrategia_id: string;
  nombre_rol: string;
  descripcion?: string;
@@ -102,7 +102,7 @@ interface StrategyGroup {
 type HabilitacionEstado = 'DESHABILITADO' | 'HABILITADO' | 'CERRADO' | 'CANCELADA';
 
 interface SessionRow {
- id: number;
+ id: string;
  grupo_id: string;
  session_date: string;
  status: string;
@@ -279,7 +279,7 @@ export default function StrategyDetailPage() {
  const [editStatus, setEditStatus] = useState<'active' | 'pending' | 'done'>('pending');
  const [editActiva, setEditActiva] = useState(true);
  const [editClaseRaiz, setEditClaseRaiz] = useState('');
- const [editDefaultRoleId, setEditDefaultRoleId] = useState<number | null | undefined>(undefined);
+ const [editDefaultRoleId, setEditDefaultRoleId] = useState<string | null | undefined>(undefined);
  const [editStartDate, setEditStartDate] = useState('');
  const [editEndDate, setEditEndDate] = useState('');
  const [editRecurrence, setEditRecurrence] = useState<string | null>(null);
@@ -366,7 +366,7 @@ export default function StrategyDetailPage() {
  const [isAttendanceDrawerOpen, setIsAttendanceDrawerOpen] = useState(false);
 
  // Session menu
- const [sessionMenuId, setSessionMenuId] = useState<number | null>(null);
+ const [sessionMenuId, setSessionMenuId] = useState<string | null>(null);
  const [shareMenuId, setShareMenuId] = useState<string | null>(null);
  const [sessionGroupFilter, setSessionGroupFilter] = useState<string | 'all'>('all');
  const [sessionHabFilter, setSessionHabFilter] = useState<'all' | 'HABILITADO' | 'DESHABILITADO' | 'CERRADO'>('all');
@@ -410,7 +410,7 @@ export default function StrategyDetailPage() {
  || 'Persona';
 
  const getRoleLabel = (value: string, fallback?: string) => {
- const customId = value?.startsWith('custom:') ? Number(value.split(':')[1]) : null;
+ const customId = value?.startsWith('custom:') ? value.split(':')[1] : null;
  if (customId) {
  return customRoles.find(role => role.id === customId)?.nombre_rol || fallback || value;
  }
@@ -698,11 +698,11 @@ export default function StrategyDetailPage() {
  method: 'PUT', token,
  silent: true,
  body: {
- base_attendees_with_roles: groupPersonas.map(m => ({
- persona_id: m.id,
- role: m.role,
- rol_personalizado_id: m.role.startsWith('custom:') ? Number(m.role.split(':')[1]) : null,
- })),
+  base_attendees_with_roles: groupPersonas.map(m => ({
+   persona_id: m.id,
+   role: m.role,
+   rol_personalizado_id: m.role.startsWith('custom:') ? m.role.split(':')[1] : null,
+  })),
  },
  });
  toast.success('Personas actualizados');
@@ -908,7 +908,7 @@ export default function StrategyDetailPage() {
  } finally { setSavingNewVisitor(false); }
  };
 
- const handleDeleteSession = async (sessionId: number) => {
+ const handleDeleteSession = async (sessionId: string) => {
  try {
  await apiFetch(`/evangelism/sessions/${sessionId}`, { method: 'DELETE', token, silent: true });
  toast.success('Sesión eliminada');
@@ -919,7 +919,7 @@ export default function StrategyDetailPage() {
  setSessionMenuId(null);
  };
 
- const requestDeleteSession = (sessionId: number) => {
+ const requestDeleteSession = (sessionId: string) => {
  setConfirmAction({
  title: 'Eliminar sesión',
  description: 'Se eliminará esta sesión y su asistencia registrada.',
@@ -2118,7 +2118,7 @@ export default function StrategyDetailPage() {
  <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Rol por defecto</label>
  <select
  value={editDefaultRoleId ?? ''}
- onChange={e => setEditDefaultRoleId(e.target.value ? Number(e.target.value) : null)}
+ onChange={e => setEditDefaultRoleId(e.target.value || null)}
  disabled={customRoles.length === 0}
  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors disabled:opacity-60"
  >

@@ -14,7 +14,7 @@ const SessionTab = dynamic(() => import("./tabs/SessionTab"), { ssr: false });
 const AnalyticsTab = dynamic(() => import("./tabs/AnalyticsTab"), { ssr: false });
 
 type MinistryEventDetail = {
-  id: number;
+  id: string;
   name: string;
   title?: string;
   description: string | null;
