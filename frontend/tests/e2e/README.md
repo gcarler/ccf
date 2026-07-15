@@ -3,6 +3,7 @@
 ## Suites
 - `smoke.spec.ts`: rutas publicas (`/login`, `/faro`), siempre ejecutables.
 - `authenticated.spec.ts`: rutas con sesion (`/academy`, `/projects`, `/crm`).
+- `projects-demo.spec.ts`: semilla y verificacion de `projects`, `tasks` y `activities` con 3 proyectos / 15 tareas.
 
 ## Variables para autenticados
 - `E2E_EMAIL`
@@ -15,6 +16,7 @@ Si falta alguna variable, la suite autenticada se marca como `skip` automaticame
 - `npm run test:e2e`
 - `npm run test:e2e:auth`
 - `npm run test:e2e:seed-user`
+- `npm run test:e2e:seed-projects-demo`
 
 ## Seed de usuario para CI
 `seed-auth-user.mjs` intenta:
