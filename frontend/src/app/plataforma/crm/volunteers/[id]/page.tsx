@@ -18,7 +18,7 @@ const INPUT = "w-full bg-[hsl(var(--bg-muted))] dark:bg-white/5 border border-[h
 const LABEL = "block text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
 
 type Volunteer = {
-    id: number;
+    id: string;
     name: string;
     role: string;
     team: string;

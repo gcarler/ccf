@@ -14,7 +14,7 @@ const PRIORITY_STYLES: Record<string, string> = {
 
 interface TaskCardProps {
   task: ConsolidationTask;
-  onStatusChange: (id: number, status: string) => void;
+  onStatusChange: (id: string, status: string) => void;
   allowEditing?: boolean;
 }
 
@@ -26,7 +26,7 @@ export default function TaskCard({ task, onStatusChange, allowEditing = true }: 
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
       whileHover={{ y: -2 }}
-      onClick={() => window.location.href = `/crm/tasks/${task.id}`}
+      onClick={() => window.location.href = `/plataforma/crm/tasks/${task.id}`}
       className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group"
     >
       <div className="flex items-start gap-3">

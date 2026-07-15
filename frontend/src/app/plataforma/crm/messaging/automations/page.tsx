@@ -14,16 +14,7 @@ import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import Skeleton from '@/components/ui/Skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-
-// ─── Types ───────────────────────────────────────────────
-interface AutomationRule {
-    id: number;
-    name: string;
-    trigger: string;
-    action: string;
-    payload: Record<string, any>;
-    active: boolean;
-}
+import type { AutomationRule } from '@/types/crm';
 
 // ─── Constants ───────────────────────────────────────────
 const TRIGGERS = [
@@ -62,7 +53,7 @@ export default function AutomationsPage() {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [editingRule, setEditingRule] = useState<AutomationRule | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
     const [form, setForm] = useState(EMPTY_FORM);
 
     const fetchRules = useCallback(async () => {
@@ -139,7 +130,7 @@ export default function AutomationsPage() {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         setDeletingId(id);
         try {
             await apiFetch(`/admin/automations/${id}`, { method: 'DELETE', token });
@@ -392,4 +383,3 @@ export default function AutomationsPage() {
         </CrmShell>
     );
 }
-
