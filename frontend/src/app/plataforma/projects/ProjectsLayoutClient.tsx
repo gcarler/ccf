@@ -106,7 +106,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
                 title: 'Global',
                 items: [
                     { id: 'all-projects', label: 'Todos los Proyectos', icon: LayoutDashboard, href: '/plataforma/projects' },
-                    { id: 'my-tasks', label: 'Mis Tareas', icon: CheckCircle2, href: '/plataforma/tasks' },
+                    { id: 'my-tasks', label: 'Mis Tareas', icon: CheckCircle2, href: '/plataforma/projects/tasks' },
                 ]
             },
             {
