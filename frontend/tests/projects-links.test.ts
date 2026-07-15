@@ -9,7 +9,8 @@ describe('project metric links', () => {
     });
 
     it('keeps task and activity cards on their own destinations', () => {
-        expect(getProjectMetricHref('Tareas Pendientes')).toBe('/plataforma/projects/tasks?view=list');
+        expect(getProjectMetricHref('Tareas Pendientes')).toBe('/plataforma/projects/tasks?view=list&scope=all');
+        expect(getProjectMetricHref('Tareas Vencidas')).toBe('/plataforma/projects/tasks?status=overdue&scope=all&view=list');
         expect(getProjectMetricHref('Actividad Reciente')).toBe('/plataforma/projects/general?view=list');
     });
 });
