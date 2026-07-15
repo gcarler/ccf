@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { SITE_KEY } from "@/lib/site-config";
 import { apiFetch } from "@/lib/http";
 import { CmsPublicPage, CmsPublicPost } from "@/types/cms-v2";
 import SeoHead from "./SeoHead";
+import { usePublicBootstrap } from "../PublicBootstrapProvider";
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "Mi Comunidad";
 
@@ -256,11 +257,29 @@ async function fetchArchiveSeo(
 export default function PublicSeoManager() {
     const pathname = usePathname() || "/";
     const route = matchRoute(pathname);
-    const [cmsSeo, setCmsSeo] = useState<CmsSeoData | null>(null);
+    const bootstrap = usePublicBootstrap();
+    const bootstrappedPage = route.kind === "page" ? bootstrap?.pages?.[route.slug || ""] ?? null : route.kind === "blog" ? bootstrap?.pages?.[route.slug || "blog"] ?? null : null;
+    const initialSeo = useMemo(() => {
+        if (!bootstrappedPage) return null;
+        const seo = normalizeSeoJson(bootstrappedPage);
+        return {
+            ...seo,
+            title: seo.title || bootstrappedPage.title,
+        };
+    }, [bootstrappedPage]);
+    const [cmsSeo, setCmsSeo] = useState<CmsSeoData | null>(initialSeo);
 
     useEffect(() => {
         let active = true;
         const controller = new AbortController();
+        if (bootstrappedPage) {
+            setCmsSeo(initialSeo);
+            return () => {
+                active = false;
+                controller.abort();
+            };
+        }
+
         setCmsSeo(null);
 
         async function loadSeo() {
@@ -298,7 +317,7 @@ export default function PublicSeoManager() {
             active = false;
             controller.abort();
         };
-    }, [pathname, route.kind, route.slug, route.fallbackTitle, route.fallbackDescription, route.fallbackType]);
+    }, [pathname, route.kind, route.slug, route.fallbackTitle, route.fallbackDescription, route.fallbackType, bootstrappedPage, initialSeo]);
 
     const fallbackTitle = cmsSeo?.title || route.fallbackTitle;
     const fallbackDescription = cmsSeo?.description || route.fallbackDescription;

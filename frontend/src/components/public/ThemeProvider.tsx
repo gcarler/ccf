@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
+import { usePublicBootstrap } from "./PublicBootstrapProvider";
 
 export type Theme = "institutional" | "light" | "dark";
 
@@ -44,17 +45,28 @@ export function useTheme() {
 export const useFaroTheme = useTheme;
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+    const bootstrapTheme = usePublicBootstrap()?.theme ?? null;
     const [theme, setTheme] = useState<Theme>("institutional");
-    const [remoteTokens, setRemoteTokens] = useState<Record<string, string>>({});
+    const [remoteTokens, setRemoteTokens] = useState<Record<string, string>>(bootstrapTheme?.tokens_json || {});
     const [hasManualOverride, setHasManualOverride] = useState(false);
 
     useEffect(() => {
+        if (bootstrapTheme?.name || bootstrapTheme?.tokens_json) {
+            if (bootstrapTheme.tokens_json) {
+                setRemoteTokens(bootstrapTheme.tokens_json);
+            }
+            if (!hasManualOverride) {
+                setTheme(inferThemeMode(bootstrapTheme.name, bootstrapTheme.tokens_json));
+            }
+            return;
+        }
+
         const saved = (localStorage.getItem("site-theme-v2") || localStorage.getItem("site-theme-v2") || "").trim();
         if (saved === "institutional" || saved === "light" || saved === "dark") {
             setTheme(saved);
             setHasManualOverride(true);
         }
-    }, []);
+    }, [bootstrapTheme?.name, bootstrapTheme?.tokens_json, hasManualOverride]);
 
     useEffect(() => {
         const root = document.documentElement;
@@ -71,6 +83,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
         const loadRemoteTheme = async () => {
             try {
+                if (bootstrapTheme?.name || bootstrapTheme?.tokens_json) return;
                 const row = await apiFetch<{ name?: string; tokens_json?: Record<string, string> }>(`/cms/v2/public/sites/${SITE_KEY}/theme`, { silent: true });
                 if (mounted && row?.tokens_json && typeof row.tokens_json === "object") {
                     setRemoteTokens(row.tokens_json);
@@ -119,7 +132,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
             window.removeEventListener("storage", onStorage);
             document.removeEventListener("visibilitychange", onVisibility);
         };
-    }, [hasManualOverride]);
+    }, [hasManualOverride, bootstrapTheme?.name, bootstrapTheme?.tokens_json]);
 
     useEffect(() => {
         const root = document.documentElement;

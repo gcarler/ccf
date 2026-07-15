@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTheme } from "./ThemeProvider";
 import { useSiteBranding } from "@/lib/site-branding";
+import { usePublicBootstrap } from "./PublicBootstrapProvider";
 
 type PublicNavItem = {
     id?: string;
@@ -24,7 +25,27 @@ export default function Navbar() {
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [menuItemsV2, setMenuItemsV2] = useState<PublicNavItem[]>([]);
+    const bootstrapMenu = usePublicBootstrap()?.menus?.main ?? null;
+    const [menuItemsV2, setMenuItemsV2] = useState<PublicNavItem[]>(() => {
+        if (!bootstrapMenu) return [];
+        return (bootstrapMenu.items || [])
+            .filter((item) => item.visibility !== "hidden")
+            .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+            .filter((item) => item.parent_id === null)
+            .map((item) => ({
+                id: item.id,
+                href: item.href,
+                label: item.label,
+                children: (bootstrapMenu.items || [])
+                    .filter((child) => child.parent_id === item.id && child.visibility !== "hidden")
+                    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                    .map((child) => ({
+                        id: child.id,
+                        href: child.href,
+                        label: child.label,
+                    })),
+            }));
+    });
 
     const ctaLabel = themeTokens["--site-header-cta-label"] || "Quiero conocer a Jesús";
     const ctaHref = themeTokens["--site-header-cta-href"] || "/conocer-a-jesus";
@@ -36,6 +57,33 @@ export default function Navbar() {
     const isActiveItem = (item: PublicNavItem) => isActiveHref(item.href) || Boolean(item.children?.some((child) => isActiveHref(child.href)));
 
     useEffect(() => {
+        if (bootstrapMenu) {
+            const all = (bootstrapMenu.items || [])
+                .filter((item) => item.visibility !== "hidden")
+                .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+            const mapByParent = new Map<string | null, typeof all>();
+            all.forEach((item) => {
+                const key = item.parent_id ?? null;
+                const current = mapByParent.get(key) || [];
+                current.push(item);
+                mapByParent.set(key, current);
+            });
+
+            const roots = mapByParent.get(null) || [];
+            setMenuItemsV2(roots.map((item) => ({
+                id: item.id,
+                href: item.href,
+                label: item.label,
+                children: (mapByParent.get(item.id.toString()) || []).map((child) => ({
+                    id: child.id,
+                    href: child.href,
+                    label: child.label,
+                })),
+            })));
+            return;
+        }
+
         let mounted = true;
         const loadMenu = async () => {
             try {
@@ -72,7 +120,7 @@ export default function Navbar() {
         return () => {
             mounted = false;
         };
-    }, []);
+    }, [bootstrapMenu]);
 
     useEffect(() => {
         const handler = () => setScrolled(window.scrollY > 20);

@@ -6,6 +6,7 @@ import { SITE_EMAIL, SITE_KEY, SITE_NAME } from "@/lib/site-config";
 import { getCmsPublicPage } from "@/lib/cms/v2";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import { useSiteBranding } from "@/lib/site-branding";
+import { usePublicBootstrap } from "./PublicBootstrapProvider";
 import { ArrowUpRight, Mail, MapPin, Newspaper } from "lucide-react";
 
 type PublicLink = { href: string; label: string; kind?: string };
@@ -129,9 +130,20 @@ function FooterLinkColumn({ title, links }: { title: string; links: PublicLink[]
 
 export default function Footer() {
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
-    const [footerConfig, setFooterConfig] = useState<FooterConfig | null>(null);
+    const bootstrappedFooterPage = usePublicBootstrap()?.footerPage ?? null;
+    const [footerConfig, setFooterConfig] = useState<FooterConfig | null>(() => {
+        const section = bootstrappedFooterPage?.sections?.find((s) => s.type === "footer_config");
+        return section?.props_json ? (asRecord(section.props_json) as FooterConfig) : null;
+    });
 
     useEffect(() => {
+        if (bootstrappedFooterPage) {
+            const section = bootstrappedFooterPage.sections?.find((s) => s.type === "footer_config");
+            const props = section?.props_json ? asRecord(section.props_json) : {};
+            setFooterConfig(props as FooterConfig);
+            return;
+        }
+
         let mounted = true;
         const loadFooter = async () => {
             try {
@@ -149,7 +161,7 @@ export default function Footer() {
         return () => {
             mounted = false;
         };
-    }, []);
+    }, [bootstrappedFooterPage]);
 
     const cfg = footerConfig ?? {};
     const brandName = logoName || SITE_NAME;
