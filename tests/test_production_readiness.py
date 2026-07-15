@@ -1,6 +1,8 @@
 from scripts.auditing.production_readiness import (
     Check,
     ModuleReadiness,
+    check_next_static_assets,
+    extract_next_static_assets,
     markdown_report,
     runtime_supervision_checks,
     serialize_report,
@@ -59,3 +61,38 @@ def test_runtime_supervision_is_non_blocking_when_pm2_is_empty(monkeypatch):
     assert len(checks) == 1
     assert checks[0].status == "OK"
     assert "PM2 no registra procesos" in checks[0].detail
+
+
+def test_extract_next_static_assets_deduplicates_and_sorts():
+    html = """
+        <link rel="stylesheet" href="/_next/static/css/b.css">
+        <script src="/_next/static/chunks/a.js"></script>
+        <link rel="preload" href="/_next/static/css/b.css">
+    """
+
+    assert extract_next_static_assets(html) == [
+        "/_next/static/chunks/a.js",
+        "/_next/static/css/b.css",
+    ]
+
+
+def test_next_static_asset_check_reports_missing_assets(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.auditing.production_readiness.http_get",
+        lambda url, timeout=8: (
+            200,
+            "OK",
+            '<link rel="stylesheet" href="/_next/static/css/a.css">'
+            '<script src="/_next/static/chunks/app.js"></script>',
+        ),
+    )
+
+    def fake_http_status(url, timeout=8):
+        return (200, "OK") if url.endswith("a.css") else (404, "Not Found")
+
+    monkeypatch.setattr("scripts.auditing.production_readiness.http_status", fake_http_status)
+
+    check = check_next_static_assets("Evangelism assets", "https://example.test/plataforma/evangelism")
+
+    assert check.status == "FAIL"
+    assert "/_next/static/chunks/app.js" in check.detail

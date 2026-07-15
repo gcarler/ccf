@@ -91,12 +91,54 @@ def http_status(url: str, timeout: int = 8) -> tuple[int | None, str]:
         return None, "timeout"
 
 
+def http_get(url: str, timeout: int = 8) -> tuple[int | None, str, str]:
+    request = Request(url, headers={"User-Agent": "ccf-production-readiness/1.0"})
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            body = response.read().decode("utf-8", errors="replace")
+            return response.status, "OK", body
+    except HTTPError as exc:
+        return exc.code, exc.reason, ""
+    except URLError as exc:
+        return None, str(exc.reason), ""
+    except TimeoutError:
+        return None, "timeout", ""
+
+
 def check_http(name: str, url: str, expected: Iterable[int] = (200,)) -> Check:
     status, detail = http_status(url)
     expected_set = set(expected)
     if status in expected_set:
         return Check(name=name, status="OK", detail=f"HTTP {status} {url}")
     return Check(name=name, status="FAIL", detail=f"HTTP {status or 'ERR'} {url}: {detail}")
+
+
+_NEXT_STATIC_ASSET_RE = re.compile(r'(?P<asset>/_next/static/[^"\'\s<>]+)')
+
+
+def extract_next_static_assets(html: str) -> list[str]:
+    assets = {match.group("asset") for match in _NEXT_STATIC_ASSET_RE.finditer(html)}
+    return sorted(assets)
+
+
+def check_next_static_assets(name: str, page_url: str) -> Check:
+    status, detail, html = http_get(page_url)
+    if status != 200:
+        return Check(name=name, status="FAIL", detail=f"HTTP {status or 'ERR'} {page_url}: {detail}")
+
+    assets = extract_next_static_assets(html)
+    if not assets:
+        return Check(name=name, status="WARN", detail=f"No _next/static assets found in {page_url}", severity="medium")
+
+    missing: list[str] = []
+    for asset in assets:
+        asset_status, asset_detail = http_status(f"{page_url.split('/plataforma/')[0]}{asset}")
+        if asset_status != 200:
+            missing.append(f"{asset} -> HTTP {asset_status or 'ERR'}: {asset_detail}")
+
+    if missing:
+        return Check(name=name, status="FAIL", detail="\n".join(missing[:8]))
+    return Check(name=name, status="OK", detail=f"{len(assets)} static assets verified")
 
 
 def path_exists(name: str, path: Path, severity: str = "critical") -> Check:
@@ -325,6 +367,7 @@ def build_modules(base_url: str) -> list[ModuleReadiness]:
                 check_http("CRM resources", f"{base_url}/plataforma/crm/resources"),
                 check_http("Academy", f"{base_url}/plataforma/academy"),
                 check_http("Evangelism", f"{base_url}/plataforma/evangelism"),
+                check_next_static_assets("Evangelism assets", f"{base_url}/plataforma/evangelism"),
                 check_http("Projects", f"{base_url}/plataforma/projects"),
                 check_http("Finance", f"{base_url}/plataforma/finances"),
             ],
