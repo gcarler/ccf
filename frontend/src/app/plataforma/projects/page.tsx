@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import ProjectsClient from './ProjectsClient';
-import { fetchProjects } from './projectsData';
+import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
     title: 'Proyectos · CCF Mesh',
@@ -9,6 +8,5 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function ProjectsPage() {
-    const projects = await fetchProjects();
-    return <ProjectsClient initialProjects={projects} />;
+    redirect('/plataforma/projects?view=list#projects-list');
 }
