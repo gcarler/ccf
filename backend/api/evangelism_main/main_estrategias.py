@@ -58,6 +58,22 @@ def _count_strategy_groups(db: Session, strategy_id: UUID) -> int:
     ).count()
 
 
+def _load_visible_strategy(
+    db: Session,
+    strategy_id: UUID,
+    user_sede_id: str | None,
+):
+    from backend.models_evangelism import EstrategiaEvangelismo as StrategyModel
+
+    query = db.query(StrategyModel).filter(
+        StrategyModel.id == strategy_id,
+        StrategyModel.deleted_at.is_(None),
+    )
+    if user_sede_id is not None:
+        query = query.filter(StrategyModel.sede_id == user_sede_id)
+    return query.first()
+
+
 def read_evangelism_strategies(
     skip: int = 0,
     limit: int = 100,
@@ -113,9 +129,11 @@ def read_strategy(
     db: Session = Depends(get_db),
     _user: models.User = Depends(require_pastor_or_admin),
 ):
-    from backend.models_evangelism import EstrategiaEvangelismo as StrategyModel
-
-    db_obj = db.query(StrategyModel).filter(StrategyModel.id == strategy_id).first()
+    db_obj = _load_visible_strategy(
+        db,
+        strategy_id,
+        crud.get_user_sede_id(db, _user.id),
+    )
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
     result = EvangelismStrategy.model_validate(db_obj)
@@ -176,6 +194,7 @@ def update_strategy(
     _user: models.User = Depends(require_pastor_or_admin),
 ):
     try:
+        user_sede_id = crud.get_user_sede_id(db, _user.id)
         if strategy.default_role_id is not None:
             from backend.models_evangelism import RolPersonalizadoEstrategia
 
@@ -193,6 +212,9 @@ def update_strategy(
                     status_code=400,
                     detail="El rol por defecto debe pertenecer a esta estrategia",
                 )
+        db_obj = _load_visible_strategy(db, strategy_id, user_sede_id)
+        if not db_obj:
+            raise HTTPException(status_code=404, detail="Evangelism strategy not found")
         db_obj = update_evangelism_strategy(db=db, strategy_id=strategy_id, data=strategy, actor_user_id=str(_user.id))
     except Exception:
         logger.exception("Failed to update evangelism strategy=%s", strategy_id)

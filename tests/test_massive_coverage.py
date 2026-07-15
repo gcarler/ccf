@@ -260,6 +260,21 @@ class TestCRMAllFunctions:
             result = _c(get_counseling_tickets, db, **kw)
             assert isinstance(result, (list, dict))
 
+    def test_counseling_api_ignores_soft_deleted(self, rich_data):
+        from backend import models
+
+        db = rich_data["db"]
+        c = rich_data["c"]
+        h = rich_data["h"]
+        row = db.query(models.CounselingTicket).first()
+        assert row is not None
+        row.deleted_at = datetime.now(timezone.utc)
+        db.commit()
+        resp = c.get("/api/crm/counseling/", headers=h)
+        assert resp.status_code == 200, resp.text
+        ids = {item["id"] for item in resp.json()}
+        assert str(row.id) not in ids
+
     def test_prayer_requests_every_filter(self, rich_data):
         from backend.crud.crm import get_prayer_requests
         db = rich_data["db"]
@@ -306,6 +321,21 @@ class TestCRMAllFunctions:
         for kw in [dict(), dict(assignee_persona_id=pid), dict(persona_id=pid)]:
             result = _c(get_crm_tasks, db, **kw)
             assert isinstance(result, (list, dict))
+
+    def test_crm_tasks_api_ignores_soft_deleted(self, rich_data):
+        from backend import models
+
+        db = rich_data["db"]
+        c = rich_data["c"]
+        h = rich_data["h"]
+        row = db.query(models.TareaCRM).first()
+        assert row is not None
+        row.deleted_at = datetime.now(timezone.utc)
+        db.commit()
+        resp = c.get("/api/crm/tasks", headers=h)
+        assert resp.status_code == 200, resp.text
+        ids = {item["id"] for item in resp.json()}
+        assert str(row.id) not in ids
 
     def test_donations(self, rich_data):
         from backend.crud.crm import get_donations, get_total_donations_amount

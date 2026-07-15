@@ -207,6 +207,44 @@ class TestCRMCrudMassive:
             _call(crm.delete_crm_task, db, tid)
         _call(crm.update_support_ticket, db, 1, "resolved")
 
+    def test_crm_tasks_ignore_soft_deleted(self, db_session, full):
+        from backend import models
+        from backend.crud import crm
+
+        row = db_session.query(models.TareaCRM).first()
+        assert row is not None
+        row.deleted_at = datetime.now(timezone.utc)
+        db_session.commit()
+
+        tasks = crm.get_crm_tasks(db_session)
+        assert all(str(t.id) != str(row.id) for t in tasks)
+        assert crm.update_crm_task(
+            db_session,
+            row.id,
+            schemas.CrmTaskUpdate(status="completed"),
+            actor_user_id=full["admin"].id,
+        ) is None
+        assert crm.delete_crm_task(db_session, row.id) is False
+
+    def test_counseling_ignore_soft_deleted(self, db_session, full):
+        from backend import models
+        from backend.crud import crm
+
+        row = db_session.query(models.CounselingTicket).first()
+        assert row is not None
+        row.deleted_at = datetime.now(timezone.utc)
+        db_session.commit()
+
+        tickets = crm.get_counseling_tickets(db_session)
+        assert all(str(t.id) != str(row.id) for t in tickets)
+        assert crm.get_counseling_ticket(db_session, row.id) is None
+        assert crm.update_counseling_ticket(
+            db_session,
+            row.id,
+            schemas.CounselingTicketUpdate(status="resolved"),
+        ) is None
+        assert crm.delete_counseling_ticket(db_session, row.id) is False
+
 
 class TestCMSCrudMassive:
     def test_cms_crud(self, db_session, full):

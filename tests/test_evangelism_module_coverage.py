@@ -848,11 +848,90 @@ class TestRolesYExcusas:
         body = resp.json()
         assert len(body) >= 3
 
+    def test_strategy_reads_block_soft_deleted_and_cross_sede(self, full, db_session):
+        from backend.models import Sede
+
+        est = full["estrategia"]
+        est.deleted_at = datetime.now(timezone.utc)
+        db_session.commit()
+
+        resp = full["c"].get(f"/api/evangelism/strategies/{est.id}", headers=full["h"])
+        assert resp.status_code == 404, resp.text
+
+        other_sede = Sede(nombre="Otra Sede Estrategias", ciudad="Bogotá")
+        db_session.add(other_sede)
+        db_session.flush()
+        other_cat = CategoriaEstrategia(nombre=f"Categoria-{uuid.uuid4().hex[:6]}")
+        db_session.add(other_cat)
+        db_session.flush()
+        other_strategy = EstrategiaEvangelismo(
+            nombre="Estrategia Otra Sede",
+            sede_id=other_sede.id,
+            categoria_id=other_cat.id,
+            activa=True,
+        )
+        db_session.add(other_strategy)
+        db_session.commit()
+
+        resp_other = full["c"].get(
+            f"/api/evangelism/strategies/{other_strategy.id}",
+            headers=full["h"],
+        )
+        assert resp_other.status_code == 404, resp_other.text
+
     def test_list_strategy_roles_404(self, full):
         resp = full["c"].get(
             f"/api/evangelism/strategies/{uuid.uuid4()}/roles", headers=full["h"],
         )
         assert resp.status_code == 404
+
+    def test_strategy_roles_block_soft_deleted_and_cross_sede(self, full, db_session):
+        from backend.models import Sede
+
+        est = full["estrategia"]
+        est.deleted_at = datetime.now(timezone.utc)
+        db_session.commit()
+
+        resp_list = full["c"].get(
+            f"/api/evangelism/strategies/{est.id}/roles",
+            headers=full["h"],
+        )
+        assert resp_list.status_code == 404, resp_list.text
+
+        resp_create = full["c"].post(
+            f"/api/evangelism/strategies/{est.id}/roles",
+            json={"nombre_rol": "Rol Bloqueado"},
+            headers=full["h"],
+        )
+        assert resp_create.status_code == 404, resp_create.text
+
+        other_sede = Sede(nombre="Otra Sede Roles", ciudad="Medellín")
+        db_session.add(other_sede)
+        db_session.flush()
+        other_cat = CategoriaEstrategia(nombre=f"CategoriaRoles-{uuid.uuid4().hex[:6]}")
+        db_session.add(other_cat)
+        db_session.flush()
+        other_strategy = EstrategiaEvangelismo(
+            nombre="Estrategia Roles Otra Sede",
+            sede_id=other_sede.id,
+            categoria_id=other_cat.id,
+            activa=True,
+        )
+        db_session.add(other_strategy)
+        db_session.commit()
+
+        resp_cross = full["c"].get(
+            f"/api/evangelism/strategies/{other_strategy.id}/roles",
+            headers=full["h"],
+        )
+        assert resp_cross.status_code == 404, resp_cross.text
+
+        resp_cross_create = full["c"].post(
+            f"/api/evangelism/strategies/{other_strategy.id}/roles",
+            json={"nombre_rol": "Rol Cross Sede"},
+            headers=full["h"],
+        )
+        assert resp_cross_create.status_code == 404, resp_cross_create.text
 
     def test_create_strategy_role(self, full):
         est = full["estrategia"]
@@ -974,6 +1053,15 @@ class TestGruposEndpoints:
         assert resp.status_code == 200, resp.text
         assert len(resp.json()) >= 2
 
+    def test_list_my_grupos_ignora_soft_deleted(self, full, db_session):
+        g = full["grupos"][0]
+        g.deleted_at = datetime.now(timezone.utc)
+        db_session.commit()
+        resp = full["c"].get("/api/evangelism/grupos/mine", headers=full["h"])
+        assert resp.status_code == 200, resp.text
+        ids = {row["id"] for row in resp.json()}
+        assert str(g.id) not in ids
+
     def test_faro_assignment_summary(self, full):
         resp = full["c"].get("/api/evangelism/grupos/assignment-summary", headers=full["h"])
         assert resp.status_code == 200, resp.text
@@ -1015,6 +1103,17 @@ class TestGruposEndpoints:
         resp = full["c"].put(
             f"/api/evangelism/grupos/{uuid.uuid4()}",
             json={"nombre": "X"},
+            headers=full["h"],
+        )
+        assert resp.status_code == 404
+
+    def test_update_grupo_soft_deleted_404(self, full, db_session):
+        g = full["grupos"][0]
+        g.deleted_at = datetime.now(timezone.utc)
+        db_session.commit()
+        resp = full["c"].put(
+            f"/api/evangelism/grupos/{g.id}",
+            json={"nombre": "Grupo Inactivo"},
             headers=full["h"],
         )
         assert resp.status_code == 404
@@ -1113,6 +1212,18 @@ class TestSessions:
         resp = full["c"].get("/api/evangelism/grupos/sessions", headers=full["h"])
         assert resp.status_code == 200, resp.text
         assert len(resp.json()) >= 6
+
+    def test_list_faro_sessions_populates_season_name(self, full, db_session):
+        sesion = full["sesiones"][0]
+        sesion.season_id = full["season"].id
+        db_session.commit()
+        resp = full["c"].get("/api/evangelism/grupos/sessions", headers=full["h"])
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert any(
+            row["id"] == str(sesion.id) and row["season_name"] == full["season"].name
+            for row in body
+        )
 
     def test_list_faro_sessions_filtro_grupo(self, full):
         g = full["grupos"][0]
@@ -1609,6 +1720,42 @@ class TestFollowUp:
         )
         assert resp.status_code == 404
 
+    def test_seguimiento_create_rechaza_asistencia_soft_deleted(self, full, db_session):
+        from backend.crud.evangelism import create_seguimiento as create_follow_up
+        from backend.schemas.evangelism import RegistroSeguimientoCreate
+        from fastapi import HTTPException
+
+        asistencia = db_session.query(MAsistencia).first()
+        asistencia.deleted_at = datetime.now(timezone.utc)
+        db_session.commit()
+
+        payload = RegistroSeguimientoCreate(
+            asistencia_id=asistencia.id,
+            tipo="LLAMADA",
+            observaciones="No debe permitirse",
+        )
+        with pytest.raises(HTTPException):
+            create_follow_up(
+                db_session,
+                payload,
+                actor_user_id=str(full["admin_persona"].id),
+            )
+
+    def test_seguimiento_endpoint_rechaza_asistencia_soft_deleted(self, full, db_session):
+        asistencia = db_session.query(MAsistencia).first()
+        asistencia.deleted_at = datetime.now(timezone.utc)
+        db_session.commit()
+
+        resp = full["c"].post(
+            f"/api/evangelism/follow-up/{asistencia.id}",
+            json={
+                "tipo": "LLAMADA",
+                "observaciones": "No debe permitirse",
+            },
+            headers=full["h"],
+        )
+        assert resp.status_code == 404, resp.text
+
     def test_seguimiento_update(self, full, db_session):
         sg = RegistroSeguimiento(
             asistencia_id=db_session.query(MAsistencia).first().id,
@@ -1683,6 +1830,18 @@ class TestFaroVisitors:
             "first_name": "X", "last_name": "Y",
             "phone": "+573006666666",
             "grupo_id": str(uuid.uuid4()),
+        }, headers=full["h"])
+        assert resp.status_code == 404
+
+    def test_register_visitor_soft_deleted_group_404(self, full, db_session):
+        g = full["grupos"][0]
+        g.deleted_at = datetime.now(timezone.utc)
+        db_session.commit()
+        resp = full["c"].post("/api/evangelism/grupos/visitors", json={
+            "first_name": "X",
+            "last_name": "Y",
+            "phone": "+573006666665",
+            "grupo_id": str(g.id),
         }, headers=full["h"])
         assert resp.status_code == 404
 

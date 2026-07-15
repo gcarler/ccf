@@ -91,7 +91,14 @@ def get_counseling_ticket(db: Session, ticket_id: UUID) -> Optional[models.Couns
 def update_counseling_ticket(
     db: Session, ticket_id: UUID, payload: schemas.CounselingTicketUpdate
 ) -> Optional[models.CounselingTicket]:
-    row = db.query(models.CounselingTicket).filter(models.CounselingTicket.id == ticket_id).first()
+    row = (
+        db.query(models.CounselingTicket)
+        .filter(
+            models.CounselingTicket.id == ticket_id,
+            models.CounselingTicket.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row:
         return None
     data = payload.model_dump(exclude_unset=True)

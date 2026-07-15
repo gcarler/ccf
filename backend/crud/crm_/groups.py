@@ -45,7 +45,7 @@ def _group_participant_role_values(item):
 
 
 def get_grupos(db: Session, skip: int = 0, limit: int = 100, sede_id: str | None = None):
-    query = db.query(models.GrupoEvangelismo)
+    query = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.deleted_at.is_(None))
     if sede_id:
         query = query.filter(models.GrupoEvangelismo.sede_id == sede_id)
     return query.offset(skip).limit(limit).all()
@@ -95,11 +95,25 @@ def create_grupo(db: Session, payload: schemas.GrupoEvangelismoCreate, sede_id: 
 
 
 def get_grupo(db: Session, house_id: uuid.UUID) -> Optional[models.GrupoEvangelismo]:
-    return db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == house_id).first()
+    return (
+        db.query(models.GrupoEvangelismo)
+        .filter(
+            models.GrupoEvangelismo.id == house_id,
+            models.GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangelismoUpdate):
-    house = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == house_id).first()
+    house = (
+        db.query(models.GrupoEvangelismo)
+        .filter(
+            models.GrupoEvangelismo.id == house_id,
+            models.GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not house:
         return None
 
@@ -280,7 +294,14 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
 
 
 def delete_grupo(db: Session, house_id: uuid.UUID) -> bool:
-    row = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == house_id).first()
+    row = (
+        db.query(models.GrupoEvangelismo)
+        .filter(
+            models.GrupoEvangelismo.id == house_id,
+            models.GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row:
         return False
     row.deleted_at = _utcnow()
