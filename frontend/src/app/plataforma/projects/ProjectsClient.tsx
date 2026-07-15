@@ -29,6 +29,7 @@ import type { ProjectRecord } from '@/types/projects';
 import type { ColumnDef } from '@tanstack/react-table';
 import { AnimatePresence,motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { getProjectMetricHref, PROJECTS_LIST_ANCHOR } from './projectsLinks';
 
 const PROJECT_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
@@ -231,10 +232,6 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                 <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {dashboard?.cards?.map((card: { label: string; title?: string; value: number; trend?: number; icon?: string; color?: string }, idx: number) => {
                         const label = (card.title || card.label).toLowerCase();
-                        let href = '/plataforma/projects?view=list';
-                        if (label.includes('tarea')) href = '/plataforma/projects/tasks?view=list';
-                        else if (label.includes('actividad') || label.includes('activity')) href = '/plataforma/projects/general?view=list';
-                        else if (label.includes('atrasad') || label.includes('delayed')) href = '/plataforma/projects/tasks?status=overdue&view=list';
                         return (
                             <DSMetric
                                 key={idx}
@@ -242,7 +239,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                                 value={String(card.value)}
                                 trend={card.trend != null ? `${card.trend > 0 ? '+' : ''}${card.trend}%` : undefined}
                                 tone={card.color as "blue" | "emerald" | "amber" | undefined}
-                                href={href}
+                                href={getProjectMetricHref(label)}
                             />
                         );
                     })}
@@ -302,7 +299,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                                 <DataTable columns={tableColumns} data={filtered} />
                             </motion.div>
                         ) : viewType === 'list' ? (
-                            <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2 pb-4">
+                            <motion.div id={PROJECTS_LIST_ANCHOR} key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2 pb-4 scroll-mt-24">
                                 {filtered.map((project) => (
                                     <button key={project.id} onClick={() => router.push(`/plataforma/projects/${project.id}?view=list`)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition-all duration-300 hover:border-[hsl(var(--primary))]/60 dark:border-white/10 dark:bg-[hsl(var(--surface-2))]">
                                         <div className="flex items-center justify-between gap-4">
