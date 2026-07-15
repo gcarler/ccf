@@ -222,7 +222,7 @@ export default function StrategyAnalyticsPage() {
   const params = useParams();
   const id = params?.id as string;
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, loading: authLoading } = useAuth();
 
   const [data, setData] = useState<FullAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -238,6 +238,8 @@ export default function StrategyAnalyticsPage() {
 
   const fetchData = useCallback(async () => {
     if (!id) { setLoading(false); return; }
+    if (authLoading) return;
+    if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
       const res = await apiFetch<FullAnalytics>(
@@ -250,10 +252,11 @@ export default function StrategyAnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [id, token, weeks]);
+  }, [authLoading, id, token, weeks]);
 
   const fetchHeatmapVelocity = useCallback(async () => {
     if (!id) return;
+    if (authLoading || !token) return;
     try {
       const periodMap: Record<number, string> = { 4: "90d", 8: "90d", 12: "90d", 24: "180d", 52: "365d" };
       const [hm, vc] = await Promise.all([
@@ -271,7 +274,7 @@ export default function StrategyAnalyticsPage() {
     } catch {
       // silent
     }
-  }, [id, token, weeks]);
+  }, [authLoading, id, token, weeks]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { fetchHeatmapVelocity(); }, [fetchHeatmapVelocity]);

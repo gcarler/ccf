@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -25,16 +25,17 @@ import ProjectWhiteboard from '@/components/projects/ProjectWhiteboard';
 import ProjectChatPanel from '@/components/projects/ProjectChatPanel';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
 import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
-import { DSMetric } from '@/design/components/DSMetric';
 import TaskTableView from '@/components/projects/TaskTableView';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectActivityItem, ProjectMilestoneRecord, ProjectTaskRecord, ProjectRecord } from '@/types/projects';
-import { ProjectKanbanBoard, type PhaseDef } from '@/components/projects/ProjectKanbanBoard';
+import { ProjectKanbanBoard } from '@/components/projects/ProjectKanbanBoard';
+import { type PhaseDef } from '@/context/ProjectUpdateContext';
 import ProjectListView from '@/components/projects/ProjectListView';
 import { PhaseManagerDrawer } from '@/components/projects/PhaseManagerDrawer';
+import ProjectSettingsDrawer from '@/components/projects/ProjectSettingsDrawer';
+import { ProjectMasterView } from '@/components/projects/ProjectMasterView';
+import { ProjectUpdateProvider } from '@/context/ProjectUpdateContext';
 import { toast } from 'sonner';
-import PersonaSelect from '@/components/ui/PersonaSelect';
 
 const PROJECT_DETAIL_VIEWS: ViewType[] = ['dashboard', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki', 'chat'];
 
@@ -46,17 +47,12 @@ export default function ProjectDetailPage() {
     const searchParams = useSearchParams();
     const currentViewParam = searchParams?.get('view');
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [project, setProject] = useState<any>(null);
+    const [project, setProject] = useState<ProjectRecord | null>(null);
     const [tasks, setTasks] = useState<ProjectTaskRecord[]>([]);
     const [activities, setActivities] = useState<ProjectActivityItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [showTaskModal, setShowTaskModal] = useState(false);
-    const [editingProject, setEditingProject] = useState(false);
-    const [editTitle, setEditTitle] = useState('');
-    const [editDescription, setEditDescription] = useState('');
-    const [editStatus, setEditStatus] = useState('');
-    const [editOwnerId, setEditOwnerId] = useState<string | null>(null);
+    const [showProjectSettings, setShowProjectSettings] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('dashboard');
     const [selectedTask, setSelectedTask] = useState<ProjectTaskRecord | null>(null);
     const [whiteboardOpen, setWhiteboardOpen] = useState(false);
@@ -121,7 +117,7 @@ export default function ProjectDetailPage() {
         if (task) setSelectedTask(task);
     }, [searchParams, tasks]);
 
-    const handleCreateTask = async (data: { title: string; description: string; priority: string; status: string; assignee_id?: string | null; due_date?: string }) => {
+    const handleCreateTask = useCallback(async (data: { title: string; description?: string | null; priority: string; status: string; assignee_id?: string | null; due_date?: string }) => {
         if (!token || !id) return;
         try {
             await apiFetch(`/projects/${id}/tasks`, {
@@ -135,7 +131,7 @@ export default function ProjectDetailPage() {
         } catch (err) {
             toast.error('Error al crear tarea');
         }
-    };
+    }, [id, token, loadProject]);
 
     const handleOpenTask = (task: ProjectTaskRecord) => {
         setSelectedTask(task);
@@ -155,21 +151,62 @@ export default function ProjectDetailPage() {
         loadProject();
     };
 
-    const handleUpdateProject = async () => {
+    const handleUpdateProject = useCallback(async (patch: Partial<ProjectRecord>) => {
         if (!token || !id) return;
         try {
             await apiFetch(`/projects/${id}`, {
                 method: 'PATCH',
                 token,
-                body: { title: editTitle, description: editDescription, status: editStatus, owner_id: editOwnerId },
+                body: patch,
             });
             toast.success('Proyecto actualizado');
-            setEditingProject(false);
             loadProject();
         } catch (err) {
             toast.error('Error al actualizar proyecto');
         }
-    };
+    }, [id, token, loadProject]);
+
+    const contextValue = useMemo(
+        () => ({
+            project,
+            tasks,
+            phases,
+            activities,
+            loading,
+            reloadProject: loadProject,
+            createTask: handleCreateTask,
+            updateProject: handleUpdateProject,
+            updateTask: async (taskId: string, patch: Partial<ProjectTaskRecord>) => {
+                setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...patch } : t)));
+                if (!token) return;
+                try {
+                    await apiFetch(`/projects/tasks/${taskId}`, {
+                        method: 'PATCH',
+                        token,
+                        body: patch,
+                    });
+                    loadProject();
+                } catch {
+                    toast.error('Error al actualizar tarea');
+                    loadProject();
+                }
+            },
+            deleteTask: async (taskId: string) => {
+                setTasks((prev) => prev.filter((t) => t.id !== taskId));
+                if (!token) return;
+                try {
+                    await apiFetch(`/projects/tasks/${taskId}`, {
+                        method: 'DELETE',
+                        token,
+                    });
+                    loadProject();
+                } catch {
+                    loadProject();
+                }
+            },
+        }),
+        [project, tasks, phases, activities, loading, loadProject, handleCreateTask, handleUpdateProject, token]
+    );
 
     const handleDeleteProject = async () => {
         if (!token || !id) return;
@@ -276,14 +313,6 @@ export default function ProjectDetailPage() {
         }
     };
 
-    const startEditing = () => {
-        setEditTitle(project?.title || '');
-        setEditDescription(project?.description || '');
-        setEditStatus(project?.status || 'planning');
-        setEditOwnerId(project?.owner_id ?? null);
-        setEditingProject(true);
-    };
-
     if (loading) {
         return (
             <div className="flex flex-col h-full bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))]">
@@ -318,11 +347,11 @@ export default function ProjectDetailPage() {
         );
     }
 
-    const doneCount = tasks.filter(t => t.status === 'completed').length;
-    const progressPercent = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0;
+
 
 
     return (
+        <ProjectUpdateProvider value={contextValue}>
         <div className="flex flex-col h-full bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
@@ -343,7 +372,7 @@ export default function ProjectDetailPage() {
                         <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2">
                             <Edit3 size={14} /> Fases
                         </button>
-                        <button onClick={startEditing} className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-amber-600 active:scale-95 transition-all flex items-center gap-2">
+                        <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-amber-600 active:scale-95 transition-all flex items-center gap-2">
                             <Edit3 size={14} /> Editar
                         </button>
                         <button onClick={handleDeleteProject} className="px-3 py-1.5 bg-rose-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-rose-600 active:scale-95 transition-all flex items-center gap-2">
@@ -355,51 +384,16 @@ export default function ProjectDetailPage() {
 
             <div className="flex min-h-0 flex-1 overflow-hidden">
             <main className={(viewType === 'board' || viewType === 'kanban') ? "flex-1 overflow-hidden" : "flex-1 overflow-y-auto p-4 space-y-3"}>
-                {editingProject ? (
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg p-3 border border-[hsl(var(--border))] dark:border-white/10 space-y-3">
-                        <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Editar Proyecto</h3>
-                        <input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-primary))] text-sm font-medium" placeholder="Título del proyecto" />
-                        <textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-primary))] text-sm" placeholder="Descripción" />
-                        <select value={editStatus} onChange={e => setEditStatus(e.target.value)} className="w-full p-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-primary))] text-sm font-medium">
-                            <option value="planning">Planificación</option>
-                            <option value="active">En Marcha</option>
-                            <option value="on_hold">En Pausa</option>
-                            <option value="completed">Alcanzado</option>
-                            <option value="archived">Archivado</option>
-                        </select>
-                        <PersonaSelect
-                            value={editOwnerId}
-                            onChange={setEditOwnerId}
-                            placeholder="Responsable del proyecto"
-                        />
-                        <div className="flex gap-2">
-                            <button onClick={handleUpdateProject} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all">Guardar Cambios</button>
-                            <button onClick={() => setEditingProject(false)} className="px-3 py-1.5 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-md text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] active:scale-95 transition-all">Cancelar</button>
-                        </div>
-                    </div>
-                ) : (
-                    <>
                         {viewType === 'dashboard' && (
                             <div className="space-y-3">
-                                <header className="space-y-2">
-                                    <div className="flex items-center gap-3">
-                                        <DSBadge tone={project?.status === 'active' ? 'blue' : project?.status === 'completed' ? 'emerald' : 'amber'} label={project?.status?.toUpperCase() || 'PROYECTO'} />
-                                        <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{progressPercent}% completado</span>
-                                    </div>
-                                    <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase">
-                                        {project?.title}
-                                    </h1>
-                                    {project?.description && (
-                                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] max-w-2xl">{project.description}</p>
-                                    )}
-                                </header>
-
-                                <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                    <DSMetric label="Actividades" value={String(tasks.length)} trend="Total" tone="blue" />
-                                    <DSMetric label="Logradas" value={String(doneCount)} trend={`${progressPercent}%`} tone="emerald" />
-                                    <DSMetric label={phases.find(p => p.slug === 'review')?.name || 'En Seguimiento'} value={String(tasks.filter(t => t.status === 'review').length)} trend="Consolidación" tone="amber" />
-                                    <DSMetric label="Por Hacer" value={String(tasks.filter(t => t.status !== 'completed').length)} trend="Pendientes" tone="blue" />
-                                </section>
+                                {project && (
+                                    <ProjectMasterView
+                                        project={project}
+                                        tasks={tasks}
+                                        onUpdate={handleUpdateProject}
+                                        showMilestones={false}
+                                    />
+                                )}
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                     <aside className="space-y-3 lg:col-span-1">
@@ -568,6 +562,19 @@ export default function ProjectDetailPage() {
                                             toast.error('Error al actualizar tarea');
                                         }
                                     }}
+                                    onTaskDelete={async (taskId) => {
+                                        if (!token) return;
+                                        try {
+                                            await apiFetch(`/projects/tasks/${taskId}`, {
+                                                method: 'DELETE',
+                                                token,
+                                            });
+                                            toast.success('Tarea eliminada');
+                                            loadProject();
+                                        } catch {
+                                            toast.error('Error al eliminar tarea');
+                                        }
+                                    }}
                                 />
                             </div>
                         )}
@@ -617,8 +624,6 @@ export default function ProjectDetailPage() {
                         {viewType === 'chat' && (
                             <ProjectChatPanel projectId={project?.id || id} />
                         )}
-                    </>
-                )}
             </main>
             <TaskDetailPanel
                 task={selectedTask}
@@ -657,6 +662,14 @@ export default function ProjectDetailPage() {
                     }}
                 />
             )}
+
+            <ProjectSettingsDrawer
+                project={project}
+                isOpen={showProjectSettings}
+                onClose={() => setShowProjectSettings(false)}
+                onSave={handleUpdateProject}
+            />
         </div>
+        </ProjectUpdateProvider>
     );
 }
