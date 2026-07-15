@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { getPlatformMetricHref, getPlatformTaskHref } from '@/app/plataforma/metricRoutes';
+import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 
 describe('platform metric routes', () => {
     it('routes platform metrics to their concrete destinations', () => {
         expect(getPlatformMetricHref('Personas')).toBe('/plataforma/crm/personas');
-        expect(getPlatformMetricHref('Proyectos')).toBe('/plataforma/projects/list');
-        expect(getPlatformMetricHref('8 proyectos')).toBe('/plataforma/projects/list');
+        expect(getPlatformMetricHref('Proyectos')).toBe(PROJECTS_LIST_ROUTE);
+        expect(getPlatformMetricHref('8 proyectos')).toBe(PROJECTS_LIST_ROUTE);
         expect(getPlatformMetricHref('Pendientes')).toBe('/plataforma/tasks');
         expect(getPlatformMetricHref('Testimonios')).toBe('/plataforma/admin/testimonials');
         expect(getPlatformMetricHref('4 activos')).toBeNull();

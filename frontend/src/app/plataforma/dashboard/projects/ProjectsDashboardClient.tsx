@@ -8,7 +8,7 @@ import { FolderKanban, LayoutDashboard } from 'lucide-react';
 const SIDEBAR_SECTIONS = [
     { title: 'Dashboards', items: [
         { id: 'dash-overview', label: 'Centro de Dashboards', href: '/plataforma/dashboard', icon: LayoutDashboard },
-        { id: 'dash-projects', label: 'Proyectos', href: '/plataforma/projects', icon: FolderKanban },
+        { id: 'dash-projects', label: 'Proyectos', href: '/plataforma/projects?view=list#projects-list', icon: FolderKanban },
     ]},
 ];
 

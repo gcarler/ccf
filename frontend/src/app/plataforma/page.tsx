@@ -44,7 +44,7 @@ const DASHBOARD_SECTIONS = [
         items: [
             { id: 'dash-crm',      label: 'CRM Pastoral', href: '/plataforma/crm',      icon: Users },
             { id: 'dash-academy',  label: 'Academia',      href: '/plataforma/academy',  icon: BookOpen },
-            { id: 'dash-projects', label: 'Proyectos',     href: '/plataforma/projects', icon: FolderKanban },
+            { id: 'dash-projects', label: 'Proyectos',     href: '/plataforma/projects?view=list#projects-list', icon: FolderKanban },
             { id: 'dash-inbox',    label: 'Bandeja',       href: '/plataforma/inbox',    icon: Bell },
         ],
     },
@@ -207,7 +207,7 @@ function CommandCenterHome({ user, token }: any) {
                                 <h2 className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex items-center gap-2">
                                     <Target size={16} className="text-[hsl(var(--primary))]" /> Foco de Hoy
                                 </h2>
-                                <Link href="/plataforma/projects" className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-1">
+                                <Link href="/plataforma/projects?view=list#projects-list" className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-1">
                                     Ver Agenda <ChevronRight size={12} />
                                 </Link>
                             </div>

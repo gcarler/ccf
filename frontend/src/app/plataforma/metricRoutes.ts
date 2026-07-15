@@ -1,10 +1,12 @@
+import { PROJECTS_LIST_ROUTE } from './projects/projectsLinks';
+
 export function getPlatformMetricHref(title: string): string | null {
     const normalized = title.toLowerCase();
     if (normalized.includes('persona')) {
         return '/plataforma/crm/personas';
     }
     if (normalized.includes('proyecto') || normalized.includes('project')) {
-        return '/plataforma/projects/list';
+        return PROJECTS_LIST_ROUTE;
     }
     if (normalized.includes('pendient') || normalized.includes('pending')) {
         return '/plataforma/tasks';

@@ -6,24 +6,21 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import {
     LayoutDashboard,
-    ChevronRight,
     Calendar,
     Plus,
     Trash2,
     Edit3,
     CheckCircle2,
-    Circle,
-    Clock,
-    AlertTriangle,
     PencilRuler
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
-import UniversalGanttView from '@/components/ui/UniversalGanttView';
+
 import TaskCreationDrawer from '@/components/projects/TaskCreationDrawer';
 import TaskDetailPanel from '@/components/projects/TaskDetailPanel';
 import ProjectActivityFeed from '@/components/projects/ProjectActivityFeed';
 import ProjectWikiEditor from '@/components/projects/ProjectWikiEditor';
+import ProjectCalendarView from '@/components/projects/ProjectCalendarView';
+import ProjectGanttView from '@/components/projects/ProjectGanttView';
 import ProjectWhiteboard from '@/components/projects/ProjectWhiteboard';
 import ProjectChatPanel from '@/components/projects/ProjectChatPanel';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
@@ -34,6 +31,7 @@ import TaskTableView from '@/components/projects/TaskTableView';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectActivityItem, ProjectMilestoneRecord, ProjectTaskRecord, ProjectRecord } from '@/types/projects';
 import { ProjectKanbanBoard, type PhaseDef } from '@/components/projects/ProjectKanbanBoard';
+import ProjectListView from '@/components/projects/ProjectListView';
 import { PhaseManagerDrawer } from '@/components/projects/PhaseManagerDrawer';
 import { toast } from 'sonner';
 import PersonaSelect from '@/components/ui/PersonaSelect';
@@ -123,7 +121,7 @@ export default function ProjectDetailPage() {
         if (task) setSelectedTask(task);
     }, [searchParams, tasks]);
 
-    const handleCreateTask = async (data: { title: string; description: string; priority: string; status: string; assignee_id?: string | null }) => {
+    const handleCreateTask = async (data: { title: string; description: string; priority: string; status: string; assignee_id?: string | null; due_date?: string }) => {
         if (!token || !id) return;
         try {
             await apiFetch(`/projects/${id}/tasks`, {
@@ -136,35 +134,6 @@ export default function ProjectDetailPage() {
             loadProject();
         } catch (err) {
             toast.error('Error al crear tarea');
-        }
-    };
-
-    const handleMoveTask = async (task: any) => {
-        const currentIndex = phases.findIndex(p => p.slug === (task.status || 'todo'));
-        const nextStatus = phases[Math.min(currentIndex + 1, phases.length - 1)]?.slug;
-        if (!nextStatus || nextStatus === task.status) return;
-        try {
-            await apiFetch(`/projects/tasks/${task.id}`, {
-                method: 'PATCH',
-                token,
-                body: { status: nextStatus },
-            });
-            const nextPhase = phases.find(p => p.slug === nextStatus);
-            toast.success(`Tarea → ${nextPhase?.name || nextStatus}`);
-            loadProject();
-        } catch (err) {
-            toast.error('Error al actualizar tarea');
-        }
-    };
-
-    const handleDeleteTask = async (taskId: string) => {
-        if (!token || !id) return;
-        try {
-            await apiFetch(`/projects/${id}/tasks/${taskId}`, { method: 'DELETE', token });
-            toast.success('Tarea eliminada');
-            loadProject();
-        } catch (err) {
-            toast.error('Error al eliminar tarea');
         }
     };
 
@@ -213,7 +182,7 @@ export default function ProjectDetailPage() {
                 try {
                     await apiFetch(`/projects/${id}`, { method: 'DELETE', token });
                     toast.success('Proyecto eliminado');
-                    router.push('/plataforma/projects');
+                    router.push('/plataforma/projects?view=list#projects-list');
                 } catch (err) {
                     toast.error('Error al eliminar proyecto');
                 }
@@ -351,28 +320,13 @@ export default function ProjectDetailPage() {
 
     const doneCount = tasks.filter(t => t.status === 'completed').length;
     const progressPercent = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0;
-    const taskCalendarEvents = tasks.map((task) => ({
-        id: task.id,
-        title: task.title,
-        date: (task.due_date || task.start_date || new Date().toISOString()).slice(0, 10),
-        color: task.status === 'completed' ? 'emerald' as const : task.priority === 'urgent' ? 'rose' as const : task.status === 'review' ? 'amber' as const : 'blue' as const,
-        location: task.description || undefined,
-    }));
-    const taskGanttItems = tasks.map((task) => ({
-        id: task.id,
-        title: task.title,
-        subtitle: phases.find(p => p.slug === task.status)?.name || task.status,
-        start_date: (task.start_date || task.created_at || new Date().toISOString()).slice(0, 10),
-        end_date: (task.due_date || task.start_date || task.created_at || new Date().toISOString()).slice(0, 10),
-        color: task.status === 'completed' ? 'emerald' as const : task.priority === 'urgent' ? 'rose' as const : 'blue' as const,
-        progress: task.status === 'completed' ? 100 : task.status === 'review' ? 75 : task.status === 'in_progress' ? 45 : 10,
-    }));
+
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects' },
+                    { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects?view=list#projects-list' },
                     { label: project?.title || 'Cargando...', icon: Calendar },
                 ]}
                 viewType={viewType}
@@ -570,52 +524,25 @@ export default function ProjectDetailPage() {
                         )}
 
                         {viewType === 'list' && (
-                            <div className="w-full">
-                                <DSCard>
-                                    <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Plan de Acción</h3>
-                                    <div className="space-y-2">
-                                        {tasks.map(task => (
-                                            <div key={task.id} onClick={() => handleOpenTask(task)} className="p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-[hsl(var(--primary))]/40 transition-all duration-300 cursor-pointer">
-                                                <div className="flex items-center gap-4 flex-1">
-                                                    <button
-                                                        onClick={(event) => {
-                                                            event.stopPropagation();
-                                                            handleMoveTask(task);
-                                                        }}
-                                                        className="size-8 rounded-full border-2 flex items-center justify-center hover:scale-110 transition-all"
-                                                    >
-                                                        {task.status === 'completed' ? (
-                                                            <CheckCircle2 size={18} className="text-emerald-500" />
-                                                        ) : task.status === 'review' ? (
-                                                            <Clock size={18} className="text-amber-500" />
-                                                        ) : task.status === 'in_progress' ? (
-                                                            <AlertTriangle size={18} className="text-[hsl(var(--primary))]" />
-                                                        ) : (
-                                                            <Circle size={18} className="text-[hsl(var(--text-secondary))]" />
-                                                        )}
-                                                    </button>
-                                                    <div className="flex-1">
-                                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{task.title}</p>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10">
-                                                                {phases.find(p => p.slug === task.status)?.name || task.status}
-                                                            </span>
-                                                            <span className="font-semibold">{task.priority}</span>
-                                                            {task.due_date && <span className="text-[10px] text-[hsl(var(--text-secondary))]">{new Date(task.due_date).toLocaleDateString()}</span>}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={(event) => { event.stopPropagation(); handleDeleteTask(task.id); }} className="p-2 rounded-md hover:bg-rose-50 dark:hover:bg-rose-500/10 text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors" title="Eliminar tarea">
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                    <ChevronRight size={16} className="text-[hsl(var(--text-secondary))]" />
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {tasks.length === 0 && <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-1.5">No hay tareas — crea la primera con el botón &quot;Nueva Tarea&quot;</p>}
-                                    </div>
-                                </DSCard>
+                            <div className="w-full h-[calc(100vh-8rem)]">
+                                <ProjectListView
+                                    tasks={tasks}
+                                    onOpenTask={handleOpenTask}
+                                    onAddTask={(status) => handleCreateTask({ title: '', description: '', priority: 'medium', status })}
+                                    onTaskUpdate={async (taskId, patch) => {
+                                        if (!token) return;
+                                        try {
+                                            await apiFetch(`/projects/tasks/${taskId}`, {
+                                                method: 'PATCH',
+                                                token,
+                                                body: patch,
+                                            });
+                                            loadProject();
+                                        } catch {
+                                            toast.error('Error al actualizar tarea');
+                                        }
+                                    }}
+                                />
                             </div>
                         )}
 
@@ -628,19 +555,58 @@ export default function ProjectDetailPage() {
                                     onTasksChange={setTasks}
                                     onOpenTask={handleOpenTask}
                                     onAddTask={() => setShowTaskModal(true)}
+                                    onTaskUpdate={async (taskId, patch) => {
+                                        if (!token) return;
+                                        try {
+                                            await apiFetch(`/projects/tasks/${taskId}`, {
+                                                method: 'PATCH',
+                                                token,
+                                                body: patch,
+                                            });
+                                            loadProject();
+                                        } catch {
+                                            toast.error('Error al actualizar tarea');
+                                        }
+                                    }}
                                 />
                             </div>
                         )}
 
                         {viewType === 'calendar' && (
                             <div className="h-[720px]">
-                                <UniversalCalendarView events={taskCalendarEvents} title={`Calendario: ${project?.title || 'Proyecto'}`} />
+                                <ProjectCalendarView
+                                    projectId={id}
+                                    projectTitle={project?.title}
+                                    tasks={tasks}
+                                    onOpenTask={handleOpenTask}
+                                    onCreateTask={handleCreateTask}
+                                />
                             </div>
                         )}
 
                         {viewType === 'gantt' && (
                             <div className="h-[720px]">
-                                <UniversalGanttView items={taskGanttItems} moduleName={project?.title || 'Proyecto'} />
+                                <ProjectGanttView
+                                    projectTitle={project?.title}
+                                    tasks={tasks}
+                                    phases={phases}
+                                    onOpenTask={handleOpenTask}
+                                    onTaskDatesChange={async (taskId, start_date, end_date) => {
+                                        if (!token) return;
+                                        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, start_date, due_date: end_date } : t));
+                                        try {
+                                            await apiFetch(`/projects/tasks/${taskId}`, {
+                                                method: 'PATCH',
+                                                token,
+                                                body: { start_date, due_date: end_date },
+                                            });
+                                            toast.success('Fechas actualizadas');
+                                        } catch {
+                                            toast.error('Error al actualizar fechas');
+                                            loadProject();
+                                        }
+                                    }}
+                                />
                             </div>
                         )}
 
