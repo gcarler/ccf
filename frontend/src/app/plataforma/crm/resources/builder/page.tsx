@@ -15,7 +15,7 @@ import BuilderToolbar from '@/components/crm/email-builder/BuilderToolbar';
 import HtmlPreview from '@/components/crm/email-builder/HtmlPreview';
 
 export default function EmailBuilderPage() {
-  const { token } = useAuth();
+  const { token, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
   const plantillaId = params?.id as string | undefined;
@@ -24,15 +24,43 @@ export default function EmailBuilderPage() {
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const builder = useEmailBuilder([]);
   const { setBlocks, getBlocksJson, selectedBlock, selectedId, updateBlockProps } = builder;
 
   useEffect(() => {
-    if (!plantillaId || !token) { setLoading(false); return; }
+    if (authLoading) return;
+    if (!plantillaId) {
+      setLoading(false);
+      setError('No se encontró la plantilla.');
+      return;
+    }
+    if (!token) {
+      setLoading(false);
+      setError('Debes iniciar sesión para abrir el editor.');
+      return;
+    }
+    setError(null);
     apiFetch<PlantillaMensaje>(`/crm/resources/plantillas/${plantillaId}`, { token })
-      .then(data => { if (data) { setTemplateName(data.titulo); try { const parsed = JSON.parse(data.contenido_html || '[]'); if (Array.isArray(parsed) && parsed.length > 0) setBlocks(parsed); } catch {} } })
+      .then(data => {
+        if (data) {
+          setTemplateName(data.titulo);
+          try {
+            const parsed = JSON.parse(data.contenido_html || '[]');
+            if (Array.isArray(parsed) && parsed.length > 0) setBlocks(parsed);
+          } catch (parseErr) {
+            console.error(parseErr);
+            setError('La plantilla tiene contenido inválido.');
+          }
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        setError('No se pudo cargar el editor de plantilla.');
+      })
       .finally(() => setLoading(false));
-  }, [plantillaId, setBlocks, token]);
+  }, [authLoading, plantillaId, reloadKey, setBlocks, token]);
 
   const handleSave = useCallback(async () => {
     if (!token || !plantillaId) return;
@@ -49,6 +77,24 @@ export default function EmailBuilderPage() {
     setPreviewHtml(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;padding:0;background:#f4f6f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 20px;"><tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">${body}</table></td></tr></table></body></html>`);
     setShowPreview(true);
   }, [getBlocksJson]);
+
+  if (authLoading) return <div className="flex items-center justify-center h-screen"><p className="text-sm text-[hsl(var(--text-secondary))]">Verificando sesión...</p></div>;
+
+  if (error) {
+    return (
+      <div className="flex h-screen items-center justify-center p-4">
+        <div className="max-w-md rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-center dark:border-white/10 dark:bg-white/5">
+          <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{error}</p>
+          <button
+            onClick={() => setReloadKey((key) => key + 1)}
+            className="mt-4 rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) return <div className="flex items-center justify-center h-screen"><p className="text-sm text-[hsl(var(--text-secondary))]">Cargando editor...</p></div>;
 

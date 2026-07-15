@@ -21,13 +21,9 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
     const pathParts = pathname?.split('/') || [];
     const pathDerivedId = pathParts[3];
     const rawId = rawParam ?? pathDerivedId;
-    // Anything that doesn't look like a UUID is treated as a global sub-route
-    // (tasks, inbox, automations, etc.) and excluded from project id detection.
-    const isGlobalRoute =
-        !rawId ||
-        GLOBAL_PROJECT_ROUTES.has(rawId) ||
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawId);
-    const projectId = isGlobalRoute ? undefined : rawId;
+    // Only the explicit global sub-routes should bypass project context.
+    // Any other segment under /plataforma/projects is treated as a project id.
+    const projectId = !rawId || GLOBAL_PROJECT_ROUTES.has(rawId) ? undefined : rawId;
 
     const [projects, setProjects] = useState<Array<{ id: string; title: string; status?: string; color?: string | null }>>(initialProjects || []);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

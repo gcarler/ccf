@@ -27,21 +27,30 @@ const statusTone: Record<string, string> = {
 };
 
 export default function MyTasks() {
-    const { isAuthenticated, token } = useAuth();
+    const { isAuthenticated, token, loading: authLoading } = useAuth();
     const { addToast } = useToast();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('pending');
     const [tasks, setTasks] = useState<CrmTask[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
 
     const fetchTasks = useCallback(async () => {
-        if (!token) return;
+        if (!token) {
+            setLoading(false);
+            setError("Debes iniciar sesión para ver tus tareas.");
+            return;
+        }
         setLoading(true);
         try {
+            setError(null);
             const data = await apiFetch<CrmTask[]>('/crm/tasks/mine', { token, cache: 'no-store' });
             setTasks(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error(err);
+            setTasks([]);
+            setError("No se pudieron cargar tus tareas pastorales.");
             addToast("Error al cargar tareas pastorales", "error");
         } finally {
             setLoading(false);
@@ -49,8 +58,8 @@ export default function MyTasks() {
     }, [token, addToast]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchTasks();
-    }, [isAuthenticated, fetchTasks]);
+        if (!authLoading && isAuthenticated) fetchTasks();
+    }, [authLoading, fetchTasks, isAuthenticated, reloadKey]);
 
     const filteredTasks = useMemo(() => {
         return tasks.filter(t => 
@@ -63,6 +72,10 @@ export default function MyTasks() {
         overdue: tasks.filter(t => t.status !== 'done' && t.due_date && new Date(t.due_date) < new Date()).length
     }), [tasks]);
 
+    if (authLoading) {
+        return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Verificando sesión...</div>;
+    }
+
     if (!isAuthenticated) return null;
 
     return (
@@ -74,6 +87,20 @@ export default function MyTasks() {
                 </button>
             }
         >
+        {error && (
+            <div className="mb-4 flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wide">No se pudieron cargar las tareas</p>
+                    <p className="text-xs">{error}</p>
+                </div>
+                <button
+                    onClick={() => setReloadKey(key => key + 1)}
+                    className="rounded-md border border-amber-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-amber-100 dark:border-amber-400/30 dark:hover:bg-amber-500/20"
+                >
+                    Reintentar
+                </button>
+            </div>
+        )}
         <style jsx global>{`
             .task-aura {
                 position: relative;
