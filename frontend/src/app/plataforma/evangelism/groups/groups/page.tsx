@@ -76,21 +76,21 @@ interface AssignmentSummary {
  personas_total: number;
  personas_unassigned: number;
  houses_needing_leader: Array<{
- id: number;
+ id: string;
  name: string;
  code?: string;
  zone?: string;
  address?: string;
  }>;
  houses_needing_assistant: Array<{
- id: number;
+ id: string;
  name: string;
  code?: string;
  zone?: string;
  address?: string;
  }>;
  houses_needing_host: Array<{
- id: number;
+ id: string;
  name: string;
  code?: string;
  zone?: string;
@@ -165,7 +165,7 @@ function GroupsContent() {
  const [personaAssignmentFilter, setPersonaAssignmentFilter] = useState('all');
  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
  const [quickAssignmentTargets, setQuickAssignmentTargets] = useState<
- Record<string, number>
+ Record<string, string>
  >({});
  const [saving, setSaving] = useState(false);
 
@@ -381,7 +381,8 @@ if (!cancelled) setLoading(false);
  });
  }, [handleDeleteHouse]);
 
- const handleQuickAssignPersona = async (personaId: string) => {  const grupoId = quickAssignmentTargets[personaId];
+ const handleQuickAssignPersona = async (personaId: string) => {
+  const grupoId = quickAssignmentTargets[personaId];
   if (!grupoId) {
  toast.error('Selecciona una casa');
  return;
@@ -1367,8 +1368,8 @@ if (!cancelled) setLoading(false);
  onChange={e =>
  setQuickAssignmentTargets(prev => ({
  ...prev,
- [persona.id]: Number(e.target.value),
- }))
+   [persona.id]: e.target.value,
+   }))
  }
  className="w-full md:w-72 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
  >

@@ -467,6 +467,7 @@ class GrupoEvangelismoUpdate(BaseModel):
 
 class SesionGrupoCreate(BaseModel):
     grupo_id: Optional[UUID] = None
+    create_for_all_groups: bool = False
     season_id: Optional[UUID] = None
     session_date: datetime
     topic: Optional[str] = None
