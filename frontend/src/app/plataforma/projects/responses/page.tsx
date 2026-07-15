@@ -53,7 +53,7 @@ export default function ProjectsResponsesPage() {
         if (!token) return;
         setResolvingId(item.id);
         try {
-            if (item.task_id) {
+            if (item.type === 'task_assigned' && item.task_id) {
                 await apiFetch(`/projects/tasks/${item.task_id}`, {
                     method: 'PATCH',
                     token,
@@ -129,4 +129,3 @@ export default function ProjectsResponsesPage() {
         </ProjectsShell>
     );
 }
-

@@ -9,7 +9,7 @@ from typing import Any, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
-from sqlalchemy import Integer, cast, func
+from sqlalchemy import Integer, and_, cast, func
 from sqlalchemy.orm import Session, selectinload
 
 from backend import crud, models, schemas
@@ -636,15 +636,18 @@ def portfolio_summary(
     q = (
         db.query(
             models.Project.status,
-            func.count(models.Project.id).label("total_projects"),
+            func.count(func.distinct(models.Project.id)).label("total_projects"),
             func.count(models.ProjectTask.id).label("total_tasks"),
             done_case,
         )
-        .outerjoin(models.ProjectTask, models.ProjectTask.project_id == models.Project.id)
-        .filter(
-            models.Project.deleted_at.is_(None),
-            models.ProjectTask.deleted_at.is_(None),
+        .outerjoin(
+            models.ProjectTask,
+            and_(
+                models.ProjectTask.project_id == models.Project.id,
+                models.ProjectTask.deleted_at.is_(None),
+            ),
         )
+        .filter(models.Project.deleted_at.is_(None))
     )
     if user_sede:
         q = q.filter(models.Project.sede_id == user_sede)
