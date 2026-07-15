@@ -12,7 +12,7 @@ import { DSMetric } from "@/design/components/DSMetric";
 import { toast } from "sonner";
 
 type MessagingHistoryDetail = {
-    id: number;
+    id: string;
     name: string;
     campaign_name?: string | null;
     persona_name?: string | null;

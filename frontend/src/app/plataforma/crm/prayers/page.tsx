@@ -82,7 +82,7 @@ export default function PrayerSupportCenter() {
     useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
 
-    const updateRequestStatus = useCallback(async (id: number, newStatus: string) => {
+    const updateRequestStatus = useCallback(async (id: string, newStatus: string) => {
         if (!canEditCrm) return;
         setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
         // Sync selected request if open

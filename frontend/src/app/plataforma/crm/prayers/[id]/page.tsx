@@ -11,7 +11,7 @@ import { DSBadge } from "@/design/components/DSBadge";
 import { toast } from "sonner";
 
 type PrayerDetail = {
-    id: number;
+    id: string;
     requester_name: string;
     request_text: string;
     category: string | null;

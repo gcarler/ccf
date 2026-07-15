@@ -43,7 +43,7 @@ function normalizeHistoryRow(row: any): MessagingHistoryRow {
     const deliveredCount = Number(row?.delivered_count ?? (row?.status === 'failed' ? 0 : targetCount));
     const failedCount = Number(row?.failed_count ?? (row?.status === 'failed' ? targetCount : 0));
     return {
-        id: Number(row?.id ?? 0),
+        id: String(row?.id ?? ''),
         name: row?.name ?? row?.campaign_name ?? row?.persona_name ?? `Mensaje #${row?.id ?? 0}`,
         campaign_name: row?.campaign_name,
         channel: (String(row?.channel || 'whatsapp').toLowerCase() as Channel),
@@ -53,6 +53,8 @@ function normalizeHistoryRow(row: any): MessagingHistoryRow {
         target_count: targetCount,
         delivered_count: deliveredCount,
         failed_count: failedCount,
+        external_id: row?.external_id ?? null,
+        log_ids: Array.isArray(row?.log_ids) ? row.log_ids.map(String) : undefined,
     };
 }
 
@@ -65,7 +67,7 @@ export default function MessagingCampaignCenter() {
     const [campaignName, setCampaignName] = useState('');
     const [message, setMessage] = useState('');
     const [segments, setSegments] = useState<string[]>([]);
-    const [history, setHistory] = useState<any[]>([]);
+    const [history, setHistory] = useState<MessagingHistoryRow[]>([]);
     const [isSending, setIsSending] = useState(false);
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_messaging_view', 'grid'));
     const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_messaging_wiki_notes', {

@@ -151,7 +151,7 @@ export type Attendee = { persona_id: string; name: string };
 
 // ── Tasks ─────────────────────────────────────────────────────────────────
 export interface ConsolidationTask {
-  id: number;
+  id: string;
   title: string;
   description?: string;
   status: 'pending' | 'in_progress' | 'done' | 'urgent';
@@ -164,7 +164,7 @@ export interface ConsolidationTask {
 }
 
 export interface CrmTask {
-  id: number;
+  id: string;
   title: string;
   description: string;
   contact_name: string;
@@ -176,7 +176,7 @@ export interface CrmTask {
 
 // ── Volunteers ────────────────────────────────────────────────────────────
 export interface Volunteer {
-  id: number;
+  id: string;
   persona_id?: string;
   name?: string;
   role?: string;
@@ -298,7 +298,7 @@ export interface SystemTemplateCatalog {
 }
 
 export interface MessagingHistoryRow {
-  id: number;
+  id: string;
   name: string;
   campaign_name?: string;
   channel: Channel;
@@ -308,6 +308,17 @@ export interface MessagingHistoryRow {
   target_count: number;
   delivered_count: number;
   failed_count: number;
+  external_id?: string | null;
+  log_ids?: string[];
+}
+
+export interface AutomationRule {
+  id: string;
+  name: string;
+  trigger: string;
+  action: string;
+  payload: Record<string, any>;
+  active: boolean;
 }
 
 // ── CrmPersona (from old /crm/types.ts) ───────────────────────────────────
