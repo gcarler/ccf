@@ -28,6 +28,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
     const [isAdding, setIsAdding] = useState(false);
     const [title, setTitle] = useState('');
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const completedCount = tasks.filter(t => t.status === 'completed').length;
@@ -49,7 +50,10 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                     body: { title: title.trim(), status: id, priority: 'medium' }
                 });
                 onTaskCreated(newTask);
-            } catch { /* silent */ }
+                setError(null);
+            } catch {
+                setError('No se pudo crear la tarea.');
+            }
             setSaving(false);
         } else {
             onAddTask();
@@ -63,6 +67,11 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
     return (
         <div className="min-w-[280px] w-[280px] flex flex-col shrink-0 gap-2">
             {/* Column Header */}
+            {error && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                    <p className="text-[10px] font-bold uppercase tracking-wide">{error}</p>
+                </div>
+            )}
             <div className="flex items-center justify-between px-1 pb-1">
                 <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full shadow-sm shrink-0" style={{ backgroundColor: color }} />

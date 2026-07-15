@@ -336,6 +336,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     const [quickAddGroup, setQuickAddGroup] = useState<string | null>(null);
     const [quickAddTitle, setQuickAddTitle] = useState('');
     const [isLoaded, setIsLoaded]   = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // Dark mode detection
     useEffect(() => {
@@ -455,13 +456,22 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
         try {
             await apiFetch(`/projects/${projectId}/tasks`, { method: 'POST', body: { title, status, priority: 'medium' }, token: token ?? undefined });
             onAddTask(status);
-        } catch { /* silently fail */ }
+            setError(null);
+        } catch {
+            setError('No se pudo crear la tarea rápida.');
+        }
         setQuickAddGroup(null);
         setQuickAddTitle('');
     };
 
     return (
         <div className="flex min-w-0 flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] font-sans overflow-hidden">
+
+            {error && (
+                <div className="mx-3 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                    <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                </div>
+            )}
 
             {/* ── TOOLBAR ── */}
             <div className="shrink-0 flex min-w-0 items-center gap-1.5 px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/[0.06] bg-[hsl(var(--surface-1))]/60 dark:bg-black/10 flex-wrap">

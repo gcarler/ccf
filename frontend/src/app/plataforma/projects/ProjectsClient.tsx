@@ -104,7 +104,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
             setShowCreateForm(false);
             toast.success('Proyecto creado');
             window.dispatchEvent(new CustomEvent('project-updated'));
-            setTimeout(() => router.push(`/plataforma/projects/${created.id}`), 200);
+            setTimeout(() => router.push(`/plataforma/projects/${created.id}?view=list`), 200);
         } catch (e) {
             toast.error('Error al crear el proyecto');
         } finally {
@@ -118,7 +118,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
         description: project.description || 'Ver proyecto',
         icon: Folder,
         group: 'Proyectos',
-        action: () => router.push(`/plataforma/projects/${project.id}`),
+        action: () => router.push(`/plataforma/projects/${project.id}?view=list`),
     })), [filtered, router]);
 
     useRegisterCommands('projects-quick-links', projectCommands);
@@ -304,7 +304,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                         ) : viewType === 'list' ? (
                             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2 pb-4">
                                 {filtered.map((project) => (
-                                    <button key={project.id} onClick={() => router.push(`/plataforma/projects/${project.id}`)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition-all duration-300 hover:border-[hsl(var(--primary))]/60 dark:border-white/10 dark:bg-[hsl(var(--surface-2))]">
+                                    <button key={project.id} onClick={() => router.push(`/plataforma/projects/${project.id}?view=list`)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition-all duration-300 hover:border-[hsl(var(--primary))]/60 dark:border-white/10 dark:bg-[hsl(var(--surface-2))]">
                                         <div className="flex items-center justify-between gap-4">
                                             <div className="min-w-0">
                                                 <p className="truncate text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{project.title}</p>
@@ -332,11 +332,11 @@ export default function ProjectsClient({ initialProjects }: { initialProjects: P
                             </motion.div>
                         ) : viewType === 'calendar' ? (
                             <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-[720px] pb-4">
-                                <UniversalCalendarView events={calendarEvents} title="Calendario de proyectos" onEventClick={(event) => router.push(`/plataforma/projects/${event.id}`)} />
+                                <UniversalCalendarView events={calendarEvents} title="Calendario de proyectos" onEventClick={(event) => router.push(`/plataforma/projects/${event.id}?view=list`)} />
                             </motion.div>
                         ) : viewType === 'gantt' ? (
                             <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-[720px] pb-4">
-                                <UniversalGanttView items={ganttItems} moduleName="Portfolio" onItemClick={(item) => router.push(`/plataforma/projects/${item.id}`)} />
+                                <UniversalGanttView items={ganttItems} moduleName="Portfolio" onItemClick={(item) => router.push(`/plataforma/projects/${item.id}?view=list`)} />
                             </motion.div>
                         ) : (
                             <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-4">

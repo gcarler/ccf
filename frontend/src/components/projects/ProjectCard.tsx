@@ -37,7 +37,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
     const statusCfg = statusMap[project.status ?? 'active'] ?? statusMap.active;
 
     return (
-        <Link href={`/plataforma/projects/${project.id}`} className="block">
+        <Link href={`/plataforma/projects/${project.id}?view=list`} className="block">
         <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}

@@ -309,7 +309,7 @@ export default function TaskDetailPanel({
     onActivityCreated,
     onVerRutaClick,
 }: TaskDetailPanelProps) {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
 
     // ── Width / resize state ──────────────────────────────────────
     const [width, setWidth] = useState<number>(() => {
@@ -370,6 +370,16 @@ export default function TaskDetailPanel({
     const [deletingSupplyId, setDeletingSupplyId] = useState<string | null>(null);
     const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    const requireAuth = useCallback((message: string) => {
+        if (authLoading) return false;
+        if (!token) {
+            setError(message);
+            return false;
+        }
+        return true;
+    }, [authLoading, token]);
 
     // ── Labels / Etiquetas ─────────────────────────────────────────
     const [labels, setLabels]         = useState<string[]>((task as any)?.labels ?? []);
@@ -379,6 +389,7 @@ export default function TaskDetailPanel({
 
     const handleAddLabel = async () => {
         if (!task) return;
+        if (!requireAuth('Debes iniciar sesión para actualizar etiquetas.')) return;
         const trimmed = newLabelInput.trim();
         if (!trimmed || labels.includes(trimmed)) { setNewLabelInput(''); return; }
         const nextLabels = [...labels, trimmed];
@@ -395,6 +406,7 @@ export default function TaskDetailPanel({
 
     const handleRemoveLabel = async (label: string) => {
         if (!task) return;
+        if (!requireAuth('Debes iniciar sesión para actualizar etiquetas.')) return;
         const nextLabels = labels.filter(l => l !== label);
         setLabels(nextLabels);
         try {
@@ -409,7 +421,7 @@ export default function TaskDetailPanel({
     const [newActivityTitle, setNewActivityTitle] = useState('');
 
     const handleToggle = async (id: string) => {
-        if (!task || !token) return;
+        if (!task || !requireAuth('Debes iniciar sesión para actualizar sub-actividades.')) return;
         const findActivity = (items: Activity[], targetId: string): Activity | null => {
             for (const a of items) {
                 if (a.id === targetId) return a;
@@ -425,11 +437,13 @@ export default function TaskDetailPanel({
             await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/subtasks/${id}`, {
                 method: 'PATCH', token, body: { status: newStatus },
             });
-        } catch { /* optimistic */ }
+        } catch {
+            setError('No se pudo actualizar la sub-actividad.');
+        }
     };
 
     const handleAddChild = async (parentId: string) => {
-        if (!task || !token) return;
+        if (!task || !requireAuth('Debes iniciar sesión para crear sub-actividades.')) return;
         try {
             const created = await apiFetch<any>(`/projects/${task.project_id}/tasks/${task.id}/subtasks`, {
                 method: 'POST', token, body: { title: 'Nueva sub-actividad', status: 'todo', priority: 'medium', parent_id: parentId },
@@ -438,23 +452,24 @@ export default function TaskDetailPanel({
             setActivities(prev => addChild(prev, parentId, item));
             onActivityCreated?.();
         } catch {
-            const item: Activity = { id: uid(), title: 'Nueva sub-actividad', completed: false };
-            setActivities(prev => addChild(prev, parentId, item));
+            setError('No se pudo crear la sub-actividad.');
         }
     };
 
     const handleUpdateTitle = async (id: string, t: string) => {
         setActivities(prev => updateTitle(prev, id, t));
-        if (!task || !token) return;
+        if (!task || !requireAuth('Debes iniciar sesión para actualizar sub-actividades.')) return;
         try {
             await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/subtasks/${id}`, {
                 method: 'PATCH', token, body: { title: t },
             });
-        } catch { /* optimistic */ }
+        } catch {
+            setError('No se pudo actualizar la sub-actividad.');
+        }
     };
 
     const handleAddTopLevel = async () => {
-        if (!newActivityTitle.trim() || !task || !token) return;
+        if (!newActivityTitle.trim() || !task || !requireAuth('Debes iniciar sesión para crear actividades.')) return;
         try {
             const created = await apiFetch<any>(`/projects/${task.project_id}/tasks/${task.id}/subtasks`, {
                 method: 'POST', token, body: { title: newActivityTitle.trim(), status: 'todo', priority: 'medium' },
@@ -462,13 +477,13 @@ export default function TaskDetailPanel({
             setActivities(prev => [...prev, { id: created.id || uid(), title: newActivityTitle.trim(), completed: false }]);
             onActivityCreated?.();
         } catch {
-            setActivities(prev => [...prev, { id: uid(), title: newActivityTitle.trim(), completed: false }]);
+            setError('No se pudo crear la actividad.');
         }
         setNewActivityTitle('');
     };
 
     const handleDeleteActivity = async (activityId: string) => {
-        if (!task || !token) return;
+        if (!task || !requireAuth('Debes iniciar sesión para eliminar actividades.')) return;
         setActivities(prev => {
             const filterOut = (items: Activity[]): Activity[] =>
                 items.filter(a => a.id !== activityId).map(a => a.children ? { ...a, children: filterOut(a.children) } : a);
@@ -478,7 +493,9 @@ export default function TaskDetailPanel({
             await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/subtasks/${activityId}`, {
                 method: 'DELETE', token,
             });
-        } catch { /* optimistic */ }
+        } catch {
+            setError('No se pudo eliminar la actividad.');
+        }
     };
 
     // ── Comments ──────────────────────────────────────────────────
@@ -488,8 +505,9 @@ export default function TaskDetailPanel({
     const [loadingComments, setLoadingComments] = useState(false);
 
     const loadComments = useCallback(async () => {
-        if (!task || !token) return;
+        if (!task || !requireAuth('Debes iniciar sesión para ver comentarios de la tarea.')) return;
         setLoadingComments(true);
+        setError(null);
         try {
             const data = await apiFetch<any[]>(`/projects/comments?task_id=${task.id}`, { token });
             if (Array.isArray(data)) {
@@ -500,14 +518,16 @@ export default function TaskDetailPanel({
                     timestamp: new Date(c.created_at),
                 })));
             }
-        } catch { /* ignore */ }
+        } catch {
+            setError('No se pudieron cargar los comentarios de la tarea.');
+        }
         finally { setLoadingComments(false); }
-    }, [task, token]);
+    }, [task, token, requireAuth]);
 
     useEffect(() => { loadComments(); }, [loadComments]);
 
     const handleSendComment = async () => {
-        if (!commentInput.trim() || !task || !token) return;
+        if (!commentInput.trim() || !task || !requireAuth('Debes iniciar sesión para comentar la tarea.')) return;
         setSendingComment(true);
         try {
             const created = await apiFetch<any>(`/projects/${task.project_id}/comments`, {
@@ -523,7 +543,7 @@ export default function TaskDetailPanel({
             }]);
             onActivityCreated?.();
         } catch {
-            // silently fail
+            setError('No se pudo enviar el comentario.');
         } finally {
             setSendingComment(false);
             setCommentInput('');
@@ -559,7 +579,7 @@ export default function TaskDetailPanel({
 
     // ── Save ──────────────────────────────────────────────────────
     const handleSave = async () => {
-        if (!task) return;
+        if (!task || !requireAuth('Debes iniciar sesión para guardar cambios de la tarea.')) return;
         setSaving(true);
         try {
             const updated = await apiFetch<ProjectTaskRecord>(
@@ -568,6 +588,7 @@ export default function TaskDetailPanel({
             );
             onUpdate?.({ ...task, ...updated });
         } catch {
+            setError('No se pudieron guardar los cambios de la tarea.');
             onUpdate?.({ ...task, title, description: description as any });
         } finally {
             setSaving(false);
@@ -579,7 +600,7 @@ export default function TaskDetailPanel({
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (!files || files.length === 0 || !task || !token) return;
+        if (!files || files.length === 0 || !task || !requireAuth('Debes iniciar sesión para adjuntar archivos.')) return;
 
         // NOTE: Nginx requires `client_max_body_size 10M;` in the site config
         // (e.g. /etc/nginx/sites-available/elfarocc.tech) to match this limit.
@@ -609,6 +630,7 @@ export default function TaskDetailPanel({
                 onActivityCreated?.();
             } catch (err) {
                 toast.error('Error al subir archivo');
+                setError('No se pudo subir uno de los archivos adjuntos.');
             }
         }
         setUploading(false);
@@ -616,7 +638,8 @@ export default function TaskDetailPanel({
     };
 
     const handleAddSupply = async () => {
-        if (!task || !token || !newSupplyName.trim()) return;
+        if (!task || !requireAuth('Debes iniciar sesión para crear insumos.')) return;
+        if (!newSupplyName.trim()) return;
         setCreatingSupply(true);
         try {
             const created = await apiFetch<TaskSupplyRecord>(
@@ -637,6 +660,8 @@ export default function TaskDetailPanel({
             onActivityCreated?.();
             setNewSupplyName('');
             setNewSupplyQuantity(1);
+        } catch {
+            setError('No se pudo crear el insumo.');
         } finally {
             setCreatingSupply(false);
         }
@@ -646,7 +671,7 @@ export default function TaskDetailPanel({
         supply: TaskSupplyRecord,
         patch: Partial<Pick<TaskSupplyRecord, 'item_name' | 'quantity' | 'status'>>,
     ) => {
-        if (!task || !token) return;
+        if (!task || !requireAuth('Debes iniciar sesión para actualizar insumos.')) return;
         const optimistic = supplies.map((item) => (
             item.id === supply.id ? { ...item, ...patch } : item
         ));
@@ -668,6 +693,8 @@ export default function TaskDetailPanel({
             setSupplies(nextSupplies);
             onUpdate?.({ ...task, supplies: nextSupplies });
             onActivityCreated?.();
+        } catch {
+            setError('No se pudo actualizar el insumo.');
         } finally {
             setSavingSupplyId(null);
         }
@@ -675,7 +702,7 @@ export default function TaskDetailPanel({
 
     // ── Status / Priority / Assignee handlers ──────────────────────
     const handleStatusCycle = async () => {
-        if (!task) return;
+        if (!task || !requireAuth('Debes iniciar sesión para cambiar el estado de la tarea.')) return;
         const currentIdx = STATUS_CYCLE.indexOf(getValidStatus(task.status));
         const nextStatus = STATUS_CYCLE[(currentIdx + 1) % STATUS_CYCLE.length];
         const updated = { ...task, status: nextStatus };
@@ -684,11 +711,13 @@ export default function TaskDetailPanel({
             await apiFetch(`/projects/tasks/${task.id}`, {
                 method: 'PATCH', token, body: { status: nextStatus },
             });
-        } catch { /* optimistic */ }
+        } catch {
+            setError('No se pudo actualizar el estado de la tarea.');
+        }
     };
 
     const handlePriorityCycle = async () => {
-        if (!task) return;
+        if (!task || !requireAuth('Debes iniciar sesión para cambiar la prioridad de la tarea.')) return;
         const currentIdx = PRIORITY_CYCLE.indexOf(getValidPriority(task.priority));
         const nextPriority = PRIORITY_CYCLE[(currentIdx + 1) % PRIORITY_CYCLE.length];
         const updated = { ...task, priority: nextPriority };
@@ -697,33 +726,39 @@ export default function TaskDetailPanel({
             await apiFetch(`/projects/tasks/${task.id}`, {
                 method: 'PATCH', token, body: { priority: nextPriority },
             });
-        } catch { /* optimistic */ }
+        } catch {
+            setError('No se pudo actualizar la prioridad de la tarea.');
+        }
     };
 
     const handleAssigneeChange = async (newAssigneeId: string | null) => {
-        if (!task || !token) return;
+        if (!task || !requireAuth('Debes iniciar sesión para reasignar la tarea.')) return;
         const updated = { ...task, assignee_id: newAssigneeId as any };
         onUpdate?.(updated);
         try {
             await apiFetch(`/projects/tasks/${task.id}`, {
                 method: 'PATCH', token, body: { assignee_id: newAssigneeId },
             });
-        } catch { /* optimistic */ }
+        } catch {
+            setError('No se pudo reasignar la tarea.');
+        }
     };
 
     const handleDeleteTask = async () => {
-        if (!task || !token) return;
-        onDelete?.(task.id);
+        if (!task || !requireAuth('Debes iniciar sesión para eliminar la tarea.')) return;
         try {
             await apiFetch(`/projects/${task.project_id}/tasks/${task.id}`, {
                 method: 'DELETE', token,
             });
-        } catch { /* ignore */ }
-        onClose();
+            onDelete?.(task.id);
+            onClose();
+        } catch {
+            setError('No se pudo eliminar la tarea.');
+        }
     };
 
     const handleDeleteComment = async (commentId: string) => {
-        if (!task || !token) return;
+        if (!task || !requireAuth('Debes iniciar sesión para eliminar comentarios.')) return;
         setConfirmAction({
             title: 'Eliminar comentario',
             description: '¿Estás seguro de que deseas eliminar este comentario? Esta acción no se puede deshacer.',
@@ -735,7 +770,7 @@ export default function TaskDetailPanel({
                     setComments(prev => prev.filter(c => c.id !== commentId));
                     onActivityCreated?.();
                 } catch {
-                    // ignore
+                    setError('No se pudo eliminar el comentario.');
                 }
                 setConfirmAction(null);
             },
@@ -743,7 +778,7 @@ export default function TaskDetailPanel({
     };
 
     const handleDeleteSupply = async (supplyId: string) => {
-        if (!task || !token) return;
+        if (!task || !requireAuth('Debes iniciar sesión para eliminar insumos.')) return;
         setDeletingSupplyId(supplyId);
         try {
             await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/supplies/${supplyId}`, {
@@ -753,12 +788,14 @@ export default function TaskDetailPanel({
             setSupplies(nextSupplies);
             onUpdate?.({ ...task, supplies: nextSupplies });
             onActivityCreated?.();
-        } catch { /* ignore */ }
+        } catch {
+            setError('No se pudo eliminar el insumo.');
+        }
         finally { setDeletingSupplyId(null); }
     };
 
     const handleDeleteAttachment = async (attachmentId: string) => {
-        if (!task || !token) return;
+        if (!task || !requireAuth('Debes iniciar sesión para eliminar archivos adjuntos.')) return;
         setDeletingAttachmentId(attachmentId);
         try {
             await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/attachments/${attachmentId}`, {
@@ -767,11 +804,14 @@ export default function TaskDetailPanel({
             const nextAttachments = (task.attachments ?? []).filter(a => a.id !== attachmentId);
             onUpdate?.({ ...task, attachments: nextAttachments });
             onActivityCreated?.();
-        } catch { /* ignore */ }
+        } catch {
+            setError('No se pudo eliminar el archivo adjunto.');
+        }
         finally { setDeletingAttachmentId(null); }
     };
 
     if (!task) return null;
+    if (authLoading) return null;
 
     const status   = STATUS_MAP[task.status ?? 'todo'] ?? STATUS_MAP.todo;
     const priority = PRIORITY_MAP[task.priority ?? 'medium'] ?? PRIORITY_MAP.medium;
@@ -802,6 +842,11 @@ export default function TaskDetailPanel({
 
                 {/* ── HEADER ─────────────────────────────────────── */}
                 <header className="shrink-0 px-4 pt-3 pb-0 border-b border-[hsl(var(--border))] dark:border-white/[0.06]">
+                    {error && (
+                        <div className="mb-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                            <p className="text-[10px] font-bold uppercase tracking-wide">{error}</p>
+                        </div>
+                    )}
                     {/* Row 1: breadcrumbs + tools */}
                     <div className="flex items-center justify-between mb-2">
                         {/* Breadcrumbs */}
