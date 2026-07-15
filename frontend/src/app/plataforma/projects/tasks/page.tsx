@@ -10,31 +10,41 @@ import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { STATUS_LABELS, getValidStatus, type TaskStatus } from '@/lib/projects/constants';
 import { DSSkeleton } from '@/design/components/DSSkeleton';
-import type { ProjectTaskRecord } from '@/types/projects';
-import { CheckCircle2, Layout } from 'lucide-react';
+import type { ProjectRecord } from '@/types/projects';
+import { CheckCircle2, FolderOpen, Layout } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
+import {
+    flattenProjectTasks,
+    isTaskOverdue,
+    normalizeTaskRow,
+    type TaskScope,
+    type TaskStatusFilter,
+    type TaskViewItem,
+} from './taskList';
 
 const STATUS_FLOW: TaskStatus[] = ['todo', 'in_progress', 'review', 'completed'];
 // `as const` preserves the literal 'all' union; without it, TS widens the
 // array elements to `string` and the setStatus call site (line 80) fails
 // typecheck because the state union is narrower than `string`.
-const STATUS_FILTERS = ['all', 'todo', 'in_progress', 'review', 'completed'] as const;
-type StatusFilter = (typeof STATUS_FILTERS)[number];
+const STATUS_FILTERS: TaskStatusFilter[] = ['all', 'todo', 'in_progress', 'review', 'completed', 'overdue'];
 const PROJECT_TASK_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
-function formatStatusFilter(value: StatusFilter): string {
-    return value === 'all' ? 'Todas' : STATUS_LABELS[value as TaskStatus];
+function formatStatusFilter(value: TaskStatusFilter): string {
+    if (value === 'all') return 'Todas';
+    if (value === 'overdue') return 'Vencidas';
+    return STATUS_LABELS[value as TaskStatus];
 }
 
 export default function ProjectsTasksPage() {
     const { token, loading: authLoading } = useAuth();
     const searchParams = useSearchParams();
-    const [tasks, setTasks] = useState<ProjectTaskRecord[]>([]);
+    const taskScope: TaskScope = searchParams?.get('scope') === 'all' ? 'all' : 'mine';
+    const [tasks, setTasks] = useState<TaskViewItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [status, setStatus] = useState<StatusFilter>('all');
+    const [status, setStatus] = useState<TaskStatusFilter>('all');
     const [viewType, setViewType] = useState<ViewType>('list');
 
     useEffect(() => {
@@ -47,8 +57,13 @@ export default function ProjectsTasksPage() {
             }
             try {
                 setError(null);
-                const data = await apiFetch<ProjectTaskRecord[]>('/projects/tasks', { token, cache: 'no-store' });
-                setTasks(Array.isArray(data) ? data : []);
+                if (taskScope === 'all') {
+                    const projects = await apiFetch<ProjectRecord[]>('/projects', { token, cache: 'no-store' });
+                    setTasks(flattenProjectTasks(Array.isArray(projects) ? projects : []));
+                } else {
+                    const data = await apiFetch<any[]>('/projects/tasks', { token, cache: 'no-store' });
+                    setTasks(Array.isArray(data) ? data.map((row) => normalizeTaskRow(row)) : []);
+                }
             } catch (error) {
                 setTasks([]);
                 setError('No se pudieron cargar las tareas de proyecto.');
@@ -59,7 +74,7 @@ export default function ProjectsTasksPage() {
             }
         };
         if (!authLoading) load();
-    }, [authLoading, token]);
+    }, [authLoading, taskScope, token]);
 
     useEffect(() => {
         const view = searchParams?.get('view');
@@ -72,6 +87,7 @@ export default function ProjectsTasksPage() {
 
     const filtered = useMemo(() => {
         if (status === 'all') return tasks;
+        if (status === 'overdue') return tasks.filter((task) => isTaskOverdue(task));
         return tasks.filter((task) => task.status === status);
     }, [tasks, status]);
 
@@ -97,12 +113,12 @@ export default function ProjectsTasksPage() {
         progress: task.status === 'completed' ? 100 : task.status === 'review' ? 75 : task.status === 'in_progress' ? 50 : 20,
     }));
 
-    const moveForward = async (task: ProjectTaskRecord) => {
+    const moveForward = async (task: TaskViewItem) => {
         const index = STATUS_FLOW.indexOf(getValidStatus(task.status));
         const nextStatus = STATUS_FLOW[Math.min(index + 1, STATUS_FLOW.length - 1)];
         if (!nextStatus || nextStatus === task.status) return;
         try {
-            const updated = await apiFetch<ProjectTaskRecord>(`/projects/tasks/${task.id}`, {
+            const updated = await apiFetch<TaskViewItem>(`/projects/tasks/${task.id}`, {
                 method: 'PATCH',
                 token,
                 body: { status: nextStatus },
@@ -116,7 +132,7 @@ export default function ProjectsTasksPage() {
 
     return (
         <ProjectsShell
-            breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: 'Mis tareas', icon: CheckCircle2 }]}
+            breadcrumbs={[{ label: 'Proyectos', icon: Layout }, { label: taskScope === 'all' ? 'Todas las tareas' : 'Mis tareas', icon: CheckCircle2 }]}
             viewType={viewType}
             onViewChange={setViewType}
             viewOptions={PROJECT_TASK_VIEWS}
@@ -131,7 +147,7 @@ export default function ProjectsTasksPage() {
                 {STATUS_FILTERS.map((value) => (
                     <button
                         key={value}
-                        onClick={() => setStatus(value as StatusFilter)}
+                        onClick={() => setStatus(value)}
                         className={clsx(
                             'px-3 py-1 rounded-full text-[10px] uppercase tracking-wide font-black border transition-colors',
                             status === value
@@ -148,13 +164,20 @@ export default function ProjectsTasksPage() {
                 {loading ? (
                     <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <DSSkeleton key={idx} rounded="lg" className="h-20" />)}</div>
                 ) : !error && filtered.length === 0 ? (
-                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-[hsl(var(--text-secondary))]">No hay tareas para este filtro.</div>
+                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-[hsl(var(--text-secondary))]">
+                        {taskScope === 'all'
+                            ? 'No hay tareas en el portafolio para este filtro.'
+                            : 'No hay tareas asignadas para este filtro.'}
+                    </div>
                 ) : viewType === 'table' ? (
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
                         <table className="w-full text-left">
                             <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                                 <tr>
                                     <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tarea</th>
+                                    {taskScope === 'all' && (
+                                        <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Proyecto</th>
+                                    )}
                                     <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Estado</th>
                                     <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Prioridad</th>
                                 </tr>
@@ -163,6 +186,9 @@ export default function ProjectsTasksPage() {
                                 {filtered.map((task) => (
                                     <tr key={task.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
                                         <td className="px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">{task.title}</td>
+                                        {taskScope === 'all' && (
+                                            <td className="px-3 py-2 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{task.project_title || 'Sin proyecto'}</td>
+                                        )}
                                         <td className="px-3 py-2 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{task.status}</td>
                                         <td className="px-3 py-2 hidden lg:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{task.priority}</td>
                                     </tr>
@@ -175,6 +201,9 @@ export default function ProjectsTasksPage() {
                         {filtered.map((task) => (
                             <article key={task.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5">
                                 <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{task.title}</h3>
+                                {taskScope === 'all' && (
+                                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{task.project_title || 'Sin proyecto'}</p>
+                                )}
                                 <p className="text-xs text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">{task.status} · {task.priority}</p>
                             </article>
                         ))}
@@ -207,6 +236,11 @@ export default function ProjectsTasksPage() {
                                     <div>
                                         <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{task.title}</h3>
                                         <p className="text-xs text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">Estado: {task.status} · Prioridad: {task.priority}</p>
+                                        {taskScope === 'all' && (
+                                            <p className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                                <FolderOpen size={10} /> {task.project_title || 'Sin proyecto'}
+                                            </p>
+                                        )}
                                     </div>
                                     <button
                                         onClick={() => moveForward(task)}
