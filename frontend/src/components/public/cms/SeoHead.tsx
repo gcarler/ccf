@@ -12,6 +12,7 @@ interface SeoHeadProps {
     canonicalUrl?: string;
     robotsMeta?: string;
     jsonLd?: Record<string, unknown> | null;
+    breadcrumbJsonLd?: Record<string, unknown> | null;
 }
 
 function setMeta(attr: string, key: string, content: string) {
@@ -44,9 +45,9 @@ function removeLink(rel: string) {
     document.querySelector(`link[rel="${rel}"]`)?.remove();
 }
 
-function upsertJsonLd(data: Record<string, unknown>) {
-    // Remove any previous client-injected JSON-LD scripts
-    document.querySelectorAll('script[data-seo-head]').forEach((el) => el.remove());
+function upsertJsonLd(data: Record<string, unknown>, marker = "data-seo-head") {
+    // Remove any previous client-injected JSON-LD scripts for this slot.
+    document.querySelectorAll(`script[${marker}]`).forEach((el) => el.remove());
 
     const dataStr = JSON.stringify(data);
     // Check if identical script already exists (server-rendered)
@@ -56,13 +57,19 @@ function upsertJsonLd(data: Record<string, unknown>) {
     }
     const script = document.createElement("script");
     script.type = "application/ld+json";
-    script.setAttribute("data-seo-head", "1");
+    script.setAttribute(marker, "1");
     script.textContent = dataStr;
     document.head.appendChild(script);
 }
 
-function removeClientJsonLd() {
-    document.querySelectorAll('script[data-seo-head]').forEach((el) => el.remove());
+function removeClientJsonLd(marker = "data-seo-head") {
+    document.querySelectorAll(`script[${marker}]`).forEach((el) => el.remove());
+}
+
+function syncTitle(title: string) {
+    if (document.title !== title) {
+        document.title = title;
+    }
 }
 
 export default function SeoHead({
@@ -73,6 +80,7 @@ export default function SeoHead({
     canonicalUrl,
     robotsMeta,
     jsonLd,
+    breadcrumbJsonLd,
 }: SeoHeadProps) {
     useEffect(() => {
         const title = fallbackTitle || SITE_NAME;
@@ -85,7 +93,7 @@ export default function SeoHead({
         const siteName = SITE_NAME;
 
         // Title
-        document.title = title;
+        syncTitle(title);
 
         // Basic meta
         setMeta("name", "description", description);
@@ -130,10 +138,15 @@ export default function SeoHead({
         } else {
             removeClientJsonLd();
         }
+        if (breadcrumbJsonLd) {
+            upsertJsonLd(breadcrumbJsonLd, "data-seo-head-breadcrumb");
+        } else {
+            removeClientJsonLd("data-seo-head-breadcrumb");
+        }
 
         // Additional SEO meta
         setMeta("name", "theme-color", "var(--site-primary)");
-    }, [fallbackTitle, fallbackDescription, fallbackImage, fallbackType, canonicalUrl, robotsMeta, jsonLd]);
+    }, [fallbackTitle, fallbackDescription, fallbackImage, fallbackType, canonicalUrl, robotsMeta, jsonLd, breadcrumbJsonLd]);
 
     return null;
 }
