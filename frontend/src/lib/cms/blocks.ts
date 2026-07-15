@@ -505,7 +505,7 @@ export const SITE_BLOCKS: CmsBlockDefinition[] = [
     key: `${SITE_KEY}_privacy`,
     label: "Privacidad — Política",
     description: "Cabecera y secciones de la política de privacidad pública.",
-    page: "/privacidad",
+    page: "/privacy",
     sample: {
       last_update: "12 de junio de 2026",
       summary: "Esta política describe cómo PLES SAS y la comunidad recopilan, usan, almacenan y protegen tus datos personales.",

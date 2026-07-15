@@ -256,7 +256,7 @@ export default function FaroFooter() {
                     </p>
                     <div className="flex shrink-0 items-center justify-center gap-4">
                         <Link
-                            href="/privacidad"
+                            href="/privacy"
                             className="text-xs transition-colors hover:text-[var(--site-primary)] hover:underline"
                             style={{
                                 color: "var(--site-on-surface-variant)",

@@ -42,7 +42,7 @@ const STATIC_ROUTES: SitemapEntry[] = [
   { loc: `${SITE_URL}/sedes`, changefreq: "monthly", priority: 0.7 },
   { loc: `${SITE_URL}/boletin`, changefreq: "weekly", priority: 0.7 },
   { loc: `${SITE_URL}/testimonios`, changefreq: "weekly", priority: 0.8 },
-  { loc: `${SITE_URL}/privacidad`, changefreq: "yearly", priority: 0.3 },
+  { loc: `${SITE_URL}/privacy`, changefreq: "yearly", priority: 0.3 },
 ];
 
 function buildSitemapXml(entries: SitemapEntry[]): string {

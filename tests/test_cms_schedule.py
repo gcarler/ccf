@@ -347,6 +347,34 @@ class TestLegacyScheduleEndpointCompat:
         )
         assert resp.status_code == 422
 
+    def test_legacy_schedule_rejects_cross_site_site_key(self, client, db_session):
+        seed_admin(db_session, email="legacy-cross-a@example.com")
+        _, _, other_sede = seed_admin(db_session, email="legacy-cross-b@example.com")
+        from backend import models
+
+        site_a = _seed_site(db_session, key="legacy-a")
+        site_b = models.CmsSite(
+            id=uuid.uuid4(),
+            site_key="legacy-b",
+            name="Site legacy-b",
+            base_path="/legacy-b",
+            is_active=True,
+            sede_id=other_sede.id,
+        )
+        db_session.add(site_b)
+        db_session.commit()
+
+        page = _make_page(db_session, site_b.id, slug="cross-site-page")
+        headers = auth_headers(client, email="legacy-cross-a@example.com")
+        resp = client.post(
+            f"/api/cms/v2/pages/{page.id}/schedule?site_key={site_a.site_key}",
+            json={"scheduled_at": "2099-01-01T00:00:00Z"},
+            headers=headers,
+        )
+        assert resp.status_code == 404, resp.text
+        db_session.refresh(page)
+        assert page.publish_at is None
+
 
 # ── 4. Post PATCH endpoint ─────────────────────────────────────────────────
 

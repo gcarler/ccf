@@ -162,7 +162,7 @@ export default function CounselingPage() {
             <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Consejería</h1>
             <div className="flex gap-2">
                 <button
-                    onClick={() => router.push('/plataforma/privacy')}
+                    onClick={() => router.push('/privacy')}
                     className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-all"
                 >
                     <Link2 size={16} /> Ver políticas
