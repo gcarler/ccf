@@ -3,15 +3,15 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CalendarDays, MessageSquare, Flag, GripVertical } from 'lucide-react';
+import { MessageSquare, GripVertical } from 'lucide-react';
+import { InlinePriorityPicker, InlineDatePicker, InlineUserPicker } from '@/components/ui/inline-editors';
 import clsx from 'clsx';
-import { format, isPast, isToday } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { PRIORITY_LABELS } from '@/lib/projects/constants';
 
 interface Props {
     task: any;
     onOpen: (task: any) => void;
+    onUpdate?: (taskId: string, patch: Record<string, unknown>) => void;
 }
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -21,7 +21,7 @@ const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string
     low:    { label: PRIORITY_LABELS.low,    color: 'text-[hsl(var(--text-secondary))]',  bg: 'bg-[hsl(var(--surface-1))] dark:bg-white/5'     },
 };
 
-export function SortableTaskCard({ task, onOpen }: Props) {
+export function SortableTaskCard({ task, onOpen, onUpdate }: Props) {
     const {
         attributes,
         listeners,
@@ -41,15 +41,6 @@ export function SortableTaskCard({ task, onOpen }: Props) {
     const priority = PRIORITY_CONFIG[task.priority?.toLowerCase()] || PRIORITY_CONFIG.medium;
 
     const dueDateStr = task.due_date || task.dueDate;
-    const dueDate    = dueDateStr ? new Date(dueDateStr) : null;
-    const isOverdue  = dueDate && isPast(dueDate) && !isToday(dueDate);
-    const isDueToday = dueDate && isToday(dueDate);
-
-    // Initials from assignee name
-    const assigneeInitials = task.assignee_name
-        ? task.assignee_name.split(/\s+/).filter(Boolean).map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()
-        : task.assignee?.substring(0, 2).toUpperCase() || '?';
-
     const commentCount = task.comments_count ?? task.comments?.length ?? 0;
 
     return (
@@ -89,26 +80,15 @@ export function SortableTaskCard({ task, onOpen }: Props) {
                 <div className="flex items-center justify-between gap-2">
                     {/* Left: date + priority */}
                     <div className="flex items-center gap-2 flex-wrap">
-                        {dueDate && (
-                            <span className={clsx(
-                                'flex items-center gap-1 text-[10px] font-bold rounded-full px-2 py-0.5',
-                                isOverdue
-                                    ? 'text-[hsl(var(--destructive))] bg-red-50 dark:bg-red-900/30'
-                                    : isDueToday
-                                    ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/30'
-                                    : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/8'
-                            )}>
-                                <CalendarDays size={10} />
-                                {format(dueDate, 'd MMM', { locale: es })}
-                            </span>
-                        )}
-                        <span className={clsx(
-                            'flex items-center gap-1 text-[10px] font-bold rounded-full px-2 py-0.5',
-                            priority.color, priority.bg
-                        )}>
-                            <Flag size={9} fill="currentColor" />
-                            {priority.label}
-                        </span>
+                        <InlineDatePicker
+                            value={dueDateStr}
+                            onChange={(date) => onUpdate?.(String(task.id), { due_date: date })}
+                        />
+                        <InlinePriorityPicker
+                            value={task.priority ?? 'medium'}
+                            onChange={(p) => onUpdate?.(String(task.id), { priority: p })}
+                            size="sm"
+                        />
                     </div>
 
                     {/* Right: comments + assignee avatar */}
@@ -119,12 +99,10 @@ export function SortableTaskCard({ task, onOpen }: Props) {
                                 {commentCount}
                             </span>
                         )}
-                        <div
-                            className="size-6 rounded-full bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--bg-muted))] dark:from-blue-600 dark:to-sky-700 flex items-center justify-center font-semibold text-white shadow ring-2 ring-white dark:ring-[#25262b]"
-                            title={task.assignee_name || 'Sin asignar'}
-                        >
-                            {assigneeInitials}
-                        </div>
+                        <InlineUserPicker
+                            value={task.assignee_id ?? null}
+                            onChange={(userId) => onUpdate?.(String(task.id), { assignee_id: userId })}
+                        />
                     </div>
                 </div>
             </div>
