@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { SITE_KEY } from "@/lib/site-config";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -41,18 +41,22 @@ export default function CmsTagsManagement() {
   const [sites, setSites] = useState<CmsSite[]>([]);
   const [tags, setTags] = useState<CmsTag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [selectedTag, setSelectedTag] = useState<CmsTag | null>(null);
   const canEdit = canEditCms(user?.role);
 
-  const fetchData = async (targetSite: string) => {
+  const fetchData = useCallback(async (targetSite: string) => {
     if (!token) {
       setLoading(false);
+      setTags([]);
+      setError("Debes iniciar sesión para gestionar etiquetas.");
       return;
     }
     setLoading(true);
+    setError(null);
     try {
       const [nextSites, nextTags] = await Promise.all([
         listCmsSites(token),
@@ -63,14 +67,15 @@ export default function CmsTagsManagement() {
     } catch (error) {
       toast.error("Error al cargar etiquetas");
       setTags([]);
+      setError("No se pudieron cargar las etiquetas.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchData(siteKey);
-  }, [token, siteKey]);
+  }, [fetchData, siteKey]);
 
   const visibleTags = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -85,7 +90,12 @@ export default function CmsTagsManagement() {
   const handleCreate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const trimmedName = newName.trim();
-    if (!trimmedName || !token || !canEdit) return;
+    if (!trimmedName) return;
+    if (!token) {
+      setError("Debes iniciar sesión para crear etiquetas.");
+      return;
+    }
+    if (!canEdit) return;
     const slug = slugify(trimmedName);
     if (!slug) {
       toast.error("El nombre no produce un slug válido");
@@ -193,6 +203,12 @@ export default function CmsTagsManagement() {
           <Plus size={14} /> Nueva etiqueta
         </button>
       </header>
+
+      {error && (
+        <div className="mx-3 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+          <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+        </div>
+      )}
 
       {isQuickAddOpen && (
         <div className="bg-blue-50 dark:bg-blue-900/10 border-b-2 border-blue-300 dark:border-blue-500/30 overflow-hidden shrink-0">

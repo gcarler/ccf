@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { SITE_KEY } from "@/lib/site-config";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -56,6 +56,7 @@ export default function CmsPostsManagement() {
   const [categories, setCategories] = useState<CmsCategory[]>([]);
   const [tags, setTags] = useState<CmsTag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [viewType, setViewType] = useState<ViewType>("grid");
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -65,12 +66,17 @@ export default function CmsPostsManagement() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const canEdit = canEditCms(user?.role);
 
-  const fetchData = async (targetSite: string) => {
+  const fetchData = useCallback(async (targetSite: string) => {
     if (!token) {
       setLoading(false);
+      setPosts([]);
+      setCategories([]);
+      setTags([]);
+      setError("Debes iniciar sesión para gestionar posts.");
       return;
     }
     setLoading(true);
+    setError(null);
     try {
       const [nextSites, nextPosts, nextCategories, nextTags] = await Promise.all([
         listCmsSites(token),
@@ -85,14 +91,15 @@ export default function CmsPostsManagement() {
     } catch (error) {
       toast.error("Error al cargar posts");
       setPosts([]);
+      setError("No se pudieron cargar los posts.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchData(siteKey);
-  }, [token, siteKey]);
+  }, [fetchData, siteKey]);
 
   const visiblePosts = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -115,7 +122,12 @@ export default function CmsPostsManagement() {
   const handleCreatePost = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const trimmedTitle = newTitle.trim();
-    if (!trimmedTitle || !token || !canEdit) return;
+    if (!trimmedTitle) return;
+    if (!token) {
+      setError("Debes iniciar sesión para crear posts.");
+      return;
+    }
+    if (!canEdit) return;
     const slug = slugify(trimmedTitle);
     if (!slug) {
       toast.error("El título no produce un slug válido");
@@ -293,6 +305,12 @@ export default function CmsPostsManagement() {
           <Plus size={14} /> Nuevo post
         </button>
       </header>
+
+      {error && (
+        <div className="mx-3 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+          <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+        </div>
+      )}
 
       <AnimatePresence>
         {isQuickAddOpen && (
