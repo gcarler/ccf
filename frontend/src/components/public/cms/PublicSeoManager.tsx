@@ -42,13 +42,14 @@ interface CmsSeoData {
 export default function PublicSeoManager() {
     const pathname = usePathname() || "/";
     const match = matchRoute(pathname);
+    const routeSlug = match?.slug;
     const [cmsSeo, setCmsSeo] = useState<CmsSeoData | null>(null);
 
     useEffect(() => {
-        if (!match) return;
+        if (!routeSlug) return;
 
         const controller = new AbortController();
-        const url = `${API_BASE}/cms/v2/public/sites/${SITE_KEY}/pages/${match.slug}`;
+        const url = `${API_BASE}/cms/v2/public/sites/${SITE_KEY}/pages/${routeSlug}`;
 
         fetch(url, { signal: controller.signal })
             .then((r) => (r.ok ? r.json() : null))
@@ -67,16 +68,16 @@ export default function PublicSeoManager() {
             .catch(() => {});
 
         return () => controller.abort();
-    }, [match?.slug]);
+    }, [routeSlug]);
 
-    if (!match) return null;
+    if (!routeSlug) return null;
 
     const fallbackTitle = cmsSeo?.title || SITE_NAME;
     const fallbackDescription = cmsSeo?.description || "";
 
     return (
         <SeoHead
-            slug={match.slug}
+            slug={routeSlug}
             fallbackTitle={fallbackTitle}
             fallbackDescription={fallbackDescription}
             robotsMeta={cmsSeo?.robots_meta}
