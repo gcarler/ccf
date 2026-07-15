@@ -536,6 +536,7 @@ export default function StrategyDetailPage() {
  }, [fetchGroups, token]);
 
  const fetchMetrics = useCallback(async () => {
+ if (!token) return;
  try {
  const m = await apiFetch<StrategyMetrics>(`/evangelism/strategies/${id}/metrics`, { token, silent: true });
  setMetrics(m);
@@ -545,6 +546,7 @@ export default function StrategyDetailPage() {
  }, [id, token]);
 
  const fetchSessions = useCallback(async () => {
+ if (!token) return;
  setSessionsLoading(true);
  try {
  const data = await apiFetch<SessionRow[]>(`/evangelism/sessions?strategy_id=${id}`, { token, silent: true });
