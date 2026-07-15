@@ -3,6 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { PROJECTS_LIST_ROUTE, getProjectMetricHref } from '@/app/plataforma/projects/projectsLinks';
 
 describe('project metric links', () => {
+    it('uses the projects list anchor route as canonical destination', () => {
+        expect(PROJECTS_LIST_ROUTE).toBe('/plataforma/projects?view=list#projects-list');
+    });
+
     it('sends project metrics to the projects list route', () => {
         expect(getProjectMetricHref('8 proyectos')).toBe(PROJECTS_LIST_ROUTE);
         expect(getProjectMetricHref('Proyectos Activos')).toBe(PROJECTS_LIST_ROUTE);
