@@ -45,31 +45,44 @@ const TRIGGER_COLORS: Record<string, string> = {
 const EMPTY_FORM = { name: '', trigger: 'new_persona', action: 'send_whatsapp', message: '', taskTitle: '' };
 
 export default function AutomationsPage() {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const { addToast } = useToast();
 
     const [rules, setRules] = useState<AutomationRule[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [editingRule, setEditingRule] = useState<AutomationRule | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [form, setForm] = useState(EMPTY_FORM);
+    const [reloadKey, setReloadKey] = useState(0);
 
     const fetchRules = useCallback(async () => {
-        if (!token) return;
+        if (!token) {
+            setLoading(false);
+            setRules([]);
+            setError('Debes iniciar sesión para ver las automatizaciones');
+            return;
+        }
         setLoading(true);
         try {
+            setError(null);
             const data = await apiFetch<AutomationRule[]>('/admin/automations', { token });
             setRules(Array.isArray(data) ? data : []);
-        } catch {
+        } catch (err) {
+            console.error(err);
+            setRules([]);
+            setError('No se pudieron cargar las automatizaciones');
             addToast('Error al cargar automatizaciones', 'error');
         } finally {
             setLoading(false);
         }
     }, [token, addToast]);
 
-    useEffect(() => { fetchRules(); }, [fetchRules]);
+    useEffect(() => {
+        if (!authLoading) fetchRules();
+    }, [authLoading, fetchRules, reloadKey]);
 
     const openCreate = () => {
         setEditingRule(null);
@@ -162,6 +175,24 @@ export default function AutomationsPage() {
             }
         >
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {authLoading ? (
+                    <div className="flex justify-center py-12">
+                        <Loader2 className="animate-spin text-[hsl(var(--text-secondary))]" size={24} />
+                    </div>
+                ) : error && (
+                    <div className="flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p className="text-[11px] font-bold uppercase tracking-wide">No se pudieron cargar las automatizaciones</p>
+                            <p className="text-xs">{error}</p>
+                        </div>
+                        <button
+                            onClick={() => setReloadKey(key => key + 1)}
+                            className="rounded-md border border-amber-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-amber-100 dark:border-amber-400/30 dark:hover:bg-amber-500/20"
+                        >
+                            Reintentar
+                        </button>
+                    </div>
+                )}
 
                 {/* Stats bar */}
                 <div className="grid grid-cols-3 gap-3 mb-2">
@@ -180,7 +211,7 @@ export default function AutomationsPage() {
                 {/* Rules list */}
                 {loading ? (
                     [...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-md" />)
-                ) : rules.length === 0 ? (
+                ) : !error && rules.length === 0 ? (
                     <div className="py-1.5 flex flex-col items-center justify-center gap-4 text-center">
                         <div className="size-10 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))]">
                             <Zap size={48} strokeWidth={1} />
@@ -196,7 +227,7 @@ export default function AutomationsPage() {
                             Crear primera regla
                         </button>
                     </div>
-                ) : (
+                ) : !error ? (
                     <AnimatePresence>
                         {rules.map(rule => {
                             const trig = getTriggerMeta(rule.trigger);
@@ -274,7 +305,7 @@ export default function AutomationsPage() {
                             );
                         })}
                     </AnimatePresence>
-                )}
+                ) : null}
             </div>
 
             {/* ─── Drawer: Crear / Editar Regla ─── */}

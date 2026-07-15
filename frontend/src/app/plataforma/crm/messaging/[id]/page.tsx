@@ -30,26 +30,59 @@ type MessagingHistoryDetail = {
 export default function MessagingDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const [campaign, setCampaign] = useState<MessagingHistoryDetail | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
 
     useEffect(() => {
-        if (!token || !id) return;
+        if (authLoading) return;
+        if (!id) {
+            setLoading(false);
+            setError('No se encontró la campaña.');
+            return;
+        }
+        if (!token) {
+            setLoading(false);
+            setError('Debes iniciar sesión para ver esta campaña.');
+            return;
+        }
         const loadCampaign = async () => {
             try {
+                setError(null);
                 setLoading(true);
                 const data = await apiFetch<MessagingHistoryDetail>(`/crm/messaging/history/${id}`, { token });
                 setCampaign(data);
             } catch (err) {
                 console.error(err);
+                setCampaign(null);
+                setError('No se pudo cargar el detalle de la campaña.');
                 toast.error("Error al cargar detalle de campana");
             } finally {
                 setLoading(false);
             }
         };
         loadCampaign();
-    }, [id, token]);
+    }, [authLoading, id, reloadKey, token]);
+
+    if (authLoading) {
+        return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Verificando sesión...</div>;
+    }
+
+    if (error) {
+        return (
+            <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
+                <button
+                    onClick={() => setReloadKey(key => key + 1)}
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                >
+                    Reintentar
+                </button>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
@@ -61,8 +94,16 @@ export default function MessagingDetailPage() {
 
     if (!campaign) {
         return (
-            <div className="p-4 text-center font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                No se pudo cargar la campana.
+            <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                    No se pudo cargar la campana.
+                </p>
+                <button
+                    onClick={() => setReloadKey(key => key + 1)}
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                >
+                    Reintentar
+                </button>
             </div>
         );
     }

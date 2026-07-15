@@ -17,6 +17,7 @@ export default function GrupoAdmin() {
     const { addToast } = useToast();
     const [grupos, setGrupos] = useState<Grupo[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [selectedGrupo, setSelectedGrupo] = useState<Grupo | null>(null);
     const [reportDate, setReportDate] = useState(new Date().toISOString().split("T")[0]);
     const [seasons, setSeasons] = useState<Season[]>([]);
@@ -26,11 +27,13 @@ export default function GrupoAdmin() {
     const [submitting, setSubmitting] = useState(false);
     const [groupNameDraft, setGroupNameDraft] = useState('');
     const [groupPromptOpen, setGroupPromptOpen] = useState(false);
+    const [reloadKey, setReloadKey] = useState(0);
 
     const fetchGrupos = useCallback(async () => {
         if (!token) return;
         setLoading(true);
         try {
+            setError(null);
             const data = await apiFetch<GrupoApi[]>("/community/grupos", { token });
             setGrupos(
                 Array.isArray(data)
@@ -42,6 +45,7 @@ export default function GrupoAdmin() {
             );
         } catch {
             setGrupos([]);
+            setError("No se pudieron cargar los grupos");
             addToast("No se pudieron cargar los grupos", "error");
         } finally {
             setLoading(false);
@@ -50,7 +54,7 @@ export default function GrupoAdmin() {
 
     useEffect(() => {
         if (isAuthenticated) fetchGrupos();
-    }, [fetchGrupos, isAuthenticated]);
+    }, [fetchGrupos, isAuthenticated, reloadKey]);
 
     const totalPersonas = useMemo(() => grupos.reduce((sum, grupo) => sum + (grupo.total_personas || 0), 0), [grupos]);
 
@@ -58,6 +62,7 @@ export default function GrupoAdmin() {
         if (!token) return;
         setSelectedGrupo(grupo);
         try {
+            setError(null);
             const [seasonData, detail] = await Promise.all([
                 apiFetch<Season[]>("/evangelism/groups/seasons", { token }),
                 apiFetch<any>(`/evangelism/grupos/${grupo.id}`, { token }),
@@ -78,6 +83,7 @@ export default function GrupoAdmin() {
                 host_id: hostId,
             } : prev);
         } catch {
+            setSelectedGrupo(null);
             addToast("No se pudo preparar el reporte", "error");
         }
     };
@@ -159,11 +165,32 @@ export default function GrupoAdmin() {
             />
 
             <main className="space-y-4 pb-4">
+                {error && (
+                    <div className="flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p className="text-[11px] font-bold uppercase tracking-wide">No se pudo cargar el módulo</p>
+                            <p className="text-xs">{error}</p>
+                        </div>
+                        <button
+                            onClick={() => setReloadKey(key => key + 1)}
+                            className="rounded-md border border-amber-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-amber-100 dark:border-amber-400/30 dark:hover:bg-amber-500/20"
+                        >
+                            Reintentar
+                        </button>
+                    </div>
+                )}
+
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <Stat label="Grupos Activos" value={loading ? "..." : grupos.length.toString()} />
                     <Stat label="Integrantes Base" value={loading ? "..." : totalPersonas.toString()} />
                     <Stat label="Temporadas" value={seasons.length.toString()} />
                 </section>
+
+                {!loading && !error && grupos.length === 0 && (
+                    <div className="rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-6 text-center text-sm text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5">
+                        No hay grupos activos para mostrar.
+                    </div>
+                )}
 
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {grupos.map((grupo) => (

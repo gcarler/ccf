@@ -1079,6 +1079,8 @@ export default function RecursosPage() {
     const [categorias, setCategorias] = useState<CategoriaRecurso[]>([]);
     const [plantillas, setPlantillas] = useState<PlantillaMensaje[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
 
     const [filterCat, setFilterCat] = useState<string | null>(null);
     const [filterCanal, setFilterCanal] = useState<CanalEnvio | null>(null);
@@ -1096,6 +1098,7 @@ export default function RecursosPage() {
         if (!token) return;
         setLoading(true);
         try {
+            setError(null);
             const params = new URLSearchParams();
             if (filterCat) params.set('categoria_id', filterCat);
             if (filterCanal) params.set('canal', filterCanal);
@@ -1107,12 +1110,17 @@ export default function RecursosPage() {
             ]);
             setCategorias(cats ?? []);
             setPlantillas(plts ?? []);
+        } catch (err) {
+            console.error(err);
+            setCategorias([]);
+            setPlantillas([]);
+            setError('No se pudo cargar el banco de recursos');
         } finally {
             setLoading(false);
         }
     }, [token, filterCat, filterCanal, search]);
 
-    useEffect(() => { fetchAll(); }, [fetchAll]);
+    useEffect(() => { fetchAll(); }, [fetchAll, reloadKey]);
 
     function openCreate() { setEditing(null); setDrawerOpen(true); }
     function openEdit(p: PlantillaMensaje) { setEditing(p); setDrawerOpen(true); }
@@ -1243,10 +1251,24 @@ export default function RecursosPage() {
 
                 {/* Grid */}
                 <div className="flex-1 overflow-y-auto p-5">
+                    {!loading && error && (
+                        <div className="mb-4 flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p className="text-[11px] font-bold uppercase tracking-wide">No se pudo cargar el módulo</p>
+                                <p className="text-xs">{error}</p>
+                            </div>
+                            <button
+                                onClick={() => setReloadKey(key => key + 1)}
+                                className="rounded-md border border-amber-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-amber-100 dark:border-amber-400/30 dark:hover:bg-amber-500/20"
+                            >
+                                Reintentar
+                            </button>
+                        </div>
+                    )}
                     {loading && (
                         <div className="flex justify-center py-16"><Loader2 className="animate-spin text-[hsl(var(--text-secondary))]" size={24} /></div>
                     )}
-                    {!loading && plantillas.length === 0 && (
+                    {!loading && !error && plantillas.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
                             <BookOpen size={40} className="text-[hsl(var(--text-secondary))] dark:text-white/20 mb-3" />
                             <p className="text-sm font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Sin plantillas</p>
