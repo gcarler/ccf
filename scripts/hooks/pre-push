@@ -11,6 +11,24 @@ NC='\033[0m'
 
 FAIL=0
 
+restart_frontend_next() {
+    echo "  [deploy] Reiniciando frontend con next start..."
+    pkill -f "next start -p 3000 -H 127.0.0.1" >/dev/null 2>&1 || true
+    cd /root/ccf/frontend
+    nohup npm run start -- -p 3000 -H 127.0.0.1 >/tmp/ccf-frontend-start.log 2>&1 &
+    local pid=$!
+    sleep 8
+    if kill -0 "$pid" >/dev/null 2>&1; then
+        FRONT_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/plataforma/evangelism 2>/dev/null || echo "000")
+        echo -e "  ${GREEN}✓ Frontend reiniciado — HTTP $FRONT_HTTP${NC}"
+        return 0
+    fi
+
+    echo -e "  ${YELLOW}⚠ No se pudo reiniciar el frontend — revisa /tmp/ccf-frontend-start.log${NC}"
+    tail -n 20 /tmp/ccf-frontend-start.log 2>/dev/null || true
+    return 1
+}
+
 echo ""
 echo "🔍 Pre-push: validando cambios antes de enviar a producción..."
 echo ""
@@ -243,7 +261,8 @@ if [ -n "$FRONTEND_FILES" ]; then
             FRONT_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3002 2>/dev/null || echo "000")
             echo -e "  ${GREEN}✓ Frontend reiniciado — HTTP $FRONT_HTTP${NC}"
         else
-            echo -e "  ${YELLOW}⚠ No se pudo reiniciar el frontend — revisa PM2${NC}"
+            echo -e "  ${YELLOW}⚠ PM2 no está manejando el frontend; usando next start directo${NC}"
+            restart_frontend_next
         fi
     fi
 fi
