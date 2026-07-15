@@ -45,6 +45,7 @@ export default function ResourceBankGallery({
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -52,9 +53,12 @@ export default function ResourceBankGallery({
     setError(null);
     apiFetch<SystemTemplateCatalog>('/crm/resources/system-templates', { token })
       .then(data => setCatalog(data ?? { categorias: [], plantillas: [] }))
-      .catch(() => setError('No se pudo cargar el banco de recursos'))
+      .catch(() => {
+        setCatalog({ categorias: [], plantillas: [] });
+        setError('No se pudo cargar el banco de recursos');
+      })
       .finally(() => setLoading(false));
-  }, [open, token]);
+  }, [open, reloadKey, token]);
 
   const categories = useMemo(() => catalog?.categorias ?? [], [catalog]);
   const templates = useMemo(() => catalog?.plantillas ?? [], [catalog]);
@@ -183,6 +187,21 @@ export default function ResourceBankGallery({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
+          {!loading && error && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wide">Banco de recursos sin respuesta</p>
+                <p className="text-xs">{error}</p>
+              </div>
+              <button
+                onClick={() => setReloadKey(key => key + 1)}
+                className="rounded-md border border-amber-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-amber-100 dark:border-amber-400/30 dark:hover:bg-amber-500/20"
+              >
+                Reintentar
+              </button>
+            </div>
+          )}
+
           {loading && (
             <div className="flex flex-col items-center justify-center py-16">
               <Loader2 className="animate-spin text-[hsl(var(--text-secondary))]" size={28} />
@@ -190,7 +209,7 @@ export default function ResourceBankGallery({
             </div>
           )}
 
-          {!loading && filteredTemplates.length === 0 && (
+          {!loading && !error && filteredTemplates.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <BookOpen size={40} className="text-[hsl(var(--text-secondary))] dark:text-white/20 mb-3" />
               <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">No se encontraron plantillas</p>

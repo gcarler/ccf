@@ -65,7 +65,7 @@ function formatDate(value?: string | null) {
 }
 
 export default function LeadDetail() {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const { canEditCrm } = useCrmAccess();
     const { addToast } = useToast();
     const router = useRouter();
@@ -77,6 +77,8 @@ export default function LeadDetail() {
     const [callLogs, setCallLogs] = useState<CallLog[]>([]);
     const [counselingSessions, setCounselingSessions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
 
     const [isCallDrawerOpen, setIsCallDrawerOpen] = useState(false);
     const [isSavingCall, setIsSavingCall] = useState(false);
@@ -88,9 +90,20 @@ export default function LeadDetail() {
     const [isSavingStage, setIsSavingStage] = useState(false);
 
     const fetchLeadData = useCallback(async () => {
-        if (!token || !leadId) return;
+        if (authLoading) return;
+        if (!leadId) {
+            setLoading(false);
+            setError('No se encontró el contacto.');
+            return;
+        }
+        if (!token) {
+            setLoading(false);
+            setError('Debes iniciar sesión para ver este contacto.');
+            return;
+        }
         setLoading(true);
         try {
+            setError(null);
             const [leadData, logsData] = await Promise.allSettled([
                 apiFetch(`/crm/casos/${leadId}`, { token, cache: 'no-store' }),
                 apiFetch<CallLog[]>(`/crm/casos/${leadId}/calls`, { token, cache: 'no-store' }),
@@ -114,17 +127,22 @@ export default function LeadDetail() {
             } else {
                 setLead(null);
                 setCounselingSessions([]);
+                setError('No se pudo cargar el contacto.');
             }
             setCallLogs(logsData.status === 'fulfilled' && Array.isArray(logsData.value) ? logsData.value : []);
         } catch (err) {
             console.error(err);
+            setLead(null);
+            setCallLogs([]);
+            setCounselingSessions([]);
+            setError('No se pudo cargar el contacto.');
             addToast('No se pudo cargar el contacto', 'error');
         } finally {
             setLoading(false);
         }
-    }, [addToast, leadId, token]);
+    }, [addToast, authLoading, leadId, token]);
 
-    useEffect(() => { fetchLeadData(); }, [fetchLeadData]);
+    useEffect(() => { fetchLeadData(); }, [fetchLeadData, reloadKey]);
 
     const handleStageChange = async (newStage: string) => {
         setIsStageOpen(false);
@@ -225,6 +243,28 @@ export default function LeadDetail() {
         .map((part: string) => part[0])
         .join('')
         .toUpperCase();
+
+    if (authLoading) {
+        return (
+            <div className="flex h-full items-center justify-center text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">
+                Verificando sesión...
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
+                <button
+                    onClick={() => setReloadKey(key => key + 1)}
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                >
+                    Reintentar
+                </button>
+            </div>
+        );
+    }
 
     if (loading) {
         return (

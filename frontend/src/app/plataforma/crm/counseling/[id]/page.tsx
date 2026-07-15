@@ -30,9 +30,11 @@ type CounselingDetail = {
 export default function CounselingDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const [session, setSession] = useState<CounselingDetail | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
     const [isEditing, setIsEditing] = useState(false);
     const [editedNotes, setEditedNotes] = useState("");
     const [copilotLoading, setCopilotLoading] = useState(false);
@@ -78,21 +80,52 @@ export default function CounselingDetailPage() {
 
 
     useEffect(() => {
-        if (!token || !id) return;
+        if (authLoading) return;
+        if (!id) {
+            setLoading(false);
+            setError("No se encontró la sesión de consejería.");
+            return;
+        }
+        if (!token) {
+            setLoading(false);
+            setError("Debes iniciar sesión para ver esta sesión.");
+            return;
+        }
         const loadSession = async () => {
             try {
+                setError(null);
                 setLoading(true);
                 const data = await apiFetch<CounselingDetail>(`/crm/counseling/${id}`, { token });
                 setSession(data);
             } catch (err) {
                 console.error(err);
+                setSession(null);
+                setError("No se pudo cargar la sesión de consejería.");
                 toast.error("Error al cargar la sesion de consejeria");
             } finally {
                 setLoading(false);
             }
         };
         loadSession();
-    }, [id, token]);
+    }, [authLoading, id, reloadKey, token]);
+
+    if (authLoading) {
+        return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Verificando sesión...</div>;
+    }
+
+    if (error) {
+        return (
+            <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
+                <button
+                    onClick={() => setReloadKey(key => key + 1)}
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                >
+                    Reintentar
+                </button>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
@@ -104,8 +137,16 @@ export default function CounselingDetailPage() {
 
     if (!session) {
         return (
-            <div className="p-4 text-center font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                No se pudo cargar la sesion.
+            <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                    No se pudo cargar la sesion.
+                </p>
+                <button
+                    onClick={() => setReloadKey(key => key + 1)}
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                >
+                    Reintentar
+                </button>
             </div>
         );
     }

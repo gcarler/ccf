@@ -21,37 +21,78 @@ import clsx from 'clsx';
 export default function CrmTaskDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     
     const [task, setTask] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
 
     useEffect(() => {
-        if (!token || !id) return;
+        if (authLoading) return;
+        if (!id) {
+            setLoading(false);
+            setError('No se encontró la tarea pastoral.');
+            return;
+        }
+        if (!token) {
+            setLoading(false);
+            setError('Debes iniciar sesión para ver esta tarea pastoral.');
+            return;
+        }
         const loadTask = async () => {
             try {
+                setError(null);
                 setLoading(true);
-                const data = await apiFetch<any>(`/crm/tasks/${id}`, { token }).catch(() => null);
-                setTask(data || {
-                    id,
-                    title: 'Seguimiento de Consolidación',
-                    description: 'Contactar al nuevo persona para invitarlo al grupo de su sector.',
-                    status: 'pending',
-                    priority: 'high',
-                    due_date: '2026-04-20',
-                    assigned_to: 'Diácono Roberto',
-                    category: 'Consolidación'
-                });
+                const data = await apiFetch<any>(`/crm/tasks/${id}`, { token });
+                setTask(data);
             } catch (err) {
+                console.error(err);
+                setTask(null);
+                setError('No se pudo cargar la tarea pastoral.');
                 toast.error('Error al cargar la tarea pastoral');
             } finally {
                 setLoading(false);
             }
         };
         loadTask();
-    }, [id, token]);
+    }, [authLoading, id, reloadKey, token]);
+
+    if (authLoading) {
+        return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Verificando sesión...</div>;
+    }
+
+    if (!token || error) {
+        return (
+            <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                    {error ?? 'Debes iniciar sesión para ver esta tarea pastoral.'}
+                </p>
+                <button
+                    onClick={() => setReloadKey(key => key + 1)}
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                >
+                    Reintentar
+                </button>
+            </div>
+        );
+    }
 
     if (loading) return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cargando tarea pastoral...</div>;
+
+    if (!task) {
+        return (
+            <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">No se pudo cargar la tarea pastoral.</p>
+                <button
+                    onClick={() => setReloadKey(key => key + 1)}
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                >
+                    Reintentar
+                </button>
+            </div>
+        );
+    }
 
     return (
         <CrmShell
