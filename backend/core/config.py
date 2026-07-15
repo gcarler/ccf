@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     mercadopago_public_key: str = Field(default="")
 
     google_redirect_uri: str = Field(
-        default="http://localhost:8000/api/auth/google/callback"
+        default="http://localhost:8000/api/v3/auth/google/callback"
     )
 
     model_config = SettingsConfigDict(

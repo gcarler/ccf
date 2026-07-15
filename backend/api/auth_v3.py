@@ -135,6 +135,20 @@ def _build_public_welcome_redirect(frontend_url: str, *, name: str | None = None
     return f"{base}/bienvenida?{urlencode(params)}"
 
 
+def _google_oauth_ready() -> bool:
+    return bool(settings.google_client_id and settings.google_client_secret)
+
+
+def _resolve_google_redirect_uri(request: Request | None = None) -> str:
+    configured = (settings.google_redirect_uri or "").strip()
+    if configured:
+        return configured
+    if request is not None:
+        return str(request.url_for("google_callback"))
+    frontend_guess = getattr(settings, "frontend_url", "http://localhost:3000").rstrip("/")
+    return f"{frontend_guess}/api/v3/auth/google/callback"
+
+
 # ─── Schemas ──────────────────────────────────────────────────────────────
 
 
@@ -208,10 +222,10 @@ def _resolve_token(db: Session, token: str) -> TokenResetContrasena | None:
 @router.get("/google")
 def google_login(request: Request):
     """Redirige a pantalla de consentimiento de Google."""
-    if not settings.google_client_id:
-        raise HTTPException(status_code=501, detail="Google OAuth no configurado")
+    if not _google_oauth_ready():
+        raise HTTPException(status_code=503, detail="Google OAuth no configurado")
 
-    redirect_uri = settings.google_redirect_uri or request.url_for("google_callback")
+    redirect_uri = _resolve_google_redirect_uri(request)
     from urllib.parse import urlencode
 
     params = {
@@ -231,14 +245,13 @@ def google_callback(
     error: Optional[str] = None,
     request: Request = None,
     db: Session = Depends(get_db),
-    response: Response = None,
 ):
     import httpx
 
     if error or not code:
         raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
 
-    redirect_uri = settings.google_redirect_uri or (request.url_for("google_callback") if request else "")
+    redirect_uri = _resolve_google_redirect_uri(request)
 
     # 1. Exchange code for tokens
     try:
@@ -355,7 +368,6 @@ def google_callback(
     refresh_token = _create_refresh_token(db, user.id)
 
     # 8. Set httpOnly cookies + redirect
-    _set_cookies(response, access_token, refresh_token)
     _log_security(
         db,
         user.id,
@@ -366,7 +378,9 @@ def google_callback(
 
     # Redirect to frontend with token in hash
     frontend_url = getattr(settings, "frontend_url", "http://localhost:3000")
-    return RedirectResponse(url=f"{frontend_url}/auth/callback?token={access_token}")
+    redirect_response = RedirectResponse(url=f"{frontend_url}/auth/callback?token={access_token}")
+    _set_cookies(redirect_response, access_token, refresh_token)
+    return redirect_response
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -682,13 +696,18 @@ def check_email(email: str, db: Session = Depends(get_db)):
     is_gmail = email.lower().endswith("@gmail.com") if email else False
 
     if not user:
-        return {"exists": False, "is_gmail": is_gmail}
+        return {
+            "exists": False,
+            "is_gmail": is_gmail,
+            "google_oauth_enabled": _google_oauth_ready(),
+        }
 
     return {
         "exists": True,
         "is_gmail": is_gmail,
         "needs_password_init": user.password_hash is None,
         "has_password": user.password_hash is not None,
+        "google_oauth_enabled": _google_oauth_ready(),
     }
 
 

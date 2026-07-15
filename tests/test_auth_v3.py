@@ -102,6 +102,7 @@ class TestAuthV3Flow:
         data = response.json()
         assert data["exists"] is True
         assert data["has_password"] is True
+        assert isinstance(data["google_oauth_enabled"], bool)
 
     def test_v3_check_email_not_found(self, client: TestClient):
         """Check-email para email no registrado."""
@@ -188,6 +189,32 @@ class TestAuthV3Flow:
         assert response.status_code == 200
         data = response.json()
         assert data["is_gmail"] is True
+        assert isinstance(data["google_oauth_enabled"], bool)
+
+    def test_v3_check_email_reports_google_ready(self, client: TestClient, db_session: Session, monkeypatch):
+        """Check-email debe exponer si Google SSO está listo para usar."""
+        from backend.api import auth_v3
+
+        monkeypatch.setattr(auth_v3.settings, "google_client_id", "client-id")
+        monkeypatch.setattr(auth_v3.settings, "google_client_secret", "client-secret")
+        _create_v3_user(db_session, email="ready@gmail.com", password="SecurePass99!")
+
+        response = client.get(
+            "/api/v3/auth/check-email",
+            params={"email": "ready@gmail.com"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["google_oauth_enabled"] is True
+
+    def test_google_login_returns_service_error_when_not_configured(self, client: TestClient, monkeypatch):
+        """El login Google debe fallar de forma explícita si no está habilitado."""
+        from backend.api import auth_v3
+
+        monkeypatch.setattr(auth_v3.settings, "google_client_id", "")
+        monkeypatch.setattr(auth_v3.settings, "google_client_secret", "")
+        response = client.get("/api/v3/auth/google")
+        assert response.status_code == 503
 
     def test_welcome_redirect_builder(self):
         url = _build_public_welcome_redirect(
@@ -199,5 +226,3 @@ class TestAuthV3Flow:
         assert "reason=no_account" in url
         assert "name=G.+Carler" in url
         assert "email=gscarler%40gmail.com" in url
-
-

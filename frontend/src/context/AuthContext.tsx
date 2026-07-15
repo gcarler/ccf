@@ -75,9 +75,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } finally { clearTimeout(timer); setLoading(false); }
     }, []);
 
+    const bootstrapRefreshFromCookie = useCallback(async () => {
+        try {
+            const data = await apiFetch<any>('/v3/auth/refresh', {
+                method: 'POST',
+                silent: true,
+            });
+
+            if (data?.access_token && typeof window !== 'undefined') {
+                sessionStorage.setItem('ccf_token', data.access_token);
+                setToken(data.access_token);
+            }
+            if (data?.refresh_token && typeof window !== 'undefined') {
+                sessionStorage.setItem('ccf_refresh_token', data.refresh_token);
+            }
+
+            return data?.access_token || null;
+        } catch {
+            return null;
+        }
+    }, []);
+
     useEffect(() => { fetchUser(); }, [fetchUser]); // only on mount
 
     const login = useCallback(async (accessToken?: string, refreshToken?: string) => {
+        let effectiveToken = accessToken;
+
         if (accessToken && typeof window !== 'undefined') {
             sessionStorage.setItem('ccf_token', accessToken);
             setToken(accessToken);
@@ -85,17 +108,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (refreshToken && typeof window !== 'undefined') {
             sessionStorage.setItem('ccf_refresh_token', refreshToken);
         }
-        const data = await fetchUser(accessToken);
+        if (accessToken && !refreshToken) {
+            const refreshedAccessToken = await bootstrapRefreshFromCookie();
+            if (refreshedAccessToken) {
+                effectiveToken = refreshedAccessToken;
+            }
+        }
+
+        const data = await fetchUser(effectiveToken);
         if (data?.role) redirectByRole();
-        else if (accessToken) router.push('/plataforma/academy');
+        else if (effectiveToken) router.push('/plataforma/academy');
         
         // Auto-refresh permissions cache
         try {
-            if (accessToken) {
-                await apiFetch('/v3/auth/me', { token: accessToken, silent: true });
+            if (effectiveToken) {
+                await apiFetch('/v3/auth/me', { token: effectiveToken, silent: true });
             }
         } catch { /* silent */ }
-    }, [fetchUser, redirectByRole, router]);
+    }, [bootstrapRefreshFromCookie, fetchUser, redirectByRole, router]);
 
     const refresh = useCallback(async () => { await fetchUser(); }, [fetchUser]);
 

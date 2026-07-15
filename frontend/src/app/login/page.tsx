@@ -36,8 +36,17 @@ export default function LoginPage() {
         try {
             const res = await apiFetch<any>(`/v3/auth/check-email?email=${encodeURIComponent(email)}`);
             if (res.is_gmail) {
-                // Google SSO — go direct
-                window.location.href = '/api/v3/auth/google';
+                if (res.google_oauth_enabled) {
+                    // Google SSO — go direct
+                    window.location.href = '/api/v3/auth/google';
+                    return;
+                }
+                if (res.has_password) {
+                    setStep('password');
+                    setError('Tu cuenta de Gmail usa contraseña porque Google SSO no está habilitado.');
+                    return;
+                }
+                setError('Tu cuenta de Gmail no tiene Google SSO habilitado. Contacta a administración.');
                 return;
             }
             if (res.needs_password_init) {
