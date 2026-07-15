@@ -7,7 +7,7 @@ Plus
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React,{ useEffect,useMemo,useState } from 'react';
+import React,{ useCallback,useEffect,useMemo,useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import type { ViewType } from '@/components/ViewSwitcher';
@@ -16,6 +16,8 @@ import ProjectCard from '@/components/projects/ProjectCard';
 import ProjectCreationDrawer from '@/components/projects/ProjectCreationDrawer';
 import { formatDate } from '@/components/projects/utils';
 import { DataTable } from '@/components/ui/DataTable';
+import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
+import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
@@ -25,6 +27,7 @@ import { DSCard } from '@/design/components/DSCard';
 import { DSChart } from '@/design/components/DSChart';
 import { DSMetric } from '@/design/components/DSMetric';
 import { apiFetch } from '@/lib/http';
+import { useProjects } from '@/hooks/useProjects';
 import type { ProjectRecord } from '@/types/projects';
 import type { ColumnDef } from '@tanstack/react-table';
 import { AnimatePresence,motion } from 'framer-motion';
@@ -49,6 +52,7 @@ export default function ProjectsClient({
     const [search, setSearch] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const { updateProject, deleteProject } = useProjects();
 
     useEffect(() => {
         if (!token) return;
@@ -85,6 +89,42 @@ export default function ProjectsClient({
             p.title.toLowerCase().includes(search.toLowerCase()) ||
             (p.description || '').toLowerCase().includes(search.toLowerCase())
         );
+
+    const handleUpdateProject = useCallback(
+        async (projectId: string, patch: Partial<ProjectRecord>) => {
+            setProjects((prev) => {
+                const previous = prev.find((p) => p.id === projectId);
+                if (!previous) return prev;
+                return prev.map((p) => (p.id === projectId ? { ...p, ...patch } : p));
+            });
+            const updated = await updateProject(projectId, patch);
+            if (!updated) {
+                setProjects((prev) =>
+                    prev.map((p) => {
+                        if (p.id !== projectId) return p;
+                        const previous = prev.find((prevP) => prevP.id === projectId);
+                        return previous ?? p;
+                    })
+                );
+            }
+        },
+        [updateProject]
+    );
+
+    const handleDeleteProject = useCallback(
+        async (projectId: string) => {
+            let previous: ProjectRecord | undefined;
+            setProjects((prev) => {
+                previous = prev.find((p) => p.id === projectId);
+                return prev.filter((p) => p.id !== projectId);
+            });
+            const ok = await deleteProject(projectId);
+            if (!ok && previous) {
+                setProjects((prev) => [...prev, previous!]);
+            }
+        },
+        [deleteProject]
+    );
 
     const handleCreateProject = async (data: {
         title: string;
@@ -145,7 +185,13 @@ export default function ProjectsClient({
                             {project.title.slice(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{project.title}</p>
+                            <InlineTextInput
+                                value={project.title}
+                                onChange={(v) => handleUpdateProject(project.id, { title: v })}
+                                placeholder="Título del proyecto"
+                                className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate"
+                                inputClassName="text-[13px]"
+                            />
                             <p className="text-[11px] text-[hsl(var(--text-secondary))] truncate">{project.description || 'Sin descripción'}</p>
                         </div>
                     </div>
@@ -155,12 +201,14 @@ export default function ProjectsClient({
         {
             accessorKey: 'status',
             header: 'Estado',
-            cell: ({ getValue }) => {
-                const status = String(getValue() || '').toUpperCase();
+            cell: ({ row }) => {
+                const project = row.original;
                 return (
-                    <span className="px-2 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]">
-                        {status || 'SIN ESTADO'}
-                    </span>
+                    <InlineProjectStatusPicker
+                        value={(project.status || 'active') as any}
+                        onChange={(v) => handleUpdateProject(project.id, { status: v })}
+                        size="sm"
+                    />
                 );
             },
         },
@@ -177,7 +225,7 @@ export default function ProjectsClient({
             header: 'Creado',
             cell: ({ getValue }) => <span className="text-sm text-[hsl(var(--text-secondary))]">{formatDate(getValue() as string)}</span>,
         },
-    ], []);
+    ], [handleUpdateProject]);
 
     const groupedByStatus = useMemo(() => {
         const statuses = ['active', 'planning', 'on_hold', 'completed', 'archived'];
@@ -298,7 +346,7 @@ export default function ProjectsClient({
                             </motion.div>
                         ) : viewType === 'grid' ? (
                             <motion.div key="grid" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
-                                {filtered.map((p, idx) => <ProjectCard key={p.id} project={p} index={idx} />)}
+                                {filtered.map((p, idx) => <ProjectCard key={p.id} project={p} index={idx} onUpdate={handleUpdateProject} onDelete={handleDeleteProject} />)}
                             </motion.div>
                         ) : viewType === 'table' ? (
                             <motion.div key="table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-4">
@@ -307,15 +355,25 @@ export default function ProjectsClient({
                         ) : viewType === 'list' ? (
                             <motion.div id={PROJECTS_LIST_ANCHOR} key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2 pb-4 scroll-mt-24">
                                 {filtered.map((project) => (
-                                    <button key={project.id} onClick={() => router.push(`/plataforma/projects/${project.id}?view=list`)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition-all duration-300 hover:border-[hsl(var(--primary))]/60 dark:border-white/10 dark:bg-[hsl(var(--surface-2))]">
+                                    <div key={project.id} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition-all duration-300 hover:border-[hsl(var(--primary))]/60 dark:border-white/10 dark:bg-[hsl(var(--surface-2))]">
                                         <div className="flex items-center justify-between gap-4">
-                                            <div className="min-w-0">
-                                                <p className="truncate text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{project.title}</p>
+                                            <div className="min-w-0 flex-1">
+                                                <InlineTextInput
+                                                    value={project.title}
+                                                    onChange={(v) => handleUpdateProject(project.id, { title: v })}
+                                                    placeholder="Título del proyecto"
+                                                    className="truncate text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white"
+                                                    inputClassName="text-sm"
+                                                />
                                                 <p className="truncate text-xs font-medium text-[hsl(var(--text-secondary))]">{project.description || 'Sin descripcion'}</p>
                                             </div>
-                                            <span className="shrink-0 rounded-full border border-[hsl(var(--border))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">{project.status || 'active'}</span>
+                                            <InlineProjectStatusPicker
+                                                value={(project.status || 'active') as any}
+                                                onChange={(v) => handleUpdateProject(project.id, { status: v })}
+                                                size="sm"
+                                            />
                                         </div>
-                                    </button>
+                                    </div>
                                 ))}
                             </motion.div>
                         ) : viewType === 'board' || viewType === 'kanban' ? (
@@ -327,7 +385,7 @@ export default function ProjectsClient({
                                             <span className="font-semibold text-[hsl(var(--text-secondary))]">{column.projects.length}</span>
                                         </div>
                                         <div className="space-y-2">
-                                            {column.projects.map((project, index) => <ProjectCard key={project.id} project={project} index={index} />)}
+                                            {column.projects.map((project, index) => <ProjectCard key={project.id} project={project} index={index} onUpdate={handleUpdateProject} onDelete={handleDeleteProject} />)}
                                             {column.projects.length === 0 && <div className="rounded-md border border-dashed border-[hsl(var(--border))] py-8 text-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">Vacio</div>}
                                         </div>
                                     </section>
