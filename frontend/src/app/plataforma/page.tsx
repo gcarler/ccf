@@ -28,6 +28,7 @@ Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect,useState } from 'react';
+import { getPlatformMetricHref } from './metricRoutes';
 
 const DASHBOARD_SECTIONS = [
     {
@@ -121,7 +122,6 @@ function CommandCenterHome({ user, token }: any) {
         hidden: { opacity: 0, y: 20 },
         show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
     };
-
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] dark:bg-transparent overflow-y-auto scrollbar-thin p-3 p-4 font-sans relative">
             <motion.div
@@ -151,35 +151,48 @@ function CommandCenterHome({ user, token }: any) {
                         [1,2,3,4].map(i => <div key={i} className="h-28 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 animate-pulse" />)
                     ) : (
                         (stats?.cards || []).map((card: any, idx: number) => (
-                            <div key={idx} className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-md hover:border-[hsl(var(--border))] dark:hover:border-white/10 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]">
-                                <div className={clsx(
-                                    "absolute top-0 left-0 right-0 h-[3px]",
-                                    idx === 0 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" :
-                                    idx === 1 ? "bg-gradient-to-r from-blue-400 to-blue-500" :
-                                    idx === 2 ? "bg-gradient-to-r from-blue-400 to-blue-500" :
-                                    "bg-gradient-to-r from-amber-400 to-amber-500"
-                                )} />
-                                <div className="flex items-center justify-between mb-3 mt-1">
-                                    <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{card.title}</p>
-                                    <div className="text-[hsl(var(--text-secondary))]">
-                                        {idx === 0 && <TrendingUp size={14} />}
-                                        {idx === 1 && <FolderKanban size={14} />}
-                                        {idx === 2 && <Bell size={14} />}
-                                        {idx === 3 && <Zap size={14} />}
+                            (() => {
+                                const href = getPlatformMetricHref(card.title || '');
+                                const content = (
+                                    <div className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-md hover:border-[hsl(var(--border))] dark:hover:border-white/10 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99]">
+                                        <div className={clsx(
+                                            "absolute top-0 left-0 right-0 h-[3px]",
+                                            idx === 0 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" :
+                                            idx === 1 ? "bg-gradient-to-r from-blue-400 to-blue-500" :
+                                            idx === 2 ? "bg-gradient-to-r from-blue-400 to-blue-500" :
+                                            "bg-gradient-to-r from-amber-400 to-amber-500"
+                                        )} />
+                                        <div className="flex items-center justify-between mb-3 mt-1">
+                                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{card.title}</p>
+                                            <div className="text-[hsl(var(--text-secondary))]">
+                                                {idx === 0 && <TrendingUp size={14} />}
+                                                {idx === 1 && <FolderKanban size={14} />}
+                                                {idx === 2 && <Bell size={14} />}
+                                                {idx === 3 && <Zap size={14} />}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">{card.value}</span>
+                                            <span className={clsx(
+                                                "text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5",
+                                                (card.trend || '').includes('-')
+                                                    ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                                                    : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                            )}>
+                                                <ArrowUpRight size={10} strokeWidth={3} className={(card.trend || '').includes('-') ? "rotate-90" : ""} /> {card.trend}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">{card.value}</span>
-                                    <span className={clsx(
-                                        "text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5",
-                                        (card.trend || '').includes('-')
-                                            ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400"
-                                            : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                    )}>
-                                        <ArrowUpRight size={10} strokeWidth={3} className={(card.trend || '').includes('-') ? "rotate-90" : ""} /> {card.trend}
-                                    </span>
-                                </div>
-                            </div>
+                                );
+
+                                return href ? (
+                                    <Link key={idx} href={href} className="block">
+                                        {content}
+                                    </Link>
+                                ) : (
+                                    <div key={idx}>{content}</div>
+                                );
+                            })()
                         ))
                     )}
                 </motion.section>
