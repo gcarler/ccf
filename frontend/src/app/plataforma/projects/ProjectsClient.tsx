@@ -262,7 +262,7 @@ export default function ProjectsClient({
                         </Link>
                     </div>
                     <div>
-                        <Link href="/plataforma/projects/tasks?view=list" className="block">
+                        <Link href="/plataforma/projects/tasks?view=list&scope=all" className="block">
                             <DSCard className="hover:border-rose-400/30 transition-all cursor-pointer">
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Tareas</h3>
                                 <div className="space-y-4 pt-4">
