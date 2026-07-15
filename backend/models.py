@@ -122,6 +122,7 @@ from backend.models_crm import (  # noqa: F401
     Ministry,
     PendingCrmAction,
     Persona,
+    PersonaMentorship,
     PersonaMinistryAssignment,
     PersonaPosition,
     PersonaRoleLink,

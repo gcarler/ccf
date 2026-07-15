@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
     User,
@@ -51,41 +51,201 @@ function MentorAssignmentDrawer({
     open,
     onClose,
     personaName,
+    currentMentor,
+    candidates,
+    search,
+    onSearchChange,
+    selectedMentorId,
+    onSelectMentor,
+    notes,
+    onNotesChange,
+    loadingCandidates,
+    saving,
+    onSave,
+    error,
     title = 'Asignar Mentoría',
+    subtitle,
 }: {
     open: boolean;
     onClose: () => void;
     personaName: string;
-    token: string | null;
-    personaId: string;
+    currentMentor?: PersonaMentorshipSummary | null;
+    candidates: PersonaMentorCandidate[];
+    search: string;
+    onSearchChange: (value: string) => void;
+    selectedMentorId: string;
+    onSelectMentor: (mentorId: string) => void;
+    notes: string;
+    onNotesChange: (value: string) => void;
+    loadingCandidates: boolean;
+    saving: boolean;
+    onSave: () => void;
+    error?: string | null;
     title?: string;
+    subtitle?: string;
 }) {
     return (
         <WorkspaceDrawer
             isOpen={open}
             onClose={onClose}
             title={title}
-            subtitle={`Para: ${personaName}`}
+            subtitle={subtitle || `Para: ${personaName}`}
             actions={
-                <button onClick={onClose} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
-                    Cerrar
-                </button>
+                <div className="flex items-center gap-2">
+                    <button onClick={onClose} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+                        Cerrar
+                    </button>
+                    <button
+                        onClick={onSave}
+                        disabled={saving || !selectedMentorId}
+                        className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60"
+                    >
+                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                        Guardar
+                    </button>
+                </div>
             }
         >
-            <div className="mt-8 flex flex-col items-center justify-center gap-4 p-6 text-center">
-                <div className="size-14 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 flex items-center justify-center">
-                    <Users size={28} className="text-[hsl(var(--text-secondary))]" />
+            <div className="mt-6 space-y-4">
+                {currentMentor?.mentor_name ? (
+                    <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Mentoría actual</p>
+                        <p className="mt-1 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{currentMentor.mentor_name}</p>
+                        <p className="text-xs text-[hsl(var(--text-secondary))]">{currentMentor.mentor_role || 'Mentor activo'}</p>
+                    </div>
+                ) : (
+                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 text-sm text-[hsl(var(--text-secondary))]">
+                        Esta persona aún no tiene mentoría activa.
+                    </div>
+                )}
+
+                <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Buscar mentor</label>
+                    <input
+                        value={search}
+                        onChange={(e) => onSearchChange(e.target.value)}
+                        placeholder="Busca por nombre, correo o teléfono"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm text-[hsl(var(--text-primary))] outline-none transition-all focus:border-[hsl(var(--primary))]"
+                    />
                 </div>
-                <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Próximamente</p>
-                <p className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed max-w-xs">
-                    La asignación de mentoría pastoral estará disponible en una próxima actualización.
-                </p>
+
+                <div className="space-y-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Candidatos sugeridos</p>
+                    {loadingCandidates ? (
+                        <div className="flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 text-sm text-[hsl(var(--text-secondary))]">
+                            <Loader2 size={14} className="animate-spin" />
+                            Cargando candidatos...
+                        </div>
+                    ) : candidates.length > 0 ? (
+                        <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                            {candidates.map((candidate) => {
+                                const selected = candidate.id === selectedMentorId;
+                                return (
+                                    <button
+                                        key={candidate.id}
+                                        type="button"
+                                        onClick={() => onSelectMentor(candidate.id)}
+                                        className={clsx(
+                                            "w-full rounded-lg border p-3 text-left transition-all",
+                                            selected
+                                                ? "border-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10"
+                                                : "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:border-blue-500/30"
+                                        )}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{candidate.nombre_completo}</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{candidate.church_role || 'Persona'}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[11px] font-bold text-[hsl(var(--primary))]">{candidate.fit_score ?? 0}%</p>
+                                                <p className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ajuste</p>
+                                            </div>
+                                        </div>
+                                        <p className="mt-2 text-xs text-[hsl(var(--text-secondary))] leading-relaxed">{candidate.fit_reason}</p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-4 text-sm text-[hsl(var(--text-secondary))]">
+                            No hay candidatos que cumplan el umbral mínimo de mentoría.
+                        </div>
+                    )}
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Observaciones</label>
+                    <textarea
+                        value={notes}
+                        onChange={(e) => onNotesChange(e.target.value)}
+                        rows={4}
+                        placeholder="Anota contexto pastoral, frecuencia de seguimiento o acuerdos."
+                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm text-[hsl(var(--text-primary))] outline-none transition-all focus:border-[hsl(var(--primary))]"
+                    />
+                </div>
+
+                {error ? (
+                    <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
+                        {error}
+                    </div>
+                ) : null}
             </div>
         </WorkspaceDrawer>
     );
 }
 
 import { Tab } from '@/types/crm';
+
+interface PersonaMeshMetric {
+    key: string;
+    label: string;
+    value: number;
+    display_value: string;
+    detail?: string | null;
+    tone?: string;
+    has_data?: boolean;
+}
+
+interface PersonaMentorshipSummary {
+    id: string;
+    mentor_persona_id: string;
+    mentor_name?: string | null;
+    mentor_role?: string | null;
+    mentee_persona_id: string;
+    mentee_name?: string | null;
+    mentee_role?: string | null;
+    notes?: string | null;
+    status?: string;
+    started_at?: string;
+    ended_at?: string | null;
+}
+
+interface PersonaMeshInsight {
+    title: string;
+    summary: string;
+    recommendation: string;
+    health_score?: number | null;
+    health_status?: string | null;
+    attendance_rate?: number;
+    academy_progress?: number;
+    volunteer_commitment?: number;
+    metrics: PersonaMeshMetric[];
+    signals: string[];
+    current_mentorship?: PersonaMentorshipSummary | null;
+}
+
+interface PersonaMentorCandidate {
+    id: string;
+    nombre_completo: string;
+    church_role?: string | null;
+    health_score?: number | null;
+    spiritual_health?: number;
+    academy_progress?: number;
+    volunteer_commitment?: number;
+    fit_score?: number;
+    fit_reason?: string;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -104,6 +264,21 @@ function getDeptName(departments: any[], id: number | null | undefined): string 
     if (!id) return '';
     const d = departments.find(d => d.id === id);
     return d ? d.name : String(id);
+}
+
+function metricToneClass(tone?: string) {
+    switch (tone) {
+        case 'emerald':
+            return 'bg-emerald-500';
+        case 'amber':
+            return 'bg-amber-500';
+        case 'rose':
+            return 'bg-rose-500';
+        case 'blue':
+            return 'bg-[hsl(var(--primary))]';
+        default:
+            return 'bg-slate-400';
+    }
 }
 
 import {
@@ -141,6 +316,13 @@ export default function PersonaDetailPage() {
     const [departments, setDepartments] = useState<any[]>([]);
     const [editCities, setEditCities] = useState<any[]>([]);
     const [loadingEditCities, setLoadingEditCities] = useState(false);
+    const [mentorCandidates, setMentorCandidates] = useState<PersonaMentorCandidate[]>([]);
+    const [mentorSearch, setMentorSearch] = useState('');
+    const [selectedMentorId, setSelectedMentorId] = useState('');
+    const [mentorNotes, setMentorNotes] = useState('');
+    const [loadingMentorCandidates, setLoadingMentorCandidates] = useState(false);
+    const [savingMentor, setSavingMentor] = useState(false);
+    const [mentorError, setMentorError] = useState<string | null>(null);
     
     // Extra data fetched on demand
     const [history, setHistory] = useState<any[]>([]);
@@ -148,79 +330,86 @@ export default function PersonaDetailPage() {
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [loadingDonations, setLoadingDonations] = useState(false);
 
+    const loadPersonaDetail = useCallback(async (signal?: AbortSignal) => {
+        try {
+            const data = await apiFetch<any>(`/crm/personas/${id}`, { token, signal, cache: 'no-store' });
+            const m = {
+                ...data,
+                first_name: data.first_name ?? '',
+                last_name: data.last_name ?? '',
+                email: data.email ?? '',
+                phone: data.phone ?? '',
+                address: data.address ?? '',
+                joinedAt: data.joinedAt ?? data.created_at ?? null,
+                status: data.status ?? 'Activo',
+                church_role: data.church_role ?? 'Persona',
+                xp: data.xp ?? 0,
+                level: data.level ?? 1,
+                house: data.house ?? '',
+                family: Array.isArray(data.family) ? data.family : [],
+                birthday: data.birthday ?? null,
+                pastoral_notes: data.pastoral_notes ?? '',
+                spiritual_gifts: data.spiritual_gifts ?? '',
+                talents: data.talents ?? '',
+                baptism_date: data.baptism_date ?? null,
+                second_name: data.second_name ?? '',
+                second_last_name: data.second_last_name ?? '',
+                id_type: data.id_type ?? '',
+                id_number: data.id_number ?? '',
+                birth_country: data.birth_country ?? '',
+                sex: data.sex ?? '',
+                marital_status: data.marital_status ?? '',
+                landline_phone: data.landline_phone ?? '',
+                other_phone: data.other_phone ?? '',
+                mobile_phone: data.mobile_phone ?? '',
+                housing_type: data.housing_type ?? '',
+                education_level: data.education_level ?? '',
+                education_status: data.education_status ?? '',
+                profession: data.profession ?? '',
+                economic_sector: data.economic_sector ?? '',
+                blood_type: data.blood_type ?? '',
+                medical_notes: data.medical_notes ?? '',
+                participation_type: data.participation_type ?? '',
+                attendance_type: data.attendance_type ?? '',
+                group_name: data.group_name ?? '',
+                campus: data.campus ?? '',
+                church_join_date: data.church_join_date ?? null,
+                registration_reason: data.registration_reason ?? '',
+                unregistration_reason: data.unregistration_reason ?? '',
+                registration_date: data.registration_date ?? null,
+                unregistration_date: data.unregistration_date ?? null,
+                optional_info: data.optional_info ?? '',
+                responsible_adult_name: data.responsible_adult_name ?? '',
+                responsible_adult_contact: data.responsible_adult_contact ?? '',
+                guardian_name: data.guardian_name ?? '',
+                guardian_contact: data.guardian_contact ?? '',
+                colombian_department_id: data.colombian_department_id ?? null,
+                city: data.city ?? '',
+                last_group_attendance: data.last_group_attendance ?? null,
+                last_meeting_attendance: data.last_meeting_attendance ?? null,
+            };
+            setPersona(m);
+            setEditPersona({ ...m });
+            if (m.current_mentorship?.mentor_persona_id) {
+                setSelectedMentorId(String(m.current_mentorship.mentor_persona_id));
+            }
+            if (m.current_mentorship?.notes) {
+                setMentorNotes(m.current_mentorship.notes);
+            }
+        } catch {
+            if (!signal?.aborted) {
+                setPersona(null);
+            }
+        } finally {
+            if (!signal?.aborted) {
+                setLoading(false);
+            }
+        }
+    }, [id, token]);
+
     useEffect(() => {
         const abortCtrl = new AbortController();
-        const fetchPersona = async () => {
-            try {
-                const data = await apiFetch<any>(`/crm/personas/${id}`, { token, signal: abortCtrl.signal });
-                const m = {
-                    ...data,
-                    first_name: data.first_name ?? '',
-                    last_name: data.last_name ?? '',
-                    email: data.email ?? '',
-                    phone: data.phone ?? '',
-                    address: data.address ?? '',
-                    joinedAt: data.joinedAt ?? data.created_at ?? null,
-                    status: data.status ?? 'Activo',
-                    church_role: data.church_role ?? 'Persona',
-                    xp: data.xp ?? 0,
-                    level: data.level ?? 1,
-                    house: data.house ?? '',
-                    family: Array.isArray(data.family) ? data.family : [],
-                    birthday: data.birthday ?? null,
-                    pastoral_notes: data.pastoral_notes ?? '',
-                    spiritual_gifts: data.spiritual_gifts ?? '',
-                    talents: data.talents ?? '',
-                    baptism_date: data.baptism_date ?? null,
-                    second_name: data.second_name ?? '',
-                    second_last_name: data.second_last_name ?? '',
-                    id_type: data.id_type ?? '',
-                    id_number: data.id_number ?? '',
-                    birth_country: data.birth_country ?? '',
-                    sex: data.sex ?? '',
-                    marital_status: data.marital_status ?? '',
-                    landline_phone: data.landline_phone ?? '',
-                    other_phone: data.other_phone ?? '',
-                    mobile_phone: data.mobile_phone ?? '',
-                    housing_type: data.housing_type ?? '',
-                    education_level: data.education_level ?? '',
-                    education_status: data.education_status ?? '',
-                    profession: data.profession ?? '',
-                    economic_sector: data.economic_sector ?? '',
-                    blood_type: data.blood_type ?? '',
-                    medical_notes: data.medical_notes ?? '',
-                    participation_type: data.participation_type ?? '',
-                    attendance_type: data.attendance_type ?? '',
-                    group_name: data.group_name ?? '',
-                    campus: data.campus ?? '',
-                    church_join_date: data.church_join_date ?? null,
-                    registration_reason: data.registration_reason ?? '',
-                    unregistration_reason: data.unregistration_reason ?? '',
-                    registration_date: data.registration_date ?? null,
-                    unregistration_date: data.unregistration_date ?? null,
-                    optional_info: data.optional_info ?? '',
-                    responsible_adult_name: data.responsible_adult_name ?? '',
-                    responsible_adult_contact: data.responsible_adult_contact ?? '',
-                    guardian_name: data.guardian_name ?? '',
-                    guardian_contact: data.guardian_contact ?? '',
-                    colombian_department_id: data.colombian_department_id ?? null,
-                    city: data.city ?? '',
-                    last_group_attendance: data.last_group_attendance ?? null,
-                    last_meeting_attendance: data.last_meeting_attendance ?? null,
-                };
-                setPersona(m);
-                setEditPersona({ ...m });
-            } catch {
-                if (!abortCtrl.signal.aborted) {
-                    setPersona(null);
-                }
-            } finally {
-                if (!abortCtrl.signal.aborted) {
-                    setLoading(false);
-                }
-            }
-        };
-        fetchPersona();
+        loadPersonaDetail(abortCtrl.signal);
         // Load departments for display
         apiFetch<any[]>('/crm/colombian-departments', { token, signal: abortCtrl.signal })
             .then(setDepartments)
@@ -230,7 +419,45 @@ export default function PersonaDetailPage() {
                 }
             });
         return () => abortCtrl.abort();
-    }, [id, token]);
+    }, [loadPersonaDetail, id, token]);
+
+    useEffect(() => {
+        if (!mentorDrawerOpen || !token) return;
+
+        const abortCtrl = new AbortController();
+        const timer = window.setTimeout(async () => {
+            setLoadingMentorCandidates(true);
+            setMentorError(null);
+            try {
+                const params = new URLSearchParams({ limit: '12' });
+                if (mentorSearch.trim()) {
+                    params.set('q', mentorSearch.trim());
+                }
+                const data = await apiFetch<PersonaMentorCandidate[]>(
+                    `/crm/personas/${id}/mentor-candidates?${params.toString()}`,
+                    { token, signal: abortCtrl.signal, cache: 'no-store' }
+                );
+                setMentorCandidates(Array.isArray(data) ? data : []);
+                if (!selectedMentorId && data?.[0]?.id) {
+                    setSelectedMentorId(String(data[0].id));
+                }
+            } catch {
+                if (!abortCtrl.signal.aborted) {
+                    setMentorError('No se pudieron cargar los candidatos de mentoría.');
+                    setMentorCandidates([]);
+                }
+            } finally {
+                if (!abortCtrl.signal.aborted) {
+                    setLoadingMentorCandidates(false);
+                }
+            }
+        }, mentorSearch.trim() ? 250 : 0);
+
+        return () => {
+            abortCtrl.abort();
+            window.clearTimeout(timer);
+        };
+    }, [id, mentorDrawerOpen, mentorSearch, selectedMentorId, token]);
 
     // Load cities for edit drawer cascade
     useEffect(() => {
@@ -284,6 +511,30 @@ export default function PersonaDetailPage() {
             toast.error('No se pudo actualizar la persona');
         } finally {
             setIsEditSaving(false);
+        }
+    };
+
+    const handleMentorSave = async () => {
+        if (!token || !selectedMentorId) return;
+        setSavingMentor(true);
+        setMentorError(null);
+        try {
+            await apiFetch(`/crm/personas/${id}/mentorship`, {
+                method: 'POST',
+                token,
+                body: {
+                    mentor_persona_id: selectedMentorId,
+                    notes: mentorNotes || null,
+                },
+            });
+            toast.success('Mentoría asignada');
+            setMentorDrawerOpen(false);
+            await loadPersonaDetail();
+        } catch {
+            setMentorError('No se pudo guardar la mentoría.');
+            toast.error('No se pudo guardar la mentoría');
+        } finally {
+            setSavingMentor(false);
         }
     };
 
@@ -546,37 +797,77 @@ export default function PersonaDetailPage() {
 
                         <div className="lg:col-span-4 space-y-3">
                             {/* MESH Insight */}
-                            <div className="p-4 bg-gradient-to-br from-sky-600 to-blue-700 rounded-md text-white shadow-xl relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700"><Sparkles size={100} /></div>
-                                <div className="relative z-10 space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <Flame size={18} className="text-amber-300" />
-                                        <h4 className="text-base font-bold tracking-tight uppercase">MESH Insight</h4>
+                            {(() => {
+                                const insight: PersonaMeshInsight | undefined = persona.mesh_insight;
+                                const metrics = insight?.metrics ?? [];
+                                const currentMentor = insight?.current_mentorship ?? persona.current_mentorship;
+                                return (
+                                    <div className="p-4 bg-gradient-to-br from-sky-600 via-blue-600 to-indigo-700 rounded-md text-white shadow-xl relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700"><Sparkles size={100} /></div>
+                                        <div className="relative z-10 space-y-4">
+                                            <div className="flex items-center gap-2">
+                                                <Flame size={18} className="text-amber-300" />
+                                                <h4 className="text-base font-bold tracking-tight uppercase">{insight?.title || 'MESH Insight'}</h4>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <p className="text-sm font-medium text-blue-100 leading-relaxed">
+                                                    {insight?.summary || `${fullName} tiene potencial pastoral en su área de servicio.`}
+                                                </p>
+                                                <p className="text-xs text-blue-100/90 leading-relaxed">
+                                                    {insight?.recommendation || 'Mantener seguimiento activo y asignar acompañamiento si hace falta.'}
+                                                </p>
+                                            </div>
+                                            {currentMentor?.mentor_name ? (
+                                                <div className="rounded-lg bg-white/10 p-3 border border-white/10">
+                                                    <p className="text-[10px] font-bold uppercase tracking-wide text-blue-100">Mentoría actual</p>
+                                                    <p className="mt-1 text-sm font-bold text-white">{currentMentor.mentor_name}</p>
+                                                    <p className="text-[11px] text-blue-100/90">{currentMentor.mentor_role || 'Mentor activo'}</p>
+                                                </div>
+                                            ) : null}
+                                            {metrics.length > 0 ? (
+                                                <div className="space-y-3 rounded-lg bg-white/10 p-3 border border-white/10">
+                                                    {metrics.map((metric) => (
+                                                        <HealthIndicator
+                                                            key={metric.key}
+                                                            label={metric.label}
+                                                            value={Math.max(0, Math.min(100, Math.round(metric.value || 0)))}
+                                                            color={metricToneClass(metric.tone)}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            ) : null}
+                                            {insight?.signals?.length ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {insight.signals.slice(0, 4).map((signal) => (
+                                                        <span key={signal} className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-50">
+                                                            {signal}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : null}
+                                            <button
+                                                onClick={() => {
+                                                    setMentorDrawerConfig({
+                                                        title: 'Asignar Mentoría',
+                                                        subtitle: `Selecciona el mentor que guiará el proceso espiritual de ${fullName}.`,
+                                                    });
+                                                    setMentorDrawerOpen(true);
+                                                }}
+                                                className="w-full py-1.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] rounded-lg font-bold text-[10px] uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all"
+                                            >
+                                                Asignar Mentoría
+                                            </button>
+                                        </div>
                                     </div>
-                                    <p className="text-sm font-medium text-blue-100 leading-relaxed">
-                                        {fullName} tiene potencial pastoral en su área de servicio. Su participación este mes es consistente.
-                                    </p>
-                                    <button
-                                        onClick={() => {
-                                            setMentorDrawerConfig({
-                                                title: 'Asignar Mentoría',
-                                                subtitle: `Selecciona el mentor que guiará el proceso espiritual de ${fullName}.`,
-                                            });
-                                            setMentorDrawerOpen(true);
-                                        }}
-                                        className="w-full py-1.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] rounded-lg font-bold text-[10px] uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all"
-                                    >
-                                        Asignar Mentoría
-                                    </button>
-                                </div>
-                            </div>
+                                );
+                            })()}
 
                             {/* Indicadores de Salud */}
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-4 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-2">
                                 <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Indicadores de Salud</h3>
-                                <HealthIndicator label="Asistencia Mensual" value={85} color="bg-emerald-500" />
-                                <HealthIndicator label="Progreso Academia" value={65} color="bg-[hsl(var(--primary))]" />
-                                <HealthIndicator label="Compromiso Voluntario" value={92} color="bg-amber-500" />
+                                <HealthIndicator label="Asistencia Mensual" value={Math.max(0, Math.min(100, Math.round(persona.mesh_insight?.attendance_rate ?? 0)))} color="bg-emerald-500" />
+                                <HealthIndicator label="Progreso Academia" value={Math.max(0, Math.min(100, Math.round(persona.mesh_insight?.academy_progress ?? persona.academy_progress ?? 0)))} color="bg-[hsl(var(--primary))]" />
+                                <HealthIndicator label="Compromiso Voluntario" value={Math.max(0, Math.min(100, Math.round(persona.mesh_insight?.volunteer_commitment ?? persona.volunteer_commitment ?? 0)))} color="bg-amber-500" />
                             </div>
                         </div>
                     </>}
@@ -765,9 +1056,20 @@ export default function PersonaDetailPage() {
                 open={mentorDrawerOpen}
                 onClose={() => setMentorDrawerOpen(false)}
                 personaName={fullName}
-                token={token}
-                personaId={id}
+                currentMentor={persona.current_mentorship}
+                candidates={mentorCandidates}
+                search={mentorSearch}
+                onSearchChange={setMentorSearch}
+                selectedMentorId={selectedMentorId}
+                onSelectMentor={setSelectedMentorId}
+                notes={mentorNotes}
+                onNotesChange={setMentorNotes}
+                loadingCandidates={loadingMentorCandidates}
+                saving={savingMentor}
+                onSave={handleMentorSave}
+                error={mentorError}
                 title={mentorDrawerConfig.title}
+                subtitle={mentorDrawerConfig.subtitle}
             />
 
             {/* Edit Persona Drawer */}

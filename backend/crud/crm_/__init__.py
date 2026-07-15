@@ -77,13 +77,16 @@ from backend.crud.crm_.notifications import (
     mark_notification_as_read,
 )
 from backend.crud.crm_.personas import (
+    assign_persona_mentor,
     create_persona,
     delete_persona,
     get_persona,
     get_persona_donations,
     get_personas,
+    list_mentor_candidates,
     get_talents,
     search_personas,
+    search_personas_page,
     search_personas_paginated,
     update_persona,
 )

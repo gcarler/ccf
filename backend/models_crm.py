@@ -485,6 +485,16 @@ class Persona(Base):
     volunteer_shifts = relationship(
         "VolunteerShift", foreign_keys="VolunteerShift.persona_id", back_populates="persona"
     )
+    mentor_assignments = relationship(
+        "PersonaMentorship",
+        foreign_keys="PersonaMentorship.mentor_persona_id",
+        back_populates="mentor",
+    )
+    mentee_assignments = relationship(
+        "PersonaMentorship",
+        foreign_keys="PersonaMentorship.mentee_persona_id",
+        back_populates="mentee",
+    )
     communication_logs = relationship(
         "CommunicationLog", foreign_keys="CommunicationLog.persona_id", back_populates="persona"
     )
@@ -625,6 +635,40 @@ persona_volunteer_skills = Table(
         primary_key=True,
     ),
 )
+
+
+class PersonaMentorship(Base):
+    __tablename__ = "persona_mentorships"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    mentee_persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    mentor_persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    assigned_by_user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("auth_users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    status = Column(String(20), default="active", nullable=False, index=True)
+    notes = Column(Text, nullable=True)
+    started_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)
+    ended_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    mentor = relationship("Persona", foreign_keys=[mentor_persona_id], back_populates="mentor_assignments")
+    mentee = relationship("Persona", foreign_keys=[mentee_persona_id], back_populates="mentee_assignments")
+    assigned_by = relationship("Usuario")
 
 
 class CommunicationLog(Base):
