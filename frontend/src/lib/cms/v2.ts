@@ -309,7 +309,7 @@ export async function rollbackCmsPageVersion(siteKey: string, slug: string, vers
 
 export async function getCmsPublicPage(siteKey: string, slug: string, options?: { silent?: boolean }) {
   return apiFetch<CmsPublicPage>(`/cms/v2/public/sites/${siteKey}/pages/${slug}`, {
-    silent: options?.silent,
+    silent: options?.silent ?? true,
   });
 }
 
@@ -334,7 +334,7 @@ export interface PastoralProfile {
 }
 
 export async function getPublicPastoralTeam(siteKey: string): Promise<PastoralProfile[]> {
-  return apiFetch<PastoralProfile[]>(`/cms/v2/public/sites/${siteKey}/pastoral-team`);
+  return apiFetch<PastoralProfile[]>(`/cms/v2/public/sites/${siteKey}/pastoral-team`, { silent: true });
 }
 
 export async function getCmsPastoralTeam(token?: string | null): Promise<PastoralProfile[]> {
@@ -544,7 +544,7 @@ export async function getCmsPublicPosts(
 }
 
 export async function getCmsPublicPost(siteKey: string, slug: string) {
-  return apiFetch<CmsPublicPost>(`/cms/v2/public/sites/${siteKey}/posts/${slug}`);
+  return apiFetch<CmsPublicPost>(`/cms/v2/public/sites/${siteKey}/posts/${slug}`, { silent: true });
 }
 
 // ── Scheduled publish + auto-archive helpers (2026-07-06) ────────────────
