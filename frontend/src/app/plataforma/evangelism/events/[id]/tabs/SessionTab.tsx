@@ -10,7 +10,7 @@ import type { Persona } from "@/app/plataforma/evangelism/types";
 type Assignment = { persona_id: string; role: string; persona_name?: string };
 
 type SessionData = {
-  event_id: number;
+  event_id: string;
   session_date: string;
   assignments: Assignment[];
   metrics: Record<string, number>;

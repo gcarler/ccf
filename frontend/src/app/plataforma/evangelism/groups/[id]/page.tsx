@@ -22,9 +22,9 @@ interface HouseDetail {
  sessions: SessionRow[]; total_sessions: number; total_attendance: number;
  monitoring?: HouseMonitoring;
 }
-interface SessionRow { id: number; session_date: string; status: string; estado_habilitacion?: string; season_name?: string; attendance_count: number; topic?: string; report_deadline?: string; }
+interface SessionRow { id: string; session_date: string; status: string; estado_habilitacion?: string; season_name?: string; attendance_count: number; topic?: string; report_deadline?: string; }
 interface MonitoringTrendRow {
- session_id: number;
+ session_id: string;
  session_date: string;
  status: string;
  attendance_rate: number;
@@ -35,12 +35,12 @@ interface RepeatAbsentee {
  persona_id: string;
  name: string;
  absences: number;
- details: { session_id: number; session_date?: string | null; reason?: string | null; reason_detail?: string | null }[];
+ details: { session_id: string; session_date?: string | null; reason?: string | null; reason_detail?: string | null }[];
 }
 interface MonitoringAlert {
  type: string;
  message: string;
- session_id?: number;
+ session_id?: string;
 }
 interface HouseMonitoring {
  expected_personas: number;
@@ -53,7 +53,7 @@ interface HouseMonitoring {
 }
 type AttendanceReason = 'weather' | 'work' | 'health' | 'family' | 'other';
 interface AttendanceData {
- session_id: number;
+ session_id: string;
  session_date: string;
  grupo_id: string;
  status: string;
@@ -166,7 +166,7 @@ export default function GroupDetailPage() {
  {isPrivileged && <button 
  onClick={async () => {
  try {
- const session = await apiFetch<{ id: number }>(`/evangelism/sessions`, {
+ const session = await apiFetch<{ id: string }>(`/evangelism/sessions`, {
  method: 'POST', silent: true,
 	 body: {
 	 grupo_id: house.id,
