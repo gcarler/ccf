@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY, SITE_NAME } from "@/lib/site-config";
+import { usePublicBootstrap } from "@/components/public/PublicBootstrapProvider";
 
 export interface SiteBranding {
   logoUrl: string;
@@ -10,12 +11,21 @@ export interface SiteBranding {
 }
 
 export function useSiteBranding(fallback?: Partial<SiteBranding>) {
+  const bootstrapTheme = usePublicBootstrap()?.theme ?? null;
   const [branding, setBranding] = useState<SiteBranding>({
-    logoUrl: fallback?.logoUrl || "",
-    logoName: fallback?.logoName || SITE_NAME,
+    logoUrl: bootstrapTheme?.tokens_json?.["--site-logo-url"] || fallback?.logoUrl || "",
+    logoName: bootstrapTheme?.tokens_json?.["--site-logo-name"] || fallback?.logoName || SITE_NAME,
   });
 
   useEffect(() => {
+    if (bootstrapTheme?.tokens_json) {
+      setBranding({
+        logoUrl: bootstrapTheme.tokens_json["--site-logo-url"] || fallback?.logoUrl || "",
+        logoName: bootstrapTheme.tokens_json["--site-logo-name"] || fallback?.logoName || SITE_NAME,
+      });
+      return;
+    }
+
     let mounted = true;
 
     const load = async () => {
@@ -44,7 +54,7 @@ export function useSiteBranding(fallback?: Partial<SiteBranding>) {
     return () => {
       mounted = false;
     };
-  }, [fallback?.logoName, fallback?.logoUrl]);
+  }, [bootstrapTheme?.tokens_json, fallback?.logoName, fallback?.logoUrl]);
 
   return branding;
 }

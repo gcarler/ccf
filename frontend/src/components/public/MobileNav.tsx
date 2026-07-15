@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { getCmsPublicMenu } from "@/lib/cms/v2";
 import { SITE_KEY } from "@/lib/site-config";
+import { usePublicBootstrap } from "./PublicBootstrapProvider";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Home,
@@ -39,9 +40,36 @@ type MobileMenuItem = {
 
 export default function MobileNav() {
   const pathname = usePathname();
-  const [items, setItems] = useState<MobileMenuItem[]>([]);
+  const bootstrapMenu = usePublicBootstrap()?.menus?.mobile ?? null;
+  const [items, setItems] = useState<MobileMenuItem[]>(() => {
+    if (!bootstrapMenu) return [];
+    return (bootstrapMenu.items || [])
+      .filter((item) => item.visibility !== "hidden")
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      .map((item) => ({
+        id: item.id,
+        href: item.href,
+        label: item.label,
+        meta_json: item.meta_json || {},
+      }));
+  });
 
   useEffect(() => {
+    if (bootstrapMenu) {
+      setItems(
+        (bootstrapMenu.items || [])
+          .filter((item) => item.visibility !== "hidden")
+          .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+          .map((item) => ({
+            id: item.id,
+            href: item.href,
+            label: item.label,
+            meta_json: item.meta_json || {},
+          }))
+      );
+      return;
+    }
+
     let mounted = true;
     const loadMenu = async () => {
       try {
@@ -67,7 +95,7 @@ export default function MobileNav() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [bootstrapMenu]);
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 w-full flex justify-center z-50" style={{ paddingBottom: 'max(1.75rem, env(safe-area-inset-bottom))' }}>

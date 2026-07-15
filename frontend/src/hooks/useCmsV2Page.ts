@@ -33,11 +33,18 @@ import { getCmsPublicPage } from "@/lib/cms/v2";
 import { buildCmsPageBlocks } from "@/lib/cms/pageBlocks";
 import { SITE_KEY } from "@/lib/site-config";
 import type { CmsPublicPage } from "@/types/cms-v2";
+import { usePublicBootstrap } from "@/components/public/PublicBootstrapProvider";
 
 export function useCmsV2Page(slug: string): CmsPublicPage | null {
-  const [page, setPage] = useState<CmsPublicPage | null>(null);
+  const bootstrappedPage = usePublicBootstrap()?.pages?.[slug] ?? null;
+  const [page, setPage] = useState<CmsPublicPage | null>(bootstrappedPage);
 
   useEffect(() => {
+    if (bootstrappedPage) {
+      setPage(bootstrappedPage);
+      return;
+    }
+
     let alive = true;
     // Silent error handling: pages render sentinel defaults when CMS data is
     // absent, so a fetch failure must not break the UI.
@@ -52,7 +59,7 @@ export function useCmsV2Page(slug: string): CmsPublicPage | null {
     return () => {
       alive = false;
     };
-  }, [slug]);
+  }, [slug, bootstrappedPage]);
 
   return page;
 }
