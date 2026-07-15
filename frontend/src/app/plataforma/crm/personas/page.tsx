@@ -7,7 +7,6 @@ import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { FULL_VIEWS,useViewType } from '@/hooks/useViewType';
-import { apiFetch } from '@/lib/http';
 import clsx from 'clsx';
 import { AnimatePresence,motion } from 'framer-motion';
 import {
@@ -26,7 +25,7 @@ VenetianMask,
 X,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation';
-import React,{ useEffect,useMemo,useState } from 'react';
+import React,{ useCallback, useEffect,useMemo,useState } from 'react';
 import { toast } from 'sonner';
 import {
   Department,
@@ -44,16 +43,18 @@ import {
   INITIAL_PERSONA,
 } from '@/types/crm';
 import { FormSection, SelectField, PersonaField } from '@/components/crm/ui';
+import { ApiError, apiFetch } from '@/lib/http';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PersonasPage() {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const { canEditCrm } = useCrmAccess();
     const router = useRouter();
     const { viewType, setViewType } = useViewType('crm_personas', 'grid');
     const [personas, setPersonas] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [personasError, setPersonasError] = useState<string | null>(null);
 
     const [roles, setRoles] = useState<any[]>([]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -73,36 +74,52 @@ export default function PersonasPage() {
     const [uniqueGroups, setUniqueGroups] = useState<string[]>([]);
     const [activeFilterCount, setActiveFilterCount] = useState(0);
 
-    useEffect(() => {
-        if (!token) return;
-        const loadPersonas = async () => {
-            try {
-                setLoading(true);
-                const [personasData, rolesData, deptData] = await Promise.all([
-                    apiFetch<any[]>('/crm/personas', { token }).catch(() => []),
-                    apiFetch<any[]>('/crm/roles', { token }).catch(() => []),
-                    apiFetch<Department[]>('/crm/colombian-departments', { token }).catch(() => []),
-                ]);
-                const normalizedPersonas = Array.isArray(personasData)
-                    ? personasData
-                    : Array.isArray((personasData as any)?.items)
-                        ? (personasData as any).items
-                        : [];
-                setPersonas(normalizedPersonas);
-                setRoles(rolesData);
-                setDepartments(deptData);
-                // Extract unique group names for filter
-                const groups = [...new Set(normalizedPersonas.map((m: any) => m.group_name).filter(Boolean))] as string[];
-                groups.sort();
-                setUniqueGroups(groups);
-            } catch {
-                toast.error('Error al cargar personas');
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadPersonas();
+    const loadPersonas = useCallback(async () => {
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        setPersonasError(null);
+
+        try {
+            const personasData = await apiFetch<any[]>('/crm/personas', { token });
+            const normalizedPersonas = Array.isArray(personasData)
+                ? personasData
+                : Array.isArray((personasData as any)?.items)
+                    ? (personasData as any).items
+                    : [];
+            setPersonas(normalizedPersonas);
+
+            const groups = [...new Set(normalizedPersonas.map((m: any) => m.group_name).filter(Boolean))] as string[];
+            groups.sort();
+            setUniqueGroups(groups);
+        } catch (err) {
+            setPersonas([]);
+            setUniqueGroups([]);
+
+            const message = err instanceof ApiError
+                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'No se pudo cargar la lista de personas'))
+                : 'No se pudo cargar la lista de personas';
+            setPersonasError(message);
+            toast.error(message);
+        } finally {
+            setLoading(false);
+        }
+
+        apiFetch<any[]>('/crm/roles', { token })
+            .then(setRoles)
+            .catch(() => setRoles([]));
+
+        apiFetch<Department[]>('/crm/colombian-departments', { token })
+            .then(setDepartments)
+            .catch(() => setDepartments([]));
     }, [token]);
+
+    useEffect(() => {
+        loadPersonas();
+    }, [loadPersonas]);
 
     useEffect(() => {
         if (!token || !newPersona.colombian_department_id) {
@@ -155,6 +172,44 @@ export default function PersonasPage() {
         setActiveFilterCount(count);
         return list;
     }, [personas, query, roleFilter, idTypeFilter, sexFilter, groupFilter, participationFilter]);
+
+    if (!authLoading && !token) {
+        return (
+            <CrmShell
+                breadcrumbs={[
+                    { label: 'CRM', icon: LayoutDashboard, href: '/plataforma/crm' },
+                    { label: 'Personas', icon: LayoutDashboard },
+                ]}
+            >
+                <main className="flex-1 overflow-y-auto scrollbar-thin p-4">
+                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-4 text-center">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            La sesión no está disponible para cargar personas.
+                        </p>
+                    </div>
+                </main>
+            </CrmShell>
+        );
+    }
+
+    if (authLoading && !token) {
+        return (
+            <CrmShell
+                breadcrumbs={[
+                    { label: 'CRM', icon: LayoutDashboard, href: '/plataforma/crm' },
+                    { label: 'Personas', icon: LayoutDashboard },
+                ]}
+            >
+                <main className="flex-1 overflow-y-auto scrollbar-thin p-4">
+                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-4 text-center">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] animate-pulse">
+                            Verificando sesión y cargando personas...
+                        </p>
+                    </div>
+                </main>
+            </CrmShell>
+        );
+    }
 
     const um = (key: keyof PersonaFormData) => (value: string) => setNewPersona(prev => ({ ...prev, [key]: value }));
 
@@ -214,6 +269,25 @@ export default function PersonasPage() {
                 </div>
 
                 <div className="p-4 lg:p-4 space-y-4 w-full">
+                    {personasError && (
+                        <div className="rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div className="min-w-0">
+                                <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                                    No se pudo cargar el directorio de personas
+                                </p>
+                                <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                                    {personasError}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => loadPersonas()}
+                                className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                            >
+                                Reintentar
+                            </button>
+                        </div>
+                    )}
+
                     {/* Filters Toolbar */}
                     <div className="sticky top-0 z-10 bg-[hsl(var(--surface-1))]/80 dark:bg-[#121212]/80 backdrop-blur-xl pt-2 space-y-2">
                         {/* Search + Filter Toggle Row */}
@@ -522,7 +596,7 @@ export default function PersonasPage() {
                                         )}
 
                                         {/* Empty state */}
-                                        {filteredPersonas.length === 0 && (
+                                        {!personasError && filteredPersonas.length === 0 && (
                                             <div className="text-center py-6 font-bold text-[hsl(var(--text-secondary))]">No se encontraron personas con esos filtros.</div>
                                         )}
                                     </>

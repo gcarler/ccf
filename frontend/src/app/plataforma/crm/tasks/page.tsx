@@ -17,7 +17,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
-import { apiFetch } from '@/lib/http';
+import { ApiError, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
@@ -58,6 +58,7 @@ export default function CrmTasksPage() {
     const { addToast } = useToast();
     const [tasks, setTasks] = useState<ConsolidationTask[]>([]);
     const [loading, setLoading] = useState(true);
+    const [tasksError, setTasksError] = useState<string | null>(null);
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_tasks_view', 'board'));
     const [selectedTask, setSelectedTask] = useState<ConsolidationTask | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -72,13 +73,22 @@ export default function CrmTasksPage() {
     });
 
     const fetchTasks = useCallback(async () => {
-        if (!token) return;
+        if (!token) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
+        setTasksError(null);
         try {
             const data = await apiFetch<ConsolidationTask[]>('/crm/tasks', { token, cache: 'no-store' });
             setTasks(Array.isArray(data) ? data : []);
-        } catch {
-            addToast('Error al cargar tareas', 'error');
+        } catch (err) {
+            setTasks([]);
+            const message = err instanceof ApiError
+                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'Error al cargar tareas'))
+                : 'Error al cargar tareas';
+            setTasksError(message);
+            addToast(message, 'error');
         } finally {
             setLoading(false);
         }
@@ -165,6 +175,25 @@ export default function CrmTasksPage() {
                 </button>
             ) : undefined}
         >
+            {tasksError && (
+                <div className="mx-4 mt-4 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                            No se pudo cargar el tablero de tareas
+                        </p>
+                        <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                            {tasksError}
+                        </p>
+                    </div>
+                    <button
+                        onClick={fetchTasks}
+                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            )}
+
             {/* ─── Stats strip ─── */}
             <div className="px-4 pt-4 pb-0 flex items-center gap-3">
                 {STATUS_COLUMNS.map(col => (
@@ -238,7 +267,7 @@ export default function CrmTasksPage() {
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         className="flex-1 overflow-y-auto p-4 space-y-2"
                     >
-                        {tasks.length === 0 ? (
+                        {!tasksError && tasks.length === 0 ? (
                             <div className="py-1.5 flex flex-col items-center gap-4">
                                 <CheckSquare size={48} strokeWidth={1} className="text-[hsl(var(--text-secondary))]" />
                                 <p className="text-[hsl(var(--text-secondary))] font-bold uppercase text-sm">Sin tareas registradas</p>
@@ -325,7 +354,7 @@ export default function CrmTasksPage() {
                                 })}
                             </tbody>
                         </table>
-                        {tasks.length === 0 && (
+                        {!tasksError && tasks.length === 0 && (
                             <div className="py-1.5 text-center text-[hsl(var(--text-secondary))] font-bold uppercase text-sm">Sin tareas</div>
                         )}
                     </motion.div>
@@ -366,7 +395,7 @@ export default function CrmTasksPage() {
                                     </div>
                                 </div>
                             ))}
-                            {tasks.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin tareas</div>}
+                            {!tasksError && tasks.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin tareas</div>}
                         </div>
                     </motion.div>
                 )}

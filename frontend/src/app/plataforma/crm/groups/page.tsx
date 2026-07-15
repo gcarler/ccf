@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
+import { ApiError, apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import { motion } from 'framer-motion';
 import {
@@ -47,19 +47,31 @@ export default function CrmGroupsPage() {
     const router = useRouter();
     const [groups, setGroups] = useState<Grupo[]>([]);
     const [loading, setLoading] = useState(true);
+    const [groupsError, setGroupsError] = useState<string | null>(null);
     const [query, setQuery] = useState('');
     const [personas, setPersonas] = useState<Persona[]>([]);
+    const [personasError, setPersonasError] = useState<string | null>(null);
     const [inviteGroup, setInviteGroup] = useState<Grupo | null>(null);
     const [personaQuery, setPersonaQuery] = useState('');
     const [assigningPersonaId, setAssigningPersonaId] = useState<string | null>(null);
 
     const loadGroups = useCallback(async () => {
-        if (!token) return;
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        setGroupsError(null);
         try {
-            const data = await apiFetch<Grupo[]>('/crm/grupos', { token }).catch(() => []);
+            const data = await apiFetch<Grupo[]>('/crm/grupos', { token });
             setGroups(data);
-        } catch {
-            toast.error('Error al cargar grupos');
+        } catch (err) {
+            setGroups([]);
+            const message = err instanceof ApiError
+                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'Error al cargar grupos'))
+                : 'Error al cargar grupos';
+            setGroupsError(message);
+            toast.error(message);
         } finally {
             setLoading(false);
         }
@@ -75,6 +87,7 @@ export default function CrmGroupsPage() {
         let cancelled = false;
 
         const loadPersonas = async () => {
+            setPersonasError(null);
             try {
                 const pageSize = 250;
                 let skip = 0;
@@ -106,9 +119,14 @@ export default function CrmGroupsPage() {
                 if (!cancelled) {
                     setPersonas(allPersonas);
                 }
-            } catch {
+            } catch (err) {
                 if (!cancelled) {
-                    toast.error('No se pudo cargar la lista de personas');
+                    setPersonas([]);
+                    const message = err instanceof ApiError
+                        ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'No se pudo cargar la lista de personas'))
+                        : 'No se pudo cargar la lista de personas';
+                    setPersonasError(message);
+                    toast.error(message);
                 }
             }
         };
@@ -210,6 +228,25 @@ export default function CrmGroupsPage() {
                     <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Grupos</h1>
                 </div>
 
+                {groupsError && (
+                    <div className="mx-3 mb-3 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                                No se pudo cargar la lista de grupos
+                            </p>
+                            <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                                {groupsError}
+                            </p>
+                        </div>
+                        <button
+                            onClick={loadGroups}
+                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                        >
+                            Reintentar
+                        </button>
+                    </div>
+                )}
+
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-3 -mt-3 mb-3 relative z-10">
                     {[
@@ -249,7 +286,7 @@ export default function CrmGroupsPage() {
                     )}
 
                     {/* Empty */}
-                    {!loading && filtered.length === 0 && (
+                    {!loading && !groupsError && filtered.length === 0 && (
                         <div className="py-1.5 text-center">
                             <div className="size-10 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
                                 <Home size={36} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
@@ -400,7 +437,25 @@ export default function CrmGroupsPage() {
                                 </button>
                             </div>
                         ))}
-                        {filteredPersonas.length === 0 && (
+                        {personasError && (
+                            <div className="rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 text-left">
+                                <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                                    No se pudo cargar la lista de personas
+                                </p>
+                                <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                                    {personasError}
+                                </p>
+                                <button
+                                    onClick={() => {
+                                        setInviteGroup(current => (current ? { ...current } : current));
+                                    }}
+                                    className="mt-3 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                                >
+                                    Reintentar
+                                </button>
+                            </div>
+                        )}
+                        {!personasError && filteredPersonas.length === 0 && (
                             <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
                                 No se encontraron personas.
                             </div>

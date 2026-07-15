@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
-import { apiFetch } from '@/lib/http';
+import { ApiError, apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -53,6 +53,7 @@ export default function VolunteersPage() {
     const router = useRouter();
     const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
     const [loading, setLoading] = useState(true);
+    const [volunteersError, setVolunteersError] = useState<string | null>(null);
     const [query, setQuery] = useState('');
     const [teamFilter, setTeamFilter] = useState('Todos');
     const [showFilters, setShowFilters] = useState(false);
@@ -64,12 +65,22 @@ export default function VolunteersPage() {
     });
 
     const loadVolunteers = useCallback(async () => {
-        if (!token) return;
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        setVolunteersError(null);
         try {
-            const data = await apiFetch<Volunteer[]>('/crm/volunteers', { token }).catch(() => []);
+            const data = await apiFetch<Volunteer[]>('/crm/volunteers', { token });
             setVolunteers(data);
-        } catch {
-            toast.error('Error al cargar servidores');
+        } catch (err) {
+            setVolunteers([]);
+            const message = err instanceof ApiError
+                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'Error al cargar servidores'))
+                : 'Error al cargar servidores';
+            setVolunteersError(message);
+            toast.error(message);
         } finally {
             setLoading(false);
         }
@@ -155,6 +166,21 @@ export default function VolunteersPage() {
                         </button>
                     )}
                 </div>
+
+                {volunteersError && (
+                    <div className="mx-3 mb-3 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">No se pudo cargar el voluntariado</p>
+                            <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">{volunteersError}</p>
+                        </div>
+                        <button
+                            onClick={loadVolunteers}
+                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                        >
+                            Reintentar
+                        </button>
+                    </div>
+                )}
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-3 -mt-3 mb-3 relative z-10">
@@ -265,7 +291,7 @@ export default function VolunteersPage() {
                     )}
 
                     {/* Empty */}
-                    {!loading && filtered.length === 0 && (
+                    {!loading && !volunteersError && filtered.length === 0 && (
                         <div className="py-1.5 text-center">
                             <div className="size-10 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
                                 <Heart size={36} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
