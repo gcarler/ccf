@@ -14,3 +14,7 @@ export function getPlatformMetricHref(title: string): string | null {
     }
     return null;
 }
+
+export function getPlatformTaskHref(taskId: string): string {
+    return `/plataforma/tasks/${taskId}`;
+}
