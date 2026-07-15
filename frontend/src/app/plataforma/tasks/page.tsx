@@ -212,7 +212,7 @@ export default function UserTasksPage() {
 
   return (
     <WorkspaceLayout
-      breadcrumbs={[{ label: "Mi Centro de Tareas", icon: ListChecks, href: "/tasks" }]}
+      breadcrumbs={[{ label: "Mi Centro de Tareas", icon: ListChecks, href: "/plataforma/tasks" }]}
       viewType={viewType}
       setViewType={setViewType}
       availableViews={TASK_VIEWS}
