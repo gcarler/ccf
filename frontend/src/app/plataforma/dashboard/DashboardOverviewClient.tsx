@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import { MODULE_CONFIG } from '@/components/DashboardShell';
 import { DSCard } from '@/design/components/DSCard';
 import { useAuth } from '@/context/AuthContext';
@@ -61,6 +62,9 @@ export default function DashboardOverviewClient() {
                 {visibleModules.map((mod, i) => {
                     const cfg = MODULE_CONFIG[mod.key];
                     const Icon = mod.icon;
+                    const href = mod.key === 'projects'
+                        ? '/plataforma/projects?view=list#projects-list'
+                        : `/plataforma/dashboard/${mod.key}`;
                     return (
                         <motion.div
                             key={mod.key}
@@ -68,7 +72,7 @@ export default function DashboardOverviewClient() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05 }}
                         >
-                            <Link href={`/plataforma/dashboard/${mod.key}`} className="block group">
+                            <Link href={href} className="block group">
                                 <DSCard padding="md" className="hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                                     <div className="flex items-start gap-3">
                                         <div
