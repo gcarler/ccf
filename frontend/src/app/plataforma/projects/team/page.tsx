@@ -25,10 +25,11 @@ interface TeamPersona {
 }
 
 export default function TeamPage() {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const { openLayer, closeLayer, setRightMode, layers } = useSidebarLayers();
     const [team, setTeam] = useState<TeamPersona[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [selectedPersona, setSelectedPersona] = useState<TeamPersona | null>(null);
 
     useEffect(() => {
@@ -37,12 +38,22 @@ export default function TeamPage() {
     }, [layers.RIGHT]);
 
     useEffect(() => {
-        if (!token) return;
+        if (authLoading) return;
+        if (!token) {
+            setLoading(false);
+            setTeam([]);
+            setError('Debes iniciar sesión para ver el equipo del proyecto.');
+            return;
+        }
+        setError(null);
         apiFetch<TeamPersona[]>('/system/workload', { token })
             .then(data => setTeam(Array.isArray(data) ? data : []))
-            .catch(() => setTeam([]))
+            .catch(() => {
+                setTeam([]);
+                setError('No se pudo cargar el equipo del proyecto.');
+            })
             .finally(() => setLoading(false));
-    }, [token]);
+    }, [authLoading, token]);
 
     const handleSelect = (persona: TeamPersona) => {
         setSelectedPersona(persona);
@@ -56,6 +67,11 @@ export default function TeamPage() {
         >
             <div className="flex-1 flex flex-col font-display">
                 <div className="w-full mx-auto p-3 space-y-3 pb-4">
+                    {error && (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                            <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                        </div>
+                    )}
 
                     {/* Sub-header */}
                     <div className="flex items-center justify-between">
@@ -91,7 +107,7 @@ export default function TeamPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 rounded-lg" />)}
                         </div>
-                    ) : team.length === 0 ? (
+                    ) : !error && team.length === 0 ? (
                         <EmptyState
                             icon={Users}
                             title="No hay personas en el equipo"

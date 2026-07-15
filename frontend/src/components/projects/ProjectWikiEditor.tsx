@@ -25,12 +25,17 @@ interface Props {
 }
 
 export default function ProjectWikiEditor({ project_id, initialContent = '' }: Props) {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [content, setContent] = useState(initialContent);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     const saveContent = useCallback(async (newContent: string) => {
-        if (!token) return;
+        if (!token) {
+            setSaveStatus('error');
+            setLoadError('Debes iniciar sesión para guardar la wiki.');
+            return;
+        }
         setSaveStatus('saving');
         try {
             await apiFetch(`/projects/${project_id}/wiki`, {
@@ -42,6 +47,7 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
             setTimeout(() => setSaveStatus('idle'), 3000);
         } catch (err) {
             setSaveStatus('error');
+            setLoadError('No se pudo guardar la wiki del proyecto.');
         }
     }, [project_id, token]);
 
@@ -145,14 +151,22 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
 
     useEffect(() => {
         const load = async () => {
-            if (!token) return;
+            if (authLoading) return;
+            if (!token) {
+                setLoadError('Debes iniciar sesión para abrir la wiki del proyecto.');
+                return;
+            }
             try {
+                setLoadError(null);
                 const data = await apiFetch<{content: string}>(`/projects/${project_id}/wiki`, { token });
                 if (data && data.content) editor?.commands.setContent(data.content);
-            } catch (err) { toast.error("Error inesperado"); }
+            } catch (err) {
+                setLoadError('No se pudo cargar la wiki del proyecto.');
+                toast.error("Error inesperado");
+            }
         };
         load();
-    }, [project_id, token, editor]);
+    }, [authLoading, editor, project_id, token]);
 
     if (!editor) return null;
 
@@ -174,6 +188,11 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
                     </div>
                 </div>
             </div>
+            {loadError && (
+                <div className="mx-4 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                    <p className="text-[11px] font-bold uppercase tracking-wide">{loadError}</p>
+                </div>
+            )}
             <div className="flex-1 overflow-y-auto scrollbar-thin p-4 bg-[hsl(var(--bg-primary))] dark:bg-transparent">
                 <div className="max-w-4xl mx-auto"><EditorContent editor={editor} /></div>
             </div>

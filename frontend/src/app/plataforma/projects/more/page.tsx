@@ -14,16 +14,24 @@ import Skeleton from '@/components/ui/Skeleton';
 import { toast } from 'sonner';
 
 export default function ProjectsMorePage() {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const [summary, setSummary] = useState<ProjectPortfolioSummaryRow[]>([]);
     const [workload, setWorkload] = useState<ProjectWorkloadSummaryRow[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [viewType, setViewType] = useState<ViewType>('grid');
 
     useEffect(() => {
         const load = async () => {
-            if (!token) return;
+            if (!token) {
+                setLoading(false);
+                setSummary([]);
+                setWorkload([]);
+                setError('Debes iniciar sesión para ver el resumen de proyectos.');
+                return;
+            }
             try {
+                setError(null);
                 const [summaryRows, workloadRows] = await Promise.all([
                     apiFetch<ProjectPortfolioSummaryRow[]>('/projects/summary', { token, cache: 'no-store' }),
                     apiFetch<ProjectWorkloadSummaryRow[]>('/projects/workload', { token, cache: 'no-store' }),
@@ -31,14 +39,17 @@ export default function ProjectsMorePage() {
                 setSummary(Array.isArray(summaryRows) ? summaryRows : []);
                 setWorkload(Array.isArray(workloadRows) ? workloadRows : []);
             } catch (error) {
+                setSummary([]);
+                setWorkload([]);
+                setError('No se pudo cargar el resumen de proyectos.');
                 toast.error("Error inesperado");
                 toast.error('Error al cargar resumen');
             } finally {
                 setLoading(false);
             }
         };
-        load();
-    }, [token]);
+        if (!authLoading) load();
+    }, [authLoading, token]);
 
     const metrics = useMemo(() => {
         const totals = summary.reduce(
@@ -73,9 +84,14 @@ export default function ProjectsMorePage() {
             viewOptions={['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
         >
             <main className="flex-1 overflow-y-auto p-3">
+                {error && (
+                    <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                        <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                    </div>
+                )}
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[1, 2, 3].map((idx) => <Skeleton key={idx} className="h-32 rounded-lg" />)}</div>
-                ) : summary.length === 0 && workload.length === 0 ? (
+                ) : !error && summary.length === 0 && workload.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <BarChart3 size={48} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4" />
                         <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Sin datos de resumen</h3>
@@ -120,4 +136,3 @@ function MetricCard({ label, value }: { label: string; value: number }) {
         </article>
     );
 }
-

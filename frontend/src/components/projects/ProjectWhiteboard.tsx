@@ -46,7 +46,7 @@ export default function ProjectWhiteboard({
   isOpen,
   onClose,
 }: Props) {
-  const { token } = useAuth();
+  const { token, loading: authLoading } = useAuth();
   const loadedFor = useRef<string | null>(null);
 
   // Shared hooks
@@ -81,6 +81,7 @@ export default function ProjectWhiteboard({
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showLayers, setShowLayers] = useState(false);
   const [layers, setLayers] = useState<{ index: number; type: string; label: string }[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -143,8 +144,15 @@ export default function ProjectWhiteboard({
   useEffect(() => {
     if (!isOpen || !fabricCanvas.current) return;
     if (loadedFor.current === project_id) return;
+    if (authLoading) return;
+    if (!token) {
+      setLoadError('Debes iniciar sesión para abrir la pizarra del proyecto.');
+      loadedFor.current = project_id;
+      return;
+    }
 
     const canvas = fabricCanvas.current;
+    setLoadError(null);
     apiFetch<{ elements_json: string }>(
       `/projects/${project_id}/whiteboard`,
       { token }
@@ -156,6 +164,7 @@ export default function ProjectWhiteboard({
             await canvas.loadFromJSON(JSON.parse(data.elements_json));
             canvas.renderAll();
           } catch {
+            setLoadError('No se pudo cargar la pizarra guardada.');
             toast.error("No se pudo cargar la pizarra guardada.");
           } finally {
             history.restoringRef.current = false;
@@ -165,9 +174,10 @@ export default function ProjectWhiteboard({
         syncLayers();
       })
       .catch(() => {
+        setLoadError('No se pudo cargar la pizarra del proyecto.');
         loadedFor.current = project_id;
       });
-  }, [fabricCanvas, history.restoringRef, isOpen, project_id, syncLayers, token]);
+  }, [authLoading, fabricCanvas, history.restoringRef, isOpen, project_id, syncLayers, token]);
 
   // Resize on open
   useEffect(() => {
@@ -323,6 +333,11 @@ export default function ProjectWhiteboard({
         placeholder="Ej. seguimiento de nuevos creyentes"
         submitLabel={isAiDrawing ? "Generando…" : "Generar"}
       />
+      {loadError && (
+        <div className="mx-4 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+          <p className="text-[11px] font-bold uppercase tracking-wide">{loadError}</p>
+        </div>
+      )}
       {/* Top Bar */}
       <header className="h-11 px-4 shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-sm">
         <div className="flex items-center gap-3">

@@ -78,25 +78,34 @@ function getTriggerMeta(triggerType: string) {
 }
 
 export default function AutomationsPage() {
-  const { token } = useAuth();
+  const { token, loading: authLoading } = useAuth();
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchRules();
+    if (!authLoading) fetchRules();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [authLoading, token]);
 
   const fetchRules = async () => {
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      setRules([]);
+      setError('Debes iniciar sesión para ver las automatizaciones.');
+      return;
+    }
     setLoading(true);
     try {
+      setError(null);
       const data = await apiFetch<AutomationRule[]>("/admin/automations", {
         token,
       });
       setRules(Array.isArray(data) ? data : []);
     } catch (err) {
+      setRules([]);
+      setError('No se pudieron cargar las automatizaciones.');
       toast.error("Error loading automations:");
     } finally {
       setLoading(false);
@@ -104,7 +113,10 @@ export default function AutomationsPage() {
   };
 
   const toggleRule = async (id: string, active: boolean) => {
-    if (!token) return;
+    if (!token) {
+      setError('Debes iniciar sesión para modificar automatizaciones.');
+      return;
+    }
     try {
       await apiFetch(`/admin/automations/${id}`, {
         method: "PATCH",
@@ -120,7 +132,10 @@ export default function AutomationsPage() {
   };
 
   const handleCreate = async () => {
-    if (!token) return;
+    if (!token) {
+      setError('Debes iniciar sesión para crear automatizaciones.');
+      return;
+    }
     setCreating(true);
     try {
       const newRule = await apiFetch<AutomationRule>("/admin/automations", {
@@ -150,6 +165,11 @@ export default function AutomationsPage() {
     >
       <div className="flex flex-col h-full font-display">
         <div className="w-full mx-auto p-3 space-y-3 pb-4">
+          {error && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+              <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+            </div>
+          )}
           {/* Sub-header */}
           <div className="flex items-center justify-between">
             <div>
@@ -197,7 +217,7 @@ export default function AutomationsPage() {
               <Loader2 size={24} className="animate-spin mr-2" />
               Cargando automatizaciones...
             </div>
-          ) : (
+          ) : !error ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {rules.map((rule, idx) => {
                 const meta = getTriggerMeta(rule.trigger_type);
@@ -292,7 +312,7 @@ export default function AutomationsPage() {
                 </div>
               </motion.div>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </ProjectsShell>

@@ -17,18 +17,26 @@ import { toast } from 'sonner';
 const COMMENT_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function ProjectsCommentsPage() {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const [comments, setComments] = useState<ProjectCommentItem[]>([]);
     const [projects, setProjects] = useState<ProjectRecord[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
     const [projectId, setProjectId] = useState<string | ''>('');
     const [content, setContent] = useState('');
     const [viewType, setViewType] = useState<ViewType>('list');
 
     const loadData = async () => {
-        if (!token) return;
+        if (!token) {
+            setLoading(false);
+            setComments([]);
+            setProjects([]);
+            setError('Debes iniciar sesión para ver los comentarios de proyectos.');
+            return;
+        }
         try {
+            setError(null);
             const [commentRows, projectRows] = await Promise.all([
                 apiFetch<ProjectCommentItem[]>('/projects/comments?unresolved_only=true&limit=120', { token, cache: 'no-store' }),
                 apiFetch<ProjectRecord[]>('/projects?limit=200', { token, cache: 'no-store' }),
@@ -40,6 +48,9 @@ export default function ProjectsCommentsPage() {
                 setProjectId(projectList[0].id);
             }
         } catch (error) {
+            setComments([]);
+            setProjects([]);
+            setError('No se pudieron cargar los comentarios de proyectos.');
             toast.error("Error inesperado");
             toast.error('Error al cargar comentarios');
         } finally {
@@ -48,9 +59,9 @@ export default function ProjectsCommentsPage() {
     };
 
     useEffect(() => {
-        loadData();
+        if (!authLoading) loadData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token]);
+    }, [authLoading, token]);
 
     const grouped = useMemo(() => {
         return comments.reduce<Record<string, ProjectCommentItem[]>>((acc, comment) => {
@@ -102,6 +113,11 @@ export default function ProjectsCommentsPage() {
             onViewChange={setViewType}
             viewOptions={COMMENT_VIEWS}
         >
+            {error && (
+                <div className="mx-4 mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                    <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                </div>
+            )}
             <main className="flex-1 overflow-y-auto p-4 space-y-3">
                 <section className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5">
                     <h2 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Nuevo comentario</h2>
@@ -133,7 +149,7 @@ export default function ProjectsCommentsPage() {
 
                 {loading ? (
                     <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-lg" />)}</div>
-                ) : comments.length === 0 ? (
+                ) : !error && comments.length === 0 ? (
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-[hsl(var(--text-secondary))]">Sin comentarios pendientes.</div>
                 ) : viewType === 'table' ? (
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Autor</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Comentario</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">{comments.map((item) => <tr key={item.id}><td className="px-3 py-2 text-sm font-medium">{item.author_name}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{item.content}</td><td className="px-3 py-2"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase", item.is_resolved ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-[hsl(var(--primary))]")}>{item.is_resolved ? 'Resuelto' : 'Pendiente'}</span></td></tr>)}</tbody></table></div>

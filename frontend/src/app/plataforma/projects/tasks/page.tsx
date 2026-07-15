@@ -29,28 +29,37 @@ function formatStatusFilter(value: StatusFilter): string {
 }
 
 export default function ProjectsTasksPage() {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const searchParams = useSearchParams();
     const [tasks, setTasks] = useState<ProjectTaskRecord[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [status, setStatus] = useState<StatusFilter>('all');
     const [viewType, setViewType] = useState<ViewType>('list');
 
     useEffect(() => {
         const load = async () => {
-            if (!token) return;
+            if (!token) {
+                setLoading(false);
+                setTasks([]);
+                setError('Debes iniciar sesión para ver las tareas de proyecto.');
+                return;
+            }
             try {
+                setError(null);
                 const data = await apiFetch<ProjectTaskRecord[]>('/projects/tasks', { token, cache: 'no-store' });
                 setTasks(Array.isArray(data) ? data : []);
             } catch (error) {
+                setTasks([]);
+                setError('No se pudieron cargar las tareas de proyecto.');
                 toast.error("Error inesperado");
                 toast.error('Error al cargar tareas');
             } finally {
                 setLoading(false);
             }
         };
-        load();
-    }, [token]);
+        if (!authLoading) load();
+    }, [authLoading, token]);
 
     useEffect(() => {
         const view = searchParams?.get('view');
@@ -112,6 +121,11 @@ export default function ProjectsTasksPage() {
             onViewChange={setViewType}
             viewOptions={PROJECT_TASK_VIEWS}
         >
+            {error && (
+                <div className="mx-4 mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                    <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                </div>
+            )}
 
             <div className="px-3 py-3 border-b border-[hsl(var(--border))] dark:border-white/10 flex flex-wrap gap-2">
                 {STATUS_FILTERS.map((value) => (
@@ -133,7 +147,7 @@ export default function ProjectsTasksPage() {
             <main className="flex-1 overflow-y-auto p-4">
                 {loading ? (
                     <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <DSSkeleton key={idx} rounded="lg" className="h-20" />)}</div>
-                ) : filtered.length === 0 ? (
+                ) : !error && filtered.length === 0 ? (
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-[hsl(var(--text-secondary))]">No hay tareas para este filtro.</div>
                 ) : viewType === 'table' ? (
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">

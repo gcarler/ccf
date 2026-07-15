@@ -18,28 +18,37 @@ import { toast } from 'sonner';
 const RESPONSE_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 export default function ProjectsResponsesPage() {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const router = useRouter();
     const [items, setItems] = useState<ProjectInboxItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [resolvingId, setResolvingId] = useState<string | null>(null);
     const [viewType, setViewType] = useState<ViewType>('list');
 
     useEffect(() => {
         const load = async () => {
-            if (!token) return;
+            if (!token) {
+                setLoading(false);
+                setItems([]);
+                setError('Debes iniciar sesión para ver las respuestas de proyectos.');
+                return;
+            }
             try {
+                setError(null);
                 const data = await apiFetch<ProjectInboxItem[]>('/projects/inbox?unread_only=true', { token, cache: 'no-store' });
                 setItems(Array.isArray(data) ? data : []);
             } catch (error) {
+                setItems([]);
+                setError('No se pudieron cargar las respuestas de proyectos.');
                 toast.error("Error inesperado");
                 toast.error('Error al cargar respuestas');
             } finally {
                 setLoading(false);
             }
         };
-        load();
-    }, [token]);
+        if (!authLoading) load();
+    }, [authLoading, token]);
 
     const unread = useMemo(() => items.filter((item) => !item.is_read), [items]);
     const grouped = [
@@ -83,9 +92,14 @@ export default function ProjectsResponsesPage() {
         >
 
             <main className="flex-1 overflow-y-auto p-4">
+                {error && (
+                    <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                        <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                    </div>
+                )}
                 {loading ? (
                     <div className="space-y-3">{[1, 2, 3].map((idx) => <Skeleton key={idx} className="h-20 rounded-lg" />)}</div>
-                ) : unread.length === 0 ? (
+                ) : !error && unread.length === 0 ? (
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-[hsl(var(--text-secondary))]">No hay respuestas pendientes.</div>
                 ) : viewType === 'table' ? (
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Respuesta</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Proyecto</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tipo</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">{unread.map((item) => <tr key={item.id}><td className="px-3 py-2 text-sm font-medium">{item.task_title || 'Actualización'}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{item.project}</td><td className="px-3 py-2 text-[11px] text-[hsl(var(--text-secondary))]">{item.type}</td></tr>)}</tbody></table></div>
