@@ -268,7 +268,7 @@ export default function StrategyDetailPage() {
  const params = useParams();
  const router = useRouter();
  const id = (params?.id as string) || '';
- const { token } = useAuth();
+ const { token, loading: authLoading } = useAuth();
  const [strategy, setStrategy] = useState<Strategy | null>(null);
  const [loading, setLoading] = useState(true);
  const [loadError, setLoadError] = useState(false);
@@ -453,6 +453,7 @@ export default function StrategyDetailPage() {
  };
 
  const fetchStrategy = useCallback(async () => {
+ if (!token) return;
  setLoading(true);
  setLoadError(false);
  try {
@@ -477,6 +478,7 @@ export default function StrategyDetailPage() {
  }, [id, token]);
 
  const fetchCustomRoles = useCallback(async () => {
+ if (!token) return;
  setLoadingRoles(true);
  try {
  const result = await apiFetch<CustomRole[]>(`/evangelism/strategies/${id}/roles`, { token, silent: true });
@@ -490,6 +492,7 @@ export default function StrategyDetailPage() {
  }, [id, token]);
 
  const fetchFollowUps = useCallback(async () => {
+ if (!token) return;
  setLoadingFollowUps(true);
  try {
  const result = await apiFetch<FollowUpRecord[]>('/evangelism/follow-up/pending', { token, silent: true });
@@ -502,12 +505,20 @@ export default function StrategyDetailPage() {
  }, [token]);
 
  useEffect(() => {
+ if (authLoading) return;
+ if (!token) {
+ setLoading(false);
+ setLoadingRoles(false);
+ setLoadingFollowUps(false);
+ return;
+ }
  fetchStrategy();
  fetchCustomRoles();
  fetchFollowUps();
- }, [fetchStrategy, fetchCustomRoles, fetchFollowUps]);
+ }, [authLoading, fetchStrategy, fetchCustomRoles, fetchFollowUps, token]);
 
  const fetchGroups = useCallback(async () => {
+ if (!token) return;
  setGroupsLoading(true);
  try {
  const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token, silent: true, query: { evangelism_strategy_id: id } });
@@ -566,11 +577,12 @@ export default function StrategyDetailPage() {
  }, [fetchSessions, token]);
 
  useEffect(() => {
+ if (!token) return;
  if (activeTab === 'groups') fetchGroups();
  if (activeTab === 'metrics') fetchMetrics();
  if (activeTab === 'sessions') { fetchGroups(); fetchSessions(); }
  if (activeTab === 'attendance') { fetchGroups(); fetchSessions(); }
- }, [activeTab, fetchGroups, fetchMetrics, fetchSessions]);
+ }, [activeTab, fetchGroups, fetchMetrics, fetchSessions, token]);
 
  useEffect(() => {
  if (!roleDropdown) return;
@@ -682,6 +694,7 @@ export default function StrategyDetailPage() {
 
  // Carga todas las personas al abrir el drawer — el filtro es client-side por nombre
  useEffect(() => {
+ if (!token) return;
  if (!isPersonaDrawerOpen) return;
  setPersonaSearchLoading(true);
  apiFetch<any[]>('/crm/personas', { token, silent: true, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } })
