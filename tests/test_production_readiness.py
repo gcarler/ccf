@@ -2,6 +2,7 @@ from scripts.auditing.production_readiness import (
     Check,
     ModuleReadiness,
     markdown_report,
+    runtime_supervision_checks,
     serialize_report,
 )
 
@@ -45,3 +46,16 @@ def test_markdown_report_contains_module_check_table():
     assert "# CCF Production Readiness Report" in markdown
     assert "## Public - OK (100%)" in markdown
     assert "| home | OK | HTTP 200 |" in markdown
+
+
+def test_runtime_supervision_is_non_blocking_when_pm2_is_empty(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.auditing.production_readiness.run_command",
+        lambda command, timeout=20: (0, "[]"),
+    )
+
+    checks = runtime_supervision_checks()
+
+    assert len(checks) == 1
+    assert checks[0].status == "OK"
+    assert "PM2 no registra procesos" in checks[0].detail
