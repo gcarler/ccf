@@ -355,10 +355,27 @@ class TestCRMAllFunctions:
 
     def test_community_cards(self, rich_data):
         from backend.crud.crm import get_community_cards
+        from backend import models
         db = rich_data["db"]
         for kw in [dict(), dict(column_id="test")]:
             result = _c(get_community_cards, db, **kw)
             assert isinstance(result, (list, dict))
+
+    def test_community_cards_api_ignores_soft_deleted(self, rich_data):
+        from backend import models
+
+        db = rich_data["db"]
+        c = rich_data["c"]
+        card = models.CommunityBoardCard(title="API Test", body="Body", column_id="general", position=1)
+        db.add(card)
+        db.commit()
+        db.refresh(card)
+        card.deleted_at = datetime.now(timezone.utc)
+        db.commit()
+        resp = c.get("/api/community/cards", headers=rich_data["h"])
+        assert resp.status_code == 200, resp.text
+        ids = {item["id"] for item in resp.json()}
+        assert str(card.id) not in ids
 
     def test_support_tickets(self, rich_data):
         from backend.crud.crm import get_support_tickets

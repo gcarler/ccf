@@ -245,6 +245,24 @@ class TestCRMCrudMassive:
         ) is None
         assert crm.delete_counseling_ticket(db_session, row.id) is False
 
+    def test_community_ignore_soft_deleted(self, db_session, full):
+        from backend import models
+        from backend.crud.crm import get_community_card
+        from backend.crud.crm_ import community
+        from backend.schemas.operational import CommunityBoardCardUpdate
+
+        card = models.CommunityBoardCard(title="Test", body="Body", column_id="general", position=1)
+        db_session.add(card)
+        db_session.commit()
+        db_session.refresh(card)
+        card.deleted_at = datetime.now(timezone.utc)
+        db_session.commit()
+
+        assert all(str(c.id) != str(card.id) for c in community.get_community_cards(db_session))
+        assert get_community_card(db_session, card.id) is None
+        assert community.update_community_card(db_session, card.id, CommunityBoardCardUpdate(title="New")) is None
+        assert community.delete_community_card(db_session, card.id) is False
+
 
 class TestCMSCrudMassive:
     def test_cms_crud(self, db_session, full):
@@ -300,6 +318,7 @@ class TestAcademyCrudMassive:
 class TestCrmExtendedMassive:
     def test_extended_crud(self, db_session, full):
         from backend.crud import crm_extended
+        from backend import models
         db = db_session
         pid = str(full["personas"][0].id)
         _call(crm_extended.get_positions, db)
@@ -320,6 +339,33 @@ class TestCrmExtendedMassive:
         _call(crm_extended.get_chat_messages, db)
         _call(crm_extended.get_chat_messages, db, room_id="r1")
         _call(crm_extended.get_user_conversations, db, str(full["admin"].id))
+
+        event = full["events"][0]
+        assignment = models.EventAssignment(
+            event_id=event.id,
+            session_date=datetime.now(timezone.utc).date(),
+            persona_id=full["personas"][0].id,
+            role="MC",
+        )
+        db.add(assignment)
+        db.commit()
+        db.refresh(assignment)
+        assignment.deleted_at = datetime.now(timezone.utc)
+        db.commit()
+        assert crm_extended.get_event_assignment(db, assignment.id) is None
+        assert all(str(a.id) != str(assignment.id) for a in crm_extended.get_event_assignments(db, event_id=event.id))
+        assert crm_extended.update_event_assignment(db, assignment.id, crm_extended.EventAssignmentUpdate(role="HOST")) is None
+        assert crm_extended.delete_event_assignment(db, assignment.id) is False
+
+        msg = models.ChatMessage(sender_id=full["admin"].id, room_id="r1", content="Hola")
+        db.add(msg)
+        db.commit()
+        db.refresh(msg)
+        msg.deleted_at = datetime.now(timezone.utc)
+        db.commit()
+        assert crm_extended.get_chat_message(db, msg.id) is None
+        assert all(str(row.id) != str(msg.id) for row in crm_extended.get_chat_messages(db))
+        assert crm_extended.delete_chat_message(db, msg.id) is False
 
 
 class TestProjectsMassive:

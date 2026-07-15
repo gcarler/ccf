@@ -11,7 +11,8 @@ from backend.schemas.operational import CommunityBoardCardUpdate
 
 
 def get_community_cards(db: Session, column_id: Optional[str] = None) -> List[models.CommunityBoardCard]:
-    q = db.query(models.CommunityBoardCard).order_by(models.CommunityBoardCard.position.asc())
+    q = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.deleted_at.is_(None))
+    q = q.order_by(models.CommunityBoardCard.position.asc())
     if column_id:
         q = q.filter(models.CommunityBoardCard.column_id == column_id)
     return q.all()
@@ -27,13 +28,27 @@ def create_community_card(db: Session, card: schemas.CommunityBoardCardCreate) -
 
 
 def get_community_card(db: Session, card_id: UUID) -> Optional[models.CommunityBoardCard]:
-    return db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
+    return (
+        db.query(models.CommunityBoardCard)
+        .filter(
+            models.CommunityBoardCard.id == card_id,
+            models.CommunityBoardCard.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 def update_community_card(
     db: Session, card_id: UUID, payload: CommunityBoardCardUpdate
 ) -> Optional[models.CommunityBoardCard]:
-    row = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
+    row = (
+        db.query(models.CommunityBoardCard)
+        .filter(
+            models.CommunityBoardCard.id == card_id,
+            models.CommunityBoardCard.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -44,7 +59,14 @@ def update_community_card(
 
 
 def delete_community_card(db: Session, card_id: UUID) -> bool:
-    row = db.query(models.CommunityBoardCard).filter(models.CommunityBoardCard.id == card_id).first()
+    row = (
+        db.query(models.CommunityBoardCard)
+        .filter(
+            models.CommunityBoardCard.id == card_id,
+            models.CommunityBoardCard.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row:
         return False
     row.deleted_at = _utcnow()

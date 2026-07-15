@@ -242,11 +242,14 @@ def create_groups_session(
 
     season_id = payload.get("season_id")
     grupo_id = payload.get("grupo_id")
+    create_for_all_groups = bool(payload.get("create_for_all_groups", False))
     topic = payload.get("topic")
     report_deadline_str = payload.get("report_deadline")
 
-    if not season_id or not grupo_id:
-        raise HTTPException(status_code=400, detail="Faltan datos: temporada y grupo son requeridos")
+    if not season_id:
+        raise HTTPException(status_code=400, detail="Falta la temporada de la sesión")
+    if not create_for_all_groups and not grupo_id:
+        raise HTTPException(status_code=400, detail="Falta el grupo de la sesión")
     user_sede = require_user_sede_id(db, current_user)
 
     season = db.query(models.CampaignSeason).filter(models.CampaignSeason.id == season_id).first()
@@ -269,9 +272,11 @@ def create_groups_session(
             logger.warning("report_deadline inválido: %s", report_deadline_str)
             pass
 
+    batch_mode = create_for_all_groups or str(grupo_id).lower() == "all"
+
     # Gather houses
     houses_to_process = []
-    if str(grupo_id).lower() == "all":
+    if batch_mode:
         houses = db.query(GrupoEvangelismo).filter(
             models.GrupoEvangelismo.activo.is_(True),
             models.GrupoEvangelismo.sede_id == user_sede,
@@ -308,7 +313,7 @@ def create_groups_session(
             .first()
         )
         if existing:
-            if str(grupo_id).lower() != "all":
+            if not batch_mode:
                 raise HTTPException(
                     status_code=400,
                     detail="Ya existe una sesion registrada para ese Grupo en esa fecha",
@@ -340,6 +345,7 @@ def create_groups_session(
         "message": f"Se crearon {len(created_sessions)} sesiones.",
         "created_count": len(created_sessions),
         "session_ids": [session.id for session in created_sessions],
+        "create_for_all_groups": batch_mode,
     }
 
 

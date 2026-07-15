@@ -1289,12 +1289,13 @@ class TestSessions:
         s = full["season"]
         resp = full["c"].post("/api/evangelism/grupos/sessions", json={
             "season_id": str(s.id),
-            "grupo_id": "all",
+            "create_for_all_groups": True,
             "session_date": "2026-09-25",
             "topic": "All groups",
         }, headers=full["h"])
         assert resp.status_code == 200, resp.text
         assert resp.json()["created_count"] == len(full["grupos"])
+        assert resp.json()["create_for_all_groups"] is True
 
     def test_create_faro_session_invalid_uuid(self, full):
         s = full["season"]
@@ -1330,7 +1331,7 @@ class TestSessions:
         s = full["season"]
         resp = full["c"].post("/api/evangelism/grupos/sessions", json={
             "season_id": str(s.id),
-            "grupo_id": "all",
+            "create_for_all_groups": True,
             "session_date": "2026-06-08",
         }, headers=full["h"])
         assert resp.status_code == 200, resp.text
