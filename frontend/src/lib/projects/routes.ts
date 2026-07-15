@@ -5,6 +5,7 @@
 // (ej. 'tasks', 'inbox') del UUID real de un proyecto cuando se decide
 // si el layout debe cargar el detalle de un proyecto o la lista global.
 export const GLOBAL_PROJECT_ROUTES: ReadonlySet<string> = new Set([
+    'list',
     'tasks',
     'inbox',
     'general',

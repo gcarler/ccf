@@ -17,6 +17,7 @@ Shield,
 Users
 } from 'lucide-react';
 import Link from 'next/link';
+import { getProjectMetricHref } from '../projects/projectsLinks';
 
 const MODULES = [
     { key: 'crm', icon: Users, desc: 'Personas, casos, pipelines, SLAs e interacciones' },
@@ -63,7 +64,7 @@ export default function DashboardOverviewClient() {
                     const cfg = MODULE_CONFIG[mod.key];
                     const Icon = mod.icon;
                     const href = mod.key === 'projects'
-                        ? '/plataforma/projects?view=list#projects-list'
+                        ? getProjectMetricHref('Proyectos')
                         : `/plataforma/dashboard/${mod.key}`;
                     return (
                         <motion.div

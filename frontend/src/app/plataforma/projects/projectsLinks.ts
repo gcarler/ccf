@@ -1,10 +1,11 @@
 export const PROJECTS_LIST_ANCHOR = 'projects-list';
+export const PROJECTS_LIST_ROUTE = '/plataforma/projects/list';
 
 export function getProjectMetricHref(label: string): string {
     const normalized = label.toLowerCase();
 
     if (normalized.includes('proyecto') || normalized.includes('project')) {
-        return `/plataforma/projects?view=list#${PROJECTS_LIST_ANCHOR}`;
+        return PROJECTS_LIST_ROUTE;
     }
 
     if (normalized.includes('atrasad') || normalized.includes('vencid') || normalized.includes('delayed')) {
@@ -19,5 +20,5 @@ export function getProjectMetricHref(label: string): string {
         return '/plataforma/projects/general?view=list';
     }
 
-    return '/plataforma/projects?view=list';
+    return PROJECTS_LIST_ROUTE;
 }
