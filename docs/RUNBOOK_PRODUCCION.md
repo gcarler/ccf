@@ -167,7 +167,7 @@ curl -f https://elfarocc.tech/api/system/health
 ```bash
 # Estado de procesos
 ./stopccf --status        # o ver .started_pids
-pm2 list
+pm2 list                  # solo si esta instancia usa PM2
 
 # Readiness global
 cd /root/ccf

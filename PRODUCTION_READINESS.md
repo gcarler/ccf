@@ -6,7 +6,7 @@ Este documento define el estándar operativo para considerar la plataforma CCF l
 
 La plataforma está al 100% solo cuando el estado actual cumple estos criterios medibles:
 
-- Runtime: backend y frontend online, healthchecks 200, PM2 estable, sin errores críticos recientes.
+- Runtime: backend y frontend online, healthchecks 200, supervisor de procesos coherente con el despliegue real, sin errores críticos recientes.
 - Web pública: rutas públicas principales, sitemap, robots y assets críticos responden 200.
 - CMS: readiness, builder, APIs públicas, theme, menús y contrato hero/pop-up verificados.
 - Plataforma: shell y módulos principales cargan sin errores HTTP.
@@ -38,7 +38,7 @@ Artefactos generados:
 
 | Módulo | Evidencia |
 |---|---|
-| Runtime e Infra | Git, PM2, healthchecks, logs recientes |
+| Runtime e Infra | Git, supervisión de procesos, healthchecks, logs recientes |
 | Web Pública | Home, nosotros, eventos, favicon, sitemap, robots |
 | CMS | Readiness UI, builder UI, APIs públicas, tests hero/pop-up |
 | Plataforma | Shell, CRM, Academy, Evangelism, Projects, Finance |
@@ -67,10 +67,15 @@ npm run build
 
 ## Regla Operativa Importante
 
-Después de `npm run build` en producción, reiniciar el frontend PM2 antes de validar con navegador:
+Después de `npm run build` en producción, reiniciar el frontend usando el supervisor que esté activo en la instancia antes de validar con navegador:
 
 ```bash
+# Ejemplo si la instancia usa PM2
 pm2 restart ccf-frontend-staging --update-env
+
+# Ejemplo si la instancia usa systemd o startccf
+sudo systemctl restart ccf-frontend
+# ./startccf
 ```
 
 Esto evita desfases entre HTML servido y chunks `_next/static`.
