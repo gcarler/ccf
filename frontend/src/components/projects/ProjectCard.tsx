@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { ProjectRecord } from '@/types/projects';
 
@@ -23,7 +23,6 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({ project, index }: ProjectCardProps) {
-    const router = useRouter();
     const tasks = Array.isArray(project.tasks) ? project.tasks : [];
     const completed = tasks.filter(t => ['completed', 'completed'].includes((t.status || '').toLowerCase())).length;
     const inProgress = tasks.filter(t => ['in_progress'].includes((t.status || '').toLowerCase())).length;
@@ -38,11 +37,11 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
     const statusCfg = statusMap[project.status ?? 'active'] ?? statusMap.active;
 
     return (
+        <Link href={`/plataforma/projects/${project.id}`} className="block">
         <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04, duration: 0.3 }}
-            onClick={() => router.push(`/plataforma/projects/${project.id}`)}
             className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden"
             style={{ '--card-color': color } as React.CSSProperties}
         >
@@ -122,5 +121,6 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
                 </div>
             </div>
         </motion.div>
+        </Link>
     );
 }

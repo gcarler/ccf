@@ -38,13 +38,15 @@ interface Persona {
 }
 
 export default function TaskAssignment() {
-    const { isAuthenticated, token } = useAuth();
+    const { isAuthenticated, token, loading: authLoading } = useAuth();
     const { addToast } = useToast();
     const router = useRouter();
     
     const [leaders, setLeaders] = useState<Leader[]>([]);
     const [personas, setPersonas] = useState<Persona[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
     
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
@@ -54,9 +56,14 @@ export default function TaskAssignment() {
     const [isAssigning, setIsAssigning] = useState(false);
 
     const fetchData = useCallback(async () => {
-        if (!token) return;
+        if (!token) {
+            setLoading(false);
+            setError("Debes iniciar sesión para asignar tareas.");
+            return;
+        }
         setLoading(true);
         try {
+            setError(null);
             const [usersData, personasData] = await Promise.all([
                 apiFetch<any[]>('/admin/users', { token }),
                 apiFetch<any[]>('/crm/personas', { token })
@@ -67,6 +74,9 @@ export default function TaskAssignment() {
             setPersonas(Array.isArray(personasData) ? personasData : []);
         } catch (err) {
             console.error(err);
+            setLeaders([]);
+            setPersonas([]);
+            setError("No se pudieron cargar los datos de asignación.");
             addToast("Error al cargar datos de asignación", "error");
         } finally {
             setLoading(false);
@@ -74,8 +84,8 @@ export default function TaskAssignment() {
     }, [token, addToast]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchData();
-    }, [isAuthenticated, fetchData]);
+        if (!authLoading && isAuthenticated) fetchData();
+    }, [authLoading, fetchData, isAuthenticated, reloadKey]);
 
     const filteredPersonas = useMemo(() => {
         return personas.filter(m =>
@@ -114,6 +124,8 @@ export default function TaskAssignment() {
         }
     };
 
+    if (authLoading) return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Verificando sesión...</div>;
+
     if (!isAuthenticated) return null;
 
     const selectedPersona = personas.find(m => m.id === selectedPersonaId);
@@ -128,6 +140,20 @@ export default function TaskAssignment() {
                 </button>
             }
         >
+        {error && (
+            <div className="mb-4 flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wide">No se pudo cargar la asignación</p>
+                    <p className="text-xs">{error}</p>
+                </div>
+                <button
+                    onClick={() => setReloadKey(key => key + 1)}
+                    className="rounded-md border border-amber-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-amber-100 dark:border-amber-400/30 dark:hover:bg-amber-500/20"
+                >
+                    Reintentar
+                </button>
+            </div>
+        )}
         <style jsx global>{`
             .glass-panel {
                 background: rgba(255, 255, 255, 0.7);
