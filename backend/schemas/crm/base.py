@@ -359,6 +359,69 @@ class VolunteerShift(VolunteerShiftBase):
     model_config = orm_config
 
 
+class PersonaMeshMetric(BaseModel):
+    key: str
+    label: str
+    value: float
+    display_value: str
+    detail: Optional[str] = None
+    tone: str = "neutral"
+    has_data: bool = True
+
+    model_config = orm_config
+
+
+class PersonaMentorshipCreate(BaseModel):
+    mentor_persona_id: UUID
+    notes: Optional[str] = None
+
+
+class PersonaMentorshipResponse(BaseModel):
+    id: UUID
+    sede_id: Optional[UUID] = None
+    mentee_persona_id: UUID
+    mentee_name: Optional[str] = None
+    mentee_role: Optional[str] = None
+    mentor_persona_id: UUID
+    mentor_name: Optional[str] = None
+    mentor_role: Optional[str] = None
+    assigned_by_user_id: Optional[UUID] = None
+    status: str = "active"
+    notes: Optional[str] = None
+    started_at: datetime
+    ended_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class PersonaMeshInsight(BaseModel):
+    title: str = "MESH Insight"
+    summary: str
+    recommendation: str
+    health_score: Optional[int] = None
+    health_status: Optional[str] = None
+    attendance_rate: float = 0.0
+    academy_progress: float = 0.0
+    volunteer_commitment: float = 0.0
+    metrics: List[PersonaMeshMetric] = Field(default_factory=list)
+    signals: List[str] = Field(default_factory=list)
+    current_mentorship: Optional[PersonaMentorshipResponse] = None
+    generated_at: datetime
+    model_config = orm_config
+
+
+class PersonaMentorCandidate(BaseModel):
+    id: UUID
+    nombre_completo: str
+    church_role: Optional[str] = None
+    health_score: Optional[int] = None
+    spiritual_health: float = 0.8
+    academy_progress: float = 0.0
+    volunteer_commitment: float = 0.0
+    fit_score: int = 0
+    fit_reason: str = ""
+    model_config = orm_config
+
+
 class ColombianCity(BaseModel):
     id: UUID
     department_id: UUID
@@ -438,6 +501,20 @@ class PersonaResponse(BaseModel):
     city: Optional[str] = None
     health_score: Optional[int] = None
     health_status: Optional[str] = None
+    spiritual_health: float = 0.8
+    academy_progress: float = 0.0
+    volunteer_commitment: float = 0.0
+    mesh_insight: Optional[PersonaMeshInsight] = None
+    current_mentorship: Optional[PersonaMentorshipResponse] = None
+
+
+class PersonaPageResponse(BaseModel):
+    items: List[PersonaResponse]
+    total: int
+    skip: int = 0
+    limit: int = 20
+    available_groups: List[str] = Field(default_factory=list)
+    model_config = orm_config
 
 
 class Persona(BaseModel):

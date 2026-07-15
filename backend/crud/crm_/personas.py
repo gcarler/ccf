@@ -122,7 +122,7 @@ def _find_existing_persona(db: Session, payload: schemas.PersonaCreate) -> Optio
     return None
 
 
-def search_personas(
+def _build_persona_search_query(
     db: Session,
     search: str | None = None,
     role: str | None = None,
@@ -136,10 +136,6 @@ def search_personas(
     max_age: int | None = None,
     family_id: UUID | None = None,
     sede_id: str | None = None,
-    skip: int = 0,
-    limit: int = 1000,
-    sort_by: str | None = None,
-    sort_dir: str = "asc",
 ):
     query = persona_query(db).options(
         selectinload(models.Persona.family),
@@ -184,7 +180,43 @@ def search_personas(
         query = query.filter(models.Persona.birthday >= cutoff)
     if family_id:
         query = query.filter(models.Persona.family_id == family_id)
+    return query
 
+
+def search_personas(
+    db: Session,
+    search: str | None = None,
+    role: str | None = None,
+    estado_vital: str | None = None,
+    spiritual_status: str | None = None,
+    sex: str | None = None,
+    group_name: str | None = None,
+    participation_type: str | None = None,
+    id_type: str | None = None,
+    min_age: int | None = None,
+    max_age: int | None = None,
+    family_id: UUID | None = None,
+    sede_id: str | None = None,
+    skip: int = 0,
+    limit: int = 1000,
+    sort_by: str | None = None,
+    sort_dir: str = "asc",
+):
+    query = _build_persona_search_query(
+        db,
+        search=search,
+        role=role,
+        estado_vital=estado_vital,
+        spiritual_status=spiritual_status,
+        sex=sex,
+        group_name=group_name,
+        participation_type=participation_type,
+        id_type=id_type,
+        min_age=min_age,
+        max_age=max_age,
+        family_id=family_id,
+        sede_id=sede_id,
+    )
     sort_col = getattr(models.Persona, sort_by or "nombre_completo", models.Persona.nombre_completo)
     query = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc())
 
@@ -193,9 +225,169 @@ def search_personas(
     return _enrich_personas_with_progress(db, personas)
 
 
+def search_personas_page(
+    db: Session,
+    search: str | None = None,
+    role: str | None = None,
+    estado_vital: str | None = None,
+    spiritual_status: str | None = None,
+    sex: str | None = None,
+    group_name: str | None = None,
+    participation_type: str | None = None,
+    id_type: str | None = None,
+    min_age: int | None = None,
+    max_age: int | None = None,
+    family_id: UUID | None = None,
+    sede_id: str | None = None,
+    skip: int = 0,
+    limit: int = 50,
+    sort_by: str | None = None,
+    sort_dir: str = "asc",
+) -> dict:
+    query = _build_persona_search_query(
+        db,
+        search=search,
+        role=role,
+        estado_vital=estado_vital,
+        spiritual_status=spiritual_status,
+        sex=sex,
+        group_name=group_name,
+        participation_type=participation_type,
+        id_type=id_type,
+        min_age=min_age,
+        max_age=max_age,
+        family_id=family_id,
+        sede_id=sede_id,
+    )
+    total = query.order_by(None).count()
+    available_groups = [
+        row[0]
+        for row in (
+            query.with_entities(models.Persona.group_name)
+            .order_by(models.Persona.group_name.asc())
+            .distinct()
+            .all()
+        )
+        if row[0]
+    ]
+    sort_col = getattr(models.Persona, sort_by or "nombre_completo", models.Persona.nombre_completo)
+    personas = query.order_by(sort_col.desc() if sort_dir == "desc" else sort_col.asc()).offset(skip).limit(limit).all()
+    personas = [prepare_persona_for_output(db, p) for p in personas]
+    return {
+        "items": _enrich_personas_with_progress(db, personas),
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "available_groups": available_groups,
+    }
+
+
 def get_persona(db: Session, persona_id: str) -> Optional[models.Persona]:
     persona = persona_query(db).filter(models.Persona.id == _to_uuid(persona_id)).first()
-    return prepare_persona_for_output(db, persona) if persona else None
+    return _attach_persona_detail_payload(db, prepare_persona_for_output(db, persona)) if persona else None
+
+
+def list_mentor_candidates(
+    db: Session,
+    persona_id: str,
+    search: str | None = None,
+    limit: int = 20,
+    sede_id: UUID | None = None,
+) -> list[models.Persona]:
+    query = persona_query(db)
+    persona_uuid = _to_uuid(persona_id)
+    if sede_id is not None:
+        query = query.filter(models.Persona.sede_id == sede_id)
+    query = query.filter(models.Persona.id != persona_uuid)
+    if search:
+        like = f"%{search}%"
+        query = query.filter(
+            or_(
+                models.Persona.first_name.ilike(like),
+                models.Persona.last_name.ilike(like),
+                models.Persona.nombre_completo.ilike(like),
+                models.Persona.email.ilike(like),
+                models.Persona.phone.ilike(like),
+                models.Persona.mobile_phone.ilike(like),
+            )
+        )
+
+    rows = query.order_by(models.Persona.nombre_completo.asc()).limit(max(limit * 3, limit)).all()
+    rows = [prepare_persona_for_output(db, p) for p in rows]
+    rows = _enrich_personas_with_progress(db, rows)
+
+    candidates: list[models.Persona] = []
+    for row in rows:
+        if str(getattr(row, "estado_vital", "")).upper() == "INACTIVO":
+            continue
+        health_score = float(getattr(row, "health_score", 0) or 0)
+        academy_progress = float(getattr(row, "academy_progress", 0) or 0)
+        volunteer_commitment = float(getattr(row, "volunteer_commitment", 0) or 0)
+        fit_score = int(round((health_score * 0.45) + (academy_progress * 0.35) + (volunteer_commitment * 0.2)))
+        if fit_score < 40:
+            continue
+        row.fit_score = fit_score
+        row.fit_reason = (
+            f"Salud {health_score:.0f}%, academia {academy_progress:.0f}% y servicio {volunteer_commitment:.0f}%."
+        )
+        candidates.append(row)
+
+    candidates.sort(
+        key=lambda persona: (
+            -int(getattr(persona, "fit_score", 0) or 0),
+            -float(getattr(persona, "health_score", 0) or 0),
+            getattr(persona, "nombre_completo", "") or "",
+        )
+    )
+    return candidates[:limit]
+
+
+def assign_persona_mentor(
+    db: Session,
+    mentee_persona_id: str,
+    mentor_persona_id: str,
+    *,
+    assigned_by_user_id: str | None = None,
+    notes: str | None = None,
+) -> models.PersonaMentorship:
+    mentee_uuid = _to_uuid(mentee_persona_id)
+    mentor_uuid = _to_uuid(mentor_persona_id)
+    if mentee_uuid == mentor_uuid:
+        raise ValueError("Una persona no puede ser su propio mentor")
+
+    mentee = persona_query(db).filter(models.Persona.id == mentee_uuid).first()
+    mentor = persona_query(db).filter(models.Persona.id == mentor_uuid).first()
+    if not mentee or not mentor:
+        raise ValueError("Mentor o mentee no encontrado")
+
+    if str(getattr(mentee, "sede_id", "") or "") != str(getattr(mentor, "sede_id", "") or ""):
+        raise ValueError("Mentor y mentee deben pertenecer a la misma sede")
+
+    active_assignment = _active_mentorship_query(db, mentee_uuid)
+    if active_assignment and active_assignment.mentor_persona_id == mentor_uuid:
+        active_assignment.notes = notes or active_assignment.notes
+        active_assignment.assigned_by_user_id = _to_uuid(assigned_by_user_id) if assigned_by_user_id else active_assignment.assigned_by_user_id
+        db.commit()
+        db.refresh(active_assignment)
+        return _decorate_mentorship(active_assignment)
+
+    if active_assignment:
+        active_assignment.status = "inactive"
+        active_assignment.ended_at = _utcnow()
+
+    assignment = models.PersonaMentorship(
+        sede_id=getattr(mentee, "sede_id", None),
+        mentee_persona_id=mentee_uuid,
+        mentor_persona_id=mentor_uuid,
+        assigned_by_user_id=_to_uuid(assigned_by_user_id) if assigned_by_user_id else None,
+        status="active",
+        notes=notes,
+        started_at=_utcnow(),
+    )
+    db.add(assignment)
+    db.commit()
+    db.refresh(assignment)
+    return _decorate_mentorship(assignment)
 
 
 def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate) -> Optional[models.Persona]:
@@ -353,11 +545,7 @@ def _enrich_personas_with_progress(
     db: Session,
     personas: List[models.Persona],
 ) -> List[models.Persona]:
-    """Adjunta academy_progress (avg de Enrollment) a cada persona in-place.
-
-    spiritual_health se deja al default del schema (0.8) porque el valor
-    hash-based anterior era mock/placeholder, no dato real.
-    """
+    """Adjunta métricas operativas reales a cada persona in-place."""
     if not personas:
         return personas
     persona_ids = [p.id for p in personas]
@@ -367,13 +555,201 @@ def _enrich_personas_with_progress(
             func.avg(models.Enrollment.progress_percent),
         )
         .filter(models.Enrollment.persona_id.in_(persona_ids))
+        .filter(models.Enrollment.deleted_at.is_(None))
         .group_by(models.Enrollment.persona_id)
         .all()
     )
     progress_map = {pid: float(avg or 0.0) for pid, avg in progress_data}
+    volunteer_map = _volunteer_commitment_map(db, persona_ids)
     for p in personas:
         p.academy_progress = progress_map.get(p.id, 0.0)
+        health_score = getattr(p, "health_score", None)
+        p.spiritual_health = round(float(health_score or 80) / 100, 2) if health_score is not None else 0.8
+        p.volunteer_commitment = volunteer_map.get(p.id, 0.0)
     return personas
+
+
+def _normalize_token(value: str | None) -> str:
+    if not value:
+        return ""
+    import unicodedata
+
+    normalized = unicodedata.normalize("NFKD", str(value))
+    return "".join(ch for ch in normalized if not unicodedata.combining(ch)).upper().strip()
+
+
+def _attendance_rate_map(db: Session, persona_ids: List[UUID]) -> dict[UUID, float]:
+    if not persona_ids:
+        return {}
+
+    cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=30)
+    rows = (
+        db.query(models.Asistencia)
+        .join(models.SesionGrupo, models.Asistencia.sesion_id == models.SesionGrupo.id)
+        .filter(
+            models.Asistencia.persona_id.in_(persona_ids),
+            models.Asistencia.deleted_at.is_(None),
+            models.SesionGrupo.fecha_sesion >= cutoff,
+        )
+        .all()
+    )
+    buckets: dict[UUID, list[models.Asistencia]] = {}
+    for row in rows:
+        buckets.setdefault(row.persona_id, []).append(row)
+
+    rate_map: dict[UUID, float] = {}
+    for persona_id, items in buckets.items():
+        attended = sum(1 for item in items if getattr(item, "attended", False))
+        rate_map[persona_id] = round((attended / len(items)) * 100, 1) if items else 0.0
+    return rate_map
+
+
+def _volunteer_commitment_map(db: Session, persona_ids: List[UUID]) -> dict[UUID, float]:
+    if not persona_ids:
+        return {}
+
+    cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=90)
+    shifts = (
+        db.query(models.VolunteerShift)
+        .filter(
+            models.VolunteerShift.persona_id.in_(persona_ids),
+            models.VolunteerShift.deleted_at.is_(None),
+        )
+        .all()
+    )
+    buckets: dict[UUID, list[models.VolunteerShift]] = {}
+    for shift in shifts:
+        buckets.setdefault(shift.persona_id, []).append(shift)
+
+    commitment_map: dict[UUID, float] = {}
+    for persona_id, items in buckets.items():
+        recent = [
+            shift
+            for shift in items
+            if (shift.shift_start and shift.shift_start >= cutoff) or (shift.shift_end and shift.shift_end >= cutoff)
+        ]
+        recent_hours = 0.0
+        for shift in recent:
+            if shift.shift_start and shift.shift_end:
+                recent_hours += max((shift.shift_end - shift.shift_start).total_seconds() / 3600, 0)
+        unique_teams = {str(shift.team_name).strip().lower() for shift in recent if shift.team_name}
+        score = min(100.0, (len(recent) * 20.0) + min(recent_hours * 2.0, 40.0) + (len(unique_teams) * 10.0))
+        commitment_map[persona_id] = round(score, 1)
+    return commitment_map
+
+
+def _active_mentorship_query(db: Session, persona_id: UUID):
+    return (
+        db.query(models.PersonaMentorship)
+        .filter(
+            models.PersonaMentorship.mentee_persona_id == persona_id,
+            models.PersonaMentorship.deleted_at.is_(None),
+            models.PersonaMentorship.status == "active",
+        )
+        .order_by(models.PersonaMentorship.started_at.desc())
+        .first()
+    )
+
+
+def _decorate_mentorship(row: models.PersonaMentorship | None) -> models.PersonaMentorship | None:
+    if not row:
+        return None
+    mentor = getattr(row, "mentor", None)
+    mentee = getattr(row, "mentee", None)
+    row.mentor_name = (
+        getattr(mentor, "nombre_completo", None)
+        or (f"{getattr(mentor, 'first_name', '')} {getattr(mentor, 'last_name', '')}".strip() if mentor else None)
+    )
+    row.mentor_role = getattr(mentor, "church_role", None)
+    row.mentee_name = (
+        getattr(mentee, "nombre_completo", None)
+        or (f"{getattr(mentee, 'first_name', '')} {getattr(mentee, 'last_name', '')}".strip() if mentee else None)
+    )
+    row.mentee_role = getattr(mentee, "church_role", None)
+    return row
+
+
+def _build_persona_mesh_insight(db: Session, persona: models.Persona) -> schemas.PersonaMeshInsight:
+    attendance_rate = _attendance_rate_map(db, [persona.id]).get(persona.id, 0.0)
+    volunteer_commitment = _volunteer_commitment_map(db, [persona.id]).get(persona.id, 0.0)
+    academy_progress = float(getattr(persona, "academy_progress", 0.0) or 0.0)
+    health_score = getattr(persona, "health_score", None)
+    health_status = getattr(persona, "health_status", None)
+    current_mentorship = _decorate_mentorship(_active_mentorship_query(db, persona.id))
+
+    metrics = [
+        schemas.PersonaMeshMetric(
+            key="attendance",
+            label="Asistencia Mensual",
+            value=attendance_rate,
+            display_value=f"{attendance_rate:.0f}%",
+            detail="Basado en asistencias registradas en los últimos 30 días.",
+            tone="emerald" if attendance_rate >= 80 else "amber" if attendance_rate >= 50 else "rose",
+            has_data=attendance_rate > 0,
+        ),
+        schemas.PersonaMeshMetric(
+            key="academy",
+            label="Progreso Academia",
+            value=academy_progress,
+            display_value=f"{academy_progress:.0f}%",
+            detail="Promedio de progreso en cursos activos.",
+            tone="blue" if academy_progress >= 60 else "amber" if academy_progress >= 30 else "slate",
+            has_data=getattr(persona, "academy_progress", None) is not None,
+        ),
+        schemas.PersonaMeshMetric(
+            key="volunteer",
+            label="Compromiso Voluntario",
+            value=volunteer_commitment,
+            display_value=f"{volunteer_commitment:.0f}%",
+            detail="Turnos de servicio y horas recientes registradas.",
+            tone="amber" if volunteer_commitment >= 70 else "blue" if volunteer_commitment >= 40 else "slate",
+            has_data=volunteer_commitment > 0,
+        ),
+    ]
+
+    if health_status == "COMPROMETIDO":
+        summary = f"{persona.nombre_completo} mantiene un ritmo ministerial saludable y consistente."
+        recommendation = "Mantener mentoría activa y abrir espacios de liderazgo progresivo."
+    elif health_status == "ESTABLE":
+        summary = f"{persona.nombre_completo} muestra base estable y señales de crecimiento."
+        recommendation = "Consolidar seguimiento y reforzar hábitos de servicio y formación."
+    elif health_status == "EN_RIESGO":
+        summary = f"{persona.nombre_completo} requiere acompañamiento más cercano."
+        recommendation = "Priorizar contacto pastoral y revisar barreras de asistencia o formación."
+    else:
+        summary = f"{persona.nombre_completo} todavía necesita más datos para evaluar su ritmo ministerial."
+        recommendation = "Registrar asistencia, academia y servicio para obtener un panorama confiable."
+
+    signals = []
+    if attendance_rate > 0:
+        signals.append(f"Asistencia reciente: {attendance_rate:.0f}%")
+    if academy_progress > 0:
+        signals.append(f"Academia: {academy_progress:.0f}%")
+    if volunteer_commitment > 0:
+        signals.append(f"Servicio: {volunteer_commitment:.0f}%")
+    if current_mentorship and current_mentorship.mentor_name:
+        signals.append(f"Mentoría actual: {current_mentorship.mentor_name}")
+
+    return schemas.PersonaMeshInsight(
+        summary=summary,
+        recommendation=recommendation,
+        health_score=health_score,
+        health_status=health_status,
+        attendance_rate=attendance_rate,
+        academy_progress=academy_progress,
+        volunteer_commitment=volunteer_commitment,
+        metrics=metrics,
+        signals=signals,
+        current_mentorship=current_mentorship,
+        generated_at=_utcnow(),
+    )
+
+
+def _attach_persona_detail_payload(db: Session, persona: models.Persona) -> models.Persona:
+    _enrich_personas_with_progress(db, [persona])
+    persona.current_mentorship = _decorate_mentorship(_active_mentorship_query(db, persona.id))
+    persona.mesh_insight = _build_persona_mesh_insight(db, persona)
+    return persona
 
 
 def search_personas_paginated(

@@ -52,6 +52,46 @@ def list_personas(
     )
 
 
+@router.get("/personas/page", response_model=schemas.PersonaPageResponse)
+def list_personas_page(
+    search: Optional[str] = None,
+    role: Optional[str] = None,
+    estado_vital: Optional[str] = None,
+    sex: Optional[str] = None,
+    group_name: Optional[str] = None,
+    participation_type: Optional[str] = None,
+    id_type: Optional[str] = None,
+    min_age: Optional[int] = Query(None, ge=0, le=120),
+    max_age: Optional[int] = Query(None, ge=0, le=120),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    sort_by: Optional[str] = Query(None, description="Campo de ordenamiento"),
+    sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
+):
+    """Lista personas con búsqueda y paginación reales, filtrado por sede."""
+    sede_id = get_user_sede_id(db, current_user.id)
+    page = crud.search_personas_page(
+        db,
+        search=search,
+        role=role,
+        estado_vital=estado_vital,
+        sex=sex,
+        group_name=group_name,
+        participation_type=participation_type,
+        id_type=id_type,
+        min_age=min_age,
+        max_age=max_age,
+        sede_id=sede_id,
+        skip=skip,
+        limit=limit,
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+    )
+    return schemas.PersonaPageResponse(**page)
+
+
 @router.get("/personas/me/profile")
 def my_ministry_profile(
     db: Session = Depends(get_db),
@@ -93,7 +133,41 @@ def get_persona(
     from backend.crud.crm_.health import update_pastoral_health
 
     update_pastoral_health(db, persona.id)
-    return persona
+    return crud.get_persona(db, persona.id)
+
+
+@router.get("/personas/{persona_id}/mentor-candidates", response_model=List[schemas.PersonaMentorCandidate])
+def mentor_candidates(
+    persona_id: str,
+    q: Optional[str] = None,
+    limit: int = Query(12, ge=1, le=30),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("crm", "read")),
+):
+    """Lista candidatos de mentoría ordenados por ajuste ministerial."""
+    persona = _get_scoped_persona(db, current_user, persona_id)
+    sede_id = get_user_sede_id(db, current_user.id)
+    candidates = crud.list_mentor_candidates(db, str(persona.id), search=q, limit=limit, sede_id=sede_id)
+    return [schemas.PersonaMentorCandidate.model_validate(candidate) for candidate in candidates]
+
+
+@router.post("/personas/{persona_id}/mentorship", response_model=schemas.PersonaMentorshipResponse)
+def assign_mentorship(
+    persona_id: str,
+    payload: schemas.PersonaMentorshipCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
+):
+    """Asigna o reemplaza la mentoría de una persona dentro de su misma sede."""
+    persona = _get_scoped_persona(db, current_user, persona_id)
+    assigned = crud.assign_persona_mentor(
+        db,
+        str(persona.id),
+        str(payload.mentor_persona_id),
+        assigned_by_user_id=str(current_user.id),
+        notes=payload.notes,
+    )
+    return schemas.PersonaMentorshipResponse.model_validate(assigned)
 
 
 @router.post("/personas", response_model=schemas.PersonaResponse)
