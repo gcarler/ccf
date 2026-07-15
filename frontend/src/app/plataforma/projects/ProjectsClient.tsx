@@ -33,13 +33,19 @@ import { getProjectMetricHref, PROJECTS_LIST_ANCHOR } from './projectsLinks';
 
 const PROJECT_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
-export default function ProjectsClient({ initialProjects }: { initialProjects: ProjectRecord[] }) {
+export default function ProjectsClient({
+    initialProjects,
+    initialViewType = 'grid',
+}: {
+    initialProjects: ProjectRecord[];
+    initialViewType?: ViewType;
+}) {
     const { token } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const [projects, setProjects] = useState<ProjectRecord[]>(initialProjects);
     const [dashboard, setDashboard] = useState<{ cards?: Array<{ label: string; value: number; icon?: string; color?: string }>; workload_distribution?: Array<{ name: string; tasks: number }>; delayed_tasks_count?: number } | null>(null);
-    const [viewType, setViewType] = useState<ViewType>('grid');
+    const [viewType, setViewType] = useState<ViewType>(initialViewType);
     const [search, setSearch] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [showCreateForm, setShowCreateForm] = useState(false);

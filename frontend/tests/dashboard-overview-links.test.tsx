@@ -26,7 +26,7 @@ describe('DashboardOverviewClient links', () => {
     it('routes the projects tile to the projects workspace list', () => {
         const { container } = render(<DashboardOverviewClient />);
 
-        const link = container.querySelector('a[href="/plataforma/projects?view=list#projects-list"]');
+        const link = container.querySelector('a[href="/plataforma/projects/list"]');
         expect(link).toBeTruthy();
     });
 });
