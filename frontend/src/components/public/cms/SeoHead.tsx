@@ -25,6 +25,10 @@ function setMeta(attr: string, key: string, content: string) {
     el.setAttribute("content", content);
 }
 
+function removeMeta(attr: string, key: string) {
+    document.querySelector(`meta[${attr}="${key}"]`)?.remove();
+}
+
 function setLink(rel: string, href: string) {
     if (!href) return;
     let el = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
@@ -34,6 +38,10 @@ function setLink(rel: string, href: string) {
         document.head.appendChild(el);
     }
     el.setAttribute("href", href);
+}
+
+function removeLink(rel: string) {
+    document.querySelector(`link[rel="${rel}"]`)?.remove();
 }
 
 function upsertJsonLd(data: Record<string, unknown>) {
@@ -51,6 +59,10 @@ function upsertJsonLd(data: Record<string, unknown>) {
     script.setAttribute("data-seo-head", "1");
     script.textContent = dataStr;
     document.head.appendChild(script);
+}
+
+function removeClientJsonLd() {
+    document.querySelectorAll('script[data-seo-head]').forEach((el) => el.remove());
 }
 
 export default function SeoHead({
@@ -93,21 +105,30 @@ export default function SeoHead({
         setMeta("property", "og:url", canonical);
         setMeta("property", "og:site_name", siteName);
         setMeta("property", "og:locale", locale);
-        if (image) setMeta("property", "og:image", image);
-        if (image) setMeta("property", "og:image:alt", title);
+        if (image) {
+            setMeta("property", "og:image", image);
+            setMeta("property", "og:image:alt", title);
+        } else {
+            removeMeta("property", "og:image");
+            removeMeta("property", "og:image:alt");
+        }
 
         // Twitter Card
         setMeta("name", "twitter:card", twitterCard);
         setMeta("name", "twitter:title", title);
         setMeta("name", "twitter:description", description);
         if (image) setMeta("name", "twitter:image", image);
+        else removeMeta("name", "twitter:image");
 
         // Canonical
         if (canonical) setLink("canonical", canonical);
+        else removeLink("canonical");
 
         // JSON-LD — upsert without destroying server-rendered scripts (e.g. breadcrumb)
         if (jsonLd) {
             upsertJsonLd(jsonLd);
+        } else {
+            removeClientJsonLd();
         }
 
         // Additional SEO meta
