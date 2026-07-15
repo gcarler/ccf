@@ -18,7 +18,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
-import { apiFetch } from '@/lib/http';
+import { ApiError, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { DataTable } from '@/components/ui/DataTable';
@@ -46,6 +46,7 @@ export default function PrayerSupportCenter() {
     const { addToast } = useToast();
     const [requests, setRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [requestsError, setRequestsError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [selectedRequest, setSelectedRequest] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -58,8 +59,12 @@ export default function PrayerSupportCenter() {
     });
 
     const fetchRequests = useCallback(async () => {
-        if (!token) return;
+        if (!token) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
+        setRequestsError(null);
         try {
             const data = await apiFetch<any[]>('/crm/prayer-requests', { token });
             if (Array.isArray(data)) {
@@ -73,8 +78,13 @@ export default function PrayerSupportCenter() {
                     time: new Date(r.created_at).toLocaleDateString()
                 })));
             }
-        } catch {
-            addToast('Error al cargar peticiones', 'error');
+        } catch (err) {
+            setRequests([]);
+            const message = err instanceof ApiError
+                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'Error al cargar peticiones'))
+                : 'Error al cargar peticiones';
+            setRequestsError(message);
+            addToast(message, 'error');
         }
         finally { setLoading(false); }
     }, [token, addToast]);
@@ -228,6 +238,23 @@ export default function PrayerSupportCenter() {
         >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#f43f5e05_0%,_transparent_50%)] pointer-events-none" />
 
+            {requestsError && (
+                <div className="mx-4 mt-4 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                            No se pudo cargar el muro de intercesión
+                        </p>
+                        <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">{requestsError}</p>
+                    </div>
+                    <button
+                        onClick={fetchRequests}
+                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            )}
+
             {/* Prayer Dashboard Hero */}
             <section className="p-4 lg:p-3">
                     <div className="bg-gradient-to-br from-rose-600 to-rose-800 rounded-lg p-3 text-white shadow-2xl relative overflow-hidden group border border-white/10">
@@ -292,7 +319,7 @@ export default function PrayerSupportCenter() {
                                     <p className="mt-2 text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] line-clamp-2">{req.request}</p>
                                 </button>
                             ))}
-                            {filtered.length === 0 && <div className="col-span-full py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Sin peticiones</div>}
+                            {!requestsError && filtered.length === 0 && <div className="col-span-full py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Sin peticiones</div>}
                         </div>
                     ) : viewType === 'board' || viewType === 'kanban' ? (
                         <div className="p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -315,7 +342,7 @@ export default function PrayerSupportCenter() {
                         </div>
                     ) : viewType === 'calendar' ? (
                         <div className="p-4 space-y-4">
-                            {groupedByDate.length === 0 ? (
+                            {!requestsError && groupedByDate.length === 0 ? (
                                 <div className="py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Sin actividad</div>
                             ) : groupedByDate.map(([key, payload]) => (
                                 <div key={key} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">

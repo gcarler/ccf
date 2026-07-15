@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
-import { apiFetch } from '@/lib/http';
+import { ApiError, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { Search, UserPlus, Phone, MessageSquare, Link2, Users, Plus, Loader2, Send, Calendar, BarChart3, BookOpen } from 'lucide-react';
 import CrmShell from '@/components/crm/CrmShell';
@@ -54,6 +54,7 @@ export default function ContactsPage() {
 
     const [leads, setLeads] = useState<Array<{ id: string; nombre_completo?: string; source?: string; phone?: string; telefono?: string; stage?: string; created_at?: string }>>([]);
     const [loading, setLoading] = useState(true);
+    const [leadsError, setLeadsError] = useState<string | null>(null);
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_contacts_view', 'list'));
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
@@ -69,14 +70,23 @@ export default function ContactsPage() {
     });
 
     const fetchLeads = useCallback(async () => {
-        if (!token) return;
+        if (!token) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
+        setLeadsError(null);
         try {
             const data = await apiFetch<Array<{ id: string; nombre_completo?: string; source?: string; phone?: string; telefono?: string; stage?: string; created_at?: string }> | { cases?: Array<{ id: string; nombre_completo?: string; source?: string; phone?: string; telefono?: string; stage?: string; created_at?: string }> }>('/crm/casos', { token, cache: 'no-store' });
             const items = Array.isArray(data) ? data : Array.isArray(data?.cases) ? data.cases : [];
             setLeads(items);
-        } catch {
-            addToast('Error al cargar contactos', 'error');
+        } catch (err) {
+            setLeads([]);
+            const message = err instanceof ApiError
+                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'Error al cargar contactos'))
+                : 'Error al cargar contactos';
+            setLeadsError(message);
+            addToast(message, 'error');
         } finally {
             setLoading(false);
         }
@@ -160,6 +170,24 @@ export default function ContactsPage() {
             ) : undefined}
         >
             <div className="flex flex-col h-full overflow-hidden">
+                {leadsError && (
+                    <div className="mx-4 mt-4 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                                No se pudo cargar el pipeline de contactos
+                            </p>
+                            <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                                {leadsError}
+                            </p>
+                        </div>
+                        <button
+                            onClick={fetchLeads}
+                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                        >
+                            Reintentar
+                        </button>
+                    </div>
+                )}
                 {/* Toolbar */}
                 <div className="px-4 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 space-y-3">
                     <div className="relative">
@@ -195,7 +223,7 @@ export default function ContactsPage() {
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {loading ? (
                         [...Array(5)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-md" />)
-                    ) : filtered.length === 0 ? (
+                    ) : !leadsError && filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-1.5 text-center space-y-4">
                             <div className="size-10 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10">
                                 <Search size={40} />
@@ -335,7 +363,7 @@ export default function ContactsPage() {
                                 </div>
                                 );
                             })}
-                            {filtered.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin datos</div>}
+                            {!leadsError && filtered.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin datos</div>}
                         </div>
                     ) : viewType === 'table' ? (
                         <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto">

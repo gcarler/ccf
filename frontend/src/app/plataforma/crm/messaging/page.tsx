@@ -25,7 +25,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
-import { apiFetch } from '@/lib/http';
+import { ApiError, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import clsx from 'clsx';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
@@ -68,6 +68,7 @@ export default function MessagingCampaignCenter() {
     const [message, setMessage] = useState('');
     const [segments, setSegments] = useState<string[]>([]);
     const [history, setHistory] = useState<MessagingHistoryRow[]>([]);
+    const [historyError, setHistoryError] = useState<string | null>(null);
     const [isSending, setIsSending] = useState(false);
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_messaging_view', 'grid'));
     const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_messaging_wiki_notes', {
@@ -75,14 +76,22 @@ export default function MessagingCampaignCenter() {
     });
 
     const fetchHistory = useCallback(async () => {
-        if (!token) return;
+        if (!token) {
+            setHistory([]);
+            return;
+        }
         try {
+            setHistoryError(null);
             const data = await apiFetch('/crm/messaging/history', { token });
             setHistory(Array.isArray(data) ? data.map(normalizeHistoryRow) : []);
         } catch (err) {
             console.error(err);
             setHistory([]);
-            addToast('No se pudo cargar el historial de mensajeria', 'error');
+            const message = err instanceof ApiError
+                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'No se pudo cargar el historial de mensajeria'))
+                : 'No se pudo cargar el historial de mensajeria';
+            setHistoryError(message);
+            addToast(message, 'error');
         }
     }, [addToast, token]);
 
@@ -158,6 +167,24 @@ export default function MessagingCampaignCenter() {
             ) : undefined}
         >
             <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/50 dark:bg-[#1e1f21] overflow-hidden font-display rounded-lg">
+                {historyError && (
+                    <div className="mx-4 mt-4 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="min-w-0">
+                            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                                No se pudo cargar la mensajería
+                            </p>
+                            <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                                {historyError}
+                            </p>
+                        </div>
+                        <button
+                            onClick={fetchHistory}
+                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                        >
+                            Reintentar
+                        </button>
+                    </div>
+                )}
                 <div className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4">
                 {viewType === 'list' && (
  <div className="w-full space-y-3">
@@ -174,7 +201,7 @@ export default function MessagingCampaignCenter() {
                                 <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.status}</span>
                             </div>
                         ))}
-                        {history.length === 0 && <div className="py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Sin campañas recientes</div>}
+                        {!historyError && history.length === 0 && <div className="py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Sin campañas recientes</div>}
                     </div>
                 )}
 
@@ -236,7 +263,7 @@ export default function MessagingCampaignCenter() {
 
                 {viewType === 'calendar' && (
  <div className="w-full space-y-4">
-                        {groupedByDate.map(([label, items]) => (
+                            {!historyError && groupedByDate.map(([label, items]) => (
                             <div key={label} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                 <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

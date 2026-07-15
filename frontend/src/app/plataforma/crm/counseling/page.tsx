@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, Plus, Calendar, Clock, Heart, Search, MessageSquare, History, Link2, ShieldCheck, CheckCircle2, XCircle, Loader2, ChevronRight, MoreHorizontal, BookOpen } from 'lucide-react';
 import UniversalTableView from '@/components/ui/UniversalTableView';
 import { useTheme } from '@/app/plataforma/theme/ThemeContext';
-import { apiFetch } from '@/lib/http';
+import { ApiError, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
@@ -29,6 +29,7 @@ export default function CounselingPage() {
     const router = useRouter();
     const [sessions, setSessions] = useState<CounselingSession[]>([]);
     const [loading, setLoading] = useState(true);
+    const [sessionsError, setSessionsError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
     const { pushSidebarPanel, popSidebarPanel } = useSidebarLayers();
@@ -65,15 +66,22 @@ export default function CounselingPage() {
             return;
         }
         setLoading(true);
+        setSessionsError(null);
         try {
             const sessionsData = await apiFetch<CounselingSession[]>('/crm/counseling/', { token, cache: 'no-store' });
             setSessions(Array.isArray(sessionsData) ? sessionsData : []);
         } catch (err) {
             console.error(err);
+            setSessions([]);
+            const message = err instanceof ApiError
+                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'Error al cargar la sesion de consejeria'))
+                : 'Error al cargar la sesion de consejeria';
+            setSessionsError(message);
+            addToast(message, 'error');
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [token, addToast]);
 
     useEffect(() => {
         fetchSessions();
@@ -157,6 +165,17 @@ export default function CounselingPage() {
                 />
             }
         >
+        {sessionsError && (
+            <div className="mx-3 mt-3 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div className="min-w-0">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">No se pudo cargar la consejería</p>
+                    <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">{sessionsError}</p>
+                </div>
+                <button onClick={fetchSessions} className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all">
+                    Reintentar
+                </button>
+            </div>
+        )}
         {/* Header */}
         <div className="px-3 py-4 border-b border-[hsl(var(--border))]/50 dark:border-white/5 mb-4 flex items-center justify-between">
             <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Consejería</h1>
@@ -228,7 +247,7 @@ export default function CounselingPage() {
                     Array.from({ length: 6 }).map((_, i) => (
                         <div key={i} className="h-48 bg-[hsl(var(--surface-2))] dark:bg-white/5 animate-pulse rounded-lg border border-[hsl(var(--border))] dark:border-white/5" />
                     ))
-                ) : filteredSessions.length > 0 ? (
+                ) : !sessionsError && filteredSessions.length > 0 ? (
                     filteredSessions.map(session => (
                         <div 
                             key={session.id} 
@@ -351,7 +370,7 @@ export default function CounselingPage() {
                             </div>
                         </div>
                     ))}
-                    {filteredSessions.length === 0 && (
+                    {!sessionsError && filteredSessions.length === 0 && (
                         <div className="py-1.5 text-center space-y-3">
                             <Search className="mx-auto text-[hsl(var(--text-secondary))] dark:text-white/10" size={32} />
                             <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-[10px]">No hay sesiones registradas</p>
@@ -541,7 +560,7 @@ export default function CounselingPage() {
                     </div>
                 ))}
                 
-                {groupedByDate.length === 0 && (
+                {!sessionsError && groupedByDate.length === 0 && (
                     <div className="py-1.5 text-center space-y-2 relative z-10">
                         <div className="size-10 rounded-full bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                             <Calendar size={40} />
@@ -585,7 +604,7 @@ export default function CounselingPage() {
                             </div>
                         </div>
                     ))}
-                    {filteredSessions.length === 0 && (
+                    {!sessionsError && filteredSessions.length === 0 && (
                         <div className="py-1.5 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg flex items-center justify-center">
                             <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Añade sesiones para visualizar el progreso</p>
                         </div>

@@ -18,7 +18,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
-import { apiFetch } from '@/lib/http';
+import { ApiError, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { useRouter } from 'next/navigation';
 import CrmShell from '@/components/crm/CrmShell';
@@ -53,6 +53,7 @@ export default function ConsolidationPipelinePage() {
 
     const [leads, setLeads] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [leadsError, setLeadsError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_pipeline_view', 'board'));
     const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
@@ -82,8 +83,12 @@ export default function ConsolidationPipelinePage() {
     });
 
     const fetchPipeline = useCallback(async () => {
-        if (!token) return;
+        if (!token) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
+        setLeadsError(null);
         try {
             const data = await apiFetch<any>('/crm/casos', { token, cache: 'no-store' });
             const items = Array.isArray(data)
@@ -94,10 +99,16 @@ export default function ConsolidationPipelinePage() {
             setLeads(items);
         } catch (err) {
             console.error(err);
+            setLeads([]);
+            const message = err instanceof ApiError
+                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'No se pudo cargar el pipeline'))
+                : 'No se pudo cargar el pipeline';
+            setLeadsError(message);
+            addToast(message, 'error');
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [token, addToast]);
 
     useEffect(() => { fetchPipeline(); }, [fetchPipeline]);
 
@@ -398,6 +409,24 @@ export default function ConsolidationPipelinePage() {
                 />
             ) : undefined}
         >
+            {leadsError && (
+                <div className="mx-4 mt-4 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                            No se pudo cargar el pipeline
+                        </p>
+                        <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                            {leadsError}
+                        </p>
+                    </div>
+                    <button
+                        onClick={fetchPipeline}
+                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            )}
             <div className="flex flex-col md:flex-row h-full w-full overflow-hidden">
                 {/* ── Main Board ── */}
                 <div className="flex-1 flex flex-col h-full overflow-hidden bg-[hsl(var(--surface-1))]/50 dark:bg-[#1a1b1d]">
@@ -460,7 +489,7 @@ export default function ConsolidationPipelinePage() {
                                 </motion.div>
                             ) : viewType === 'calendar' ? (
                                 <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto space-y-4">
-                                    {groupedByDate.length === 0 ? (
+                                    {!leadsError && groupedByDate.length === 0 ? (
                                         <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-3 text-center text-[hsl(var(--text-secondary))]">Sin actividad de pipeline</div>
                                     ) : groupedByDate.map(([key, payload]) => (
                                         <div key={key} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
@@ -497,7 +526,7 @@ export default function ConsolidationPipelinePage() {
                                             </div>
                                             );
                                         })}
-                                        {filteredLeads.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin prospectos</div>}
+                                        {!leadsError && filteredLeads.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin prospectos</div>}
                                     </div>
                                 </motion.div>
                             ) : viewType === 'wiki' ? (
