@@ -43,7 +43,7 @@ const PROJECT_DETAIL_VIEWS: ViewType[] = ['dashboard', 'table', 'list', 'board',
 export default function ProjectDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -71,10 +71,22 @@ export default function ProjectDetailPage() {
     const [phases, setPhases] = useState<PhaseDef[]>([]);
     const [showPhaseManager, setShowPhaseManager] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
 
     const loadProject = useCallback(async () => {
-        if (!token || !id) return;
+        if (!id) {
+            setLoading(false);
+            setError('No se encontró el proyecto.');
+            return;
+        }
+        if (!token) {
+            setLoading(false);
+            setError('Debes iniciar sesión para ver este proyecto.');
+            return;
+        }
         try {
+            setError(null);
             setLoading(true);
             const [projData, tasksData, activityRows, phasesData] = await Promise.all([
                 apiFetch<ProjectRecord>(`/projects/${id}`, { token }),
@@ -88,6 +100,11 @@ export default function ProjectDetailPage() {
             if (Array.isArray(phasesData) && phasesData.length > 0) setPhases(phasesData);
             window.dispatchEvent(new CustomEvent('project-updated', { detail: { projectId: id } }));
         } catch (err) {
+            setProject(null);
+            setTasks([]);
+            setActivities([]);
+            setPhases([]);
+            setError('No se pudo cargar el proyecto.');
             toast.error('Error al cargar detalle del proyecto');
         } finally {
             setLoading(false);
@@ -95,8 +112,8 @@ export default function ProjectDetailPage() {
     }, [id, token]);
 
     useEffect(() => {
-        loadProject();
-    }, [loadProject]);
+        if (!authLoading) loadProject();
+    }, [authLoading, loadProject, reloadKey]);
 
     useEffect(() => {
         const taskId = searchParams?.get('task');
@@ -311,6 +328,20 @@ export default function ProjectDetailPage() {
                         <div className="h-64 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg lg:col-span-2" />
                     </div>
                 </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
+                <button
+                    onClick={() => setReloadKey(key => key + 1)}
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                >
+                    Reintentar
+                </button>
             </div>
         );
     }

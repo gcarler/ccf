@@ -20,25 +20,37 @@ import clsx from 'clsx';
 import Skeleton from '@/components/ui/Skeleton';
 
 export default function ProjectsInboxPage() {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const router = useRouter();
     const [messages, setMessages] = useState<ProjectInboxItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [resolvingId, setResolvingId] = useState<string | null>(null);
     const [filter, setFilter] = useState<'all' | 'mentions' | 'unread'>('all');
     const [viewType, setViewType] = useState<ViewType>('list');
 
     useEffect(() => {
         const fetchInbox = async () => {
-            if (!token) return;
+            if (!token) {
+                setLoading(false);
+                setMessages([]);
+                setError('Debes iniciar sesión para ver el inbox de proyectos.');
+                return;
+            }
             try {
+                setError(null);
                 const data = await apiFetch<ProjectInboxItem[]>('/projects/inbox', { token, cache: 'no-store' });
                 setMessages(Array.isArray(data) ? data : []);
-            } catch (err) { toast.error("Error inesperado"); toast.error('Error al cargar inbox'); }
+            } catch (err) {
+                setMessages([]);
+                setError('No se pudo cargar el inbox de proyectos.');
+                toast.error("Error inesperado");
+                toast.error('Error al cargar inbox');
+            }
             finally { setLoading(false); }
         };
-        fetchInbox();
-    }, [token]);
+        if (!authLoading) fetchInbox();
+    }, [authLoading, token]);
 
     const filteredMessages = messages.filter((msg) => {
         if (filter === 'unread') return !msg.is_read;
@@ -90,6 +102,11 @@ export default function ProjectsInboxPage() {
             onViewChange={setViewType}
             viewOptions={['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
         >
+            {error && (
+                <div className="mx-4 mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                    <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                </div>
+            )}
             <div className="flex px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0">
                 <Tab active={filter === 'all'} onClick={() => setFilter('all')} label="Todo" />
                 <Tab active={filter === 'unread'} onClick={() => setFilter('unread')} label="No leídos" />
@@ -101,7 +118,7 @@ export default function ProjectsInboxPage() {
                     <div className="p-4 space-y-3">
                         {[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full rounded-lg" />)}
                     </div>
-                ) : filteredMessages.length === 0 ? (
+                ) : !error && filteredMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center p-4">
                         <div className="size-12 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center mb-4">
                             <Inbox size={28} className="text-[hsl(var(--text-secondary))]" />
