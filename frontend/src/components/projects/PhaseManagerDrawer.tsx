@@ -25,10 +25,11 @@ const COLOR_PRESETS = [
 ];
 
 export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Props) {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const { addToast } = useToast();
     const [items, setItems] = useState<PhaseDef[]>(() => phases.map((p, i) => ({ ...p, order_index: i })));
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleMoveUp = (index: number) => {
         if (index === 0) return;
@@ -76,9 +77,14 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
     };
 
     const handleSave = async () => {
-        if (!token) return;
+        if (authLoading) return;
+        if (!token) {
+            setError('Debes iniciar sesión para guardar las fases.');
+            return;
+        }
         setSaving(true);
         try {
+            setError(null);
             const payload = items.map((p, i) => ({
                 name: p.name,
                 slug: p.slug,
@@ -94,6 +100,7 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
             addToast('Fases actualizadas', 'success');
             onClose();
         } catch (err: any) {
+            setError('No se pudieron guardar las fases.');
             const detail = typeof err?.detail === 'string'
                 ? err.detail
                 : err?.detail?.detail || err?.detail?.message || (err?.detail ? JSON.stringify(err.detail) : '');
@@ -106,6 +113,11 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
     return (
         <RightPanel open={true} onClose={onClose} title="Gestionar Fases" width={480}>
             <div className="flex flex-col h-full">
+                {error && (
+                    <div className="mx-3 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                        <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                    </div>
+                )}
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-2">
                     {items.map((phase, i) => (

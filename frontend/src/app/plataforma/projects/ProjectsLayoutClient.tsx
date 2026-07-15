@@ -112,7 +112,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
                     id: `project-${p.id}`,
                     label: p.title,
                     icon: Home,
-                    href: `/plataforma/projects/${p.id}`
+                    href: `/plataforma/projects/${p.id}?view=list`
                 }))
             }
         ];

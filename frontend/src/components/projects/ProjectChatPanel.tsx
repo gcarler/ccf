@@ -35,11 +35,12 @@ function formatMessageTime(dateStr: string): string {
 }
 
 export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
-  const { token, user } = useAuth();
+  const { token, user, loading: authLoading } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [isNearBottom, setIsNearBottom] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const userId = user?.id;
   const shouldAutoScroll = useRef(true);
@@ -56,8 +57,21 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
   }, []);
 
   useEffect(() => {
-    if (!token || !projectId) return;
+    if (authLoading) return;
+    if (!projectId) {
+      setLoading(false);
+      setMessages([]);
+      setError("No se encontró el proyecto para el chat.");
+      return;
+    }
+    if (!token) {
+      setLoading(false);
+      setMessages([]);
+      setError("Debes iniciar sesión para ver el chat del proyecto.");
+      return;
+    }
     setLoading(true);
+    setError(null);
     apiFetch<ChatMessage[]>(`/projects/${projectId}/messages`, {
       token,
       query: { limit: "100" },
@@ -71,9 +85,12 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
           setMessages([]);
         }
       })
-      .catch(() => setMessages([]))
+      .catch(() => {
+        setMessages([]);
+        setError("No se pudo cargar el chat del proyecto.");
+      })
       .finally(() => setLoading(false));
-  }, [projectId, token]);
+  }, [authLoading, projectId, token]);
 
   // Auto-scroll on new messages (only if near bottom)
   useEffect(() => {
@@ -158,6 +175,11 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
 
   return (
     <div className="relative flex flex-col flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
+      {error && (
+        <div className="mx-4 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+          <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+        </div>
+      )}
       {messages.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-[hsl(var(--text-secondary))] gap-3">
           <div className="size-16 rounded-2xl bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">

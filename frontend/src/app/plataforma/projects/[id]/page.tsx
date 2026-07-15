@@ -46,6 +46,7 @@ export default function ProjectDetailPage() {
     const { token, loading: authLoading } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const currentViewParam = searchParams?.get('view');
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [project, setProject] = useState<any>(null);
@@ -169,12 +170,14 @@ export default function ProjectDetailPage() {
 
     const handleOpenTask = (task: ProjectTaskRecord) => {
         setSelectedTask(task);
-        router.replace(`/plataforma/projects/${id}?task=${task.id}`);
+        const viewQuery = currentViewParam ? `view=${encodeURIComponent(currentViewParam)}&` : '';
+        router.replace(`/plataforma/projects/${id}?${viewQuery}task=${task.id}`);
     };
 
     const handleCloseTask = () => {
         setSelectedTask(null);
-        router.replace(`/plataforma/projects/${id}`);
+        const viewQuery = currentViewParam ? `?view=${encodeURIComponent(currentViewParam)}` : '';
+        router.replace(`/plataforma/projects/${id}${viewQuery}`);
     };
 
     const handleTaskUpdated = (updated: ProjectTaskRecord) => {

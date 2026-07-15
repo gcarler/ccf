@@ -122,7 +122,7 @@ export default function ProjectsResponsesPage() {
                                 <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-1">{item.content}</p>
                                 <div className="mt-3 flex items-center gap-2">
                                     <button
-                                        onClick={() => router.push(`/plataforma/projects/${item.project_id}`)}
+                                        onClick={() => router.push(`/plataforma/projects/${item.project_id}?view=list`)}
                                         className="px-3 py-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
                                     >
                                         Ver proyecto

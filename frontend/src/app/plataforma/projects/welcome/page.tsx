@@ -43,7 +43,7 @@ export default function ProjectsWelcomePage() {
                     status: 'planning',
                 },
             });
-            router.push(`/plataforma/projects/${project.id}`);
+            router.push(`/plataforma/projects/${project.id}?view=list`);
         } catch (error) {
             toast.error("Error inesperado");
             toast.error('Error al crear proyecto');
