@@ -14,7 +14,7 @@ ColDef,
 GetRowIdParams,
 ICellRendererParams,
 ModuleRegistry,themeQuartz,
-} from 'ag-grid-community/dist/ag-grid-community.noStyle';
+} from '@/lib/ag-grid-community-no-style';
 import { AgGridReact } from 'ag-grid-react';
 import clsx from 'clsx';
 import { AnimatePresence,motion } from 'framer-motion';
