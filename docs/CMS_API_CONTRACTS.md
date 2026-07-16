@@ -9,6 +9,10 @@
 - Contenido público aprobado/publicado puede ser global por diseño editorial
 - `site_id`, `sede_id`, `status`, `deleted_at`, `published_at` y `slug` son claves del contrato
 
+Referencia RBAC:
+
+- `docs/CMS_RBAC_MATRIX.md`
+
 ## 2. CMS v1 — `backend/api/cms.py`
 
 Áreas:
@@ -158,3 +162,10 @@ cd /root/ccf/frontend
 npx vitest run tests/cms-components.test.ts tests/cms-public-fetch.test.ts
 npx playwright test tests/e2e/cms-public-contract.spec.ts
 ```
+
+## 10. Notas RBAC actuales
+
+- `cms.py` v1 tiene mutaciones protegidas solo con `cms:read`.
+- `cms_v2.py` sí separa mejor lectura (`cms:read`) y mutación (`cms:edit`).
+- `enterprise_cms.py` expone muchas rutas con `get_current_user` en vez de `require_module_access("cms", ...)` en la firma.
+- ver `CMS_RBAC_MATRIX.md` para la matriz completa y los drift activos.

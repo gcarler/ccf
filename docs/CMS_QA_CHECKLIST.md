@@ -15,6 +15,7 @@ Confirmar:
 
 - el problema es admin, preview o público
 - si toca uploads, scope o SEO, está identificado
+- la matriz RBAC consultada en `docs/CMS_RBAC_MATRIX.md`
 
 ## 2. Smoke canónico
 
@@ -88,7 +89,21 @@ No cerrar tarea si aparece:
 - fetch público CMS
 - spec Playwright pública
 
-## 8. Criterio de cierre
+## 8. Roles mínimos
+
+| Rol | Esperado |
+|---|---|
+| ADMIN | acceso completo |
+| GESTOR/EDITOR | mutación en CMS v2 según permisos efectivos |
+| LECTOR | solo lectura deseada; revisar deriva real de CMS v1 |
+
+Notas obligatorias:
+
+- revisar `docs/CMS_RBAC_MATRIX.md` antes de tocar `cms.py`, `cms_v2.py` o `enterprise_cms.py`
+- no asumir que v1, v2 y enterprise comparten el mismo gate
+- si se toca `cms.py`, revalidar explícitamente la deriva actual de mutaciones con `cms:read`
+
+## 9. Criterio de cierre
 
 Una tarea de CMS queda cerrada cuando:
 
