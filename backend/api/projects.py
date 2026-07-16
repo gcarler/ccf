@@ -1291,11 +1291,23 @@ def update_project_task(
     if "status" in update_data:
         _assert_status_in_project_phases(db, project_id, update_data["status"])
     previous_assignee_id = getattr(task, "assignee_id", None)
+    changed_fields = []
 
     for key, value in update_data.items():
+        old_value = getattr(task, key, None)
         setattr(task, key, value)
+        if old_value != value:
+            changed_fields.append(key)
 
     _normalize_task_enums(task)
+    if changed_fields:
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "task_updated",
+            f"Tarea '{task.title}' actualizada: {', '.join(changed_fields)}",
+        )
     db.commit()
     db.refresh(task)
     if "assignee_id" in update_data and _assignment_changed(previous_assignee_id, getattr(task, "assignee_id", None)) and task.assignee_id:
@@ -1692,9 +1704,21 @@ def update_project(
     user_sede = get_user_sede_id(db, current_user.id)
     project = _ensure_project(db, project_id, user_sede=user_sede)
     update_data = payload.model_dump(exclude_unset=True)
+    changed_fields = []
     for key, value in update_data.items():
+        old_value = getattr(project, key, None)
         setattr(project, key, value)
+        if old_value != value:
+            changed_fields.append(key)
     project.updated_at = _utcnow()
+    if changed_fields:
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "project_updated",
+            f"Proyecto '{project.title}' actualizado: {', '.join(changed_fields)}",
+        )
     db.commit()
     db.refresh(project)
     _normalize_dates(project)
@@ -1726,6 +1750,13 @@ def delete_project_task(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     task = _ensure_task_in_project(db, project_id, task_id)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "task_deleted",
+        f"Tarea '{task.title}' eliminada",
+    )
     task.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return {"ok": True, "deleted": task_id}

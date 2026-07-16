@@ -1,10 +1,14 @@
 "use client";
 
 import React from 'react';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { ProjectRecord } from '@/types/projects';
+import { useAuth } from '@/context/AuthContext';
+import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
+import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
+import { InlineUserPicker } from '@/components/ui/inline-editors/InlineUserPicker';
 
 function _formatDate(dateStr: string) {
     if (!dateStr) return '—';
@@ -20,21 +24,18 @@ function _formatDate(dateStr: string) {
 interface ProjectCardProps {
     project: ProjectRecord;
     index: number;
+    onUpdate?: (projectId: string, patch: Partial<ProjectRecord>) => void;
+    onDelete?: (projectId: string) => void;
 }
 
-export default function ProjectCard({ project, index }: ProjectCardProps) {
+export default function ProjectCard({ project, index, onUpdate, onDelete }: ProjectCardProps) {
+    const { user, hasPermission } = useAuth();
     const tasks = Array.isArray(project.tasks) ? project.tasks : [];
     const completed = tasks.filter(t => ['completed', 'completed'].includes((t.status || '').toLowerCase())).length;
     const inProgress = tasks.filter(t => ['in_progress'].includes((t.status || '').toLowerCase())).length;
     const progress = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
     const color = project.color || '#2563eb';
-
-    const statusMap: Record<string, { label: string; cls: string }> = {
-        active:   { label: 'Activo',     cls: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' },
-        on_hold:  { label: 'Pausado',    cls: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' },
-        archived: { label: 'Archivado',  cls: 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]' },
-    };
-    const statusCfg = statusMap[project.status ?? 'active'] ?? statusMap.active;
+    const canDeleteProject = user?.role === 'admin' || user?.role === 'administrador' || hasPermission('system:config');
 
     return (
         <Link href={`/plataforma/projects/${project.id}?view=list`} className="block">
@@ -52,25 +53,47 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             <div className="space-y-4">
                 {/* Header row */}
                 <div className="flex items-start justify-between gap-3">
-                    <div
-                        className="size-6 rounded-md flex items-center justify-center text-white font-black text-lg shadow-lg transition-transform group-hover:scale-105 shrink-0"
+                    <label
+                        className="size-6 rounded-md flex items-center justify-center text-white font-black text-lg shadow-lg transition-transform group-hover:scale-105 shrink-0 cursor-pointer overflow-hidden"
                         style={{ backgroundColor: color }}
+                        title="Cambiar color"
                     >
+                        <input
+                            type="color"
+                            value={color}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onChange={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onUpdate?.(project.id, { color: e.target.value });
+                            }}
+                            className="opacity-0 absolute inset-0 cursor-pointer"
+                        />
                         {project.title.charAt(0)}
-                    </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${statusCfg.cls}`}>
-                        {statusCfg.label}
-                    </span>
+                    </label>
+                    <InlineProjectStatusPicker
+                        value={project.status || 'active'}
+                        onChange={(v) => onUpdate?.(project.id, { status: v })}
+                        size="sm"
+                    />
                 </div>
 
                 {/* Title + description */}
                 <div>
-                    <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white leading-snug truncate">
-                        {project.title}
+                    <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white leading-snug">
+                        <InlineTextInput
+                            value={project.title || ''}
+                            onChange={(v) => onUpdate?.(project.id, { title: v })}
+                            placeholder="Título del proyecto"
+                        />
                     </h3>
-                    <p className="text-[12px] text-[hsl(var(--text-secondary))] font-medium line-clamp-2 mt-1 min-h-[32px]">
-                        {project.description || 'Sin descripción.'}
-                    </p>
+                    <InlineTextInput
+                        value={project.description || ''}
+                        onChange={(v) => onUpdate?.(project.id, { description: v })}
+                        placeholder="Agregar descripción"
+                        className="text-[12px] text-[hsl(var(--text-secondary))] font-medium mt-1 min-h-[32px]"
+                        inputClassName="text-[12px]"
+                    />
                 </div>
 
                 {/* Task stats */}
@@ -107,17 +130,40 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
                     </div>
                 </div>
 
-                {/* Footer: date + arrow */}
-                <div className="flex items-center justify-between pt-1">
-                    {project.created_at && (
-                        <span className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-                            {new Date(project.created_at).toLocaleDateString('es-PE', { month: 'short', year: 'numeric' })}
+                {/* Footer: date + owner + actions */}
+                <div className="flex items-center justify-between pt-1 gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                            <InlineUserPicker
+                                value={project.owner_id ?? null}
+                                onChange={(id) => onUpdate?.(project.id, { owner_id: id })}
+                            />
                         </span>
-                    )}
-                    <ArrowUpRight
-                        size={16}
-                        className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-[hsl(var(--text-secondary))] transition-colors ml-auto"
-                    />
+                        {project.created_at && (
+                            <span className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] shrink-0">
+                                {new Date(project.created_at).toLocaleDateString('es-PE', { month: 'short', year: 'numeric' })}
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                        {canDeleteProject && onDelete && (
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onDelete?.(project.id);
+                                }}
+                                className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                                title="Eliminar proyecto"
+                            >
+                                <Trash2 size={14} />
+                            </button>
+                        )}
+                        <ArrowUpRight
+                            size={16}
+                            className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-[hsl(var(--text-secondary))] transition-colors"
+                        />
+                    </div>
                 </div>
             </div>
         </motion.div>
