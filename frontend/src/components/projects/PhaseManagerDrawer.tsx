@@ -10,7 +10,7 @@ Save,
 Trash2
 } from 'lucide-react';
 import { useState } from 'react';
-import type { PhaseDef } from './ProjectKanbanBoard';
+import type { PhaseDef } from '@/context/ProjectUpdateContext';
 
 interface Props {
     projectId: string;

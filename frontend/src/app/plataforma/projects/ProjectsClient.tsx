@@ -92,19 +92,16 @@ export default function ProjectsClient({
 
     const handleUpdateProject = useCallback(
         async (projectId: string, patch: Partial<ProjectRecord>) => {
+            let previousProject: ProjectRecord | undefined;
             setProjects((prev) => {
-                const previous = prev.find((p) => p.id === projectId);
-                if (!previous) return prev;
+                previousProject = prev.find((p) => p.id === projectId);
+                if (!previousProject) return prev;
                 return prev.map((p) => (p.id === projectId ? { ...p, ...patch } : p));
             });
             const updated = await updateProject(projectId, patch);
-            if (!updated) {
+            if (!updated && previousProject) {
                 setProjects((prev) =>
-                    prev.map((p) => {
-                        if (p.id !== projectId) return p;
-                        const previous = prev.find((prevP) => prevP.id === projectId);
-                        return previous ?? p;
-                    })
+                    prev.map((p) => (p.id === projectId ? previousProject! : p))
                 );
             }
         },
@@ -203,12 +200,11 @@ export default function ProjectsClient({
             header: 'Estado',
             cell: ({ row }) => {
                 const project = row.original;
-                return (
-                    <InlineProjectStatusPicker
-                        value={(project.status || 'active') as any}
-                        onChange={(v) => handleUpdateProject(project.id, { status: v })}
-                        size="sm"
-                    />
+                return (                            <InlineProjectStatusPicker
+                                value={project.status || 'active'}
+                                onChange={(v) => handleUpdateProject(project.id, { status: v })}
+                                size="sm"
+                            />
                 );
             },
         },

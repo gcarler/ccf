@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
     Radio, Share2, Globe, CheckCircle2, Clock, 
@@ -8,18 +8,37 @@ import {
     ArrowUpRight, BarChart3
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { ProjectRecord, ProjectTaskRecord } from '@/types/projects';
+import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord } from '@/types/projects';
+import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
+import { InlineTextArea } from '@/components/ui/inline-editors/InlineTextArea';
+import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
+import { InlineUserPicker } from '@/components/ui/inline-editors/InlineUserPicker';
 
 interface ProjectMasterViewProps {
     project: ProjectRecord;
     tasks: ProjectTaskRecord[];
+    onUpdate?: (patch: Partial<ProjectRecord>) => void;
+    onOpenTask?: (task: ProjectTaskRecord) => void;
+    onMilestoneToggle?: (milestone: ProjectMilestoneRecord) => void;
+    showMilestones?: boolean;
 }
 
-export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
+export function ProjectMasterView({ project, tasks, onUpdate, onOpenTask, onMilestoneToggle, showMilestones = true }: ProjectMasterViewProps) {
+    const [togglingMilestoneId, setTogglingMilestoneId] = useState<string | null>(null);
     const nutritionTasks = tasks.filter(t => t.title.includes('[Gestión]'));
     const webTasks = tasks.filter(t => t.title.includes('[Web]'));
 
     const milestones = project.milestones || [];
+
+    const handleMilestoneToggle = async (milestone: ProjectMilestoneRecord) => {
+        if (togglingMilestoneId === milestone.id) return;
+        setTogglingMilestoneId(milestone.id);
+        try {
+            await onMilestoneToggle?.(milestone);
+        } finally {
+            setTogglingMilestoneId(null);
+        }
+    };
     
     // Uso del progreso real persistido en DB
     const dbProgress = project.progress_percent || 0;
@@ -40,10 +59,37 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
                             <div className="size-2 rounded-full bg-emerald-400 animate-ping" />
                             <span className="text-[10px] font-medium text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizado en tiempo real</span>
                         </div>
-                        <h1 className="text-xl font-bold tracking-tight leading-none text-white">{project.title}</h1>
-                        <p className="text-[hsl(var(--text-secondary))] text-base font-medium leading-relaxed max-w-xl">
-                            {project.description || "Iniciativa estratégica para la expansión del reino en el ecosistema digital."}
-                        </p>
+                        <h1 className="text-xl font-bold tracking-tight leading-none text-white">
+                            <InlineTextInput
+                                value={project.title || ''}
+                                onChange={(v) => onUpdate?.({ title: v })}
+                                placeholder="Título del proyecto"
+                                className="text-white hover:bg-white/10"
+                                inputClassName="text-white border-white/20 bg-white/10 placeholder:text-white/50"
+                            />
+                        </h1>
+                        <div className="text-[hsl(var(--text-secondary))] text-base font-medium leading-relaxed max-w-xl">
+                            <InlineTextArea
+                                value={project.description || ''}
+                                onChange={(v) => onUpdate?.({ description: v })}
+                                placeholder="Iniciativa estratégica para la expansión del reino en el ecosistema digital."
+                                rows={3}
+                                className="text-[hsl(var(--text-secondary))] hover:bg-white/5"
+                                inputClassName="text-[hsl(var(--text-secondary))] border-white/20 bg-white/10 placeholder:text-white/30"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 text-[12px] text-[hsl(var(--text-secondary))]">
+                            <InlineProjectStatusPicker
+                                value={project.status || 'planning'}
+                                onChange={(v) => onUpdate?.({ status: v })}
+                                size="sm"
+                            />
+                            <span className="font-semibold">Responsable:</span>
+                            <InlineUserPicker
+                                value={project.owner_id ?? null}
+                                onChange={(id) => onUpdate?.({ owner_id: id })}
+                            />
+                        </div>
                     </div>
 
                     {/* Widget Bento de Salud Persistida */}
@@ -83,7 +129,7 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
             </section>
 
             {/* 3. Línea de Tiempo de Hitos */}
-            <section className="space-y-3">
+            {showMilestones && <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
                     <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tighter flex items-center gap-2">
                         <BarChart3 className="text-[hsl(var(--primary))]" size={16} /> Hitos Estratégicos
@@ -93,9 +139,14 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
                     {milestones.map((m) => (
                         <div key={m.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 hover:shadow-2xl transition-all group relative overflow-hidden">
                             <div className="flex items-start justify-between mb-3">
-                                <div className={clsx("size-10 rounded-md flex items-center justify-center shadow-lg", m.is_completed ? "bg-emerald-500 text-white" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]")}>
+                                <button
+                                    onClick={() => handleMilestoneToggle(m)}
+                                    disabled={togglingMilestoneId === m.id}
+                                    className={clsx("size-10 rounded-md flex items-center justify-center shadow-lg transition-colors", m.is_completed ? "bg-emerald-500 text-white" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-emerald-500/10 hover:text-emerald-500", togglingMilestoneId === m.id && "opacity-60 cursor-wait")}
+                                    title={m.is_completed ? 'Reabrir hito' : 'Completar hito'}
+                                >
                                     {m.is_completed ? <CheckCircle2 size={18} /> : <Calendar size={18} />}
-                                </div>
+                                </button>
                                 <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                     {m.target_date ? new Date(m.target_date).toLocaleDateString() : 'TBD'}
                                 </span>
@@ -105,12 +156,12 @@ export function ProjectMasterView({ project, tasks }: ProjectMasterViewProps) {
                         </div>
                     ))}
                 </div>
-            </section>
+            </section>}
 
             {/* 4. Grid de Nodos Operativos */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <NodeCard title="Nodo de Nutrición" icon={Share2} color="bg-orange-500" tasks={nutritionTasks} />
-                <NodeCard title="Nodo Digital" icon={Globe} color="bg-[hsl(var(--primary))]" tasks={webTasks} />
+                <NodeCard title="Nodo de Nutrición" icon={Share2} color="bg-orange-500" tasks={nutritionTasks} onOpenTask={onOpenTask} />
+                <NodeCard title="Nodo Digital" icon={Globe} color="bg-[hsl(var(--primary))]" tasks={webTasks} onOpenTask={onOpenTask} />
             </div>
         </div>
     );
@@ -131,7 +182,15 @@ function AnalyticCard({ title, value, detail, icon: Icon, color }: any) {
     );
 }
 
-function NodeCard({ title, icon: Icon, color, tasks }: any) {
+interface NodeCardProps {
+    title: string;
+    icon: React.ElementType;
+    color: string;
+    tasks: ProjectTaskRecord[];
+    onOpenTask?: (task: ProjectTaskRecord) => void;
+}
+
+function NodeCard({ title, icon: Icon, color, tasks, onOpenTask }: NodeCardProps) {
     return (
         <div className="p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm hover:shadow-2xl transition-all group">
             <div className="flex items-center gap-3 mb-3">
@@ -144,8 +203,12 @@ function NodeCard({ title, icon: Icon, color, tasks }: any) {
                 </div>
             </div>
             <div className="space-y-2">
-                {tasks.slice(0, 4).map((t: any) => (
-                    <div key={t.id} className="flex items-center gap-3 p-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-transparent hover:border-[hsl(var(--border))] transition-all cursor-pointer">
+                {tasks.slice(0, 4).map((t) => (
+                    <div
+                        key={t.id}
+                        onClick={() => onOpenTask?.(t)}
+                        className="flex items-center gap-3 p-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-transparent hover:border-[hsl(var(--border))] transition-all cursor-pointer"
+                    >
                         <div className={clsx("size-2.5 rounded-full shadow-sm", t.status === 'completed' ? "bg-emerald-500" : "bg-[hsl(var(--primary))]")} />
                         <span className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate flex-1 leading-none">{t.title.split('] ')[1] || t.title}</span>
                         <ArrowUpRight size={14} className="text-[hsl(var(--text-secondary))]" />

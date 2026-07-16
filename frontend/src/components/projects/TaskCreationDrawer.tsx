@@ -12,7 +12,7 @@ interface Props {
     isOpen: boolean;
     defaultStatus?: string;
     onClose: () => void;
-    onSubmit: (data: { title: string; description: string; priority: string; status: string; assignee_id?: string | null }) => Promise<void>;
+    onSubmit: (data: { title: string; description: string; priority: string; status: string; assignee_id?: string | null }) => Promise<boolean> | Promise<void> | boolean | void;
 }
 
 interface FormValues {
@@ -49,8 +49,10 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
     }, [isOpen, reset]);
 
     const onFormSubmit = async (data: FormValues) => {
-        await onSubmit({ ...data, status: defaultStatus });
-        onClose();
+        const result = await onSubmit({ ...data, status: defaultStatus });
+        if (result === true || result === undefined) {
+            onClose();
+        }
     };
 
     return (

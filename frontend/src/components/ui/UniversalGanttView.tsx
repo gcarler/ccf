@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 
-interface GanttItem {
+export interface GanttItem {
     id: string | number;
     title: string;
     subtitle?: string;
@@ -18,11 +18,13 @@ interface GanttItem {
     progress?: number; // 0-100
 }
 
-interface UniversalGanttViewProps {
+export interface UniversalGanttViewProps {
     items: GanttItem[];
     moduleName?: string;
     onItemClick?: (item: GanttItem) => void;
     onOptimize?: () => void;
+    onItemMove?: (item: GanttItem, newStart: string, newEnd: string) => void;
+    onItemResize?: (item: GanttItem, newEnd: string) => void;
 }
 
 const COLORS = {
@@ -33,7 +35,123 @@ const COLORS = {
     rose: 'bg-rose-500 shadow-rose-500/20',
 };
 
-export default function UniversalGanttView({ items, moduleName = "Módulo", onItemClick, onOptimize }: UniversalGanttViewProps) {
+const toDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const addDays = (dateStr: string, days: number) => {
+    const d = new Date(`${dateStr}T12:00:00`);
+    d.setDate(d.getDate() + days);
+    return toDateKey(d);
+};
+
+interface GanttBarItemProps {
+    item: GanttItem;
+    pos: number;
+    width: number;
+    idx: number;
+    onClick?: (item: GanttItem) => void;
+    onMove?: (item: GanttItem, start: string, end: string) => void;
+    onResize?: (item: GanttItem, end: string) => void;
+}
+
+function GanttBarItem({ item, pos, width, idx, onClick, onMove, onResize }: GanttBarItemProps) {
+    const [dragState, setDragState] = useState<{type: 'move'|'resize'; startX: number; currentX: number} | null>(null);
+
+    const handlePointerDown = (e: React.PointerEvent, type: 'move'|'resize') => {
+        if (type === 'move' && !onMove) return;
+        if (type === 'resize' && !onResize) return;
+        e.stopPropagation();
+        (e.target as Element).setPointerCapture(e.pointerId);
+        setDragState({ type, startX: e.clientX, currentX: e.clientX });
+    };
+
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (!dragState) return;
+        setDragState(prev => (prev ? { ...prev, currentX: e.clientX } : null));
+    };
+
+    const handlePointerUp = (e: React.PointerEvent) => {
+        if (!dragState) return;
+        (e.target as Element).releasePointerCapture(e.pointerId);
+        const rawDeltaX = dragState.currentX - dragState.startX;
+        const deltaDays = Math.round(rawDeltaX / 160);
+
+        if (deltaDays !== 0) {
+            if (dragState.type === 'move' && onMove) {
+                onMove(item, addDays(item.start_date, deltaDays), addDays(item.end_date, deltaDays));
+            } else if (dragState.type === 'resize' && onResize) {
+                const newEnd = addDays(item.end_date, deltaDays);
+                const s = new Date(item.start_date);
+                if (new Date(newEnd) >= s) onResize(item, newEnd);
+            }
+        } else if (dragState.type === 'move') {
+            onClick?.(item);
+        }
+
+        setDragState(null);
+    };
+
+    const isDragging = !!dragState;
+    const deltaX = dragState ? dragState.currentX - dragState.startX : 0;
+    const displayX = pos + (dragState?.type === 'move' ? deltaX : 0);
+    const displayWidth = Math.max(140, width + (dragState?.type === 'resize' ? deltaX : 0));
+
+    return (
+        <>
+            <motion.div
+                initial={{ opacity: 0, x: pos - 20 }}
+                animate={{ opacity: 1, x: displayX, width: displayWidth }}
+                transition={{
+                    type: isDragging ? false : "spring",
+                    duration: isDragging ? 0 : 0.5,
+                    bounce: 0,
+                    delay: isDragging ? 0 : idx * 0.05
+                }}
+                onPointerDown={(e) => handlePointerDown(e, 'move')}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                className={clsx(
+                    "absolute h-full rounded-lg p-4 flex items-center justify-between select-none shadow-lg group-hover:shadow-2xl",
+                    COLORS[item.color || 'blue'],
+                    isDragging ? "z-40 scale-[1.02] cursor-grabbing" : "cursor-pointer hover:scale-[1.02]"
+                )}
+            >
+                <div className="flex items-center gap-3 overflow-hidden pointer-events-none">
+                    <div className="size-8 rounded-md bg-white/20 flex items-center justify-center text-white shrink-0"><Clock size={16} /></div>
+                    <div className="overflow-hidden">
+                        <p className="font-semibold text-white uppercase tracking-tight truncate leading-none mb-1">{item.title}</p>
+                        {item.subtitle && <p className="text-[9px] text-white/70 uppercase font-bold tracking-wide truncate">{item.subtitle}</p>}
+                    </div>
+                </div>
+                {item.progress !== undefined && (
+                    <div className="flex items-center gap-3 text-white/90 pointer-events-none mr-2">
+                        <span className="font-semibold">{item.progress}%</span>
+                        <div className="size-6 rounded-full border-2 border-white/20 flex items-center justify-center">
+                            <div className="size-1.5 rounded-full bg-[hsl(var(--bg-primary))] animate-pulse" />
+                        </div>
+                    </div>
+                )}
+            </motion.div>
+            {onResize && (
+                <div
+                    style={{ left: `${displayX + displayWidth - 12}px`, width: '24px' }}
+                    onPointerDown={(e) => handlePointerDown(e, 'resize')}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    className="absolute top-0 bottom-0 cursor-ew-resize flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-white/20 rounded-r-lg transition-colors z-50"
+                >
+                    <div className="w-1 h-4 bg-white/50 rounded-full pointer-events-none" />
+                </div>
+            )}
+        </>
+    );
+}
+
+export default function UniversalGanttView({ items, moduleName = "Módulo", onItemClick, onOptimize, onItemMove, onItemResize }: UniversalGanttViewProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [zoom, setZoom] = useState<'day' | 'week' | 'month'>('week');
     
@@ -52,7 +170,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
     };
 
     const getPosition = (dateStr: string) => {
-        const date = new Date(dateStr);
+        const date = new Date(`${dateStr}T12:00:00`);
         const startIndex = days.findIndex(d => d.toDateString() === date.toDateString());
         if (startIndex === -1) {
             // Check if before or after
@@ -63,8 +181,8 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
     };
 
     const getWidth = (start: string, end: string) => {
-        const s = new Date(start);
-        const e = new Date(end);
+        const s = new Date(`${start}T12:00:00`);
+        const e = new Date(`${end}T12:00:00`);
         const diff = Math.max(1, Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)));
         return (diff + 1) * 160 - 20; // gap handling
     };
@@ -161,33 +279,15 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                                         
                                         return (
                                             <div key={item.id} className="h-8 relative group">
-                                                <motion.div
-                                                    initial={{ opacity: 0, x: pos - 20 }}
-                                                    animate={{ opacity: 1, x: pos }}
-                                                    transition={{ delay: idx * 0.05 }}
-                                                    onClick={() => onItemClick?.(item)}
-                                                    style={{ width: `${width}px` }}
-                                                    className={clsx(
-                                                        "absolute h-full rounded-lg p-4 flex items-center justify-between cursor-pointer transition-all hover:scale-[1.02] active:scale-95 shadow-lg group-hover:shadow-2xl",
-                                                        COLORS[item.color || 'blue']
-                                                    )}
-                                                >
-                                                    <div className="flex items-center gap-3 overflow-hidden">
-                                                        <div className="size-8 rounded-md bg-white/20 flex items-center justify-center text-white shrink-0"><Clock size={16} /></div>
-                                                        <div className="overflow-hidden">
-                                                            <p className="font-semibold text-white uppercase tracking-tight truncate leading-none mb-1">{item.title}</p>
-                                                            {item.subtitle && <p className="text-[9px] text-white/70 uppercase font-bold tracking-wide truncate">{item.subtitle}</p>}
-                                                        </div>
-                                                    </div>
-                                                    {item.progress !== undefined && (
-                                                        <div className="flex items-center gap-3 text-white/90">
-                                                            <span className="font-semibold">{item.progress}%</span>
-                                                            <div className="size-6 rounded-full border-2 border-white/20 flex items-center justify-center">
-                                                                <div className="size-1.5 rounded-full bg-[hsl(var(--bg-primary))] animate-pulse" />
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </motion.div>
+                                                <GanttBarItem
+                                                    item={item}
+                                                    pos={pos}
+                                                    width={width}
+                                                    idx={idx}
+                                                    onClick={onItemClick}
+                                                    onMove={onItemMove}
+                                                    onResize={onItemResize}
+                                                />
                                             </div>
                                         );
                                     })

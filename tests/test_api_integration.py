@@ -283,6 +283,28 @@ class TestCrmAPI:
         resp = client.get("/api/crm/personas", headers=headers)
         assert resp.status_code in (200, 404)
 
+    def test_list_personas_page(self, authed_client, db_session):
+        client, headers, sede = authed_client
+        from backend import models
+
+        seed_rows = [
+            models.Persona(first_name="Ana", last_name="Zapata", sede_id=sede.id, group_name="Grupo Norte"),
+            models.Persona(first_name="Bruno", last_name="Arias", sede_id=sede.id, group_name="Grupo Norte"),
+            models.Persona(first_name="Camila", last_name="Paz", sede_id=sede.id, group_name="Grupo Sur"),
+        ]
+        db_session.add_all(seed_rows)
+        db_session.commit()
+
+        resp = client.get("/api/crm/personas/page?skip=0&limit=2&sort_by=first_name&sort_dir=asc", headers=headers)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] >= 3
+        assert len(data["items"]) == 2
+        assert data["skip"] == 0
+        assert data["limit"] == 2
+        assert "Grupo Norte" in data["available_groups"]
+        assert "Grupo Sur" in data["available_groups"]
+
     def test_list_casos(self, authed_client):
         client, headers, sede = authed_client
         resp = client.get("/api/crm/casos", headers=headers)

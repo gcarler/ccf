@@ -20,9 +20,11 @@ interface Props {
     onAddTask: () => void;
     projectId?: string | number;
     onTaskCreated?: (task: ProjectTaskRecord) => void;
+    onTaskUpdate?: (taskId: string, patch: Partial<ProjectTaskRecord>) => void;
+    onTaskDelete?: (taskId: string) => void;
 }
 
-export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, projectId, onTaskCreated }: Props) {
+export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, projectId, onTaskCreated, onTaskUpdate, onTaskDelete }: Props) {
     const { setNodeRef, isOver } = useDroppable({ id });
     const { token } = useAuth();
     const [isAdding, setIsAdding] = useState(false);
@@ -113,7 +115,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
             >
                 <SortableContext id={id} items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
                     {tasks.map(task => (
-                        <SortableTaskCard key={task.id} task={task} onOpen={onOpenTask} />
+                        <SortableTaskCard key={task.id} task={task} onOpen={onOpenTask} onUpdate={onTaskUpdate} onDelete={onTaskDelete} />
                     ))}
                 </SortableContext>
 

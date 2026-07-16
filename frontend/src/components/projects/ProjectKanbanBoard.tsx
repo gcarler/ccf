@@ -21,14 +21,8 @@ import { SortableTaskCard } from './SortableTaskCard';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { useProjectUpdate, type PhaseDef } from '@/context/ProjectUpdateContext';
 import type { ProjectRecord, ProjectTaskRecord } from '@/types/projects';
-
-export interface PhaseDef {
-    slug: string;
-    name: string;
-    color: string;
-    order_index: number;
-}
 
 interface Props {
     project: ProjectRecord;
@@ -36,10 +30,11 @@ interface Props {
     phases: PhaseDef[];
     onTasksChange: (tasks: ProjectTaskRecord[]) => void;
     onOpenTask: (task: ProjectTaskRecord) => void;
-    onAddTask: (status: string) => void;
+    onAddTask: () => void;
 }
 
 export function ProjectKanbanBoard({ project, tasks, phases, onTasksChange, onOpenTask, onAddTask }: Props) {
+    const { updateTask, deleteTask } = useProjectUpdate();
     const { token } = useAuth();
     const { addToast } = useToast();
     const [activeTask, setActiveTask] = useState<ProjectTaskRecord | null>(null);
@@ -116,9 +111,11 @@ export function ProjectKanbanBoard({ project, tasks, phases, onTasksChange, onOp
                             color={phase.color}
                             tasks={tasks.filter(t => (t.status || 'todo') === phase.slug)}
                             onOpenTask={onOpenTask}
-                            onAddTask={() => onAddTask(phase.slug)}
+                            onAddTask={onAddTask}
                             projectId={project.id}
                             onTaskCreated={handleTaskCreated}
+                            onTaskUpdate={updateTask}
+                            onTaskDelete={deleteTask}
                         />
                     ))}
                 </SortableContext>
