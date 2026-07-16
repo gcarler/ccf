@@ -268,7 +268,9 @@ export default function StrategyDetailPage() {
  const params = useParams();
  const router = useRouter();
  const id = (params?.id as string) || '';
- const { token, loading: authLoading } = useAuth();
+ const { token, loading: authLoading, user } = useAuth();
+ const role = (user?.role || '').toLowerCase();
+ const canManageStrategySurface = ['admin', 'administrador', 'pastor'].includes(role);
  const [strategy, setStrategy] = useState<Strategy | null>(null);
  const [loading, setLoading] = useState(true);
  const [loadError, setLoadError] = useState(false);
@@ -506,7 +508,7 @@ export default function StrategyDetailPage() {
 
  useEffect(() => {
  if (authLoading) return;
- if (!token) {
+ if (!token || !canManageStrategySurface) {
  setLoading(false);
  setLoadingRoles(false);
  setLoadingFollowUps(false);
@@ -515,7 +517,7 @@ export default function StrategyDetailPage() {
  fetchStrategy();
  fetchCustomRoles();
  fetchFollowUps();
- }, [authLoading, fetchStrategy, fetchCustomRoles, fetchFollowUps, token]);
+ }, [authLoading, canManageStrategySurface, fetchStrategy, fetchCustomRoles, fetchFollowUps, token]);
 
  const fetchGroups = useCallback(async () => {
  if (!token) return;
@@ -532,8 +534,8 @@ export default function StrategyDetailPage() {
 
  // Cargar grupos al montar para que aparezcan en el sidebar
  useEffect(() => {
- if (token) fetchGroups();
- }, [fetchGroups, token]);
+ if (token && canManageStrategySurface) fetchGroups();
+ }, [canManageStrategySurface, fetchGroups, token]);
 
  const fetchMetrics = useCallback(async () => {
  if (!token) return;
@@ -579,15 +581,15 @@ export default function StrategyDetailPage() {
  }, [fetchSessions, token]);
 
  useEffect(() => {
- if (!token) return;
+ if (!token || !canManageStrategySurface) return;
  if (activeTab === 'groups') fetchGroups();
  if (activeTab === 'metrics') fetchMetrics();
  if (activeTab === 'sessions') { fetchGroups(); fetchSessions(); }
  if (activeTab === 'attendance') { fetchGroups(); fetchSessions(); }
- }, [activeTab, fetchGroups, fetchMetrics, fetchSessions, token]);
+ }, [activeTab, canManageStrategySurface, fetchGroups, fetchMetrics, fetchSessions, token]);
 
  useEffect(() => {
- if (!roleDropdown) return;
+ if (!roleDropdown || !token || !canManageStrategySurface) return;
  const field = roleDropdown;
  const query = (roleSearch[field] || '').trim();
  setRoleLoading(l => ({ ...l, [field]: true }));
@@ -605,7 +607,29 @@ export default function StrategyDetailPage() {
  }
  }, query.length >= 1 ? 300 : 0);
  return () => clearTimeout(timer);
- }, [roleSearch, roleDropdown, token]);
+ }, [canManageStrategySurface, roleSearch, roleDropdown, token]);
+
+ if (!authLoading && !canManageStrategySurface) {
+ return (
+ <EvangelismShell breadcrumbs={[
+ { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
+ { label: 'Estrategias', href: '/plataforma/evangelism' },
+ { label: 'Acceso restringido' }
+ ]}>
+ <div className="flex flex-col items-center justify-center py-16 text-center">
+ <AlertCircle size={48} className="text-[hsl(var(--text-secondary))] mb-4" />
+ <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">Acceso restringido</h2>
+ <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] max-w-md">
+ Esta vista de estrategia requiere rol pastoral o administrativo porque consume superficies protegidas del modulo.
+ </p>
+ <button onClick={() => router.push('/plataforma/evangelism')}
+ className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
+ Volver a Evangelismo
+ </button>
+ </div>
+ </EvangelismShell>
+ );
+ }
 
  const openGroupDrawer = () => {
  setGroupForm({

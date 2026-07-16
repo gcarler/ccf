@@ -70,22 +70,23 @@ export default function EvangelismShell({
 }: EvangelismShellProps) {
     const { user, loading, token, hasModuleAccess } = useAuth();
     const role = (user?.role || '').toLowerCase();
-    const isAuthorized = ['admin', 'administrador', 'pastor'].includes(role) || hasModuleAccess('evangelism', 'read');
+    const isPastoralOrAdmin = ['admin', 'administrador', 'pastor'].includes(role);
+    const isAuthorized = isPastoralOrAdmin || hasModuleAccess('evangelism', 'read');
     const [strategies, setStrategies] = useState<StrategyItem[]>([]);
 
     const fetchStrategies = useCallback(async () => {
-        if (!token) return;
+        if (!token || !isPastoralOrAdmin) return;
         try {
             const result = await apiFetch<StrategyItem[]>('/evangelism/strategies', { token, silent: true });
             setStrategies(Array.isArray(result) ? result : []);
         } catch {
             setStrategies([]);
         }
-    }, [token]);
+    }, [isPastoralOrAdmin, token]);
 
     useEffect(() => {
-        if (isAuthorized) fetchStrategies();
-    }, [isAuthorized, fetchStrategies]);
+        if (isPastoralOrAdmin) fetchStrategies();
+    }, [fetchStrategies, isPastoralOrAdmin]);
 
     // Listen for newly created strategies
     useEffect(() => {
@@ -95,7 +96,7 @@ export default function EvangelismShell({
     }, [fetchStrategies]);
 
     const sidebarSections = [
-        {
+        ...(isPastoralOrAdmin ? [{
             title: 'Estrategias',
             items: [
                 { id: 'ev-strategies', label: 'Todas las Estrategias', href: '/plataforma/evangelism', icon: Flame, count: strategies.length },
@@ -106,7 +107,7 @@ export default function EvangelismShell({
                     icon: Zap,
                 })),
             ],
-        },
+        }] : []),
         ...(sidebarGroups && sidebarGroups.length > 0 ? [{
             title: 'Grupos',
             items: sidebarGroups.map(g => ({
