@@ -9,8 +9,10 @@ GetRowIdParams,
 IDatasource,
 IGetRowsParams,
 ModuleRegistry,
+type ValueFormatterParams,
+type ValueGetterParams,
 themeQuartz
-} from "ag-grid-community/dist/ag-grid-community.noStyle";
+} from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import clsx from "clsx";
 import {
@@ -158,7 +160,7 @@ function toColDef(col: TableColumn): ColDef {
         ...base,
         cellDataType: "number",
         cellEditor: "agNumberCellEditor",
-        valueFormatter: ({ value }) => {
+        valueFormatter: ({ value }: ValueFormatterParams) => {
           if (value === null || value === undefined) return "";
           if (col.format === "currency") return `$${Number(value).toLocaleString()}`;
           if (col.format === "percent") return `${value}%`;
@@ -193,7 +195,7 @@ function toColDef(col: TableColumn): ColDef {
       return {
         ...base,
         editable: false,
-        valueGetter: ({ data }) => {
+        valueGetter: ({ data }: ValueGetterParams) => {
           if (!data || !col.formula) return "";
           try { return evaluateFormula(col.formula, data); } catch { return ""; }
         },
@@ -202,15 +204,23 @@ function toColDef(col: TableColumn): ColDef {
     case "email":
       return {
         ...base,
-        cellRenderer: ({ value }: any) =>
-          value ? <a href={`mailto:${value}`} className="text-[hsl(var(--primary))] hover:underline text-xs" onClick={(e) => e.stopPropagation()}>{value}</a> : null,
+        cellRenderer: ({ value }: { value: unknown }) => {
+          const email = typeof value === "string" || typeof value === "number" ? String(value) : "";
+          return email
+            ? <a href={`mailto:${email}`} className="text-[hsl(var(--primary))] hover:underline text-xs" onClick={(e) => e.stopPropagation()}>{email}</a>
+            : null;
+        },
       };
 
     case "url":
       return {
         ...base,
-        cellRenderer: ({ value }: any) =>
-          value ? <a href={value} target="_blank" rel="noopener noreferrer" className="text-[hsl(var(--primary))] hover:underline text-xs truncate block" onClick={(e) => e.stopPropagation()}>{value}</a> : null,
+        cellRenderer: ({ value }: { value: unknown }) => {
+          const url = typeof value === "string" || typeof value === "number" ? String(value) : "";
+          return url
+            ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-[hsl(var(--primary))] hover:underline text-xs truncate block" onClick={(e) => e.stopPropagation()}>{url}</a>
+            : null;
+        },
       };
 
     default:
