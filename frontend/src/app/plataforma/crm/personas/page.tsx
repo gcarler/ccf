@@ -45,6 +45,36 @@ import {
 import { FormSection, SelectField, PersonaField } from '@/components/crm/ui';
 import { ApiError, apiFetch } from '@/lib/http';
 
+interface PersonasPageResponse {
+    items: any[];
+    total: number;
+    skip: number;
+    limit: number;
+    available_groups: string[];
+}
+
+const PERSONAS_PAGE_SIZE_OPTIONS = [25, 50, 100, 200] as const;
+const DEFAULT_PERSONAS_PAGE_SIZE = 50;
+
+function buildPaginationItems(currentPage: number, totalPages: number) {
+    if (totalPages <= 7) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    const pages: Array<number | 'ellipsis'> = [1];
+    const left = Math.max(2, currentPage - 1);
+    const right = Math.min(totalPages - 1, currentPage + 1);
+
+    if (left > 2) pages.push('ellipsis');
+    for (let page = left; page <= right; page += 1) {
+        pages.push(page);
+    }
+    if (right < totalPages - 1) pages.push('ellipsis');
+    pages.push(totalPages);
+
+    return pages;
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PersonasPage() {
@@ -52,9 +82,11 @@ export default function PersonasPage() {
     const { canEditCrm } = useCrmAccess();
     const router = useRouter();
     const { viewType, setViewType } = useViewType('crm_personas', 'grid');
-    const [personas, setPersonas] = useState<any[]>([]);
+    const [personasPage, setPersonasPage] = useState<PersonasPageResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [personasError, setPersonasError] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(DEFAULT_PERSONAS_PAGE_SIZE);
 
     const [roles, setRoles] = useState<any[]>([]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -71,8 +103,11 @@ export default function PersonasPage() {
     const [groupFilter, setGroupFilter] = useState('');
     const [participationFilter, setParticipationFilter] = useState('');
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-    const [uniqueGroups, setUniqueGroups] = useState<string[]>([]);
-    const [activeFilterCount, setActiveFilterCount] = useState(0);
+    const activeFilterCount = useMemo(
+        () => [idTypeFilter, sexFilter, groupFilter, participationFilter].filter(Boolean).length
+            + (roleFilter !== 'Todos' ? 1 : 0),
+        [idTypeFilter, sexFilter, groupFilter, participationFilter, roleFilter]
+    );
 
     const loadPersonas = useCallback(async () => {
         if (!token) {
@@ -84,20 +119,26 @@ export default function PersonasPage() {
         setPersonasError(null);
 
         try {
-            const personasData = await apiFetch<any[]>('/crm/personas', { token });
-            const normalizedPersonas = Array.isArray(personasData)
-                ? personasData
-                : Array.isArray((personasData as any)?.items)
-                    ? (personasData as any).items
-                    : [];
-            setPersonas(normalizedPersonas);
+            const params = new URLSearchParams({
+                skip: String((page - 1) * pageSize),
+                limit: String(pageSize),
+                sort_by: 'nombre_completo',
+                sort_dir: 'asc',
+            });
+            if (query.trim()) params.set('search', query.trim());
+            if (roleFilter !== 'Todos') params.set('role', roleFilter);
+            if (idTypeFilter) params.set('id_type', idTypeFilter);
+            if (sexFilter) params.set('sex', sexFilter);
+            if (groupFilter) params.set('group_name', groupFilter);
+            if (participationFilter) params.set('participation_type', participationFilter);
 
-            const groups = [...new Set(normalizedPersonas.map((m: any) => m.group_name).filter(Boolean))] as string[];
-            groups.sort();
-            setUniqueGroups(groups);
+            const personasData = await apiFetch<PersonasPageResponse>(`/crm/personas/page?${params.toString()}`, {
+                token,
+                cache: 'no-store',
+            });
+            setPersonasPage(personasData);
         } catch (err) {
-            setPersonas([]);
-            setUniqueGroups([]);
+            setPersonasPage(null);
 
             const message = err instanceof ApiError
                 ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'No se pudo cargar la lista de personas'))
@@ -107,19 +148,26 @@ export default function PersonasPage() {
         } finally {
             setLoading(false);
         }
+    }, [token, page, pageSize, query, roleFilter, idTypeFilter, sexFilter, groupFilter, participationFilter]);
 
-        apiFetch<any[]>('/crm/roles', { token })
+    useEffect(() => {
+        loadPersonas();
+    }, [loadPersonas]);
+
+    useEffect(() => {
+        if (!token) return;
+        apiFetch<any[]>('/crm/roles', { token, cache: 'no-store' })
             .then(setRoles)
             .catch(() => setRoles([]));
 
-        apiFetch<Department[]>('/crm/colombian-departments', { token })
+        apiFetch<Department[]>('/crm/colombian-departments', { token, cache: 'no-store' })
             .then(setDepartments)
             .catch(() => setDepartments([]));
     }, [token]);
 
     useEffect(() => {
-        loadPersonas();
-    }, [loadPersonas]);
+        setPage(1);
+    }, [query, roleFilter, idTypeFilter, sexFilter, groupFilter, participationFilter]);
 
     useEffect(() => {
         if (!token || !newPersona.colombian_department_id) {
@@ -138,40 +186,19 @@ export default function PersonasPage() {
         return r ? r.color : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]';
     };
 
-    const filteredPersonas = useMemo(() => {
-        let list = personas;
-        if (query) {
-            const q = query.toLowerCase();
-            list = list.filter(m =>
-                (m.nombre_completo || '').toLowerCase().includes(q) ||
-                m.email?.toLowerCase().includes(q) ||
-                m.church_role?.toLowerCase().includes(q) ||
-                (m.id_number || '').toLowerCase().includes(q) ||
-                (m.phone || '').toLowerCase().includes(q) ||
-                (m.mobile_phone || '').toLowerCase().includes(q)
-            );
+    const personas = personasPage?.items ?? [];
+    const totalPersonas = personasPage?.total ?? 0;
+    const totalPages = Math.max(1, Math.ceil(totalPersonas / pageSize));
+    const pageStart = totalPersonas === 0 ? 0 : ((page - 1) * pageSize) + 1;
+    const pageEnd = Math.min(totalPersonas, page * pageSize);
+    const uniqueGroups = personasPage?.available_groups ?? [];
+    const paginationItems = useMemo(() => buildPaginationItems(page, totalPages), [page, totalPages]);
+
+    useEffect(() => {
+        if (page > totalPages) {
+            setPage(totalPages);
         }
-        if (roleFilter !== 'Todos') {
-            list = list.filter(m => m.church_role === roleFilter);
-        }
-        if (idTypeFilter) {
-            list = list.filter(m => m.id_type === idTypeFilter);
-        }
-        if (sexFilter) {
-            list = list.filter(m => m.sex === sexFilter);
-        }
-        if (groupFilter) {
-            list = list.filter(m => m.group_name === groupFilter);
-        }
-        if (participationFilter) {
-            list = list.filter(m => m.participation_type === participationFilter);
-        }
-        // Count active filters
-        const count = [idTypeFilter, sexFilter, groupFilter, participationFilter].filter(Boolean).length
-            + (roleFilter !== 'Todos' ? 1 : 0);
-        setActiveFilterCount(count);
-        return list;
-    }, [personas, query, roleFilter, idTypeFilter, sexFilter, groupFilter, participationFilter]);
+    }, [page, totalPages]);
 
     if (!authLoading && !token) {
         return (
@@ -226,14 +253,14 @@ export default function PersonasPage() {
                 if (!body[k]) body[k] = null;
             });
 
-            const created = await apiFetch<any>('/crm/personas/', {
+            await apiFetch<any>('/crm/personas/', {
                 method: 'POST',
                 token,
                 body,
             });
-            setPersonas(prev => [created, ...prev]);
             setNewPersona({ ...INITIAL_PERSONA });
             setIsCreateOpen(false);
+            await loadPersonas();
             toast.success('Persona registrada');
         } catch {
             toast.error('No se pudo registrar la persona');
@@ -436,12 +463,96 @@ export default function PersonasPage() {
                         </AnimatePresence>
                     </div>
 
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2">
+                        <div className="flex flex-col gap-1">
+                            <div className="text-[11px] font-medium text-[hsl(var(--text-secondary))]">
+                                {totalPersonas === 0
+                                    ? 'No hay personas para mostrar en esta consulta.'
+                                    : `Mostrando ${pageStart}-${pageEnd} de ${totalPersonas} personas`}
+                            </div>
+                            <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                Registros por página
+                                <select
+                                    value={pageSize}
+                                    onChange={(event) => {
+                                        setPage(1);
+                                        setPageSize(Number(event.target.value));
+                                    }}
+                                    className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-2 py-1 text-[11px] font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20"
+                                >
+                                    {PERSONAS_PAGE_SIZE_OPTIONS.map((option) => (
+                                        <option key={option} value={option}>{option}</option>
+                                    ))}
+                                </select>
+                            </label>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setPage(1)}
+                                disabled={loading || page <= 1}
+                                className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 disabled:opacity-50"
+                            >
+                                Primera
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={loading || page <= 1}
+                                className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 disabled:opacity-50"
+                            >
+                                Anterior
+                            </button>
+                            <div className="flex items-center gap-1">
+                                {paginationItems.map((item, index) => (
+                                    item === 'ellipsis' ? (
+                                        <span key={`ellipsis-${index}`} className="px-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">…</span>
+                                    ) : (
+                                        <button
+                                            key={item}
+                                            type="button"
+                                            onClick={() => setPage(item)}
+                                            disabled={loading}
+                                            className={clsx(
+                                                "min-w-8 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-wide transition-all",
+                                                item === page
+                                                    ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))] shadow-lg shadow-blue-500/20"
+                                                    : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10"
+                                            )}
+                                        >
+                                            {item}
+                                        </button>
+                                    )
+                                ))}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                disabled={loading || page >= totalPages}
+                                className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 disabled:opacity-50"
+                            >
+                                Siguiente
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPage(totalPages)}
+                                disabled={loading || page >= totalPages}
+                                className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 disabled:opacity-50"
+                            >
+                                Última
+                            </button>
+                            <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                Página {page} de {totalPages}
+                            </span>
+                        </div>
+                    </div>
+
                     {/* Personas List */}
                     {loading ? (
                         <div className="text-center py-1.5 animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sincronizando base de datos...</div>
                     ) : viewType === 'list' ? (
                         <div className="space-y-1">
-                            {filteredPersonas.map(m => (
+                            {personas.map(m => (
                                 <div key={m.id} onClick={() => router.push(`/plataforma/crm/personas/${m.id}`)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 cursor-pointer transition-all">
                                     <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-xs">
                                         {(m.nombre_completo?.charAt(0) || '')}
@@ -455,9 +566,10 @@ export default function PersonasPage() {
                         </div>
                     ) : viewType === 'table' ? (
                         <TableView
-                            data={[]}
+                            data={personas}
                             idAccessor="id"
                             storageKey="crm_personas"
+                            enableFilters={false}
                             columns={[
                                 { id: 'nombre_completo', name: 'Nombre Completo', type: 'text' },
                                 { id: 'church_role', name: 'Rol', type: 'select', options: roles.map(r => ({ label: r.name, value: r.name, color: r.color })) },
@@ -466,21 +578,6 @@ export default function PersonasPage() {
                                 { id: 'participation_type', name: 'Participación', type: 'select', options: [{ label: 'Activo', value: 'Activo' }, { label: 'Inactivo', value: 'Inactivo' }] },
                                 { id: 'spiritual_health', name: 'Salud Espiritual', type: 'progress' },
                             ]}
-                            serverSide={{
-                                pageSize: 100,
-                                getRows: ({ offset, limit, sortBy, sortDir, search }) => {
-                                    const params = new URLSearchParams();
-                                    params.set('offset', String(offset));
-                                    params.set('limit', String(limit));
-                                    if (sortBy) params.set('sort_by', sortBy);
-                                    if (sortDir) params.set('sort_dir', sortDir);
-                                    if (search) params.set('search', search);
-                                    return apiFetch<{ items: any[]; total: number }>(
-                                        `/crm/personas?${params.toString()}`,
-                                        { token: token ?? undefined }
-                                    ).then(res => ({ items: res.items ?? [], total: res.total ?? 0 }));
-                                },
-                            }}
                         />
                     ) : (
                         <div className="space-y-6">
@@ -493,11 +590,23 @@ export default function PersonasPage() {
                                 ];
 
                                 // Collect unique group_name values from filtered Visitante personas
-                                const visitantes = filteredPersonas.filter(m => (m.participation_type || '') === 'Visitante');
+                                const visitantes = personas.filter(m => (m.participation_type || '') === 'Visitante');
                                 const visitantGroups = [...new Set(visitantes.map((m: any) => m.group_name).filter(Boolean))].sort();
                                 const visitantesSinGrupo = visitantes.filter(m => !m.group_name);
 
-                                const sinMembresia = filteredPersonas.filter(m => !m.participation_type);
+                                const sinMembresia = personas.filter(m => !m.participation_type);
+                                const gruposFijosConPersonas = FIXED_GROUPS.map(group => ({
+                                    ...group,
+                                    personas: personas.filter(m => (m.participation_type || '') === group.key),
+                                }));
+
+                                const renderedIds = new Set<string>();
+                                visitantes.forEach(persona => renderedIds.add(String(persona.id)));
+                                gruposFijosConPersonas.forEach(group => {
+                                    group.personas.forEach(persona => renderedIds.add(String(persona.id)));
+                                });
+                                sinMembresia.forEach(persona => renderedIds.add(String(persona.id)));
+                                const otrasPersonas = personas.filter(persona => !renderedIds.has(String(persona.id)));
 
                                 function renderPersonaCard(persona: any) {
                                     return (
@@ -576,13 +685,12 @@ export default function PersonasPage() {
                                         )}
 
                                         {/* Grupos fijos: Activo, Persona, Inactivo, Transferido */}
-                                        {FIXED_GROUPS.map(group => {
-                                            const groupPersonas = filteredPersonas.filter(m => (m.participation_type || '') === group.key);
-                                            if (groupPersonas.length === 0) return null;
+                                        {gruposFijosConPersonas.map(group => {
+                                            if (group.personas.length === 0) return null;
                                             return (
                                                 <div key={group.key}>
-                                                    {renderSectionHeader(group.label, group.desc, group.color, group.bg, groupPersonas.length)}
-                                                    {renderGroupPersonaCards(groupPersonas)}
+                                                    {renderSectionHeader(group.label, group.desc, group.color, group.bg, group.personas.length)}
+                                                    {renderGroupPersonaCards(group.personas)}
                                                 </div>
                                             );
                                         })}
@@ -595,8 +703,22 @@ export default function PersonasPage() {
                                             </div>
                                         )}
 
+                                        {/* Fallback estructural: personas que no encajan en ningún bucket visible */}
+                                        {otrasPersonas.length > 0 && (
+                                            <div>
+                                                {renderSectionHeader(
+                                                    'Sin Clasificación',
+                                                    'Personas con un estado de participación no cubierto por la vista actual',
+                                                    'text-[hsl(var(--primary))]',
+                                                    'bg-blue-50 dark:bg-blue-900/20',
+                                                    otrasPersonas.length
+                                                )}
+                                                {renderGroupPersonaCards(otrasPersonas)}
+                                            </div>
+                                        )}
+
                                         {/* Empty state */}
-                                        {!personasError && filteredPersonas.length === 0 && (
+                                        {!personasError && personas.length === 0 && (
                                             <div className="text-center py-6 font-bold text-[hsl(var(--text-secondary))]">No se encontraron personas con esos filtros.</div>
                                         )}
                                     </>
