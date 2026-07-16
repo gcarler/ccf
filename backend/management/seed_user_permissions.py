@@ -22,11 +22,13 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("seed_permissions")
 
 
-def seed_rol_plataforma(db) -> None:
-    """Crea los roles auth (RolPlataforma) con permisos planos."""
-    from backend.models_auth import RolPlataforma
+def build_roles_config() -> dict[str, dict[str, str]]:
+    """Retorna la matriz canónica de roles -> módulo -> nivel.
 
-    # Map module+level -> flat permission keys for each role
+    Esta función usa únicamente ids de módulo válidos según
+    ``MODULE_PERMISSION_MAP``. Alias legacy como ``finances`` o ``agenda``
+    no deben aparecer aquí.
+    """
     roles_config = {
         "ADMINISTRADOR": {m: "manage" for m in MODULE_PERMISSION_MAP},
         "GESTOR": {m: "manage" for m in ["crm", "academy", "projects", "evangelism", "community", "messaging"]},
@@ -34,9 +36,16 @@ def seed_rol_plataforma(db) -> None:
         "LECTOR": {m: "read" for m in MODULE_PERMISSION_MAP},
         "MIEMBRO": {"academy": "study"},
     }
-    # Special cases
-    roles_config["GESTOR"].update({"finances": "read", "cms": "edit", "spiritual_life": "manage"})
-    roles_config["EDITOR"].update({"academy": "read", "agenda": "read", "finances": "read"})
+    roles_config["GESTOR"].update({"finance": "read", "cms": "edit", "spiritual_life": "manage"})
+    roles_config["EDITOR"].update({"academy": "read", "finance": "read"})
+    return roles_config
+
+
+def seed_rol_plataforma(db) -> None:
+    """Crea los roles auth (RolPlataforma) con permisos planos."""
+    from backend.models_auth import RolPlataforma
+
+    roles_config = build_roles_config()
 
     created = 0
     for nombre, module_levels in roles_config.items():

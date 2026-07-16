@@ -76,14 +76,14 @@ Regla:
 
 | Modulo | Estado doc | Falta |
 |---|---|---|
-| Proyectos | `docs/ESTADO_PROYECTOS.md`, `PLAN_VISTAS_EDITABLES_PROYECTOS.md` | Contratos API y QA checklist separados |
-| Evangelismo | `ESTADO_EVANGELISMO.md`, `PLAN_EVANGELISMO_CALIDAD.md`, `EVANGELISMO_API_CONTRACTS.md`, `EVANGELISMO_QA_CHECKLIST.md` | Script canonico `scripts/test_evangelism_quality.py` |
-| CRM | Parcial por tests, sin estado canonico equivalente | `ESTADO_CRM.md`, contratos, QA, smoke script |
-| Academy | Tiene tests y arquitectura general | `ESTADO_ACADEMY.md`, contratos, QA |
-| CMS | Tiene multiples tests y planes | `ESTADO_CMS.md` canonico si no existe, QA consolidado |
-| Messaging/Community | Tiene tests de isolation | Estado canonico y QA |
-| Agenda/Calendar | Superficie compartida con evangelismo/proyectos | Estado canonico y contratos de eventos |
-| Auth/Admin/RBAC | Plataforma compartida | Contrato raiz de permisos |
+| Proyectos | `docs/ESTADO_PROYECTOS.md`, `PROJECTS_API_CONTRACTS.md`, `PROJECTS_QA_CHECKLIST.md`, `PLAN_VISTAS_EDITABLES_PROYECTOS.md`, `scripts/test_projects_quality.py` | RBAC compacta + smoke frontend profundo |
+| Evangelismo | `ESTADO_EVANGELISMO.md`, `PLAN_EVANGELISMO_CALIDAD.md`, `EVANGELISMO_API_CONTRACTS.md`, `EVANGELISMO_QA_CHECKLIST.md`, `scripts/test_evangelism_quality.py` | ampliar smoke y e2e |
+| CRM | `ESTADO_CRM.md`, `CRM_API_CONTRACTS.md`, `CRM_QA_CHECKLIST.md`, `scripts/test_crm_quality.py` | plan por fases + RBAC |
+| Academy | `ESTADO_ACADEMY.md`, `ACADEMY_API_CONTRACTS.md`, `ACADEMY_QA_CHECKLIST.md`, `scripts/test_academy_quality.py` | e2e + RBAC |
+| CMS | `ESTADO_CMS.md`, `CMS_API_CONTRACTS.md`, `CMS_QA_CHECKLIST.md`, `scripts/test_cms_quality.py`, `PLAN_CMS_100.md` | RBAC + smoke profundo |
+| Messaging/Community | `ESTADO_MESSAGING_COMMUNITY.md`, `MESSAGING_COMMUNITY_API_CONTRACTS.md`, `MESSAGING_COMMUNITY_QA_CHECKLIST.md`, `scripts/test_messaging_quality.py` | RBAC + contrato chat |
+| Agenda/Calendar | `ESTADO_AGENDA.md`, `AGENDA_API_CONTRACTS.md`, `AGENDA_QA_CHECKLIST.md`, `scripts/test_agenda_quality.py` | RBAC + contrato `system/calendar` |
+| Auth/Admin/RBAC | `ESTADO_PLATAFORMA_COMPARTIDA.md`, `PLATAFORMA_AUTH_RBAC_API_UI.md`, `PLATAFORMA_UI_BASE_PROTEGIDA.md`, `PLATAFORMA_MATRIZ_MODULAR.md`, `PLATAFORMA_COMPARTIDA_QA_CHECKLIST.md`, `scripts/test_platform_quality.py` | seguimiento de RBAC por modulo vive en cada handover |
 
 ## 5. Entregables por modulo
 
@@ -145,6 +145,8 @@ Entregables:
 - `scripts/test_crm_quality.py`
 - `scripts/test_academy_quality.py`
 - `scripts/test_cms_quality.py`
+- `scripts/test_messaging_quality.py`
+- `scripts/test_agenda_quality.py`
 - `scripts/test_platform_quality.py`
 
 Regla:
@@ -290,4 +292,3 @@ Resultado esperado:
 
 - CRM y evangelismo quedan al nivel documental de proyectos.
 - Ya existe base tecnica para gates por modulo.
-
