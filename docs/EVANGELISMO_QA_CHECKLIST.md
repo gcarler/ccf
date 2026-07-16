@@ -21,6 +21,13 @@ Confirmar:
 
 ```bash
 cd /root/ccf
+./venv/bin/python scripts/test_evangelism_quality.py
+```
+
+Smoke mínimo bruto:
+
+```bash
+cd /root/ccf
 ./venv/bin/python -m pytest -q -o addopts='' \
   tests/test_evangelism_triple7_flow.py \
   tests/test_evangelism_crm_bridge.py \
@@ -157,4 +164,3 @@ Una tarea de evangelismo queda cerrada cuando:
 - El documento canonico se actualizo si cambio estado/backlog/contrato.
 - Commit incluye solo archivos de la unidad trabajada.
 - Push pasa pre-push.
-
