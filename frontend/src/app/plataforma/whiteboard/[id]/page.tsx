@@ -34,7 +34,6 @@ import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import clsx from "clsx";
 import {
     fetchProjectWhiteboard,
-    saveProjectWhiteboard,
     GridStyle,
     GridSize,
     WHITEBOARD_COLORS,
@@ -42,6 +41,7 @@ import {
 } from "@/lib/whiteboards";
 import { useAuth } from "@/context/AuthContext";
 import { useWhiteboardHistory } from "@/hooks/useWhiteboardHistory";
+import { useWhiteboardSave } from "@/hooks/useWhiteboardSave";
 
 type WhiteboardTool = "select" | "draw";
 
@@ -101,18 +101,19 @@ export default function WhiteboardSessionPage() {
     const projectId = params?.id as string;
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const fabricCanvas = useRef<fabric.Canvas | null>(null);
-    const restoringRef = useRef(false);
-    const saveTimerRef = useRef<number | null>(null);
     const { token } = useAuth();
 
     // History hook for undo/redo
     const history = useWhiteboardHistory({ maxStates: 50 });
-
     const [title, setTitle] = useState("Lienzo colaborativo");
     const [tool, setTool] = useState<WhiteboardTool>("select");
-    const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
     const [layers, setLayers] = useState<LayerRow[]>([]);
     const [selectedObjectProps, setSelectedObjectProps] = useState<Record<string, unknown> | null>(null);
+    const { saveStatus, save, saveNow } = useWhiteboardSave({
+        projectId,
+        token,
+        title,
+    });
 
     // Grid state
     const [gridStyle, setGridStyle] = useState<GridStyle>("dots");
@@ -211,30 +212,6 @@ export default function WhiteboardSessionPage() {
         canvas?.fire("object:modified", saveEvent as unknown as fabric.ModifiedEvent<fabric.TPointerEvent> | undefined);
     }, []);
 
-    const persistCanvas = useCallback((status: "saving" | "saved" = "saving") => {
-        const canvas = fabricCanvas.current;
-        if (!canvas || restoringRef.current || typeof window === "undefined" || !projectId || !token) return;
-
-        if (saveTimerRef.current) {
-            window.clearTimeout(saveTimerRef.current);
-        }
-
-        setSaveStatus(status);
-        saveTimerRef.current = window.setTimeout(async () => {
-            try {
-                await saveProjectWhiteboard(projectId, {
-                    title,
-                    elements_json: JSON.stringify(canvas.toJSON()),
-                }, token);
-                setSaveStatus("saved");
-            } catch (err) {
-                console.error("Error saving whiteboard:", err);
-                setSaveStatus("idle");
-            }
-            window.setTimeout(() => setSaveStatus("idle"), 1600);
-        }, 350);
-    }, [projectId, title, token]);
-
     // ── Load board metadata ──
     useEffect(() => {
         if (!projectId || !token) return;
@@ -285,32 +262,33 @@ export default function WhiteboardSessionPage() {
             try {
                 const board = await fetchProjectWhiteboard(projectId, token);
                 if (board?.elements_json && board.elements_json !== "[]") {
-                    restoringRef.current = true;
+                    history.restoringRef.current = true;
                     canvas.loadFromJSON(JSON.parse(board.elements_json), () => {
                         canvas.renderAll();
                         syncLayers();
-                        restoringRef.current = false;
+                        history.restoringRef.current = false;
                     });
                 } else {
                     addStarterObjects(canvas);
                     syncLayers();
-                    persistCanvas("saved");
+                    saveNow(canvas);
                 }
             } catch {
                 addStarterObjects(canvas);
                 syncLayers();
-                persistCanvas("saved");
+                saveNow(canvas);
             }
         };
         loadSaved();
 
         const handleChanged = () => {
             // Push to history stack (unless restoring)
-            if (!restoringRef.current) {
+            if (!history.restoringRef.current) {
                 history.pushHistory(canvas);
+                syncLayers();
+                save(canvas);
+                return;
             }
-            syncLayers();
-            persistCanvas();
         };
 
         canvas.on("object:added", handleChanged);
@@ -321,13 +299,12 @@ export default function WhiteboardSessionPage() {
         canvas.on("selection:cleared", () => setSelectedObjectProps(null));
 
         return () => {
-            if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
             window.removeEventListener("resize", resizeCanvas);
             canvas.dispose();
             fabricCanvas.current = null;
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [projectId, token]);
+    }, [history, projectId, save, saveNow, token]);
 
     // ── Keyboard shortcuts ──
     useEffect(() => {
@@ -499,8 +476,6 @@ export default function WhiteboardSessionPage() {
         await navigator.clipboard?.writeText(window.location.href);
     };
 
-    const saveNow = () => persistCanvas("saving");
-
     const isTextSelected = selectedObjectProps?.type === "i-text" || selectedObjectProps?.type === "textbox";
     const isObjectSelected = selectedObjectProps !== null;
 
@@ -516,10 +491,12 @@ export default function WhiteboardSessionPage() {
                         <div className="flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5">
                             {saveStatus === "saving" ? (
                                 <Loader2 size={12} className="animate-spin text-[hsl(var(--primary))]" />
+                            ) : saveStatus === "error" ? (
+                                <Cloud size={12} className="text-rose-500" />
                             ) : (
                                 <Cloud size={12} className="text-emerald-500" />
                             )}
-                            {saveStatus === "saving" ? "Guardando" : saveStatus === "saved" ? "Guardado" : "Local"}
+                            {saveStatus === "saving" ? "Guardando" : saveStatus === "saved" ? "Guardado" : saveStatus === "error" ? "Error" : "Local"}
                         </div>
                         <button onClick={copyShareLink} className="p-2 text-[hsl(var(--text-secondary))] transition-all hover:text-[hsl(var(--primary))]" title="Copiar enlace">
                             <Share2 size={18} />
@@ -527,7 +504,7 @@ export default function WhiteboardSessionPage() {
                         <button onClick={exportCanvas} className="p-2 text-[hsl(var(--text-secondary))] transition-all hover:text-[hsl(var(--primary))]" title="Exportar JSON">
                             <Download size={18} />
                         </button>
-                        <button onClick={saveNow} className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
+                        <button onClick={() => fabricCanvas.current && saveNow(fabricCanvas.current)} className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
                             <Save size={14} /> Guardar
                         </button>
                     </div>
