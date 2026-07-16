@@ -33,7 +33,11 @@ export default function WhiteboardPage() {
   }, [token]);
 
   const fetchBoards = async () => {
-    if (!token) return;
+    if (!token) {
+      setBoards([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const data = await fetchProjectWhiteboards(token);
