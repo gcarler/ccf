@@ -78,7 +78,11 @@ export function useWhiteboardSave(
 
   const save = useCallback(
     (canvas: Canvas, immediate = false) => {
-      if (!projectId || !token) return;
+      if (!projectId || !token) {
+        clearTimers();
+        setSaveStatus("idle");
+        return;
+      }
 
       clearTimers();
 
