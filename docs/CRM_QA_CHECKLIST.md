@@ -15,6 +15,7 @@ Confirmar:
 
 - La ruta afectada está identificada.
 - El rol/usuario con el que se prueba está claro.
+- La matriz a usar quedó identificada en `docs/CRM_RBAC_MATRIX.md`.
 - Si el cambio toca `Persona`, auth, permisos, `apiFetch` o componentes UI base, se trata como cambio de plataforma.
 
 ## 2. Smoke mínimo backend
@@ -140,9 +141,11 @@ Validar al menos:
 | GESTOR/EDITOR | acceso operativo según contrato real |
 | MIEMBRO | no debe acceder a administración CRM |
 
-Pendiente formal:
+Notas obligatorias:
 
-- `PEND-RBAC-CRM-001`
+- revisar `docs/CRM_RBAC_MATRIX.md` antes de tocar pipeline o automations
+- recordar que pipeline/kanban no usa el mismo guard que personas/resources
+- si se toca `backend/api/crm/pipelines.py`, validar también helpers sin auth explícita documentados en la matriz
 
 ## 9. Criterio de cierre
 

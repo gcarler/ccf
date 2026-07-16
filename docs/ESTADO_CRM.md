@@ -18,6 +18,7 @@
 ```bash
 cat /root/ccf/docs/ESTADO_CRM.md
 cat /root/ccf/docs/CRM_API_CONTRACTS.md
+cat /root/ccf/docs/CRM_RBAC_MATRIX.md
 cat /root/ccf/docs/CRM_QA_CHECKLIST.md
 cat /root/ccf/docs/PLAN_ARQUITECTURA_MODULAR_CCF.md
 ```
@@ -233,7 +234,7 @@ No existe todavía suite e2e CRM dedicada en `frontend/tests`.
 
 1. **E2E CRM** `[PEND-FRONTEND-E2E-CRM-001]` — crear smoke de rutas críticas.
 2. **Plan de calidad CRM** `[PEND-PLAN-CRM-001]` — crear documento equivalente a `PLAN_EVANGELISMO_CALIDAD.md` si el módulo empieza a cerrarse por fases.
-3. **Matriz RBAC CRM** `[PEND-RBAC-CRM-001]` — documentar permisos por rol para personas, pipeline, counseling, tasks y resources.
+3. **Matriz RBAC CRM** `[PEND-RBAC-CRM-001]` — cerrada el 2026-07-16 en `CRM_RBAC_MATRIX.md`; documenta la matriz real por superficie y deja explícitas las asimetrías entre roles persistidos, fallback runtime y pipeline.
 4. **Contrato de dashboard CRM** `[PEND-DASHBOARD-CONTRACT-001]` — documentar `/dashboard/crm` porque la UI principal depende de ese endpoint.
 5. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-CRM-001]` — extender `scripts/test_crm_quality.py` a pipeline, dashboard y concurrency.
 
@@ -243,18 +244,19 @@ No existe todavía suite e2e CRM dedicada en `frontend/tests`.
 
 1. `docs/ESTADO_CRM.md`
 2. `docs/CRM_API_CONTRACTS.md`
-3. `docs/CRM_QA_CHECKLIST.md`
-4. `backend/api/crm/__init__.py`
-5. `backend/api/crm/personas.py`
-6. `backend/api/crm/persona_relations.py`
-7. `backend/api/crm/pastoral.py`
-8. `backend/api/crm/pipelines.py`
-9. `backend/api/crm/resources.py`
-10. `backend/models_crm.py`
-11. `backend/models_crm_pipeline.py`
-12. `frontend/src/app/plataforma/crm/personas/page.tsx`
-13. `frontend/src/app/plataforma/crm/personas/[id]/page.tsx`
-14. `frontend/src/app/plataforma/crm/pipeline/page.tsx`
+3. `docs/CRM_RBAC_MATRIX.md`
+4. `docs/CRM_QA_CHECKLIST.md`
+5. `backend/api/crm/__init__.py`
+6. `backend/api/crm/personas.py`
+7. `backend/api/crm/persona_relations.py`
+8. `backend/api/crm/pastoral.py`
+9. `backend/api/crm/pipelines.py`
+10. `backend/api/crm/resources.py`
+11. `backend/models_crm.py`
+12. `backend/models_crm_pipeline.py`
+13. `frontend/src/app/plataforma/crm/personas/page.tsx`
+14. `frontend/src/app/plataforma/crm/personas/[id]/page.tsx`
+15. `frontend/src/app/plataforma/crm/pipeline/page.tsx`
 
 ---
 
@@ -282,7 +284,7 @@ No existe todavía suite e2e CRM dedicada en `frontend/tests`.
 | `PARCIAL-SMOKE-CRM-001` | Script canónico existe, cobertura aún parcial | `scripts/test_crm_quality.py` |
 | `PEND-FRONTEND-E2E-CRM-001` | Smoke frontend CRM | `frontend/tests/e2e/crm/` |
 | `PEND-PLAN-CRM-001` | Plan de calidad CRM | `docs/PLAN_CRM_CALIDAD.md` |
-| `PEND-RBAC-CRM-001` | Matriz RBAC CRM | docs + backend permissions |
+| `PEND-RBAC-CRM-001` | ✅ **Hecho 2026-07-16** — matriz RBAC CRM documentada con contrato actual, asimetría `LECTOR` persistido vs fallback runtime y excepción de pipeline/automations. | `docs/CRM_RBAC_MATRIX.md` |
 | `PEND-DASHBOARD-CONTRACT-001` | Contrato del dashboard CRM | `/dashboard/crm` |
 | `PEND-EXPAND-SMOKE-CRM-001` | Ampliar script CRM a pipeline/dashboard/concurrency | `scripts/test_crm_quality.py` |
 
