@@ -61,6 +61,10 @@ export default function ProjectCalendarView({ projectId, projectTitle, tasks, on
         if (!task) return;
         const currentDueDate = task.due_date ? task.due_date.slice(0, 10) : null;
         if (currentDueDate === newDueDate) return;
+        // Capture previous value for targeted rollback on failure (avoid wiping
+        // out concurrent edits from other events between optimistic update and
+        // server roundtrip).
+        const previousDueDate = task.due_date;
         setCalendarTasks((prev) =>
             prev.map((item) =>
                 String(item.id) === String(event.id)
@@ -68,10 +72,15 @@ export default function ProjectCalendarView({ projectId, projectTitle, tasks, on
                     : item
             )
         );
-        // updateTask catches errors internally and rolls back optimistic state
         const updated = await updateTask(String(event.id), { due_date: newDueDate }, { optimistic: true });
         if (!updated) {
-            setCalendarTasks(tasks);
+            setCalendarTasks((prev) =>
+                prev.map((item) =>
+                    String(item.id) === String(event.id)
+                        ? { ...item, due_date: previousDueDate }
+                        : item
+                )
+            );
         }
     };
 

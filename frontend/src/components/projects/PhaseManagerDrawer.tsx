@@ -9,7 +9,7 @@ GripVertical,Plus,
 Save,
 Trash2
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { PhaseDef } from '@/context/ProjectUpdateContext';
 
 interface Props {
@@ -27,9 +27,51 @@ const COLOR_PRESETS = [
 export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Props) {
     const { token, loading: authLoading } = useAuth();
     const { addToast } = useToast();
+    const draftKey = `phaseManagerDraft:${projectId}`;
     const [items, setItems] = useState<PhaseDef[]>(() => phases.map((p, i) => ({ ...p, order_index: i })));
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Restore draft from a previous abandoned session, if any. A draft is only
+    // considered valid if its length matches the current phase count; otherwise
+    // the project's phases have changed underneath us and we silently discard.
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            const raw = window.localStorage.getItem(draftKey);
+            if (!raw) return;
+            const parsed = JSON.parse(raw) as PhaseDef[];
+            if (Array.isArray(parsed) && parsed.length === phases.length) {
+                setItems(parsed);
+            }
+        } catch {
+            /* ignore corrupt draft */
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Persist draft whenever items change so an accidental close / crash
+    // doesn't lose the user's edits.
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            window.localStorage.setItem(draftKey, JSON.stringify(items));
+        } catch {
+            /* quota exceeded — skip silently */
+        }
+    }, [items, draftKey]);
+
+    // Clear the draft on unmount, regardless of the close path (cancel button,
+    // X button, click-outside, Escape). Without this the draft would resurface
+    // on the next session and the user would be confused.
+    useEffect(() => {
+        return () => {
+            try {
+                if (typeof window !== 'undefined') window.localStorage.removeItem(draftKey);
+            } catch { /* ignore */ }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleMoveUp = (index: number) => {
         if (index === 0) return;
@@ -97,17 +139,31 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
                 body: payload,
             });
             onSaved(result);
+            // Persisted successfully → drop the draft so we don't restore it on next open.
+            try {
+                if (typeof window !== 'undefined') window.localStorage.removeItem(draftKey);
+            } catch { /* ignore */ }
             addToast('Fases actualizadas', 'success');
             onClose();
         } catch (err: any) {
-            setError('No se pudieron guardar las fases.');
+            setError('No se pudieron guardar las fases. Ajusta los cambios y vuelve a intentarlo.');
             const detail = typeof err?.detail === 'string'
                 ? err.detail
                 : err?.detail?.detail || err?.detail?.message || (err?.detail ? JSON.stringify(err.detail) : '');
             addToast(detail || 'Error al guardar fases', 'error');
+            // Intentional: keep the drawer open so the user can fix and retry;
+            // the draft is still in localStorage.
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleCancel = () => {
+        // Discard the draft on explicit cancel.
+        try {
+            if (typeof window !== 'undefined') window.localStorage.removeItem(draftKey);
+        } catch { /* ignore */ }
+        onClose();
     };
 
     return (
@@ -185,7 +241,7 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
                 {/* Footer */}
                 <div className="flex items-center justify-end gap-2 px-4 py-2.5 border-t border-[hsl(var(--border))] dark:border-white/5 shrink-0">
                     <button
-                        onClick={onClose}
+                        onClick={handleCancel}
                         className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md transition-all"
                     >
                         Cancelar

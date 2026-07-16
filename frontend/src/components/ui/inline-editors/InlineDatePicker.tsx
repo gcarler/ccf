@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import clsx from "clsx";
 import { AlertCircle, Calendar, ChevronDown, ChevronLeft } from "lucide-react";
@@ -56,6 +56,41 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
   const [viewYear, setViewYear] = useState(safeYear);
   const [viewMonth, setViewMonth] = useState(safeMonth);
 
+  // Tracks the last month/year the user navigated to manually via the chevron
+  // buttons. If ``true``, an external ``value`` change won't clobber the
+  // user's visible month — they explicitly chose it.
+  const userTouchedViewRef = useRef<boolean>(false);
+
+  // Sync the visible calendar month/year whenever the externally-provided value
+  // changes (e.g. after a successful PATCH refresh) — but only if the user
+  // hasn't manually navigated since the picker was opened. This avoids
+  // yanking the calendar back when the user clicks "next month" and a
+  // background refresh arrives.
+  useEffect(() => {
+    if (!value || userTouchedViewRef.current) return;
+    const d = new Date(value + "T00:00:00");
+    if (!isNaN(d.getTime())) {
+      setViewYear(d.getFullYear());
+      setViewMonth(d.getMonth());
+    }
+  }, [value]);
+
+  // Reset the "user touched" flag whenever the popover (re-)opens so that the
+  // first display starts on the value's month.
+  useEffect(() => {
+    if (open) userTouchedViewRef.current = false;
+  }, [open]);
+
+  const stepMonth = (delta: number) => {
+    userTouchedViewRef.current = true;
+    let m = viewMonth + delta;
+    let y = viewYear;
+    if (m > 11) { m = 0; y++; }
+    else if (m < 0) { m = 11; y--; }
+    setViewMonth(m);
+    setViewYear(y);
+  };
+
   const isOverdue = parsed && !isNaN(parsed.getTime()) && parsed < today;
   const isToday2 = parsed && !isNaN(parsed.getTime()) && parsed.toDateString() === today.toDateString();
   const label = parsed && !isNaN(parsed.getTime()) ? formatRelative(parsed) : null;
@@ -106,13 +141,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
         >
           <div className="flex items-center justify-between mb-3">
             <button
-              onClick={() => {
-                let m = viewMonth - 1;
-                let y = viewYear;
-                if (m < 0) { m = 11; y--; }
-                setViewMonth(m);
-                setViewYear(y);
-              }}
+              onClick={() => stepMonth(-1)}
               className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))]"
             >
               <ChevronLeft size={14} />
@@ -121,13 +150,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
               {MONTHS_ES[viewMonth]} {viewYear}
             </span>
             <button
-              onClick={() => {
-                let m = viewMonth + 1;
-                let y = viewYear;
-                if (m > 11) { m = 0; y++; }
-                setViewMonth(m);
-                setViewYear(y);
-              }}
+              onClick={() => stepMonth(1)}
               className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))]"
             >
               <ChevronDown size={14} />

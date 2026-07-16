@@ -46,6 +46,18 @@ function PriorityRenderer({ value }: { value: string }) {
     return <span className={clsx('text-[11px] font-bold uppercase tracking-wide', p.cls)}>⚑ {p.label}</span>;
 }
 
+function AssigneeRenderer({ value }: { value: string | null | undefined }) {
+    if (!value) return <span className="text-[11px] text-[hsl(var(--text-secondary))]">—</span>;
+    return (
+        <span
+            className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
+            title={value}
+        >
+            {String(value).replace(/-/g, '').slice(0, 8)}
+        </span>
+    );
+}
+
 function DateRenderer({ value }: { value: string }) {
     if (!value) return <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs">—</span>;
     return <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))]">{new Date(value).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}</span>;
@@ -69,7 +81,7 @@ export default function ProjectTableView({ tasks }: { tasks: ProjectTaskRecord[]
     const colDefs = useMemo<ColDef[]>(() => [
         { field: 'title',    headerName: 'Tarea',        flex: 2, cellRenderer: TitleRenderer },
         { field: 'status',   headerName: 'Estado',       width: 140, cellRenderer: StatusRenderer },
-        { field: 'assignee_id', headerName: 'Responsable', width: 130, valueFormatter: () => 'Sin asignar', cellStyle: { color: '#94a3b8', fontSize: '11px', fontWeight: '500' } },
+        { field: 'assignee_id', headerName: 'Responsable', width: 130, cellRenderer: AssigneeRenderer },
         { field: 'due_date', headerName: 'Entrega',      width: 120, cellRenderer: DateRenderer },
         { field: 'priority', headerName: 'Prioridad',    width: 120, cellRenderer: PriorityRenderer },
     ], []);

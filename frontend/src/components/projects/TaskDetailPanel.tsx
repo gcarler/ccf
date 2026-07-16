@@ -319,22 +319,36 @@ export default function TaskDetailPanel({
     const resizing = useRef(false);
     const startX   = useRef(0);
     const startW   = useRef(0);
+    // Mirror of the latest ``width`` value. The drag listeners are attached
+    // once at mousedown, so their ``onUp``/``onMove`` closures cannot rely on
+    // React state directly — they read the most current width from this ref.
+    const widthRef = useRef<number>(width);
+    useEffect(() => { widthRef.current = width; }, [width]);
 
+    /**
+     * Resize handle: attach ``mousemove``/``mouseup`` listeners directly
+     * inside ``onMouseDown`` (one attachment per drag) and tear them down
+     * inside the same handlers. This avoids the previous
+     * ``useEffect([width])`` churn that re-bound document listeners on every
+     * state update during a drag, AND the stale-closure bug that persisted
+     * the pre-drag width to ``localStorage`` instead of the dragged-to value.
+     */
     const onMouseDown = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         resizing.current = true;
         startX.current = e.clientX;
-        startW.current = width;
+        // Use the ref so the starting width is the freshest value (not a stale
+        // snapshot of the React state captured by this useCallback at mount).
+        startW.current = widthRef.current;
         document.body.style.cursor = 'ew-resize';
         document.body.style.userSelect = 'none';
-    }, [width]);
 
-    useEffect(() => {
-        const onMove = (e: MouseEvent) => {
+        const onMove = (moveEvt: MouseEvent) => {
             if (!resizing.current) return;
-            const delta = startX.current - e.clientX; // dragging left = wider
+            const delta = startX.current - moveEvt.clientX; // dragging left = wider
             const maxW  = window.innerWidth * MAX_RATIO;
             const newW  = Math.min(maxW, Math.max(MIN_WIDTH, startW.current + delta));
+            widthRef.current = newW;
             setWidth(newW);
         };
         const onUp = () => {
@@ -342,16 +356,20 @@ export default function TaskDetailPanel({
                 resizing.current = false;
                 document.body.style.cursor = '';
                 document.body.style.userSelect = '';
-                localStorage.setItem('taskDetailPanelWidth', String(width));
+                // Persist the FINAL width from the ref, not the pre-drag value.
+                localStorage.setItem('taskDetailPanelWidth', String(widthRef.current));
             }
-        };
-        document.addEventListener('mousemove', onMove);
-        document.addEventListener('mouseup', onUp);
-        return () => {
             document.removeEventListener('mousemove', onMove);
             document.removeEventListener('mouseup', onUp);
         };
-    }, [width]);
+        // Safety net: if the user releases outside the window or switches tabs,
+        // ``mouseup`` is never received and listeners leak. ``blur`` (once)
+        // flushes the same teardown.
+        const onBlur = () => onUp();
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        window.addEventListener('blur', onBlur, { once: true });
+    }, []);
 
     // ── Form state ────────────────────────────────────────────────
     const [title, setTitle]         = useState(task?.title ?? '');
@@ -382,7 +400,7 @@ export default function TaskDetailPanel({
     }, [authLoading, token]);
 
     // ── Labels / Etiquetas ─────────────────────────────────────────
-    const [labels, setLabels]         = useState<string[]>((task as any)?.labels ?? []);
+    const [labels, setLabels]         = useState<string[]>(task?.labels ?? []);
     const [labelPopoverOpen, setLabelPopoverOpen] = useState(false);
     const [newLabelInput, setNewLabelInput] = useState('');
     const labelInputRef = useRef<HTMLInputElement>(null);
@@ -554,9 +572,9 @@ export default function TaskDetailPanel({
     useEffect(() => {
         if (task) {
             setTitle(task.title ?? '');
-            setDesc((task as any).description ?? '');
+            setDesc(task.description ?? '');
             // Load activities from task subtasks
-            const subs = (task as any).subtasks || [];
+            const subs = task.subtasks || [];
             setActivities(subs.map((s: any) => ({
                 id: s.id,
                 title: s.title,
@@ -569,7 +587,7 @@ export default function TaskDetailPanel({
             })));
             setNewActivityTitle('');
             // Sync labels from task
-            setLabels((task as any).labels ?? []);
+            setLabels(task.labels ?? []);
             setSupplies(task.supplies ?? []);
             setNewSupplyName('');
             setNewSupplyQuantity(1);
@@ -589,7 +607,7 @@ export default function TaskDetailPanel({
             onUpdate?.({ ...task, ...updated });
         } catch {
             setError('No se pudieron guardar los cambios de la tarea.');
-            onUpdate?.({ ...task, title, description: description as any });
+            onUpdate?.({ ...task, title, description });
         } finally {
             setSaving(false);
         }
@@ -733,7 +751,7 @@ export default function TaskDetailPanel({
 
     const handleAssigneeChange = async (newAssigneeId: string | null) => {
         if (!task || !requireAuth('Debes iniciar sesión para reasignar la tarea.')) return;
-        const updated = { ...task, assignee_id: newAssigneeId as any };
+        const updated = { ...task, assignee_id: newAssigneeId };
         onUpdate?.(updated);
         try {
             await apiFetch(`/projects/tasks/${task.id}`, {

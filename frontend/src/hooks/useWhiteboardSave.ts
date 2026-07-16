@@ -28,6 +28,10 @@ export function useWhiteboardSave(
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const statusResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Set when the consumer unmounts (closing the whiteboard tab). Used by
+  // ``persistToApi`` to avoid setState-after-unmount warnings if a save lands
+  // while the panel is being torn down.
+  const canceledRef = useRef<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
 
   const clearTimers = useCallback(() => {
@@ -60,14 +64,18 @@ export function useWhiteboardSave(
             elements_json: JSON.stringify(canvas.toJSON()),
           },
         });
+        if (canceledRef.current) return;
         setSaveStatus("saved");
         statusResetTimerRef.current = setTimeout(() => {
+          if (canceledRef.current) return;
           setSaveStatus("idle");
           statusResetTimerRef.current = null;
         }, 2000);
       } catch {
+        if (canceledRef.current) return;
         setSaveStatus("error");
         statusResetTimerRef.current = setTimeout(() => {
+          if (canceledRef.current) return;
           setSaveStatus("idle");
           statusResetTimerRef.current = null;
         }, 3000);
@@ -96,7 +104,7 @@ export function useWhiteboardSave(
         persistToApi(canvas);
       }, debounceMs);
     },
-    [projectId, token, persistToApi, debounceMs]
+    [projectId, token, persistToApi, debounceMs, clearTimers]
   );
 
   const saveNow = useCallback(
@@ -108,6 +116,7 @@ export function useWhiteboardSave(
 
   useEffect(() => {
     return () => {
+      canceledRef.current = true;
       clearTimers();
     };
   }, [clearTimers]);

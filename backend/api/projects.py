@@ -1370,6 +1370,11 @@ def update_project_task(
     _normalize_task_payload(update_data)
     if "status" in update_data:
         _assert_status_in_project_phases(db, project_id, update_data["status"])
+    # Validate that the new assignee (if any) belongs to the actor's sede.
+    # Without this, an actor in sede A could inject a persona UUID from sede B
+    # via PATCH body {} and assign tasks across tenant boundaries.
+    if "assignee_id" in update_data:
+        _assert_assignee_in_sede(db, update_data.get("assignee_id"), user_sede)
     previous_assignee_id = getattr(task, "assignee_id", None)
     changed_fields = []
 

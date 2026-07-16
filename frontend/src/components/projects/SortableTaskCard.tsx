@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { MessageSquare, GripVertical, MoreHorizontal, Trash2, Eye } from 'lucide-react';
 import { InlinePriorityPicker, InlineDatePicker, InlineUserPicker, InlineTextInput } from '@/components/ui/inline-editors';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
 import clsx from 'clsx';
 import { PRIORITY_LABELS } from '@/lib/projects/constants';
 import type { ProjectTaskRecord } from '@/types/projects';
@@ -42,6 +43,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
     };
 
     const [menuOpen, setMenuOpen] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState<ConfirmActionState>(null);
     const priority = PRIORITY_CONFIG[task.priority?.toLowerCase()] || PRIORITY_CONFIG.medium;
 
     const dueDateStr = task.due_date || undefined;
@@ -49,10 +51,17 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (window.confirm(`¿Eliminar la tarea "${task.title}"? Esta acción no se puede deshacer.`)) {
-            onDelete?.(String(task.id));
-        }
         setMenuOpen(false);
+        const label = task.title || 'esta tarea';
+        setConfirmDelete({
+            title: 'Eliminar tarea',
+            description: `¿Eliminar la tarea "${label}"? Esta acción no se puede deshacer.`,
+            confirmLabel: 'Eliminar',
+            destructive: true,
+            onConfirm: async () => {
+                await Promise.resolve(onDelete?.(String(task.id)));
+            },
+        });
     };
 
     return (
@@ -163,6 +172,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                     </div>
                 </div>
             </div>
+            <ConfirmActionDrawer action={confirmDelete} onClose={() => setConfirmDelete(null)} />
         </div>
     );
 }
