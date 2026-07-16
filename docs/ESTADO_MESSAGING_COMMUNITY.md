@@ -17,6 +17,7 @@
 ```bash
 cat /root/ccf/docs/ESTADO_MESSAGING_COMMUNITY.md
 cat /root/ccf/docs/MESSAGING_COMMUNITY_API_CONTRACTS.md
+cat /root/ccf/docs/MESSAGING_COMMUNITY_RBAC_MATRIX.md
 cat /root/ccf/docs/MESSAGING_COMMUNITY_QA_CHECKLIST.md
 cat /root/ccf/docs/PLAN_ARQUITECTURA_MODULAR_CCF.md
 ```
@@ -94,7 +95,7 @@ cd /root/ccf
 ## 9. Pendientes formales
 
 1. **Script canonico del modulo** `[PEND-MESSAGING-SMOKE-001]` — cerrada el 2026-07-16 con `scripts/test_messaging_quality.py`; agrupa inbox/notificaciones, isolation/ownership y chat directo.
-2. **Matriz RBAC por superficie** `[PEND-MESSAGING-RBAC-001]` — documentar admin / gestor / editor / miembro sobre inbox, chat, community publica y community admin.
+2. **Matriz RBAC por superficie** `[PEND-MESSAGING-RBAC-001]` — cerrada el 2026-07-16 en `MESSAGING_COMMUNITY_RBAC_MATRIX.md`; documenta la diferencia entre notifications/chat, inbox interno gateado por `academy:manage`, community pública y mutaciones community.
 3. **Contrato de chat directo** `[PEND-CHAT-CONTRACT-001]` — endurecer y cerrar contrato por rol y paginacion, aunque la superficie ya quedó mapeada.
 
 ## 10. Archivos a revisar primero si falla
@@ -103,6 +104,7 @@ cd /root/ccf
 2. `backend/api/chat.py`
 3. `backend/api/community.py`
 4. `backend/services/messaging.py`
-5. `frontend/src/app/plataforma/community/page.tsx`
-6. `frontend/src/app/plataforma/inbox/messages/page.tsx`
-7. `frontend/src/app/plataforma/messages/page.tsx`
+5. `docs/MESSAGING_COMMUNITY_RBAC_MATRIX.md`
+6. `frontend/src/app/plataforma/community/page.tsx`
+7. `frontend/src/app/plataforma/inbox/messages/page.tsx`
+8. `frontend/src/app/plataforma/messages/page.tsx`
