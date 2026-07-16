@@ -118,6 +118,7 @@ export function useWhiteboardCanvas(
         const zoomDelta = delta * 0.1;
         zoomRef.current = Math.min(400, Math.max(25, zoomRef.current + zoomDelta));
         canvas.setZoom(zoomRef.current / 100);
+        setZoomState(zoomRef.current);
         canvas.renderAll();
 
         lastDistance = distance;
