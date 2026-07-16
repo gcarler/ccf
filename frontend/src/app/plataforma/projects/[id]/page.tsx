@@ -42,7 +42,7 @@ const PROJECT_DETAIL_VIEWS: ViewType[] = ['dashboard', 'table', 'list', 'board',
 export default function ProjectDetailPage() {
     const params = useParams();
     const id = params?.id as string;
-    const { token, loading: authLoading } = useAuth();
+    const { token, loading: authLoading, user, hasPermission } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentViewParam = searchParams?.get('view');
@@ -68,6 +68,7 @@ export default function ProjectDetailPage() {
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
     const [error, setError] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
+    const canDeleteProject = user?.role === 'admin' || user?.role === 'administrador' || hasPermission('system:config');
 
     const loadProject = useCallback(async () => {
         if (!id) {
@@ -117,8 +118,8 @@ export default function ProjectDetailPage() {
         if (task) setSelectedTask(task);
     }, [searchParams, tasks]);
 
-    const handleCreateTask = useCallback(async (data: { title: string; description?: string | null; priority: string; status: string; assignee_id?: string | null; due_date?: string }) => {
-        if (!token || !id) return;
+    const handleCreateTask = useCallback(async (data: { title: string; description?: string | null; priority: string; status: string; assignee_id?: string | null; due_date?: string | null }) => {
+        if (!token || !id) return false;
         try {
             await apiFetch(`/projects/${id}/tasks`, {
                 method: 'POST',
@@ -128,8 +129,10 @@ export default function ProjectDetailPage() {
             toast.success('Tarea creada');
             setShowTaskModal(false);
             loadProject();
+            return true;
         } catch (err) {
             toast.error('Error al crear tarea');
+            return false;
         }
     }, [id, token, loadProject]);
 
@@ -315,6 +318,7 @@ export default function ProjectDetailPage() {
 
     if (loading) {
         return (
+            <ProjectUpdateProvider value={contextValue}>
             <div className="flex flex-col h-full bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))]">
                 <div className="p-4 space-y-4 animate-pulse">
                     <div className="h-10 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg w-1/3" />
@@ -330,11 +334,13 @@ export default function ProjectDetailPage() {
                     </div>
                 </div>
             </div>
+            </ProjectUpdateProvider>
         );
     }
 
     if (error) {
         return (
+            <ProjectUpdateProvider value={contextValue}>
             <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
                 <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
                 <button
@@ -344,6 +350,7 @@ export default function ProjectDetailPage() {
                     Reintentar
                 </button>
             </div>
+            </ProjectUpdateProvider>
         );
     }
 
@@ -375,9 +382,11 @@ export default function ProjectDetailPage() {
                         <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-amber-600 active:scale-95 transition-all flex items-center gap-2">
                             <Edit3 size={14} /> Editar
                         </button>
-                        <button onClick={handleDeleteProject} className="px-3 py-1.5 bg-rose-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-rose-600 active:scale-95 transition-all flex items-center gap-2">
-                            <Trash2 size={14} /> Eliminar
-                        </button>
+                        {canDeleteProject && (
+                            <button onClick={handleDeleteProject} className="px-3 py-1.5 bg-rose-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-rose-600 active:scale-95 transition-all flex items-center gap-2">
+                                <Trash2 size={14} /> Eliminar
+                            </button>
+                        )}
                     </div>
                 }
             />
@@ -391,6 +400,8 @@ export default function ProjectDetailPage() {
                                         project={project}
                                         tasks={tasks}
                                         onUpdate={handleUpdateProject}
+                                        onOpenTask={handleOpenTask}
+                                        onMilestoneToggle={handleToggleMilestone}
                                         showMilestones={false}
                                     />
                                 )}
@@ -520,10 +531,14 @@ export default function ProjectDetailPage() {
                         {viewType === 'list' && (
                             <div className="w-full h-[calc(100vh-8rem)]">
                                 <ProjectListView
+                                    projectId={id}
                                     tasks={tasks}
                                     onOpenTask={handleOpenTask}
                                     onAddTask={(status) => handleCreateTask({ title: '', description: '', priority: 'medium', status })}
+                                    onTasksChange={setTasks}
                                     onTaskUpdate={async (taskId, patch) => {
+                                        // The shared hook already persists changes when projectId is provided.
+                                        // This callback is kept for backward compatibility / side effects.
                                         if (!token) return;
                                         try {
                                             await apiFetch(`/projects/tasks/${taskId}`, {
@@ -549,32 +564,6 @@ export default function ProjectDetailPage() {
                                     onTasksChange={setTasks}
                                     onOpenTask={handleOpenTask}
                                     onAddTask={() => setShowTaskModal(true)}
-                                    onTaskUpdate={async (taskId, patch) => {
-                                        if (!token) return;
-                                        try {
-                                            await apiFetch(`/projects/tasks/${taskId}`, {
-                                                method: 'PATCH',
-                                                token,
-                                                body: patch,
-                                            });
-                                            loadProject();
-                                        } catch {
-                                            toast.error('Error al actualizar tarea');
-                                        }
-                                    }}
-                                    onTaskDelete={async (taskId) => {
-                                        if (!token) return;
-                                        try {
-                                            await apiFetch(`/projects/tasks/${taskId}`, {
-                                                method: 'DELETE',
-                                                token,
-                                            });
-                                            toast.success('Tarea eliminada');
-                                            loadProject();
-                                        } catch {
-                                            toast.error('Error al eliminar tarea');
-                                        }
-                                    }}
                                 />
                             </div>
                         )}

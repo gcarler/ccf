@@ -134,7 +134,7 @@ class ProjectUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
-    owner_id: Optional[str] = None
+    owner_id: Optional[UUIDStr] = None
     color: Optional[str] = None
     icon: Optional[str] = None
 
