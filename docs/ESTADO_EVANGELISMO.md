@@ -19,6 +19,7 @@
 cat /root/ccf/docs/ESTADO_EVANGELISMO.md
 cat /root/ccf/docs/PLAN_EVANGELISMO_CALIDAD.md
 cat /root/ccf/docs/EVANGELISMO_API_CONTRACTS.md
+cat /root/ccf/docs/EVANGELISMO_RBAC_MATRIX.md
 cat /root/ccf/docs/EVANGELISMO_QA_CHECKLIST.md
 cat /root/ccf/docs/AUDITORIA_FLUJO_EVANGELISMO_CCF.md
 ```
@@ -49,7 +50,7 @@ Conteo actual:
 ## 4. Listar backlog completo (Parcial + Pendiente) por ID
 
 ```bash
-grep -nE "PARCIAL-|PEND-" /root/ccf/docs/ESTADO_EVANGELISMO.md
+grep -nE '^\d+\. \*\*.*\[(PARCIAL|PEND)-|^\| `(PARCIAL|PEND)-' /root/ccf/docs/ESTADO_EVANGELISMO.md
 ```
 
 ## 5. Smoke test
@@ -106,6 +107,8 @@ npx playwright test tests/e2e/evangelism/sessions-detail.spec.ts tests/e2e/evang
 
 **Estado global:** El modulo tiene base funcional y flujo canonico auditado. Quedan riesgos vivos en cobertura amplia de `test_evangelism_module_coverage.py`, contratos mixtos historicos y permisos/401 visibles en pantallas cuando el token o acceso del usuario no coincide con el modulo.
 
+**Actualizacion documental 2026-07-16:** `PEND-RBAC-EVANGELISM-001` queda cerrada con `docs/EVANGELISMO_RBAC_MATRIX.md`. La matriz confirma que el modulo no esta homogeneamente migrado a `evangelism:*`.
+
 ---
 
 ## 7. Convenciones del modulo
@@ -113,7 +116,7 @@ npx playwright test tests/e2e/evangelism/sessions-detail.spec.ts tests/e2e/evang
 - **Ruta plataforma:** `/plataforma/evangelism`.
 - **Ruta API:** `/api/evangelism`.
 - **Cliente frontend:** usar `apiFetch('/evangelism/...', { token })`; no construir URLs absolutas ni saltar a `/api` manualmente en pantallas plataforma.
-- **Auth y permisos:** los endpoints usan `require_module_access("evangelism", "...")`. Los 401/403 se investigan en sesion/permisos antes de cambiar contratos.
+- **Auth y permisos:** evangelismo no usa un solo guard uniforme. Conviven `require_pastor_or_admin`, `require_active_user`, checks contextuales por grupo/persona y algunos endpoints con `require_module_access("evangelism", "...")`. Ver `docs/EVANGELISMO_RBAC_MATRIX.md`.
 - **Identidad de personas:** todo participante o visitante debe apuntar a `personas.id` UUID.
 - **Sede isolation:** estrategias y grupos tienen `sede_id`; sesiones y asistencias heredan scope por grupo.
 - **Soft delete:** no asumir hard delete en grupos, sesiones o registros operativos. Revisar `deleted_at` en lecturas.
@@ -257,9 +260,12 @@ Componentes compartidos:
 1. **Descomposicion de estrategia** `[PEND-STRATEGY-DECOMPOSE-001]` — extraer hooks/componentes desde `strategies/[id]/page.tsx` y cubrirlos con prueba enfocada.
 2. **Contrato unico de eventos** `[PEND-EVENTS-CONTRACT-001]` — cerrar response schemas y serializacion ORM -> dict en eventos/roles/asistencia.
 3. **Contrato unico de sesiones FARO/groups** `[PEND-SESSIONS-CONTRACT-001]` — consolidar aliases `/grupos`, `/groups`, posibles rutas FARO y respuestas.
-4. **RBAC documentado por rol** `[PEND-RBAC-EVANGELISM-001]` — documentar ADMIN / GESTOR / EDITOR / MIEMBRO sobre estrategias, grupos, sesiones, asistencia, reportes y eventos.
-5. **Busqueda remota de personas** `[PEND-PERSONAS-SEARCH-001]` — evolucionar asistencia a busqueda remota con debounce para volumen alto.
-6. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-EVANGELISM-001]` — extender `scripts/test_evangelism_quality.py` a frontend y cobertura más profunda.
+4. **Busqueda remota de personas** `[PEND-PERSONAS-SEARCH-001]` — evolucionar asistencia a busqueda remota con debounce para volumen alto.
+5. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-EVANGELISM-001]` — extender `scripts/test_evangelism_quality.py` a frontend y cobertura más profunda.
+
+### Cerrado recientemente
+
+1. **RBAC documentado por rol** `[PEND-RBAC-EVANGELISM-001]` — cerrada el `2026-07-16` con [EVANGELISMO_RBAC_MATRIX.md](/root/ccf/docs/EVANGELISMO_RBAC_MATRIX.md). Se conserva aqui solo como referencia historica del cierre mas reciente.
 
 ---
 
@@ -309,12 +315,12 @@ Componentes compartidos:
 | `PEND-STRATEGY-DECOMPOSE-001` | Separar page de estrategia | frontend evangelism strategy detail |
 | `PEND-EVENTS-CONTRACT-001` | Contrato unico eventos | `backend/api/evangelism_events/` |
 | `PEND-SESSIONS-CONTRACT-001` | Contrato unico sesiones/aliases | `backend/api/evangelism_grupos/grupos_sesiones.py` |
-| `PEND-RBAC-EVANGELISM-001` | RBAC por rol documentado | backend permissions + tests |
 | `PEND-PERSONAS-SEARCH-001` | Busqueda remota personas asistencia | frontend + `/evangelism/personas/search` |
 | `PEND-EXPAND-SMOKE-EVANGELISM-001` | Ampliar script Evangelismo | `scripts/test_evangelism_quality.py` |
+| `PEND-RBAC-EVANGELISM-001` | Cerrada el 2026-07-16. Se mantiene solo como referencia historica del cierre documental RBAC. | `docs/EVANGELISMO_RBAC_MATRIX.md` |
 
 Busqueda rapida:
 
 ```bash
-grep -nE "PARCIAL-|PEND-" /root/ccf/docs/ESTADO_EVANGELISMO.md
+grep -nE '^\d+\. \*\*.*\[(PARCIAL|PEND)-|^\| `(PARCIAL|PEND)-' /root/ccf/docs/ESTADO_EVANGELISMO.md
 ```
