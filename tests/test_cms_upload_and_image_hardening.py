@@ -27,7 +27,8 @@ import io
 import uuid as _uuid
 
 from backend import models
-from tests.conftest import auth_headers, seed_admin
+from backend.management.seed_user_permissions import seed_rol_plataforma
+from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
 
 def _seed_two_sedes(db_session):
@@ -43,6 +44,17 @@ def _seed_two_sedes(db_session):
 
 def _auth_headers(client, email):
     return auth_headers(client, email=email)
+
+
+def _seed_lector_same_sede(db_session, email, sede_id):
+    seed_rol_plataforma(db_session)
+    return seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email=email,
+        password="testpass123",
+        sede_id=sede_id,
+    )
 
 
 def _make_upload_file(filename, content, content_type):
@@ -350,6 +362,34 @@ class TestUploadCmsMediaHardening:
         assert resp.status_code == 400, (
             f"Oversize permitido: {resp.status_code} {resp.text}"
         )
+
+    def test_lector_cannot_upload_media(self, client, db_session, monkeypatch):
+        save_calls = []
+        self._stub_storage_save(monkeypatch, save_calls)
+
+        (_, _, sede_a), _ = _seed_two_sedes(db_session)
+        _seed_lector_same_sede(
+            db_session,
+            "cmsUploadLector@example.com",
+            sede_a.id,
+        )
+        headers = _auth_headers(client, "cmsUploadLector@example.com")
+
+        resp = client.post(
+            "/api/cms/media/upload",
+            headers=headers,
+            data={"section": "hero", "alt_text": "lector no puede subir"},
+            files=[
+                (
+                    "file",
+                    _make_upload_file("logo.png", self.PNG_BYTES, "image/png"),
+                )
+            ],
+        )
+        assert resp.status_code == 403, (
+            f"Leak RBAC: LECTOR pudo subir media v1: {resp.status_code} {resp.text}"
+        )
+        assert save_calls == []
 
 
 # (B) /images/optimize — cross-sede IDOR

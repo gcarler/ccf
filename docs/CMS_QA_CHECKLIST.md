@@ -40,6 +40,8 @@ cd /root/ccf
 ```bash
 cd /root/ccf/frontend
 npx vitest run tests/cms-components.test.ts tests/cms-public-fetch.test.ts
+npm run test:e2e:cms
+npm run test:e2e:cms:deep
 npx playwright test tests/e2e/cms-public-contract.spec.ts
 ```
 
@@ -80,7 +82,7 @@ No cerrar tarea si aparece:
 ### Páginas
 
 - listar página
-- editar o publicar
+- crear/archivar desde pages management
 - validar preview
 - validar publicado
 
@@ -93,7 +95,7 @@ No cerrar tarea si aparece:
 
 | Rol | Esperado |
 |---|---|
-| ADMIN | acceso completo |
+| ADMINISTRADOR | acceso completo |
 | GESTOR/EDITOR | mutación en CMS v2 según permisos efectivos |
 | LECTOR | solo lectura deseada; revisar deriva real de CMS v1 |
 
@@ -112,3 +114,15 @@ Una tarea de CMS queda cerrada cuando:
 - preview y publicado se validaron por separado cuando aplica
 - si cambia contrato, `CMS_API_CONTRACTS.md` se actualiza
 - si cambia estado/backlog, `ESTADO_CMS.md` se actualiza
+
+## 10. Pendientes QA / backlog
+
+- `PEND-EXPAND-SMOKE-CMS-001`
+- `PEND-VISUAL-CMS-001`
+- `PEND-RBAC-ENTERPRISE-CMS-001`
+
+## 11. Cerrado recientemente
+
+- `DONE-RBAC-V1-HARDENING-CMS-001` cerrado el 2026-07-16 con endurecimiento de mutaciones CMS v1 a `cms:edit` y cobertura focal para `LECTOR`
+- `DONE-FRONTEND-E2E-CMS-001` cerrado el 2026-07-16 con `frontend/tests/e2e/cms/smoke.spec.ts`
+- `DONE-FRONTEND-DEEP-CMS-001` cerrado el 2026-07-16 con `frontend/tests/e2e/cms/pages-preview.spec.ts`

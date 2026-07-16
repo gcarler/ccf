@@ -20,6 +20,7 @@ cat /root/ccf/docs/ESTADO_CMS.md
 cat /root/ccf/docs/CMS_API_CONTRACTS.md
 cat /root/ccf/docs/CMS_RBAC_MATRIX.md
 cat /root/ccf/docs/CMS_QA_CHECKLIST.md
+cat /root/ccf/docs/PLAN_CMS_CALIDAD.md
 cat /root/ccf/docs/PLAN_CMS_100.md
 cat /root/ccf/docs/AUDITORIA_FORENSE_CMS.md
 cat /root/ccf/docs/PLAN_ARQUITECTURA_MODULAR_CCF.md
@@ -82,9 +83,10 @@ npx vitest run tests/cms-components.test.ts tests/cms-public-fetch.test.ts
 npx playwright test tests/e2e/cms-public-contract.spec.ts
 ```
 
-Pendiente del plan modular:
+Plan operativo vigente:
 
-- plan de calidad CMS por fases ya existe en `docs/PLAN_CMS_100.md`, pero falta integrarlo del todo al gate modular
+- `docs/PLAN_CMS_CALIDAD.md` es el subplan canónico del módulo dentro de la arquitectura modular.
+- `docs/PLAN_CMS_100.md` se conserva como plan de auditoría profunda y referencia histórica complementaria.
 
 ---
 
@@ -103,7 +105,7 @@ Pendiente del plan modular:
 | Tests backend | `tests/test_cms_*.py`, `tests/test_enterprise_cms.py` | dominio, isolation, upload, metrics, SEO, scheduling, v2 coverage |
 | Tests frontend | `frontend/tests/cms-components.test.ts`, `frontend/tests/cms-public-fetch.test.ts`, `frontend/tests/e2e/cms-public-contract.spec.ts` | contrato público y componentes |
 
-**Estado global:** CMS tiene gran superficie técnica y mucha evidencia previa, pero no tenía handover modular unificado ni comando canónico único de validación. Además es uno de los módulos con más mezcla entre admin, preview y render público.
+**Estado global:** CMS tiene gran superficie técnica y mucha evidencia previa. Ya cuenta con handover modular, smoke dedicado y cobertura profunda de `pages` + `preview`; el trabajo abierto se concentra en builder, checklist visual preview/publicado y cobertura enterprise más profunda.
 
 ---
 
@@ -216,6 +218,8 @@ Frontend test existente:
 - `frontend/tests/cms-components.test.ts`
 - `frontend/tests/cms-public-fetch.test.ts`
 - `frontend/tests/e2e/cms-public-contract.spec.ts`
+- `frontend/tests/e2e/cms/smoke.spec.ts`
+- `frontend/tests/e2e/cms/pages-preview.spec.ts`
 
 ---
 
@@ -235,14 +239,21 @@ Frontend test existente:
 1. **Preview vs publicado vs público** `[PARCIAL-PREVIEW-PUBLIC-001]` — el módulo ya lo reconoce como riesgo principal; siempre validar por separado.
 2. **Builder/editor CMS** `[PARCIAL-BUILDER-001]` — surface amplia y sensible a contratos de sections y global blocks.
 3. **Dashboard CMS** `[PARCIAL-DASHBOARD-CMS-001]` — operativo, pero depende de varios endpoints agregados.
-4. **Gate modular CMS** `[PARCIAL-GATE-CMS-001]` — ya hay `PLAN_CMS_100`, pero no estaba integrado al esquema modular unificado hasta ahora.
+4. **Gate modular CMS** `[PARCIAL-GATE-CMS-001]` — ya existe plan canónico (`PLAN_CMS_CALIDAD.md`), smoke base y coverage profunda de `pages` + `preview`; falta endurecer el gate modular con checklist visual y mayor profundidad enterprise.
 
 ### Pendiente
 
-1. **Plan de calidad canónico enlazado** `[PEND-PLAN-CMS-LINK-001]` — alinear `PLAN_CMS_100.md` como subplan oficial dentro del gate modular.
-2. **Matriz RBAC CMS** `[PEND-RBAC-CMS-001]` — cerrada el 2026-07-16 en `CMS_RBAC_MATRIX.md`; documenta v1, v2 y enterprise por separado, incluyendo la subprotección actual de CMS v1.
-3. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-CMS-001]` — agregar suites v2 profundas y enterprise al script único si el cambio lo requiere.
-4. **Checklist visual preview/publicado** `[PEND-VISUAL-CMS-001]` — institucionalizar comparación preview/publicado por ruta crítica.
+1. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-CMS-001]` — continuar desde `frontend/tests/e2e/cms/pages-preview.spec.ts` hacia builder, versions y enterprise cuando el cambio lo requiera.
+2. **Checklist visual preview/publicado** `[PEND-VISUAL-CMS-001]` — institucionalizar comparación preview/publicado por ruta crítica.
+3. **Expresar RBAC explícito en Enterprise CMS** `[PEND-RBAC-ENTERPRISE-CMS-001]` — reemplazar la autorización difusa basada solo en `get_current_user` por guards `cms:*` homogéneos en el borde del router donde corresponda.
+
+### Cerrado recientemente
+
+1. **Plan de calidad canónico enlazado** `[DONE-PLAN-CMS-LINK-001]` — cerrado el 2026-07-16; `docs/PLAN_CMS_CALIDAD.md` queda como subplan oficial del módulo dentro de la matriz modular y este handover, con `docs/PLAN_CMS_100.md` preservado como referencia de auditoría profunda.
+2. **Matriz RBAC CMS** `[DONE-RBAC-CMS-001]` — cerrada el 2026-07-16 en `CMS_RBAC_MATRIX.md`; documenta v1, v2 y enterprise por separado, incluyendo la subprotección actual de CMS v1.
+3. **Smoke frontend CMS** `[DONE-FRONTEND-E2E-CMS-001]` — cerrado el 2026-07-16 con `frontend/tests/e2e/cms/smoke.spec.ts`; cubre dashboard, pages y media con guard de consola/API/assets.
+4. **Smoke profundo CMS pages/preview** `[DONE-FRONTEND-DEEP-CMS-001]` — cerrado el 2026-07-16 con `frontend/tests/e2e/cms/pages-preview.spec.ts`; valida gestión de páginas, archivado, schedule views y preview draft con runner administrado.
+5. **Hardening RBAC CMS v1** `[DONE-RBAC-V1-HARDENING-CMS-001]` — cerrado el 2026-07-16; las mutaciones administrativas de `backend/api/cms.py` ahora exigen `cms:edit`, mientras las lecturas administrativas permanecen en `cms:read`. Cobertura focal agregada para bloquear creación de testimonials, announcements y uploads de media por `LECTOR`.
 
 ---
 
@@ -252,17 +263,18 @@ Frontend test existente:
 2. `docs/CMS_API_CONTRACTS.md`
 3. `docs/CMS_RBAC_MATRIX.md`
 4. `docs/CMS_QA_CHECKLIST.md`
-5. `docs/PLAN_CMS_100.md`
-6. `docs/AUDITORIA_FORENSE_CMS.md`
-7. `backend/api/cms.py`
-8. `backend/api/cms_v2.py`
-9. `backend/api/enterprise_cms.py`
-10. `backend/api/_cms_helpers/_shared.py`
-11. `backend/crud/cms.py`
-12. `backend/models_cms.py`
-13. `frontend/src/app/plataforma/cms/page.tsx`
-14. `frontend/src/app/plataforma/cms/builder/page.tsx`
-15. `frontend/tests/e2e/cms-public-contract.spec.ts`
+5. `docs/PLAN_CMS_CALIDAD.md`
+6. `docs/PLAN_CMS_100.md`
+7. `docs/AUDITORIA_FORENSE_CMS.md`
+8. `backend/api/cms.py`
+9. `backend/api/cms_v2.py`
+10. `backend/api/enterprise_cms.py`
+11. `backend/api/_cms_helpers/_shared.py`
+12. `backend/crud/cms.py`
+13. `backend/models_cms.py`
+14. `frontend/src/app/plataforma/cms/page.tsx`
+15. `frontend/src/app/plataforma/cms/builder/page.tsx`
+16. `frontend/tests/e2e/cms-public-contract.spec.ts`
 
 ---
 
@@ -284,11 +296,15 @@ Frontend test existente:
 | `PARCIAL-PREVIEW-PUBLIC-001` | Preview y render público aún requieren validación explícita | preview/public route contract |
 | `PARCIAL-BUILDER-001` | Builder/editor CMS de alta sensibilidad | `frontend/src/app/plataforma/cms/builder/page.tsx` |
 | `PARCIAL-DASHBOARD-CMS-001` | Dashboard CMS depende de múltiples fuentes agregadas | `frontend/src/app/plataforma/cms/page.tsx` |
-| `PARCIAL-GATE-CMS-001` | Gate modular CMS aún no integrado del todo | docs + scripts |
-| `PEND-PLAN-CMS-LINK-001` | Integrar `PLAN_CMS_100.md` al esquema modular | docs |
-| `PEND-RBAC-CMS-001` | ✅ **Hecho 2026-07-16** — matriz RBAC CMS documentada separando v1, v2 y enterprise; deja explícita la subprotección actual de CMS v1 y la autorización difusa de enterprise. | `docs/CMS_RBAC_MATRIX.md` |
-| `PEND-EXPAND-SMOKE-CMS-001` | Ampliar script CMS con suites profundas/enterprise | `scripts/test_cms_quality.py` |
+| `PARCIAL-GATE-CMS-001` | Gate modular CMS ya cubre smoke base y pages/preview; sigue faltando checklist visual y profundidad enterprise | docs + scripts |
+| `PEND-EXPAND-SMOKE-CMS-001` | Ampliar script CMS con builder, versions y suites enterprise profundas | `scripts/test_cms_quality.py` |
 | `PEND-VISUAL-CMS-001` | Checklist preview/publicado institucionalizado | docs + QA |
+| `PEND-RBAC-ENTERPRISE-CMS-001` | Hacer explícito el RBAC `cms:*` en Enterprise CMS donde hoy predomina `get_current_user` | `backend/api/enterprise_cms.py` |
+| `DONE-PLAN-CMS-LINK-001` | ✅ **Hecho 2026-07-16** — `PLAN_CMS_CALIDAD.md` queda alineado como subplan oficial del módulo dentro del esquema modular; `PLAN_CMS_100.md` queda como referencia complementaria profunda. | `docs/PLAN_CMS_CALIDAD.md` |
+| `DONE-RBAC-CMS-001` | ✅ **Hecho 2026-07-16** — matriz RBAC CMS documentada separando v1, v2 y enterprise; deja explícita la subprotección actual de CMS v1 y la autorización difusa de enterprise. | `docs/CMS_RBAC_MATRIX.md` |
+| `DONE-RBAC-V1-HARDENING-CMS-001` | ✅ **Hecho 2026-07-16** — mutaciones administrativas de CMS v1 endurecidas a `cms:edit`; lecturas administrativas preservadas en `cms:read`; pruebas focalizadas cubren `LECTOR` en testimonials, announcements y media upload. | `backend/api/cms.py`, `tests/test_cms_sede_isolation.py`, `tests/test_cms_upload_and_image_hardening.py` |
+| `DONE-FRONTEND-E2E-CMS-001` | ✅ **Hecho 2026-07-16** — smoke frontend CMS base para dashboard, pages y media. | `frontend/tests/e2e/cms/smoke.spec.ts` |
+| `DONE-FRONTEND-DEEP-CMS-001` | ✅ **Hecho 2026-07-16** — coverage profunda mockeada para pages + preview con workflow editorial y render draft. | `frontend/tests/e2e/cms/pages-preview.spec.ts` |
 
 Busqueda rapida:
 

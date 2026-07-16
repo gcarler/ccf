@@ -103,9 +103,29 @@ Reglas:
 - redirects
 - broken links
 
-Regla:
+Rutas clave:
+
+| Area | Rutas |
+|---|---|
+| Audit logs | `/cms/v2/audit-logs` |
+| Content permissions | `/cms/v2/content-permissions*` |
+| Notifications | `/cms/v2/notifications*` |
+| Webhooks | `/cms/v2/webhooks*`, `/cms/v2/webhooks/{hook_id}/deliveries` |
+| Custom types | `/cms/v2/custom-types*` |
+| Custom entries | `/cms/v2/custom-entries*`, `/cms/v2/custom-entries/{entry_id}/versions`, `/cms/v2/custom-entries/{entry_id}/rollback/{version_id}` |
+| Glossary | `/cms/v2/glossary*` |
+| Search | `/cms/v2/search`, `/cms/v2/search/promotions*` |
+| Sessions | `/cms/v2/sessions*`, `/cms/v2/sessions/revoke-all` |
+| Media folders | `/cms/v2/media-folders*` |
+| Redirects | `/cms/v2/redirects*` |
+| Broken links | `/cms/v2/broken-links*`, `/cms/v2/broken-links/{check_id}/resolve` |
+
+Reglas:
 
 - tratar estas superficies como CMS enterprise, no como parte menor del editor
+- no asumir que autenticación simple equivale a autorización CMS correcta
+- en CMS v1, las mutaciones administrativas de `backend/api/cms.py` ya exigen `cms:edit`; las lecturas administrativas siguen en `cms:read`
+- mientras no cierre `PEND-RBAC-ENTERPRISE-CMS-001`, validar enterprise como superficie separada y con sospecha explícita de drift RBAC
 
 ## 5. Modelos y scope
 

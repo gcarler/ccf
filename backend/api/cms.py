@@ -64,7 +64,7 @@ def list_cms_testimonials(db: Session = Depends(get_db)):
 def create_cms_testimonial(
     payload: schemas.TestimonialCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Axioma 3 — Multi-Tenant: al crear un testimonial, derivamos su
     ``sede_id`` desde la persona del autor (si está presente) o el
@@ -139,7 +139,7 @@ def patch_admin_testimonial(
     testimonial_id: uuid.UUID,
     payload: schemas.TestimonialUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Axioma 3 — Multi-Tenant: 404 cross-sede. Defense-in-depth CRUD
     re-valida scope sobre `author_persona_id` entrante si el body lo
@@ -157,7 +157,7 @@ def patch_admin_testimonial(
 def delete_admin_testimonial(
     testimonial_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Axioma 3 — Multi-Tenant: 404 cross-sede antes de soft-delete."""
     row = _get_scoped_cms_testimonial(db, current_user, testimonial_id)
@@ -189,7 +189,7 @@ def list_cms_announcements(db: Session = Depends(get_db)):
 def create_cms_announcement(
     payload: schemas.AnnouncementCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Axioma 3 — Multi-Tenant: ``sede_id`` y ``created_by_persona_id``
     se derivan server-side desde el current_user (no se aceptan del body
@@ -252,7 +252,7 @@ def patch_admin_announcement(
     announcement_id: uuid.UUID,
     payload: schemas.AnnouncementUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Axioma 3 — Multi-Tenant: 404 cross-sede antes de mutar."""
     row = _get_scoped_cms_announcement(db, current_user, announcement_id)
@@ -268,7 +268,7 @@ def patch_admin_announcement(
 def delete_admin_announcement(
     announcement_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Axioma 3 — Multi-Tenant: 404 cross-sede antes de soft-delete."""
     row = _get_scoped_cms_announcement(db, current_user, announcement_id)
@@ -334,7 +334,7 @@ def list_cms_media(
 def create_cms_media(
     payload: schemas.CmsMediaCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Axioma 3 — Multi-Tenant: ``sede_id`` se deriva server-side desde el
     current_user. Defense-in-depth CRUD lo re-valida pre-add."""
@@ -368,7 +368,7 @@ def patch_cms_media(
     item_id: uuid.UUID,
     payload: schemas.CmsMediaUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Axioma 3 — Multi-Tenant: 404 cross-sede antes de mutar."""
     row = _get_scoped_cms_media(db, current_user, item_id)
@@ -392,7 +392,7 @@ def delete_cms_media(
     item_id: uuid.UUID,
     permanent: bool = Query(default=False),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Delete media item. If permanent=true, deletes the file AND DB record.
     Otherwise soft-deletes (archives)."""
@@ -416,7 +416,7 @@ def delete_cms_media(
 def optimize_cms_media(
     item_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Optimize an existing image: re-encode to WebP, resize, compress.
     Returns updated media item with new URL and file_size."""
@@ -463,7 +463,7 @@ async def upload_cms_media(
     tags: str = Form(default=""),
     optimize: bool = Form(default=True),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Hardened upload pipeline (Axioma 3 + Defense-in-Depth):
 
