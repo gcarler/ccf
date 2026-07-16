@@ -84,3 +84,6 @@ backend/.env.staging
 frontend/.env.staging
 .env.staging
 frontend/tsconfig.tsbuildinfo
+
+# Runtime feature flags snapshot (regenerated on demand)
+backend/data/feature_flags*.ndjson
