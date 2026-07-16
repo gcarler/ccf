@@ -105,10 +105,11 @@ npx playwright test tests/e2e/evangelism/sessions-detail.spec.ts tests/e2e/evang
 | Tests backend | `tests/test_evangelism_*.py`, `tests/test_calculo_sesiones.py` | Regresion y cobertura |
 | Tests e2e | `frontend/tests/e2e/evangelism/` | Sesiones, rankings, multiplicacion |
 
-**Estado global:** El modulo tiene base funcional y flujo canonico auditado. El smoke minimo (`18 passed, 1 xfailed`) y la cobertura amplia (`219 passed`) quedaron validados el `2026-07-16`. Los riesgos vivos ya no estan en contratos backend de eventos/sesiones/follow-up/multiplicacion, sino en permisos runtime UI, deuda estructural de la pantalla de estrategia y ampliacion del smoke canonico.
+**Estado global:** El modulo tiene base funcional y flujo canonico auditado. El smoke minimo (`18 passed, 1 xfailed`) y la cobertura amplia (`219 passed`) quedaron validados el `2026-07-16`. Los riesgos vivos ya no estan en contratos backend de eventos/sesiones/follow-up/multiplicacion, sino en deuda estructural de la pantalla de estrategia, ampliacion del smoke canonico y remates de UX/QA sobre permisos runtime.
 
 **Actualizacion documental 2026-07-16:** `PEND-RBAC-EVANGELISM-001` queda cerrada con `docs/EVANGELISMO_RBAC_MATRIX.md`. La matriz confirma que el modulo no esta homogeneamente migrado a `evangelism:*`.
 **Actualizacion operativa 2026-07-16:** `tests/test_evangelism_module_coverage.py` paso en verde (`219 passed`), por lo que `PARCIAL-EVENTS-001`, `PARCIAL-MULTIPLICATION-001`, `PARCIAL-FOLLOWUP-001`, `PEND-EVENTS-CONTRACT-001` y `PEND-SESSIONS-CONTRACT-001` dejan de ser backlog activo y pasan a historial de cierre validado.
+**Actualizacion UI 2026-07-16:** se alineo la superficie de estrategias con el guard real del backend. `EvangelismShell`, el dashboard de estrategias y `strategies/[id]/page.tsx` ya no disparan fetches de estrategias/grupos/sesiones para usuarios fuera de `admin/administrador/pastor`; muestran estado de acceso restringido en lugar de provocar `401/403` estructurales.
 
 ---
 
@@ -250,8 +251,7 @@ Componentes compartidos:
 ### Parcial
 
 1. **Detalle de estrategia** `[PARCIAL-STRATEGY-PAGE-001]` — `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` concentra demasiadas responsabilidades. Separar grupos, sesiones, asistencia, roles y seguimiento en componentes/hooks locales antes de seguir creciendo.
-2. **Permisos runtime UI** `[PARCIAL-RUNTIME-AUTH-001]` — errores 401 en `/evangelism/grupos` y `/evangelism/sessions` deben resolverse revisando token, rol y `require_module_access`, no ocultando errores en frontend.
-3. **Smoke canónico aún parcial** `[PARCIAL-SMOKE-EVANGELISM-001]` — `scripts/test_evangelism_quality.py` ya existe, pero todavia no cubre frontend ni cobertura profunda completa.
+2. **Smoke canónico aún parcial** `[PARCIAL-SMOKE-EVANGELISM-001]` — `scripts/test_evangelism_quality.py` ya existe, pero todavia no cubre frontend ni cobertura profunda completa.
 
 ### Pendiente
 
@@ -268,6 +268,7 @@ Componentes compartidos:
 4. **Follow-up** `[PARCIAL-FOLLOWUP-001]` — contratos de seguimiento y respuestas validados por la suite amplia el `2026-07-16`.
 5. **Contrato unico de eventos** `[PEND-EVENTS-CONTRACT-001]` — cierre operativo confirmado por la suite amplia el `2026-07-16`.
 6. **Contrato unico de sesiones FARO/groups** `[PEND-SESSIONS-CONTRACT-001]` — aliases y contratos de sesiones validados por la suite amplia el `2026-07-16`.
+7. **Permisos runtime UI** `[PARCIAL-RUNTIME-AUTH-001]` — avance parcial confirmado el `2026-07-16`. La UI de estrategias ya no expone superficies protegidas de backend a usuarios fuera de `admin/administrador/pastor`; quedan pendientes solo remates de QA manual y decidir si otras pantallas de evangelismo deben endurecerse igual.
 
 ---
 
@@ -309,7 +310,6 @@ Componentes compartidos:
 | ID | Pieza | Archivo o area |
 |---|---|---|
 | `PARCIAL-STRATEGY-PAGE-001` | Detalle de estrategia demasiado grande | `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` |
-| `PARCIAL-RUNTIME-AUTH-001` | 401 runtime en pantallas | permisos + token + `require_module_access` |
 | `PARCIAL-SMOKE-EVANGELISM-001` | Script canónico existe, cobertura aún parcial | `scripts/test_evangelism_quality.py` |
 | `PEND-STRATEGY-DECOMPOSE-001` | Separar page de estrategia | frontend evangelism strategy detail |
 | `PEND-PERSONAS-SEARCH-001` | Busqueda remota personas asistencia | frontend + `/evangelism/personas/search` |
@@ -320,6 +320,7 @@ Componentes compartidos:
 | `PARCIAL-FOLLOWUP-001` | Cerrada el 2026-07-16 tras validacion de follow-up y respuestas en la suite amplia. | `backend/api/evangelism_grupos/grupos_asistencias.py` |
 | `PEND-EVENTS-CONTRACT-001` | Cerrada el 2026-07-16. Contrato de eventos validado por `tests/test_evangelism_module_coverage.py`. | `backend/api/evangelism_events/` |
 | `PEND-SESSIONS-CONTRACT-001` | Cerrada el 2026-07-16. Contratos y aliases de sesiones validados por `tests/test_evangelism_module_coverage.py`. | `backend/api/evangelism_grupos/grupos_sesiones.py` |
+| `PARCIAL-RUNTIME-AUTH-001` | Avance parcial el 2026-07-16. Estrategias y detalle ya se alinearon con `require_pastor_or_admin`; pendiente QA manual y revisar si quedan otras superficies runtime con drift de guard. | `frontend/src/components/evangelism/EvangelismShell.tsx` + `frontend/src/app/plataforma/evangelism/EvangelismClient.tsx` + `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` |
 
 Busqueda rapida:
 

@@ -2,7 +2,7 @@
 
 > **Objetivo:** cerrar evangelismo como plataforma propia, con trabajo por capas y validacion repetible. Este plan complementa `docs/ESTADO_EVANGELISMO.md`; no reemplaza el estado canonico.
 
-**Ejecucion 2026-07-16:** Fase 0 completada con smoke minimo verde (`18 passed, 1 xfailed`). Fase 2 tambien quedo validada con `tests/test_evangelism_module_coverage.py` en verde (`219 passed`). En consecuencia, los IDs `PARCIAL-EVENTS-001`, `PARCIAL-MULTIPLICATION-001`, `PARCIAL-FOLLOWUP-001`, `PEND-EVENTS-CONTRACT-001` y `PEND-SESSIONS-CONTRACT-001` salen del backlog activo y quedan como cierres documentados en `ESTADO_EVANGELISMO.md`.
+**Ejecucion 2026-07-16:** Fase 0 completada con smoke minimo verde (`18 passed, 1 xfailed`). Fase 2 tambien quedo validada con `tests/test_evangelism_module_coverage.py` en verde (`219 passed`). En consecuencia, los IDs `PARCIAL-EVENTS-001`, `PARCIAL-MULTIPLICATION-001`, `PARCIAL-FOLLOWUP-001`, `PEND-EVENTS-CONTRACT-001` y `PEND-SESSIONS-CONTRACT-001` salen del backlog activo y quedan como cierres documentados en `ESTADO_EVANGELISMO.md`. Ademas, `PARCIAL-RUNTIME-AUTH-001` avanzo: la superficie de estrategias ya quedo alineada con `require_pastor_or_admin` y deja de producir `401/403` estructurales para usuarios con solo `evangelism:read`.
 
 ## 1. Regla de trabajo
 
@@ -56,6 +56,11 @@ Criterio de salida:
 - 401/403 se explica por rol real o se corrige en permisos.
 - La UI no oculta errores estructurales.
 - QA manual cubre ADMIN, GESTOR, EDITOR y MIEMBRO cuando aplique.
+
+Estado 2026-07-16:
+
+- Avance parcial cerrado en frontend para dashboard de estrategias, shell y detalle de estrategia.
+- Pendiente validar manualmente otras rutas de evangelismo que compartan drift entre `evangelism:read` y `require_pastor_or_admin`.
 
 ## 4. Fase 2 — Contratos API y serializacion
 

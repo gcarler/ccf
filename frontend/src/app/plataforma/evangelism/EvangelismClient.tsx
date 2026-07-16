@@ -26,7 +26,7 @@ import type { Strategy } from './types';
 export type EvangelismStrategy = Strategy;
 
 export default function EvangelismClient() {
- const { token } = useAuth();
+ const { token, user, loading: authLoading } = useAuth();
  const router = useRouter();
  const { viewType, setViewType } = useViewType('evangelism_dashboard', 'table');
  const [data, setData] = useState<EvangelismStrategy[]>([]);
@@ -34,8 +34,11 @@ export default function EvangelismClient() {
  const [search, setSearch] = useState('');
  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
+ const role = (user?.role || '').toLowerCase();
+ const canManageStrategies = ['admin', 'administrador', 'pastor'].includes(role);
+
  const fetchStrategies = useCallback(async () => {
- if (!token) return;
+ if (!token || !canManageStrategies) return;
  setLoading(true);
  try {
  const result = await apiFetch<EvangelismStrategy[]>('/evangelism/strategies', { token, silent: true });
@@ -45,14 +48,20 @@ export default function EvangelismClient() {
  } finally {
  setLoading(false);
  }
- }, [token]);
+ }, [canManageStrategies, token]);
 
  useEffect(() => {
+ if (authLoading) return;
+ if (!token || !canManageStrategies) {
+ setLoading(false);
+ return;
+ }
  fetchStrategies();
- }, [fetchStrategies]);
+ }, [authLoading, canManageStrategies, fetchStrategies, token]);
 
  // Reactively refresh when a new strategy is created globally
  useEffect(() => {
+ if (!canManageStrategies) return;
  const handleCreated = () => {
  fetchStrategies();
  };
@@ -60,7 +69,7 @@ export default function EvangelismClient() {
  return () => {
  window.removeEventListener('evangelism-strategy-created', handleCreated);
  };
- }, [fetchStrategies]);
+ }, [canManageStrategies, fetchStrategies]);
 
  // El cierre del panel lateral ahora navega a la vista de detalle
 
@@ -103,6 +112,28 @@ export default function EvangelismClient() {
  return dateStr;
  }
  };
+
+ if (!authLoading && !canManageStrategies) {
+ return (
+ <ModuleErrorBoundary moduleName="Evangelismo">
+ <EvangelismShell
+ breadcrumbs={[
+ { label: 'Evangelismo', icon: Flame },
+ { label: 'Estrategias' }
+ ]}
+ >
+ <div className="min-h-[60vh] flex items-center justify-center p-3">
+ <div className="max-w-md w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-8 text-center">
+ <h2 className="text-lg font-bold text-amber-900">Acceso restringido</h2>
+ <p className="mt-2 text-sm font-medium text-amber-800">
+ Esta vista de estrategias requiere rol pastoral o administrativo.
+ </p>
+ </div>
+ </div>
+ </EvangelismShell>
+ </ModuleErrorBoundary>
+ );
+ }
 
  return (
  <ModuleErrorBoundary moduleName="Evangelismo">
