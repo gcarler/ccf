@@ -16,6 +16,10 @@ Este documento cubre cuatro superficies distintas:
 - `community` mezcla endpoints publicos y editables; no asumir auth uniforme.
 - Cuando hay `Persona`, aplica `sede_id` salvo que el endpoint publico declare la excepcion de forma explicita.
 
+Referencia RBAC:
+
+- `docs/MESSAGING_COMMUNITY_RBAC_MATRIX.md`
+
 ## 3. `/api/messaging/*`
 
 Archivo: `backend/api/messaging.py`.
@@ -93,5 +97,12 @@ No mezclar:
 ## 7. Pendientes de contrato
 
 - `PEND-CHAT-CONTRACT-001`
-- `PEND-MESSAGING-RBAC-001`
+- `PEND-MESSAGING-RBAC-001` cerrada el `2026-07-16` en `MESSAGING_COMMUNITY_RBAC_MATRIX.md`
 - endurecimiento explicito de `community/cards`
+
+## 8. Notas RBAC actuales
+
+- `messaging/history` y `messaging/send` no usan `messaging:*`; usan `require_staff_or_admin` (`academy:manage`).
+- `chat.py` sí separa `messaging:read` y `messaging:edit`.
+- `community/cards` mantiene create/delete públicos en la firma actual.
+- ver `MESSAGING_COMMUNITY_RBAC_MATRIX.md` para la matriz completa y el drift activo.
