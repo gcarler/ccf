@@ -34,7 +34,11 @@ export default function NewWhiteboardPage() {
   }, [token]);
 
   const fetchProjects = async () => {
-    if (!token) return;
+    if (!token) {
+      setProjects([]);
+      setLoadingProjects(false);
+      return;
+    }
     setLoadingProjects(true);
     try {
       const data = await apiFetch<ProjectOption[]>("/projects", { token });
