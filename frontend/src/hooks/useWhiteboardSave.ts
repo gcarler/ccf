@@ -27,13 +27,29 @@ export function useWhiteboardSave(
     options;
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const statusResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+
+  const clearTimers = useCallback(() => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    if (statusResetTimerRef.current) {
+      clearTimeout(statusResetTimerRef.current);
+      statusResetTimerRef.current = null;
+    }
+  }, []);
 
   const persistToApi = useCallback(
     async (canvas: Canvas) => {
       if (!projectId || !token) return;
 
       setSaveStatus("saving");
+      if (statusResetTimerRef.current) {
+        clearTimeout(statusResetTimerRef.current);
+        statusResetTimerRef.current = null;
+      }
 
       try {
         await apiFetch(`/projects/${projectId}/whiteboard`, {
@@ -45,10 +61,16 @@ export function useWhiteboardSave(
           },
         });
         setSaveStatus("saved");
-        setTimeout(() => setSaveStatus("idle"), 2000);
+        statusResetTimerRef.current = setTimeout(() => {
+          setSaveStatus("idle");
+          statusResetTimerRef.current = null;
+        }, 2000);
       } catch {
         setSaveStatus("error");
-        setTimeout(() => setSaveStatus("idle"), 3000);
+        statusResetTimerRef.current = setTimeout(() => {
+          setSaveStatus("idle");
+          statusResetTimerRef.current = null;
+        }, 3000);
       }
     },
     [projectId, token, title]
@@ -58,9 +80,7 @@ export function useWhiteboardSave(
     (canvas: Canvas, immediate = false) => {
       if (!projectId || !token) return;
 
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-      }
+      clearTimers();
 
       if (immediate) {
         persistToApi(canvas);
@@ -84,11 +104,9 @@ export function useWhiteboardSave(
 
   useEffect(() => {
     return () => {
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-      }
+      clearTimers();
     };
-  }, []);
+  }, [clearTimers]);
 
   return {
     saveStatus,
