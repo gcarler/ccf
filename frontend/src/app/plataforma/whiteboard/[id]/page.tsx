@@ -263,11 +263,9 @@ export default function WhiteboardSessionPage() {
                 const board = await fetchProjectWhiteboard(projectId, token);
                 if (board?.elements_json && board.elements_json !== "[]") {
                     history.restoringRef.current = true;
-                    canvas.loadFromJSON(JSON.parse(board.elements_json), () => {
-                        canvas.renderAll();
-                        syncLayers();
-                        history.restoringRef.current = false;
-                    });
+                    await canvas.loadFromJSON(JSON.parse(board.elements_json));
+                    canvas.renderAll();
+                    syncLayers();
                 } else {
                     addStarterObjects(canvas);
                     syncLayers();
@@ -277,6 +275,8 @@ export default function WhiteboardSessionPage() {
                 addStarterObjects(canvas);
                 syncLayers();
                 saveNow(canvas);
+            } finally {
+                history.restoringRef.current = false;
             }
         };
         loadSaved();
