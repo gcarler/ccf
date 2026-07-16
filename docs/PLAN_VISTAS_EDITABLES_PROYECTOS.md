@@ -43,24 +43,21 @@ Dejar documentado, con base en el código real, qué vistas del módulo de proye
 | P1 | `frontend/src/components/projects/ProjectWikiEditor.tsx` | Hecho | Editor de wiki operativo y sincronizado. |
 | P1 | `frontend/src/components/projects/ProjectChatPanel.tsx` | Hecho | Panel de chat operativo y sincronizado. |
 | P1 | `frontend/src/lib/__tests__/useProjectTasks.test.tsx` | Hecho | Cobertura de CRUD base y rollback del hook compartido. |
+| P1 | `frontend/src/components/projects/TaskTableView.tsx` | Hecho | Tabla editable con editores inline, agrupación, filtros y apertura de detalle por doble clic. |
+| P1 | `frontend/src/components/projects/ProjectKanbanBoard.tsx` + `frontend/src/components/projects/KanbanColumn.tsx` + `frontend/src/components/projects/SortableTaskCard.tsx` | Hecho | Drag & drop persistente, edición inline de título, fecha, prioridad y asignado, más menú de acción. |
+| P1 | `frontend/src/components/projects/ProjectCalendarView.tsx` + `frontend/src/components/ui/UniversalCalendarView.tsx` | Hecho | Click en día vacío abre creación con `due_date` prellenada, click en evento abre detalle y el arrastre de eventos reubica fechas. |
 
 ## Parcial
 
 | Prioridad | Componente | Estado real | Qué está listo | Qué falta |
 |-----------|------------|-------------|----------------|-----------|
 | P0 | `frontend/src/components/projects/ProjectListView.tsx` | Parcial | Ya persiste cambios de estado, prioridad, fecha y asignado; quick-add funcional. | Reducir la dependencia de `localOverrides` y converger con el flujo compartido del hook. |
-| P0 | `frontend/src/components/projects/TaskTableView.tsx` | Parcial | Usa editores inline compartidos y `useProjectTasks`. | Falta abrir detalle con doble clic y ampliar la edición inline de más celdas. |
-| P0 | `frontend/src/components/projects/ProjectKanbanBoard.tsx` + `frontend/src/components/projects/KanbanColumn.tsx` + `frontend/src/components/projects/SortableTaskCard.tsx` | Parcial | Drag & drop persistente y edición inline de fecha, prioridad y asignado. | Falta edición inline del título y terminar el pulido del menú/flujo de tarjeta. |
-| P1 | `frontend/src/components/projects/ProjectCalendarView.tsx` + `frontend/src/components/ui/UniversalCalendarView.tsx` | Parcial | Click en día vacío abre creación con `due_date` prellenada; click en evento abre detalle. | Falta drag & drop entre días y acciones rápidas por día. |
 | P1 | `frontend/src/components/projects/ProjectMasterView.tsx` | Parcial | Título, descripción, estado y responsable ya son editables. | Falta hacer editables los nodos operativos y los hitos desde la misma vista. |
 | P1 | `frontend/src/components/projects/PhaseManagerDrawer.tsx` | Parcial | La gestión de fases ya está conectada al contexto. | Falta cerrar el contrato de edición/validación si se quiere usar como fuente única de fases. |
 | P2 | `frontend/src/app/plataforma/projects/[id]/page.tsx` | Parcial | La página ya orquesta vistas, drawers y contexto de actualización. | Sigue teniendo lógica de coordinación extensa y se beneficia de simplificación posterior. |
 
 ## Pendientes de cierre
 
-- Arrastre entre días desde `ProjectCalendarView`.
-- Edición inline del título en `ProjectKanbanBoard` / `SortableTaskCard`.
-- Apertura de `TaskDetailPanel` con doble clic desde `TaskTableView`.
 - Reducción del estado local redundante en `ProjectListView`.
 - Edición de nodos operativos e hitos en `ProjectMasterView`.
 - Revalidación del backend de proyectos para permisos, contratos `PATCH/DELETE` y normalización de estados.
@@ -69,11 +66,9 @@ Dejar documentado, con base en el código real, qué vistas del módulo de proye
 ## Orden operativo recomendado
 
 1. Consolidar `ProjectListView` para reducir el estado local redundante.
-2. Completar `TaskTableView` con acceso a detalle y más celdas editables.
-3. Cerrar la interacción de `ProjectCalendarView` con drag & drop entre días.
-4. Terminar `ProjectMasterView` con edición de nodos operativos e hitos.
-5. Añadir edición inline del título en `ProjectKanbanBoard` / `SortableTaskCard`.
-6. Revalidar backend, permisos y pruebas de integración.
+2. Terminar `ProjectMasterView` con edición de nodos operativos e hitos.
+3. Cerrar `PhaseManagerDrawer` si se quiere usar como fuente única de fases.
+4. Revalidar backend, permisos y pruebas de integración.
 
 ## Verificación mínima
 
@@ -86,6 +81,6 @@ Dejar documentado, con base en el código real, qué vistas del módulo de proye
 ## Resumen operativo
 
 - El bloque base ya está hecho.
-- Las vistas más cercanas a terminar son `ProjectListView`, `TaskTableView`, `ProjectKanbanBoard`, `ProjectCalendarView` y `ProjectMasterView`.
-- El trabajo pendiente real está concentrado en la edición faltante de tareas y en el cierre del contrato entre frontend, backend y pruebas.
+- Las vistas más cercanas a terminar son `ProjectListView`, `ProjectMasterView`, `PhaseManagerDrawer` y la coordinación general de `page.tsx`.
+- El trabajo pendiente real está concentrado en la reducción del estado local redundante y en el cierre del contrato entre frontend, backend y pruebas.
 - Este documento sirve como referencia de ejecución y de auditoría, no como checklist ornamental.
