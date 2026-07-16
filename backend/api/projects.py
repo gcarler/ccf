@@ -120,13 +120,13 @@ def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Proj
 
     Existence-leak safe: returns 404 (never 403) when the project is in a
     different ``sede_id`` than the actor or when the project's ``sede_id``
-    is NULL (legacy orphan) while the actor is restricted to a sede. This
+    is NULL while the actor is restricted to a sede. This
     matches the CRM/CMS ``_ensure_*`` convention so cross-tenant probing
     yields indistinguishable error from "not found".
 
     Fix vs prior implementation: previously the guard used
-    ``if user_sede and project.sede_id and ...``, which let superadmin
-    exclude legacy projects without ``sede_id`` slip past scope checks
+    ``if user_sede and project.sede_id and ...``, which let projects without
+    ``sede_id`` slip past scope checks
     when an actor from any sede queried them. The new guard explicitly
     rejects projects with NULL ``sede_id`` whenever the actor is bounded
     to a sede, eliminating the leak.
@@ -151,9 +151,8 @@ def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Proj
     )
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    # Axioma 3 strict scope: even legacy projects with NULL sede_id are
-    # hidden from seated actors. Only the superadmin (user_sede = None)
-    # bypasses scope.
+    # Axioma 3 strict scope: even projects with NULL sede_id are hidden
+    # from seated actors. Only the superadmin (user_sede = None) bypasses scope.
     if user_sede is not None:
         if project.sede_id is None or str(project.sede_id) != str(user_sede):
             raise HTTPException(status_code=404, detail="Project not found")
