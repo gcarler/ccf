@@ -15,6 +15,7 @@ Confirmar:
 
 - ruta afectada identificada
 - rol real de prueba identificado
+- matriz RBAC consultada en `docs/ACADEMY_RBAC_MATRIX.md`
 - si el cambio toca auth, personas, permisos o storage, tratarlo como cambio de plataforma
 
 ## 2. Smoke canónico
@@ -108,9 +109,11 @@ Para cada endpoint tocado:
 | `LECTOR` | `academy:study`, solo su propia operación |
 | EDITOR/GESTOR | según permisos efectivos `academy:edit/manage` |
 
-Pendiente formal:
+Notas obligatorias:
 
-- `PEND-RBAC-ACADEMY-001`
+- revisar `docs/ACADEMY_RBAC_MATRIX.md` antes de tocar enrollments, progress o admin flows
+- validar ownership además del permiso en rutas de estudiante
+- recordar que `EDITOR` y `LECTOR` no se resuelven igual en seed persistido y fallback runtime
 
 ## 9. Criterio de cierre
 
