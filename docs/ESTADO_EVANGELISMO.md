@@ -17,6 +17,9 @@
 
 ```bash
 cat /root/ccf/docs/ESTADO_EVANGELISMO.md
+cat /root/ccf/docs/PLAN_EVANGELISMO_CALIDAD.md
+cat /root/ccf/docs/EVANGELISMO_API_CONTRACTS.md
+cat /root/ccf/docs/EVANGELISMO_QA_CHECKLIST.md
 cat /root/ccf/docs/AUDITORIA_FLUJO_EVANGELISMO_CCF.md
 ```
 
@@ -253,18 +256,21 @@ Componentes compartidos:
 ## 12. Archivos a leer antes de cambiar codigo
 
 1. `docs/ESTADO_EVANGELISMO.md` — este handover.
-2. `docs/AUDITORIA_FLUJO_EVANGELISMO_CCF.md` — flujo canonico y correcciones ya aplicadas.
-3. `backend/models_evangelism.py` — modelo de datos.
-4. `backend/schemas/evangelism.py` — contratos Pydantic.
-5. `backend/api/evangelism.py` — router canonico.
-6. `backend/api/evangelism_main/main_estrategias.py` — estrategias y generacion de sesiones.
-7. `backend/api/evangelism_grupos/grupos_main.py` — grupos, seasons, analytics, visitantes.
-8. `backend/api/evangelism_grupos/grupos_sesiones.py` — sesiones y habilitacion.
-9. `backend/api/evangelism_grupos/grupos_asistencias.py` — asistencia y seguimiento.
-10. `backend/api/evangelism_events/` — eventos y check-in.
-11. `backend/services/evangelism_crm_bridge.py` — integracion CRM.
-12. `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` — pantalla mas sensible.
-13. `frontend/src/components/evangelism/` — shell/drawers compartidos.
+2. `docs/PLAN_EVANGELISMO_CALIDAD.md` — orden de trabajo por fases.
+3. `docs/EVANGELISMO_API_CONTRACTS.md` — contratos API, permisos y codigos esperados.
+4. `docs/EVANGELISMO_QA_CHECKLIST.md` — checklist manual y automatizado.
+5. `docs/AUDITORIA_FLUJO_EVANGELISMO_CCF.md` — flujo canonico y correcciones ya aplicadas.
+6. `backend/models_evangelism.py` — modelo de datos.
+7. `backend/schemas/evangelism.py` — contratos Pydantic.
+8. `backend/api/evangelism.py` — router canonico.
+9. `backend/api/evangelism_main/main_estrategias.py` — estrategias y generacion de sesiones.
+10. `backend/api/evangelism_grupos/grupos_main.py` — grupos, seasons, analytics, visitantes.
+11. `backend/api/evangelism_grupos/grupos_sesiones.py` — sesiones y habilitacion.
+12. `backend/api/evangelism_grupos/grupos_asistencias.py` — asistencia y seguimiento.
+13. `backend/api/evangelism_events/` — eventos y check-in.
+14. `backend/services/evangelism_crm_bridge.py` — integracion CRM.
+15. `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` — pantalla mas sensible.
+16. `frontend/src/components/evangelism/` — shell/drawers compartidos.
 
 ---
 
