@@ -59,6 +59,8 @@ export default function WhiteboardPage() {
 
   const deleteBoard = async (projectId: string) => {
     if (!token) return;
+    const confirmed = window.confirm("Eliminar esta pizarra no se puede deshacer. ¿Deseas continuar?");
+    if (!confirmed) return;
     try {
       await deleteProjectWhiteboard(projectId, token);
       setBoards((prev) => prev.filter((b) => b.project_id !== projectId));
