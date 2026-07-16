@@ -287,7 +287,7 @@ export default function UserTasksPage() {
                   {query || filterPriority !== "all" ? "Ajusta los filtros para ver otras tareas." : "No tienes tareas activas asignadas en este momento."}
                 </p>
               </div>
-              <Link href="/plataforma/projects?view=list#projects-list" className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+              <Link href="/plataforma/projects/list#projects-list" className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white">
                 <FolderOpen size={13} /> Ver proyectos
               </Link>
             </div>

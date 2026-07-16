@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function ProjectsPage() {
-    redirect('/plataforma/projects?view=list#projects-list');
+    redirect('/plataforma/projects/list#projects-list');
 }
