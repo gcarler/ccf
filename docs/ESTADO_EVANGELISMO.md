@@ -105,9 +105,10 @@ npx playwright test tests/e2e/evangelism/sessions-detail.spec.ts tests/e2e/evang
 | Tests backend | `tests/test_evangelism_*.py`, `tests/test_calculo_sesiones.py` | Regresion y cobertura |
 | Tests e2e | `frontend/tests/e2e/evangelism/` | Sesiones, rankings, multiplicacion |
 
-**Estado global:** El modulo tiene base funcional y flujo canonico auditado. Quedan riesgos vivos en cobertura amplia de `test_evangelism_module_coverage.py`, contratos mixtos historicos y permisos/401 visibles en pantallas cuando el token o acceso del usuario no coincide con el modulo.
+**Estado global:** El modulo tiene base funcional y flujo canonico auditado. El smoke minimo (`18 passed, 1 xfailed`) y la cobertura amplia (`219 passed`) quedaron validados el `2026-07-16`. Los riesgos vivos ya no estan en contratos backend de eventos/sesiones/follow-up/multiplicacion, sino en permisos runtime UI, deuda estructural de la pantalla de estrategia y ampliacion del smoke canonico.
 
 **Actualizacion documental 2026-07-16:** `PEND-RBAC-EVANGELISM-001` queda cerrada con `docs/EVANGELISMO_RBAC_MATRIX.md`. La matriz confirma que el modulo no esta homogeneamente migrado a `evangelism:*`.
+**Actualizacion operativa 2026-07-16:** `tests/test_evangelism_module_coverage.py` paso en verde (`219 passed`), por lo que `PARCIAL-EVENTS-001`, `PARCIAL-MULTIPLICATION-001`, `PARCIAL-FOLLOWUP-001`, `PEND-EVENTS-CONTRACT-001` y `PEND-SESSIONS-CONTRACT-001` dejan de ser backlog activo y pasan a historial de cierre validado.
 
 ---
 
@@ -249,23 +250,24 @@ Componentes compartidos:
 ### Parcial
 
 1. **Detalle de estrategia** `[PARCIAL-STRATEGY-PAGE-001]` — `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` concentra demasiadas responsabilidades. Separar grupos, sesiones, asistencia, roles y seguimiento en componentes/hooks locales antes de seguir creciendo.
-2. **Eventos evangelisticos** `[PARCIAL-EVENTS-001]` — la matriz historica marca fallos de serializacion, roles, duplicados y attendance-history. Revalidar con `tests/test_evangelism_module_coverage.py` antes de tocar UI de eventos.
-3. **Multiplicacion** `[PARCIAL-MULTIPLICATION-001]` — endpoints existen, pero la matriz historica exige validar 404/400 en grupo inexistente, inactivo, lider invalido y pocos participantes.
-4. **Follow-up** `[PARCIAL-FOLLOWUP-001]` — flujo existe, pero la cobertura amplia historica senala serializacion y dispatch de 404 en seguimiento.
-5. **Permisos runtime UI** `[PARCIAL-RUNTIME-AUTH-001]` — errores 401 en `/evangelism/grupos` y `/evangelism/sessions` deben resolverse revisando token, rol y `require_module_access`, no ocultando errores en frontend.
-6. **Smoke canónico aún parcial** `[PARCIAL-SMOKE-EVANGELISM-001]` — `scripts/test_evangelism_quality.py` ya existe, pero todavía no cubre frontend ni cobertura profunda completa.
+2. **Permisos runtime UI** `[PARCIAL-RUNTIME-AUTH-001]` — errores 401 en `/evangelism/grupos` y `/evangelism/sessions` deben resolverse revisando token, rol y `require_module_access`, no ocultando errores en frontend.
+3. **Smoke canónico aún parcial** `[PARCIAL-SMOKE-EVANGELISM-001]` — `scripts/test_evangelism_quality.py` ya existe, pero todavia no cubre frontend ni cobertura profunda completa.
 
 ### Pendiente
 
 1. **Descomposicion de estrategia** `[PEND-STRATEGY-DECOMPOSE-001]` — extraer hooks/componentes desde `strategies/[id]/page.tsx` y cubrirlos con prueba enfocada.
-2. **Contrato unico de eventos** `[PEND-EVENTS-CONTRACT-001]` — cerrar response schemas y serializacion ORM -> dict en eventos/roles/asistencia.
-3. **Contrato unico de sesiones FARO/groups** `[PEND-SESSIONS-CONTRACT-001]` — consolidar aliases `/grupos`, `/groups`, posibles rutas FARO y respuestas.
-4. **Busqueda remota de personas** `[PEND-PERSONAS-SEARCH-001]` — evolucionar asistencia a busqueda remota con debounce para volumen alto.
-5. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-EVANGELISM-001]` — extender `scripts/test_evangelism_quality.py` a frontend y cobertura más profunda.
+2. **Busqueda remota de personas** `[PEND-PERSONAS-SEARCH-001]` — evolucionar asistencia a busqueda remota con debounce para volumen alto.
+3. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-EVANGELISM-001]` — extender `scripts/test_evangelism_quality.py` a frontend y cobertura mas profunda.
+4. **Smoke frontend Evangelismo** `[PEND-FRONTEND-E2E-EVANGELISM-001]` — cerrada el `2026-07-16` con `frontend/tests/e2e/evangelism/smoke.spec.ts`; cubre dashboard, groups y rankings con guard de consola/API/assets.
 
 ### Cerrado recientemente
 
 1. **RBAC documentado por rol** `[PEND-RBAC-EVANGELISM-001]` — cerrada el `2026-07-16` con [EVANGELISMO_RBAC_MATRIX.md](/root/ccf/docs/EVANGELISMO_RBAC_MATRIX.md). Se conserva aqui solo como referencia historica del cierre mas reciente.
+2. **Eventos evangelisticos** `[PARCIAL-EVENTS-001]` — cobertura amplia del modulo valida serializacion, roles, attendance y contratos asociados; cierre operativo confirmado el `2026-07-16` con `tests/test_evangelism_module_coverage.py` (`219 passed`).
+3. **Multiplicacion** `[PARCIAL-MULTIPLICATION-001]` — validacion backend de `check/split/history` confirmada por la suite amplia el `2026-07-16`.
+4. **Follow-up** `[PARCIAL-FOLLOWUP-001]` — contratos de seguimiento y respuestas validados por la suite amplia el `2026-07-16`.
+5. **Contrato unico de eventos** `[PEND-EVENTS-CONTRACT-001]` — cierre operativo confirmado por la suite amplia el `2026-07-16`.
+6. **Contrato unico de sesiones FARO/groups** `[PEND-SESSIONS-CONTRACT-001]` — aliases y contratos de sesiones validados por la suite amplia el `2026-07-16`.
 
 ---
 
@@ -307,17 +309,17 @@ Componentes compartidos:
 | ID | Pieza | Archivo o area |
 |---|---|---|
 | `PARCIAL-STRATEGY-PAGE-001` | Detalle de estrategia demasiado grande | `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` |
-| `PARCIAL-EVENTS-001` | Eventos: serializacion/roles/attendance | `backend/api/evangelism_events/` + `frontend/src/app/plataforma/evangelism/events/` |
-| `PARCIAL-MULTIPLICATION-001` | Validaciones de multiplicacion | `backend/api/evangelism_multiplication.py` |
-| `PARCIAL-FOLLOWUP-001` | Seguimiento y respuestas | `backend/api/evangelism_grupos/grupos_asistencias.py` |
 | `PARCIAL-RUNTIME-AUTH-001` | 401 runtime en pantallas | permisos + token + `require_module_access` |
 | `PARCIAL-SMOKE-EVANGELISM-001` | Script canónico existe, cobertura aún parcial | `scripts/test_evangelism_quality.py` |
 | `PEND-STRATEGY-DECOMPOSE-001` | Separar page de estrategia | frontend evangelism strategy detail |
-| `PEND-EVENTS-CONTRACT-001` | Contrato unico eventos | `backend/api/evangelism_events/` |
-| `PEND-SESSIONS-CONTRACT-001` | Contrato unico sesiones/aliases | `backend/api/evangelism_grupos/grupos_sesiones.py` |
 | `PEND-PERSONAS-SEARCH-001` | Busqueda remota personas asistencia | frontend + `/evangelism/personas/search` |
 | `PEND-EXPAND-SMOKE-EVANGELISM-001` | Ampliar script Evangelismo | `scripts/test_evangelism_quality.py` |
 | `PEND-RBAC-EVANGELISM-001` | Cerrada el 2026-07-16. Se mantiene solo como referencia historica del cierre documental RBAC. | `docs/EVANGELISMO_RBAC_MATRIX.md` |
+| `PARCIAL-EVENTS-001` | Cerrada el 2026-07-16 tras validacion completa de la suite amplia del modulo. | `backend/api/evangelism_events/` + `frontend/src/app/plataforma/evangelism/events/` |
+| `PARCIAL-MULTIPLICATION-001` | Cerrada el 2026-07-16 tras validacion de `/multiplication/check`, `/split` y `/history` en la suite amplia. | `backend/api/evangelism_multiplication.py` |
+| `PARCIAL-FOLLOWUP-001` | Cerrada el 2026-07-16 tras validacion de follow-up y respuestas en la suite amplia. | `backend/api/evangelism_grupos/grupos_asistencias.py` |
+| `PEND-EVENTS-CONTRACT-001` | Cerrada el 2026-07-16. Contrato de eventos validado por `tests/test_evangelism_module_coverage.py`. | `backend/api/evangelism_events/` |
+| `PEND-SESSIONS-CONTRACT-001` | Cerrada el 2026-07-16. Contratos y aliases de sesiones validados por `tests/test_evangelism_module_coverage.py`. | `backend/api/evangelism_grupos/grupos_sesiones.py` |
 
 Busqueda rapida:
 

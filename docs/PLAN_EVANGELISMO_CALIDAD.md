@@ -2,6 +2,8 @@
 
 > **Objetivo:** cerrar evangelismo como plataforma propia, con trabajo por capas y validacion repetible. Este plan complementa `docs/ESTADO_EVANGELISMO.md`; no reemplaza el estado canonico.
 
+**Ejecucion 2026-07-16:** Fase 0 completada con smoke minimo verde (`18 passed, 1 xfailed`). Fase 2 tambien quedo validada con `tests/test_evangelism_module_coverage.py` en verde (`219 passed`). En consecuencia, los IDs `PARCIAL-EVENTS-001`, `PARCIAL-MULTIPLICATION-001`, `PARCIAL-FOLLOWUP-001`, `PEND-EVENTS-CONTRACT-001` y `PEND-SESSIONS-CONTRACT-001` salen del backlog activo y quedan como cierres documentados en `ESTADO_EVANGELISMO.md`.
+
 ## 1. Regla de trabajo
 
 - No mezclar fixes de evangelismo con CRM, proyectos, calendario o CMS salvo que el contrato cruzado sea el origen real del fallo.
@@ -199,4 +201,3 @@ Criterio de salida:
 - Rutas QA de `EVANGELISMO_QA_CHECKLIST.md` pasan.
 - `ESTADO_EVANGELISMO.md` se actualiza si cambio backlog o estado.
 - Commit por fase o por unidad coherente.
-
