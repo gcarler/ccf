@@ -5,6 +5,8 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { DEFAULT_TASK_PRIORITY } from '@/lib/projects/constants';
 import type { ProjectTaskRecord } from '@/types/projects';
+import { InlineStatusPicker, InlinePriorityPicker, InlineDatePicker, InlineUserPicker } from '@/components/ui/inline-editors';
+import { useProjectTasks } from '@/hooks/useProjectTasks';
 import * as Popover from '@radix-ui/react-popover';
 import {
 AllCommunityModule,
@@ -12,46 +14,24 @@ ColDef,
 GetRowIdParams,
 ICellRendererParams,
 ModuleRegistry,themeQuartz,
-} from 'ag-grid-community';
+} from 'ag-grid-community/dist/ag-grid-community.noStyle';
 import { AgGridReact } from 'ag-grid-react';
 import clsx from 'clsx';
 import { AnimatePresence,motion } from 'framer-motion';
 import {
-AlertCircle,
-Calendar,
 Check,
-ChevronDown,
-ChevronLeft,
 Circle,
 Eye,EyeOff,Filter,
 Layers,
-Loader2,
 MessageSquare,
 Plus,
-Search,
 Settings2,
-User,X
+X
 } from 'lucide-react';
 import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
+import TitleCellEditor from './TitleCellEditor';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
-
-// ─── Date helpers ──────────────────────────────────────────────────────────────
-const DAYS_ES   = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'];
-const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-function getDaysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate(); }
-function getFirstDay(y: number, m: number)    { return new Date(y, m, 1).getDay(); }
-function formatRelative(date: Date): string {
-    const today = new Date(); today.setHours(0,0,0,0);
-    const d = new Date(date); d.setHours(0,0,0,0);
-    const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
-    if (diff === 0) return 'Hoy';
-    if (diff === 1) return 'Mañana';
-    if (diff === -1) return 'Ayer';
-    if (diff < 0) return d.toLocaleDateString('es-PE', { day:'2-digit', month:'short' });
-    if (diff <= 7) return `En ${diff}d`;
-    return d.toLocaleDateString('es-PE', { day:'2-digit', month:'short' });
-}
 
 // ─── Status / Priority configs ─────────────────────────────────────────────────
 const STATUS_OPTIONS = [
@@ -77,173 +57,6 @@ const FlagIcon = ({ fill, size = 14 }: { fill: string; size?: number }) => (
     </svg>
 );
 
-// ─── Inline Status Cell ────────────────────────────────────────────────────────
-function InlineStatusCell({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-    const [open, setOpen] = useState(false);
-    const st = getStatus(value);
-    return (
-        <Popover.Root open={open} onOpenChange={setOpen}>
-            <Popover.Trigger asChild>
-                <button onClick={e => e.stopPropagation()} className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold transition-all whitespace-nowrap', st.bg, st.text, st.border, 'hover:opacity-80', open && 'ring-2 ring-blue-500/30')}>
-                    <div className={clsx('size-1.5 rounded-full shrink-0', st.dot)} />{st.label}<ChevronDown size={10} className="ml-0.5 opacity-60" />
-                </button>
-            </Popover.Trigger>
-            <Popover.Portal>
-                <Popover.Content className="z-[500] min-w-[180px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
-                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">Estado</p>
-                    {STATUS_OPTIONS.map(s => (
-                        <button key={s.value} onClick={() => { onChange(s.value); setOpen(false); }}
-                            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
-                            <div className={clsx('size-2 rounded-full shrink-0', s.dot)} />
-                            <span className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex-1 text-left">{s.label}</span>
-                            {s.value === value && <Check size={12} className="text-[hsl(var(--primary))]" />}
-                        </button>
-                    ))}
-                </Popover.Content>
-            </Popover.Portal>
-        </Popover.Root>
-    );
-}
-
-// ─── Inline Priority Cell ──────────────────────────────────────────────────────
-function InlinePriorityCell({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-    const [open, setOpen] = useState(false);
-    const pr = getPriority(value);
-    return (
-        <Popover.Root open={open} onOpenChange={setOpen}>
-            <Popover.Trigger asChild>
-                <button onClick={e => e.stopPropagation()} className={clsx('flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-bold transition-all', 'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5', open && 'bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10')}>
-                    <FlagIcon fill={pr.fill} size={13} /><span className={pr.color}>{pr.label}</span><ChevronDown size={10} className="text-[hsl(var(--text-secondary))]" />
-                </button>
-            </Popover.Trigger>
-            <Popover.Portal>
-                <Popover.Content className="z-[500] min-w-[160px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
-                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">Prioridad</p>
-                    {PRIORITY_OPTIONS.map(p => (
-                        <button key={p.value} onClick={() => { onChange(p.value); setOpen(false); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
-                            <FlagIcon fill={p.fill} size={12} /><span className={clsx('text-[12px] font-semibold flex-1 text-left', p.color)}>{p.label}</span>
-                            {p.value === value && <Check size={12} className="text-[hsl(var(--primary))]" />}
-                        </button>
-                    ))}
-                </Popover.Content>
-            </Popover.Portal>
-        </Popover.Root>
-    );
-}
-
-// ─── Inline Date Cell ──────────────────────────────────────────────────────────
-function InlineDateCell({ value, onChange }: { value?: string | null; onChange: (v: string | null) => void }) {
-    const [open, setOpen] = useState(false);
-    const today    = new Date(); today.setHours(0,0,0,0);
-    const parsed   = value ? new Date(value + 'T00:00:00') : null;
-    const safeYear  = parsed && !isNaN(parsed.getTime()) ? parsed.getFullYear() : today.getFullYear();
-    const safeMonth = parsed && !isNaN(parsed.getTime()) ? parsed.getMonth()    : today.getMonth();
-    const [viewYear, setViewYear]   = useState(safeYear);
-    const [viewMonth, setViewMonth] = useState(safeMonth);
-    const isOverdue = parsed && !isNaN(parsed.getTime()) && parsed < today;
-    const isToday2  = parsed && !isNaN(parsed.getTime()) && parsed.toDateString() === today.toDateString();
-    const label     = parsed && !isNaN(parsed.getTime()) ? formatRelative(parsed) : null;
-    const rawFD = getFirstDay(viewYear, viewMonth);
-    const firstDay = isNaN(rawFD) ? 0 : Math.max(0, Math.min(6, rawFD));
-    const daysCount = Math.max(0, getDaysInMonth(viewYear, viewMonth));
-    const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({length:daysCount},(_,i)=>i+1)];
-    const selectDay = (day: number) => { onChange(new Date(viewYear, viewMonth, day).toISOString().split('T')[0]); setOpen(false); };
-    return (
-        <Popover.Root open={open} onOpenChange={(v) => { setOpen(v); if(!v) return; if(parsed && !isNaN(parsed.getTime())) { setViewYear(parsed.getFullYear()); setViewMonth(parsed.getMonth()); } }}>
-            <Popover.Trigger asChild>
-                <button onClick={e => e.stopPropagation()} className={clsx('group flex items-center gap-1.5 px-2 py-1 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all', 'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5', open && 'bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10', isOverdue ? 'text-rose-500 dark:text-rose-400' : isToday2 ? 'text-amber-500 dark:text-amber-400' : label ? 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]' : 'text-[hsl(var(--text-secondary))] dark:text-white/20')}>
-                    {isOverdue ? <AlertCircle size={13} className="shrink-0" /> : <Calendar size={13} className="shrink-0" />}
-                    {label ?? <span className="group-hover:text-[hsl(var(--text-secondary))] transition-colors">—</span>}
-                </button>
-            </Popover.Trigger>
-            <Popover.Portal>
-                <Popover.Content className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-3 select-none" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
-                    <div className="flex items-center justify-between mb-3">
-                        <button onClick={() => { let m=viewMonth-1,y=viewYear; if(m<0){m=11;y--;} setViewMonth(m);setViewYear(y); }} className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))]"><ChevronLeft size={14}/></button>
-                        <span className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{MONTHS_ES[viewMonth]} {viewYear}</span>
-                        <button onClick={() => { let m=viewMonth+1,y=viewYear; if(m>11){m=0;y++;} setViewMonth(m);setViewYear(y); }} className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))]"><ChevronDown size={14}/></button>
-                    </div>
-                    <div className="grid grid-cols-7 mb-1">{DAYS_ES.map(d => <div key={d} className="text-[9px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center py-0.5">{d}</div>)}</div>
-                    <div className="grid grid-cols-7 gap-y-0.5">
-                        {cells.map((day, i) => {
-                            if (!day) return <div key={`e-${i}`} />;
-                            const cd = new Date(viewYear, viewMonth, day);
-                            const isSel = parsed && !isNaN(parsed.getTime()) && cd.toDateString()===parsed.toDateString();
-                            const isTd  = cd.toDateString()===today.toDateString();
-                            const isPast = cd < today && !isTd;
-                            return <button key={day} onClick={() => selectDay(day)} className={clsx('size-8 rounded-lg text-[12px] font-medium transition-all mx-auto flex items-center justify-center', isSel ? 'bg-[hsl(var(--primary))] text-white font-bold shadow-sm' : isTd ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] font-bold ring-1 ring-blue-200' : isPast ? 'text-[hsl(var(--text-secondary))] dark:text-white/20 hover:bg-[hsl(var(--surface-1))]' : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>{day}</button>;
-                        })}
-                    </div>
-                    <div className="flex items-center gap-2 mt-3 pt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
-                        <button onClick={() => selectDay(today.getDate())} className="flex-1 text-[11px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors">Hoy</button>
-                        {value && <button onClick={() => { onChange(null); setOpen(false); }} className="flex-1 text-[11px] font-bold text-rose-500 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">Quitar</button>}
-                    </div>
-                </Popover.Content>
-            </Popover.Portal>
-        </Popover.Root>
-    );
-}
-
-// ─── Inline User Cell ──────────────────────────────────────────────────────────
-type UserRecord = { id: string; username: string; email?: string };
-function InlineUserCell({ value, token, onChange }: { value?: string | null; token: string | null; onChange: (userId: string | null, name: string | null) => void }) {
-    const [open, setOpen] = useState(false);
-    const [query, setQuery]   = useState('');
-    const [users, setUsers]   = useState<UserRecord[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [displayName, setDisplayName] = useState<string | null>(null);
-    useEffect(() => {
-        if (!open) return;
-        setLoading(true);
-        apiFetch('/crm/personas/', { method: 'GET', token: token ?? undefined })
-            .then((data: any) => {
-                const list: UserRecord[] = Array.isArray(data)
-                    ? data.map((m: any) => ({ id: String(m.user?.id ?? m.id), username: m.nombre_completo || m.user?.username || m.username || `#${m.id}`, email: m.user?.email ?? m.email }))
-                    : [];
-                setUsers(list);
-                if (value) { const found = list.find(u => u.id === value); if (found) setDisplayName(found.username); }
-            })
-            .catch(() => setUsers([]))
-            .finally(() => setLoading(false));
-    }, [open, token, value]);
-    const filtered = query ? users.filter(u => u.username.toLowerCase().includes(query.toLowerCase())) : users;
-    return (
-        <Popover.Root open={open} onOpenChange={setOpen}>
-            <Popover.Trigger asChild>
-                <button onClick={e => e.stopPropagation()} className={clsx('flex items-center gap-2 px-2 py-1 rounded-lg transition-all', 'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5', open && 'bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10')}>
-                    <div className={clsx('size-6 rounded-full flex items-center justify-center font-semibold shrink-0', value ? 'bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] dark:text-blue-300' : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]')}>
-                        {value && displayName ? displayName.charAt(0).toUpperCase() : <User size={11} />}
-                    </div>
-                    <span className="text-[12px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate max-w-[80px]">{displayName ?? (value ? `#${value}` : '—')}</span>
-                </button>
-            </Popover.Trigger>
-            <Popover.Portal>
-                <Popover.Content className="z-[500] w-[240px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 overflow-hidden" sideOffset={6} align="start" onOpenAutoFocus={e => e.preventDefault()}>
-                    <div className="flex items-center gap-2 px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5">
-                        <Search size={13} className="text-[hsl(var(--text-secondary))] shrink-0" />
-                        <input autoFocus value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar usuario..." className="flex-1 text-[12px] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent outline-none placeholder:text-[hsl(var(--text-secondary))]" />
-                        {query && <button onClick={() => setQuery('')}><X size={12} className="text-[hsl(var(--text-secondary))]" /></button>}
-                    </div>
-                    <div className="max-h-[200px] overflow-y-auto py-1">
-                        {loading ? <div className="flex items-center justify-center py-1.5"><Loader2 size={16} className="text-[hsl(var(--primary))] animate-spin" /></div>
-                        : filtered.length === 0 ? <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-1.5">Sin resultados</p>
-                        : <>
-                            {value && <button onClick={() => { onChange(null, null); setDisplayName(null); setOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 transition-colors"><X size={12} /><span className="text-[11px] font-bold">Quitar asignación</span></button>}
-                            {filtered.map(u => (
-                                <button key={u.id} onClick={() => { onChange(u.id, u.username); setDisplayName(u.username); setOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
-                                    <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center font-semibold text-[hsl(var(--primary))] shrink-0">{u.username.charAt(0).toUpperCase()}</div>
-                                    <div className="flex-1 text-left"><p className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{u.username}</p>{u.email && <p className="text-[10px] text-[hsl(var(--text-secondary))] truncate">{u.email}</p>}</div>
-                                    {u.id === value && <Check size={12} className="text-[hsl(var(--primary))]" />}
-                                </button>
-                            ))}
-                        </>}
-                    </div>
-                </Popover.Content>
-            </Popover.Portal>
-        </Popover.Root>
-    );
-}
-
 // ─── AG Grid Themes ────────────────────────────────────────────────────────────
 const lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: '#ffffff', foregroundColor: '#1e293b', borderColor: '#e2e8f0', oddRowBackgroundColor: '#f8fafc', headerBackgroundColor: '#f1f5f9', headerTextColor: '#475569', selectedRowBackgroundColor: '#eef2ff', accentColor: '#6366f1', cellHorizontalPaddingScale: 0.8 });
 const darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: 'rgb(15 23 42)', foregroundColor: '#e2e8f0', borderColor: 'rgba(255,255,255,0.08)', oddRowBackgroundColor: 'rgba(255,255,255,0.02)', headerBackgroundColor: 'rgba(255,255,255,0.04)', headerTextColor: '#94a3b8', selectedRowBackgroundColor: 'rgba(99,102,241,0.15)', accentColor: '#6366f1', cellHorizontalPaddingScale: 0.8 });
@@ -251,16 +64,14 @@ const darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12,
 // ─── AG Grid Cell Renderers (use context for callbacks) ────────────────────────
 function TitleRenderer(params: ICellRendererParams) {
     if (params.data?.__isGroup) return null;
-    const { onOpenTask } = params.context ?? {};
     const task = params.data as ProjectTaskRecord;
     return (
-        <button onClick={(e) => { e.stopPropagation(); onOpenTask?.(task); }}
-            className="flex items-center gap-2 h-full w-full text-left group">
+        <div className="flex items-center gap-2 h-full w-full text-left group">
             <div className={clsx('size-4 rounded-full border-2 flex items-center justify-center flex-shrink-0',
                 task.status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-[hsl(var(--border))] dark:border-white/20')}>
                 {task.status === 'completed' && <span className="text-[7px] font-bold">✓</span>}
             </div>
-            <span className={clsx('text-[13px] font-semibold truncate group-hover:text-[hsl(var(--primary))] transition-colors', task.status === 'completed' ? 'line-through text-[hsl(var(--text-secondary))]' : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]')}>
+            <span className="text-[13px] font-semibold truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                 {task.title}
             </span>
             {(task.comments_count ?? 0) > 0 && (
@@ -268,7 +79,7 @@ function TitleRenderer(params: ICellRendererParams) {
                     <MessageSquare size={11} /><span className="text-[10px]">{task.comments_count}</span>
                 </span>
             )}
-        </button>
+        </div>
     );
 }
 
@@ -276,28 +87,28 @@ function StatusRenderer(params: ICellRendererParams) {
     if (params.data?.__isGroup) return null;
     const { applyChangeRef } = params.context ?? {};
     const task = params.data as ProjectTaskRecord;
-    return <InlineStatusCell value={task.status ?? 'todo'} onChange={(v) => applyChangeRef?.current?.(task.id, 'status', v)} />;
+    return <InlineStatusPicker value={task.status ?? 'todo'} onChange={(v) => applyChangeRef?.current?.(task.id, 'status', v)} />;
 }
 
 function PriorityRenderer(params: ICellRendererParams) {
     if (params.data?.__isGroup) return null;
     const { applyChangeRef } = params.context ?? {};
     const task = params.data as ProjectTaskRecord;
-    return <InlinePriorityCell value={task.priority ?? 'medium'} onChange={(v) => applyChangeRef?.current?.(task.id, 'priority', v)} />;
+    return <InlinePriorityPicker value={task.priority ?? 'medium'} onChange={(v) => applyChangeRef?.current?.(task.id, 'priority', v)} />;
 }
 
 function DateRenderer(params: ICellRendererParams) {
     if (params.data?.__isGroup) return null;
     const { applyChangeRef } = params.context ?? {};
     const task = params.data as ProjectTaskRecord;
-    return <InlineDateCell value={task.due_date} onChange={(v) => applyChangeRef?.current?.(task.id, 'due_date', v)} />;
+    return <InlineDatePicker value={task.due_date} onChange={(v) => applyChangeRef?.current?.(task.id, 'due_date', v)} />;
 }
 
 function AssigneeRenderer(params: ICellRendererParams) {
     if (params.data?.__isGroup) return null;
-    const { applyChangeRef, token } = params.context ?? {};
+    const { applyChangeRef } = params.context ?? {};
     const task = params.data as ProjectTaskRecord;
-    return <InlineUserCell value={task.assignee_id} token={token} onChange={(id) => applyChangeRef?.current?.(task.id, 'assignee_id', id)} />;
+    return <InlineUserPicker value={task.assignee_id} onChange={(id, name) => applyChangeRef?.current?.(task.id, 'assignee_id', id, { assignee_name: name })} />;
 }
 
 // ─── Props / Types ─────────────────────────────────────────────────────────────
@@ -324,6 +135,7 @@ type ActiveFilter = { field: 'status' | 'priority'; value: string; label: string
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask, onTaskUpdated }: Props) {
     const { token } = useAuth();
+    const { updateTask } = useProjectTasks();
     const gridRef = useRef<AgGridReact>(null);
     const [isDark, setIsDark] = useState(false);
     const [overrides, setOverrides] = useState<Record<string, Partial<ProjectTaskRecord>>>({});
@@ -368,20 +180,28 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
         try { localStorage.setItem(key, JSON.stringify({ groupBy, activeFilters, visibleCols: Array.from(visibleCols) })); } catch { /* ignore */ }
     }, [isLoaded, projectId, groupBy, activeFilters, visibleCols]);
 
-    // Optimistic update
-    const applyChange = useCallback(async (taskId: number, field: string, value: any) => {
-        setOverrides(prev => ({ ...prev, [taskId]: { ...prev[taskId], [field]: value } }));
-        try {
-            await apiFetch(`/projects/tasks/${taskId}`, { method: 'PATCH', body: { [field]: value }, token: token ?? undefined });
-            onTaskUpdated?.(taskId, field, value);
-        } catch {
+    // Optimistic update via shared hook
+    const applyChange = useCallback(async (taskId: number | string, field: string, value: any, extraOpt: Record<string, any> = {}) => {
+        setOverrides(prev => ({ ...prev, [taskId]: { ...prev[taskId], [field]: value, ...extraOpt } }));
+        const updated = await updateTask(String(taskId), { [field]: value }, { optimistic: false });
+        if (updated) {
+            onTaskUpdated?.(Number(taskId), field, value);
+        } else {
             setOverrides(prev => { const n = { ...prev }; delete n[taskId]; return n; });
         }
-    }, [token, onTaskUpdated]);
+    }, [updateTask, onTaskUpdated]);
 
     // Stable ref for applyChange so cell renderers always have latest version
     const applyChangeRef = useRef(applyChange);
     useEffect(() => { applyChangeRef.current = applyChange; }, [applyChange]);
+
+    // Trigger title edit on double click for the title column
+    const handleCellDoubleClicked = useCallback((e: any) => {
+        if (e.colDef.field === 'title' && !e.data?.__isGroup) {
+            e.event?.stopPropagation?.();
+            e.api.startEditingCell({ rowIndex: e.rowIndex, colKey: 'title' });
+        }
+    }, []);
 
     // Resolve optimistic overrides
     const resolveTask = useCallback((t: ProjectTaskRecord): ProjectTaskRecord => ({ ...t, ...(overrides[t.id] ?? {}) }), [overrides]);
@@ -417,12 +237,12 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     // Column definitions
     const colDefs = useMemo<ColDef[]>(() => {
         const cols: ColDef[] = [];
-        if (visibleCols.has('title'))    cols.push({ field: 'title',      headerName: 'Nombre',       flex: 3, minWidth: 220, cellRenderer: TitleRenderer, sortable: true });
+        if (visibleCols.has('title'))    cols.push({ field: 'title',      headerName: 'Nombre',       flex: 3, minWidth: 220, cellRenderer: TitleRenderer, cellEditor: TitleCellEditor, editable: true, sortable: true });
         if (visibleCols.has('status'))   cols.push({ field: 'status',     headerName: 'Estado',       width: 160, cellRenderer: StatusRenderer, sortable: true });
         if (visibleCols.has('priority')) cols.push({ field: 'priority',   headerName: 'Prioridad',    width: 140, cellRenderer: PriorityRenderer, sortable: true });
         if (visibleCols.has('assignee')) cols.push({ field: 'assignee_id',headerName: 'Asignado',     width: 160, cellRenderer: AssigneeRenderer, sortable: false });
         if (visibleCols.has('due_date')) cols.push({ field: 'due_date',   headerName: 'Fecha límite', width: 140, cellRenderer: DateRenderer, sortable: true });
-        return cols.map(c => ({ ...c, resizable: true, editable: false, suppressHeaderMenuButton: false }));
+        return cols.map(c => ({ ...c, resizable: true, suppressHeaderMenuButton: false }));
     }, [visibleCols]);
 
     // Full-width group row renderer
@@ -612,7 +432,17 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         getRowHeight={getRowHeight}
                         isFullWidthRow={groupBy !== 'none' ? isFullWidthRow : undefined}
                         fullWidthCellRenderer={groupBy !== 'none' ? fullWidthCellRenderer : undefined}
-                        onRowClicked={(e) => { if (!e.data?.__isGroup) onOpenTask(e.data); }}
+                        onRowDoubleClicked={(e) => { if (!e.data?.__isGroup) onOpenTask(e.data); }}
+                        onCellDoubleClicked={handleCellDoubleClicked}
+                        onCellValueChanged={(e) => {
+                            if (e.colDef.field === 'title' && !e.data?.__isGroup) {
+                                const taskId = String(e.data.id);
+                                const newTitle = e.newValue;
+                                if (newTitle && newTitle.trim()) {
+                                    applyChangeRef.current?.(taskId, 'title', newTitle.trim());
+                                }
+                            }
+                        }}
                         rowStyle={{ cursor: 'pointer' }}
                         suppressCellFocus
                         animateRows
