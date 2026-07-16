@@ -38,15 +38,26 @@ export function useWhiteboardCanvas(
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fabricCanvas = useRef<fabric.Canvas | null>(null);
+  const backgroundColorRef = useRef(backgroundColor);
+  const callbacksRef = useRef({
+    onObjectModified,
+    onObjectAdded,
+    onObjectRemoved,
+  });
   const [isReady, setIsReady] = useState(false);
   const [zoom, setZoomState] = useState(100);
+
+  useEffect(() => {
+    backgroundColorRef.current = backgroundColor;
+    callbacksRef.current = { onObjectModified, onObjectAdded, onObjectRemoved };
+  }, [backgroundColor, onObjectAdded, onObjectModified, onObjectRemoved]);
 
   // Initialize canvas
   useEffect(() => {
     if (!canvasRef.current || typeof window === "undefined") return;
 
     const canvas = new fabric.Canvas(canvasRef.current, {
-      backgroundColor,
+      backgroundColor: backgroundColorRef.current,
       preserveObjectStacking: true,
       selection: true,
       selectionColor: "rgba(37, 99, 235, 0.1)",
@@ -72,15 +83,13 @@ export function useWhiteboardCanvas(
     window.addEventListener("resize", resizeCanvas);
 
     // Wire up callbacks
-    if (onObjectModified) {
-      canvas.on("object:modified", () => onObjectModified(canvas));
-    }
-    if (onObjectAdded) {
-      canvas.on("object:added", () => onObjectAdded(canvas));
-    }
-    if (onObjectRemoved) {
-      canvas.on("object:removed", () => onObjectRemoved(canvas));
-    }
+    const handleObjectModified = () => callbacksRef.current.onObjectModified?.(canvas);
+    const handleObjectAdded = () => callbacksRef.current.onObjectAdded?.(canvas);
+    const handleObjectRemoved = () => callbacksRef.current.onObjectRemoved?.(canvas);
+
+    canvas.on("object:modified", handleObjectModified);
+    canvas.on("object:added", handleObjectAdded);
+    canvas.on("object:removed", handleObjectRemoved);
 
     // Pinch-to-zoom support
     let lastDistance = 0;
@@ -135,12 +144,22 @@ export function useWhiteboardCanvas(
         canvasElement.removeEventListener("touchmove", handleTouchMove);
         canvasElement.removeEventListener("touchend", handleTouchEnd);
       }
+      canvas.off("object:modified", handleObjectModified);
+      canvas.off("object:added", handleObjectAdded);
+      canvas.off("object:removed", handleObjectRemoved);
       canvas.dispose();
       fabricCanvas.current = null;
       setIsReady(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const canvas = fabricCanvas.current;
+    if (!canvas) return;
+    (canvas as fabric.Canvas & { backgroundColor?: string }).backgroundColor = backgroundColor;
+    canvas.renderAll();
+  }, [backgroundColor]);
 
   const addRect = useCallback(
     (x = 120, y = 120, options?: Partial<fabric.RectProps>) => {
