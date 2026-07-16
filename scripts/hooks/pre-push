@@ -11,21 +11,20 @@ NC='\033[0m'
 
 FAIL=0
 
-restart_frontend_next() {
-    echo "  [deploy] Reiniciando frontend con next start..."
-    pkill -f "next start -p 3000 -H 127.0.0.1" >/dev/null 2>&1 || true
-    cd /root/ccf/frontend
-    nohup npm run start -- -p 3000 -H 127.0.0.1 >/tmp/ccf-frontend-start.log 2>&1 &
-    local pid=$!
-    sleep 8
-    if kill -0 "$pid" >/dev/null 2>&1; then
+restart_via_startccf() {
+    echo "  [deploy] Reiniciando stack con ./stopccf + ./startccf..."
+    cd /root/ccf
+    if ./stopccf > /tmp/ccf-stopccf.log 2>&1 && ./startccf > /tmp/ccf-startccf.log 2>&1; then
+        sleep 3
         FRONT_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/plataforma/evangelism 2>/dev/null || echo "000")
-        echo -e "  ${GREEN}✓ Frontend reiniciado — HTTP $FRONT_HTTP${NC}"
+        BACK_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/system/health 2>/dev/null || echo "000")
+        echo -e "  ${GREEN}✓ Stack reiniciado — frontend: HTTP $FRONT_HTTP, backend: HTTP $BACK_HTTP${NC}"
         return 0
     fi
 
-    echo -e "  ${YELLOW}⚠ No se pudo reiniciar el frontend — revisa /tmp/ccf-frontend-start.log${NC}"
-    tail -n 20 /tmp/ccf-frontend-start.log 2>/dev/null || true
+    echo -e "  ${YELLOW}⚠ No se pudo reiniciar el stack — revisa /tmp/ccf-stopccf.log y /tmp/ccf-startccf.log${NC}"
+    tail -n 20 /tmp/ccf-stopccf.log 2>/dev/null || true
+    tail -n 20 /tmp/ccf-startccf.log 2>/dev/null || true
     return 1
 }
 
@@ -261,8 +260,8 @@ if [ -n "$FRONTEND_FILES" ]; then
             FRONT_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3002 2>/dev/null || echo "000")
             echo -e "  ${GREEN}✓ Frontend reiniciado — HTTP $FRONT_HTTP${NC}"
         else
-            echo -e "  ${YELLOW}⚠ PM2 no está manejando el frontend; usando next start directo${NC}"
-            restart_frontend_next
+            echo -e "  ${YELLOW}⚠ PM2 no está manejando el frontend; usando ./stopccf + ./startccf${NC}"
+            restart_via_startccf
         fi
     fi
 fi

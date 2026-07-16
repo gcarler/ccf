@@ -12,20 +12,8 @@ FRONTEND_PORT="${FRONTEND_PORT:-3000}"
 
 mkdir -p "$RUN_DIR"
 
-# ── Trap: cleanup children on exit ──
-CLEANUP_PIDS=""
-trap 'cleanup_exit' EXIT
-trap 'cleanup_exit' INT TERM
-
 cleanup_exit() {
-  local pids_file="$RUN_DIR/.started_pids"
-  if [[ -f "$pids_file" ]]; then
-    while IFS= read -r pid; do
-      [[ -z "$pid" ]] && continue
-      kill "$pid" >/dev/null 2>&1 || true
-    done < "$pids_file"
-    rm -f "$pids_file"
-  fi
+  return 0
 }
 
 resolve_python() {
@@ -111,17 +99,25 @@ ensure_started() {
   local pid="$2"
   local log_file="$3"
   local port="${4:-}"
+  local health_url="${5:-}"
 
-  # Poll with increasing intervals up to a total of ~12 seconds.
+  # Poll with increasing intervals up to a total of ~30 seconds.
   # This catches the case where the process starts, then crashes
   # between checks (the next poll would detect the absence).
   local waited=0
   local interval=1
-  while [[ $waited -lt 12 ]]; do
+  while [[ $waited -lt 30 ]]; do
     if ! is_running "$pid"; then
       echo "ERROR: $name (PID $pid) died after ${waited}s. Last log lines:" >&2
       tail -n 40 "$log_file" 2>/dev/null || true
       exit 1
+    fi
+    if [[ -n "$health_url" ]]; then
+      local http_status
+      http_status="$(curl -s -o /dev/null -w "%{http_code}" "$health_url" 2>/dev/null || echo "000")"
+      if [[ "$http_status" = "200" ]]; then
+        return 0
+      fi
     fi
     # Once the PID exists, also check the port if provided
     if [[ -n "$port" ]] && is_port_listening "$port"; then
@@ -174,7 +170,7 @@ start_backend() {
     echo "$pid" > "$BACKEND_PID_FILE"
     echo "$pid" >> "$RUN_DIR/.started_pids"
   )
-  ensure_started "Backend" "$(cat "$BACKEND_PID_FILE")" "$BACKEND_LOG" "$BACKEND_PORT"
+  ensure_started "Backend" "$(cat "$BACKEND_PID_FILE")" "$BACKEND_LOG" "$BACKEND_PORT" "http://127.0.0.1:$BACKEND_PORT/api/system/health"
   echo "Backend started on http://localhost:$BACKEND_PORT"
 }
 
@@ -194,10 +190,16 @@ start_frontend() {
     return
   fi
 
+  if [[ ! -f "$ROOT_DIR/frontend/.next/BUILD_ID" || ! -d "$ROOT_DIR/frontend/.next/server" ]]; then
+    echo "ERROR: frontend build missing or incomplete."
+    echo "Run: cd \"$ROOT_DIR/frontend\" && npm run build"
+    exit 1
+  fi
+
   (
     cd "$ROOT_DIR/frontend"
     local pid
-    pid="$(_launch_detached "$FRONTEND_LOG" npm run dev -- --hostname 0.0.0.0 --port "$FRONTEND_PORT")"
+    pid="$(_launch_detached "$FRONTEND_LOG" npm run start -- --hostname 0.0.0.0 --port "$FRONTEND_PORT")"
     echo "$pid" > "$FRONTEND_PID_FILE"
     echo "$pid" >> "$RUN_DIR/.started_pids"
   )
