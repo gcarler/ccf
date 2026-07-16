@@ -36,6 +36,28 @@ echo ""
 PY_FILES=$(git diff --name-only origin/main HEAD 2>/dev/null | grep '\.py$' || true)
 FRONTEND_FILES=$(git diff --name-only origin/main HEAD 2>/dev/null | grep '^frontend/' || true)
 ALEMBIC_FILES=$(git diff --name-only origin/main HEAD 2>/dev/null | grep 'alembic/versions/' || true)
+QUALITY_SELECTOR="$VENV/python /root/ccf/scripts/select_quality_checks.py --base origin/main --head HEAD"
+QUALITY_SUMMARY=$($QUALITY_SELECTOR --summary 2>/dev/null || echo "No quality selector summary available.")
+mapfile -t QUALITY_CHECKS < <($QUALITY_SELECTOR 2>/dev/null || true)
+
+run_quality_check() {
+    local check_id="$1"
+    local label="$2"
+    local cmd="$3"
+    echo "      - $label"
+    if eval "$cmd" > /tmp/ccf-quality-check.log 2>&1; then
+        local tail_line
+        tail_line=$(tail -n 1 /tmp/ccf-quality-check.log 2>/dev/null || true)
+        echo -e "        ${GREEN}✓${NC} $check_id"
+        if [ -n "$tail_line" ]; then
+            echo "          $tail_line"
+        fi
+    else
+        echo -e "        ${RED}✗${NC} $check_id"
+        tail -n 20 /tmp/ccf-quality-check.log 2>/dev/null | sed 's/^/          /'
+        FAIL=1
+    fi
+}
 
 # ─── 1. SINTAXIS PYTHON ───────────────────────────────────────────────────────
 if [ -n "$PY_FILES" ]; then
@@ -176,7 +198,7 @@ else
 fi
 
 # ─── 6. TESTS RÁPIDOS ────────────────────────────────────────────────────────
-echo "  [6/7] Tests rápidos (smoke + structural)..."
+echo "  [6/8] Tests rápidos (smoke + structural)..."
 cd /root/ccf
 TEST_OUTPUT=$($VENV/python -m pytest tests/test_smoke.py tests/test_structural_contracts.py --override-ini="addopts=-p no:cacheprovider" -v --tb=short -q -x 2>&1) || TEST_RC=$?
 cd - > /dev/null
@@ -190,8 +212,50 @@ else
     FAIL=1
 fi
 
-# ─── 7. VERIFICAR QUE NO SE ROMPE EL FRONTEND ACTUAL ─────────────────────────
-echo "  [7/7] Frontend actual respondiendo..."
+# ─── 7. CHECKS POR MÓDULO ────────────────────────────────────────────────────
+echo "  [7/8] Checks por módulo..."
+echo "      $QUALITY_SUMMARY"
+if [ ${#QUALITY_CHECKS[@]} -eq 0 ]; then
+    echo -e "      ${YELLOW}⚠ Sin checks modulares extra para este diff${NC}"
+else
+    for check_id in "${QUALITY_CHECKS[@]}"; do
+        case "$check_id" in
+            academy_quality)
+                run_quality_check "$check_id" "Academy quality" "$VENV/python /root/ccf/scripts/test_academy_quality.py"
+                ;;
+            cms_quality)
+                run_quality_check "$check_id" "CMS quality" "$VENV/python /root/ccf/scripts/test_cms_quality.py"
+                ;;
+            crm_quality)
+                run_quality_check "$check_id" "CRM quality" "$VENV/python /root/ccf/scripts/test_crm_quality.py"
+                ;;
+            evangelism_quality)
+                run_quality_check "$check_id" "Evangelism quality" "$VENV/python /root/ccf/scripts/test_evangelism_quality.py"
+                ;;
+            messaging_quality)
+                run_quality_check \
+                    "$check_id" \
+                    "Messaging quality" \
+                    "$VENV/python /root/ccf/scripts/test_messaging_quality.py"
+                ;;
+            agenda_quality)
+                run_quality_check "$check_id" "Agenda quality" "$VENV/python /root/ccf/scripts/test_agenda_quality.py"
+                ;;
+            platform_quality)
+                run_quality_check "$check_id" "Platform quality" "$VENV/python /root/ccf/scripts/test_platform_quality.py"
+                ;;
+            projects_quality)
+                run_quality_check "$check_id" "Projects quality" "$VENV/python /root/ccf/scripts/test_projects_quality.py"
+                ;;
+            *)
+                echo -e "      ${YELLOW}⚠ Check no reconocido: $check_id${NC}"
+                ;;
+        esac
+    done
+fi
+
+# ─── 8. VERIFICAR QUE NO SE ROMPE EL FRONTEND ACTUAL ─────────────────────────
+echo "  [8/8] Frontend actual respondiendo..."
 FRONT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3002 2>/dev/null || echo "000")
 if [ "$FRONT_STATUS" = "200" ]; then
     echo -e "  ${GREEN}✓ Frontend actual: HTTP $FRONT_STATUS${NC}"
