@@ -68,7 +68,7 @@ export default function SessionReportPage() {
  const params = useParams();
  const router = useRouter();
  const grupoId = (params?.grupo_id as string) || '';
- const { token } = useAuth();
+ const { token, loading: authLoading } = useAuth();
 
  const [house, setHouse] = useState<Grupo | null>(null);
  const [loading, setLoading] = useState(true);
@@ -82,10 +82,15 @@ export default function SessionReportPage() {
  const [newGuests, setNewGuests] = useState<NewGuest[]>([]);
  const [searchQuery, setSearchQuery] = useState('');
  const fetchHouse = useCallback(async () => {
+    if (authLoading) return;
+    if (!token || !grupoId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setLoadError(false);
     try {
-      const data = await apiFetch<Grupo>(`/evangelism/grupos/${grupoId}`, { token: token || '', silent: true });
+      const data = await apiFetch<Grupo>(`/evangelism/grupos/${grupoId}`, { token, silent: true });
       setHouse(data);
 
       const basePersonas = data.base_attendees || [];
@@ -131,7 +136,7 @@ export default function SessionReportPage() {
     } finally {
       setLoading(false);
     }
-  }, [grupoId, token]);
+  }, [authLoading, grupoId, token]);
 
  useEffect(() => { fetchHouse(); }, [fetchHouse]);
 
@@ -157,11 +162,11 @@ export default function SessionReportPage() {
  }, [people, searchQuery]);
 
  const handleSubmit = async () => {
- if (!house) return;
+ if (!house || !token) return;
  setSaving(true);
  try {
  const sessionData = await apiFetch<any>('/evangelism/sessions', {
-  method: 'POST', token: token || '', silent: true,
+  method: 'POST', token, silent: true,
   body: {
   grupo_id: grupoId,
   session_date: `${sessionDate}T12:00:00`,
