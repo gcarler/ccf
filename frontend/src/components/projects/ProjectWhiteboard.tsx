@@ -357,6 +357,13 @@ export default function ProjectWhiteboard({
                   Guardando...
                 </span>
               </>
+            ) : saveStatus === "error" ? (
+              <>
+                <Cloud size={10} className="text-rose-500" />
+                <span className="text-[9px] font-semibold uppercase text-rose-500">
+                  Error
+                </span>
+              </>
             ) : (
               <>
                 <Cloud size={10} className="text-emerald-500" />
