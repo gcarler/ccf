@@ -164,12 +164,16 @@ export default function WhiteboardPage() {
                 className="mx-auto text-[hsl(var(--text-secondary))] mb-3"
               />
               <p className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                {boards.length === 0
+                {!token
+                  ? "Debes iniciar sesión"
+                  : boards.length === 0
                   ? "No hay pizarras registradas todavia"
                   : "Sin resultados"}
               </p>
               <p className="text-xs text-[hsl(var(--text-secondary))] mt-2">
-                {boards.length === 0
+                {!token
+                  ? "Inicia sesión para ver y administrar las pizarras vinculadas a tus proyectos."
+                  : boards.length === 0
                   ? "Crea una nueva pizarra seleccionando un proyecto."
                   : "Ajusta la busqueda para encontrar otro lienzo."}
               </p>
