@@ -2,6 +2,8 @@
 
 Fecha: 2026-06-04
 
+> **Estado del documento:** auditoria historica de corte `2026-06-04`. No usar este archivo como backlog vivo ni como handover primario; el estado canonico vigente vive en [ESTADO_EVANGELISMO.md](/root/ccf/docs/ESTADO_EVANGELISMO.md).
+
 ## Alcance
 
 Auditoria de continuidad de datos del componente Evangelismo, desde base de datos hasta frontend:
