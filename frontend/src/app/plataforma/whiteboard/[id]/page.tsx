@@ -417,8 +417,12 @@ export default function WhiteboardSessionPage() {
     const clearCanvas = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
+        history.restoringRef.current = true;
         canvas.getObjects().forEach((object) => canvas.remove(object));
         canvas.requestRenderAll();
+        history.clearHistory();
+        history.restoringRef.current = false;
+        saveNow(canvas);
     };
 
     const duplicateSelection = () => {
