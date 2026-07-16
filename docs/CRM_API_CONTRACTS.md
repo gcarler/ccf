@@ -11,6 +11,10 @@
 - Los listados protegidos deben excluir `deleted_at` cuando aplique
 - No devolver ORM crudo
 
+Referencia RBAC:
+
+- `docs/CRM_RBAC_MATRIX.md`
+
 ## 2. Areas y routers
 
 | Router | Archivo | Responsabilidad |
@@ -194,3 +198,10 @@ cd /root/ccf
   tests/test_crm_automations_dag.py \
   tests/test_crm_concurrency_adversarial.py
 ```
+
+## 12. Notas RBAC actuales
+
+- La mayor parte de personas, pastoral y resources usa `crm:read` / `crm:edit`.
+- `PATCH /personas/me/profile` usa `profile:manage`, no `crm:*`.
+- Pipeline y kanban no siguen la misma matriz; usan `require_pastor_or_admin`.
+- Existen helpers de automations/validación en `backend/api/crm/pipelines.py` sin guard explícito de auth/RBAC en la firma actual; ver `CRM_RBAC_MATRIX.md`.
