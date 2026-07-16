@@ -71,7 +71,7 @@ export default function NewWhiteboardPage() {
     }
   };
 
-  const canCreate = selectedProjectId && !creating;
+  const canCreate = Boolean(selectedProjectId && !creating && token);
 
   return (
     <CrmShell
@@ -116,7 +116,11 @@ export default function NewWhiteboardPage() {
               <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 Proyecto vinculado
               </span>
-              {loadingProjects ? (
+              {!token ? (
+                <p className="text-sm text-[hsl(var(--text-secondary))]">
+                  Debes iniciar sesión para cargar proyectos.
+                </p>
+              ) : loadingProjects ? (
                 <div className="flex items-center gap-2 py-3 text-[hsl(var(--text-secondary))]">
                   <Loader2 size={16} className="animate-spin" />
                   Cargando proyectos...
