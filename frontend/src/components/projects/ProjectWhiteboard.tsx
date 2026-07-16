@@ -446,19 +446,28 @@ export default function ProjectWhiteboard({
           <div className="h-px w-7 bg-[hsl(var(--surface-2))] dark:bg-white/10 mx-auto my-0.5" />
           <ToolBtn
             active={tool === "rect"}
-            onClick={() => addRect()}
+            onClick={() => {
+              setTool("rect");
+              addRect();
+            }}
             icon={Square}
             label="Rectángulo (R)"
           />
           <ToolBtn
             active={tool === "circle"}
-            onClick={() => addCircle()}
+            onClick={() => {
+              setTool("circle");
+              addCircle();
+            }}
             icon={Circle}
             label="Círculo (C)"
           />
           <ToolBtn
             active={tool === "text"}
-            onClick={() => addText()}
+            onClick={() => {
+              setTool("text");
+              addText();
+            }}
             icon={Type}
             label="Texto (T)"
           />
