@@ -48,7 +48,9 @@ import pytest
 from fastapi import HTTPException
 
 from backend import crud, models
+from backend.management.seed_user_permissions import seed_rol_plataforma
 from tests.conftest import auth_headers, seed_admin
+from tests.conftest import seed_user_with_role
 
 # ── Helpers (re-usan patrón de test_crm_sede_isolation.py) ────────────────
 
@@ -78,6 +80,17 @@ def _persona_in(db, sede_id, email_suffix):
     db.add(p)
     db.flush()
     return p
+
+
+def _seed_lector_same_sede(db_session, email, sede_id):
+    seed_rol_plataforma(db_session)
+    return seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email=email,
+        password="testpass123",
+        sede_id=sede_id,
+    )
 
 
 def _pastor_in(db, sede_id, name_suffix, is_main_pastor=False):
@@ -366,6 +379,30 @@ def test_create_testimonial_with_cross_sede_author_blocks_404(client, db_session
         )
 
 
+def test_lector_cannot_create_testimonial_v1(client, db_session):
+    """RBAC hardening: CMS v1 write paths now require cms:edit, not cms:read."""
+    (_, _, sede_a), _ = _seed_two_sedes(db_session)
+    _, lector_persona, _ = _seed_lector_same_sede(
+        db_session,
+        "cmsLectorTestimonial@example.com",
+        sede_a.id,
+    )
+    headers = auth_headers(client, email="cmsLectorTestimonial@example.com")
+    resp = client.post(
+        "/api/cms/testimonials",
+        headers=headers,
+        json={
+            "content": "LECTOR no debe crear testimonial",
+            "emotion": "Gratitud",
+            "author_persona_id": str(lector_persona.id),
+        },
+    )
+    assert resp.status_code == 403, (
+        f"Leak RBAC: LECTOR pudo crear testimonial CMS v1 "
+        f"({resp.status_code}): {resp.text}"
+    )
+
+
 # ════════════════════════════════════════════════════════════════════════════
 # 3) Announcements (admin) — scope checks por sede
 # ════════════════════════════════════════════════════════════════════════════
@@ -449,6 +486,30 @@ def test_delete_admin_announcement_blocks_cross_sede(client, db_session):
     assert resp.status_code == 404
     db_session.refresh(a_cross)
     assert a_cross.status == "published"
+
+
+def test_lector_cannot_create_announcement_v1(client, db_session):
+    """RBAC hardening: mutaciones de announcements en CMS v1 requieren cms:edit."""
+    (_, _, sede_a), _ = _seed_two_sedes(db_session)
+    _seed_lector_same_sede(
+        db_session,
+        "cmsLectorAnnouncement@example.com",
+        sede_a.id,
+    )
+    headers = auth_headers(client, email="cmsLectorAnnouncement@example.com")
+    resp = client.post(
+        "/api/cms/announcements",
+        headers=headers,
+        json={
+            "title": "LECTOR no debe crear announcement",
+            "content": "sin permiso de escritura",
+            "status": "draft",
+        },
+    )
+    assert resp.status_code == 403, (
+        f"Leak RBAC: LECTOR pudo crear announcement CMS v1 "
+        f"({resp.status_code}): {resp.text}"
+    )
 
 
 # ════════════════════════════════════════════════════════════════════════════
