@@ -24,7 +24,7 @@ export default function Navbar() {
     const navItems = [
         { label: 'Inicio', href: '/' },
         { label: 'Academia', href: '/plataforma/academy' },
-        { label: 'Proyectos', href: '/plataforma/projects?view=list#projects-list' },
+        { label: 'Proyectos', href: '/plataforma/projects/list#projects-list' },
         { label: 'Prédicas', href: '/predicas' },
         { label: 'Libros', href: '/books' },
         { label: 'Testimonios', href: '/testimonios' },

@@ -31,7 +31,7 @@ const footerLinks: FooterGroup[] = [
         links: [
             { label: 'CRM Pastoral', href: '/plataforma/crm' },
             { label: 'Academia', href: '/plataforma/academy' },
-            { label: 'Proyectos', href: '/plataforma/projects?view=list#projects-list' },
+            { label: 'Proyectos', href: '/plataforma/projects/list#projects-list' },
         ],
     },
     {

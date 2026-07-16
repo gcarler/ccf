@@ -222,7 +222,7 @@ export default function ProjectDetailPage() {
                 try {
                     await apiFetch(`/projects/${id}`, { method: 'DELETE', token });
                     toast.success('Proyecto eliminado');
-                    router.push('/plataforma/projects?view=list#projects-list');
+                    router.push('/plataforma/projects/list#projects-list');
                 } catch (err) {
                     toast.error('Error al eliminar proyecto');
                 }
@@ -362,7 +362,7 @@ export default function ProjectDetailPage() {
         <div className="flex flex-col h-full bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects?view=list#projects-list' },
+                    { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects/list#projects-list' },
                     { label: project?.title || 'Cargando...', icon: Calendar },
                 ]}
                 viewType={viewType}
