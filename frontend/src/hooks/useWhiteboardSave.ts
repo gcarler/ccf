@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
+import { useEffect } from "react";
 import type { Canvas } from "fabric";
 import { apiFetch } from "@/lib/http";
 
@@ -55,6 +56,8 @@ export function useWhiteboardSave(
 
   const save = useCallback(
     (canvas: Canvas, immediate = false) => {
+      if (!projectId || !token) return;
+
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
       }
@@ -69,7 +72,7 @@ export function useWhiteboardSave(
         persistToApi(canvas);
       }, debounceMs);
     },
-    [persistToApi, debounceMs]
+    [projectId, token, persistToApi, debounceMs]
   );
 
   const saveNow = useCallback(
@@ -78,6 +81,14 @@ export function useWhiteboardSave(
     },
     [save]
   );
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, []);
 
   return {
     saveStatus,
