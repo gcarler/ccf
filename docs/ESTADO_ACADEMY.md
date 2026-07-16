@@ -1,0 +1,260 @@
+# Estado del Modulo de Academy — CCF
+
+> **TL;DR (una linea):** Academy es el módulo formativo de CCF sobre `/api/academy` y `/plataforma/academy`: cursos, lecciones, evaluaciones, matrículas, progreso, certificados, foro, agenda académica y operaciones administrativas por rol.
+
+**Proposito.** Handover canónico para que cualquier sesión nueva pueda trabajar Academy como unidad propia, sin mezclarlo con CRM, CMS o auth más allá de los contratos compartidos reales.
+
+**Regla de uso.**
+
+- Actualizar este doc al cerrar tareas, no antes.
+- `Hecho / Parcial / Pendiente` reflejan el código vigente.
+- No usar este doc como wishlist.
+- Si un cambio toca `personas.id`, `auth_users.id`, permisos Academy, `sede_id`, storage o `apiFetch`, tratarlo como cambio de plataforma.
+
+---
+
+## 1. Leer primero (cualquier agente)
+
+```bash
+cat /root/ccf/docs/ESTADO_ACADEMY.md
+cat /root/ccf/docs/ACADEMY_API_CONTRACTS.md
+cat /root/ccf/docs/ACADEMY_QA_CHECKLIST.md
+cat /root/ccf/docs/PLAN_ARQUITECTURA_MODULAR_CCF.md
+```
+
+## 2. Verificar entorno
+
+```bash
+python3 --version && node --version
+```
+
+Versiones verificadas en este host el **2026-07-16**:
+
+- Python: **3.12.3**
+- Node: **v24.15.0**
+
+## 3. Recontar superficie vigente (por si drift)
+
+```bash
+wc -l /root/ccf/backend/api/academy.py /root/ccf/backend/crud/academy.py /root/ccf/backend/models_academy_core.py /root/ccf/backend/schemas/academy.py 2>/dev/null | tail -1
+wc -l /root/ccf/frontend/src/app/plataforma/academy/**/*.tsx /root/ccf/frontend/src/app/plataforma/academy/*.tsx 2>/dev/null | tail -1
+```
+
+Conteo actual:
+
+- Backend Academy directo: **1 908 LOC**
+- Frontend Academy directo: **2 978 LOC**
+
+## 4. Listar backlog completo (Parcial + Pendiente) por ID
+
+```bash
+grep -nE "PARCIAL-|PEND-" /root/ccf/docs/ESTADO_ACADEMY.md
+```
+
+## 5. Smoke test
+
+Smoke canónico:
+
+```bash
+cd /root/ccf
+./venv/bin/python scripts/test_academy_quality.py
+```
+
+Smoke mínimo bruto:
+
+```bash
+cd /root/ccf
+./venv/bin/python -m pytest -q -o addopts='' tests/test_academy_api.py tests/test_academy_domain.py
+```
+
+Pendiente del plan modular:
+
+- Smoke frontend dedicado de Academy `[PEND-FRONTEND-E2E-ACADEMY-001]`
+
+---
+
+## 6. TL;DR — Mapa del modulo
+
+| Capa | Ubicacion | Tamano |
+|---|---|---:|
+| Router canónico | `backend/api/academy.py` | cursos, lessons, assessments, enrollments, profile, dashboard, admin |
+| CRUD | `backend/crud/academy.py` | matrículas y operaciones de dominio |
+| Modelos | `backend/models_academy_core.py` | cursos, lecciones, progreso, evaluaciones, intentos, certificados, foro |
+| Schemas | `backend/schemas/academy.py` | contratos Pydantic |
+| UI principal | `frontend/src/app/plataforma/academy/**` | dashboard, cursos, curriculum, forum, certificados, grades, coordination |
+| Tests backend | `tests/test_academy_api.py`, `tests/test_academy_domain.py` | API canónica y dominio |
+
+**Estado global:** Academy tiene router y dominio relativamente concentrados, con contratos ya endurecidos a UUID y `sede_id`. Le faltaba documentación modular y smoke canónico de un solo comando.
+
+---
+
+## 7. Convenciones del modulo
+
+- **Ruta plataforma:** `/plataforma/academy`
+- **Ruta API:** `/api/academy`
+- **Cliente frontend:** `apiFetch('/academy/...')` y dashboard por `/dashboard/academy`
+- **Identidad canonica:** `personas.id` UUID; `auth_users.id == personas.id`
+- **Permisos:** `academy:read`, `academy:study`, `academy:edit`, `academy:manage`
+- **Sede isolation:** cursos y operaciones protegidas deben respetar `sede_id`
+- **Storage/uploads:** usar `storage_service` y `sanitize_filename`
+- **Soft delete:** `academy_*` usa `deleted_at` donde aplica
+
+---
+
+## 8. Backend — Modelo de datos
+
+Dominio principal en `backend/models_academy_core.py`:
+
+```text
+Course
+  -> Lesson
+    -> Resource
+    -> AssignmentSubmission
+  -> Assessment
+    -> AssessmentQuestion
+      -> AssessmentOption
+  -> Enrollment
+    -> LessonProgress
+    -> AssessmentAttempt
+      -> AssessmentAnswer
+    -> CourseAttendance
+    -> Certificate
+ForumThread
+CoursePrerequisite
+```
+
+Tablas clave:
+
+- `academy_courses`
+- `academy_lessons`
+- `academy_lesson_progress`
+- `academy_assessments`
+- `academy_assessment_questions`
+- `academy_assessment_options`
+- `academy_enrollments`
+- `academy_assessment_attempts`
+- `academy_assessment_answers`
+- `academy_course_attendance`
+- `academy_assignment_submissions`
+- `academy_certificates`
+- `academy_forum_threads`
+
+---
+
+## 9. Backend — API surface
+
+Router canónico: `backend/api/academy.py`
+
+Áreas principales:
+
+| Area | Rutas clave |
+|---|---|
+| Courses | `/courses`, `/courses/{course_id}`, `/courses/{course_id}/lessons`, `/courses/{course_id}/assessments` |
+| Assessments | `/assessments/{assessment_id}`, `/assessments/{assessment_id}/submit` |
+| Progress | `/lessons/{lesson_id}/progress`, `/me/progress`, `/me/profile` |
+| Enrollments | `/enrollments`, `/me/enrollments`, `/enrollments/{id}/check-in` |
+| Certificates | `/me/certificates`, `/enrollments/{id}/request-certificate`, `/certificates/validate/{code}` |
+| Assignments | `/lessons/{lesson_id}/submit-assignment`, `/admin/submissions`, `/admin/submissions/{id}/grade` |
+| Forum | `/forum/threads` |
+| Schedule / personas / dashboard | `/schedule`, `/personas`, `/dashboard/metrics`, `/dashboard/pilot-readiness` |
+| Admin | `/admin/courses*`, `/admin/lessons*`, `/admin/assessments*` |
+
+Detalle y reglas en `docs/ACADEMY_API_CONTRACTS.md`.
+
+---
+
+## 10. Frontend — Mapa de pantallas
+
+Rutas principales en `frontend/src/app/plataforma/academy/`:
+
+| Ruta | Archivo | Estado |
+|---|---|---|
+| `/plataforma/academy` | `page.tsx`, `AcademyClient.tsx` | Hecho — dashboard |
+| `/plataforma/academy/courses` | `courses/page.tsx`, `courses/[id]/page.tsx` | Hecho funcional |
+| `/plataforma/academy/course/[id]` | `course/[id]/page.tsx` | Parcial — coexistencia de rutas requiere contrato claro |
+| `/plataforma/academy/curriculum` | `curriculum/page.tsx` | Hecho funcional |
+| `/plataforma/academy/forum` | `forum/page.tsx`, `forum/[id]/page.tsx` | Hecho funcional |
+| `/plataforma/academy/certificates` | `certificates/page.tsx`, `[code]/page.tsx` | Hecho funcional |
+| `/plataforma/academy/grades` | `grades/page.tsx` | Parcial — depende de flujos administrativos |
+| `/plataforma/academy/coordination` | `coordination/page.tsx` y subrutas | Parcial — surface administrativa amplia |
+| `/plataforma/academy/profile` | `profile/page.tsx`, `progress/page.tsx` | Hecho funcional |
+| `/plataforma/academy/resources`, `/schedule`, `/students`, `/teachers`, `/teacher` | varias | Hecho funcional, sin e2e dedicado |
+
+No existe todavía suite e2e dedicada en `frontend/tests`.
+
+---
+
+## 11. Estado del modulo
+
+### Hecho
+
+- Router canónico `/api/academy`
+- Contrato UUID para personas, matrículas y recursos
+- Permisos separados por `read/study/edit/manage`
+- Scope por sede en cursos y operaciones protegidas
+- Progreso de lessons, enrollments, profile y certificates
+- Foro académico con aislamiento por sede y preservación de hilos globales
+- Dashboard Academy en frontend
+- Smoke canónico backend mediante script único
+
+### Parcial
+
+1. **Smoke frontend Academy** `[PARCIAL-FRONTEND-SMOKE-ACADEMY-001]` — no existe e2e dedicado.
+2. **Rutas de curso duplicadas** `[PARCIAL-COURSE-ROUTES-001]` — conviven `course/[id]` y `courses/[id]`; requiere contrato funcional más explícito.
+3. **Dashboard Academy** `[PARCIAL-DASHBOARD-CONTRACT-ACADEMY-001]` — la UI depende de `/dashboard/academy`, pero el contrato operativo no estaba documentado hasta este sprint.
+4. **Coordinación/admin** `[PARCIAL-COORDINATION-ACADEMY-001]` — hay surface amplia de administración sin smoke frontend dedicado.
+
+### Pendiente
+
+1. **E2E Academy** `[PEND-FRONTEND-E2E-ACADEMY-001]` — crear smoke de rutas críticas.
+2. **Plan de calidad Academy** `[PEND-PLAN-ACADEMY-001]` — crear plan por fases si el módulo entra a cierre intensivo.
+3. **Matriz RBAC Academy** `[PEND-RBAC-ACADEMY-001]` — documentar permisos por rol real en todas las superficies.
+4. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-ACADEMY-001]` — cubrir dashboard, admin flows y forum desde `scripts/test_academy_quality.py`.
+
+---
+
+## 12. Archivos a leer antes de cambiar codigo
+
+1. `docs/ESTADO_ACADEMY.md`
+2. `docs/ACADEMY_API_CONTRACTS.md`
+3. `docs/ACADEMY_QA_CHECKLIST.md`
+4. `backend/api/academy.py`
+5. `backend/crud/academy.py`
+6. `backend/models_academy_core.py`
+7. `backend/schemas/academy.py`
+8. `frontend/src/app/plataforma/academy/AcademyClient.tsx`
+9. `frontend/src/app/plataforma/academy/courses/`
+10. `frontend/src/app/plataforma/academy/coordination/`
+
+---
+
+## 13. Orden operativo recomendado
+
+1. Reproducir con ruta exacta y rol real.
+2. Identificar si el problema es Academy puro o plataforma compartida.
+3. Correr smoke canónico.
+4. Si toca enrollments/progress, validar ownership del estudiante.
+5. Si toca forum, validar aislamiento por sede y hilos globales.
+6. Si toca admin, validar `academy:edit/manage`.
+7. Si toca frontend, probar manualmente rutas del checklist.
+
+---
+
+## 14. Tabla de IDs estables
+
+| ID | Pieza | Archivo o area |
+|---|---|---|
+| `PARCIAL-FRONTEND-SMOKE-ACADEMY-001` | Academy sin e2e dedicado | `frontend/tests` |
+| `PARCIAL-COURSE-ROUTES-001` | Coexistencia `course/[id]` vs `courses/[id]` | frontend academy routes |
+| `PARCIAL-DASHBOARD-CONTRACT-ACADEMY-001` | Contrato de dashboard todavía débil | `/dashboard/academy` |
+| `PARCIAL-COORDINATION-ACADEMY-001` | Surface admin amplia sin smoke frontend | `frontend/src/app/plataforma/academy/coordination/**` |
+| `PEND-FRONTEND-E2E-ACADEMY-001` | Smoke frontend Academy | `frontend/tests/e2e/academy/` |
+| `PEND-PLAN-ACADEMY-001` | Plan de calidad Academy | `docs/PLAN_ACADEMY_CALIDAD.md` |
+| `PEND-RBAC-ACADEMY-001` | Matriz RBAC Academy | docs + backend permissions |
+| `PEND-EXPAND-SMOKE-ACADEMY-001` | Ampliar script Academy | `scripts/test_academy_quality.py` |
+
+Busqueda rapida:
+
+```bash
+grep -nE "PARCIAL-|PEND-" /root/ccf/docs/ESTADO_ACADEMY.md
+```
