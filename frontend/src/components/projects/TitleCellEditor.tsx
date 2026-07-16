@@ -1,7 +1,7 @@
 "use client";
 
 import React, { forwardRef, useImperativeHandle, useRef, useState } from "react";
-import type { ICellEditorParams } from "ag-grid-community";
+import type { ICellEditorParams } from "ag-grid-community/dist/ag-grid-community.noStyle";
 
 export interface TitleCellEditorRef {
     getValue: () => string;

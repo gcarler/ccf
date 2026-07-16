@@ -1,6 +1,6 @@
 "use client";
 
-import { AllCommunityModule,ColDef,ModuleRegistry,themeQuartz } from 'ag-grid-community';
+import { AllCommunityModule,ColDef,ModuleRegistry,themeQuartz } from 'ag-grid-community/dist/ag-grid-community.noStyle';
 import { AgGridReact } from 'ag-grid-react';
 import { motion } from 'framer-motion';
 import {
