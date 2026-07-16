@@ -19,7 +19,7 @@ function VerifyEmailContent() {
             return;
         }
 
-        apiFetch('/auth/verify-email', {
+        apiFetch('/v3/auth/verify-email', {
             method: 'POST',
             body: { token },
         })
@@ -65,4 +65,3 @@ export default function VerifyEmailPage() {
         </Suspense>
     );
 }
-

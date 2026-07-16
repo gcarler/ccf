@@ -16,6 +16,7 @@ Confirmar:
 - Los cambios sucios ajenos no se incluyen en el commit.
 - Se sabe que usuario/rol se esta probando.
 - La ruta afectada esta identificada.
+- Se consulto `docs/EVANGELISMO_RBAC_MATRIX.md` si el bug involucra 401/403 o visibilidad por rol.
 
 ## 2. Backend smoke minimo
 
@@ -56,9 +57,21 @@ Ejecutar si se toca:
 ## 4. Frontend smoke
 
 ```bash
+cd /root/ccf
+./venv/bin/python scripts/test_evangelism_quality.py --frontend-smoke
+./venv/bin/python scripts/test_evangelism_quality.py --frontend-deep
 cd /root/ccf/frontend
-npx playwright test tests/e2e/evangelism/sessions-detail.spec.ts tests/e2e/evangelism/rankings-multiplication.spec.ts
+npm run test:e2e:evangelism
+npm run test:e2e:evangelism:deep
 ```
+
+Nota operativa:
+
+- `scripts/test_evangelism_quality.py --frontend-smoke` ejecuta el comando oficial del módulo desde el gate raíz.
+- `scripts/test_evangelism_quality.py --frontend-deep` aísla la cobertura profunda frontend desde el gate raíz.
+- Ambos comandos levantan el frontend con `webServer` administrado por Playwright.
+- `test:e2e:evangelism` ejecuta smoke autenticado + cobertura profunda mockeada.
+- `test:e2e:evangelism:deep` aísla sesiones, rankings, multiplication, events y scanner cuando no hace falta correr el smoke autenticado completo.
 
 Ejecutar si se toca:
 
@@ -107,6 +120,7 @@ Para cada endpoint nuevo o modificado:
 - Response coincide con schema documentado.
 - Errores esperados son 400/403/404, no 500.
 - Listados respetan sede y soft delete.
+- No asumir que todo endpoint privado depende de `evangelism:*`; revisar el guard real.
 
 ## 8. Roles minimos
 
@@ -114,12 +128,12 @@ Validar al menos:
 
 | Rol | Esperado |
 |---|---|
-| ADMIN | acceso completo |
-| GESTOR | operar grupos/sesiones/asistencia si permisos lo permiten |
-| EDITOR | editar contenido operativo permitido |
-| MIEMBRO | no debe acceder a acciones administrativas |
+| ADMIN | acceso completo en superficies del modulo |
+| GESTOR | validar por guard real; no todo flujo pastoral/admin necesariamente equivale a `evangelism:manage` |
+| EDITOR | puede quedar fuera de superficies con `require_pastor_or_admin` aunque tenga `evangelism:edit` |
+| MIEMBRO | no debe acceder a acciones administrativas y solo puede entrar en superficies auth/contextuales si el flujo real lo habilita |
 
-Si el comportamiento real difiere, actualizar `EVANGELISMO_API_CONTRACTS.md` o corregir permisos.
+Si el comportamiento real difiere, actualizar `EVANGELISMO_API_CONTRACTS.md`, `EVANGELISMO_RBAC_MATRIX.md` o corregir permisos.
 
 ## 9. Flujos funcionales
 
@@ -162,5 +176,13 @@ Una tarea de evangelismo queda cerrada cuando:
 - Rutas afectadas se probaron manualmente o con e2e.
 - Consola queda limpia de errores nuevos.
 - El documento canonico se actualizo si cambio estado/backlog/contrato.
+- La matriz RBAC se actualizo si cambio el guard real o la lectura por rol.
 - Commit incluye solo archivos de la unidad trabajada.
 - Push pasa pre-push.
+
+## 11. Pendientes QA / deuda reconocida
+
+- `PEND-FRONTEND-E2E-EVANGELISM-001` cerrada el 2026-07-16 con `frontend/tests/e2e/evangelism/smoke.spec.ts`
+- `PEND-FRONTEND-E2E-EVANGELISM-DEEP-001` cerrada el 2026-07-16 con `frontend/tests/e2e/evangelism/sessions-detail.spec.ts` y `frontend/tests/e2e/evangelism/rankings-multiplication.spec.ts`
+- `PEND-FRONTEND-E2E-EVANGELISM-EVENTS-SCANNER-001` cerrada el 2026-07-16 con `frontend/tests/e2e/evangelism/events-scanner.spec.ts`
+- `PEND-EXPAND-SMOKE-EVANGELISM-001` cerrada el 2026-07-16 con `scripts/test_evangelism_quality.py`

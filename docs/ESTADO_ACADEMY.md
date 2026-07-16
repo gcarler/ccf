@@ -20,6 +20,7 @@ cat /root/ccf/docs/ESTADO_ACADEMY.md
 cat /root/ccf/docs/ACADEMY_API_CONTRACTS.md
 cat /root/ccf/docs/ACADEMY_RBAC_MATRIX.md
 cat /root/ccf/docs/ACADEMY_QA_CHECKLIST.md
+cat /root/ccf/docs/PLAN_ACADEMY_CALIDAD.md
 cat /root/ccf/docs/PLAN_ARQUITECTURA_MODULAR_CCF.md
 ```
 
@@ -68,9 +69,10 @@ cd /root/ccf
 ./venv/bin/python -m pytest -q -o addopts='' tests/test_academy_api.py tests/test_academy_domain.py
 ```
 
-Pendiente del plan modular:
+Cobertura frontend vigente:
 
-- Smoke frontend dedicado de Academy `[PEND-FRONTEND-E2E-ACADEMY-001]`
+- `frontend/tests/e2e/academy/smoke.spec.ts` cubre dashboard, forum y coordination.
+- `frontend/tests/e2e/academy/profile-detail.spec.ts` cubre profile y progress con runner administrado.
 
 ---
 
@@ -85,7 +87,7 @@ Pendiente del plan modular:
 | UI principal | `frontend/src/app/plataforma/academy/**` | dashboard, cursos, curriculum, forum, certificados, grades, coordination |
 | Tests backend | `tests/test_academy_api.py`, `tests/test_academy_domain.py` | API canónica y dominio |
 
-**Estado global:** Academy tiene router y dominio relativamente concentrados, con contratos ya endurecidos a UUID y `sede_id`. Le faltaba documentación modular y smoke canónico de un solo comando.
+**Estado global:** Academy tiene router y dominio relativamente concentrados, con contratos ya endurecidos a UUID y `sede_id`. Ya cuenta con documentación modular, smoke canónico y cobertura profunda de profile/progress; el trabajo abierto se concentra en rutas duplicadas, coordinación/admin y expansión del smoke canónico.
 
 ---
 
@@ -181,7 +183,10 @@ Rutas principales en `frontend/src/app/plataforma/academy/`:
 | `/plataforma/academy/profile` | `profile/page.tsx`, `progress/page.tsx` | Hecho funcional |
 | `/plataforma/academy/resources`, `/schedule`, `/students`, `/teachers`, `/teacher` | varias | Hecho funcional, sin e2e dedicado |
 
-No existe todavía suite e2e dedicada en `frontend/tests`.
+Suites frontend dedicadas vigentes:
+
+- `frontend/tests/e2e/academy/smoke.spec.ts`
+- `frontend/tests/e2e/academy/profile-detail.spec.ts`
 
 ---
 
@@ -200,17 +205,18 @@ No existe todavía suite e2e dedicada en `frontend/tests`.
 
 ### Parcial
 
-1. **Smoke frontend Academy** `[PARCIAL-FRONTEND-SMOKE-ACADEMY-001]` — no existe e2e dedicado.
+1. **Smoke frontend Academy** `[PARCIAL-FRONTEND-SMOKE-ACADEMY-001]` — ya existe smoke dedicado en `frontend/tests/e2e/academy/smoke.spec.ts` y cobertura profunda en `frontend/tests/e2e/academy/profile-detail.spec.ts`, pero aún faltan certificates, rutas duales de curso y flows admin detallados.
 2. **Rutas de curso duplicadas** `[PARCIAL-COURSE-ROUTES-001]` — conviven `course/[id]` y `courses/[id]`; requiere contrato funcional más explícito.
-3. **Dashboard Academy** `[PARCIAL-DASHBOARD-CONTRACT-ACADEMY-001]` — la UI depende de `/dashboard/academy`, pero el contrato operativo no estaba documentado hasta este sprint.
+3. **Dashboard Academy** `[PARCIAL-DASHBOARD-CONTRACT-ACADEMY-001]` — la shape operativa de `/dashboard/academy` ya quedó documentada y el módulo ya tiene smoke frontend dedicado; falta ampliar cobertura visual y de agregados administrativos.
 4. **Coordinación/admin** `[PARCIAL-COORDINATION-ACADEMY-001]` — hay surface amplia de administración sin smoke frontend dedicado.
 
 ### Pendiente
 
-1. **E2E Academy** `[PEND-FRONTEND-E2E-ACADEMY-001]` — crear smoke de rutas críticas.
-2. **Plan de calidad Academy** `[PEND-PLAN-ACADEMY-001]` — crear plan por fases si el módulo entra a cierre intensivo.
+1. **E2E Academy** `[PEND-FRONTEND-E2E-ACADEMY-001]` — cerrada el 2026-07-16 con `frontend/tests/e2e/academy/smoke.spec.ts`; fija smoke mínimo de dashboard, forum y coordination con guard de consola/API/assets.
+2. **Plan de calidad Academy** `[PEND-PLAN-ACADEMY-001]` — cerrada el 2026-07-16 en `docs/PLAN_ACADEMY_CALIDAD.md`; fija fases para dashboard, ownership del estudiante, rutas de curso, coordinación y smoke frontend.
 3. **Matriz RBAC Academy** `[PEND-RBAC-ACADEMY-001]` — cerrada el 2026-07-16 en `ACADEMY_RBAC_MATRIX.md`; documenta permisos reales, ownership del estudiante y drift entre seed persistido, fallback runtime y role normalization.
-4. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-ACADEMY-001]` — cubrir dashboard, admin flows y forum desde `scripts/test_academy_quality.py`.
+4. **Smoke profundo de profile/progress** `[PEND-FRONTEND-DEEP-ACADEMY-001]` — cerrada el 2026-07-16 con `frontend/tests/e2e/academy/profile-detail.spec.ts`; valida profile, progress y cambios de vista con runner administrado.
+5. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-ACADEMY-001]` — cubrir certificates, rutas duales, admin flows y forum desde `scripts/test_academy_quality.py`.
 
 ---
 
@@ -246,12 +252,12 @@ No existe todavía suite e2e dedicada en `frontend/tests`.
 
 | ID | Pieza | Archivo o area |
 |---|---|---|
-| `PARCIAL-FRONTEND-SMOKE-ACADEMY-001` | Academy sin e2e dedicado | `frontend/tests` |
+| `PARCIAL-FRONTEND-SMOKE-ACADEMY-001` | Smoke Academy ya existe, pero todavía no cubre certificates, profile, rutas duales de curso ni flujos admin detallados | `frontend/tests/e2e/academy/` |
 | `PARCIAL-COURSE-ROUTES-001` | Coexistencia `course/[id]` vs `courses/[id]` | frontend academy routes |
-| `PARCIAL-DASHBOARD-CONTRACT-ACADEMY-001` | Contrato de dashboard todavía débil | `/dashboard/academy` |
+| `PARCIAL-DASHBOARD-CONTRACT-ACADEMY-001` | Contrato del dashboard ya documentado; sigue faltando gate frontend para drift visual | `docs/ACADEMY_API_CONTRACTS.md` + `/dashboard/academy` |
 | `PARCIAL-COORDINATION-ACADEMY-001` | Surface admin amplia sin smoke frontend | `frontend/src/app/plataforma/academy/coordination/**` |
-| `PEND-FRONTEND-E2E-ACADEMY-001` | Smoke frontend Academy | `frontend/tests/e2e/academy/` |
-| `PEND-PLAN-ACADEMY-001` | Plan de calidad Academy | `docs/PLAN_ACADEMY_CALIDAD.md` |
+| `PEND-FRONTEND-E2E-ACADEMY-001` | ✅ **Hecho 2026-07-16** — smoke frontend Academy dedicado para dashboard, forum y coordination con guard de consola/API/assets. | `frontend/tests/e2e/academy/smoke.spec.ts` |
+| `PEND-PLAN-ACADEMY-001` | ✅ **Hecho 2026-07-16** — plan de calidad Academy documentado por fases, con foco en dashboard, ownership del estudiante, rutas duplicadas y coordinación/admin. | `docs/PLAN_ACADEMY_CALIDAD.md` |
 | `PEND-RBAC-ACADEMY-001` | ✅ **Hecho 2026-07-16** — matriz RBAC documentada con guards reales, ownership por matrícula/persona y drift entre seed, fallback y role normalization. | `docs/ACADEMY_RBAC_MATRIX.md` |
 | `PEND-EXPAND-SMOKE-ACADEMY-001` | Ampliar script Academy | `scripts/test_academy_quality.py` |
 

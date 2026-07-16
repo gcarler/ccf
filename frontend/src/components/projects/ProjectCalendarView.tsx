@@ -25,7 +25,7 @@ interface Props {
     projectTitle?: string;
     tasks: ProjectTaskRecord[];
     onOpenTask: (task: ProjectTaskRecord) => void;
-    onCreateTask: (data: { title: string; description: string; priority: string; status: string; due_date?: string }) => Promise<boolean> | boolean | void;
+    onCreateTask: (data: { title: string; description: string; priority: string; status: string; due_date?: string }) => Promise<boolean | void> | boolean | void;
 }
 
 export default function ProjectCalendarView({ projectId, projectTitle, tasks, onOpenTask, onCreateTask }: Props) {

@@ -21,7 +21,7 @@ export default function RegisterPage() {
         setLoading(true);
         setError('');
         try {
-            await apiFetch('/auth/register', {
+            await apiFetch('/v3/auth/register', {
                 method: 'POST',
                 body: {
                     username: formData.email,
@@ -495,4 +495,3 @@ export default function RegisterPage() {
         </>
     );
 }
-

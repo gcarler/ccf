@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
         setLoading(true);
         setError(null);
         try {
-            await apiFetch('/auth/forgot-password', {
+            await apiFetch('/v3/auth/forgot-password', {
                 method: 'POST',
                 body: { email },
             });

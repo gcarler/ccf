@@ -9,6 +9,10 @@ Este documento cubre las piezas compartidas que condicionan a todos los modulos:
 - cliente HTTP `apiFetch`
 - layout y componentes UI base
 
+Complemento obligatorio de runtime:
+
+- `docs/PLATAFORMA_AUTH_RUNTIME_CONTRACT.md`
+
 ## 2. Auth v3
 
 Archivos:
@@ -19,7 +23,9 @@ Archivos:
 Contrato vigente:
 
 - login canonico: `POST /api/v3/auth/login`
+- register canonico: `POST /api/v3/auth/register`
 - refresh canonico: `POST /api/v3/auth/refresh`
+- sesiones propias: `GET /api/v3/auth/sessions`, `POST /api/v3/auth/sessions/{session_id}/revoke`, `POST /api/v3/auth/sessions/revoke-all`
 - Google OAuth: `GET /api/v3/auth/google` y callback asociado
 - sesiones y perfil via `/api/v3/auth/*`
 
@@ -28,6 +34,7 @@ Invariantes:
 - `auth_users.id == personas.id`
 - access token y refresh token se consideran fuente canonica de sesion
 - el frontend no debe usar endpoints legacy `/api/auth/*` en codigo nuevo
+- el detalle runtime de refresh/cookies/sessionStorage vive en `PLATAFORMA_AUTH_RUNTIME_CONTRACT.md`
 
 ## 3. RBAC / permisos
 
@@ -151,12 +158,16 @@ Documento canonico:
 Archivos base:
 
 - `frontend/src/components/WorkspaceLayout.tsx`
+- `frontend/src/components/ProtectedRoute.tsx`
+- `frontend/src/lib/protectedRouteAccess.ts`
 - `frontend/src/components/ui/TableView.tsx`
 - `frontend/src/components/ui/UniversalTableView.tsx`
 
 Regla:
 
 - cualquier cambio debe considerarse plataforma
+- `allowedPermissions` es el contrato canónico de `ProtectedRoute`
+- `allowedRoles` queda como compatibilidad legacy y no debe usarse cuando el permiso backend real ya existe
 - validar al menos CRM, proyectos y evangelismo
 - errores de AG Grid o layout se tratan como regresiones compartidas
 - no mezclar `themeQuartz` con CSS legacy de AG Grid

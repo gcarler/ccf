@@ -4,12 +4,27 @@
 set -euo pipefail
 
 VENV="/root/ccf/venv/bin"
+MODE="${CCF_PRE_PUSH_MODE:-fast}"
+DEPLOY_AFTER_VALIDATION="${CCF_PRE_PUSH_DEPLOY:-0}"
+RUN_FRONTEND_E2E="${CCF_PRE_PUSH_E2E:-0}"
+BASE_REF="${CCF_PRE_PUSH_BASE:-origin/main}"
+HEAD_REF="${CCF_PRE_PUSH_HEAD:-HEAD}"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m'
 
 FAIL=0
+
+case "$MODE" in
+    fast|full) ;;
+    *)
+        echo -e "${RED}✗ CCF_PRE_PUSH_MODE inválido: $MODE${NC}"
+        echo "  Usa: fast | full"
+        exit 2
+        ;;
+esac
 
 restart_via_startccf() {
     echo "  [deploy] Reiniciando stack con ./stopccf + ./startccf..."
@@ -30,15 +45,20 @@ restart_via_startccf() {
 
 echo ""
 echo "🔍 Pre-push: validando cambios antes de enviar a producción..."
+echo -e "  ${BLUE}Modo:${NC} $MODE"
+echo -e "  ${BLUE}Deploy automático:${NC} $DEPLOY_AFTER_VALIDATION"
+echo -e "  ${BLUE}Frontend E2E autenticado:${NC} $RUN_FRONTEND_E2E"
+echo -e "  ${BLUE}Diff base/head:${NC} $BASE_REF..$HEAD_REF"
 echo ""
 
-# Archivos modificados respecto a origin/main
-PY_FILES=$(git diff --name-only origin/main HEAD 2>/dev/null | grep '\.py$' || true)
-FRONTEND_FILES=$(git diff --name-only origin/main HEAD 2>/dev/null | grep '^frontend/' || true)
-ALEMBIC_FILES=$(git diff --name-only origin/main HEAD 2>/dev/null | grep 'alembic/versions/' || true)
-QUALITY_SELECTOR="$VENV/python /root/ccf/scripts/select_quality_checks.py --base origin/main --head HEAD"
+# Archivos modificados respecto a la base configurada
+PY_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF" 2>/dev/null | grep '\.py$' || true)
+FRONTEND_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF" 2>/dev/null | grep '^frontend/' || true)
+ALEMBIC_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF" 2>/dev/null | grep 'alembic/versions/' || true)
+QUALITY_SELECTOR="$VENV/python /root/ccf/scripts/select_quality_checks.py --base $BASE_REF --head $HEAD_REF"
 QUALITY_SUMMARY=$($QUALITY_SELECTOR --summary 2>/dev/null || echo "No quality selector summary available.")
 mapfile -t QUALITY_CHECKS < <($QUALITY_SELECTOR 2>/dev/null || true)
+mapfile -t QUALITY_EXPLANATIONS < <($QUALITY_SELECTOR --explain 2>/dev/null || true)
 
 run_quality_check() {
     local check_id="$1"
@@ -61,7 +81,7 @@ run_quality_check() {
 
 # ─── 1. SINTAXIS PYTHON ───────────────────────────────────────────────────────
 if [ -n "$PY_FILES" ]; then
-    echo "  [1/7] Sintaxis Python..."
+    echo "  [Sintaxis] Python..."
     SYNTAX_ERRORS=0
     while IFS= read -r f; do
         [ -f "$f" ] || continue
@@ -78,12 +98,12 @@ if [ -n "$PY_FILES" ]; then
         exit 1
     fi
 else
-    echo "  [1/7] Sin archivos Python, saltando sintaxis."
+    echo "  [Sintaxis] Sin archivos Python, saltando."
 fi
 
 # ─── 2. LINTING RUFF ─────────────────────────────────────────────────────────
 if [ -n "$PY_FILES" ]; then
-    echo "  [2/7] Linting (ruff)..."
+    echo "  [Lint] Ruff..."
     LINT_FILES=$(echo "$PY_FILES" | tr '\n' ' ')
     if $VENV/ruff check $LINT_FILES --quiet 2>/dev/null; then
         echo -e "  ${GREEN}✓ Linting OK${NC}"
@@ -100,12 +120,12 @@ if [ -n "$PY_FILES" ]; then
         fi
     fi
 else
-    echo "  [2/7] Sin archivos Python, saltando linting."
+    echo "  [Lint] Sin archivos Python, saltando."
 fi
 
 # ─── 3. ALEMBIC MIGRATION CHAIN ──────────────────────────────────────────────
 if [ -n "$ALEMBIC_FILES" ]; then
-    echo "  [3/7] Cadena de migraciones Alembic..."
+    echo "  [Migraciones] Cadena Alembic..."
     # Verificar que no haya referencias rotas en la cadena
     cd /root/ccf
     MIGRATION_CHECK=$($VENV/python -c "
@@ -139,66 +159,11 @@ print('OK')
         echo -e "  ${GREEN}✓ Cadena de migraciones intacta${NC}"
     fi
 else
-    echo "  [3/7] Sin migraciones Alembic, saltando."
+    echo "  [Migraciones] Sin migraciones Alembic, saltando."
 fi
 
-# ─── 4. BACKEND ONLINE ───────────────────────────────────────────────────────
-echo "  [4/7] Backend en producción..."
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/system/health 2>/dev/null || echo "000")
-if [ "$HTTP_STATUS" = "200" ]; then
-    echo -e "  ${GREEN}✓ Backend responde OK (HTTP $HTTP_STATUS)${NC}"
-else
-    echo -e "  ${RED}✗ Backend NO responde (HTTP $HTTP_STATUS) — no se puede validar${NC}"
-    FAIL=1
-fi
-
-# ─── 5. FRONTEND BUILD ────────────────────────────────────────────────────────
-if [ -n "$FRONTEND_FILES" ]; then
-    echo "  [5/7] Build de Frontend..."
-    BUILD_ID="/root/ccf/frontend/.next/BUILD_ID"
-
-    # No solo verificar que BUILD_ID existe, sino que el build es válido
-    if [ ! -f "$BUILD_ID" ]; then
-        echo -e "  ${RED}✗ No hay build de Next.js en .next/${NC}"
-        echo -e "  ${YELLOW}  Ejecuta: cd /root/ccf/frontend && npm run build${NC}"
-        FAIL=1
-    elif [ ! -d "/root/ccf/frontend/.next/server" ]; then
-        echo -e "  ${RED}✗ Build incompleto — falta .next/server/${NC}"
-        echo -e "  ${YELLOW}  Ejecuta: cd /root/ccf/frontend && rm -rf .next && npm run build${NC}"
-        FAIL=1
-    else
-        BUILD_AGE=$(( $(date +%s) - $(stat -c %Y "$BUILD_ID") ))
-        if [ $BUILD_AGE -gt 1800 ]; then
-            echo -e "  ${YELLOW}⚠ Build viejo (${BUILD_AGE}s) — considera reconstruir${NC}"
-        else
-            echo -e "  ${GREEN}✓ Build válido y reciente (${BUILD_AGE}s)${NC}"
-        fi
-    fi
-
-    # Verificar que PM2 está corriendo
-    PM2_STATUS=$(pm2 jlist 2>/dev/null | python3 -c "
-import sys, json
-procs = json.load(sys.stdin)
-for p in procs:
-    if 'frontend' in p.get('name','').lower():
-        print(p.get('pm2_env',{}).get('status','unknown'))
-        sys.exit(0)
-print('not_found')
-" 2>/dev/null || echo "error")
-
-    if [ "$PM2_STATUS" = "online" ]; then
-        echo -e "  ${GREEN}✓ PM2 frontend: online${NC}"
-    elif [ "$PM2_STATUS" = "errored" ] || [ "$PM2_STATUS" = "stopped" ]; then
-        echo -e "  ${YELLOW}⚠ PM2 frontend: $PM2_STATUS — se reiniciará al hacer push${NC}"
-    else
-        echo -e "  ${YELLOW}⚠ PM2 frontend: $PM2_STATUS${NC}"
-    fi
-else
-    echo "  [5/7] Sin cambios en frontend, saltando."
-fi
-
-# ─── 6. TESTS RÁPIDOS ────────────────────────────────────────────────────────
-echo "  [6/8] Tests rápidos (smoke + structural)..."
+# ─── 4. TESTS RÁPIDOS ────────────────────────────────────────────────────────
+echo "  [Tests base] Smoke + structural..."
 cd /root/ccf
 TEST_OUTPUT=$($VENV/python -m pytest tests/test_smoke.py tests/test_structural_contracts.py --override-ini="addopts=-p no:cacheprovider" -v --tb=short -q -x 2>&1) || TEST_RC=$?
 cd - > /dev/null
@@ -212,12 +177,16 @@ else
     FAIL=1
 fi
 
-# ─── 7. CHECKS POR MÓDULO ────────────────────────────────────────────────────
-echo "  [7/8] Checks por módulo..."
+# ─── 5. CHECKS POR MÓDULO ────────────────────────────────────────────────────
+echo "  [Checks modulares] Selector por diff..."
 echo "      $QUALITY_SUMMARY"
 if [ ${#QUALITY_CHECKS[@]} -eq 0 ]; then
     echo -e "      ${YELLOW}⚠ Sin checks modulares extra para este diff${NC}"
 else
+    echo "      Owners / razones:"
+    for explanation in "${QUALITY_EXPLANATIONS[@]}"; do
+        echo "        - $explanation"
+    done
     for check_id in "${QUALITY_CHECKS[@]}"; do
         case "$check_id" in
             academy_quality)
@@ -241,6 +210,12 @@ else
             agenda_quality)
                 run_quality_check "$check_id" "Agenda quality" "$VENV/python /root/ccf/scripts/test_agenda_quality.py"
                 ;;
+            frontend_build)
+                run_quality_check \
+                    "$check_id" \
+                    "Frontend production build" \
+                    "cd /root/ccf/frontend && npm run build"
+                ;;
             platform_quality)
                 run_quality_check "$check_id" "Platform quality" "$VENV/python /root/ccf/scripts/test_platform_quality.py"
                 ;;
@@ -254,13 +229,81 @@ else
     done
 fi
 
-# ─── 8. VERIFICAR QUE NO SE ROMPE EL FRONTEND ACTUAL ─────────────────────────
-echo "  [8/8] Frontend actual respondiendo..."
-FRONT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3002 2>/dev/null || echo "000")
-if [ "$FRONT_STATUS" = "200" ]; then
-    echo -e "  ${GREEN}✓ Frontend actual: HTTP $FRONT_STATUS${NC}"
+# ─── 5.5 E2E FRONTEND MODULAR OPCIONAL ───────────────────────────────────────
+if [ "$MODE" = "full" ] && [ "$RUN_FRONTEND_E2E" = "1" ]; then
+    echo "  [Frontend E2E] Smokes modulares autenticados..."
+    if [ -z "${E2E_AUTH_ENABLED:-}" ] || [ -z "${E2E_EMAIL:-}" ] || [ -z "${E2E_PASSWORD:-}" ] || { [ -z "${E2E_API_URL:-}" ] && [ -z "${NEXT_PUBLIC_API_URL:-}" ]; }; then
+        echo -e "  ${YELLOW}⚠ Faltan variables E2E_AUTH_ENABLED/E2E_EMAIL/E2E_PASSWORD/E2E_API_URL o NEXT_PUBLIC_API_URL — se omite smoke modular autenticado${NC}"
+    else
+        run_quality_check \
+            "frontend_e2e_modules" \
+            "Frontend modular authenticated smoke" \
+            "cd /root/ccf/frontend && npm run test:e2e:modules"
+    fi
+fi
+
+# ─── 6. VALIDACIÓN RUNTIME FULL ──────────────────────────────────────────────
+if [ "$MODE" = "full" ]; then
+    echo "  [Runtime full] Backend en producción..."
+    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/system/health 2>/dev/null || echo "000")
+    if [ "$HTTP_STATUS" = "200" ]; then
+        echo -e "  ${GREEN}✓ Backend responde OK (HTTP $HTTP_STATUS)${NC}"
+    else
+        echo -e "  ${RED}✗ Backend NO responde (HTTP $HTTP_STATUS) — no se puede validar${NC}"
+        FAIL=1
+    fi
+
+    if [ -n "$FRONTEND_FILES" ]; then
+        echo "  [Runtime full] Estado de build frontend..."
+        BUILD_ID="/root/ccf/frontend/.next/BUILD_ID"
+
+        if [ ! -f "$BUILD_ID" ]; then
+            echo -e "  ${RED}✗ No hay build de Next.js en .next/${NC}"
+            echo -e "  ${YELLOW}  Ejecuta: cd /root/ccf/frontend && npm run build${NC}"
+            FAIL=1
+        elif [ ! -d "/root/ccf/frontend/.next/server" ]; then
+            echo -e "  ${RED}✗ Build incompleto — falta .next/server/${NC}"
+            echo -e "  ${YELLOW}  Ejecuta: cd /root/ccf/frontend && rm -rf .next && npm run build${NC}"
+            FAIL=1
+        else
+            BUILD_AGE=$(( $(date +%s) - $(stat -c %Y "$BUILD_ID") ))
+            if [ $BUILD_AGE -gt 1800 ]; then
+                echo -e "  ${YELLOW}⚠ Build viejo (${BUILD_AGE}s) — considera reconstruir${NC}"
+            else
+                echo -e "  ${GREEN}✓ Build válido y reciente (${BUILD_AGE}s)${NC}"
+            fi
+        fi
+
+        PM2_STATUS=$(pm2 jlist 2>/dev/null | python3 -c "
+import sys, json
+procs = json.load(sys.stdin)
+for p in procs:
+    if 'frontend' in p.get('name','').lower():
+        print(p.get('pm2_env',{}).get('status','unknown'))
+        sys.exit(0)
+print('not_found')
+" 2>/dev/null || echo "error")
+
+        if [ "$PM2_STATUS" = "online" ]; then
+            echo -e "  ${GREEN}✓ PM2 frontend: online${NC}"
+        elif [ "$PM2_STATUS" = "errored" ] || [ "$PM2_STATUS" = "stopped" ]; then
+            echo -e "  ${YELLOW}⚠ PM2 frontend: $PM2_STATUS — se reiniciará al hacer push${NC}"
+        else
+            echo -e "  ${YELLOW}⚠ PM2 frontend: $PM2_STATUS${NC}"
+        fi
+    else
+        echo "  [Runtime full] Sin cambios en frontend, saltando build/PM2."
+    fi
+
+    echo "  [Runtime full] Frontend actual respondiendo..."
+    FRONT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3002 2>/dev/null || echo "000")
+    if [ "$FRONT_STATUS" = "200" ]; then
+        echo -e "  ${GREEN}✓ Frontend actual: HTTP $FRONT_STATUS${NC}"
+    else
+        echo -e "  ${YELLOW}⚠ Frontend actual no responde (HTTP $FRONT_STATUS) — posible problema en producción${NC}"
+    fi
 else
-    echo -e "  ${YELLOW}⚠ Frontend actual no responde (HTTP $FRONT_STATUS) — posible problema en producción${NC}"
+    echo "  [Runtime full] Modo fast: se omiten health/build/PM2 de runtime."
 fi
 
 # ─── RESULTADO FINAL ─────────────────────────────────────────────────────────
@@ -279,6 +322,12 @@ echo -e "  ${GREEN}╔═══════════════════�
 echo -e "  ${GREEN}║  ✓ TODAS LAS VALIDACIONES PASARON        ║${NC}"
 echo -e "  ${GREEN}╚══════════════════════════════════════════╝${NC}"
 echo ""
+
+if [ "$DEPLOY_AFTER_VALIDATION" != "1" ]; then
+    echo -e "  ${BLUE}ℹ Deploy omitido.${NC} Usa CCF_PRE_PUSH_DEPLOY=1 cuando quieras ejecutar release después del gate."
+    echo ""
+    exit 0
+fi
 
 # ─── DEPLOY ──────────────────────────────────────────────────────────────────
 echo "  🚀 Desplegando cambios en producción..."

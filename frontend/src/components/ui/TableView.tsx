@@ -1,14 +1,13 @@
 "use client";
 
 import { evaluateFormula } from "@/lib/formulaEngine";
+import "@/lib/agGrid";
 import {
-AllCommunityModule,
 CellValueChangedEvent,
 ColDef,
 GetRowIdParams,
 IDatasource,
 IGetRowsParams,
-ModuleRegistry,
 type ValueFormatterParams,
 type ValueGetterParams,
 themeQuartz
@@ -23,8 +22,6 @@ Trash2,
 X
 } from "lucide-react";
 import React,{ useCallback,useMemo,useRef,useState } from "react";
-
-ModuleRegistry.registerModules([AllCommunityModule]);
 
 // ─── Types (same public API as before) ───────────────────────────────────────
 

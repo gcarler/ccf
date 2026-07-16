@@ -19,12 +19,11 @@ parametrizados sobre las 4 roles canónicas. Cubre además:
 
     * Jerarquía ``manage → edit → read`` (Gestor/Editor pueden
       delegaciones de nivel inferior).
-    * Gap documentado de ``PUT /projects/{id}/phases``: el docstring del
-      endpoint dice "Solo administradores y gestores", pero el decorador es
-      ``require_module_access("projects", "edit")`` — por lo que un Editor
-      también pasa el RBAC hoy. Se documenta explícitamente para que el gap
-      quede resumido y sea reversible cuando se decida promover el
-      endpoint a ``projects:manage``.
+    * ``PUT /projects/{id}/phases`` (cierre ``PEND-QUALITY-PHASES-RBAC-001``):
+      decorador ``require_module_access("projects", "manage")`` desde
+      ``2026-07-16``. Editor (sin ``projects:manage``) recibe 403,
+      alineado con el docstring del endpoint ("Solo administradores y
+      gestores pueden modificar fases").
 
 Ejecutar: ``cd /root/ccf && ./venv/bin/python -m pytest tests/test_projects_rbac.py -v``.
 """
@@ -244,11 +243,10 @@ class TestEditorReadEdit:
     """Editor tiene ``projects:read + projects:edit``; por jerarquía
     ``edit → read`` se mantiene, pero NO tiene ``projects:manage``.
 
-    Documenta además que ``PUT /projects/{id}/phases`` usa
-    ``require_module_access("projects", "edit")`` y por tanto Editor PASA
-    ese RBAC hoy — diverge del docstring del endpoint que dice "Solo
-    administradores y gestores". Este gap se documenta pero queda
-    capturado por el test (ver ``TestPermissionGranularityGaps``)."""
+    ``PUT /projects/{id}/phases`` está protegido con ``projects:manage``
+    desde el cierre de ``PEND-QUALITY-PHASES-RBAC-001`` (2026-07-16), por
+    lo que Editor recibe **403** en ese endpoint específico
+    (alineado con el docstring del endpoint)."""
 
     @pytest.mark.parametrize("method, path", _READ_ENDPOINTS)
     def test_editor_read_passess_rbac(self, client, role_headers, method, path):
@@ -313,14 +311,17 @@ class TestPermissionHierarchy:
         assert resp.status_code != status.HTTP_403_FORBIDDEN
 
     def test_gestor_can_modify_phases(self, client, role_headers):
-        """``PUT /projects/{id}/phases`` usa ``projects:edit`` y Gestor tiene
-        ``projects:manage`` que por jerarquía cubre ``projects:edit``."""
+        """``PUT /projects/{id}/phases`` usa ``projects:manage`` desde el
+        cierre de ``PEND-QUALITY-PHASES-RBAC-001`` (2026-07-16). Gestor
+        tiene ``projects:manage`` directamente, sin necesidad de jerarquía.
+        Si en el futuro se cambia la decoración, este test debe
+        actualizarse."""
         resp = client.put(
             f"/api/projects/{FAKE}/phases", json=[], headers=role_headers["gestor"]
         )
         assert resp.status_code != status.HTTP_403_FORBIDDEN
 
-    def test_editor_blocked_from_delete_project(self, client, role_headers):
+    def test_delete_project_requires_academy_manage_per_policy(self, client, role_headers):
         """**Asimetría confirmada**: ``DELETE /projects/{id}`` usa
         ``require_staff_or_admin`` (= ``require_permission("academy:manage")``),
         NO ``projects:edit`` como su primo ``PATCH /projects/{id}``.
@@ -345,26 +346,28 @@ class TestPermissionHierarchy:
 
 
 class TestPermissionGranularityGaps:
-    """Gaps conscientes del sistema actual que merecen revision futura.
-    Estos tests son **POSITIVOS por diseño**: pasan como documentación
-    del comportamiento en producción hoy. Si se decide cerrar el gap
-    (p.ej. cambiar ``PUT /phases`` a ``projects:manage``), el test debe
-    cambiar."""
+    """Gaps conscientes del sistema actual. Cada test documenta un caso
+    y fija el baseline del comportamiento esperado. Si en el futuro se
+    cambia la decoración de un endpoint, el test correspondiente debe
+    actualizarse."""
 
-    def test_editor_passes_put_phases_rbac_gap(self, client, role_headers):
-        """Gap PEND-RBAC-001: ``PUT /projects/{id}/phases`` está protegido
-        con ``projects:edit`` y el docstring dice 'Solo administradores y
-        gestores'. Editor pasa el RBAC por la decoración actual. Cuando
-        se decida promover, reemplaza el assertion por ``== status.HTTP_403_FORBIDDEN``
-        y mueve el endpoint a ``projects:manage``."""
+    def test_editor_blocked_from_put_phases(self, client, role_headers):
+        """Cierre de ``PEND-QUALITY-PHASES-RBAC-001`` (2026-07-16):
+        ``PUT /projects/{id}/phases`` está protegido con
+        ``require_module_access("projects", "manage")``. Editor (que solo
+        tiene ``projects:edit``) recibe **403**, alineado con el docstring
+        del endpoint ("Solo administradores y gestores pueden modificar
+        fases"). Gestor (con ``projects:manage``) sigue pasando
+        (ver ``test_gestor_can_modify_phases``). Si en el futuro se cambia
+        la decoración, este test debe actualizarse."""
         resp = client.put(
             f"/api/projects/{FAKE}/phases",
             json=[{"name": "P", "slug": "todo", "color": "#000"}],
             headers=role_headers["editor"],
         )
-        assert resp.status_code != status.HTTP_403_FORBIDDEN, (
-            "Gap cerrado: PUT /phases ahora bloquea Editor con 403. "
-            "Considera si esto era lo deseado."
+        assert resp.status_code == status.HTTP_403_FORBIDDEN, (
+            f"PUT /phases roto: editor recibió {resp.status_code}, "
+            f"se esperaba 403 (projects:manage)."
         )
 
 

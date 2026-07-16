@@ -765,6 +765,52 @@ def test_auth_and_scanner_have_no_parallel_fallback_contracts():
     assert [term for term in forbidden if term in source] == []
 
 
+def test_frontend_auth_entrypoints_use_v3_contracts():
+    root = Path(__file__).resolve().parents[1]
+    files = [
+        root / "frontend" / "src" / "app" / "register" / "page.tsx",
+        root / "frontend" / "src" / "app" / "auth" / "forgot" / "page.tsx",
+        root / "frontend" / "src" / "app" / "auth" / "reset" / "page.tsx",
+        root / "frontend" / "src" / "app" / "auth" / "verify" / "page.tsx",
+        root / "frontend" / "src" / "app" / "plataforma" / "account" / "page.tsx",
+        root / "frontend" / "src" / "app" / "plataforma" / "admin" / "settings" / "sessions" / "page.tsx",
+        root / "frontend" / "src" / "app" / "plataforma" / "admin" / "dashboard" / "page.tsx",
+    ]
+    source = "\n".join(path.read_text(encoding="utf-8") for path in files)
+    forbidden = (
+        '"/auth/register"',
+        '"/auth/forgot-password"',
+        '"/auth/reset-password"',
+        '"/auth/verify-email"',
+        '"/auth/send-verification-email"',
+        '"/auth/me"',
+        '"/auth/sessions"',
+        '"/auth/stats/summary"',
+    )
+    assert [term for term in forbidden if term in source] == []
+
+
+def test_ag_grid_module_registration_stays_centralized():
+    root = Path(__file__).resolve().parents[1]
+    frontend_root = root / "frontend" / "src"
+    allowed_registration_file = "frontend/src/lib/agGrid.ts"
+    direct_registration = []
+    legacy_css_imports = []
+
+    for path in frontend_root.rglob("*"):
+        if path.suffix not in {".ts", ".tsx"}:
+            continue
+        rel = path.relative_to(root).as_posix()
+        content = path.read_text(encoding="utf-8")
+        if "ModuleRegistry.registerModules([AllCommunityModule])" in content and rel != allowed_registration_file:
+            direct_registration.append(rel)
+        if "ag-grid.css" in content:
+            legacy_css_imports.append(rel)
+
+    assert direct_registration == []
+    assert legacy_css_imports == []
+
+
 def test_frontend_no_direct_fetch_calls():
     """AGENTS_FRONTEND §8 — usar apiFetch() de @/lib/http, nunca fetch() directo.
 
@@ -847,3 +893,58 @@ def test_frontend_no_legacy_cms_ui_routes():
                 if any(pattern in line for pattern in patterns):
                     violations.append(f"{rel}:{line_no}: {stripped[:120]}")
     assert violations == [], "Usar solo rutas canónicas /plataforma/cms en la UI"
+
+
+def test_workspace_navigation_access_rules_stay_centralized():
+    root = Path(__file__).resolve().parents[1]
+    helper = root / "frontend" / "src" / "lib" / "workspaceAccess.ts"
+    layout = root / "frontend" / "src" / "components" / "WorkspaceLayout.tsx"
+    mini_sidebar = root / "frontend" / "src" / "components" / "WorkspaceMiniSidebar.tsx"
+
+    helper_content = helper.read_text(encoding="utf-8")
+    layout_content = layout.read_text(encoding="utf-8")
+    mini_content = mini_sidebar.read_text(encoding="utf-8")
+
+    assert "canAccessWorkspaceHref" in helper_content
+    assert "filterWorkspaceSectionsByAccess" in helper_content
+    assert "MODULE_PATH_PERM_MAP" not in layout_content
+    assert "MODULE_PERM_MAP" not in mini_content
+    assert "workspaceAccess" in layout_content
+    assert "workspaceAccess" in mini_content
+
+
+def test_pre_push_hook_supports_fast_and_full_modes():
+    root = Path(__file__).resolve().parents[1]
+    hook = root / "scripts" / "hooks" / "pre-push"
+    content = hook.read_text(encoding="utf-8")
+
+    assert "CCF_PRE_PUSH_MODE" in content
+    assert "CCF_PRE_PUSH_DEPLOY" in content
+    assert "CCF_PRE_PUSH_E2E" in content
+    assert "fast|full" in content
+    assert 'MODE="${CCF_PRE_PUSH_MODE:-fast}"' in content
+    assert "--explain" in content
+    assert "QUALITY_EXPLANATIONS" in content
+    assert "Owners / razones:" in content
+
+
+def test_protected_route_permissions_stay_canonical_in_platform_routes():
+    root = Path(__file__).resolve().parents[1]
+    helper = root / "frontend" / "src" / "lib" / "protectedRouteAccess.ts"
+    protected_route = root / "frontend" / "src" / "components" / "ProtectedRoute.tsx"
+
+    helper_content = helper.read_text(encoding="utf-8")
+    protected_content = protected_route.read_text(encoding="utf-8")
+
+    assert "evaluateProtectedRouteAccess" in helper_content
+    assert "permissionRules.length > 0" in helper_content
+    assert "evaluateProtectedRouteAccess" in protected_content
+
+    platform_route_violations = []
+    for path in (root / "frontend" / "src" / "app" / "plataforma").rglob("*.tsx"):
+        rel = str(path.relative_to(root)).replace("\\", "/")
+        content = path.read_text(encoding="utf-8")
+        if "allowedRoles=" in content:
+            platform_route_violations.append(rel)
+
+    assert platform_route_violations == []

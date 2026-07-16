@@ -24,6 +24,8 @@ cd /root/ccf
 ./venv/bin/python scripts/test_cms_quality.py
 ```
 
+Ese runner ya incluye backend, Vitest, smoke E2E autenticado y contrato público.
+
 ## 3. Smoke mínimo bruto
 
 ```bash
@@ -42,8 +44,13 @@ cd /root/ccf/frontend
 npx vitest run tests/cms-components.test.ts tests/cms-public-fetch.test.ts
 npm run test:e2e:cms
 npm run test:e2e:cms:deep
-npx playwright test tests/e2e/cms-public-contract.spec.ts
+npm run test:e2e:cms:public
 ```
+
+Para `npm run test:e2e:cms`:
+
+- exportar `E2E_EMAIL`, `E2E_PASSWORD` y `E2E_API_URL` o `API_BASE_URL` absolutos
+- si el usuario no existe localmente, correr antes `npm run test:e2e:seed-user`
 
 ## 5. Rutas manuales
 
@@ -103,7 +110,7 @@ Notas obligatorias:
 
 - revisar `docs/CMS_RBAC_MATRIX.md` antes de tocar `cms.py`, `cms_v2.py` o `enterprise_cms.py`
 - no asumir que v1, v2 y enterprise comparten el mismo gate
-- si se toca `cms.py`, revalidar explícitamente la deriva actual de mutaciones con `cms:read`
+- si se toca `cms.py`, revalidar explícitamente que las mutaciones sigan exigiendo `cms:edit` y que la lectura administrativa permanezca en `cms:read`
 
 ## 9. Criterio de cierre
 
@@ -115,14 +122,17 @@ Una tarea de CMS queda cerrada cuando:
 - si cambia contrato, `CMS_API_CONTRACTS.md` se actualiza
 - si cambia estado/backlog, `ESTADO_CMS.md` se actualiza
 
-## 10. Pendientes QA / backlog
-
-- `PEND-EXPAND-SMOKE-CMS-001`
-- `PEND-VISUAL-CMS-001`
-- `PEND-RBAC-ENTERPRISE-CMS-001`
-
-## 11. Cerrado recientemente
+## 10. Cerrado recientemente
 
 - `DONE-RBAC-V1-HARDENING-CMS-001` cerrado el 2026-07-16 con endurecimiento de mutaciones CMS v1 a `cms:edit` y cobertura focal para `LECTOR`
+- `DONE-RBAC-ENTERPRISE-CMS-001` cerrado el 2026-07-16 con guards `cms:read` / `cms:manage` en `backend/api/enterprise_cms.py`
+- `DONE-CMS-E2E-AUTH-GATE-001` cerrado el 2026-07-16 con el runner administrado y el bootstrap corregido
+- `DONE-EXPAND-SMOKE-CMS-001` cerrado el 2026-07-16 con `scripts/test_cms_quality.py` ampliado
+- `DONE-VISUAL-CMS-001` cerrado el 2026-07-16 con `frontend/tests/e2e/cms/pages-preview.spec.ts` y `frontend/tests/e2e/cms-public-contract.spec.ts`
+- `DONE-GATE-CMS-001` cerrado el 2026-07-16 con el gate canónico y exhaustivo pasando
 - `DONE-FRONTEND-E2E-CMS-001` cerrado el 2026-07-16 con `frontend/tests/e2e/cms/smoke.spec.ts`
 - `DONE-FRONTEND-DEEP-CMS-001` cerrado el 2026-07-16 con `frontend/tests/e2e/cms/pages-preview.spec.ts`
+
+## 11. Estado operativo
+
+Sin pendientes abiertos en CMS al momento de esta lectura.

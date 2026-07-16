@@ -79,6 +79,28 @@ class TestProjectsCRUD:
         _assert_uuid(data["id"])
         _assert_datetime(data["created_at"])
 
+    # PEND-QUALITY-PROJECT-TITLE-NORM-001 (anotación diferida del code
+    # review del 2026-07-16, aplicada el mismo día): ``ProjectBase.title``
+    # rechaza título vacío / whitespace-only en POST y PATCH con 422.
+    def test_create_project_with_empty_title_returns_422(self, client, db_session):
+        _, _, sede = seed_admin(db_session)
+        headers = auth_headers(client)
+        resp = client.post("/api/projects", json={"title": "", "status": "planning"}, headers=headers)
+        assert resp.status_code == 422
+
+    def test_create_project_with_whitespace_title_returns_422(self, client, db_session):
+        _, _, sede = seed_admin(db_session)
+        headers = auth_headers(client)
+        resp = client.post("/api/projects", json={"title": "   ", "status": "planning"}, headers=headers)
+        assert resp.status_code == 422
+
+    def test_update_project_with_empty_title_returns_422(self, client, db_session):
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+        resp = client.patch(f"/api/projects/{proj.id}", json={"title": ""}, headers=headers)
+        assert resp.status_code == 422
+
     def test_create_project_creates_default_phases(self, client, db_session):
         """Creating a project also creates 4 default Kanban phases."""
         _, _, sede = seed_admin(db_session)
@@ -275,6 +297,48 @@ class TestTasks:
         data = resp.json()
         _assert_uuid(data["id"])
         assert data["title"] == "Mi tarea"
+
+    # ── PEND-QUALITY-TASK-CREATE-001 (cierre 2026-07-16) ──
+    # Cobertura de validación de título no vacío en POST y PATCH.
+    def test_create_task_with_empty_title_returns_422(self, client, db_session):
+        """PEND-QUALITY-TASK-CREATE-001: la vista list enviaba ``title: ''``
+        literal; el backend debe rechazar con 422 vía ``min_length=1``."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+        resp = client.post(
+            f"/api/projects/{proj.id}/tasks",
+            json={"title": "", "status": "todo"},
+            headers=headers,
+        )
+        assert resp.status_code == 422
+
+    def test_create_task_with_whitespace_title_returns_422(self, client, db_session):
+        """El field_validator ``mode='before'`` hace ``strip()`` antes de
+        validar, por lo que '   ' queda como '' y falla ``min_length=1``."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+        resp = client.post(
+            f"/api/projects/{proj.id}/tasks",
+            json={"title": "   ", "status": "todo"},
+            headers=headers,
+        )
+        assert resp.status_code == 422
+
+    def test_update_task_with_empty_title_returns_422(self, client, db_session):
+        """PATCH con title='' también debe ser rechazado para no permitir
+        ``clear title`` accidental."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        task = create_task_factory(db_session, proj.id, title="Original")
+        headers = auth_headers(client)
+        resp = client.patch(
+            f"/api/projects/tasks/{task.id}",
+            json={"title": ""},
+            headers=headers,
+        )
+        assert resp.status_code == 422
 
     def test_list_tasks_empty(self, client, db_session):
         """GET /projects/{id}/tasks returns [] when no tasks."""
@@ -723,11 +787,92 @@ class TestInbox:
         assert resp.json() == []
 
     def test_mark_inbox_read(self, client, db_session):
-        _, _, sede = seed_admin(db_session)
+        """Baseline con un item real del feed del actor (cierre PEND-QUALITY-INBOX-SCOPE-001)."""
+        from backend.models_projects import ProjectInboxState
+
+        user, persona, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        other_persona_id = _uuid.uuid4()
+        db_session.add(Persona(id=other_persona_id, first_name="Otro", last_name="Autor", email="other_mark@test.com"))
+        db_session.flush()
+        c = create_comment_factory(db_session, proj.id, author_id=other_persona_id, content="visible en mi inbox")
         headers = auth_headers(client)
-        resp = client.post("/api/projects/inbox/comment-1/read", headers=headers)
+        item_id = f"comment-{c.id}"
+        resp = client.post(f"/api/projects/inbox/{item_id}/read", headers=headers)
         assert resp.status_code == 200
         assert resp.json()["ok"] is True
+        db_session.query(ProjectInboxState).filter(ProjectInboxState.item_id == item_id).delete()
+        db_session.commit()
+
+    # ── PEND-QUALITY-INBOX-SCOPE-001 (cierre 2026-07-16) ──
+    # Cobertura de los huecos de soft delete y validación de item_id.
+    def test_inbox_excludes_comments_from_soft_deleted_project(self, client, db_session):
+        """Comentarios de proyectos soft-deleted NO deben llegar al feed."""
+        from backend.models_projects import Project
+        from datetime import datetime, timezone
+
+        user, persona, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        # Crear comentario de OTRO autor (no auto-comentario del actor)
+        other_persona_id = _uuid.uuid4()
+        db_session.add(Persona(id=other_persona_id, first_name="Otro", last_name="Autor", email="other@test.com"))
+        db_session.flush()
+        create_comment_factory(db_session, proj.id, author_id=other_persona_id, content="En proyecto vivo")
+        # Soft-delete del proyecto
+        proj.deleted_at = datetime.now(timezone.utc)
+        db_session.flush()
+        db_session.commit()
+        headers = auth_headers(client)
+        resp = client.get("/api/projects/inbox", headers=headers)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_inbox_excludes_tasks_from_soft_deleted_project(self, client, db_session):
+        """Tareas de proyectos soft-deleted NO deben llegar al feed del inbox."""
+        from datetime import datetime, timezone
+
+        user, persona, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        # Crear tarea asignada al actor en el proyecto
+        create_task_factory(db_session, proj.id, assignee_id=persona.id, status="todo")
+        proj.deleted_at = datetime.now(timezone.utc)
+        db_session.flush()
+        db_session.commit()
+        headers = auth_headers(client)
+        resp = client.get("/api/projects/inbox", headers=headers)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_mark_inbox_read_with_invalid_id_returns_404(self, client, db_session):
+        """``item_id`` arbitrario NO debe persistirse; respondemos 404."""
+        _, _, sede = seed_admin(db_session)
+        headers = auth_headers(client)
+        resp = client.post("/api/projects/inbox/not-a-real-item/read", headers=headers)
+        assert resp.status_code == 404
+        # Confirmamos que no se persiste el estado de \u00edtem inventado
+        from backend.models_projects import ProjectInboxState
+        rows = db_session.query(ProjectInboxState).filter(ProjectInboxState.item_id == "not-a-real-item").all()
+        assert rows == []
+
+    def test_mark_inbox_read_with_other_actor_item_returns_404(self, client, db_session):
+        """Un item real pero de un proyecto soft-deleted NO debe ser marcado
+        como leído por un actor externo."""
+        from datetime import datetime, timezone
+
+        user, persona, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        other_persona_id = _uuid.uuid4()
+        db_session.add(Persona(id=other_persona_id, first_name="Otro", last_name="X", email="ox@test.com"))
+        db_session.flush()
+        c = create_comment_factory(db_session, proj.id, author_id=other_persona_id, content="privado")
+        # Soft-delete del proyecto (el item deja de estar en el inbox)
+        proj.deleted_at = datetime.now(timezone.utc)
+        db_session.flush()
+        db_session.commit()
+        headers = auth_headers(client)
+        item_id = f"comment-{c.id}"
+        resp = client.post(f"/api/projects/inbox/{item_id}/read", headers=headers)
+        assert resp.status_code == 404
 
 
 # ── H: Portfolio / Workload / Activities / My Tasks ──────────────────────

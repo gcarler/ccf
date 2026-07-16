@@ -64,9 +64,30 @@ Ejecutar si se toca:
 
 ## 4. Frontend
 
-No existe todavía suite e2e dedicada de CRM.
+Smoke dedicado mínimo:
 
-Hasta que exista `PEND-FRONTEND-E2E-CRM-001`, hacer QA manual con consola abierta sobre:
+```bash
+cd /root/ccf/frontend
+npm run test:e2e:crm
+npm run test:e2e:crm:deep
+```
+
+El smoke dedicado cubre:
+
+- `/plataforma/crm`
+- `/plataforma/crm/personas`
+- `/plataforma/crm/pipeline`
+- bloqueo de `console.error`
+- bloqueo de `pageerror`
+- bloqueo de `4xx/5xx` en API
+- bloqueo de `404/5xx` en `_next/static`
+
+Cobertura profunda:
+
+- `test:e2e:crm:deep` levanta `webServer` administrado por Playwright.
+- valida `/plataforma/crm/personas/{id}` con MESH insight, historial, contribuciones y mentoría mockeada.
+
+QA manual complementaria con consola abierta sobre:
 
 | Ruta | Validar |
 |---|---|

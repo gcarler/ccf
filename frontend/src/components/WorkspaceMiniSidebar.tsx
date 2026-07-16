@@ -28,10 +28,11 @@ import clsx from 'clsx';
 import { useCreation } from '@/context/CreationContext';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { useAuth } from '@/context/AuthContext';
+import { canAccessWorkspaceHref } from '@/lib/workspaceAccess';
 
 export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void }) {
     const pathname = usePathname();
-    const { user, hasModuleAccess, hasPermission } = useAuth();
+    const { hasModuleAccess, hasPermission } = useAuth();
     const { openModal } = useCreation();
     const { resetSidebarStack } = useSidebarLayers();
 
@@ -54,24 +55,12 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
         { id: 'admin',         icon: Shield,        href: '/plataforma/admin',          label: 'Admin' },
     ];
 
-    // Module ID to permission mapping for sidebar filtering
-    const MODULE_PERM_MAP: Record<string, string> = {
-        academy: 'academy',
-        crm: 'crm',
-        evangelism: 'evangelism',
-        community: 'community',
-        finances: 'finance',
-        cms: 'cms',
-        'spiritual-life': 'spiritual_life',
-        admin: 'admin',
-    };
-
-    const visibleModuleItems = moduleItems.filter((item) => {
-        if (item.id === 'admin') return user?.role === 'admin' || user?.role === 'administrador' || hasPermission('system:config');
-        const permModule = MODULE_PERM_MAP[item.id];
-        if (!permModule) return true;
-        return hasModuleAccess(permModule, 'read');
-    });
+    const visiblePrimaryItems = primaryItems.filter((item) =>
+        canAccessWorkspaceHref(item.href, { hasModuleAccess, hasPermission })
+    );
+    const visibleModuleItems = moduleItems.filter((item) =>
+        canAccessWorkspaceHref(item.href, { hasModuleAccess, hasPermission })
+    );
 
     const NavItem = ({ id, icon: Icon, href, label, badge }: any) => {
         const isActive = href === '/' ? (pathname === '/' || !pathname) : pathname?.startsWith(href);
@@ -112,7 +101,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             </button>
 
             {/* Primary workspace items */}
-            {primaryItems.map(item => <NavItem key={item.id} {...item} />)}
+            {visiblePrimaryItems.map(item => <NavItem key={item.id} {...item} />)}
 
             {/* Separator */}
             <div className="w-6 h-px bg-[hsl(var(--surface-2))] dark:bg-white/10 my-2" />
@@ -124,7 +113,9 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             <div className="w-6 h-px bg-[hsl(var(--surface-2))] dark:bg-white/10 my-2" />
 
             {/* Inbox with badge */}
-            <NavItem id="inbox" icon={Inbox} href="/plataforma/inbox" label="Bandeja" badge={3} />
+            {canAccessWorkspaceHref('/plataforma/inbox', { hasModuleAccess, hasPermission }) && (
+                <NavItem id="inbox" icon={Inbox} href="/plataforma/inbox" label="Bandeja" badge={3} />
+            )}
 
             {/* ── Footer: solo Settings + Collapse (SIN ThemeToggle — ya está en el header) */}
             <div className="flex flex-col items-center gap-1 mb-2">

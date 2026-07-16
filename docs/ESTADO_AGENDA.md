@@ -17,6 +17,8 @@
 ```bash
 cat /root/ccf/docs/ESTADO_AGENDA.md
 cat /root/ccf/docs/AGENDA_API_CONTRACTS.md
+cat /root/ccf/docs/SYSTEM_CALENDAR_CONTRACT.md
+cat /root/ccf/docs/AGENDA_RBAC_MATRIX.md
 cat /root/ccf/docs/AGENDA_QA_CHECKLIST.md
 cat /root/ccf/docs/PLAN_ARQUITECTURA_MODULAR_CCF.md
 ```
@@ -74,6 +76,7 @@ cd /root/ccf
 - `AgendaEventCreate` se transforma al modelo `EventoAgenda` con `modulo_origen="MANUAL"`.
 - Todo acceso a `agenda` autenticada debe respetar `sede_id` del actor.
 - `calendar` no es un modulo totalmente aislado: agrega eventos de varias fuentes para la UI.
+- La matriz RBAC del modulo vive en `docs/AGENDA_RBAC_MATRIX.md`.
 
 ## 7. Dependencias compartidas criticas
 
@@ -90,9 +93,12 @@ cd /root/ccf
 
 ## 9. Pendientes formales
 
-1. **Contrato de eventos agregados** `[PEND-CALENDAR-EVENTS-CONTRACT-001]` — documentar `system/calendar` y los tipos de evento que consume la UI.
-2. **Matriz RBAC agenda** `[PEND-AGENDA-RBAC-001]` — documentar por rol real lectura/edicion de eventos, recursos y reservas.
+1. **Contrato de eventos agregados** `[PEND-CALENDAR-EVENTS-CONTRACT-001]` — cerrada el 2026-07-16 con `docs/SYSTEM_CALENDAR_CONTRACT.md`.
+2. **Matriz RBAC agenda** `[PEND-AGENDA-RBAC-001]` — cerrada el 2026-07-16 con `docs/AGENDA_RBAC_MATRIX.md`.
 3. **Script canonico del modulo** `[PEND-AGENDA-SMOKE-001]` — cerrada el 2026-07-16 con `scripts/test_agenda_quality.py`.
+4. **Plan operativo del modulo** `[PEND-PLAN-AGENDA-001]` — cerrada el 2026-07-16 con `docs/PLAN_AGENDA_CALIDAD.md`; fija fases para CRUD de eventos, reservas, agregación calendar, RBAC heredado y smoke frontend.
+5. **Smoke frontend Agenda / Calendar** `[PEND-FRONTEND-E2E-AGENDA-001]` — cerrada el 2026-07-16 con `frontend/tests/e2e/agenda/smoke.spec.ts`; cubre calendar y agenda/events con guard de consola/API/assets.
+6. **Cobertura profunda Agenda / Calendar** `[PEND-FRONTEND-E2E-AGENDA-DEEP-001]` — cerrada el 2026-07-16 con `frontend/tests/e2e/agenda/calendar-events.spec.ts`; cubre CRUD manual básico, detalle editable y navegación desde `/plataforma/calendar` hacia el owner route del evento.
 
 ## 10. Archivos a revisar primero si falla
 

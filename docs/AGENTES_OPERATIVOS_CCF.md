@@ -16,6 +16,10 @@ Lo que faltaba era una guía breve de uso por dominio. Esta capa divide el traba
 3. `ccf-cms-guard` para CMS, recursos, themes, page builder y render público.
 4. `ccf-architecture-guard` para decidir alcance, orden de cambio, reversibilidad y validación.
 
+Entrada operativa uniforme:
+
+- `docs/ARRANQUE_MODULAR_CCF.md` define cómo arrancar por módulo: qué leer primero, cómo listar backlog vivo y qué smoke correr antes de editar.
+
 ## Regla de uso
 
 - Usar un solo skill por vez cuando el cambio tenga un dueño claro.
@@ -35,5 +39,6 @@ Lo que faltaba era una guía breve de uso por dominio. Esta capa divide el traba
 2. `AGENTS_FRONTEND.md`
 3. `docs/ESTANDARES_DESARROLLO.md`
 4. `docs/AGENTES_OPERATIVOS_CCF.md`
+5. `docs/ARRANQUE_MODULAR_CCF.md`
 
 Este documento no reemplaza las reglas duras. Solo las convierte en un flujo operativo simple para agentes.

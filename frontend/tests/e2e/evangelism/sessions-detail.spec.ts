@@ -1,4 +1,5 @@
 import { test, expect, Page, Route } from '@playwright/test';
+import { installMockPlatformSession } from '../helpers/mockPlatformSession';
 
 /**
  * E2E coverage for the renamed Evangelism session report route:
@@ -34,33 +35,13 @@ const GRUPO_FIXTURE = {
 };
 
 async function mockShellRoutes(page: Page) {
-    await page.route('**/api/v3/auth/me', async (route: Route) => {
-        await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-                id: 'e2e-user',
-                email: 'pastor.e2e@ccf.local',
-                role: 'pastor',
-                permissions: ['evangelism:read', 'evangelism:manage'],
-                sede_id: 'sede-1',
-                persona_id: 'persona-1',
-            }),
-        });
-    });
+    await installMockPlatformSession(page);
 
     await page.route('**/api/evangelism/strategies**', async (route: Route) => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
             body: JSON.stringify([{ id: 's-1', name: 'FARO Centro' }]),
-        });
-    });
-
-    await page.route('**/api/auth/v3/me**', async (route: Route) => {
-        await route.fulfill({
-            status: 200, contentType: 'application/json',
-            body: JSON.stringify({ ok: true }),
         });
     });
 }
@@ -142,12 +123,8 @@ test.describe('Evangelism — Session report route (/sessions/[grupo_id])', () =
         await page.getByRole('button', { name: /Agregar/i }).click();
         await expect(page.locator('text=/Invitados nuevos/')).toContainText(/\(2\)/);
 
-        const removeButtons = page.locator('button[aria-label*="Quitar"], button:has(.lucide-x-circle)');
-        await removeButtons.first().click().catch(async () => {
-            // Fallback: target the first X icon button inside the guests panel
-            await page.locator('h2:has-text("Invitados nuevos")').locator('xpath=ancestor::div[1]')
-                .locator('button.lucide-x-circle, button:has(svg.lucide-x-circle)').first().click();
-        });
+        const firstGuestPhone = page.getByPlaceholder('Teléfono').first();
+        await firstGuestPhone.locator('xpath=following-sibling::button[1]').click();
         await expect(page.locator('text=/Invitados nuevos/')).toContainText(/\(1\)/);
     });
 

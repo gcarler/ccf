@@ -1,13 +1,12 @@
 "use client";
 
+import '@/lib/agGrid';
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { AllCommunityModule, ModuleRegistry, themeQuartz, ColDef } from 'ag-grid-community';
+import { themeQuartz, ColDef } from 'ag-grid-community';
 import clsx from 'clsx';
 import type { ProjectTaskRecord } from '@/types/projects';
 import { STATUS_LABELS, PRIORITY_LABELS } from '@/lib/projects/constants';
-
-ModuleRegistry.registerModules([AllCommunityModule]);
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
     completed:   { label: STATUS_LABELS.completed,   cls: 'bg-emerald-50 border-emerald-100 text-emerald-600' },

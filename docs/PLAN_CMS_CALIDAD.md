@@ -50,7 +50,7 @@ Criterio de salida:
 
 ## 3. Fase 1 — Contratos backend y aislamiento
 
-**IDs:** `PARCIAL-GATE-CMS-001`, `DONE-RBAC-V1-HARDENING-CMS-001`, `PEND-RBAC-ENTERPRISE-CMS-001`
+**IDs:** `DONE-GATE-CMS-001`, `DONE-RBAC-V1-HARDENING-CMS-001`, `DONE-RBAC-ENTERPRISE-CMS-001`
 
 Orden:
 
@@ -68,7 +68,7 @@ Criterio de salida:
 
 ## 4. Fase 2 — Admin, builder y workflow editorial
 
-**IDs:** `PARCIAL-BUILDER-001`, `PARCIAL-PREVIEW-PUBLIC-001`, `PARCIAL-DASHBOARD-CMS-001`
+**IDs:** `DONE-BUILDER-CMS-001`, `DONE-PREVIEW-PUBLIC-CMS-001`, `DONE-DASHBOARD-CMS-001`
 
 Orden:
 
@@ -84,7 +84,7 @@ Criterio de salida:
 
 ## 5. Fase 3 — Preview, publicado y render público
 
-**IDs:** `PARCIAL-PREVIEW-PUBLIC-001`, `PEND-VISUAL-CMS-001`
+**IDs:** `DONE-PREVIEW-PUBLIC-CMS-001`, `DONE-VISUAL-CMS-001`
 
 Orden:
 
@@ -100,7 +100,7 @@ Criterio de salida:
 
 ## 6. Fase 4 — Smoke modular y profundidad progresiva
 
-**IDs:** `PEND-EXPAND-SMOKE-CMS-001`, `PARCIAL-GATE-CMS-001`
+**IDs:** `DONE-EXPAND-SMOKE-CMS-001`, `DONE-GATE-CMS-001`, `DONE-CMS-E2E-AUTH-GATE-001`
 
 Comandos actuales:
 
@@ -118,13 +118,16 @@ Cobertura complementaria existente:
 ```bash
 cd /root/ccf/frontend
 npx vitest run tests/cms-components.test.ts tests/cms-public-fetch.test.ts
-npx playwright test tests/e2e/cms-public-contract.spec.ts
+npm run test:e2e:cms:public
 ```
 
 Regla:
 
-- El smoke modular debe proteger tanto la superficie admin como el contrato público; cuando un cambio toque preview/publicado, el checklist visual y el contrato público suben de prioridad.
+- El smoke modular protege tanto la superficie admin como el contrato público; cuando un cambio toque preview/publicado, el checklist visual y el contrato público suben de prioridad.
 - La cobertura profunda actual de CMS vive en `frontend/tests/e2e/cms/pages-preview.spec.ts` y debe reutilizar el runner administrado compartido.
+- `scripts/test_cms_quality.py` ya es el gate canónico completo: backend CMS, Vitest, smoke E2E autenticado y contrato público.
+- El smoke autenticado de CMS requiere `E2E_EMAIL`, `E2E_PASSWORD` y `E2E_API_URL` o `API_BASE_URL` absolutos; si el usuario no existe localmente, sembrarlo con `npm run test:e2e:seed-user` antes del gate.
+- Si `npm run test:e2e:cms` cae en `Acceso Restringido` pese a que `/v3/auth/me` devuelve `cms:*`, tratarlo como drift de bootstrap de sesión/AuthContext/ProtectedRoute y no como fallo RBAC backend de CMS.
 
 Criterio de salida:
 
@@ -153,8 +156,10 @@ Si se toca preview, render público o enterprise:
 cd /root/ccf
 ./venv/bin/python -m pytest -q -o addopts='' \
   tests/test_enterprise_cms.py \
-  tests/test_cms_public_pages.py \
-  tests/test_cms_public_rendering.py
+  tests/test_cms_v2_coverage.py \
+  tests/test_cms_v2_deep_coverage.py \
+  tests/test_cms_schedule.py \
+  tests/test_cms_seo_audit.py
 ```
 
 Criterio de salida:
@@ -162,3 +167,21 @@ Criterio de salida:
 - `docs/ESTADO_CMS.md` se actualiza si cambia backlog o estado.
 - `docs/CMS_API_CONTRACTS.md` y `docs/CMS_QA_CHECKLIST.md` se sincronizan si cambia el flujo validado.
 - Ningún fix de CMS se aprueba si resuelve UI pero deja vivo el problema de aislamiento o publicación.
+
+## 8. Fase 6 — Ruta de cierre a 100%
+
+**ID:** `CMS-FASE6-CIERRE100`
+
+Estado de cierre:
+
+1. El smoke autenticado de CMS entra con sesión real y no cae en `Acceso Restringido`.
+2. Enterprise CMS expresa `cms:read` y `cms:manage` en el borde del router.
+3. `scripts/test_cms_quality.py` corre backend, unit, smoke E2E autenticado y contrato público.
+4. La validación preview/publicado quedó cubierta por `pages-preview.spec.ts` y el contrato público de Playwright.
+5. Builder, dashboard y preview dejaron de depender de tolerancias silenciosas y quedaron cubiertos por los gates reproducibles.
+
+Criterio de salida:
+
+- No quedan IDs abiertos para CMS en `docs/ESTADO_CMS.md`.
+- El gate canónico y el gate exhaustivo del módulo pasan sin skips silenciosos.
+- `docs/ESTADO_CMS.md`, `docs/CMS_API_CONTRACTS.md` y `docs/CMS_QA_CHECKLIST.md` quedan sincronizados con el estado final.

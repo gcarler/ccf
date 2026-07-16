@@ -180,12 +180,13 @@ Frontend específico:
 ```bash
 cd /root/ccf/frontend
 npx vitest run tests/cms-components.test.ts tests/cms-public-fetch.test.ts
-npx playwright test tests/e2e/cms-public-contract.spec.ts
+npm run test:e2e:cms
+npm run test:e2e:cms:public
 ```
 
 ## 10. Notas RBAC actuales
 
-- `cms.py` v1 tiene mutaciones protegidas solo con `cms:read`.
+- `cms.py` v1 ya separa lectura administrativa (`cms:read`) de mutación administrativa (`cms:edit`).
 - `cms_v2.py` sí separa mejor lectura (`cms:read`) y mutación (`cms:edit`).
-- `enterprise_cms.py` expone muchas rutas con `get_current_user` en vez de `require_module_access("cms", ...)` en la firma.
-- ver `CMS_RBAC_MATRIX.md` para la matriz completa y los drift activos.
+- `enterprise_cms.py` ahora expresa lectura con `cms:read` y mutación con `cms:manage` en la firma.
+- ver `CMS_RBAC_MATRIX.md` para la matriz completa y el contrato RBAC vigente.

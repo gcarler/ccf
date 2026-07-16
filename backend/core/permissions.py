@@ -35,7 +35,7 @@ SECRET_KEY = settings.secret_key
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v3/auth/login")
 
 # ── Role aliases & valid set ──────────────────────────────────────────
 ROLE_ALIASES: Dict[str, str] = {

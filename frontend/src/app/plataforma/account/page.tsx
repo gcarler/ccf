@@ -92,7 +92,7 @@ export default function AccountSettingsPage() {
             }
 
             if (Object.keys(authBody).length > 0) {
-                await apiFetch('/auth/me', { method: 'PATCH', body: authBody });
+                await apiFetch('/v3/auth/me', { method: 'PATCH', body: authBody });
             }
             if (Object.keys(profileBody).length > 0) {
                 await apiFetch('/crm/personas/me/profile', { method: 'PATCH', body: profileBody });
@@ -246,9 +246,9 @@ export default function AccountSettingsPage() {
                                             <button
                                                 onClick={async () => {
                                                     try {
-                                                        await apiFetch('/auth/send-verification-email', {
+                                                        await apiFetch('/v3/auth/send-verification-email', {
                                                             method: 'POST',
-                                                            query: { email: user?.email ?? '' },
+                                                            body: { email: user?.email ?? '' },
                                                         });
                                                         addToast("Correo de verificación enviado", "success");
                                                     } catch {
@@ -318,7 +318,7 @@ export default function AccountSettingsPage() {
                                                     }
                                                     setIsChangingPassword(true);
                                                     try {
-                                                        await apiFetch('/auth/me', {
+                                                        await apiFetch('/v3/auth/me', {
                                                             method: 'PATCH',
                                                             body: {
                                                                 current_password: passwordForm.current,

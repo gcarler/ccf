@@ -107,39 +107,39 @@ Conclusión:
 
 Patrón observado:
 
-- los endpoints revisados usan `get_current_user`
-- no se observan guards `require_module_access("cms", ...)` en la firma
+- los endpoints ahora expresan `cms:read` para lecturas y `cms:manage` para mutaciones
+- la autorización queda visible en la firma del router, no escondida sólo en autenticación implícita
 
 | Superficie | Guard observado | Roles que pasan hoy |
 |---|---|---|
-| audit logs | `get_current_user` | cualquier usuario autenticado, salvo validaciones internas adicionales |
-| content permissions | `get_current_user` | cualquier usuario autenticado, salvo validaciones internas adicionales |
-| notifications | `get_current_user` | cualquier usuario autenticado |
-| webhooks | `get_current_user` | cualquier usuario autenticado, salvo validaciones internas adicionales |
-| custom types / entries / versions / rollback | `get_current_user` | cualquier usuario autenticado, salvo validaciones internas adicionales |
-| glossary, search, promotions, sessions, media folders, redirects, broken links | `get_current_user` | cualquier usuario autenticado, salvo validaciones internas adicionales |
+| audit logs | `cms:read` | `ADMINISTRADOR` y roles con `cms:read` explícito |
+| content permissions | `cms:read` / `cms:manage` | lectura para `cms:read`; mutación para `cms:manage` |
+| notifications | `cms:read` / `cms:manage` | lectura para `cms:read`; mutación para `cms:manage` |
+| webhooks | `cms:read` / `cms:manage` | lectura para `cms:read`; mutación para `cms:manage` |
+| custom types / entries / versions / rollback | `cms:read` / `cms:manage` | lectura para `cms:read`; mutación para `cms:manage` |
+| glossary, search, promotions, sessions, media folders, redirects, broken links | `cms:read` / `cms:manage` | lectura para `cms:read`; mutación para `cms:manage` |
 
-Hallazgo crítico:
+Hallazgo operativo:
 
-- Enterprise CMS parece depender más de autenticación que de permisos `cms:*` a nivel de firma del router
-- la autorización fina, si existe, no está expresada homogéneamente como contrato RBAC en el borde
+- Enterprise CMS ya no depende sólo de autenticación para la superficie revisada
+- la lectura y la mutación quedaron separadas con `cms:read` y `cms:manage`
 
 ## 6. Lectura correcta por rol
 
 | Rol | CMS v1 | CMS v2 | Enterprise CMS |
 |---|---|---|---|
-| `ADMINISTRADOR` | lectura + mutación | lectura + mutación | autenticado; normalmente pasa |
-| `GESTOR` persistido | lectura + mutación v1 | lectura + mutación v2 | autenticado; revisar reglas internas |
-| `EDITOR` persistido | lectura + mutación v1 | lectura + mutación v2 | autenticado; revisar reglas internas |
-| `LECTOR` persistido | lectura + también mutación v1 por guard actual | solo lectura v2 | autenticado; revisar reglas internas |
-| `MIEMBRO` | sin CMS | sin CMS | podría autenticarse en enterprise si el endpoint no filtra más allá de `get_current_user` |
+| `ADMINISTRADOR` | lectura + mutación | lectura + mutación | lectura + mutación |
+| `GESTOR` persistido | lectura + mutación v1 | lectura + mutación v2 | lectura si tiene `cms:read`; mutación sólo con `cms:manage` |
+| `EDITOR` persistido | lectura + mutación v1 | lectura + mutación v2 | lectura si tiene `cms:read`; mutación sólo con `cms:manage` |
+| `LECTOR` persistido | lectura + también mutación v1 por guard actual | solo lectura v2 | lectura sólo si tiene `cms:read`; sin mutación |
+| `MIEMBRO` | sin CMS | sin CMS | sin CMS salvo permiso explícito añadido |
 
 ## 7. Riesgos y drift documentados
 
 1. CMS v1 está subprotegido: varias mutaciones usan `cms:read`.
 2. CMS v2 está mejor segmentado que v1.
-3. Enterprise CMS no expresa el RBAC por `cms:*` en el borde del router; usa autenticación y deja la fineza fuera de la firma.
-4. seed persistido y fallback runtime no son equivalentes para `GESTOR`, `EDITOR` y `LECTOR`.
+3. Enterprise CMS ya expresa RBAC por `cms:*` en el borde del router; la deuda activa se concentra ahora en otros flujos del módulo.
+4. seed persistido y fallback runtime siguen sin ser equivalentes para `GESTOR`, `EDITOR` y `LECTOR`.
 
 ## 8. Reglas operativas para QA
 
@@ -154,4 +154,5 @@ Validar mínimo:
 ## 9. Estado
 
 - `PEND-RBAC-CMS-001` queda cerrada el `2026-07-16` como documentación del contrato actual
-- queda deuda técnica visible sobre subprotección en CMS v1 y autorización difusa en Enterprise CMS
+- `PEND-RBAC-ENTERPRISE-CMS-001` queda cerrada el `2026-07-16` con guards `cms:read` / `cms:manage` en el borde del router
+- la deuda técnica visible queda concentrada en la evolución normal de CMS v1 y en cambios futuros de contrato, no en Enterprise CMS

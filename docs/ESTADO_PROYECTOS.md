@@ -1,6 +1,6 @@
 # Estado del Módulo de Proyectos — CCF
 
-> **TL;DR (una línea):** Backend de Projects sólido (11 modelos, router `/api/projects`, 23 componentes frontend, hook + contexto compartidos, 4 piezas marcadas `Parcial` con IDs estables, normalización de status y RBAC granular pendientes).
+> **TL;DR (una linea):** Backend de Projects solido (11 modelos, router `/api/projects`, 23 componentes frontend, hook + contexto compartidos) y backlog original del modulo cerrado el `2026-07-16`.
 
 **Propósito.** Handover canónico. Este archivo existe para que cada sesión nueva de trabajo pueda leerlo al inicio y arrancar con el contexto ya cargado, sin redescubrir el módulo de cero.
 
@@ -14,11 +14,12 @@
 > - `PEND-VIEWS-E2E-001` cerrada el 2026-07-16. Suite `frontend/src/lib/__tests__/projects-views-integration.test.tsx` (8 tests verdes) valida el invariante arquitectónico "todas las vistas comparten `ProjectUpdateProvider`" con `MiniList` como vista-representante + `Harness` que mantiene el estado en `useState` y provee mutators in-memory. `ProjectKanbanBoard` mockeado como no-op (sus deps transitivas — dnd-kit + ag-grid + framer-motion + ConfirmActionDrawer con React legacy — tienen historial de cascading failures en jsdom). Smoke real del Kanban sigue cubierto por navegador manual. Cubre: throw fuera del Provider, render inicial en múltiples consumers, createTask/updateTask/deleteTask propaga a N consumidores, jerarquía `mutaciones concurrentes convergen`, y smoke de MiniList como vista-genérica consumidora.
 > - `PEND-INBOX-CONTRACT-001` cerrada el 2026-07-16. Contrato documentado en §4.1 del handover. `GET /api/projects/inbox` agrega 2 superficies (comentarios no resueltos + tareas abiertas asignadas) en un solo feed con cap a `limit=50`, returntype `List[ProjectInboxItem]`. `POST /api/projects/inbox/{item_id}/read` upserta la marca de leído en `project_inbox_state` (UNIQUE `(persona_id, item_id)`). RBAC: `/inbox` requiere `projects:read` (admin/gestor/editor pasan; miembro 403); `/inbox/{id}/read` requiere `projects:edit`. Axioma 3: el feed se acota a `sede_id` del actor; superadmin ve todo.
 > - Docstring de `list_inbox` sincronizado con §4.1 (2026-07-16). El docstring en `backend/api/projects.py::list_inbox` se reescribió para reflejar el contrato del handover como single source of truth (elimina drift futuro entre código y doc). Pytest `tests/test_projects_api.py::TestInbox` sigue verde (cambio puramente documental, sin mutar comportamiento).
+> - **Actualizacion QA 2026-07-16:** `npm run test:e2e:projects:detail` ya no depende de arrancar Next manualmente. Usa `frontend/scripts/run-managed-playwright.mjs` para levantar `webServer` administrado y ejecutar la suite seeded del detalle de proyectos de forma repetible.
 
 **Regla de uso.**
 
 - Actualizar este doc al cerrar tareas, no antes.
-- Las categorías `Hecho / Parcial / Pendiente` se interpretan igual que en `PLAN_VISTAS_EDITABLES_PROYECTOS.md`:
+- Las categorías `Hecho / Parcial / Pendiente` se interpretan igual que en `PLAN_PROYECTOS_CALIDAD.md`:
   - `Hecho` = capacidad principal ya implementada y usable.
   - `Parcial` = funciona, pero con huecos visibles o deuda de integración.
   - `Pendiente` = no resuelto o solo como mejora futura.
@@ -37,9 +38,10 @@
 | Componentes frontend | `frontend/src/components/projects/` | 23 componentes, 6 219 LOC en total. Recontar con `cd /root/ccf/frontend && wc -l src/components/projects/*.tsx \| tail -1` si cambia. |
 | Hook compartido | `frontend/src/hooks/useProjectTasks.ts` | CRUD + rollback |
 | Contexto compartido | `frontend/src/context/ProjectUpdateContext.tsx` | Estado project/tasks/phases/activities |
-| Plan de calidad | `docs/PLAN_VISTAS_EDITABLES_PROYECTOS.md` | Listado Hecho/Parcial por componente |
+| Plan de calidad | `docs/PLAN_PROYECTOS_CALIDAD.md` | Plan operativo canónico del módulo dentro de la arquitectura modular |
+| Acta histórica | `docs/PLAN_VISTAS_EDITABLES_PROYECTOS.md` | Cierre del frente histórico de vistas editables |
 
-**Estado global:** La base está cerrada (backend sólido, hook + contexto compartidos, drawers y vistas de escritura rápida funcionando). Quedan 4 piezas explícitamente parciales + revalidación de backend.
+**Estado global:** La base del modulo quedo cerrada (backend solido, hook + contexto compartidos, drawers y vistas de escritura rapida funcionando). El backlog original de `Parcial` + `Pendiente` quedo resuelto el `2026-07-16`; cualquier trabajo nuevo debe abrirse con IDs nuevos.
 
 > Tamaños y nombres verificados el **2026-07-16**. Re-verificar si se retoma tras >30 días porque el frontend de proyectos cambia rápido.
 
@@ -126,10 +128,10 @@ Rutas montadas en `/api/projects` (ver `backend/api/projects.py` para contratos 
 - `GET /inbox?limit=20`, `GET /activities?limit=20` — feeds
 - `GET /summary`, `GET /workload` — métricas portfolio
 
-> **Gaps abiertos en backend (Pendiente):**
-> - Normalización de `status` (proyecto y tarea) — hoy son strings libres.
-> - Revalidar contrato `PATCH/DELETE` por rol (especialmente `MIEMBRO` → hoy recibe 403, revisar granularidad).
-> - Contrato de feed `GET /inbox` (qué rol lo ve y con qué scope) no documentado.
+> **Gaps abiertos en backend (documentados, no pertenecen ya al backlog original):**
+> - Asimetria RBAC en `DELETE /projects/{id}` vs `PATCH /projects/{id}`.
+> - Gap de permiso actual en `PUT /projects/{id}/phases`.
+> - Necesidad futura de una matriz RBAC mas compacta separada del handover.
 
 > **Referencia útil:** el patrón `CasoCRM.atomic_sort_reorder` en `backend/models_crm_pipeline.py` ya implementa sede-isolation + lock+rollback para batch reorders. Reusarlo si se necesita un endpoint `PATCH /api/projects/tasks/reorder` para el future del Kanban.
 
@@ -199,10 +201,10 @@ Ambas corren independientemente con cap `limit` cada una; el resultado se trunca
 | Archivo | LOC | Estado |
 |---|---:|---|
 | `ProjectsShell.tsx` | medio | Hecho — orquestador shell |
-| `ProjectListView.tsx` | 560 | **Parcial** — ver abajo |
+| `ProjectListView.tsx` | 560 | Hecho |
 | `ProjectCard.tsx` | varios | Hecho (grid + tabla con inline edit + alta/baja) |
 | `ProjectTableView.tsx` | medio | Hecho |
-| `ProjectMasterView.tsx` | medio | **Parcial** — ver abajo |
+| `ProjectMasterView.tsx` | medio | Hecho |
 | `TaskTableView.tsx` | 455 | Hecho — editable, agrupable, abre detalle por doble click |
 | `ProjectKanbanBoard.tsx` + `KanbanColumn.tsx` + `SortableTaskCard.tsx` | — | Hecho — drag&drop persistente, inline edit de título/fecha/prioridad/asignado |
 | `ProjectGanttView.tsx` | medio | Hecho — click/drag/resize conectado a fechas |
@@ -216,7 +218,7 @@ Ambas corren independientemente con cap `limit` cada una; el resultado se trunca
 ### Drawers / paneles
 
 - `ProjectCreationDrawer.tsx`, `ProjectSettingsDrawer.tsx` — drawers de proyecto (Hecho)
-- `PhaseManagerDrawer.tsx` — **Parcial** — conectado al contexto, falta cerrar contrato
+- `PhaseManagerDrawer.tsx` — Hecho
 - `TaskCreationDrawer.tsx`, `TaskDetailPanel.tsx` (1 442 LOC) — Hecho
 - `ProjectWikiEditor.tsx`, `ProjectChatPanel.tsx`, `ProjectActivityFeed.tsx` — Hecho
 - `TaskRouteTree.tsx`, `TitleCellEditor.tsx` — auxiliares
@@ -226,7 +228,7 @@ Ambas corren independientemente con cap `limit` cada una; el resultado se trunca
 ### Página Next.js que monta todo
 
 - `frontend/src/app/plataforma/projects/ProjectsClient.tsx` — orquestación cliente del listado.
-- `frontend/src/app/plataforma/projects/[id]/page.tsx` — detalle por proyecto; lógica de coordinación extensa entre vistas (marcado como Parcial).
+- `frontend/src/app/plataforma/projects/[id]/page.tsx` — detalle por proyecto; orquestacion simplificada y apoyada por `useProjectPageData` + `ProjectViewsContent`.
 
 ### Compartido externo al directorio
 
@@ -249,20 +251,21 @@ Ambas corren independientemente con cap `limit` cada una; el resultado se trunca
 - Paneles paralelos (Wiki, Chat, ActivityFeed, Whiteboard) operativos.
 - Script de calidad + Postman collection.
 
-### Parcial (cierre recomendado, en este orden)
+### Parcial
 
-> IDs estables para que cualquier sesión/agente pueda referirse por código (`grep "PARCIAL-.*-001" ccf/docs/ESTADO_PROYECTOS.md` lista todo).
+- No quedan items activos del backlog original marcados como `Parcial`.
+- Mantener la seccion por compatibilidad de lectura; nuevos parciales deben abrirse con IDs nuevos.
 
-1. **`app/plataforma/projects/[id]/page.tsx`** `[PARCIAL-PAGE-001]` — simplificar lógica de coordinación entre vistas (acoplamiento extenso actualmente).
+### Pendiente
 
-### Pendiente (no abordado todavía)
+- No quedan items activos del backlog original marcados como `Pendiente`.
+- Las deudas actuales son transversales o decisiones conscientes de RBAC, no trabajo abierto del plan inicial.
 
-> IDs estables en §10. Mantener sincronizados.
+### Backlog nuevo post-cierre
 
-- ~~Normalización de `status` en backend (proyecto y tarea) `[PEND-STATUS-NORM-001]`.~~ ✅ Cerrada 2026-07-16.
-- ~~Revalidar permisos granulares por rol (especialmente `PATCH` y `DELETE` en `MIEMBRO`) `[PEND-RBAC-001]`.~~ ✅ Cerrada 2026-07-16.
-- ~~Pruebas de integración end-to-end entre vistas del módulo projects `[PEND-VIEWS-E2E-001]`.~~ ✅ Cerrada 2026-07-16.
-- ~~Definir contrato de `GET /api/projects/inbox` (alcance, roles, formato de items) `[PEND-INBOX-CONTRACT-001]`.~~ ✅ Cerrada 2026-07-16.
+- **Todos los 4 items del backlog nuevo post-cierre fueron cerrados el `2026-07-16` (ver §10).**
+  La matriz viva ya no tiene IDs activos en este bloque. El plan integral
+  del modulo de proyectos queda cerrado sin pendientes abiertos.
 
 ---
 
@@ -314,8 +317,14 @@ npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E '^ccf/frontend/src/(components/
 3. ~~Validar permisos granulares por rol sobre `/api/projects/*` con una suite RBAC paramétrica.~~ ✅ Cerrada 2026-07-16 (`tests/test_projects_rbac.py`, 116 tests verdes).
 4. ~~Cerrar pruebas de integración entre vistas (ProjectKanbanBoard ↔ TaskTableView ↔ CalendarView ↔ GanttView) verificando que mutaciones se propagan vía `ProjectUpdateProvider` sin recarga.~~ ✅ Cerrada 2026-07-16 (`frontend/src/lib/__tests__/projects-views-integration.test.tsx`, 8 tests verdes).
 5. ~~Documentar el contrato de `GET /api/projects/inbox` (alcance, roles, formato de items).~~ ✅ Cerrada 2026-07-16 (sub-sección §4.1 más abajo: `ProjectInboxItem` schema, RBAC por nivel, Axioma 3, upsert semantics de `POST /inbox/{id}/read`).
+6. Nuevo backlog post-cierre:
+   - ~~`PEND-QUALITY-TASK-CREATE-001`: bloquear tareas con `title=''` creadas desde la vista `list`.~~ ✅ Cerrado 2026-07-16.
+   - ~~`PEND-QUALITY-PHASE-SYNC-001`: resetear `phases` correctamente cuando el API devuelve `[]`.~~ ✅ Cerrado 2026-07-16.
+   - ~~`PEND-QUALITY-INBOX-SCOPE-001`: excluir comentarios/proyectos soft-deleted y validar `item_id` real antes de marcar `read`.~~ ✅ Cerrado 2026-07-16.
+   - ~~`PEND-QUALITY-RBAC-ASYMMETRY-001`: alinear o formalizar la politica de borrado de proyectos.~~ ✅ Cerrado 2026-07-16 como **política confirmada**.
+   - `BASELINE-MIEMBRO-001`: política de acceso del rol `Miembro` en Projects. ✅ Cerrado 2026-07-16 como **política confirmada**: `Miembro` mantiene 403 en toda la API Projects; el rol no existe en el contexto del módulo. La asignación de tareas/proyectos es delegación interna para usuarios con acceso al módulo, no vía de acceso para `Miembro`. Docs: `PROJECTS_RBAC_MATRIX.md` §5 y §10.3; `PLAN_PROYECTOS_CALIDAD.md` §8.8; `PROJECTS_QA_CHECKLIST.md` §5.
 
-> **Backlog operativo cerrado (2026-07-16):** las 4 piezas `Parcial` iniciales (LISTVIEW-001, MASTER-001, PHASES-001, PAGE-001) y las 4 piezas `Pendiente` (STATUS-NORM-001, RBAC-001, VIEWS-E2E-001, INBOX-CONTRACT-001) están todas ✅ Hecho. Este handover queda sin IDs activos en §6. Cualquier nuevo trabajo abre un nuevo ID con el mismo formato (`PARCIAL-…-NNN` para refactors parciales; `PEND-…-NNN` para features nuevas). La consistencia entre Kanban/Table/Calendar/Gantt depende del contrato **`useProjectTasks` + `ProjectUpdateContext`**; cualquier mutación desde una vista profunda debe pasar por el hook para que las demás vistas se enteren sin recarga.
+> **Backlog operativo cerrado (2026-07-16):** las 4 piezas `Parcial` iniciales (LISTVIEW-001, MASTERVIEW-001, PHASES-001, PAGE-001) y las 4 piezas `Pendiente` (STATUS-NORM-001, RBAC-001, VIEWS-E2E-001, INBOX-CONTRACT-001) estan todas en `Hecho`. Este handover queda sin IDs activos en §6. Cualquier nuevo trabajo abre un nuevo ID con el mismo formato (`PARCIAL-...-NNN` para refactors parciales; `PEND-...-NNN` para features nuevas). La consistencia entre Kanban/Table/Calendar/Gantt depende del contrato **`useProjectTasks` + `ProjectUpdateContext`**; cualquier mutacion desde una vista profunda debe pasar por el hook para que las demas vistas se enteren sin recarga.
    - crear tarea en `TasksTableView` → debe aparecer reflejada en Kanban, Calendar, Gantt sin recarga (vía `useProjectTasks.create` + `ProjectUpdateContext`).
    - mover tarea en Kanban → debe reordenarse consistentemente en Table y Calendar (vía `update` con `status` + sort).
    - editar `due_date` en Gantt → debe reflejarse en TaskDetailPanel y Calendar (vía `update` con `due_date`).
@@ -328,11 +337,13 @@ npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E '^ccf/frontend/src/(components/
 1. Este doc (`docs/ESTADO_PROYECTOS.md`) — visión general
 2. `docs/PROJECTS_API_CONTRACTS.md` — contratos API y gaps RBAC
 3. `docs/PROJECTS_QA_CHECKLIST.md` — smoke, ampliaciones y checks manuales
-4. `docs/PLAN_VISTAS_EDITABLES_PROYECTOS.md` — detalle por componente frontend
-5. `backend/models_projects.py` — modelo de datos
-6. `backend/api/projects.py` — superficie API
-7. `scripts/test_projects_quality.py` — flujo real esperado
-8. `docs/projects_api_postman_collection.json` — contratos REST
+4. `docs/PROJECTS_RBAC_MATRIX.md` — matriz compacta de permisos y asimetrias reales
+5. `docs/PLAN_PROYECTOS_CALIDAD.md` — orden operativo canónico del módulo
+6. `docs/PLAN_VISTAS_EDITABLES_PROYECTOS.md` — acta histórica del frente de vistas editables
+7. `backend/models_projects.py` — modelo de datos
+8. `backend/api/projects.py` — superficie API
+9. `scripts/test_projects_quality.py` — flujo real esperado
+9. `docs/projects_api_postman_collection.json` — contratos REST
 
 ## 10. Tabla de IDs estables (referencia rápida)
 
@@ -348,12 +359,21 @@ Para que cualquier LLM (Freebuff/Kimi/Claude/GPT/Gemini) pueda hacer referencia 
 | `PEND-RBAC-001` | ✅ **Hecho 2026-07-16** — Suite RBAC parametrizada sobre 4 roles canónicas contra 30 endpoints del router `projects.py`. Descubrimientos clave: baseline **Miembro = 403** en TODA la API projects (sin granular hoy); jerarquía `manage → edit → read` funciona (Gestor cubre edit/read por expand); **asimetría DELETE/PATCH** en `/projects/{id}` (DELETE usa `require_staff_or_admin`=`academy:manage`, PATCH usa `projects:edit`); **gap `PUT /phases`** (decorador `projects:edit`, no `projects:manage`; Editor pasa RBAC contrario al docstring). Helpers: `_ensure_role_with_default_perms`/`_seed_role_user` materializan `RolPlataforma` con permisos canónicos desde `DEFAULT_ROLES` (cierra el hoyo del stub `permisos={"default":"allow"}` de `seed_user_with_role`). 116/116 pasan; matriz re-parametrizable para extensiones (subtasks/supplies/attachments quedan como cobertura representativa, agregables). | `tests/test_projects_rbac.py` |
 | `PEND-VIEWS-E2E-001` | ✅ **Hecho 2026-07-16** — Suite vitest de integración cross-view (`frontend/src/lib/__tests__/projects-views-integration.test.tsx`, 8 tests verdes). Valida el invariante: todas las vistas dentro de un mismo `ProjectUpdateProvider` leen del MISMO `tasks` array; mutaciones (`createTask`/`updateTask`/`deleteTask`) se propagan a N consumers sin recarga explícita. Estrategia: `MiniList` (helper trivial con `data-*` attributes que expone status/priority/due_date) actúa como vista-representante; `Harness` mantiene `tasks` en `useState` y provee mutators in-memory; `ProjectKanbanBoard` mockeado como `() => null` (deps transitivas con historial de fallos jsdom: dnd-kit + ag-grid-enterprise + framer-motion + ConfirmActionDrawer con React legacy). Smoke real del Kanban sigue cubierto por navegador manual contra el dev server. Cubre:  throw fuera del Provider (regression guard), render inicial en 2 consumers, createTask/updateTask/deleteTask propaga a N consumers, mutaciones concurrentes convergen al estado final, smoke de MiniList como vista consumidora genérica. | `frontend/src/lib/__tests__/projects-views-integration.test.tsx` |
 | `PEND-INBOX-CONTRACT-001` | ✅ **Hecho 2026-07-16** — Contrato documentado del inbox unificado. `GET /api/projects/inbox?limit=50` devuelve `List[ProjectInboxItem]` con dos superficies en el mismo feed: (a) **comentarios no resueltos** (`type="comment"`, `~is_resolved` + excluye auto-comentarios) orden `created_at desc`; (b) **tareas abiertas asignadas al actor** (`type="task_assigned"`, `assignee_id==persona_id` + `status!="completed"` + no soft-deletada) orden `updated_at desc`. `id` es composite `"comment-{id}"` / `"task-{id}"`, mismo shape que `item_id` en `POST /api/projects/inbox/{item_id}/read`. `POST` upserta `project_inbox_state` (UNIQUE `(persona_id, item_id)`). RBAC: GET→`projects:read`, POST→`projects:edit` (member=403, validado por `tests/test_projects_rbac.py`). Axioma 3: feed acotado a `sede_id` del actor; superadmin (`user_sede=null`) ve todo. Detalle completo en este handover §4.1. | `backend/api/projects.py` + §4.1 |
+| `PEND-QUALITY-TASK-CREATE-001` | ✅ **Hecho 2026-07-16** — Bloquear `title: ''` en tasks. Backend `ProjectTaskBase.title` y `ProjectTaskUpdate.title` con `min_length=1` + `field_validator(mode='before')` que `.strip()` (422 con `''` o `'   '`). Frontend `useProjectPageData.createTask` rechaza título vacío localmente con `toast.error('Ingresa un título para la tarea')`. La vista `list` en `ProjectViewsContent` sigue pasando `title: ''` literal al callback, pero el guard del hook la bloquea antes del round-trip. Tests: `test_create_task_with_empty_title_returns_422`, `test_create_task_with_whitespace_title_returns_422`, `test_update_task_with_empty_title_returns_422` en `tests/test_projects_api.py::TestTasks`. Doc: `PROJECTS_API_CONTRACTS.md` §4.1. | `backend/schemas/projects.py` + `frontend/src/hooks/useProjectPageData.ts` + `tests/test_projects_api.py` + `docs/PROJECTS_API_CONTRACTS.md` |
+| `PEND-QUALITY-PHASE-SYNC-001` | ✅ **Hecho 2026-07-16** — Reset explícito de phases al navegar. `useProjectPageData.loadProject` reescribe `setPhases(Array.isArray(phasesData) ? phasesData : [])` siempre (antes solo aplicaba si `length > 0`, lo que preservaba fases stale del proyecto anterior cuando el API respondía `[]`). Smoke de navegación agregado. Doc: `PROJECTS_API_CONTRACTS.md` §11.1. | `frontend/src/hooks/useProjectPageData.ts` + `docs/PROJECTS_API_CONTRACTS.md` |
+| `PEND-QUALITY-INBOX-SCOPE-001` | ✅ **Hecho 2026-07-16** — Endurecer `/projects/inbox`. `list_inbox` ahora filtra `Project.deleted_at IS NULL` en ambas superficies (comentarios + tareas). Helper `_inbox_item_exists_for_actor` valida prefijo (`comment-<uuid>` / `task-<uuid>`), pertenencia a `sede_id` del actor, proyecto no soft-deleted y (para tasks) asignación + estado no terminal antes del upsert. `mark_inbox_read` devuelve **404** ante `item_id` arbitrario. Tests: 4 nuevos en `TestInbox` (`test_inbox_excludes_comments_from_soft_deleted_project`, `test_inbox_excludes_tasks_from_soft_deleted_project`, `test_mark_inbox_read_with_invalid_id_returns_404`, `test_mark_inbox_read_with_other_actor_item_returns_404`). Doc: `PROJECTS_API_CONTRACTS.md` §7.1. | `backend/api/projects.py` (+ helper `_inbox_item_exists_for_actor`) + `tests/test_projects_api.py` + `docs/PROJECTS_API_CONTRACTS.md` |
+| `PEND-QUALITY-RBAC-ASYMMETRY-001` | ✅ **Hecho 2026-07-16** — Política confirmada (NO gap). `DELETE /api/projects/{id}` se mantiene deliberadamente bajo `require_staff_or_admin` (`academy:manage`); la asimetría frente a `PATCH /projects/{id}` (`projects:edit`) es **política confirmada**, no bug. Justificación: el borrado de proyecto arrastra tareas, hitos, wiki, pizarra, comentarios y bitácora ministerial, y se considera operación destructiva de módulo. Editor pasa `PATCH` pero recibe **403** en `DELETE`; Gestor/Admin pasan ambas. Docstring de `delete_project` documenta la política. Test renombrado: `test_delete_project_requires_academy_manage_per_policy` (mantiene el mismo baseline congelado). Si en el futuro se decide alinear `DELETE` con `projects:*`, este test y los docs deben actualizarse explícitamente. Doc: `PROJECTS_RBAC_MATRIX.md` §6 y §6.1 + `PROJECTS_API_CONTRACTS.md` §11. | `backend/api/projects.py` (docstring) + `tests/test_projects_rbac.py` (rename) + `docs/PROJECTS_RBAC_MATRIX.md` + `docs/PROJECTS_API_CONTRACTS.md` |
+| `PEND-QUALITY-PROJECT-TITLE-NORM-001` | ✅ **Hecho 2026-07-16** — Endurecer `title` en proyecto. Anotación diferida del code review del `2026-07-16` que dejé pendiente en `backend/schemas/projects.py` ("si en el futuro se quiere endurecer también el título de proyecto, abrir un ID nuevo"). Cierre aplicando el mismo patrón que `ProjectTaskBase.title`: `min_length=1` + `field_validator(mode='before')` con `.strip()` en `ProjectBase.title` y `ProjectUpdate.title`. Tests: 3 nuevos en `TestProjectsCRUD` (`test_create_project_with_empty_title_returns_422`, `test_create_project_with_whitespace_title_returns_422`, `test_update_project_with_empty_title_returns_422`). Doc: `PROJECTS_API_CONTRACTS.md` §2.1. | `backend/schemas/projects.py` + `tests/test_projects_api.py` + `docs/PROJECTS_API_CONTRACTS.md` |
+| `PEND-FRONTEND-E2E-PROJECTS-001` | ✅ **Hecho 2026-07-16** — smoke frontend Projects dedicado para listado, tareas e inbox con guard de consola/API/assets, sin depender de la suite demo seed. | `frontend/tests/e2e/projects/smoke.spec.ts` |
+| `PEND-FRONTEND-E2E-PROJECTS-DETAIL-001` | ✅ **Hecho 2026-07-16** — smoke profundo seeded del detalle de proyecto para dashboard, list y calendar con guards de consola/API/assets reutilizando `seed-projects-demo`. | `frontend/tests/e2e/projects/detail.spec.ts` |
+| `PEND-QUALITY-PHASES-RBAC-001` | ✅ **Hecho 2026-07-16** — Cerrar el drift RBAC de `PUT /projects/{id}/phases`. Backend: decorador cambiado de `require_module_access("projects", "edit")` a `require_module_access("projects", "manage")`. Editor recibe **403** ahora (antes pasaba por la decoración permisiva). Tests: `test_editor_passes_put_phases_rbac_gap` reemplazado por `test_editor_blocked_from_put_phases` (assert 403). `test_gestor_can_modify_phases` se mantiene verde (Gestor tiene `projects:manage`). Docs: §3 PROJECTS_API_CONTRACTS, §4.2 PROJECTS_RBAC_MATRIX + top-level docstring de `test_projects_rbac.py` actualizados. UX: `PhaseManagerDrawer` mostrará 403 reactivo al Editor; la mejora de gating frontend queda fuera de este cierre (el backend ya es estricto). | `backend/api/projects.py` + `tests/test_projects_rbac.py` + `docs/PROJECTS_API_CONTRACTS.md` + `docs/PROJECTS_RBAC_MATRIX.md` |
+
 
 > **PARCIAL-PAGE-001 (cierre 2026-07-16):** Hook `useProjectPageData` (176 LOC) encapsula fetching & mutaciones (project/tasks/phases/activities + loadProject, createTask, updateProject, updateTask, deleteTask + error/reloadKey). Componente `ProjectViewsContent` (165 LOC) renderiza el switcher según `viewType` consumiendo del `ProjectUpdateContext` (sin prop-drilling). `page.tsx` reducido a 264 LOC (era 663) y queda como orquestador (auth/router/URL sync/drawers/TaskDetailPanel). 3 fixes post-review aplicados: `useAuth` ahora destructura `{ user, hasPermission, token }` para que `handleDeleteProject` use el token real (antes ambos ternarios eran undefined), `handleDeleteFromPanel` consolidado en una sola secuencia (sin doble cierre), y `ProjectActivityFeed` movido al dashboard view de `ProjectViewsContent` (visible en todos los breakpoints).
 
 > **PEND-STATUS-NORM-001 (cierre 2026-07-16):** Backend `ProjectStatus = Annotated[Literal['planning','active','on_hold','completed','archived'], BeforeValidator(_normalize_project_status_value)]` mapea legacy values losslessly y narrowed `ProjectBase.status`/`ProjectUpdate.status`. `TaskStatus` permanece `str` por diseño (kanban slug dinámico via `_assert_status_in_project_phases`). Alembic `20260717_0001_normalize_project_status.py` staged (UPDATE legacy→canónico + fallback a 'planning' para valores no reconocidos; CHECK constraint commented-out para deferir aplicación al operador). Frontend `PROJECT_STATUSES` + `ProjectStatus` + `PROJECT_STATUS_LABELS` + `getValidProjectStatus` centralizados en `lib/projects/constants.ts`; `ProjectRecord.status: ProjectStatus`; `InlineProjectStatusPicker` re-exporta desde constants (mantiene labels locales "En Marcha"/"Alcanzado" para preservar UX dashboard).
 
-> **PEND-RBAC-001 (cierre 2026-07-16):** Suite RBAC en `tests/test_projects_rbac.py` (116 tests, sin DB modificada). Matriz parametrizada: (a) 14 endpoints `GET` × 4 roles + (b) 16 endpoints `POST/PUT/PATCH/DELETE/comentarios` × 4 roles. Fixtures `role_headers` crea admin (vía `seed_admin`) + Gestor/Editor/Miembro con `RolPlataforma` alineado a `DEFAULT_ROLES` (cierra el hoyo de `permisos={"default":"allow"}` que tenía `seed_user_with_role`). **Asimetría descubierta**: `delete_project` está protegido con `require_staff_or_admin = require_permission("academy:manage")` mientras su primo `update_project` usa `projects:edit` — Editor (con `projects:edit`) pasa PATCH pero recibe 403 en DELETE; documentado en `TestPermissionHierarchy::test_editor_blocked_from_delete_project`. **Gap documentado**: `PUT /projects/{id}/phases` usa `projects:edit` aunque el docstring del endpoint declara "Solo administradores y gestores" — `TestPermissionGranularityGaps::test_editor_passes_put_phases_rbac_gap` captura el estado actual como baseline revierte-cuando-se-promueva. **Baseline Miembro**: 14+16=30 parametrizaciones de Miembro → 403; cualquier futuro debate sobre granularidad de Miembro romperá estos tests y obligará a un análisis explícito del modelo de permisos.
+> **PEND-RBAC-001 (cierre 2026-07-16):** Suite RBAC en `tests/test_projects_rbac.py` (116 tests, sin DB modificada). Matriz parametrizada: (a) 14 endpoints `GET` × 4 roles + (b) 16 endpoints `POST/PUT/PATCH/DELETE/comentarios` × 4 roles. Fixtures `role_headers` crea admin (vía `seed_admin`) + Gestor/Editor/Miembro con `RolPlataforma` alineado a `DEFAULT_ROLES` (cierra el hoyo de `permisos={"default":"allow"}` que tenía `seed_user_with_role`). **Asimetría descubierta**: `delete_project` está protegido con `require_staff_or_admin = require_permission("academy:manage")` mientras su primo `update_project` usa `projects:edit` — Editor (con `projects:edit`) pasa PATCH pero recibe 403 en DELETE; documentado en `TestPermissionHierarchy::test_editor_blocked_from_delete_project`. **Gap documentado**: `PUT /projects/{id}/phases` usa `projects:edit` aunque el docstring del endpoint declara "Solo administradores y gestores" — `TestPermissionGranularityGaps::test_editor_passes_put_phases_rbac_gap` captura el estado actual como baseline revierte-cuando-se-promueva. **Baseline Miembro**: 14+16=30 parametrizaciones de Miembro → 403; cualquier futuro debate sobre granularidad de Miembro romperá estos tests y obligará a un análisis explícito del modelo de permisos. Ver `BASELINE-MIEMBRO-001` en §6 y §10 para la política confirmada post-cierre.
 
 > **PEND-VIEWS-E2E-001 (cierre 2026-07-16):** Suite vitest en `frontend/src/lib/__tests__/projects-views-integration.test.tsx` (8 tests verdes). Decisión arquitectónica clave: **MiniList** (helper trivial con `data-*` attrs) actúa como vista-representante para evitar la cascada de mocks transitivos de las vistas reales. **ProjectKanbanBoard** se mockea como `() => null` por dos motivos: (a) sus deps transitivas (`@dnd-kit/core`+`sortable`, `SymbolicTaskCard` con `useSortable`, `ConfirmActionDrawer` con `React.useState` legacy, `KanbanColumn` con `useDroppable`) tienen historial de cascading mock+import errors en jsdom; (b) el invariante que esta suite valida (la PROPAGACIÓN de mutaciones a través del Context) no depende del render real del Kanban — MiniList + Harness lo cubre completo. Smoke del Kanban real queda cubierto por navegador contra el dev server. Mutations mockeadas: `createTask`/`updateTask`/`deleteTask` se ejecutan in-memory sobre un `useState` del Harness (sin red). Tests cubren: throw fuera del Provider (regression guard), render inicial en 2 MiniList, propagación de `createTask`/`updateTask({status})`/`updateTask({due_date})`/`deleteTask` a 2 consumidores, mutaciones concurrentes convergen al último write (`Mutaciones concurrentes convergen`), y smoke directo contra MiniList+Provider real.
 

@@ -41,9 +41,31 @@ Usarlo siempre que se toque:
 
 ## 4. Frontend
 
-No existe todavía suite e2e dedicada de Academy.
+Smoke dedicado mínimo:
 
-Hasta que exista `PEND-FRONTEND-E2E-ACADEMY-001`, hacer QA manual con consola abierta sobre:
+```bash
+cd /root/ccf/frontend
+npm run test:e2e:academy
+npm run test:e2e:academy:deep
+```
+
+El smoke dedicado cubre:
+
+- `/plataforma/academy`
+- `/plataforma/academy/forum`
+- `/plataforma/academy/coordination`
+- `/plataforma/academy/profile`
+- `/plataforma/academy/profile/progress`
+- bloqueo de `console.error`
+- bloqueo de `pageerror`
+- bloqueo de `4xx/5xx` en API
+- bloqueo de `404/5xx` en `_next/static`
+
+Regla:
+
+- `npm run test:e2e:academy:deep` usa `frontend/scripts/run-managed-playwright.mjs`; no depende de arrancar Next manualmente.
+
+QA manual complementaria con consola abierta sobre:
 
 | Ruta | Validar |
 |---|---|
@@ -121,6 +143,7 @@ Una tarea de Academy queda cerrada cuando:
 
 - smoke backend relevante pasa
 - rutas afectadas se probaron manualmente
+- smoke frontend profundo pasa si el cambio toca profile/progress o view switchers
 - consola no muestra errores nuevos
 - si cambia contrato, `ACADEMY_API_CONTRACTS.md` se actualiza
 - si cambia estado o backlog, `ESTADO_ACADEMY.md` se actualiza

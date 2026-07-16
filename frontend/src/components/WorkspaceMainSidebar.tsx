@@ -16,7 +16,7 @@ import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { SITE_NAME } from '@/lib/site-config';
 import { useSiteBranding } from '@/lib/site-branding';
 
-interface NavItem {
+export interface NavItem {
     id: string;
     label: string;
     href: string;
@@ -27,7 +27,7 @@ interface NavItem {
     onClick?: () => void;
 }
 
-interface NavSection {
+export interface NavSection {
     title?: string;
     items: NavItem[];
     canAdd?: boolean;

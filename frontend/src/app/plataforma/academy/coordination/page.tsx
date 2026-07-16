@@ -97,7 +97,7 @@ export default function CoordinationConsole() {
     return (
         <WorkspaceLayout 
             sidebarTitle="Academia"
-            allowedRoles={['admin', 'coordinador', 'staff']}
+            allowedPermissions={['academy:manage']}
         >
             <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0f1114]">
                 <WorkspaceToolbar
@@ -317,4 +317,3 @@ export default function CoordinationConsole() {
         </WorkspaceLayout>
     );
 }
-

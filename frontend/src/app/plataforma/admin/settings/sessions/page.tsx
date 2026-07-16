@@ -9,7 +9,7 @@ import React,{ useCallback,useEffect,useState } from 'react';
 import { toast } from 'sonner';
 
 interface Session {
-    id: number;
+    id: string;
     ip_address: string | null;
     user_agent: string | null;
     last_active: string | null;
@@ -22,12 +22,12 @@ export default function AdminSettingsSessionsPage() {
     const { token } = useAuth();
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
-    const [revoking, setRevokeing] = useState<number | null>(null);
+    const [revoking, setRevokeing] = useState<string | null>(null);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const fetchSessions = useCallback(async () => {
         try {
-            const data = await apiFetch<Session[]>('/auth/sessions', { token });
+            const data = await apiFetch<Session[]>('/v3/auth/sessions', { token });
             // Mark the most recently active session as current
             if (data.length > 0) {
                 const sorted = [...data].sort((a, b) => {
@@ -49,10 +49,10 @@ export default function AdminSettingsSessionsPage() {
 
     useEffect(() => { fetchSessions(); }, [fetchSessions]);
 
-    const handleRevoke = async (sessionId: number) => {
+    const handleRevoke = async (sessionId: string) => {
         setRevokeing(sessionId);
         try {
-            await apiFetch(`/auth/sessions/${sessionId}/revoke`, { method: 'POST', token });
+            await apiFetch(`/v3/auth/sessions/${sessionId}/revoke`, { method: 'POST', token });
             toast.success('Sesión revocada');
             fetchSessions();
         } catch {
@@ -70,10 +70,7 @@ export default function AdminSettingsSessionsPage() {
             confirmLabel: 'Revocar sesiones',
             onConfirm: async () => {
                 try {
-                    const nonCurrent = sessions.filter(s => !s.is_current);
-                    for (const s of nonCurrent) {
-                        await apiFetch(`/auth/sessions/${s.id}/revoke`, { method: 'POST', token });
-                    }
+                    await apiFetch('/v3/auth/sessions/revoke-all', { method: 'POST', token });
                     toast.success('Todas las demás sesiones fueron revocadas');
                     fetchSessions();
                 } catch {

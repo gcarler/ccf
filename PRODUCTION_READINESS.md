@@ -67,18 +67,17 @@ npm run build
 
 ## Regla Operativa Importante
 
-Después de `npm run build` en producción, reiniciar el frontend usando el supervisor que esté activo en la instancia antes de validar con navegador:
+Después de `npm run build` en producción, reiniciar el frontend usando el supervisor real de la instancia antes de validar con navegador:
 
 ```bash
-# Ejemplo si la instancia usa PM2
+# Esta instancia usa PM2
 pm2 restart ccf-frontend-staging --update-env
 
-# Ejemplo si la instancia usa systemd o startccf
-sudo systemctl restart ccf-frontend
-# ./startccf
+# No mezclar PM2 con `./startccf` o `npm run start` manual en la misma máquina.
 ```
 
 Esto evita desfases entre HTML servido y chunks `_next/static`.
+El `build` del frontend además debe preservar el último `.next` sano si la compilación falla o se interrumpe.
 
 ## Interpretación Del Resultado
 

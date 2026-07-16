@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { evaluateProtectedRouteAccess } from '@/lib/protectedRouteAccess';
 import { useRouter } from 'next/navigation';
 import { SITE_NAME } from '@/lib/site-config';
 
@@ -287,6 +288,7 @@ function LoadingScreen() {
 export default function ProtectedRoute({ children, allowedRoles, allowedPermissions }: ProtectedRouteProps) {
     const { user, isAuthenticated, loading, hasPermission } = useAuth();
     const router = useRouter();
+    const access = evaluateProtectedRouteAccess({ user, allowedRoles, allowedPermissions, hasPermission });
 
     useEffect(() => {
         const hasToken = typeof window !== 'undefined' && (!!sessionStorage.getItem('ccf_token') || !!localStorage.getItem('ccf_token'));
@@ -295,30 +297,19 @@ export default function ProtectedRoute({ children, allowedRoles, allowedPermissi
             if (!isAuthenticated && !hasToken) {
                 console.warn("[AUTH QUALITY] No user and no token found. Redirecting to login.");
                 router.push('/login');
-            } else if (isAuthenticated && user) {
-                if (allowedRoles) {
-                    const normalizedUserRole = user.role.toLowerCase();
-                    const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
-                    if (!normalizedAllowedRoles.includes(normalizedUserRole)) {
-                        console.warn(`[AUTH QUALITY] Role mismatch: ${normalizedUserRole} not in ${normalizedAllowedRoles}. Redirecting.`);
-                        if (['admin', 'coordinador', 'docente'].includes(normalizedUserRole)) {
-                            router.push('/plataforma/admin');
-                        } else {
-                            router.push('/plataforma/academy');
-                        }
-                        return;
-                    }
+            } else if (isAuthenticated && user && !access.isAllowed) {
+                if (access.deniedBy === 'role') {
+                    console.warn('[AUTH QUALITY] Role mismatch for ProtectedRoute. Redirecting.');
+                    router.push('/plataforma/academy');
+                    return;
                 }
-                if (allowedPermissions) {
-                    const hasAny = allowedPermissions.some(p => hasPermission(p));
-                    if (!hasAny) {
-                        console.warn(`[AUTH QUALITY] No required permissions ${allowedPermissions}. Redirecting.`);
-                        router.push('/plataforma/academy');
-                    }
+                if (access.deniedBy === 'permission') {
+                    console.warn(`[AUTH QUALITY] No required permissions ${allowedPermissions}. Redirecting.`);
+                    router.push('/plataforma/academy');
                 }
             }
         }
-    }, [isAuthenticated, loading, user, allowedRoles, allowedPermissions, hasPermission, router]);
+    }, [access.deniedBy, access.isAllowed, allowedPermissions, isAuthenticated, loading, router, user]);
 
     if (loading) return <LoadingScreen />;
 
@@ -334,7 +325,7 @@ export default function ProtectedRoute({ children, allowedRoles, allowedPermissi
         );
     }
 
-    if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    if (access.deniedBy === 'role') {
         return (
             <GateScreen
                 variant="shield"
@@ -346,7 +337,7 @@ export default function ProtectedRoute({ children, allowedRoles, allowedPermissi
         );
     }
 
-    if (allowedPermissions && user && !allowedPermissions.some(p => hasPermission(p))) {
+    if (access.deniedBy === 'permission') {
         return (
             <GateScreen
                 variant="key"

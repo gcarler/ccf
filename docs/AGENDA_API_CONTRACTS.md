@@ -7,11 +7,15 @@ Este documento cubre:
 - API propietaria de agenda: `/api/agenda/*`
 - dependencia compartida de la UI de calendario: `GET /api/system/calendar`
 
+Referencia RBAC: `docs/AGENDA_RBAC_MATRIX.md`.
+Referencia agregador compartido: `docs/SYSTEM_CALENDAR_CONTRACT.md`.
+
 ## 2. Reglas de contrato
 
 - Frontend usa `apiFetch`.
 - `agenda` es autenticada y tenant-scoped.
 - `calendar` agrega eventos de varias fuentes; no debe mutar `agenda` de forma directa sin pasar por su contrato.
+- Agenda usa hoy `spiritual_life:*`; no existe aun taxonomia `agenda:*` en codigo.
 
 ## 3. `/api/agenda/*`
 
@@ -48,19 +52,19 @@ Invariantes:
 
 ## 4. `GET /api/system/calendar`
 
-Estado:
+Contrato formal:
 
-- contrato compartido usado por `/plataforma/calendar/page.tsx`
-- agrega eventos de multiples modulos para la UI
-- contrato formal detallado pendiente en `PEND-CALENDAR-EVENTS-CONTRACT-001`
+- ver `docs/SYSTEM_CALENDAR_CONTRACT.md`
 
-Minimo que no debe romperse:
+Resumen operativo:
 
-- respuesta lista de eventos serializables
-- `id`, `title`, `start` y `type` utilizables por la UI
-- sin 401/403/500 inesperados para usuarios con acceso valido
+- owner: plataforma compartida
+- auth: `require_active_user`
+- `view` soporta `todo`, `evangelismo`, `crm`, `proyectos`, `personal`, `cumpleanos`
+- respuesta: lista de eventos serializables con `id`, `title`, `start`, `end`, `type`, `allDay`, `href`, `location`
+- no reintroducir aliases legacy de `type` ni `href`
 
 ## 5. Pendientes de contrato
 
-- `PEND-CALENDAR-EVENTS-CONTRACT-001`
-- `PEND-AGENDA-RBAC-001`
+- `PEND-CALENDAR-EVENTS-CONTRACT-001` cerrada el **2026-07-16** con `docs/SYSTEM_CALENDAR_CONTRACT.md`
+- `PEND-AGENDA-RBAC-001` cerrada el **2026-07-16** con `docs/AGENDA_RBAC_MATRIX.md`

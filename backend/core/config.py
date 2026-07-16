@@ -33,6 +33,10 @@ class Settings(BaseSettings):
         default_factory=lambda: [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
+            "http://localhost:4173",
+            "http://127.0.0.1:4173",
+            "http://localhost:4174",
+            "http://127.0.0.1:4174",
             "http://localhost:3005",
             "http://127.0.0.1:3005",
             "http://localhost:8000",

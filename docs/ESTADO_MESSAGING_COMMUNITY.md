@@ -90,13 +90,16 @@ cd /root/ccf
 ## 8. Riesgos estructurales activos
 
 1. **Publico vs autenticado** `[PARCIAL-COMMUNITY-PUBLIC-001]` — `community.py` mezcla endpoints publicos y autenticados; cualquier hardening debe separar contratos antes de meter auth global.
-2. **Mensajeria repartida** `[PARCIAL-MESSAGING-SPLIT-001]` — inbox, chat y CRM bridge viven en routers distintos; documentar mejor ownership para evitar fixes cruzados.
+2. **Mensajeria repartida** `[PARCIAL-MESSAGING-SPLIT-001]` — inbox, chat y CRM bridge viven en routers distintos; el owner ya quedó mejor delimitado y existe coverage profunda inicial de chat directo, pero aún hay riesgo de fixes cruzados si no se respeta la separación por router.
 
 ## 9. Pendientes formales
 
 1. **Script canonico del modulo** `[PEND-MESSAGING-SMOKE-001]` — cerrada el 2026-07-16 con `scripts/test_messaging_quality.py`; agrupa inbox/notificaciones, isolation/ownership y chat directo.
 2. **Matriz RBAC por superficie** `[PEND-MESSAGING-RBAC-001]` — cerrada el 2026-07-16 en `MESSAGING_COMMUNITY_RBAC_MATRIX.md`; documenta la diferencia entre notifications/chat, inbox interno gateado por `academy:manage`, community pública y mutaciones community.
-3. **Contrato de chat directo** `[PEND-CHAT-CONTRACT-001]` — endurecer y cerrar contrato por rol y paginacion, aunque la superficie ya quedó mapeada.
+3. **Contrato de chat directo** `[PEND-CHAT-CONTRACT-001]` — endurecer y cerrar contrato por rol y paginacion; la superficie ya quedó cubierta por smoke profundo de conversación, pero falta cerrar el contrato documental y de backend.
+4. **Plan operativo del modulo** `[PEND-PLAN-MESSAGING-001]` — cerrada el 2026-07-16 con `docs/PLAN_MESSAGING_CALIDAD.md`; fija fases para inbox, chat directo, community pública, bridge CRM y smoke frontend.
+5. **Smoke frontend Messaging / Community** `[PEND-FRONTEND-E2E-MESSAGING-001]` — cerrada el 2026-07-16 con `frontend/tests/e2e/messaging/smoke.spec.ts`; cubre inbox, mensajes directos, hub community y eventos con guard de consola/API/assets.
+6. **Smoke profundo de chat directo** `[PEND-FRONTEND-DEEP-MESSAGING-001]` — cerrada el 2026-07-16 con `frontend/tests/e2e/messaging/direct-messages.spec.ts`; valida listado, hilo, búsqueda, creación de conversación y envío de mensajes con runner administrado.
 
 ## 10. Archivos a revisar primero si falla
 
