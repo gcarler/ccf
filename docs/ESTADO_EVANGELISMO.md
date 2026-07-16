@@ -54,6 +54,15 @@ grep -nE "PARCIAL-|PEND-" /root/ccf/docs/ESTADO_EVANGELISMO.md
 
 ## 5. Smoke test
 
+Smoke canónico:
+
+```bash
+cd /root/ccf
+./venv/bin/python scripts/test_evangelism_quality.py
+```
+
+Smoke mínimo bruto:
+
 ```bash
 cd /root/ccf
 ./venv/bin/python -m pytest -q -o addopts='' \
@@ -241,15 +250,16 @@ Componentes compartidos:
 3. **Multiplicacion** `[PARCIAL-MULTIPLICATION-001]` — endpoints existen, pero la matriz historica exige validar 404/400 en grupo inexistente, inactivo, lider invalido y pocos participantes.
 4. **Follow-up** `[PARCIAL-FOLLOWUP-001]` — flujo existe, pero la cobertura amplia historica senala serializacion y dispatch de 404 en seguimiento.
 5. **Permisos runtime UI** `[PARCIAL-RUNTIME-AUTH-001]` — errores 401 en `/evangelism/grupos` y `/evangelism/sessions` deben resolverse revisando token, rol y `require_module_access`, no ocultando errores en frontend.
+6. **Smoke canónico aún parcial** `[PARCIAL-SMOKE-EVANGELISM-001]` — `scripts/test_evangelism_quality.py` ya existe, pero todavía no cubre frontend ni cobertura profunda completa.
 
 ### Pendiente
 
-1. **Smoke canonico dedicado** `[PEND-SMOKE-SCRIPT-001]` — crear `scripts/test_evangelism_quality.py` equivalente a proyectos, con seed controlado, asserts de API y resumen `passed/failed`.
-2. **Descomposicion de estrategia** `[PEND-STRATEGY-DECOMPOSE-001]` — extraer hooks/componentes desde `strategies/[id]/page.tsx` y cubrirlos con prueba enfocada.
-3. **Contrato unico de eventos** `[PEND-EVENTS-CONTRACT-001]` — cerrar response schemas y serializacion ORM -> dict en eventos/roles/asistencia.
-4. **Contrato unico de sesiones FARO/groups** `[PEND-SESSIONS-CONTRACT-001]` — consolidar aliases `/grupos`, `/groups`, posibles rutas FARO y respuestas.
-5. **RBAC documentado por rol** `[PEND-RBAC-EVANGELISM-001]` — documentar ADMIN / GESTOR / EDITOR / MIEMBRO sobre estrategias, grupos, sesiones, asistencia, reportes y eventos.
-6. **Busqueda remota de personas** `[PEND-PERSONAS-SEARCH-001]` — evolucionar asistencia a busqueda remota con debounce para volumen alto.
+1. **Descomposicion de estrategia** `[PEND-STRATEGY-DECOMPOSE-001]` — extraer hooks/componentes desde `strategies/[id]/page.tsx` y cubrirlos con prueba enfocada.
+2. **Contrato unico de eventos** `[PEND-EVENTS-CONTRACT-001]` — cerrar response schemas y serializacion ORM -> dict en eventos/roles/asistencia.
+3. **Contrato unico de sesiones FARO/groups** `[PEND-SESSIONS-CONTRACT-001]` — consolidar aliases `/grupos`, `/groups`, posibles rutas FARO y respuestas.
+4. **RBAC documentado por rol** `[PEND-RBAC-EVANGELISM-001]` — documentar ADMIN / GESTOR / EDITOR / MIEMBRO sobre estrategias, grupos, sesiones, asistencia, reportes y eventos.
+5. **Busqueda remota de personas** `[PEND-PERSONAS-SEARCH-001]` — evolucionar asistencia a busqueda remota con debounce para volumen alto.
+6. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-EVANGELISM-001]` — extender `scripts/test_evangelism_quality.py` a frontend y cobertura más profunda.
 
 ---
 
@@ -295,12 +305,13 @@ Componentes compartidos:
 | `PARCIAL-MULTIPLICATION-001` | Validaciones de multiplicacion | `backend/api/evangelism_multiplication.py` |
 | `PARCIAL-FOLLOWUP-001` | Seguimiento y respuestas | `backend/api/evangelism_grupos/grupos_asistencias.py` |
 | `PARCIAL-RUNTIME-AUTH-001` | 401 runtime en pantallas | permisos + token + `require_module_access` |
-| `PEND-SMOKE-SCRIPT-001` | Script canonico de calidad | `scripts/test_evangelism_quality.py` |
+| `PARCIAL-SMOKE-EVANGELISM-001` | Script canónico existe, cobertura aún parcial | `scripts/test_evangelism_quality.py` |
 | `PEND-STRATEGY-DECOMPOSE-001` | Separar page de estrategia | frontend evangelism strategy detail |
 | `PEND-EVENTS-CONTRACT-001` | Contrato unico eventos | `backend/api/evangelism_events/` |
 | `PEND-SESSIONS-CONTRACT-001` | Contrato unico sesiones/aliases | `backend/api/evangelism_grupos/grupos_sesiones.py` |
 | `PEND-RBAC-EVANGELISM-001` | RBAC por rol documentado | backend permissions + tests |
 | `PEND-PERSONAS-SEARCH-001` | Busqueda remota personas asistencia | frontend + `/evangelism/personas/search` |
+| `PEND-EXPAND-SMOKE-EVANGELISM-001` | Ampliar script Evangelismo | `scripts/test_evangelism_quality.py` |
 
 Busqueda rapida:
 
