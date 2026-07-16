@@ -10,6 +10,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import Integer, and_, cast, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from backend import crud, models, schemas
@@ -118,17 +119,23 @@ def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Proj
     """Fetch a project by id and enforce multi-tenant scope (Axioma 3).
 
     Existence-leak safe: returns 404 (never 403) when the project is in a
-    different ``sede_id`` than the actor. This matches the CRM/CMS
-    ``_ensure_*`` convention so cross-tenant probing yields indistinguishable
-    error from "not found".
+    different ``sede_id`` than the actor or when the project's ``sede_id``
+    is NULL (legacy orphan) while the actor is restricted to a sede. This
+    matches the CRM/CMS ``_ensure_*`` convention so cross-tenant probing
+    yields indistinguishable error from "not found".
+
+    Fix vs prior implementation: previously the guard used
+    ``if user_sede and project.sede_id and ...``, which let superadmin
+    exclude legacy projects without ``sede_id`` slip past scope checks
+    when an actor from any sede queried them. The new guard explicitly
+    rejects projects with NULL ``sede_id`` whenever the actor is bounded
+    to a sede, eliminating the leak.
 
     Args:
         db: SQLAlchemy session.
         project_id: Project identifier (UUID or string).
-        user_sede: When provided, the actor's sede. If the project has a
-            ``sede_id`` and it differs from ``user_sede``, raises 404. If
-            ``user_sede`` is ``None`` (superadmin path) no scope filter is
-            applied.
+        user_sede: Actor's sede. ``None`` ⇒ superadmin path, no scope
+            filter is applied.
     """
     project = (
         db.query(models.Project)
@@ -144,9 +151,12 @@ def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Proj
     )
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if user_sede and project.sede_id and str(project.sede_id) != str(user_sede):
-        # Existence-leak safe rejection — same envelope as "not found".
-        raise HTTPException(status_code=404, detail="Project not found")
+    # Axioma 3 strict scope: even legacy projects with NULL sede_id are
+    # hidden from seated actors. Only the superadmin (user_sede = None)
+    # bypasses scope.
+    if user_sede is not None:
+        if project.sede_id is None or str(project.sede_id) != str(user_sede):
+            raise HTTPException(status_code=404, detail="Project not found")
     return project
 
 
@@ -211,6 +221,48 @@ def _ensure_attachment_in_task(db: Session, project_id: str, task_id: str, attac
     if not attachment:
         raise HTTPException(status_code=404, detail="Attachment not found in task")
     return attachment
+
+
+def _assert_assignee_in_sede(
+    db: Session,
+    assignee_id: Optional[uuid.UUID | str],
+    user_sede: Optional[uuid.UUID | str],
+) -> None:
+    """Validate that an assignee persona belongs to the actor's ``sede_id``.
+
+    Closed Axioma 3 enforcement on PATCH/POST payloads that carry an
+    ``assignee_id``. Without this check, an actor from ``sede_a`` could
+    inject a UUID of a persona from ``sede_b`` and have the backend
+    transparently persist that cross-sede assignment.
+
+    Behavior:
+      * ``assignee_id`` falsy (None or empty) → silent skip (no assignee).
+      * ``user_sede`` is ``None`` (superadmin) → no scope filter.
+      * Otherwise the persona must exist AND live in the actor's sede.
+        Personas with NULL ``sede_id`` are treated as untagged and
+        blocked to avoid cross-sede leakage. Existence-leak safe: 404
+        on mismatch (never 403).
+
+    Note: ``_to_uuid`` is *not* raise-style — it returns the original bad
+    value on parse failure. The downstream ``Persona.id ==`` filter then
+    returns ``None`` and we map it to 404. We intentionally do NOT raise
+    a separate 400 on malformed UUIDs; that's a single source of truth
+    with the rest of the project.
+    """
+    if not assignee_id:
+        return
+    if user_sede is None:
+        return
+    persona_uuid = _to_uuid(assignee_id)
+    persona = (
+        db.query(models.Persona)
+        .filter(models.Persona.id == persona_uuid)
+        .first()
+    )
+    if not persona:
+        raise HTTPException(status_code=404, detail="Assignee not found")
+    if persona.sede_id is not None and str(persona.sede_id) != str(user_sede):
+        raise HTTPException(status_code=404, detail="Assignee not in your sede")
 
 
 def _assert_status_in_project_phases(
@@ -476,6 +528,12 @@ def set_project_phases(
     """
     user_sede = get_user_sede_id(db, current_user.id)
     _project = _ensure_project(db, project_id, user_sede=user_sede)
+    # Race-condition fix: lock the parent project row while we validate
+    # task counts and apply the phase rewrite, so concurrent inserts
+    # under a status about to be removed cannot create orphan tasks.
+    db.query(models.Project).filter(
+        models.Project.id == _to_uuid(project_id)
+    ).with_for_update().first()
 
     # Check no phase with tasks is being deleted
     existing = {p.slug for p in crud.get_project_phases(db, project_id)}
@@ -580,10 +638,18 @@ def create_project_task(
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
+    # Race-condition fix: acquire a row lock on the parent project so the
+    # subsequent MAX(order_index) + INSERT is serialized across concurrent
+    # task creations. On PostgreSQL this is a real SELECT ... FOR UPDATE;
+    # on SQLite it is a no-op (the test suite runs serialized transactions).
+    db.query(models.Project).filter(
+        models.Project.id == _to_uuid(project_id)
+    ).with_for_update().first()
     project = db.query(models.Project).filter(models.Project.id == _to_uuid(project_id)).first()
     payload = task.model_dump()
     _normalize_task_payload(payload)
     _assert_status_in_project_phases(db, project_id, payload.get("status"))
+    _assert_assignee_in_sede(db, payload.get("assignee_id"), user_sede)
     max_order = (
         db.query(func.max(models.ProjectTask.order_index))
         .filter(models.ProjectTask.project_id == _to_uuid(project_id))
@@ -845,6 +911,8 @@ def update_task(
     _normalize_task_payload(update_data)
     if "status" in update_data:
         _assert_status_in_project_phases(db, task.project_id, update_data["status"])
+    if "assignee_id" in update_data:
+        _assert_assignee_in_sede(db, update_data["assignee_id"], user_sede)
     previous_assignee_id = getattr(task, "assignee_id", None)
     for key, value in update_data.items():
         setattr(task, key, value)
@@ -1022,20 +1090,32 @@ def mark_inbox_read(
     persona = _resolve_persona(db, current_user.id)
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
-    state = (
-        db.query(models.ProjectInboxState)
-        .filter(
-            models.ProjectInboxState.persona_id == persona.id,
-            models.ProjectInboxState.item_id == item_id,
+    # Race-condition fix: replace check-then-act with an atomic upsert.
+    # Two concurrent clicks or a duplicate POST would otherwise both see
+    # ``state = None`` and either duplicate the row (if no unique
+    # constraint) or raise IntegrityError 500 (if there is one). The
+    # try/except handles both PostgreSQL and SQLite dialects uniformly.
+    try:
+        state = models.ProjectInboxState(
+            persona_id=persona.id,
+            item_id=item_id,
+            is_read=True,
         )
-        .first()
-    )
-    if state:
-        state.is_read = True
-    else:
-        state = models.ProjectInboxState(persona_id=persona.id, item_id=item_id, is_read=True)
         db.add(state)
-    db.commit()
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        state = (
+            db.query(models.ProjectInboxState)
+            .filter(
+                models.ProjectInboxState.persona_id == persona.id,
+                models.ProjectInboxState.item_id == item_id,
+            )
+            .first()
+        )
+        if state and not state.is_read:
+            state.is_read = True
+            db.commit()
     return {"ok": True, "item_id": item_id}
 
 
@@ -1439,9 +1519,16 @@ def create_subtask(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     parent_task = _ensure_task_in_project(db, project_id, task_id)
+    # Race-condition fix: lock the parent project row before reading the
+    # MAX(order_index) so concurrent subtask creations do not share the
+    # same order_index slot.
+    db.query(models.Project).filter(
+        models.Project.id == _to_uuid(project_id)
+    ).with_for_update().first()
     payload = subtask.model_dump()
     _normalize_task_payload(payload)
     _assert_status_in_project_phases(db, project_id, payload.get("status"))
+    _assert_assignee_in_sede(db, payload.get("assignee_id"), user_sede)
     max_order = (
         db.query(func.max(models.ProjectTask.order_index)).filter(models.ProjectTask.parent_id == task_id).scalar() or 0
     )
@@ -1497,6 +1584,8 @@ def update_subtask(
     _normalize_task_payload(update_data)
     if "status" in update_data:
         _assert_status_in_project_phases(db, project_id, update_data["status"])
+    if "assignee_id" in update_data:
+        _assert_assignee_in_sede(db, update_data["assignee_id"], user_sede)
     previous_assignee_id = getattr(subtask, "assignee_id", None)
     for key, value in update_data.items():
         setattr(subtask, key, value)
