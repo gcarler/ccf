@@ -3,7 +3,7 @@
 Covers all 34 API endpoints in /api/projects/* using factories and
 the conftest.py fixtures (db_session, client, seed_admin, auth_headers).
 
-Organised in 12 labelled sections (A-L) with ~66 individual tests.
+Organised in 12 labelled sections (A-L) with 83 individual tests.
 """
 
 from __future__ import annotations

@@ -939,22 +939,59 @@ def list_inbox(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Bandeja de entrada: tareas recién asignadas + comentarios no leídos.
+    """Bandeja de entrada unificada por persona: 2 superficies en un solo feed.
 
-    Axioma 3 — strict scope: only comments from projects whose ``sede_id``
-    matches the actor's home sede are exposed. Cross-sede unread comments
-    are filtered server-side; superadmin (``user_sede`` = ``None``) sees
-    all, consistente con ``list_projects`` / ``list_whiteboards``.
+    **Endpoint**: ``GET /api/projects/inbox?limit=N`` (default 50, máx 200).
 
-    Task-assignment surface (Sprint 1.1): antes el inbox solo exponía
-    comentarios no resueltos. Ahora también expone las **tareas abiertas
-    asignadas** al actor (``ProjectTask.assignee_id == persona_id``) en
-    proyectos visibles, con ``item_id = f"task-{task.id}"`` para que el
-    endpoint ``POST /api/projects/inbox/{id}/read`` pueda marcarlas como
-    leídas sin tocar lógica nueva. La query excluye tareas ya
-    completadas (estado terminal) para reducir el feed a pendientes
-    reales. El ``selectinload(Project.owner)`` evita un N+1 al resolver
-    el nombre del asignador.
+    **Response shape**: ``List[ProjectInboxItem]`` (ver Pydantic en
+    ``backend/schemas/projects.py``). Cada item expone ``id`` composite
+    (``"comment-<id>"`` / ``"task-<id>"``), ``type`` (``"comment"`` /
+    ``"task_assigned"``), ``user``, ``content``, ``project``,
+    ``project_id``, ``task_id`` (opcional), ``task_title`` (opcional),
+    ``is_read`` y ``created_at``.
+
+    **Superficies combinadas** (ordenadas independientemente, truncadas al
+    ``limit`` final):
+
+    1. **Comentarios no resueltos** (``type="comment"``): ``ProjectComment``
+       con ``~is_resolved``, ``author_id != persona_id`` (excluye
+       auto-comentarios). Orden: ``created_at desc``.
+    2. **Tareas abiertas asignadas al actor** (``type="task_assigned"``):
+       ``ProjectTask`` con ``assignee_id == persona_id``,
+       ``status != "completed"``, ``deleted_at IS NULL``. Orden:
+       ``updated_at desc``.
+
+    **Marca de leído** (sincronizada vía ``POST /api/projects/inbox/{item_id}/read``):
+    ``ProjectInboxState`` con UNIQUE ``(persona_id, item_id)``. Una query
+    batch por superficie resuelve el flag ``is_read`` en O(1) por item.
+
+    **RBAC**:
+
+    * ``GET /inbox`` requiere ``projects:read`` (decorador). Admin / Gestor
+      / Editor pasan; **Miembro = 403** (baseline documentado en
+      ``tests/test_projects_rbac.py`` + ``PEND-RBAC-001``).
+    * ``POST /inbox/{item_id}/read`` requiere ``projects:edit``.
+
+    **Axioma 3 (multi-tenant)**:
+
+    * Sedes sentadas: sólo items de proyectos cuya ``Project.sede_id ==
+      user_sede``. Cross-sede unread comments + out-of-sede assigned
+      tasks filtrados server-side. Proyectos soft-deleted excluidos.
+    * Superadmin (``user_sede = None``): ve todo (consistente con
+      ``list_projects`` / ``list_whiteboards`` / ``list_activities``).
+
+    **Performance**: N+1 fix (Sprint 1.1). Un ``IN (...)`` batch por
+    superficie para resolver ``author_name`` / ``project_title`` más un
+    batch para resolver ``is_read`` desde ``project_inbox_state``.
+    ``selectinload(Project.owner)`` evita N+1 al resolver ``user`` en
+    items ``task_assigned``.
+
+    **Diferencia con ``GET /api/projects/activities``**: ``activities`` es
+    bitácora cruda universal por proyecto; ``inbox`` es feed normalizado
+    por persona con merge de 2 superficies y estado ``is_read``.
+
+    Contrato documentado en handover canónico:
+    ``ccf/docs/ESTADO_PROYECTOS.md`` §4.1 (cierre de ``PEND-INBOX-CONTRACT-001``).
     """
     inbox_items: list[schemas.ProjectInboxItem] = []
 

@@ -39,11 +39,21 @@ const GROUP_PILL: Record<string, string> = {
 
 // ─── TYPE DEFINITIONS ─────────────────────────────────────────────────────────
 interface Props {
+    /** When provided, useProjectTasks is the single source of truth
+     *  (handles optimistic update + rollback; see useProjectTasks.test.tsx).
+     *  In that mode, `onTasksChange` is invoked by the sync effect below
+     *  to mirror hook state back to the parent so sibling views stay in sync.
+     *  When omitted, the parent-owned callback path below is used instead. */
     projectId?: string;
     tasks: ProjectTaskRecord[];
     onOpenTask: (task: ProjectTaskRecord) => void;
     onAddTask: (status: string) => void;
+    /** Parent-owned tasks setter. Only used as the source of truth when
+     *  `projectId` is NOT provided; otherwise it is invoked by the internal
+     *  sync effect to keep the parent's `tasks` array in lockstep with the hook. */
     onTasksChange?: (tasks: ProjectTaskRecord[]) => void;
+    /** Parent-owned persistence callback. Only used as the persistence path
+     *  when `projectId` is NOT provided. */
     onTaskUpdate?: (taskId: string, patch: Partial<ProjectTaskRecord>) => void;
     quickAddStatus?: string | null;
     quickAddTitle?: string;
@@ -420,20 +430,29 @@ export default function ProjectListView({
     const tasksRef = React.useRef(tasks);
     useEffect(() => { tasksRef.current = tasks; }, [tasks]);
 
-    const handleChangeTask = useCallback(async (taskId: number | string, patch: Partial<ProjectTaskRecord>) => {
-        // Optimistically update local view via parent callback
-        onTasksChange?.(
-            tasksRef.current.map(t => (t.id === taskId ? { ...t, ...patch } : t))
-        );
+    // Sync hook state back to the parent when `projectId` is provided.
+    // This keeps sibling views (Kanban/Calendar/Dashboard/TaskDetailPanel)
+    // — which all read `tasks` from the parent — in lockstep with the hook.
+    // Does NOT interfere with the hook's optimistic+rollback: this effect only
+    // fires after the hook has settled its own internal state.
+    useEffect(() => {
+        if (projectId) onTasksChange?.(hookTasks);
+    }, [hookTasks, projectId, onTasksChange]);
 
+    const handleChangeTask = useCallback(async (taskId: number | string, patch: Partial<ProjectTaskRecord>) => {
+        // Strict mutex: when projectId is set, useProjectTasks is the single source of truth
+        // (handles optimistic update + rollback internally — see useProjectTasks.test.tsx).
+        // The parent-owned callbacks are only used when no projectId is provided.
         if (projectId) {
-            // Persist through the shared hook; it handles rollback on error
             await updateTask(String(taskId), patch, { optimistic: true });
         } else {
-            // Parent-owned persistence path
+            // Parent-owned persistence path: optimistic local update + PATCH via parent
+            onTasksChange?.(
+                tasksRef.current.map(t => (t.id === taskId ? { ...t, ...patch } : t))
+            );
             onTaskUpdate?.(String(taskId), patch);
         }
-    }, [onTasksChange, projectId, updateTask, onTaskUpdate]);
+    }, [onTasksChange, onTaskUpdate, projectId, updateTask]);
 
     const groups = STATUS_ORDER.map(status => ({
         status,
