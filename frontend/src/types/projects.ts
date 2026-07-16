@@ -1,8 +1,10 @@
+import type { ProjectStatus } from '@/lib/projects/constants';
+
 export interface ProjectRecord {
   id: string;
   title: string;
   description?: string | null;
-  status: string;
+  status: ProjectStatus;
   color?: string | null;
   icon?: string | null;
   owner_id?: string | null;

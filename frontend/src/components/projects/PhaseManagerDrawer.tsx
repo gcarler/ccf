@@ -4,19 +4,13 @@ import { RightPanel } from '@/components/ui/RightPanel';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
-import {
-GripVertical,Plus,
-Save,
-Trash2
-} from 'lucide-react';
+import { GripVertical, Plus, Save, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { PhaseDef } from '@/context/ProjectUpdateContext';
+import { useProjectUpdate, type PhaseDef } from '@/context/ProjectUpdateContext';
 
 interface Props {
     projectId: string;
-    phases: PhaseDef[];
     onClose: () => void;
-    onSaved: (phases: PhaseDef[]) => void;
 }
 
 const COLOR_PRESETS = [
@@ -24,11 +18,31 @@ const COLOR_PRESETS = [
     '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316',
 ];
 
-export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Props) {
+/**
+ * Drawer para gestionar fases de un proyecto. Self-sufficient desde 2026-07-16
+ * (cierre de `PARCIAL-PHASES-001`): consume `phases`/`tasks`/`reloadProject`
+ * directamente del ProjectUpdateContext, por lo que `page.tsx` ya no necesita
+ * mantener un duplicado ni pasar callbacks. La API surface colapsa a sólo
+ * `projectId` + `onClose`.
+ *
+ * Validación (cierra el contrato):
+ *  - Al menos 1 fase (no permite save si se queda vacío).
+ *  - Name no vacío en cada fase.
+ *  - Slug único (case-insensitive) entre items del draft.
+ *  - Pre-flight de tasks huérfanas: si al guardar alguna tarea existente
+ *    quedaría con status que no existe en los slugs nuevos, el save se
+ *    bloquea con mensaje claro (el backend rechaza _assert_status_in_project_phases
+ *    en PATCH posteriores al cambio de fases; mejor avisar antes).
+ */
+export function PhaseManagerDrawer({ projectId, onClose }: Props) {
     const { token, loading: authLoading } = useAuth();
     const { addToast } = useToast();
+    const { phases: ctxPhases, tasks: ctxTasks, reloadProject } = useProjectUpdate();
+
     const draftKey = `phaseManagerDraft:${projectId}`;
-    const [items, setItems] = useState<PhaseDef[]>(() => phases.map((p, i) => ({ ...p, order_index: i })));
+    const [items, setItems] = useState<PhaseDef[]>(() =>
+        (ctxPhases ?? []).map((p, i) => ({ ...p, order_index: i })),
+    );
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +55,7 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
             const raw = window.localStorage.getItem(draftKey);
             if (!raw) return;
             const parsed = JSON.parse(raw) as PhaseDef[];
-            if (Array.isArray(parsed) && parsed.length === phases.length) {
+            if (Array.isArray(parsed) && parsed.length === (ctxPhases?.length ?? 0)) {
                 setItems(parsed);
             }
         } catch {
@@ -61,9 +75,7 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
         }
     }, [items, draftKey]);
 
-    // Clear the draft on unmount, regardless of the close path (cancel button,
-    // X button, click-outside, Escape). Without this the draft would resurface
-    // on the next session and the user would be confused.
+    // Clear the draft on unmount (cancel / X / click-outside / Escape).
     useEffect(() => {
         return () => {
             try {
@@ -118,32 +130,75 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
         setItems(next);
     };
 
+    /**
+     * Validación previa al PUT. Devuelve `null` si todo OK; si no, setea el
+     * mensaje de error visible y devuelve el mensaje para el toast (opcional).
+     */
+    const validateItems = (): string | null => {
+        if (items.length === 0) {
+            return 'Debe existir al menos una fase.';
+        }
+        const seenSlugs = new Set<string>();
+        for (const item of items) {
+            if (!item.name.trim()) {
+                return 'Ninguna fase puede tener nombre vacío.';
+            }
+            const slugKey = item.slug.toLowerCase();
+            if (seenSlugs.has(slugKey)) {
+                return `Hay slugs duplicados ("${item.slug}"). Renombra o fusiona antes de guardar.`;
+            }
+            seenSlugs.add(slugKey);
+        }
+
+        // Pre-flight: ninguna tarea existente debe quedar con status fuera del nuevo set.
+        const validSlugs = new Set(items.map(i => i.slug));
+        const orphanTasks = (ctxTasks ?? []).filter(
+            (t) => !validSlugs.has((t.status ?? 'todo').toLowerCase()),
+        );
+        if (orphanTasks.length > 0) {
+            const sampleTitles = orphanTasks
+                .slice(0, 3)
+                .map((t) => `"${t.title || '(sin título)'}"`)
+                .join(', ');
+            const more = orphanTasks.length > 3 ? ` y ${orphanTasks.length - 3} más` : '';
+            return `Hay ${orphanTasks.length} tarea(s) en estados que vas a eliminar: ${sampleTitles}${more}. Mueve esas tareas a un estado nuevo antes de guardar.`;
+        }
+        return null;
+    };
+
     const handleSave = async () => {
         if (authLoading) return;
         if (!token) {
             setError('Debes iniciar sesión para guardar las fases.');
             return;
         }
+        setError(null);
+        const validationMsg = validateItems();
+        if (validationMsg) {
+            setError(validationMsg);
+            addToast(validationMsg, 'error');
+            return;
+        }
         setSaving(true);
         try {
-            setError(null);
             const payload = items.map((p, i) => ({
                 name: p.name,
                 slug: p.slug,
                 color: p.color,
                 order_index: i,
             }));
-            const result = await apiFetch<PhaseDef[]>(`/projects/${projectId}/phases`, {
+            await apiFetch(`/projects/${projectId}/phases`, {
                 method: 'PUT',
                 token,
                 body: payload,
             });
-            onSaved(result);
-            // Persisted successfully → drop the draft so we don't restore it on next open.
             try {
                 if (typeof window !== 'undefined') window.localStorage.removeItem(draftKey);
             } catch { /* ignore */ }
             addToast('Fases actualizadas', 'success');
+            // Refresh the context so all consumers (KanbanBoard, Gantt, MasterView...)
+            // receive the new phases without page.tsx prop-drilling.
+            await reloadProject();
             onClose();
         } catch (err: any) {
             setError('No se pudieron guardar las fases. Ajusta los cambios y vuelve a intentarlo.');
@@ -151,15 +206,14 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
                 ? err.detail
                 : err?.detail?.detail || err?.detail?.message || (err?.detail ? JSON.stringify(err.detail) : '');
             addToast(detail || 'Error al guardar fases', 'error');
-            // Intentional: keep the drawer open so the user can fix and retry;
-            // the draft is still in localStorage.
+            // Intentional: keep drawer open on error so user can fix and retry;
+            // localStorage draft is preserved.
         } finally {
             setSaving(false);
         }
     };
 
     const handleCancel = () => {
-        // Discard the draft on explicit cancel.
         try {
             if (typeof window !== 'undefined') window.localStorage.removeItem(draftKey);
         } catch { /* ignore */ }
@@ -218,6 +272,11 @@ export function PhaseManagerDrawer({ projectId, phases, onClose, onSaved }: Prop
                                 onChange={e => handleRename(i, e.target.value)}
                                 className="flex-1 text-[13px] font-bold bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] border-b border-transparent focus:border-blue-500 transition-all"
                             />
+
+                            {/* Slug (read-only, derived) */}
+                            <code className="hidden md:inline text-[9px] font-mono text-[hsl(var(--text-secondary))] opacity-60 truncate max-w-[120px]" title={phase.slug}>
+                                {phase.slug}
+                            </code>
 
                             {/* Delete */}
                             <button

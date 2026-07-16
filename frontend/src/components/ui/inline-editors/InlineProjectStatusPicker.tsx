@@ -4,10 +4,17 @@ import React, { useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import clsx from "clsx";
 import { Check, ChevronDown } from "lucide-react";
+import { PROJECT_STATUSES, type ProjectStatus } from "@/lib/projects/constants";
 
-export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "archived";
+// Re-export so existing `import { ProjectStatus } from '.../InlineProjectStatusPicker'`
+// keeps compiling. Prefer importing from `@/lib/projects/constants` directly.
+export type { ProjectStatus };
 
-export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
+// Visual labels stay local — the dashboard header prefers friendlier Spanish
+// ("En Marcha", "Alcanzado") than the canonical constants. Wire format lives
+// in the enum; display copy stays per-component until a visible-only-i18n
+// layer lands.
+const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   planning: "Planificación",
   active: "En Marcha",
   on_hold: "En Pausa",
@@ -15,7 +22,7 @@ export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
   archived: "Archivado",
 };
 
-const PROJECT_STATUS_OPTIONS: ProjectStatus[] = ["planning", "active", "on_hold", "completed", "archived"];
+const PROJECT_STATUS_OPTIONS: readonly ProjectStatus[] = PROJECT_STATUSES;
 
 const STATUS_STYLES: Record<ProjectStatus, { dot: string; bg: string; text: string; border: string }> = {
   planning: {

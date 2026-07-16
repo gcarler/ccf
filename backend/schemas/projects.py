@@ -68,7 +68,7 @@ class ProjectAttachment(BaseModel):
 
 
 def _normalize_priority_value(v: Any) -> Any:
-    """Map compat priority values to canonical enums before validation."""
+    """Map accepted priority aliases to canonical enums before validation."""
     if isinstance(v, str):
         return {"normal": "medium"}.get(v, v)
     return v
@@ -77,6 +77,35 @@ def _normalize_priority_value(v: Any) -> Any:
 ProjectPriority = Annotated[
     Literal["low", "medium", "high", "urgent"],
     BeforeValidator(_normalize_priority_value),
+]
+
+
+def _normalize_project_status_value(v: Any) -> Any:
+    """Map accepted project status aliases to canonical 5-value enum before validation.
+
+    Task-level status is intentionally NOT normalized here because it adopts
+    dynamic ``ProjectPhase.slug`` values (see ``_assert_status_in_project_phases``
+    in ``backend/api/projects.py``). Only ``Project.status`` is constrained.
+    """
+    if isinstance(v, str):
+        status_aliases = {
+            "paused": "on_hold",
+            "stopped": "on_hold",
+            "done": "completed",
+            "finished": "completed",
+            "cancelled": "archived",
+            "closed": "archived",
+        }
+        return status_aliases.get(v.lower(), v)
+    return v
+
+
+# Canonical ProjectStatus. The 5-value tuple mirrors the frontend
+# ``PROJECT_STATUSES`` in ``frontend/src/lib/projects/constants.ts`` and the
+# dropdown options in ``InlineProjectStatusPicker``.
+ProjectStatus = Annotated[
+    Literal["planning", "active", "on_hold", "completed", "archived"],
+    BeforeValidator(_normalize_project_status_value),
 ]
 
 
@@ -120,7 +149,7 @@ class ProjectTask(ProjectTaskBase):
 class ProjectBase(BaseModel):
     title: str
     description: Optional[str] = None
-    status: str = "planning"
+    status: ProjectStatus = "planning"
     owner_id: Optional[UUIDStr] = None
     color: Optional[str] = None
     icon: Optional[str] = None
@@ -133,7 +162,7 @@ class ProjectCreate(ProjectBase):
 class ProjectUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[ProjectStatus] = None
     owner_id: Optional[UUIDStr] = None
     color: Optional[str] = None
     icon: Optional[str] = None
