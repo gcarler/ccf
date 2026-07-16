@@ -272,9 +272,12 @@ export default function ProjectWhiteboard({
       return;
     const fc = fabricCanvas.current;
     if (!fc) return;
+    history.restoringRef.current = true;
     fc.clear();
     fc.backgroundColor = WHITEBOARD_COLORS.canvasLight;
     fc.renderAll();
+    history.clearHistory();
+    history.restoringRef.current = false;
     // Save empty state
     saveNow(fc);
   };
