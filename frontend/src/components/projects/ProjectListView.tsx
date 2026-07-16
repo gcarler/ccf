@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import type { ProjectTaskRecord } from '@/types/projects';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
+import { useProjectTasks } from '@/hooks/useProjectTasks';
 import {
     InlineStatusPicker,
     InlinePriorityPicker,
@@ -37,20 +38,8 @@ const GROUP_PILL: Record<string, string> = {
 };
 
 // ─── TYPE DEFINITIONS ─────────────────────────────────────────────────────────
-interface TaskUser {
-    id: number;
-    username: string;
-    email: string;
-}
-
-interface LocalTask extends ProjectTaskRecord {
-    _assignedUser?: TaskUser | null;
-    _priority?: string;
-    _status?: string;
-    _due_date?: string | null;
-}
-
 interface Props {
+    projectId?: string;
     tasks: ProjectTaskRecord[];
     onOpenTask: (task: ProjectTaskRecord) => void;
     onAddTask: (status: string) => void;
@@ -126,18 +115,18 @@ function TaskRow({
     onOpen,
     onChange,
 }: {
-    task: LocalTask;
+    task: ProjectTaskRecord;
     onOpen: () => void;
-    onChange: (patch: Partial<LocalTask>) => void;
+    onChange: (patch: Partial<ProjectTaskRecord>) => void;
 }) {
     const { openLayer, setRightMode } = useSidebarLayers();
     const [commentOpen, setCommentOpen] = useState(false);
     const commentRef = useRef<HTMLDivElement>(null);
 
-    const status = task._status ?? task.status ?? 'todo';
-    const priority = task._priority ?? task.priority ?? 'medium';
-    const dueDate = task._due_date !== undefined ? task._due_date : task.due_date;
-    const assignedUserId = task._assignedUser?.id != null ? String(task._assignedUser.id) : (task.assignee_id ?? null);
+    const status = task.status ?? 'todo';
+    const priority = task.priority ?? 'medium';
+    const dueDate = task.due_date;
+    const assignedUserId = task.assignee_id ?? null;
 
     // Close comment popover on outside click
     useEffect(() => {
@@ -169,7 +158,7 @@ function TaskRow({
             {/* Checkbox */}
             <div className="w-8 flex-shrink-0 flex items-center justify-center pl-2">
                 <button
-                    onClick={() => onChange({ _status: status === 'completed' ? 'todo' : 'completed' })}
+                    onClick={() => onChange({ status: status === 'completed' ? 'todo' : 'completed' })}
                     className={clsx(
                         'size-4 rounded-full border-2 flex items-center justify-center text-[9px] transition-all active:scale-95',
                         status === 'completed'
@@ -201,7 +190,7 @@ function TaskRow({
             <div className="w-28 flex-shrink-0 flex items-center justify-center px-1">
                 <InlineUserPicker
                     value={assignedUserId}
-                    onChange={(userId, userName) => onChange({ _assignedUser: userId ? { id: Number(userId), username: userName || '', email: '' } : null })}
+                    onChange={(userId) => onChange({ assignee_id: userId })}
                 />
             </div>
 
@@ -209,7 +198,7 @@ function TaskRow({
             <div className="w-32 flex-shrink-0 flex items-center px-1">
                 <InlineDatePicker
                     value={dueDate as string | null}
-                    onChange={(date) => onChange({ _due_date: date })}
+                    onChange={(date) => onChange({ due_date: date })}
                 />
             </div>
 
@@ -217,7 +206,7 @@ function TaskRow({
             <div className="w-20 flex-shrink-0 flex items-center justify-center px-1">
                 <InlinePriorityPicker
                     value={priority}
-                    onChange={(p) => onChange({ _priority: p })}
+                    onChange={(p) => onChange({ priority: p })}
                 />
             </div>
 
@@ -225,7 +214,7 @@ function TaskRow({
             <div className="w-36 flex-shrink-0 flex items-center px-2">
                 <InlineStatusPicker
                     value={status}
-                    onChange={(s) => onChange({ _status: s })}
+                    onChange={(s) => onChange({ status: s })}
                 />
             </div>
 
@@ -283,11 +272,11 @@ function StatusGroup({
     onQuickAddCancel,
 }: {
     status: string;
-    tasks: LocalTask[];
+    tasks: ProjectTaskRecord[];
     onOpenTask: (t: ProjectTaskRecord) => void;
     onAddTask: (s: string) => void;
     isFirst?: boolean;
-    onChangeTask: (taskId: number | string, patch: Partial<LocalTask>) => void;
+    onChangeTask: (taskId: number | string, patch: Partial<ProjectTaskRecord>) => void;
     quickAddStatus?: string | null;
     quickAddTitle?: string;
     onQuickAddTitleChange?: (v: string) => void;
@@ -410,6 +399,7 @@ function StatusGroup({
 const STATUS_ORDER = ['todo', 'in_progress', 'review', 'completed'];
 
 export default function ProjectListView({
+    projectId,
     tasks: propTasks,
     onOpenTask,
     onAddTask,
@@ -421,54 +411,40 @@ export default function ProjectListView({
     onQuickAddConfirm,
     onQuickAddCancel,
 }: Props) {
-    // Local optimistic state — overlays prop changes
-    const [localOverrides, setLocalOverrides] = useState<Record<string | number, Partial<LocalTask>>>({});
+    // Use shared hook when projectId is provided; otherwise fall back to props/callbacks
+    const { tasks: hookTasks, updateTask } = useProjectTasks({ projectId });
+    const tasks = projectId ? hookTasks : propTasks;
 
-    const tasks: LocalTask[] = propTasks.map(t => ({
-        ...t,
-        ...(localOverrides[t.id] ?? {}),
-    }));
+    // Keep a ref to latest tasks so the change handler can compute an updated array
+    // without depending on the tasks array itself (avoids stale closure).
+    const tasksRef = React.useRef(tasks);
+    useEffect(() => { tasksRef.current = tasks; }, [tasks]);
 
-    const handleChangeTask = useCallback((taskId: number | string, patch: Partial<LocalTask>) => {
-        // Optimistic update immediately
-        setLocalOverrides(prev => ({
-            ...prev,
-            [taskId]: { ...(prev[taskId] ?? {}), ...patch },
-        }));
+    const handleChangeTask = useCallback(async (taskId: number | string, patch: Partial<ProjectTaskRecord>) => {
+        // Optimistically update local view via parent callback
+        onTasksChange?.(
+            tasksRef.current.map(t => (t.id === taskId ? { ...t, ...patch } : t))
+        );
 
-        // Map local overlay fields to real task fields for persistence
-        const apiPatch: Partial<ProjectTaskRecord> = {};
-        if (patch._status !== undefined) apiPatch.status = patch._status;
-        if (patch._priority !== undefined) apiPatch.priority = patch._priority;
-        if (patch._due_date !== undefined) apiPatch.due_date = patch._due_date;
-        if (patch._assignedUser !== undefined) apiPatch.assignee_id = patch._assignedUser ? String(patch._assignedUser.id) : null;
-
-        if (Object.keys(apiPatch).length > 0) {
-            onTaskUpdate?.(String(taskId), apiPatch);
+        if (projectId) {
+            // Persist through the shared hook; it handles rollback on error
+            await updateTask(String(taskId), patch, { optimistic: true });
+        } else {
+            // Parent-owned persistence path
+            onTaskUpdate?.(String(taskId), patch);
         }
-
-        // Also propagate upward if caller wants to persist
-        if (onTasksChange) {
-            const updated = propTasks.map(t =>
-                t.id === taskId ? { ...t, ...patch } : t
-            );
-            onTasksChange(updated as ProjectTaskRecord[]);
-        }
-    }, [onTaskUpdate, propTasks, onTasksChange]);
+    }, [onTasksChange, projectId, updateTask, onTaskUpdate]);
 
     const groups = STATUS_ORDER.map(status => ({
         status,
-        tasks: tasks.filter(t => {
-            const s = (t._status ?? t.status ?? 'todo').toLowerCase();
-            return s === status;
-        }),
+        tasks: tasks.filter(t => (t.status ?? 'todo').toLowerCase() === status),
     })).filter(g => {
         const isTarget = quickAddStatus === g.status;
         return g.tasks.length > 0 || isTarget;
     });
 
     const ungrouped = tasks.filter(t => {
-        const s = (t._status ?? t.status ?? 'todo').toLowerCase();
+        const s = (t.status ?? 'todo').toLowerCase();
         return !STATUS_ORDER.includes(s);
     });
 
@@ -522,7 +498,7 @@ export default function ProjectListView({
                 />
             )}
 
-            {propTasks.length === 0 && (
+            {tasks.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-1.5 gap-4">
                     <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">
                         <CheckCircle2 size={28} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
