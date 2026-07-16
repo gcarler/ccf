@@ -39,6 +39,7 @@ export function useWhiteboardCanvas(
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fabricCanvas = useRef<fabric.Canvas | null>(null);
   const backgroundColorRef = useRef(backgroundColor);
+  const zoomRef = useRef(100);
   const callbacksRef = useRef({
     onObjectModified,
     onObjectAdded,
@@ -93,7 +94,6 @@ export function useWhiteboardCanvas(
 
     // Pinch-to-zoom support
     let lastDistance = 0;
-    let currentZoom = 100;
 
     const getDistance = (touch1: Touch, touch2: Touch) => {
       const dx = touch1.clientX - touch2.clientX;
@@ -116,8 +116,8 @@ export function useWhiteboardCanvas(
 
         // Adjust zoom based on pinch distance change
         const zoomDelta = delta * 0.1;
-        currentZoom = Math.min(400, Math.max(25, currentZoom + zoomDelta));
-        canvas.setZoom(currentZoom / 100);
+        zoomRef.current = Math.min(400, Math.max(25, zoomRef.current + zoomDelta));
+        canvas.setZoom(zoomRef.current / 100);
         canvas.renderAll();
 
         lastDistance = distance;
@@ -292,6 +292,7 @@ export function useWhiteboardCanvas(
     if (!canvas) return;
 
     const clamped = Math.min(400, Math.max(25, newZoom));
+    zoomRef.current = clamped;
     canvas.setZoom(clamped / 100);
     setZoomState(clamped);
     canvas.renderAll();
