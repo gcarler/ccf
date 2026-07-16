@@ -18,6 +18,7 @@
 ```bash
 cat /root/ccf/docs/ESTADO_CMS.md
 cat /root/ccf/docs/CMS_API_CONTRACTS.md
+cat /root/ccf/docs/CMS_RBAC_MATRIX.md
 cat /root/ccf/docs/CMS_QA_CHECKLIST.md
 cat /root/ccf/docs/PLAN_CMS_100.md
 cat /root/ccf/docs/AUDITORIA_FORENSE_CMS.md
@@ -239,7 +240,7 @@ Frontend test existente:
 ### Pendiente
 
 1. **Plan de calidad canónico enlazado** `[PEND-PLAN-CMS-LINK-001]` — alinear `PLAN_CMS_100.md` como subplan oficial dentro del gate modular.
-2. **Matriz RBAC CMS** `[PEND-RBAC-CMS-001]` — documentar permisos reales por operación y ruta.
+2. **Matriz RBAC CMS** `[PEND-RBAC-CMS-001]` — cerrada el 2026-07-16 en `CMS_RBAC_MATRIX.md`; documenta v1, v2 y enterprise por separado, incluyendo la subprotección actual de CMS v1.
 3. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-CMS-001]` — agregar suites v2 profundas y enterprise al script único si el cambio lo requiere.
 4. **Checklist visual preview/publicado** `[PEND-VISUAL-CMS-001]` — institucionalizar comparación preview/publicado por ruta crítica.
 
@@ -249,18 +250,19 @@ Frontend test existente:
 
 1. `docs/ESTADO_CMS.md`
 2. `docs/CMS_API_CONTRACTS.md`
-3. `docs/CMS_QA_CHECKLIST.md`
-4. `docs/PLAN_CMS_100.md`
-5. `docs/AUDITORIA_FORENSE_CMS.md`
-6. `backend/api/cms.py`
-7. `backend/api/cms_v2.py`
-8. `backend/api/enterprise_cms.py`
-9. `backend/api/_cms_helpers/_shared.py`
-10. `backend/crud/cms.py`
-11. `backend/models_cms.py`
-12. `frontend/src/app/plataforma/cms/page.tsx`
-13. `frontend/src/app/plataforma/cms/builder/page.tsx`
-14. `frontend/tests/e2e/cms-public-contract.spec.ts`
+3. `docs/CMS_RBAC_MATRIX.md`
+4. `docs/CMS_QA_CHECKLIST.md`
+5. `docs/PLAN_CMS_100.md`
+6. `docs/AUDITORIA_FORENSE_CMS.md`
+7. `backend/api/cms.py`
+8. `backend/api/cms_v2.py`
+9. `backend/api/enterprise_cms.py`
+10. `backend/api/_cms_helpers/_shared.py`
+11. `backend/crud/cms.py`
+12. `backend/models_cms.py`
+13. `frontend/src/app/plataforma/cms/page.tsx`
+14. `frontend/src/app/plataforma/cms/builder/page.tsx`
+15. `frontend/tests/e2e/cms-public-contract.spec.ts`
 
 ---
 
@@ -284,7 +286,7 @@ Frontend test existente:
 | `PARCIAL-DASHBOARD-CMS-001` | Dashboard CMS depende de múltiples fuentes agregadas | `frontend/src/app/plataforma/cms/page.tsx` |
 | `PARCIAL-GATE-CMS-001` | Gate modular CMS aún no integrado del todo | docs + scripts |
 | `PEND-PLAN-CMS-LINK-001` | Integrar `PLAN_CMS_100.md` al esquema modular | docs |
-| `PEND-RBAC-CMS-001` | Matriz RBAC CMS | docs + backend permissions |
+| `PEND-RBAC-CMS-001` | ✅ **Hecho 2026-07-16** — matriz RBAC CMS documentada separando v1, v2 y enterprise; deja explícita la subprotección actual de CMS v1 y la autorización difusa de enterprise. | `docs/CMS_RBAC_MATRIX.md` |
 | `PEND-EXPAND-SMOKE-CMS-001` | Ampliar script CMS con suites profundas/enterprise | `scripts/test_cms_quality.py` |
 | `PEND-VISUAL-CMS-001` | Checklist preview/publicado institucionalizado | docs + QA |
 
