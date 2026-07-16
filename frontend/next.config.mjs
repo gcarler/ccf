@@ -1,8 +1,14 @@
 /** @type {import('next').NextConfig} */
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 const apiBaseUrl = process.env.API_BASE_URL || '';
 const apiProxyTarget =
     process.env.API_PROXY_TARGET ||
     (apiBaseUrl ? apiBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '') : '');
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const nextConfig = {
     allowedDevOrigins: ['elfarocc.tech', 'www.elfarocc.tech'],
@@ -144,6 +150,10 @@ const nextConfig = {
         ];
     },
     webpack(config, { isServer }) {
+        config.resolve.alias = {
+            ...(config.resolve.alias || {}),
+            'ag-grid-community$': path.join(__dirname, 'node_modules/ag-grid-community/dist/ag-grid-community.noStyle.js'),
+        };
         if (isServer) {
             config.output.chunkFilename = "chunks/[name].js";
         }
