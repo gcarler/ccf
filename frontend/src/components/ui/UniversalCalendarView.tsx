@@ -8,7 +8,7 @@ import {
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
-interface CalendarEvent {
+export interface CalendarEvent {
     id: string | number;
     title: string;
     date: string; // YYYY-MM-DD
@@ -22,6 +22,7 @@ interface UniversalCalendarViewProps {
     events: CalendarEvent[];
     onDateClick?: (date: Date) => void;
     onEventClick?: (event: CalendarEvent) => void;
+    onEventMove?: (event: CalendarEvent, date: Date) => void;
     onCreate?: () => void;
     title?: string;
 }
@@ -36,8 +37,18 @@ const COLORS: any = {
 
 const DAY_LABELS = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
 
-export default function UniversalCalendarView({ events, onDateClick, onEventClick, onCreate, title = "Calendario Maestro" }: UniversalCalendarViewProps) {
+function toDateKey(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+export default function UniversalCalendarView({ events, onDateClick, onEventClick, onEventMove, onCreate, title = "Calendario Maestro" }: UniversalCalendarViewProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
+    const [dragOverDay, setDragOverDay] = useState<Date | null>(null);
+    const dragOverCounts = React.useRef<Record<string, number>>({});
     
     // Calendar logic
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -45,8 +56,8 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
     const daysInMonth = endOfMonth.getDate();
     const startDay = startOfMonth.getDay();
 
-    const prevMonth = () => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)));
-    const nextMonth = () => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)));
+    const prevMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+    const nextMonth = () => setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
 
     const days: (Date | null)[] = [];
     // Previous month padding
@@ -59,8 +70,8 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
     }
 
     const getEventsForDay = (day: Date) => {
-        const iso = day.toISOString().split('T')[0];
-        return events.filter(e => e.date === iso);
+        const iso = toDateKey(day);
+        return events.filter(e => e.date?.slice(0, 10) === iso);
     };
 
     return (
@@ -122,9 +133,34 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: idx * 0.005 }}
                                 onClick={() => onDateClick?.(day)}
+                                onDragOver={(e) => e.preventDefault()}
+                                onDragEnter={(e) => {
+                                    e.preventDefault();
+                                    const key = day.toDateString();
+                                    dragOverCounts.current[key] = (dragOverCounts.current[key] ?? 0) + 1;
+                                    // Force re-render to apply highlight
+                                    setDragOverDay(day);
+                                }}
+                                onDragLeave={() => {
+                                    const key = day.toDateString();
+                                    dragOverCounts.current[key] = Math.max(0, (dragOverCounts.current[key] ?? 0) - 1);
+                                    if (dragOverCounts.current[key] === 0) {
+                                        setDragOverDay((prev) => (prev?.toDateString() === key ? null : prev));
+                                    }
+                                }}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    if (draggedEvent) {
+                                        onEventMove?.(draggedEvent, day);
+                                    }
+                                    setDraggedEvent(null);
+                                    dragOverCounts.current = {};
+                                    setDragOverDay(null);
+                                }}
                                 className={clsx(
                                     "min-h-[140px] p-4 flex flex-col gap-3 transition-all cursor-pointer group relative overflow-hidden",
-                                    isToday ? "bg-blue-50/50 dark:bg-[hsl(var(--primary))]/10" : "bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]"
+                                    isToday ? "bg-blue-50/50 dark:bg-[hsl(var(--primary))]/10" : "bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]",
+                                    dragOverDay?.toDateString() === day.toDateString() && "ring-2 ring-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10"
                                 )}
                             >
                                 <div className="flex items-center justify-between relative z-10">
@@ -141,9 +177,20 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                                     {dayEvents.slice(0, 3).map((ev) => (
                                         <button
                                             key={ev.id}
+                                            draggable
                                             onClick={(e) => { e.stopPropagation(); onEventClick?.(ev); }}
+                                            onDragStart={(e) => {
+                                                e.stopPropagation();
+                                                setDraggedEvent(ev);
+                                                e.dataTransfer.effectAllowed = 'move';
+                                            }}
+                                            onDragEnd={() => {
+                                                setDraggedEvent(null);
+                                                dragOverCounts.current = {};
+                                                setDragOverDay(null);
+                                            }}
                                             className={clsx(
-                                                "w-full text-left p-2 rounded-md text-[10px] font-semibold uppercase tracking-tight truncate transition-all hover:scale-[1.03] active:scale-95",
+                                                "w-full text-left p-2 rounded-md text-[10px] font-semibold uppercase tracking-tight truncate transition-all hover:scale-[1.03] active:scale-95 cursor-move",
                                                 COLORS[ev.color || 'blue']
                                             )}
                                         >
