@@ -147,7 +147,6 @@ export default function ProjectWhiteboard({
     if (authLoading) return;
     if (!token) {
       setLoadError('Debes iniciar sesión para abrir la pizarra del proyecto.');
-      loadedFor.current = project_id;
       return;
     }
 
