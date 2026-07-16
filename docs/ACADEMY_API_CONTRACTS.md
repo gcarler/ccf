@@ -12,6 +12,10 @@
 - Scope de cursos y operaciones protegidas por `sede_id`
 - No devolver ORM crudo cuando el contrato exige estructura serializada
 
+Referencia RBAC:
+
+- `docs/ACADEMY_RBAC_MATRIX.md`
+
 ## 2. Permisos Academy
 
 Aliases usados en `backend/api/academy.py`:
@@ -164,3 +168,10 @@ Validación mínima bruta:
 cd /root/ccf
 ./venv/bin/python -m pytest -q -o addopts='' tests/test_academy_api.py tests/test_academy_domain.py
 ```
+
+## 11. Notas RBAC actuales
+
+- `AcademyReader`, `AcademyStudent`, `AcademyEditor` y `AcademyManager` sí están usados de forma consistente en el router.
+- además del permiso granular existe fallback por `role` normalizado dentro de `require_permission(...)`
+- student flows combinan RBAC con ownership estricto sobre `persona_id` o `enrollment_id`
+- ver `ACADEMY_RBAC_MATRIX.md` para las asimetrías entre seed persistido, `DEFAULT_ROLES` y role fallback

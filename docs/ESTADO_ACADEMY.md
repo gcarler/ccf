@@ -18,6 +18,7 @@
 ```bash
 cat /root/ccf/docs/ESTADO_ACADEMY.md
 cat /root/ccf/docs/ACADEMY_API_CONTRACTS.md
+cat /root/ccf/docs/ACADEMY_RBAC_MATRIX.md
 cat /root/ccf/docs/ACADEMY_QA_CHECKLIST.md
 cat /root/ccf/docs/PLAN_ARQUITECTURA_MODULAR_CCF.md
 ```
@@ -208,7 +209,7 @@ No existe todavía suite e2e dedicada en `frontend/tests`.
 
 1. **E2E Academy** `[PEND-FRONTEND-E2E-ACADEMY-001]` — crear smoke de rutas críticas.
 2. **Plan de calidad Academy** `[PEND-PLAN-ACADEMY-001]` — crear plan por fases si el módulo entra a cierre intensivo.
-3. **Matriz RBAC Academy** `[PEND-RBAC-ACADEMY-001]` — documentar permisos por rol real en todas las superficies.
+3. **Matriz RBAC Academy** `[PEND-RBAC-ACADEMY-001]` — cerrada el 2026-07-16 en `ACADEMY_RBAC_MATRIX.md`; documenta permisos reales, ownership del estudiante y drift entre seed persistido, fallback runtime y role normalization.
 4. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-ACADEMY-001]` — cubrir dashboard, admin flows y forum desde `scripts/test_academy_quality.py`.
 
 ---
@@ -217,14 +218,15 @@ No existe todavía suite e2e dedicada en `frontend/tests`.
 
 1. `docs/ESTADO_ACADEMY.md`
 2. `docs/ACADEMY_API_CONTRACTS.md`
-3. `docs/ACADEMY_QA_CHECKLIST.md`
-4. `backend/api/academy.py`
-5. `backend/crud/academy.py`
-6. `backend/models_academy_core.py`
-7. `backend/schemas/academy.py`
-8. `frontend/src/app/plataforma/academy/AcademyClient.tsx`
-9. `frontend/src/app/plataforma/academy/courses/`
-10. `frontend/src/app/plataforma/academy/coordination/`
+3. `docs/ACADEMY_RBAC_MATRIX.md`
+4. `docs/ACADEMY_QA_CHECKLIST.md`
+5. `backend/api/academy.py`
+6. `backend/crud/academy.py`
+7. `backend/models_academy_core.py`
+8. `backend/schemas/academy.py`
+9. `frontend/src/app/plataforma/academy/AcademyClient.tsx`
+10. `frontend/src/app/plataforma/academy/courses/`
+11. `frontend/src/app/plataforma/academy/coordination/`
 
 ---
 
@@ -250,7 +252,7 @@ No existe todavía suite e2e dedicada en `frontend/tests`.
 | `PARCIAL-COORDINATION-ACADEMY-001` | Surface admin amplia sin smoke frontend | `frontend/src/app/plataforma/academy/coordination/**` |
 | `PEND-FRONTEND-E2E-ACADEMY-001` | Smoke frontend Academy | `frontend/tests/e2e/academy/` |
 | `PEND-PLAN-ACADEMY-001` | Plan de calidad Academy | `docs/PLAN_ACADEMY_CALIDAD.md` |
-| `PEND-RBAC-ACADEMY-001` | Matriz RBAC Academy | docs + backend permissions |
+| `PEND-RBAC-ACADEMY-001` | ✅ **Hecho 2026-07-16** — matriz RBAC documentada con guards reales, ownership por matrícula/persona y drift entre seed, fallback y role normalization. | `docs/ACADEMY_RBAC_MATRIX.md` |
 | `PEND-EXPAND-SMOKE-ACADEMY-001` | Ampliar script Academy | `scripts/test_academy_quality.py` |
 
 Busqueda rapida:
