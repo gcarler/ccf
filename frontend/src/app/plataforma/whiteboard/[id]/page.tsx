@@ -277,6 +277,8 @@ export default function WhiteboardSessionPage() {
                 saveNow(canvas);
             } finally {
                 history.restoringRef.current = false;
+                history.clearHistory();
+                history.pushHistory(canvas);
             }
         };
         loadSaved();

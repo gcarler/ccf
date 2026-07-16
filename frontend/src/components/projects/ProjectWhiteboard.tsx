@@ -171,12 +171,17 @@ export default function ProjectWhiteboard({
         }
         loadedFor.current = project_id;
         syncLayers();
+        history.clearHistory();
+        history.pushHistory(canvas);
       })
       .catch(() => {
         setLoadError('No se pudo cargar la pizarra del proyecto.');
         loadedFor.current = project_id;
+        syncLayers();
+        history.clearHistory();
+        history.pushHistory(canvas);
       });
-  }, [authLoading, fabricCanvas, history.restoringRef, isOpen, project_id, syncLayers, token]);
+  }, [authLoading, fabricCanvas, history, isOpen, project_id, syncLayers, token]);
 
   // Resize on open
   useEffect(() => {
