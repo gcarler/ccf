@@ -205,13 +205,13 @@ class TestUserModuleRoles:
         client.post(
             "/api/admin/user-module-roles",
             headers={"Authorization": f"Bearer {token}"},
-            json={"user_id": auth_user_id, "modulo": "finances", "rol_id": rol_id_a},
+            json={"user_id": auth_user_id, "modulo": "finance", "rol_id": rol_id_a},
         )
         # Reassign same module -> should update
         resp = client.post(
             "/api/admin/user-module-roles",
             headers={"Authorization": f"Bearer {token}"},
-            json={"user_id": auth_user_id, "modulo": "finances", "rol_id": rol_id_b},
+            json={"user_id": auth_user_id, "modulo": "finance", "rol_id": rol_id_b},
         )
         assert resp.status_code == 200
         assert resp.json().get("updated") is True
@@ -236,4 +236,3 @@ class TestUserModuleRoles:
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 204
-

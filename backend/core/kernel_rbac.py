@@ -23,6 +23,12 @@ from backend.core.permissions import get_current_active_user, normalize_role
 log = logging.getLogger(__name__)
 
 
+MODULE_ALIASES: Dict[str, str] = {
+    "finances": "finance",
+    "agenda": "spiritual_life",
+}
+
+
 # ──────────────────────────────────────────────
 # PERMISOS POR ROL DE PLATAFORMA (KERNEL Dimensión C)
 # ──────────────────────────────────────────────
@@ -35,9 +41,8 @@ KERNEL_ROLE_PERMISSIONS: Dict[str, Set[str]] = {
         "projects:manage", "projects:read", "projects:edit",
         "evangelism:manage", "evangelism:read", "evangelism:edit",
         "cms:manage", "cms:read", "cms:edit",
-        "finances:manage", "finances:read", "finances:edit",
+        "finance:manage", "finance:read", "finance:edit",
         "community:manage", "community:read", "community:edit",
-        "agenda:manage", "agenda:read", "agenda:edit",
         "support:manage", "support:read",
         "spiritual_life:manage", "spiritual_life:read", "spiritual_life:edit",
         "profile:manage",
@@ -51,10 +56,10 @@ KERNEL_ROLE_PERMISSIONS: Dict[str, Set[str]] = {
         "evangelism:manage", "evangelism:read", "evangelism:edit",
         "cms:read", "cms:edit",
         "community:manage", "community:read", "community:edit",
-        "agenda:read", "agenda:edit",
-        "finances:read",
+        "finance:read",
         "profile:manage",
         "messaging:edit", "messaging:read",
+        "spiritual_life:manage", "spiritual_life:read", "spiritual_life:edit",
     },
     "EDITOR": {
         "crm:read", "crm:edit",
@@ -63,7 +68,8 @@ KERNEL_ROLE_PERMISSIONS: Dict[str, Set[str]] = {
         "evangelism:read", "evangelism:edit",
         "cms:read", "cms:edit",
         "community:read", "community:edit",
-        "agenda:read",
+        "finance:read",
+        "spiritual_life:read", "spiritual_life:edit",
         "profile:manage",
         "messaging:read",
     },
@@ -86,6 +92,7 @@ def _resolve_kernel_permissions(db: Session, user_id: UUID) -> Set[str]:
             # Wildcard: todos los permisos
             result.update(KERNEL_ROLE_PERMISSIONS.get("ADMINISTRADOR", set()))
         else:
+            module = MODULE_ALIASES.get(module, module)
             for action in actions:
                 perm_key = f"{module}:{action}"
                 result.add(perm_key)

@@ -71,6 +71,60 @@ class TestGetDefaultRoles:
         assert isinstance(roles, list)
         assert len(roles) > 0
 
+    def test_no_legacy_permission_aliases_in_defaults(self):
+        from backend.core.permissions import get_default_roles
+
+        legacy = {"finances:", "agenda:"}
+        for role in get_default_roles():
+            for perm in role["permissions"]:
+                assert not any(alias in perm for alias in legacy)
+
+
+class TestPermissionTaxonomy:
+    def test_module_permission_map_uses_canonical_ids(self):
+        from backend.core.permissions import MODULE_PERMISSION_MAP
+
+        assert "finance" in MODULE_PERMISSION_MAP
+        assert "spiritual_life" in MODULE_PERMISSION_MAP
+        assert "finances" not in MODULE_PERMISSION_MAP
+        assert "agenda" not in MODULE_PERMISSION_MAP
+
+    def test_seed_roles_config_uses_only_known_modules(self):
+        from backend.core.permissions import MODULE_PERMISSION_MAP
+        from backend.management.seed_user_permissions import build_roles_config
+
+        valid_modules = set(MODULE_PERMISSION_MAP.keys())
+        for module_levels in build_roles_config().values():
+            assert set(module_levels.keys()) <= valid_modules
+
+    def test_expand_module_permissions_finance_and_spiritual_life(self):
+        from backend.core.permissions import expand_module_permissions
+
+        assert expand_module_permissions("finance", "read") == ["finance:read"]
+        assert expand_module_permissions("spiritual_life", "edit") == [
+            "spiritual_life:edit",
+            "spiritual_life:read",
+        ] or expand_module_permissions("spiritual_life", "edit") == [
+            "spiritual_life:read",
+            "spiritual_life:edit",
+        ]
+
+
+class TestKernelRbacAliases:
+    def test_legacy_kernel_aliases_are_normalized(self, db_session):
+        from backend.core import kernel_rbac
+
+        with patch(
+            "backend.crud.kernel.get_persona_effective_permissions",
+            return_value={"finances": ["read"], "agenda": ["edit"]},
+        ):
+            perms = kernel_rbac._resolve_kernel_permissions(db_session, uuid.uuid4())
+
+        assert "finance:read" in perms
+        assert "spiritual_life:edit" in perms
+        assert "finances:read" not in perms
+        assert "agenda:edit" not in perms
+
 
 class TestHasPermission:
     def test_admin_bypass(self):
