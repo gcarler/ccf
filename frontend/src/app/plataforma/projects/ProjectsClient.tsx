@@ -7,7 +7,7 @@ Plus
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React,{ useCallback,useEffect,useMemo,useState } from 'react';
+import React,{ useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import type { ViewType } from '@/components/ViewSwitcher';
@@ -53,6 +53,7 @@ export default function ProjectsClient({
     const [isCreating, setIsCreating] = useState(false);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const { updateProject, deleteProject } = useProjects();
+    const projectsListRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (!token) return;
@@ -74,6 +75,16 @@ export default function ProjectsClient({
             setViewType(view as ViewType);
         }
     }, [searchParams]);
+
+    useEffect(() => {
+        if (viewType !== 'list') return;
+
+        const raf = window.requestAnimationFrame(() => {
+            projectsListRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
+        });
+
+        return () => window.cancelAnimationFrame(raf);
+    }, [viewType]);
 
     // Quality filter: hide projects with nonsensical/test names
     const isValidProject = (p: ProjectRecord) => {
@@ -349,7 +360,15 @@ export default function ProjectsClient({
                                 <DataTable columns={tableColumns} data={filtered} />
                             </motion.div>
                         ) : viewType === 'list' ? (
-                            <motion.div id={PROJECTS_LIST_ANCHOR} key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2 pb-4 scroll-mt-24">
+                            <motion.div
+                                id={PROJECTS_LIST_ANCHOR}
+                                ref={projectsListRef}
+                                key="list"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="space-y-2 pb-4 scroll-mt-24"
+                            >
                                 {filtered.map((project) => (
                                     <div key={project.id} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition-all duration-300 hover:border-[hsl(var(--primary))]/60 dark:border-white/10 dark:bg-[hsl(var(--surface-2))]">
                                         <div className="flex items-center justify-between gap-4">
