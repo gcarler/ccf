@@ -17,7 +17,6 @@ import {
     horizontalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { KanbanColumn } from './KanbanColumn';
-import { SortableTaskCard } from './SortableTaskCard';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -121,11 +120,31 @@ export function ProjectKanbanBoard({ project, tasks, phases, onTasksChange, onOp
                 </SortableContext>
             </div>
 
-            {/* Drag overlay — ghost card */}
+            {/* Drag overlay — lightweight ghost.
+
+            Render a static placeholder instead of ``SortableTaskCard``. Reusing a
+            sortable card inside ``DragOverlay`` would conflict with ``useSortable``
+            semantics (the card would register a second draggable context while it's
+            already being dragged, causing erratic pointer events).
+            */}
             <DragOverlay dropAnimation={null}>
                 {activeTask && (
-                    <div className="rotate-1 opacity-90 cursor-grabbing">
-                        <SortableTaskCard task={activeTask} onOpen={() => {}} />
+                    <div
+                        role="presentation"
+                        className="rotate-1 opacity-90 cursor-grabbing bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] rounded-md shadow-2xl border border-blue-500 p-3 w-[260px]"
+                    >
+                        <div className="h-[3px] w-full mb-2 bg-[hsl(var(--primary))] rounded-full" />
+                        <p className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-2">
+                            {activeTask.title || 'Tarea'}
+                        </p>
+                        <div className="flex items-center gap-3 mt-2 text-[10px] text-[hsl(var(--text-secondary))]">
+                            {activeTask.priority && (
+                                <span className="font-bold uppercase tracking-wide">{activeTask.priority}</span>
+                            )}
+                            {activeTask.due_date && (
+                                <span>{activeTask.due_date.slice(0, 10)}</span>
+                            )}
+                        </div>
                     </div>
                 )}
             </DragOverlay>

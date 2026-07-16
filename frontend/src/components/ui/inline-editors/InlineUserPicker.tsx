@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import clsx from "clsx";
 import { Check, Loader2, Search, User, X } from "lucide-react";
@@ -26,11 +26,52 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const lastFetchedValueRef = useRef<string | null | undefined>(undefined);
+
+  // Sync displayName when the externally-provided value changes (e.g. row reload).
+  // If we already have the user in the cached list, reuse it; otherwise hit the API.
+  // Also re-syncs when the value changes WHILE closed (e.g. after PATCH success).
+  //
+  // ``displayName`` is intentionally NOT in the deps array: including it would
+  // re-fire this effect every time we write the new name, which can double-
+  // fetch and waste bandwidth. We read it through a stable ref for comparison.
+  const displayNameRef = useRef<string | null>(null);
+  useEffect(() => { displayNameRef.current = displayName; }, [displayName]);
+
+  useEffect(() => {
+    if (!value) {
+      if (displayNameRef.current !== null) setDisplayName(null);
+      return;
+    }
+    const found = users.find((u) => u.id === value);
+    if (found) {
+      if (found.username !== displayNameRef.current) setDisplayName(found.username);
+      lastFetchedValueRef.current = value;
+      return;
+    }
+    if (lastFetchedValueRef.current === value) return;
+    lastFetchedValueRef.current = value;
+    let canceled = false;
+    apiFetch<any>(`/crm/personas/${encodeURIComponent(value)}`, { method: "GET", token: token ?? undefined })
+      .then((m: any) => {
+        if (canceled) return;
+        const name = m?.nombre_completo || m?.user?.username || m?.username || null;
+        if (name && name !== displayNameRef.current) setDisplayName(name);
+      })
+      .catch(() => {
+        /* leave displayName as-is; user can re-open picker to retry */
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [value, users, token]);
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
-    apiFetch<any[]>("/crm/personas/", { method: "GET", token: token ?? undefined })
+    const trimmed = query.trim();
+    const qs = trimmed ? `?q=${encodeURIComponent(trimmed)}&limit=50` : "?limit=50";
+    apiFetch<any[]>(`/crm/personas/${qs}`, { method: "GET", token: token ?? undefined })
       .then((data) => {
         const list: UserRecord[] = Array.isArray(data)
           ? data.map((m: any) => ({
@@ -47,7 +88,7 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
       })
       .catch(() => setUsers([]))
       .finally(() => setLoading(false));
-  }, [open, token, value]);
+  }, [open, query, token, value]);
 
   const filtered = query
     ? users.filter((u) => u.username.toLowerCase().includes(query.toLowerCase()))
