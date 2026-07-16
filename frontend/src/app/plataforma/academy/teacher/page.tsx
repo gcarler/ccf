@@ -117,7 +117,7 @@ export default function TeacherWorkspace() {
     return (
         <WorkspaceLayout 
             sidebarTitle="Academia"
-            allowedRoles={['admin', 'coordinador', 'docente', 'staff']}
+            allowedPermissions={['academy:edit', 'academy:manage']}
         >
             <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0f1114]">
                 <WorkspaceToolbar

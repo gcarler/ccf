@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Annotated, Any, List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator
 
 from backend.schemas._common import orm_config
 
@@ -109,8 +109,23 @@ ProjectStatus = Annotated[
 ]
 
 
+def _strip_str_or_passthrough(v: Any) -> Any:
+    """Strip whitespace from required task title before validation.
+
+    Empty / whitespace-only titles become ``""`` after strip, which then fails
+    the ``min_length=1`` constraint in :class:`ProjectTaskBase.title` and
+    :class:`ProjectTaskUpdate.title`. Returns the input untouched when it is
+    not a string (``None`` is allowed for the optional PATCH path).
+
+    Cierra ``PEND-QUALITY-TASK-CREATE-001`` (2026-07-16): la vista list
+    enviaba ``title: ''`` literal desde ``ProjectViewsContent`` y quedaba
+    persistido como tarea vacía.
+    """
+    return v.strip() if isinstance(v, str) else v
+
+
 class ProjectTaskBase(BaseModel):
-    title: str
+    title: str = Field(..., min_length=1, max_length=500)
     description: Optional[str] = None
     status: str = "todo"
     priority: ProjectPriority = "medium"
@@ -120,13 +135,19 @@ class ProjectTaskBase(BaseModel):
     labels: List[str] = Field(default_factory=list)
     attachments: List[ProjectAttachment] = Field(default_factory=list)
 
+    @field_validator("title", mode="before")
+    @classmethod
+    def _title_no_blank(cls, v: Any) -> Any:
+        return _strip_str_or_passthrough(v)
+
+
 class ProjectTaskCreate(ProjectTaskBase):
     project_id: Optional[UUIDStr] = None
     parent_id: Optional[UUIDStr] = None
 
 
 class ProjectTaskUpdate(BaseModel):
-    title: Optional[str] = None
+    title: Optional[str] = Field(default=None, min_length=1, max_length=500)
     description: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[ProjectPriority] = None
@@ -135,6 +156,11 @@ class ProjectTaskUpdate(BaseModel):
     due_date: Optional[datetime] = None
     labels: Optional[List[str]] = None
     attachments: Optional[List[dict]] = None
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def _title_no_blank(cls, v: Any) -> Any:
+        return _strip_str_or_passthrough(v)
 
 class ProjectTask(ProjectTaskBase):
     id: UUIDStr
@@ -147,12 +173,22 @@ class ProjectTask(ProjectTaskBase):
 
 
 class ProjectBase(BaseModel):
-    title: str
+    # Cierre ``PEND-QUALITY-PROJECT-TITLE-NORM-001`` (anotación diferida
+    # del code review del ``2026-07-16``): endurecemos ``title`` con la
+    # misma regla que ``ProjectTaskBase.title`` (``min_length=1`` +
+    # ``field_validator(mode='before')`` con strip) para coherencia del
+    # módulo de proyectos.
+    title: str = Field(..., min_length=1, max_length=500)
     description: Optional[str] = None
     status: ProjectStatus = "planning"
     owner_id: Optional[UUIDStr] = None
     color: Optional[str] = None
     icon: Optional[str] = None
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def _title_no_blank(cls, v: Any) -> Any:
+        return _strip_str_or_passthrough(v)
 
 
 class ProjectCreate(ProjectBase):
@@ -160,7 +196,12 @@ class ProjectCreate(ProjectBase):
 
 
 class ProjectUpdate(BaseModel):
-    title: Optional[str] = None
+    title: Optional[str] = Field(default=None, min_length=1, max_length=500)
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def _title_no_blank(cls, v: Any) -> Any:
+        return _strip_str_or_passthrough(v)
     description: Optional[str] = None
     status: Optional[ProjectStatus] = None
     owner_id: Optional[UUIDStr] = None

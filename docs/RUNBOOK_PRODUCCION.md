@@ -47,8 +47,8 @@
 
 | Componente | Tecnología | Puerto | Inicio |
 |---|---|---|---|
-| Frontend | Next.js 14 | `:3000` | `./startccf` (npm run start) |
-| Backend | FastAPI + Python 3.12 | `:8000` | `./startccf` (uvicorn) |
+| Frontend | Next.js 15 | `:3000` | `pm2 start ecosystem.config.js --only ccf-frontend-staging` |
+| Backend | FastAPI + Python 3.12 | `:8000` | `pm2 start ecosystem.config.js --only ccf-backend-staging` |
 | Base de Datos | PostgreSQL 15 | `:5432` | `systemctl postgresql` |
 | Proxy | nginx | `:443` / `:80` | `systemctl nginx` |
 | Repositorio | Git (VPS `/root/ccf`) | — | `git pull origin main` |
@@ -57,7 +57,7 @@
 
 | Archivo | Propósito |
 |---|---|
-| `/root/ccf/startccf` | Arranca backend + frontend en background con `_launch_detached()` |
+| `/root/ccf/startccf` | Arranque manual alterno; no usar si la instancia ya está bajo PM2 |
 | `/root/ccf/stopccf` | Detiene procesos de forma limpia con `_kill_with_verify()` |
 | `/etc/nginx/sites-available/elfarocc.tech` | Configuración de proxy inverso |
 | `/root/ccf/.env` | Variables de entorno (DB, secretos, API keys) |
@@ -93,10 +93,16 @@ alembic upgrade head
 # 4. Pull del código nuevo
 git pull origin main
 
-# 5. Subir la app
-./startccf
+# 5. Reconstruir frontend si hubo cambios UI
+cd /root/ccf/frontend
+npm run build
 
-# 6. Verificar health checks
+# 6. Reiniciar procesos con PM2
+cd /root/ccf
+pm2 restart ccf-backend-staging --update-env
+pm2 restart ccf-frontend-staging --update-env
+
+# 7. Verificar health checks
 curl -f https://elfarocc.tech/healthz
 curl -f https://elfarocc.tech/api/system/health
 curl -f https://elfarocc.tech/
@@ -108,11 +114,10 @@ python3 scripts/auditing/production_readiness.py
 ```bash
 cd /root/ccf
 git pull origin main
-./stopccf
-./startccf
+pm2 restart ccf-backend-staging --update-env
 ```
 
-> **Nota:** El frontend se compila en CI y se copia al VPS. Si el hotfix es solo backend, no necesita rebuild de frontend. Si hay cambios frontend, se requiere `cd frontend && npm run build` antes de `./startccf`.
+> **Nota:** En esta instancia el frontend se sirve con `pm2`. Si hay cambios frontend, se requiere `cd frontend && npm run build` antes de `pm2 restart ccf-frontend-staging --update-env`. No mezclar `pm2` con `./startccf` o con `npm run start` manual.
 
 ---
 

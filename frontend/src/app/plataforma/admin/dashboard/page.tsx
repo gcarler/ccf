@@ -27,8 +27,24 @@ import clsx from 'clsx';
 
 type AdminStats = {
     users: number;
-    donations: number;
-    attendance: number;
+    sessions: number;
+    personas: number;
+};
+
+type DashboardCard = {
+    title: string;
+    value: string;
+    trend?: string | null;
+    tone?: string;
+    icon?: string;
+};
+
+type AdminDashboardResponse = {
+    cards: DashboardCard[];
+    sesiones_activas: number;
+    errores_recientes: number;
+    filters: unknown[];
+    last_updated: string;
 };
 
 type AcademyMetrics = {
@@ -43,7 +59,7 @@ type AcademyMetrics = {
 export default function AdminDashboard() {
     const { isAuthenticated, token } = useAuth();
     const router = useRouter();
-    const [stats, setStats] = useState<AdminStats>({ users: 0, donations: 0, attendance: 24 });
+    const [stats, setStats] = useState<AdminStats>({ users: 0, sessions: 0, personas: 0 });
     const [academy, setAcademy] = useState<AcademyMetrics | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -51,14 +67,17 @@ export default function AdminDashboard() {
         if (!token) return;
         try {
             const [statsData, academyData] = await Promise.all([
-                apiFetch<AdminStats>('/auth/stats/summary', { token }),
+                apiFetch<AdminDashboardResponse>('/dashboard/admin', { token }),
                 apiFetch<AcademyMetrics>('/academy/dashboard/metrics', { token })
             ]);
-            
+
+            const usersCard = statsData.cards.find((card) => card.title === 'Usuarios');
+            const sessionsCard = statsData.cards.find((card) => card.title === 'Sesiones Activas');
+            const personasCard = statsData.cards.find((card) => card.title === 'Personas');
             setStats({
-                users: statsData?.users ?? 0,
-                donations: statsData?.donations ?? 0,
-                attendance: statsData?.attendance ?? 0
+                users: Number(usersCard?.value ?? 0) || 0,
+                sessions: Number(sessionsCard?.value ?? 0) || 0,
+                personas: Number(personasCard?.value ?? 0) || 0
             });
             setAcademy(academyData);
         } catch (e) { console.error(e); }
@@ -95,12 +114,12 @@ export default function AdminDashboard() {
                             icon={Users} trend="+12.5%" color="blue" 
                         />
                         <StatCard 
-                            label="Ofrendas del Mes" value={`$${loading ? '...' : stats.donations.toLocaleString()}`} 
-                            icon={Heart} trend="+8.2%" color="rose" 
+                            label="Sesiones Activas" value={loading ? '...' : stats.sessions.toLocaleString()} 
+                            icon={Activity} trend="Auth v3" color="rose" 
                         />
                         <StatCard 
-                            label="Asistencia Promedio" value={`${loading ? '...' : stats.attendance}%`} 
-                            icon={Activity} trend="-2.1%" color="emerald" 
+                            label="Personas Registradas" value={loading ? '...' : stats.personas.toLocaleString()} 
+                            icon={Heart} trend="CRM base" color="emerald" 
                         />
                     </section>
 
@@ -380,4 +399,3 @@ function ProgressItem({ label, value, color }: any) {
         </div>
     );
 }
-

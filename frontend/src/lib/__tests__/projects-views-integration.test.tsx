@@ -64,7 +64,7 @@ vi.mock("@/context/ToastContext", () => ({
 // "context compartido se propaga a todos los consumers"; no necesitamos
 // garantizar el render del Kanban real (sus dependencias — dnd-kit,
 // ag-grid-enterprise a través de SortableTaskCard, framer-motion en
-// KanbanColumn, ConfirmActionDrawer con import de React legacy — tienen
+// KanbanColumn, ConfirmActionDrawer con import de React anterior — tienen
 // historial de fallos en jsdom). En su lugar usamos MiniList como
 // vista-representante con data-* attributes que exponen el estado tras
 // cada mutación. Smoke manual del Kanban real sigue cubriendo su render.

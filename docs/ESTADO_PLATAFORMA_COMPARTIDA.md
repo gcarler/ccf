@@ -17,8 +17,12 @@
 ```bash
 cat /root/ccf/docs/ESTADO_PLATAFORMA_COMPARTIDA.md
 cat /root/ccf/docs/PLATAFORMA_AUTH_RBAC_API_UI.md
+cat /root/ccf/docs/PLATAFORMA_AUTH_RUNTIME_CONTRACT.md
 cat /root/ccf/docs/PLATAFORMA_UI_BASE_PROTEGIDA.md
 cat /root/ccf/docs/PLATAFORMA_MATRIZ_MODULAR.md
+cat /root/ccf/docs/PLAN_PLATAFORMA_COMPARTIDA_CALIDAD.md
+cat /root/ccf/docs/BACKLOG_DRIFT_TRANSVERSAL_CCF.md
+cat /root/ccf/docs/SYSTEM_CALENDAR_CONTRACT.md
 cat /root/ccf/docs/PLATAFORMA_COMPARTIDA_QA_CHECKLIST.md
 cat /root/ccf/docs/PLAN_ARQUITECTURA_MODULAR_CCF.md
 cat /root/ccf/docs/ESTADO_ARQUITECTURA_CCF.md
@@ -76,6 +80,7 @@ cd /root/ccf/frontend && npm run build
 ## 6. Invariantes de plataforma
 
 - Auth canonica vive en `/api/v3/auth/*`.
+- El runtime auth compartido y su transporte dual viven en `docs/PLATAFORMA_AUTH_RUNTIME_CONTRACT.md`.
 - `auth_users.id == personas.id` es contrato global.
 - Los permisos vienen de `backend/core/permissions.py`; no duplicar taxonomia por modulo.
 - `apiFetch` es cliente canonico para frontend plataforma.
@@ -85,9 +90,11 @@ cd /root/ccf/frontend && npm run build
 ## 7. Riesgos estructurales activos
 
 1. **Blast radius alto** `[PARCIAL-PLATFORM-BLAST-001]` — permisos, `apiFetch`, layouts y grids son dependencias compartidas de casi todos los modulos.
-2. **Taxonomia mixta de permisos** `[PARCIAL-RBAC-ROOT-001]` — el contrato raíz ya quedó documentado, pero Agenda sigue heredando `spiritual_life:*` por diseño y aún faltan matrices compactas en varios módulos.
+2. **Taxonomia mixta de permisos** `[PARCIAL-RBAC-ROOT-001]` — el contrato raíz ya quedó documentado; `ProtectedRoute` ya prioriza permisos canónicos sobre roles legacy, pero Agenda sigue heredando `spiritual_life:*` por diseño y aún quedan superficies de drift por cerrar.
 3. **Primitives UI compartidas** `[PARCIAL-UI-BASE-001]` — `WorkspaceLayout`, grids AG Grid, calendar/gantt e inline editors comparten blast radius multi-modulo y requieren owner de plataforma.
 4. **Dependencias transversales por modulo** `[PARCIAL-PLATFORM-MATRIX-001]` — sin una matriz operativa era fácil correr gates incompletos o asignar mal el owner.
+5. **Drift transversal repetitivo** `[PARCIAL-PLATFORM-DRIFT-001]` — auth/runtime, RBAC heterogeneo, `apiFetch`, AG Grid, `_next/static` y agregadores shared siguen reapareciendo entre modulos si no se clasifican como plataforma.
+6. **Suites profundas dependientes de runtime** `[PARCIAL-PLATFORM-E2E-RUNTIME-001]` — las suites Playwright profundas de modulos protegidos no pueden depender de arrancar Next a mano; el runner compartido `frontend/scripts/run-managed-playwright.mjs` ya cubre auth, Proyectos detail y Evangelismo deep, pero debe extenderse al resto de casos equivalentes.
 
 ## 8. Pendientes formales
 
@@ -95,6 +102,9 @@ cd /root/ccf/frontend && npm run build
 2. **Checklist de humo de plataforma** `[PEND-PLATFORM-SMOKE-001]` — cerrada el 2026-07-16 con `scripts/test_platform_quality.py`.
 3. **Politica de componentes base** `[PEND-UI-BASE-001]` — cerrada el 2026-07-16 en `PLATAFORMA_UI_BASE_PROTEGIDA.md`; formaliza `WorkspaceLayout`, grids AG Grid, calendar/gantt e inline editors como superficie protegida.
 4. **Matrices modulares de plataforma** `[PEND-PLATFORM-MATRIX-001]` — cerrada el 2026-07-16 en `PLATAFORMA_MATRIZ_MODULAR.md`; fija consumidores, gates y rutas mínimas por módulo.
+5. **Backlog transversal de drift** `[PEND-PLATFORM-DRIFT-001]` — cerrada el 2026-07-16 en `BACKLOG_DRIFT_TRANSVERSAL_CCF.md`; consolida patrones cross-modulo, owners y gates mínimos.
+6. **Contrato runtime de auth compartida** `[PEND-DRIFT-AUTH-001]` — parcial el 2026-07-16 en `PLATAFORMA_AUTH_RUNTIME_CONTRACT.md`; migrados consumidores públicos críticos a `/api/v3/auth/*`, quedan rutas admin legacy aisladas como drift activo de plataforma.
+7. **Plan operativo canónico de plataforma** `[PEND-PLAN-PLATFORM-001]` — cerrada el 2026-07-16 en `PLAN_PLATAFORMA_COMPARTIDA_CALIDAD.md`; formaliza fases de trabajo para auth, RBAC, UI base y smoke transversal.
 
 ## 9. Archivos a revisar primero si falla
 

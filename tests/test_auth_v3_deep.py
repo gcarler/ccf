@@ -117,6 +117,24 @@ class TestTokenFlow:
         resp = c.post("/api/v3/auth/refresh", headers=h)
         assert _ok(resp.status_code)
 
+    def test_sessions_list_and_revoke(self, full):
+        c, h = full["c"], full["h"]
+        login = c.post("/api/v3/auth/login", json={"email": full["admin"].email, "password": "testpass123"})
+        assert login.status_code == 200
+        listed = c.get("/api/v3/auth/sessions", headers=h)
+        assert listed.status_code == 200
+        data = listed.json()
+        assert isinstance(data, list)
+        if data:
+            revoke = c.post(f"/api/v3/auth/sessions/{data[0]['id']}/revoke", headers=h)
+            assert revoke.status_code == 200
+
+    def test_sessions_revoke_all(self, full):
+        c, h = full["c"], full["h"]
+        c.post("/api/v3/auth/login", json={"email": full["admin"].email, "password": "testpass123"})
+        resp = c.post("/api/v3/auth/sessions/revoke-all", headers=h)
+        assert resp.status_code == 200
+
 
 class TestProfileFlow:
     def test_get_me(self, full):

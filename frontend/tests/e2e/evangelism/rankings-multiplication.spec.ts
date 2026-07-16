@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { installMockPlatformSession } from '../helpers/mockPlatformSession';
 
 /**
  * E2E smoke coverage for the new Evangelism routes:
@@ -12,20 +13,7 @@ import { test, expect, Page } from '@playwright/test';
 
 async function mockEvangelismRoutes(page: Page) {
     // Auth bootstrap + sidebar/faro analytics endpoints that the WorkspaceLayout hits.
-    await page.route('**/api/v3/auth/me', async (route) => {
-        await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-                id: 'e2e-user',
-                email: 'pastor.e2e@ccf.local',
-                role: 'pastor',
-                permissions: ['evangelism:read', 'evangelism:manage'],
-                sede_id: 'sede-1',
-                persona_id: 'persona-1',
-            }),
-        });
-    });
+    await installMockPlatformSession(page);
 
     // Sidebar strategies list.
     await page.route('**/api/evangelism/strategies**', async (route) => {
@@ -39,10 +27,6 @@ async function mockEvangelismRoutes(page: Page) {
         });
     });
 
-    // Module access check endpoints.
-    await page.route('**/api/auth/v3/me**', async (route) => {
-        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
-    });
 }
 
 // ----------------------------------------------------------------------------
@@ -106,20 +90,26 @@ test.describe('Evangelism — Rankings page', () => {
         await page.waitForLoadState('domcontentloaded');
 
         // Page header should always render in the protected shell.
-        await expect(page.locator('h1')).toContainText(/Rankings/i);
+        await expect(page.locator('h1')).toContainText(/Ranking de grupos/i);
+        await expect(page.locator('body')).toContainText(/Casa Bethel/i);
 
         // Tabs available.
-        await page.getByRole('button', { name: /Líderes/i }).click();
-        await page.getByRole('button', { name: /Mes a mes/i }).click();
-        await page.getByRole('button', { name: /Grupos/i }).click();
+        await page.getByRole('button', { name: /Crecimiento/i }).click();
+        await expect(page.locator('body')).toContainText(/18 actuales \(antes 12\)/i);
+        await page.getByRole('button', { name: /Visitantes/i }).click();
+        await expect(page.locator('body')).toContainText(/9 visitantes nuevos este mes/i);
+        await page.getByRole('button', { name: /Asistencia/i }).click();
+        await expect(page.locator('body')).toContainText(/22 presentes \/ 24 esperados/i);
     });
 
-    test('switches ranking by dropdown', async ({ page }) => {
+    test('filters rankings by strategy dropdown', async ({ page }) => {
         await page.goto('/plataforma/evangelism/rankings', { waitUntil: 'load' });
         await page.waitForLoadState('networkidle').catch(() => {});
         const select = page.locator('select').first();
-        await select.selectOption('growth');
-        await select.selectOption('visitors');
+        await select.selectOption('s-1');
+        await expect(select).toHaveValue('s-1');
+        await select.selectOption('s-2');
+        await expect(select).toHaveValue('s-2');
     });
 });
 
@@ -135,9 +125,9 @@ test.describe('Evangelism — Multiplication page', () => {
             const url = new URL(route.request().url());
             const umbral = Number(url.searchParams.get('umbral') || '15');
             const items = [
-                { grupo_id: 'g1', grupo_nombre: 'Casa Bethel', lider_nombre: 'Ana Pérez', total_miembros: 19, excede_umbral: true, sugerencia: 'Dividir en dos células' },
-                { grupo_id: 'g2', grupo_nombre: 'Los Pinos', lider_nombre: 'Luis Soto', total_miembros: 11, excede_umbral: 11 > umbral, sugerencia: 'Aún no alcanza el umbral' },
-                { grupo_id: 'g3', grupo_nombre: 'Renuevo', lider_nombre: null, total_miembros: 7, excede_umbral: 7 > umbral, sugerencia: 'Aún no alcanza el umbral' },
+                { grupo_id: 'g1', grupo_nombre: 'Casa Bethel', lider_nombre: 'Ana Pérez', total_personas: 19, excede_umbral: 19 > umbral, sugerencia: 'Dividir en dos células' },
+                { grupo_id: 'g2', grupo_nombre: 'Los Pinos', lider_nombre: 'Luis Soto', total_personas: 11, excede_umbral: 11 > umbral, sugerencia: 'Aún no alcanza el umbral' },
+                { grupo_id: 'g3', grupo_nombre: 'Renuevo', lider_nombre: null, total_personas: 7, excede_umbral: 7 > umbral, sugerencia: 'Aún no alcanza el umbral' },
             ];
             await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(items) });
         });
@@ -154,47 +144,62 @@ test.describe('Evangelism — Multiplication page', () => {
                         parent_group_nombre: 'Casa Bethel',
                         notes_historial: 'División del 2026-03-01',
                         created_at: '2026-03-01T10:00:00Z',
-                        miembros_actuales: 12,
+                        personas_actuales: 12,
                         lider_nombre: 'Ana Pérez',
                     },
                 ]),
             });
         });
 
-        await page.route('**/api/crm/personas**', async (route) => {
+        await page.route('**/api/evangelism/grupos/g1', async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
-                body: JSON.stringify([
-                    { id: 'p1', nombre_completo: 'Ana Pérez' },
-                    { id: 'p2', nombre_completo: 'Luis Soto' },
-                ]),
+                body: JSON.stringify({
+                    base_attendees: [
+                        { persona_id: 'p1', name: 'Ana Pérez' },
+                        { persona_id: 'p2', name: 'Luis Soto' },
+                    ],
+                }),
             });
         });
     });
 
-    test('renders overview metrics and switch between Analysis / History', async ({ page }) => {
+    test('renders overview metrics and both analysis/history sections', async ({ page }) => {
         await page.goto('/plataforma/evangelism/multiplication', { waitUntil: 'load' });
         await page.waitForLoadState('domcontentloaded');
 
-        await expect(page.locator('h1')).toContainText(/Multiplicación/i);
+        await expect(page.locator('h1')).toContainText(/Multiplicación de Grupos/i);
 
         // The "Listos para multiplicar" callout should appear for at least one group.
-        await expect(page.locator('text=/Listo/i').first()).toBeVisible({ timeout: 5000 }).catch(() => {});
-
-        // Switch to Historial tab.
-        await page.getByRole('button', { name: /Historial/i }).click();
-
-        // Back to Análisis tab.
-        await page.getByRole('button', { name: /Análisis/i }).click();
+        await expect(page.locator('body')).toContainText(/Listo para dividir/i);
+        await expect(page.locator('body')).toContainText(/Historial de Multiplicaciones/i);
     });
 
     test('changing the umbral updates the analysis panel', async ({ page }) => {
+        const requestedThresholds: number[] = [];
+
+        await page.route('**/api/evangelism/multiplication/check**', async (route) => {
+            const url = new URL(route.request().url());
+            const umbral = Number(url.searchParams.get('umbral') || '15');
+            requestedThresholds.push(umbral);
+            const items = [
+                { grupo_id: 'g1', grupo_nombre: 'Casa Bethel', lider_nombre: 'Ana Pérez', total_personas: 19, excede_umbral: 19 > umbral, sugerencia: 'Dividir en dos células' },
+                { grupo_id: 'g2', grupo_nombre: 'Los Pinos', lider_nombre: 'Luis Soto', total_personas: 11, excede_umbral: 11 > umbral, sugerencia: 'Aún no alcanza el umbral' },
+                { grupo_id: 'g3', grupo_nombre: 'Renuevo', lider_nombre: null, total_personas: 7, excede_umbral: 7 > umbral, sugerencia: 'Aún no alcanza el umbral' },
+            ];
+            await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(items) });
+        });
+
         await page.goto('/plataforma/evangelism/multiplication', { waitUntil: 'load' });
         await page.waitForLoadState('domcontentloaded');
 
         const select = page.locator('select').first();
         await select.selectOption('20');
+        await expect(select).toHaveValue('20');
+        await expect.poll(() => requestedThresholds.includes(20)).toBeTruthy();
         await select.selectOption('10');
+        await expect(select).toHaveValue('10');
+        await expect.poll(() => requestedThresholds.includes(10)).toBeTruthy();
     });
 });

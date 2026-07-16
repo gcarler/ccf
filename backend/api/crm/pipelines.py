@@ -567,7 +567,7 @@ def automations_flows(
 
 
 @router.post("/automations/flows/validate-path")
-def validate_path(payload: dict = None, db: Session = Depends(get_db)):
+def validate_path(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     """Ensures a path exists from start triggers to actions, validating its length (min 3 nodes)."""
     payload = payload or {}
     try:
@@ -609,7 +609,7 @@ def validate_path(payload: dict = None, db: Session = Depends(get_db)):
 
 
 @router.get("/automations/branching/variables")
-def branching_variables():
+def branching_variables(current_user=Depends(require_module_access("crm", "read"))):
     """Returns available model fields for condition evaluations."""
     return [
         {"name": "nombre", "type": "string", "label": "Nombre del Contacto"},
@@ -622,7 +622,7 @@ def branching_variables():
 
 
 @router.post("/automations/branching/traverse")
-def branching_traverse(payload: dict):
+def branching_traverse(payload: dict, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     """Simulates branching node traversal based on dynamic condition logic."""
     variables = payload.get("variables", {})
     conditions = payload.get("conditions", [])
@@ -639,7 +639,7 @@ def branching_traverse(payload: dict):
 
 
 @router.post("/automations/flows/check-cycles")
-def check_cycles(payload: dict = None, db: Session = Depends(get_db)):
+def check_cycles(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     """DFS-based cycle checker."""
     payload = payload or {}
     try:
@@ -651,7 +651,7 @@ def check_cycles(payload: dict = None, db: Session = Depends(get_db)):
 
 
 @router.post("/automations/flows/validate")
-def flows_validate(payload: dict = None, db: Session = Depends(get_db)):
+def flows_validate(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     try:
         nodes, edges = get_graph_from_payload_or_db(payload, db)
@@ -662,7 +662,7 @@ def flows_validate(payload: dict = None, db: Session = Depends(get_db)):
 
 
 @router.post("/automations/flows/validate-node")
-def validate_node(payload: dict = None, db: Session = Depends(get_db)):
+def validate_node(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     node_id = payload.get("node_id")
     try:
@@ -678,7 +678,7 @@ def validate_node(payload: dict = None, db: Session = Depends(get_db)):
 
 
 @router.post("/automations/validate-graph")
-def validate_graph(payload: dict = None, db: Session = Depends(get_db)):
+def validate_graph(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     try:
         nodes, edges = get_graph_from_payload_or_db(payload, db)
@@ -901,7 +901,7 @@ def drag_drop_invalid_stage(
 
 
 @router.post("/pipeline/kanban/drag-drop/missing-id")
-def drag_drop_missing_id(payload: dict):
+def drag_drop_missing_id(payload: dict, current_user=Depends(require_pastor_or_admin)):
     if "caso_id" not in payload or not payload["caso_id"]:
         raise HTTPException(status_code=400, detail="Missing ID")
     return {"status": "success"}
@@ -967,14 +967,14 @@ def drag_drop_recovery(
 
 
 @router.post("/automations/flows/empty")
-def flows_empty(payload: dict = None, db: Session = Depends(get_db)):
+def flows_empty(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, _ = get_graph_from_payload_or_db(payload, db)
     return {"status": "success", "message": "Flow is empty" if not nodes else "Flow is not empty"}
 
 
 @router.post("/automations/flows/max-nodes-check")
-def flows_max_nodes_check(payload: dict = None, db: Session = Depends(get_db)):
+def flows_max_nodes_check(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, _ = get_graph_from_payload_or_db(payload, db)
     if len(nodes) > 100:
@@ -983,7 +983,7 @@ def flows_max_nodes_check(payload: dict = None, db: Session = Depends(get_db)):
 
 
 @router.post("/automations/flows/disconnected-nodes")
-def flows_disconnected_nodes(payload: dict = None, db: Session = Depends(get_db)):
+def flows_disconnected_nodes(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     if not nodes:
@@ -997,7 +997,7 @@ def flows_disconnected_nodes(payload: dict = None, db: Session = Depends(get_db)
 
 
 @router.post("/automations/flows/validate-types")
-def flows_validate_types(payload: dict = None):
+def flows_validate_types(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes = payload.get("nodes", [])
     valid_types = {
@@ -1021,12 +1021,12 @@ def flows_validate_types(payload: dict = None):
 
 
 @router.post("/automations/flows/unicode")
-def flows_unicode(payload: dict = None):
+def flows_unicode(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
     return {"status": "success"}
 
 
 @router.post("/automations/flows/validate-path-length")
-def validate_path_length_api(payload: dict = None, db: Session = Depends(get_db)):
+def validate_path_length_api(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes_count = payload.get("nodes_count")
     if nodes_count is not None and nodes_count < 3:
@@ -1038,7 +1038,7 @@ def validate_path_length_api(payload: dict = None, db: Session = Depends(get_db)
 
 
 @router.post("/automations/flows/validate-multiple-inputs")
-def validate_multiple_inputs(payload: dict = None, db: Session = Depends(get_db)):
+def validate_multiple_inputs(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     in_degree = {n: 0 for n in nodes}
@@ -1051,7 +1051,7 @@ def validate_multiple_inputs(payload: dict = None, db: Session = Depends(get_db)
 
 
 @router.post("/automations/flows/validate-multiple-outputs")
-def validate_multiple_outputs(payload: dict = None, db: Session = Depends(get_db)):
+def validate_multiple_outputs(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     out_degree = {n: 0 for n in nodes}
@@ -1064,7 +1064,7 @@ def validate_multiple_outputs(payload: dict = None, db: Session = Depends(get_db
 
 
 @router.post("/automations/flows/clean-orphans")
-def clean_orphans(payload: dict = None, db: Session = Depends(get_db)):
+def clean_orphans(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     node_set = set(nodes)
@@ -1073,7 +1073,7 @@ def clean_orphans(payload: dict = None, db: Session = Depends(get_db)):
 
 
 @router.post("/automations/flows/cross-flow-check")
-def cross_flow_check(payload: dict = None, db: Session = Depends(get_db)):
+def cross_flow_check(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     flow_id = payload.get("flow_id")
     edges = payload.get("edges", [])
@@ -1097,7 +1097,7 @@ def cross_flow_check(payload: dict = None, db: Session = Depends(get_db)):
 
 
 @router.post("/automations/branching/null-vars")
-def branching_null_vars(payload: dict = None):
+def branching_null_vars(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     variables = payload.get("variables", {})
     null_vars = [k for k, v in variables.items() if v is None]
@@ -1105,7 +1105,7 @@ def branching_null_vars(payload: dict = None):
 
 
 @router.post("/automations/branching/type-mismatch")
-def branching_type_mismatch(payload: dict = None):
+def branching_type_mismatch(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     variables = payload.get("variables", {})
     conditions = payload.get("conditions", [])
@@ -1128,7 +1128,7 @@ def branching_type_mismatch(payload: dict = None):
 
 
 @router.post("/automations/branching/missing-else")
-def branching_missing_else(payload: dict = None):
+def branching_missing_else(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     branch_node_id = payload.get("node_id")
     edges = payload.get("edges", [])
@@ -1141,7 +1141,7 @@ def branching_missing_else(payload: dict = None):
 
 
 @router.post("/automations/branching/infinite-nesting")
-def branching_infinite_nesting(payload: dict = None):
+def branching_infinite_nesting(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes = payload.get("nodes", [])
     edges = payload.get("edges", [])
@@ -1176,7 +1176,7 @@ def branching_infinite_nesting(payload: dict = None):
 
 
 @router.post("/automations/branching/unexpected-op")
-def branching_unexpected_op(payload: dict = None):
+def branching_unexpected_op(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     conditions = payload.get("conditions", [])
     valid_ops = {"equals", "ne", "contains", "starts_with", "in", "gt", "lt", "always"}
@@ -1188,22 +1188,22 @@ def branching_unexpected_op(payload: dict = None):
 
 
 @router.post("/automations/flows/cycle-deep")
-def cycle_deep(payload: dict = None, db: Session = Depends(get_db)):
+def cycle_deep(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     return check_cycles(payload, db)
 
 
 @router.post("/automations/flows/multiple-cycles")
-def multiple_cycles(payload: dict = None, db: Session = Depends(get_db)):
+def multiple_cycles(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     return check_cycles(payload, db)
 
 
 @router.post("/automations/flows/disconnected-subgraph-cycles")
-def disconnected_subgraph_cycles(payload: dict = None, db: Session = Depends(get_db)):
+def disconnected_subgraph_cycles(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     return check_cycles(payload, db)
 
 
 @router.post("/automations/flows/validate-complex-dag")
-def validate_complex_dag(payload: dict = None, db: Session = Depends(get_db)):
+def validate_complex_dag(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
@@ -1211,7 +1211,7 @@ def validate_complex_dag(payload: dict = None, db: Session = Depends(get_db)):
 
 
 @router.post("/automations/flows/concurrent-cycle-checks")
-def concurrent_cycle_checks(payload: dict = None, db: Session = Depends(get_db)):
+def concurrent_cycle_checks(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     return validate_complex_dag(payload, db)
 
 
@@ -1259,7 +1259,7 @@ def flow_builder_three_node_render(
 
 
 @router.post("/automations/branching/validate-cycles")
-def branching_validate_cycles(payload: dict = None, db: Session = Depends(get_db)):
+def branching_validate_cycles(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
@@ -1317,7 +1317,7 @@ def branching_three_node_traversal(
 
 
 @router.post("/pipeline/kanban/drag-drop/validate-cycles")
-def drag_drop_validate_cycles(payload: dict = None, db: Session = Depends(get_db)):
+def drag_drop_validate_cycles(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_pastor_or_admin)):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)

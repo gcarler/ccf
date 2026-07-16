@@ -67,6 +67,23 @@ def run_command(label: str, cmd: list[str], cwd: Path | None = None) -> bool:
     return False
 
 
+def require_e2e_env() -> None:
+    required = {
+        "E2E_EMAIL": os.getenv("E2E_EMAIL", "").strip(),
+        "E2E_PASSWORD": os.getenv("E2E_PASSWORD", "").strip(),
+    }
+    api_url = os.getenv("E2E_API_URL", "").strip() or os.getenv("API_BASE_URL", "").strip()
+    if not api_url:
+        required["E2E_API_URL_or_API_BASE_URL"] = ""
+    missing = [key for key, value in required.items() if not value]
+    if missing:
+        raise RuntimeError(
+            "Faltan variables E2E para CMS quality: "
+            + ", ".join(missing)
+            + ". Define E2E_EMAIL, E2E_PASSWORD y E2E_API_URL o API_BASE_URL."
+        )
+
+
 def main() -> int:
     section("CMS QUALITY")
     info(f"Proyecto: {PROJECT_ROOT}")
@@ -94,9 +111,23 @@ def main() -> int:
         cwd=PROJECT_ROOT / "frontend",
     )
 
+    require_e2e_env()
+
+    frontend_e2e_ok = run_command(
+        "3. Frontend CMS E2E",
+        ["npm", "run", "test:e2e:cms"],
+        cwd=PROJECT_ROOT / "frontend",
+    )
+
+    public_contract_ok = run_command(
+        "4. Frontend CMS public contract",
+        ["npm", "run", "test:e2e:cms:public"],
+        cwd=PROJECT_ROOT / "frontend",
+    )
+
     section("RESUMEN")
     total = PASS + FAIL
-    if backend_ok and frontend_ok:
+    if backend_ok and frontend_ok and frontend_e2e_ok and public_contract_ok:
         print(f"  {GREEN}RESUMEN: {PASS} passed, {FAIL} failed, {total} total suites{NC}")
         return 0
 

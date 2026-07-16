@@ -40,7 +40,7 @@ function ResetPasswordContent() {
         setError(null);
         setMessage(null);
         try {
-            await apiFetch('/auth/reset-password', {
+            await apiFetch('/v3/auth/reset-password', {
                 method: 'POST',
                 body: { token, password },
             });
@@ -115,4 +115,3 @@ export default function ResetPasswordPage() {
         </Suspense>
     );
 }
-

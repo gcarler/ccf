@@ -8,7 +8,7 @@ Validates HTTP status codes, JSON contracts, and database state.
 """
 import pytest
 
-from tests.conftest import auth_headers, seed_admin
+from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # FIXTURES
@@ -557,3 +557,23 @@ class TestCrudLifecycle:
         del_resp = client.delete(f"/api/cms/v2/custom-entries/{entry_id}", headers=headers)
         assert del_resp.status_code == 200
         assert del_resp.json()["status"] == "archived"
+
+
+class TestEnterpriseAuthorization:
+    def test_lector_cannot_access_enterprise_cms(self, client, db_session):
+        seed_user_with_role(db_session, role_name="lector", email="enterprise-lector@example.com")
+        headers = auth_headers(client, email="enterprise-lector@example.com", password="testpass123")
+
+        read_resp = client.get("/api/cms/v2/audit-logs", headers=headers)
+        assert read_resp.status_code == 403
+
+        write_resp = client.post(
+            "/api/cms/v2/webhooks",
+            headers=headers,
+            json={
+                "site_key": "faro",
+                "name": "Blocked Hook",
+                "url": "https://example.com/webhook",
+            },
+        )
+        assert write_resp.status_code == 403

@@ -118,10 +118,26 @@ La UI principal consume además:
 |---|---|
 | `GET` | `/dashboard/academy` |
 
-Pendiente:
+Shape operativa actual:
 
-- consolidar contrato operativo del dashboard frontend
-- ID: `PARCIAL-DASHBOARD-CONTRACT-ACADEMY-001`
+- `cards: MetricCard[]`
+- `enrollment_trends: ChartDataPoint[]`
+- `top_courses: {title: str, count: int}[]`
+- `grade_distribution: ChartDataPoint[]`
+- `at_risk_students_count: int`
+- `filters?: DashboardFilter[]`
+- `geo_data?: GeoBucket[]`
+- `last_updated?: iso datetime`
+
+Reglas:
+
+- el endpoint real vive en `/api/dashboard/academy`, no bajo `/api/academy`
+- `AcademyClient.tsx` consume `cards`, `enrollment_trends` y `top_courses`; cambios de shape deben pasar por `AcademyDashboard`
+- `/api/academy/dashboard/metrics` y `/api/academy/dashboard/pilot-readiness` siguen siendo endpoints internos del módulo Academy, no sustituyen el contrato del dashboard visual raíz
+
+Estado:
+
+- `PARCIAL-DASHBOARD-CONTRACT-ACADEMY-001` queda documentada el `2026-07-16`; el contrato visual ya no depende de supuestos implícitos
 
 ## 8. Admin Academy
 

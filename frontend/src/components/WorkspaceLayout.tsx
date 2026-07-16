@@ -7,6 +7,7 @@ import ThemeToggle from '@/components/ui/ThemeToggle';
 import Tooltip from '@/components/ui/Tooltip';
 import UniversalCreationDrawer from '@/components/ui/UniversalCreationDrawer';
 import WorkspaceInbox from '@/components/WorkspaceInbox';
+import type { NavSection } from '@/components/WorkspaceMainSidebar';
 import WorkspaceMainSidebar from '@/components/WorkspaceMainSidebar';
 import WorkspaceMiniSidebar from '@/components/WorkspaceMiniSidebar';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
@@ -14,6 +15,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { useCreation } from '@/context/CreationContext';
 import clsx from 'clsx';
+import { filterWorkspaceSectionsByAccess } from '@/lib/workspaceAccess';
 import { SITE_NAME } from '@/lib/site-config';
 import { AnimatePresence,motion } from 'framer-motion';
 import { Bell,Bot,ChevronLeft,ChevronRight,LayoutPanelLeft,LogOut,Maximize2,Menu,Minimize2,Settings,User } from 'lucide-react';
@@ -23,16 +25,6 @@ import React,{ useCallback,useEffect,useMemo,useRef,useState } from 'react';
 // â”€â”€ Layer Context (importamos el provider aquÃ­) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 import { MODULE_CONFIGS } from '@/components/workspace/moduleConfigs';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
-
-const MODULE_PATH_PERM_MAP: Record<string, string> = {
-    '/plataforma/evangelism': 'evangelism',
-    '/plataforma/crm': 'crm',
-    '/plataforma/finances': 'finance',
-    '/plataforma/cms': 'cms',
-    '/plataforma/community': 'community',
-    '/plataforma/spiritual-life': 'spiritual_life',
-    '/plataforma/wiki': 'cms',
-};
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PUBLIC API: WorkspaceLayout wraps children with the layer provider
@@ -74,7 +66,7 @@ function WorkspaceLayoutInner({
     breadcrumbs, viewType, setViewType, availableViews,
     rightActions, leftActions, onSearch, onFilter, onColumns, onGroup, onMore, onAdd, onAddOption
 }: any) {
-    const { user, hasModuleAccess, logout } = useAuth();
+    const { user, hasModuleAccess, hasPermission, logout } = useAuth();
     const pathname = usePathname();
     const moduleKey = pathname?.split('/')[2] || 'default';
     const [showInbox, setShowInbox] = useState(false);
@@ -168,26 +160,10 @@ function WorkspaceLayoutInner({
     }, [pathname]);
 
     const displayTitle = manualTitle || moduleContext.title;
-    const displaySections = manualSections || moduleContext.sections;
+    const displaySections = (manualSections || moduleContext.sections) as NavSection[] | undefined;
     const filteredDisplaySections = useMemo(() => {
-        if (!Array.isArray(displaySections)) return displaySections;
-        return displaySections
-            .map((section: any) => ({
-                ...section,
-                items: Array.isArray(section?.items)
-                    ? section.items.filter((item: any) => {
-                        const href = String(item?.href || '');
-                        for (const [prefix, permModule] of Object.entries(MODULE_PATH_PERM_MAP)) {
-                            if (href.startsWith(prefix)) {
-                                return hasModuleAccess(permModule, 'read');
-                            }
-                        }
-                        return true;
-                    })
-                    : section?.items,
-            }))
-            .filter((section: any) => !Array.isArray(section?.items) || section.items.length > 0);
-    }, [displaySections, hasModuleAccess]);
+        return filterWorkspaceSectionsByAccess(displaySections, { hasModuleAccess, hasPermission });
+    }, [displaySections, hasModuleAccess, hasPermission]);
 
     const cycleS2 = useCallback(() => {
         if (layers.S2) closeLayer('S2');

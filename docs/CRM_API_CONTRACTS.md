@@ -162,10 +162,27 @@ La UI principal `frontend/src/app/plataforma/crm/CRMClient.tsx` consume:
 
 - `GET /dashboard/crm`
 
-Pendiente:
+Shape operativa actual:
 
-- Documentar shape exacta de `cards`, `growth_chart` y `pipeline_distribution`
-- ID: `PEND-DASHBOARD-CONTRACT-001`
+- `cards: MetricCard[]`
+- `pipeline_funnel: FunnelStage[]`
+- `growth_chart: ChartDataPoint[]`
+- `interaction_heatmap: HeatmapItem[]`
+- `conversion_rate: float`
+- `pending_followups: int`
+- `slas_vencidos: int`
+- `filters?: DashboardFilter[]`
+- `last_updated?: iso datetime`
+
+Reglas:
+
+- el endpoint real vive en `/api/dashboard/crm`, no bajo `/api/crm`
+- `CRMClient.tsx` hoy solo usa `cards` y `growth_chart`; cualquier expansión debe respetar la shape `CrmDashboard`
+- `pipeline_funnel` es el nombre canónico; si la UI quiere mostrar otra distribución, debe derivarla de este contrato o acordar un nuevo campo compartido
+
+Estado:
+
+- `PEND-DASHBOARD-CONTRACT-001` queda cerrada el `2026-07-16`
 
 ## 10. Códigos esperados
 

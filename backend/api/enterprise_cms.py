@@ -15,7 +15,7 @@ from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
-from backend.core.permissions import get_current_user
+from backend.core.permissions import require_permission
 from backend.models_enterprise import (
     AuditLog,
     BrokenLinkCheck,
@@ -36,6 +36,8 @@ from backend.models_enterprise import (
 from backend.models_identity import User
 
 router = APIRouter(prefix="/cms/v2", tags=["Enterprise CMS"])
+require_cms_read = require_permission("cms:read")
+require_cms_manage = require_permission("cms:manage")
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -147,7 +149,7 @@ def list_audit_logs(
     limit: int = Query(50, le=200),
     offset: int = 0,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     q = db.query(AuditLog)
     if site_key:
@@ -194,7 +196,7 @@ def create_content_permission(
     body: ContentPermCreate,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     perm = ContentPermission(
         site_key=body.site_key, entity_type=body.entity_type,
@@ -217,7 +219,7 @@ def list_content_permissions(
     entity_type: str | None = None,
     entity_id: str | None = None,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     q = db.query(ContentPermission).filter(
         ContentPermission.site_key == site_key,
@@ -243,7 +245,7 @@ def delete_content_permission(
     perm_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     perm = db.query(ContentPermission).filter(ContentPermission.id == perm_id).first()
     if not perm:
@@ -265,7 +267,7 @@ def list_notifications(
     limit: int = Query(30, le=100),
     offset: int = 0,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     persona_id = getattr(user, "persona_id", None)
     if not persona_id:
@@ -297,7 +299,7 @@ def list_notifications(
 def mark_notification_read(
     notif_id: str,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     notif = db.query(CmsNotification).filter(CmsNotification.id == notif_id).first()
     if not notif:
@@ -311,7 +313,7 @@ def mark_notification_read(
 @router.post("/notifications/read-all")
 def mark_all_notifications_read(
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     persona_id = getattr(user, "persona_id", None)
     if not persona_id:
@@ -341,7 +343,7 @@ def create_webhook(
     body: WebhookCreate,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     hook = Webhook(
         site_key=body.site_key, name=body.name, url=body.url,
@@ -360,7 +362,7 @@ def create_webhook(
 def list_webhooks(
     site_key: str,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     hooks = db.query(Webhook).filter(
         Webhook.site_key == site_key,
@@ -390,7 +392,7 @@ def update_webhook(
     body: WebhookUpdate,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     hook = db.query(Webhook).filter(Webhook.id == hook_id).first()
     if not hook:
@@ -420,7 +422,7 @@ def delete_webhook(
     hook_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     hook = db.query(Webhook).filter(Webhook.id == hook_id).first()
     if not hook:
@@ -438,7 +440,7 @@ def list_webhook_deliveries(
     hook_id: str,
     limit: int = Query(20, le=100),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     deliveries = db.query(WebhookDelivery).filter(
         WebhookDelivery.webhook_id == hook_id
@@ -473,7 +475,7 @@ def create_custom_type(
     body: CustomTypeCreate,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     existing = db.query(CmsCustomType).filter(
         CmsCustomType.site_key == body.site_key,
@@ -499,7 +501,7 @@ def create_custom_type(
 def list_custom_types(
     site_key: str,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     types = db.query(CmsCustomType).filter(
         CmsCustomType.site_key == site_key,
@@ -538,7 +540,7 @@ def create_custom_entry(
     body: CustomEntryCreate,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     entry = CmsCustomEntry(
         site_key=body.site_key, type_key=body.type_key,
@@ -576,7 +578,7 @@ def list_custom_entries(
     limit: int = Query(30, le=100),
     offset: int = 0,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     q = db.query(CmsCustomEntry).filter(
         CmsCustomEntry.site_key == site_key,
@@ -610,7 +612,7 @@ def list_custom_entries(
 def get_custom_entry(
     entry_id: str,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     entry = db.query(CmsCustomEntry).filter(CmsCustomEntry.id == entry_id).first()
     if not entry:
@@ -640,7 +642,7 @@ def update_custom_entry(
     status: str | None = None,
     fields_json: dict | None = None,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     entry = db.query(CmsCustomEntry).filter(CmsCustomEntry.id == entry_id).first()
     if not entry:
@@ -677,7 +679,7 @@ def delete_custom_entry(
     entry_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     entry = db.query(CmsCustomEntry).filter(CmsCustomEntry.id == entry_id).first()
     if not entry:
@@ -695,7 +697,7 @@ def delete_custom_entry(
 def list_entry_versions(
     entry_id: str,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     versions = db.query(CmsCustomEntryVersion).filter(
         CmsCustomEntryVersion.entry_id == entry_id
@@ -716,7 +718,7 @@ def rollback_entry_version(
     version_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     entry = db.query(CmsCustomEntry).filter(CmsCustomEntry.id == entry_id).first()
     version = db.query(CmsCustomEntryVersion).filter(CmsCustomEntryVersion.id == version_id).first()
@@ -761,7 +763,7 @@ def create_glossary_term(
     body: GlossaryTermCreate,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     t = CmsGlossaryTerm(
         site_key=body.site_key, term=body.term, definition=body.definition,
@@ -782,7 +784,7 @@ def list_glossary_terms(
     search: str | None = None,
     category: str | None = None,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     q = db.query(CmsGlossaryTerm).filter(
         CmsGlossaryTerm.site_key == site_key,
@@ -825,7 +827,7 @@ def search_content_get(
     category: str | None = None,
     limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     return search_content(
         SearchRequest(
@@ -844,7 +846,7 @@ def search_content_get(
 def search_content(
     body: SearchRequest,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     q = db.query(SearchIndex).filter(
         SearchIndex.site_key == body.site_key,
@@ -898,7 +900,7 @@ class SearchPromotionCreate(BaseModel):
 def list_search_promotions(
     site_key: str = Query(default="ccf"),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     rows = (
         db.query(SearchPromotion)
@@ -926,7 +928,7 @@ def create_search_promotion(
     body: SearchPromotionCreate,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     promo = SearchPromotion(
         site_key=body.site_key, query_text=body.query_text,
@@ -950,7 +952,7 @@ def create_search_promotion(
 @router.get("/sessions")
 def list_user_sessions(
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     persona_id = getattr(user, "persona_id", None)
     if not persona_id:
@@ -974,7 +976,7 @@ def list_user_sessions(
 def revoke_session(
     session_id: str,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     session = db.query(UserSession).filter(UserSession.id == session_id).first()
     if not session:
@@ -991,7 +993,7 @@ def revoke_session(
 @router.post("/sessions/revoke-all")
 def revoke_all_sessions(
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     persona_id = getattr(user, "persona_id", None)
     if not persona_id:
@@ -1020,7 +1022,7 @@ def create_media_folder(
     body: MediaFolderCreate,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     path = f"/{body.slug}/"
     if body.parent_id:
@@ -1045,7 +1047,7 @@ def list_media_folders(
     site_key: str,
     parent_id: str | None = None,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     q = db.query(MediaFolder).filter(MediaFolder.site_key == site_key)
     if parent_id:
@@ -1076,7 +1078,7 @@ def create_redirect(
     body: RedirectCreate,
     request: Request,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     redir = CmsRedirect(
         site_key=body.site_key, from_path=body.from_path,
@@ -1095,7 +1097,7 @@ def create_redirect(
 def list_redirects(
     site_key: str,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     redirs = db.query(CmsRedirect).filter(
         CmsRedirect.site_key == site_key,
@@ -1112,7 +1114,7 @@ def list_redirects(
 def delete_redirect(
     redirect_id: str,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     redir = db.query(CmsRedirect).filter(CmsRedirect.id == redirect_id).first()
     if not redir:
@@ -1132,7 +1134,7 @@ def list_broken_links(
     resolved: bool | None = None,
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_read),
 ):
     q = db.query(BrokenLinkCheck).filter(BrokenLinkCheck.site_key == site_key)
     if resolved is not None:
@@ -1157,7 +1159,7 @@ def list_broken_links(
 def resolve_broken_link(
     check_id: str,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_cms_manage),
 ):
     check = db.query(BrokenLinkCheck).filter(BrokenLinkCheck.id == check_id).first()
     if not check:

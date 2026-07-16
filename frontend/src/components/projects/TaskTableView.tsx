@@ -1,6 +1,7 @@
 
 "use client";
 
+import '@/lib/agGrid';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { DEFAULT_TASK_PRIORITY } from '@/lib/projects/constants';
@@ -9,11 +10,10 @@ import { InlineStatusPicker, InlinePriorityPicker, InlineDatePicker, InlineUserP
 import { useProjectTasks } from '@/hooks/useProjectTasks';
 import * as Popover from '@radix-ui/react-popover';
 import {
-AllCommunityModule,
 ColDef,
 GetRowIdParams,
 ICellRendererParams,
-ModuleRegistry,themeQuartz,
+themeQuartz,
 } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import clsx from 'clsx';
@@ -30,8 +30,6 @@ X
 } from 'lucide-react';
 import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import TitleCellEditor from './TitleCellEditor';
-
-ModuleRegistry.registerModules([AllCommunityModule]);
 
 // ─── Status / Priority configs ─────────────────────────────────────────────────
 const STATUS_OPTIONS = [

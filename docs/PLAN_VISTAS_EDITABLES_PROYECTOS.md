@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Dejar documentado, con base en el código real, qué vistas del módulo de proyectos ya son editables, cuáles siguen parciales y qué falta para cerrar el contrato funcional sin introducir regresiones.
+Dejar documentado, con base en el código real, qué vistas del modulo de proyectos quedaron editables y cerradas tras la ejecucion del plan original, y que deuda tecnica transversal sigue viva fuera de ese plan.
 
 ## Criterio de estado
 
@@ -22,12 +22,15 @@ Dejar documentado, con base en el código real, qué vistas del módulo de proye
 - `ProjectEditForm` no es el refactor real; el componente vigente es `ProjectSettingsDrawer`.
 - `ProjectWikiEditor`, `ProjectChatPanel`, `ProjectListView`, `TaskTableView`, `ProjectCalendarView`, `ProjectMasterView` y `ProjectKanbanBoard` son los nombres reales que usa la app.
 
-## Prioridad de Ejecución
+## Estado del plan
 
-1. Cerrar las piezas que ya están hechas pero son base compartida.
-2. Completar las vistas que ya editan datos, pero aún tienen huecos de contrato.
-3. Resolver las interacciones que siguen pendientes de la experiencia principal.
-4. Revalidar backend, permisos y pruebas antes de dar el flujo por cerrado.
+- El plan original de vistas editables quedo cerrado el `2026-07-16`.
+- Las cuatro piezas inicialmente marcadas como `Parcial` ya fueron resueltas en codigo y revalidadas.
+- Las piezas transversales que estaban en `Pendiente` para poder dar el modulo por cerrado tambien quedaron cubiertas.
+- Los documentos complementarios vigentes para retomar el modulo ahora son:
+  - `docs/ESTADO_PROYECTOS.md`
+  - `docs/PROJECTS_API_CONTRACTS.md`
+  - `docs/PROJECTS_QA_CHECKLIST.md`
 
 ## Hecho
 
@@ -46,29 +49,28 @@ Dejar documentado, con base en el código real, qué vistas del módulo de proye
 | P1 | `frontend/src/components/projects/TaskTableView.tsx` | Hecho | Tabla editable con editores inline, agrupación, filtros y apertura de detalle por doble clic. |
 | P1 | `frontend/src/components/projects/ProjectKanbanBoard.tsx` + `frontend/src/components/projects/KanbanColumn.tsx` + `frontend/src/components/projects/SortableTaskCard.tsx` | Hecho | Drag & drop persistente, edición inline de título, fecha, prioridad y asignado, más menú de acción. |
 | P1 | `frontend/src/components/projects/ProjectCalendarView.tsx` + `frontend/src/components/ui/UniversalCalendarView.tsx` | Hecho | Click en día vacío abre creación con `due_date` prellenada, click en evento abre detalle y el arrastre de eventos reubica fechas. |
+| P0 | `frontend/src/components/projects/ProjectListView.tsx` | Hecho | Convergencia con `useProjectTasks`, mutex estricto de mutaciones y sync hacia consumidores hermanos. |
+| P1 | `frontend/src/components/projects/ProjectMasterView.tsx` | Hecho | Edicion inline de hitos y nodos operativos desde la misma vista, usando el contexto compartido. |
+| P1 | `frontend/src/components/projects/PhaseManagerDrawer.tsx` | Hecho | Fuente unica de fases con validacion reforzada y bloqueo de tareas huerfanas antes de guardar. |
+| P2 | `frontend/src/app/plataforma/projects/[id]/page.tsx` + `frontend/src/hooks/useProjectPageData.ts` + `frontend/src/components/projects/ProjectViewsContent.tsx` | Hecho | Orquestacion simplificada, menos prop drilling y separacion clara entre datos, vistas y shell. |
+| P2 | `backend/schemas/projects.py` + `frontend/src/lib/projects/constants.ts` | Hecho | Normalizacion de `ProjectStatus` y centralizacion de labels/tipos del estado del proyecto. |
+| P2 | `tests/test_projects_rbac.py` | Hecho | Matriz RBAC parametrica que documenta baseline actual, gaps y jerarquia `manage -> edit -> read`. |
+| P2 | `frontend/src/lib/__tests__/projects-views-integration.test.tsx` | Hecho | Suite de integracion cross-view para verificar propagacion de mutaciones via `ProjectUpdateProvider`. |
+| P2 | `backend/api/projects.py` + `docs/PROJECTS_API_CONTRACTS.md` | Hecho | Contrato funcional y documental de `/projects/inbox` y sus permisos asociados. |
 
-## Parcial
+## Backlog original
 
-| Prioridad | Componente | Estado real | Qué está listo | Qué falta |
-|-----------|------------|-------------|----------------|-----------|
-| P0 | `frontend/src/components/projects/ProjectListView.tsx` | Parcial | Ya persiste cambios de estado, prioridad, fecha y asignado; quick-add funcional. | Reducir la dependencia de `localOverrides` y converger con el flujo compartido del hook. |
-| P1 | `frontend/src/components/projects/ProjectMasterView.tsx` | Parcial | Título, descripción, estado y responsable ya son editables. | Falta hacer editables los nodos operativos y los hitos desde la misma vista. |
-| P1 | `frontend/src/components/projects/PhaseManagerDrawer.tsx` | Parcial | La gestión de fases ya está conectada al contexto. | Falta cerrar el contrato de edición/validación si se quiere usar como fuente única de fases. |
-| P2 | `frontend/src/app/plataforma/projects/[id]/page.tsx` | Parcial | La página ya orquesta vistas, drawers y contexto de actualización. | Sigue teniendo lógica de coordinación extensa y se beneficia de simplificación posterior. |
+- No quedan items activos del plan original de vistas editables.
+- Cualquier trabajo nuevo debe abrirse con un ID nuevo en `ESTADO_PROYECTOS.md`.
+- Las deudas que siguen vivas ya no pertenecen a este plan; pertenecen a arquitectura, RBAC de plataforma o mejoras futuras.
 
-## Pendientes de cierre
+## Backlog nuevo post-cierre
 
-- Reducción del estado local redundante en `ProjectListView`.
-- Edición de nodos operativos e hitos en `ProjectMasterView`.
-- Revalidación del backend de proyectos para permisos, contratos `PATCH/DELETE` y normalización de estados.
-- Cierre de pruebas de integración entre lista, tabla, kanban, calendario y detalle.
-
-## Orden operativo recomendado
-
-1. Consolidar `ProjectListView` para reducir el estado local redundante.
-2. Terminar `ProjectMasterView` con edición de nodos operativos e hitos.
-3. Cerrar `PhaseManagerDrawer` si se quiere usar como fuente única de fases.
-4. Revalidar backend, permisos y pruebas de integración.
+- `PEND-QUALITY-TASK-CREATE-001` — bloquear tareas con titulo vacio creadas desde la vista `list`, cerrando frontend, backend y pruebas.
+- `PEND-QUALITY-PHASE-SYNC-001` — evitar que `phases` quede stale cuando el API responde `[]` en el detalle de proyecto.
+- `PEND-QUALITY-INBOX-SCOPE-001` — endurecer `/projects/inbox` y `/projects/inbox/{item_id}/read` frente a soft delete, ownership e ids arbitrarios.
+- `PEND-QUALITY-RBAC-ASYMMETRY-001` — decidir y cerrar la asimetria entre `PATCH /projects/{id}` y `DELETE /projects/{id}`.
+- El detalle vivo de estos items debe mantenerse en `ESTADO_PROYECTOS.md`.
 
 ## Verificación mínima
 
@@ -77,10 +79,11 @@ Dejar documentado, con base en el código real, qué vistas del módulo de proye
 - `useProjectTasks` cubierto por tests.
 - Flujo manual probado entre `list`, `table`, `board`, `calendar` y `gantt`.
 - No introducir cambios que alteren el contrato de navegación o las rutas públicas del módulo.
+- Smoke canónico del modulo pasando con `scripts/test_projects_quality.py`.
+- Contratos API y QA complementaria delegados a `PROJECTS_API_CONTRACTS.md` y `PROJECTS_QA_CHECKLIST.md`.
 
 ## Resumen operativo
 
-- El bloque base ya está hecho.
-- Las vistas más cercanas a terminar son `ProjectListView`, `ProjectMasterView`, `PhaseManagerDrawer` y la coordinación general de `page.tsx`.
-- El trabajo pendiente real está concentrado en la reducción del estado local redundante y en el cierre del contrato entre frontend, backend y pruebas.
-- Este documento sirve como referencia de ejecución y de auditoría, no como checklist ornamental.
+- El bloque base y el backlog original quedaron cerrados.
+- Este documento ya no funciona como lista de pendientes; funciona como acta de cierre del plan de vistas editables.
+- El estado vivo del modulo y el backlog nuevo post-cierre deben seguirse en `ESTADO_PROYECTOS.md`.

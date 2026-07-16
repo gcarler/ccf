@@ -91,7 +91,7 @@ export default function CRMClient() {
                                 <div>
                                     <DSCard>
                                         <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Distribución por Rol</h3>
-                                        <DSChart type="bar" data={dashboard?.pipeline_distribution} color="#3b82f6" height={220} />
+                                        <DSChart type="bar" data={dashboard?.pipeline_funnel} color="#3b82f6" height={220} />
                                     </DSCard>
                                 </div>
                             </div>

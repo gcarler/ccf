@@ -17,7 +17,7 @@ import ProjectWikiEditor from '@/components/projects/ProjectWikiEditor';
 import ProjectChatPanel from '@/components/projects/ProjectChatPanel';
 import { ProjectKanbanBoard } from '@/components/projects/ProjectKanbanBoard';
 import { ProjectMasterView } from '@/components/projects/ProjectMasterView';
-import { ProjectActivityFeed } from '@/components/projects/ProjectActivityFeed';
+import ProjectActivityFeed from '@/components/projects/ProjectActivityFeed';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectTaskRecord } from '@/types/projects';
 
@@ -123,13 +123,15 @@ export function ProjectViewsContent({
 
             {viewType === 'calendar' && (
                 <div className="h-[720px]">
-                    <ProjectCalendarView
-                        projectId={project?.id}
-                        projectTitle={project?.title}
-                        tasks={tasks}
-                        onOpenTask={onOpenTask}
-                        onCreateTask={createTask}
-                    />
+                    {project?.id ? (
+                        <ProjectCalendarView
+                            projectId={project.id}
+                            projectTitle={project?.title}
+                            tasks={tasks}
+                            onOpenTask={onOpenTask}
+                            onCreateTask={createTask}
+                        />
+                    ) : null}
                 </div>
             )}
 
@@ -148,11 +150,11 @@ export function ProjectViewsContent({
             )}
 
             {viewType === 'wiki' && (
-                <ProjectWikiEditor project_id={project?.id} />
+                project?.id ? <ProjectWikiEditor project_id={project.id} /> : null
             )}
 
             {viewType === 'chat' && (
-                <ProjectChatPanel projectId={project?.id} />
+                project?.id ? <ProjectChatPanel projectId={project.id} /> : null
             )}
 
             {/* Hide suppress unused-imports tooltips; Calendar/PencilRuler etc. are

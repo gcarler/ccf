@@ -10,6 +10,28 @@ import type {
 } from '../../types';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import dynamic from 'next/dynamic';
+import {
+ AttendancePersona,
+ AttendanceSaveResult,
+ CustomRole,
+ customRoleValue,
+ FALLBACK_MEMBER_ROLES,
+ FollowUpRecord,
+ formatLocalDate,
+ isAssistantLeaderRole,
+ isPrimaryLeaderRole,
+ ROLE_COLORS,
+ roleMatches,
+ SessionRow,
+ STATUS_COLORS,
+ STATUS_LABELS,
+ Strategy,
+ StrategyGroup,
+ TABS,
+ TabId,
+ TYPOLOGY_COLORS,
+ TYPOLOGY_LABELS,
+} from './strategyDetailShared';
 
 const UniversalCalendarView = dynamic(() => import('@/components/ui/UniversalCalendarView'), { ssr: false });
 const UniversalGanttView = dynamic(() => import('@/components/ui/UniversalGanttView'), { ssr: false });
@@ -31,7 +53,6 @@ ClipboardList,
 Clock,
 Copy,
 Flame,
-FolderOpen,
 Home,
 Loader2,
 Plus,
@@ -50,174 +71,6 @@ import { ChevronDown } from 'lucide-react';
 import { useParams,useRouter } from 'next/navigation';
 import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import { toast } from 'sonner';
-
-interface Strategy {
- id: string;
- name: string;
- description: string;
- codigo?: string;
- clase_raiz?: string;
- activa: boolean;
- default_role_id?: string | null;
- typology: string;
- recurrence: string | null;
- day_of_week: string | null;
- start_time: string | null;
- event_format: string | null;
- niche_objective: string | null;
- status: 'active' | 'pending' | 'done';
- strategy_type: string;
- start_date?: string | null;
- end_date?: string | null;
- created_at: string;
- updated_at: string;
- group_count?: number;
-}
-
-interface CustomRole {
- id: string;
- estrategia_id: string;
- nombre_rol: string;
- descripcion?: string;
-}
-
-interface FollowUpRecord {
- id: string;
- asistencia_id: string;
- tipo: string;
- fecha_seguimiento?: string;
- observaciones?: string;
- estado_completado: boolean;
- responsable_id?: string;
-}
-
-interface StrategyGroup {
- id: string;
- name: string;
- zone: string | null;
- leader_name: string | null;
- personas_count: number;
-}
-
-type HabilitacionEstado = 'DESHABILITADO' | 'HABILITADO' | 'CERRADO' | 'CANCELADA';
-
-interface SessionRow {
- id: string;
- grupo_id: string;
- session_date: string;
- status: string;
- estado_habilitacion?: HabilitacionEstado;
- topic?: string | null;
- offering_amount?: number | null;
- report_notes?: string | null;
-}
-
-interface AttendancePersona {
- persona_id: string;
- name: string;
- role: string;
- role_label?: string;
- status: 'present' | 'absent' | 'first_time';
- notes?: string;
-}
-
-interface AttendanceSaveResult {
- evento_integracion?: {
- estado?: string;
- grupo_id?: string;
- sesion_id?: string;
- crm_consolidacion?: {
- caso_id?: string;
- } | null;
- } | null;
- metadata?: {
- trazabilidad?: string;
- } | null;
-}
-
-type TabId = 'overview' | 'groups' | 'sessions' | 'attendance' | 'metrics';
-
-const STATUS_COLORS = {
- pending: '#F59E0B',
- active: '#2563EB',
- done: '#10B981',
-};
-
-const STATUS_LABELS = {
- pending: 'No iniciada',
- active: 'Iniciada',
- done: 'Terminada',
-};
-
-const TYPOLOGY_COLORS: Record<string, string> = {
- relacional: '#3B82F6',
- evento_masivo: '#F97316',
- sectorial: '#8B5CF6',
- reunion: '#10B981',
- cells: '#6366F1',
-};
-
-const TYPOLOGY_LABELS: Record<string, string> = {
- relacional: 'Relacional',
- evento_masivo: 'Evento Masivo',
- sectorial: 'Sectorial',
- reunion: 'Reunión',
- cells: 'Células',
-};
-
-const FALLBACK_MEMBER_ROLES = [
- { value: 'persona', label: 'Persona' },
- { value: 'visitante', label: 'Visitante' },
-];
-
-const ROLE_COLORS: Record<string, string> = {
- lider: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
- colider: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
- persona: 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',
- visitante: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
- asistente: 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',
- personalizado: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
-};
-
-const formatLocalDate = (date: Date) => {
- const year = date.getFullYear();
- const month = String(date.getMonth() + 1).padStart(2, '0');
- const day = String(date.getDate()).padStart(2, '0');
- return `${year}-${month}-${day}`;
-};
-
-const normalizeRoleText = (value: string) =>
- value
- .normalize('NFD')
- .replace(/[\u0300-\u036f]/g, '')
- .toLowerCase()
- .replace(/[^a-z0-9]+/g, '-')
- .replace(/^-+|-+$/g, '');
-
-const customRoleValue = (role: CustomRole) => `custom:${role.id}`;
-
-const roleMatches = (role: CustomRole, keywords: string[]) => {
- const tokens = normalizeRoleText(role.nombre_rol).split('-');
- return keywords.some(keyword => tokens.includes(keyword));
-};
-
-const isPrimaryLeaderRole = (role: CustomRole) => {
- const tokens = normalizeRoleText(role.nombre_rol).split('-');
- return tokens.includes('lider') && !tokens.includes('co') && !tokens.includes('colider') && !tokens.includes('asistente');
-};
-
-const isAssistantLeaderRole = (role: CustomRole) => {
- const tokens = normalizeRoleText(role.nombre_rol).split('-');
- return tokens.includes('asistente') || tokens.includes('colider') || (tokens.includes('co') && tokens.includes('lider'));
-};
-
-const TABS: { id: TabId; label: string; icon: typeof Users }[] = [
- { id: 'overview', label: 'General', icon: Sparkles },
- { id: 'groups', label: 'Grupos', icon: FolderOpen },
- { id: 'sessions', label: 'Sesiones', icon: Calendar },
- { id: 'attendance', label: 'Asistencia', icon: ClipboardList },
- { id: 'metrics', label: 'Métricas', icon: BarChart3 },
-];
 
 function RoleSelect({ value, options, colorClass, onChange }: {
  value: string;
@@ -263,6 +116,15 @@ function RoleSelect({ value, options, colorClass, onChange }: {
  </div>
  );
 }
+
+type SearchablePersona = {
+ id: string;
+ nombre_completo?: string;
+ first_name?: string;
+ last_name?: string;
+ email?: string;
+ church_role?: string;
+};
 
 export default function StrategyDetailPage() {
  const params = useParams();
@@ -320,12 +182,13 @@ export default function StrategyDetailPage() {
  const [isPersonaDrawerOpen, setIsPersonaDrawerOpen] = useState(false);
  const [selectedGroup, setSelectedGroup] = useState<StrategyGroup | null>(null);
  const [groupPersonas, setGroupPersonas] = useState<{ id: string; name: string; email: string; role: string; role_label?: string }[]>([]);
- const [allPersonas, setAllPersonas] = useState<any[]>([]);
  const [personaSearch, setPersonaSearch] = useState('');
  const [personaSearchLoading, setPersonaSearchLoading] = useState(false);
+ const [personaSearchResults, setPersonaSearchResults] = useState<SearchablePersona[]>([]);
  const [personaSaving, setPersonaSaving] = useState(false);
  const [personaSplitHeight, setPersonaSplitHeight] = useState(200);
  const personaSplitRef = useRef<HTMLDivElement>(null);
+ const personaSearchAbortRef = useRef<AbortController | null>(null);
 
  const handlePersonaSplitDrag = useCallback((e: React.MouseEvent) => {
  e.preventDefault();
@@ -379,9 +242,12 @@ export default function StrategyDetailPage() {
  // Visitor search / new visitor form (in attendance drawer)
  const [showVisitorSearch, setShowVisitorSearch] = useState(false);
  const [visitorSearch, setVisitorSearch] = useState('');
+ const [visitorSearchLoading, setVisitorSearchLoading] = useState(false);
+ const [visitorSearchResults, setVisitorSearchResults] = useState<SearchablePersona[]>([]);
  const [showNewVisitorForm, setShowNewVisitorForm] = useState(false);
  const [newVisitorForm, setNewVisitorForm] = useState({ first_name: '', last_name: '', phone: '', whatsapp: '', email: '', address: '' });
  const [savingNewVisitor, setSavingNewVisitor] = useState(false);
+ const visitorSearchAbortRef = useRef<AbortController | null>(null);
  useEffect(() => {
  if (sessionMenuId === null) return;
  const close = () => setSessionMenuId(null);
@@ -609,28 +475,6 @@ export default function StrategyDetailPage() {
  return () => clearTimeout(timer);
  }, [canManageStrategySurface, roleSearch, roleDropdown, token]);
 
- if (!authLoading && !canManageStrategySurface) {
- return (
- <EvangelismShell breadcrumbs={[
- { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
- { label: 'Estrategias', href: '/plataforma/evangelism' },
- { label: 'Acceso restringido' }
- ]}>
- <div className="flex flex-col items-center justify-center py-16 text-center">
- <AlertCircle size={48} className="text-[hsl(var(--text-secondary))] mb-4" />
- <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">Acceso restringido</h2>
- <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] max-w-md">
- Esta vista de estrategia requiere rol pastoral o administrativo porque consume superficies protegidas del modulo.
- </p>
- <button onClick={() => router.push('/plataforma/evangelism')}
- className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
- Volver a Evangelismo
- </button>
- </div>
- </EvangelismShell>
- );
- }
-
  const openGroupDrawer = () => {
  setGroupForm({
  name: '', zone: '', address: '', capacity: 15,
@@ -704,7 +548,7 @@ export default function StrategyDetailPage() {
  setSelectedGroup(group);
  setIsPersonaDrawerOpen(true);
  setPersonaSearch('');
- setAllPersonas([]);
+ setPersonaSearchResults([]);
  setPersonaSplitHeight(200);
  try {
  const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${group.id}`, { token, silent: true });
@@ -718,16 +562,91 @@ export default function StrategyDetailPage() {
  } catch { setGroupPersonas([]); }
  };
 
- // Carga todas las personas al abrir el drawer — el filtro es client-side por nombre
  useEffect(() => {
- if (!token) return;
- if (!isPersonaDrawerOpen) return;
+ if (!token || !isPersonaDrawerOpen) return;
+ const q = personaSearch.trim();
+ if (q.length < 3) {
+ setPersonaSearchLoading(false);
+ setPersonaSearchResults([]);
+ if (personaSearchAbortRef.current) {
+ personaSearchAbortRef.current.abort();
+ personaSearchAbortRef.current = null;
+ }
+ return;
+ }
+ if (personaSearchAbortRef.current) {
+ personaSearchAbortRef.current.abort();
+ }
+ const controller = new AbortController();
+ personaSearchAbortRef.current = controller;
  setPersonaSearchLoading(true);
- apiFetch<any[]>('/crm/personas', { token, silent: true, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } })
- .then(res => setAllPersonas(res || []))
- .catch(() => {})
- .finally(() => setPersonaSearchLoading(false));
- }, [isPersonaDrawerOpen, token]); // eslint-disable-line react-hooks/exhaustive-deps
+ const handle = setTimeout(() => {
+ apiFetch<{ results: SearchablePersona[] }>('/evangelism/personas/search', {
+ token,
+ silent: true,
+ query: { q, limit: 12 },
+ signal: controller.signal,
+ })
+ .then(res => {
+ if (controller.signal.aborted) return;
+ setPersonaSearchResults(res.results || []);
+ })
+ .catch(() => {
+ if (controller.signal.aborted) return;
+ setPersonaSearchResults([]);
+ })
+ .finally(() => {
+ if (!controller.signal.aborted) setPersonaSearchLoading(false);
+ });
+ }, 300);
+ return () => {
+ clearTimeout(handle);
+ controller.abort();
+ };
+ }, [isPersonaDrawerOpen, personaSearch, token]);
+
+ useEffect(() => {
+ if (!token || !showVisitorSearch) return;
+ const q = visitorSearch.trim();
+ if (q.length < 3) {
+ setVisitorSearchLoading(false);
+ setVisitorSearchResults([]);
+ if (visitorSearchAbortRef.current) {
+ visitorSearchAbortRef.current.abort();
+ visitorSearchAbortRef.current = null;
+ }
+ return;
+ }
+ if (visitorSearchAbortRef.current) {
+ visitorSearchAbortRef.current.abort();
+ }
+ const controller = new AbortController();
+ visitorSearchAbortRef.current = controller;
+ setVisitorSearchLoading(true);
+ const handle = setTimeout(() => {
+ apiFetch<{ results: SearchablePersona[] }>('/evangelism/personas/search', {
+ token,
+ silent: true,
+ query: { q, limit: 10 },
+ signal: controller.signal,
+ })
+ .then(res => {
+ if (controller.signal.aborted) return;
+ setVisitorSearchResults(res.results || []);
+ })
+ .catch(() => {
+ if (controller.signal.aborted) return;
+ setVisitorSearchResults([]);
+ })
+ .finally(() => {
+ if (!controller.signal.aborted) setVisitorSearchLoading(false);
+ });
+ }, 300);
+ return () => {
+ clearTimeout(handle);
+ controller.abort();
+ };
+ }, [showVisitorSearch, token, visitorSearch]);
 
  const handleSavePersonas = async () => {
  if (!selectedGroup) return;
@@ -827,14 +746,9 @@ export default function StrategyDetailPage() {
  setIsAttendanceDrawerOpen(true);
  setShowVisitorSearch(false);
  setVisitorSearch('');
+ setVisitorSearchResults([]);
  setShowNewVisitorForm(false);
  setNewVisitorForm({ first_name: '', last_name: '', phone: '', whatsapp: '', email: '', address: '' });
- // Pre-load all personas for visitor search if not already loaded
- if (allPersonas.length === 0) {
- apiFetch<any[]>('/crm/personas', { token, silent: true, query: { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' } }).then(res => {
- if (Array.isArray(res)) setAllPersonas(res);
- }).catch(() => {});
- }
  try {
  // Get house personas to build attendance list
  const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${session.grupo_id}`, { token, silent: true });
@@ -925,7 +839,7 @@ export default function StrategyDetailPage() {
  }
  return [...prev, nextPersona];
  });
- setAllPersonas(prev => {
+ setVisitorSearchResults(prev => {
  if (prev.some(persona => persona.id === res.persona_id)) return prev;
  return [
  ...prev,
@@ -1116,6 +1030,28 @@ export default function StrategyDetailPage() {
  });
  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [sessions, sessionGroupFilter, sessionHabFilter, sessionMonthFilter, sessionSearch]);
+
+ if (!authLoading && !canManageStrategySurface) {
+ return (
+ <EvangelismShell breadcrumbs={[
+ { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
+ { label: 'Estrategias', href: '/plataforma/evangelism' },
+ { label: 'Acceso restringido' }
+ ]}>
+ <div className="flex flex-col items-center justify-center py-16 text-center">
+ <AlertCircle size={48} className="text-[hsl(var(--text-secondary))] mb-4" />
+ <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">Acceso restringido</h2>
+ <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] max-w-md">
+ Esta vista de estrategia requiere rol pastoral o administrativo porque consume superficies protegidas del modulo.
+ </p>
+ <button onClick={() => router.push('/plataforma/evangelism')}
+ className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
+ Volver a Evangelismo
+ </button>
+ </div>
+ </EvangelismShell>
+ );
+ }
 
  if (loading) {
  return (
@@ -2475,30 +2411,14 @@ export default function StrategyDetailPage() {
  if (personaSearchLoading) return (
  <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">Cargando personas...</p>
  );
- const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
- const q = norm(personaSearch.trim());
- const notInGroup = allPersonas.filter(m => !groupPersonas.find(gm => String(gm.id) === String(m.id)));
- const available = q
- ? notInGroup
- .filter(m => {
- const name = norm(m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`);
- return name.split(/\s+/).some(word => word.startsWith(q));
- })
- .sort((a, b) => {
- const aFirst = norm(a.first_name || '').startsWith(q);
- const bFirst = norm(b.first_name || '').startsWith(q);
- if (aFirst !== bFirst) return aFirst ? -1 : 1;
- const aName = norm(a.nombre_completo || `${a.first_name ?? ''} ${a.last_name ?? ''}`);
- const bName = norm(b.nombre_completo || `${b.first_name ?? ''} ${b.last_name ?? ''}`);
- return aName.localeCompare(bName, 'es');
- })
- : notInGroup;
- if (allPersonas.length === 0) return (
- <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">Sin personas en el sistema</p>
+ const q = personaSearch.trim();
+ const available = personaSearchResults.filter(m => !groupPersonas.find(gm => String(gm.id) === String(m.id)));
+ if (q.length < 3) return (
+ <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">Escribe al menos 3 caracteres para buscar</p>
  );
  if (available.length === 0) return (
  <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">
- {q ? 'Sin coincidencias' : 'Todas las personas ya están en el grupo'}
+ Sin coincidencias
  </p>
  );
  return available.map(m => (
@@ -2646,7 +2566,9 @@ export default function StrategyDetailPage() {
  <div className="space-y-2">
  <div className="flex items-center gap-2">
  <div className="relative flex-1">
- <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
+ {visitorSearchLoading
+ ? <Loader2 size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--primary))] animate-spin" />
+ : <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />}
  <input
  autoFocus
  value={visitorSearch}
@@ -2660,15 +2582,10 @@ export default function StrategyDetailPage() {
  <X size={14} />
  </button>
  </div>
- {visitorSearch.trim().length >= 2 && (
+ {visitorSearch.trim().length >= 3 && (
  <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] p-1">
- {allPersonas
- .filter(m => {
- const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase();
- return name.includes(visitorSearch.toLowerCase()) &&
- !attendancePersonas.find(a => a.persona_id === m.id);
- })
- .slice(0, 8)
+ {visitorSearchResults
+ .filter(m => !attendancePersonas.find(a => a.persona_id === m.id))
  .map(m => (
  <button key={m.id}
  onClick={() => {
@@ -2689,13 +2606,13 @@ export default function StrategyDetailPage() {
  {m.church_role && <span className="text-[hsl(var(--text-secondary))] text-[10px]">({m.church_role})</span>}
  </button>
  ))}
- {allPersonas.filter(m => {
- const name = (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`).toLowerCase();
- return name.includes(visitorSearch.toLowerCase()) && !attendancePersonas.find(a => a.persona_id === m.id);
- }).length === 0 && (
+ {!visitorSearchLoading && visitorSearchResults.filter(m => !attendancePersonas.find(a => a.persona_id === m.id)).length === 0 && (
  <p className="text-center py-3 text-xs text-[hsl(var(--text-secondary))]">No se encontraron personas</p>
  )}
  </div>
+ )}
+ {visitorSearch.trim().length > 0 && visitorSearch.trim().length < 3 && (
+ <p className="text-[11px] text-[hsl(var(--text-secondary))]">Escribe al menos 3 caracteres para buscar en la sede</p>
  )}
  </div>
  ) : (

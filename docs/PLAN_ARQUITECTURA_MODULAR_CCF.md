@@ -14,7 +14,7 @@ Problemas recurrentes observados:
 - Cambios de un modulo se mezclan con cambios de plataforma.
 - No todos los modulos tienen smoke test canonico.
 - El pre-push valida salud general, pero no siempre corre la suite del modulo tocado.
-- Documentacion desigual: proyectos y evangelismo ya tienen mejor base que otros modulos.
+- La base documental modular ya esta estandarizada; la deuda principal se movio a gates, e2e y contratos cruzados.
 
 Decision arquitectonica:
 
@@ -76,14 +76,20 @@ Regla:
 
 | Modulo | Estado doc | Falta |
 |---|---|---|
-| Proyectos | `docs/ESTADO_PROYECTOS.md`, `PROJECTS_API_CONTRACTS.md`, `PROJECTS_QA_CHECKLIST.md`, `PLAN_VISTAS_EDITABLES_PROYECTOS.md`, `scripts/test_projects_quality.py` | RBAC compacta + smoke frontend profundo |
-| Evangelismo | `ESTADO_EVANGELISMO.md`, `PLAN_EVANGELISMO_CALIDAD.md`, `EVANGELISMO_API_CONTRACTS.md`, `EVANGELISMO_QA_CHECKLIST.md`, `scripts/test_evangelism_quality.py` | ampliar smoke y e2e |
-| CRM | `ESTADO_CRM.md`, `CRM_API_CONTRACTS.md`, `CRM_QA_CHECKLIST.md`, `scripts/test_crm_quality.py` | plan por fases + RBAC |
-| Academy | `ESTADO_ACADEMY.md`, `ACADEMY_API_CONTRACTS.md`, `ACADEMY_QA_CHECKLIST.md`, `scripts/test_academy_quality.py` | e2e + RBAC |
-| CMS | `ESTADO_CMS.md`, `CMS_API_CONTRACTS.md`, `CMS_QA_CHECKLIST.md`, `scripts/test_cms_quality.py`, `PLAN_CMS_100.md` | RBAC + smoke profundo |
-| Messaging/Community | `ESTADO_MESSAGING_COMMUNITY.md`, `MESSAGING_COMMUNITY_API_CONTRACTS.md`, `MESSAGING_COMMUNITY_QA_CHECKLIST.md`, `scripts/test_messaging_quality.py` | RBAC + contrato chat |
-| Agenda/Calendar | `ESTADO_AGENDA.md`, `AGENDA_API_CONTRACTS.md`, `AGENDA_QA_CHECKLIST.md`, `scripts/test_agenda_quality.py` | RBAC + contrato `system/calendar` |
-| Auth/Admin/RBAC | `ESTADO_PLATAFORMA_COMPARTIDA.md`, `PLATAFORMA_AUTH_RBAC_API_UI.md`, `PLATAFORMA_UI_BASE_PROTEGIDA.md`, `PLATAFORMA_MATRIZ_MODULAR.md`, `PLATAFORMA_COMPARTIDA_QA_CHECKLIST.md`, `scripts/test_platform_quality.py` | seguimiento de RBAC por modulo vive en cada handover |
+| Proyectos | `docs/ESTADO_PROYECTOS.md`, `PLAN_PROYECTOS_CALIDAD.md`, `PROJECTS_API_CONTRACTS.md`, `PROJECTS_RBAC_MATRIX.md`, `PROJECTS_QA_CHECKLIST.md`, `PLAN_VISTAS_EDITABLES_PROYECTOS.md`, `scripts/test_projects_quality.py`, `frontend/tests/e2e/projects/smoke.spec.ts`, `frontend/tests/e2e/projects/detail.spec.ts` | extender demo seeded a roundtrip multiusuario |
+| Evangelismo | `ESTADO_EVANGELISMO.md`, `PLAN_EVANGELISMO_CALIDAD.md`, `EVANGELISMO_API_CONTRACTS.md`, `EVANGELISMO_RBAC_MATRIX.md`, `EVANGELISMO_QA_CHECKLIST.md`, `scripts/test_evangelism_quality.py`, `frontend/tests/e2e/evangelism/smoke.spec.ts`, `frontend/tests/e2e/evangelism/sessions-detail.spec.ts`, `frontend/tests/e2e/evangelism/rankings-multiplication.spec.ts`, `frontend/tests/e2e/evangelism/events-scanner.spec.ts` | runtime auth UI, strategy page monolítica y búsqueda remota de personas |
+| CRM | `ESTADO_CRM.md`, `PLAN_CRM_CALIDAD.md`, `CRM_API_CONTRACTS.md`, `CRM_RBAC_MATRIX.md`, `CRM_QA_CHECKLIST.md`, `scripts/test_crm_quality.py`, `frontend/tests/e2e/crm/smoke.spec.ts`, `frontend/tests/e2e/crm/persona-detail.spec.ts` | ampliar smoke a groups bridge, messaging y resources |
+| Academy | `ESTADO_ACADEMY.md`, `PLAN_ACADEMY_CALIDAD.md`, `ACADEMY_API_CONTRACTS.md`, `ACADEMY_RBAC_MATRIX.md`, `ACADEMY_QA_CHECKLIST.md`, `scripts/test_academy_quality.py`, `frontend/tests/e2e/academy/smoke.spec.ts`, `frontend/tests/e2e/academy/profile-detail.spec.ts` | ampliar certificates, rutas duplicadas y flows admin |
+| CMS | `ESTADO_CMS.md`, `PLAN_CMS_CALIDAD.md`, `CMS_API_CONTRACTS.md`, `CMS_RBAC_MATRIX.md`, `CMS_QA_CHECKLIST.md`, `scripts/test_cms_quality.py`, `frontend/tests/e2e/cms/smoke.spec.ts`, `frontend/tests/e2e/cms/pages-preview.spec.ts`, `PLAN_CMS_100.md` | builder, enterprise profundo y checklist visual preview/publicado |
+| Messaging/Community | `ESTADO_MESSAGING_COMMUNITY.md`, `PLAN_MESSAGING_CALIDAD.md`, `MESSAGING_COMMUNITY_API_CONTRACTS.md`, `MESSAGING_COMMUNITY_RBAC_MATRIX.md`, `MESSAGING_COMMUNITY_QA_CHECKLIST.md`, `scripts/test_messaging_quality.py`, `frontend/tests/e2e/messaging/smoke.spec.ts`, `frontend/tests/e2e/messaging/direct-messages.spec.ts` | contrato chat + ampliar bridge CRM |
+| Agenda/Calendar | `ESTADO_AGENDA.md`, `PLAN_AGENDA_CALIDAD.md`, `AGENDA_API_CONTRACTS.md`, `SYSTEM_CALENDAR_CONTRACT.md`, `AGENDA_RBAC_MATRIX.md`, `AGENDA_QA_CHECKLIST.md`, `scripts/test_agenda_quality.py`, `frontend/tests/e2e/agenda/smoke.spec.ts`, `frontend/tests/e2e/agenda/calendar-events.spec.ts` | taxonomía RBAC propia pendiente y profundidad en reservas/participantes |
+| Auth/Admin/RBAC | `ESTADO_PLATAFORMA_COMPARTIDA.md`, `PLAN_PLATAFORMA_COMPARTIDA_CALIDAD.md`, `PLATAFORMA_AUTH_RBAC_API_UI.md`, `PLATAFORMA_AUTH_RUNTIME_CONTRACT.md`, `PLATAFORMA_UI_BASE_PROTEGIDA.md`, `PLATAFORMA_MATRIZ_MODULAR.md`, `PLATAFORMA_COMPARTIDA_QA_CHECKLIST.md`, `scripts/test_platform_quality.py` | seguimiento de RBAC por modulo vive en cada handover |
+
+Complemento transversal obligatorio:
+
+- `docs/BACKLOG_DRIFT_TRANSVERSAL_CCF.md` — patrones repetitivos cross-modulo, owner correcto y gates minimos.
+- `docs/MATRIZ_COBERTURA_MODULAR_CCF.md` — cobertura documental y de smoke por modulo, con huecos abiertos reales.
+- `docs/ARRANQUE_MODULAR_CCF.md` — entrada operativa uniforme por modulo para leer contexto, listar backlog y correr el smoke correcto sin reinterpretar ownership.
 
 ## 5. Entregables por modulo
 
@@ -98,6 +104,8 @@ Cada modulo debe tener:
 7. Mapa de routers backend
 8. Matriz RBAC minima
 9. Lista de dependencias compartidas
+10. Clasificacion contra backlog transversal de drift si el patron reaparece en varios modulos
+11. Entrada de arranque alineada con `docs/ARRANQUE_MODULAR_CCF.md`
 
 ## 6. Matriz de smoke tests inicial
 
@@ -129,11 +137,13 @@ Entregables:
 - Completar docs faltantes de CMS.
 - Completar docs faltantes de Agenda/Calendar.
 - Completar doc de plataforma compartida: Auth/RBAC/API/UI.
+- Uniformar la entrada operativa de todos los modulos en un bootstrap compartido.
 
 Criterio de salida:
 
 - Cada modulo critico tiene estado canonico.
 - Cada doc tiene comandos de arranque y backlog estable.
+- Existe una entrada operativa uniforme para no redescubrir el mismo contexto en cada sesion.
 
 ### Fase 2 — Smoke scripts canonicos
 
@@ -183,7 +193,8 @@ Ejemplo de reglas:
 Criterio de salida:
 
 - El pre-push corre pruebas proporcionales al cambio.
-- Cambios documentales siguen usando smoke general rapido.
+- Cambios documentales genéricos siguen usando smoke general rapido.
+- Cambios en `ESTADO_*`, contratos API, matrices RBAC o checklists QA del owner disparan al menos el smoke canónico del modulo o de plataforma compartida.
 
 ### Fase 4 — Contratos API y RBAC
 
@@ -226,6 +237,14 @@ Entregables:
 - Captura de consola: bloquear 401/403/404/500 no esperados.
 - Validacion de assets `_next/static`.
 
+Avance inicial `2026-07-16`:
+
+- suite compartida `frontend/tests/e2e/platform-critical-routes.spec.ts` creada para las 5 rutas críticas canónicas
+- usa login previo por `E2E_EMAIL`/`E2E_PASSWORD`
+- falla por `console.error`, `pageerror`, respuestas API 4xx/5xx y assets `_next/static` rotos
+- no cierra todavía los pendientes e2e dedicados de CRM o Academy; sí cierra la primera capa transversal del gate frontend
+- suites profundas protegidas de Proyectos y Evangelismo ya usan `frontend/scripts/run-managed-playwright.mjs` para levantar `webServer` administrado y dejar de depender de arrancar Next manualmente
+
 Criterio de salida:
 
 - Un build que carga pero rompe consola no se considera sano.
@@ -245,6 +264,9 @@ Criterio de salida:
 
 - El hook deja de ser solo generalista.
 - Los errores redundantes empiezan a bloquearse antes del push.
+- Validacion y deploy no se ejecutan como si fueran el mismo acto.
+- El smoke frontend modular agregado puede correrse con un solo comando y opcionalmente desde `pre-push` full.
+- La misma bateria modular puede correrse por matriz de usuarios reales sin reescribir las suites.
 
 ## 8. Orden recomendado de ejecucion
 

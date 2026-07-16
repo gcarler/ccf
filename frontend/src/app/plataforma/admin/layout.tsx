@@ -85,7 +85,6 @@ export default function AdminLayout({
             <WorkspaceLayout
                 sidebarTitle={getSidebarTitle()}
                 sidebarSections={SIDEBAR_SECTIONS}
-                allowedRoles={['admin', 'administrador', 'coordinador', 'docente', 'pastor']}
                 allowedPermissions={['system:config']}
             >
                 <div className="h-full w-full">

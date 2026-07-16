@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy import Integer, and_, cast, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
@@ -17,7 +17,15 @@ from backend import crud, models, schemas
 from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.core.database import get_db
-from backend.core.permissions import normalize_role, require_module_access, require_staff_or_admin
+from backend.core.permissions import (
+    MODULE_PERMISSION_MAP,
+    _has_permission,
+    get_current_active_user,
+    get_user_effective_permissions,
+    normalize_role,
+    require_module_access,
+    require_staff_or_admin,
+)
 from backend.core.storage import storage_service
 from backend.core.uploads import MAX_UPLOAD_SIZE, sanitize_filename
 from backend.crud.crm import get_user_sede_id
@@ -220,6 +228,225 @@ def _ensure_attachment_in_task(db: Session, project_id: str, task_id: str, attac
     if not attachment:
         raise HTTPException(status_code=404, detail="Attachment not found in task")
     return attachment
+
+
+def _inbox_item_exists_for_actor(
+    db: Session,
+    item_id: str,
+    persona_id: Any,
+    user_sede: Optional[Any],
+) -> bool:
+    """Determinar si ``item_id`` existe en el inbox del actor.
+
+    PEND-QUALITY-INBOX-SCOPE-001 (cierre 2026-07-16): usado por
+    :func:`mark_inbox_read` para rechazar ``item_id`` arbitrarios antes
+    de tocar ``project_inbox_state``.
+
+    Formatos aceptados (deben coincidir con la salida de
+    :func:`list_inbox`):
+
+    * ``comment-<uuid>``: comentario no resuelto (de otro autor) en un
+      proyecto **no soft-deleted** de la ``sede_id`` del actor.
+    * ``task-<uuid>``: tarea abierta (``status != "completed"``, **no
+      soft-deleted**) asignada al actor, en un proyecto **no
+      soft-deleted** de la ``sede_id`` del actor.
+
+    Existencia-leak safe: cualquier formato inválido o UUID que no
+    satisface las condiciones devuelve ``False``, por lo que
+    ``mark_inbox_read`` responde **404** indistinguible de "no existe".
+    """
+    if not item_id or not isinstance(item_id, str) or "-" not in item_id:
+        return False
+    prefix, _, raw_uuid = item_id.partition("-")
+    if prefix not in {"comment", "task"} or not raw_uuid:
+        return False
+    target_uuid = _to_uuid(raw_uuid)
+    if target_uuid is raw_uuid:  # _to_uuid fallback cuando el parse falla
+        return False
+
+    if prefix == "comment":
+        q = (
+            db.query(models.ProjectComment.id)
+            .join(models.Project, models.Project.id == models.ProjectComment.project_id)
+            .filter(
+                models.ProjectComment.id == target_uuid,
+                models.ProjectComment.deleted_at.is_(None),
+                ~models.ProjectComment.is_resolved,
+                # Replicar el filtro de ``list_inbox``: auto-comentarios
+                # del propio actor no aparecen en su feed, por lo que
+                # tampoco deben ser marcables como leídos.
+                models.ProjectComment.author_id != persona_id,
+                # Solo comentarios de proyectos no soft-deleted; el filtro
+                # de ``author_id != persona_id`` se aplica en ``list_inbox``
+                # (auto-comentarios excluidos) y se respeta aquí implícito
+                # vía la uni\u00f3n con ``list_inbox``.
+                models.Project.deleted_at.is_(None),
+            )
+        )
+        if user_sede is not None:
+            q = q.filter(models.Project.sede_id == user_sede)
+        return db.query(q.exists()).scalar() is True
+
+    # prefix == "task"
+    q = (
+        db.query(models.ProjectTask.id)
+        .join(models.Project, models.Project.id == models.ProjectTask.project_id)
+        .filter(
+            models.ProjectTask.id == target_uuid,
+            models.ProjectTask.deleted_at.is_(None),
+            models.ProjectTask.status != "completed",
+            models.ProjectTask.assignee_id == persona_id,
+            models.Project.deleted_at.is_(None),
+        )
+    )
+    if user_sede is not None:
+        q = q.filter(models.Project.sede_id == user_sede)
+    return db.query(q.exists()).scalar() is True
+
+
+def _get_persona_id_for_user(db: Session, user_id: Any) -> Optional[uuid.UUID]:
+    """Resolve the persona_id for a given user_id.
+
+    Assignment-based access in Projects is tied to ``personas.id`` (owner
+    and assignee), not ``auth_users.id``. Returns ``None`` when the user
+    has no associated persona.
+    """
+    persona_id = get_user_persona_id(db, user_id)
+    if persona_id:
+        return _to_uuid(persona_id)
+    return None
+
+
+def _is_project_owner(db: Session, project_id: Any, persona_id: Any) -> bool:
+    """Return True if ``persona_id`` owns the given project."""
+    project = (
+        db.query(models.Project)
+        .filter(
+            models.Project.id == _to_uuid(project_id),
+            models.Project.deleted_at.is_(None),
+        )
+        .first()
+    )
+    return project is not None and str(project.owner_id) == str(persona_id)
+
+
+def _is_assigned_to_project(db: Session, project_id: Any, persona_id: Any) -> bool:
+    """Check if ``persona_id`` has access to ``project_id`` via assignment.
+
+    A persona is considered assigned to a project when:
+    * They are the project owner, OR
+    * They are the assignee of at least one non-deleted task in the project.
+    """
+    if _is_project_owner(db, project_id, persona_id):
+        return True
+    task = (
+        db.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.project_id == _to_uuid(project_id),
+            models.ProjectTask.assignee_id == _to_uuid(persona_id),
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .first()
+    )
+    return task is not None
+
+
+def _is_assigned_to_task(db: Session, task_id: Any, persona_id: Any) -> bool:
+    """Check if ``persona_id`` has access to ``task_id`` via assignment.
+
+    A persona is considered assigned to a task when:
+    * They are the assignee of the task, OR
+    * They are the owner of the parent project.
+    """
+    task = (
+        db.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.id == _to_uuid(task_id),
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not task:
+        return False
+    if str(task.assignee_id) == str(persona_id):
+        return True
+    return _is_project_owner(db, task.project_id, persona_id)
+
+
+def _has_role_based_project_access(db: Session, current_user: models.User, min_level: str) -> bool:
+    """Check if the user has role-based permission for the Projects module.
+
+    Reuses ``backend.core.permissions.get_user_effective_permissions`` and
+    ``_has_permission`` so the assignment-based dependency stays consistent
+    with the rest of the platform without circular imports.
+    """
+    perm_key = MODULE_PERMISSION_MAP["projects"].get(min_level)
+    if not perm_key:
+        return False
+    perms = get_user_effective_permissions(db, current_user)
+    if perms.get(perm_key) == "allow":
+        return True
+    role = normalize_role(str(getattr(current_user, "role", "")))
+    if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+        role = normalize_role(current_user.rol_plataforma.nombre)
+    return _has_permission(role, set(perms.keys()), perm_key)
+
+
+def require_project_access(min_level: str = "read"):
+    """FastAPI dependency factory: role-based OR assignment-based access.
+
+    Rules:
+    * Admin/Gestor/Editor pass via role-based permissions (existing model).
+    * For ``read`` and ``edit`` levels, any authenticated user with a
+      persona assigned to the project/task also passes.
+    * ``manage`` level remains strictly role-based.
+    * Endpoints without a ``project_id`` or ``task_id`` path parameter
+      fall back to role-based checks (assignment cannot be determined).
+
+    This implements the product decision that in the Projects module
+    access is driven by task/project assignment, not only by platform role.
+    """
+    async def _check(
+        request: Request,
+        current_user: models.User = Depends(get_current_active_user),
+        db: Session = Depends(get_db),
+    ):
+        # Role-based access (admin bypass + projects:* permissions)
+        if _has_role_based_project_access(db, current_user, min_level):
+            return current_user
+
+        # manage level is strictly role-based
+        if min_level == "manage":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permisos insuficientes. Se requiere: projects:{min_level}",
+            )
+
+        persona_id = _get_persona_id_for_user(db, current_user.id)
+        if not persona_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permisos insuficientes. Se requiere: projects:{min_level}",
+            )
+
+        project_id = request.path_params.get("project_id")
+        task_id = request.path_params.get("task_id")
+
+        # Task-level endpoints take precedence when task_id is present
+        if task_id and _is_assigned_to_task(db, task_id, persona_id):
+            return current_user
+
+        # Project-level assignment
+        if project_id and _is_assigned_to_project(db, project_id, persona_id):
+            return current_user
+
+        # No project_id/task_id in path → cannot determine assignment
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Permisos insuficientes. Se requiere: projects:{min_level}",
+        )
+
+    return _check
 
 
 def _assert_assignee_in_sede(
@@ -506,7 +733,7 @@ def create_project(
 def list_project_phases(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_project_access("read")),
 ):
     """Lista las fases (columnas del kanban) de un proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -519,7 +746,7 @@ def set_project_phases(
     project_id: str,
     phases: List[schemas.ProjectPhaseInput],
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_module_access("projects", "manage")),
 ):
     """Reemplaza todas las fases del proyecto (reordenar / renombrar / agregar / eliminar).
     El orden en el array define el order_index de cada fase.
@@ -633,7 +860,7 @@ def create_project_task(
     project_id: str,
     task: schemas.ProjectTaskCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
@@ -872,7 +1099,7 @@ def list_activities(
 def get_task(
     task_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_project_access("read")),
 ):
     """Obtiene una tarea por ID.
 
@@ -894,7 +1121,7 @@ def update_task(
     task_id: str,
     payload: schemas.ProjectTaskUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     """Actualiza una tarea usando ruta plana (sin project_id).
 
@@ -1008,7 +1235,12 @@ def list_inbox(
             .join(models.Project, models.Project.id == models.ProjectComment.project_id)
             .filter(
                 ~models.ProjectComment.is_resolved,
+                models.ProjectComment.deleted_at.is_(None),
                 models.ProjectComment.author_id != persona_id,
+                # PEND-QUALITY-INBOX-SCOPE-001 (2026-07-16): excluir
+                # comentarios cuyo proyecto esté soft-deleted para que el
+                # feed del inbox no muestre fantasmas tras un borrado.
+                models.Project.deleted_at.is_(None),
             )
         )
         if user_sede:
@@ -1070,6 +1302,11 @@ def list_inbox(
                 models.ProjectTask.assignee_id == persona_id,
                 models.ProjectTask.deleted_at.is_(None),
                 models.ProjectTask.status != "completed",
+                # PEND-QUALITY-INBOX-SCOPE-001 (2026-07-16): excluir
+                # tareas cuyo proyecto esté soft-deleted para no exponer
+                # tareas fantasma en el inbox tras un borrado. La rama de
+                # ``task.deleted_at`` ya excluye soft-delete a nivel tarea.
+                models.Project.deleted_at.is_(None),
             )
         )
         if user_sede:
@@ -1122,10 +1359,31 @@ def mark_inbox_read(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
-    """Marca un item del inbox como leído."""
+    """Marca un item del inbox como leído.
+
+    PEND-QUALITY-INBOX-SCOPE-001 (2026-07-16): exigir que ``item_id``
+    corresponda a una entrada real del inbox del actor antes de
+    upsertar ``ProjectInboxState``. Antes este endpoint hacía un upsert
+    ciego en ``project_inbox_state`` y cualquier ``item_id`` arbitrario
+    quedaba persistido como leído. Ahora se valida:
+
+    * El formato ``comment-<uuid>`` o ``task-<uuid>``.
+    * Que la entidad subyacente (comentario no resuelto de otro autor en
+      proyecto visible, o tarea abierta asignada al actor en proyecto
+      visible) efectivamente exista para ``persona_id`` + ``user_sede``.
+
+    Si no se cumple, responde **404** (existence-leak safe). El upsert
+    atómico se mantiene para cubrir el race entre POSTs concurrentes.
+    """
     persona = _resolve_persona(db, current_user.id)
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
+    user_sede = get_user_sede_id(db, current_user.id)
+
+    # ── Validación de existencia real del item en el inbox del actor ──
+    if not _inbox_item_exists_for_actor(db, item_id, persona.id, user_sede):
+        raise HTTPException(status_code=404, detail="Inbox item not found")
+
     # Race-condition fix: replace check-then-act with an atomic upsert.
     # Two concurrent clicks or a duplicate POST would otherwise both see
     # ``state = None`` and either duplicate the row (if no unique
@@ -1188,7 +1446,7 @@ def list_whiteboards(
 def get_project(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_project_access("read")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     p = _ensure_project(db, project_id, user_sede=user_sede)
@@ -1203,7 +1461,7 @@ def get_project(
 def get_project_wiki(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_project_access("read")),
 ):
     """Obtiene el wiki (ProjectDocument) asociado a un proyecto.
 
@@ -1223,7 +1481,7 @@ def update_project_wiki(
     project_id: str,
     payload: schemas.ProjectDocumentUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)  # Validates project exists + scope
@@ -1263,7 +1521,7 @@ def update_project_wiki(
 def get_project_whiteboard(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_project_access("read")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
@@ -1276,7 +1534,7 @@ def update_project_whiteboard(
     project_id: str,
     payload: schemas.ProjectWhiteboardUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
@@ -1309,7 +1567,7 @@ def update_project_whiteboard(
 def delete_project_whiteboard(
     project_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     """Realiza soft delete de la pizarra asociada a un proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -1332,7 +1590,7 @@ async def upload_task_attachment(
     task_id: str,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
@@ -1373,7 +1631,7 @@ def delete_task_attachment(
     task_id: str,
     attachment_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     """Elimina un archivo adjunto de una tarea (soft delete)."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -1396,7 +1654,7 @@ def update_project_task(
     task_id: str,
     payload: schemas.ProjectTaskUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     """Actualiza una tarea con auditoría ministerial automática."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -1446,7 +1704,7 @@ def list_task_supplies(
     project_id: str,
     task_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "read")),
+    current_user: models.User = Depends(require_project_access("read")),
 ):
     """Lista los insumos de una tarea."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -1465,7 +1723,7 @@ def create_task_supply(
     task_id: str,
     payload: schemas.TaskSupplyCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     """Crea un insumo requerido para una tarea."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -1495,7 +1753,7 @@ def update_task_supply(
     supply_id: str,
     payload: schemas.TaskSupplyUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     """Actualiza nombre, cantidad o estado de un insumo."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -1523,7 +1781,7 @@ def delete_task_supply(
     task_id: str,
     supply_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     """Elimina un insumo de una tarea."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -1612,7 +1870,7 @@ def update_subtask(
     subtask_id: str,
     payload: schemas.ProjectTaskUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     """Actualiza una subtarea."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -1649,7 +1907,7 @@ def delete_subtask(
     task_id: str,
     subtask_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     """Elimina una subtarea."""
     user_sede = get_user_sede_id(db, current_user.id)
@@ -1861,7 +2119,25 @@ def delete_project(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
-    """Elimina un proyecto y todos sus datos relacionados."""
+    """Elimina (soft delete) un proyecto y todos sus datos relacionados.
+
+    **Política confirmada** (``PEND-QUALITY-RBAC-ASYM-001`` — cierre
+    2026-07-16): ``DELETE /projects/{id}`` requiere ``academy:manage``
+    v\u00eda ``require_staff_or_admin``, NO ``projects:edit`` como su primo
+    ``PATCH /projects/{id}``. La asimetr\u00eda se mantiene como pol\u00edtica
+    deliberada porque un borrado de proyecto arrastra tareas, hitos,
+    wiki, pizarra, comentarios y bit\u00e1cora ministerial — es una
+    operaci\u00f3n destructiva de m\u00f3dulo, no de proyecto.
+
+    * Editor (con ``projects:edit``) pasa ``PATCH`` pero recibe **403** en
+      ``DELETE``.  Esto queda congelado por
+      ``tests/test_projects_rbac.py::test_delete_project_requires_academy_manage_per_policy``.
+    * Gestor / Admin pasan ambas rutas.
+
+    Si en el futuro se decide alinear ``DELETE`` con la matriz
+    ``projects:*``, este docstring y ``PROJECTS_RBAC_MATRIX.md \u00a76``
+    deben actualizarse, y el test arriba debe ajustarse.
+    """
     user_sede = get_user_sede_id(db, current_user.id)
     project = _ensure_project(db, project_id, user_sede=user_sede)
     project.deleted_at = datetime.now(timezone.utc)

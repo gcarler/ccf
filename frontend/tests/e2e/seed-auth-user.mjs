@@ -33,6 +33,7 @@ sys.path.insert(0, repo_root)
 from backend import models as _models
 from backend.core.database import SessionLocal
 from backend.core.security import get_password_hash
+from backend.management.seed_user_permissions import seed_rol_plataforma
 from backend.models_auth import RolPlataforma, Usuario
 from backend.models_crm import Persona
 
@@ -41,25 +42,39 @@ password = os.environ["E2E_PASSWORD"]
 
 session = SessionLocal()
 try:
+    seed_rol_plataforma(session)
+
+    role = session.query(RolPlataforma).filter(RolPlataforma.nombre == "ADMINISTRADOR").first()
+    if role is None:
+        raise RuntimeError("ADMINISTRADOR role not available after seed_rol_plataforma")
+
+    sede = session.query(_models.Sede).first()
+    if sede is None:
+        sede = _models.Sede(id=uuid.uuid4(), nombre="Sede E2E", ciudad="Bogota", es_activa=True)
+        session.add(sede)
+        session.flush()
+
     existing = session.query(Usuario).filter(Usuario.email == email).first()
     if existing is not None:
-        print("already-seeded")
+        persona = session.query(Persona).filter(Persona.id == existing.id).first()
+        if persona is None:
+            persona = Persona(id=existing.id, first_name="E2E", last_name="User", email=email, sede_id=sede.id)
+            session.add(persona)
+        else:
+            persona.email = email
+            persona.sede_id = sede.id
+
+        existing.sede_id = sede.id
+        existing.rol_plataforma_id = role.id
+        existing.password_hash = get_password_hash(password)
+        existing.is_active = True
+        existing.is_email_verified = True
+        session.commit()
+        print("updated-existing", existing.id)
     else:
         persona = Persona(id=uuid.uuid4(), first_name="E2E", last_name="User", email=email)
         session.add(persona)
         session.flush()
-
-        role = session.query(RolPlataforma).filter(RolPlataforma.nombre == "ADMIN").first()
-        if role is None:
-            role = RolPlataforma(id=uuid.uuid4(), nombre="ADMIN", permisos={"*": "allow"})
-            session.add(role)
-            session.flush()
-
-        sede = session.query(_models.Sede).first()
-        if sede is None:
-            sede = _models.Sede(id=uuid.uuid4(), nombre="Sede E2E", ciudad="Bogota", es_activa=True)
-            session.add(sede)
-            session.flush()
 
         persona.sede_id = sede.id
         user = Usuario(
@@ -97,18 +112,12 @@ finally:
 
 async function main() {
   try {
-    const loginOk = await tryLogin();
-    if (loginOk) {
-      console.log('[seed-auth-user] User already valid.');
-      return;
-    }
-
     seedViaPython();
     const loginAfterSeed = await tryLogin();
     if (!loginAfterSeed) {
       throw new Error('[seed-auth-user] Login still failing after local seed.');
     }
-    console.log('[seed-auth-user] User created and validated.');
+    console.log('[seed-auth-user] User normalized and validated.');
   } catch (error) {
     console.error(error);
     process.exit(1);

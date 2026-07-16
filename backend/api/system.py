@@ -106,7 +106,7 @@ def get_global_calendar(
                 "end": e.fecha_fin.isoformat() if e.fecha_fin else None,
                 "type": "evangelism_strategy",
                 "allDay": True,
-                "href": f"/plataforma/evangelism/estrategias/{e.id}",
+                "href": f"/plataforma/evangelism/strategies/{e.id}",
             })
 
         # Sesiones de grupos de evangelismo
@@ -175,7 +175,7 @@ def get_global_calendar(
                 "title": f"Seguimiento: {persona_name}",
                 "start": case.sla_vencimiento_contacto.isoformat(),
                 "end": None,
-                "type": "crm_caso",
+                "type": "consolidation_case",
                 "allDay": False,
                 "href": f"/plataforma/crm/pipeline/{case.id}",
             })
@@ -198,7 +198,7 @@ def get_global_calendar(
                 "title": task.titulo,
                 "start": task.fecha_vencimiento.isoformat(),
                 "end": None,
-                "type": "crm_tarea",
+                "type": "consolidation_task",
                 "allDay": False,
                 "href": f"/plataforma/crm/pipeline/{task.caso_id}",
             })
@@ -226,7 +226,7 @@ def get_global_calendar(
                 "start": t.due_date.isoformat(),
                 "type": "task",
                 "allDay": False,
-                "href": f"/plataforma/proyectos/{t.project_id}",
+                "href": f"/plataforma/projects/{t.project_id}",
             })
 
         # Hitos de proyectos
@@ -252,7 +252,7 @@ def get_global_calendar(
                 "end": None,
                 "type": "project_milestone",
                 "allDay": True,
-                "href": f"/plataforma/proyectos/{m.project_id}",
+                "href": f"/plataforma/projects/{m.project_id}",
             })
 
     # ── PERSONAL ───────────────────────────────────────────────────────────

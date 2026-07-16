@@ -40,6 +40,8 @@ cd /root/ccf
 
 - `PEND-MESSAGING-SMOKE-001` cerrada el 2026-07-16 con `scripts/test_messaging_quality.py`
 - `PEND-MESSAGING-RBAC-001` cerrada el 2026-07-16 en `MESSAGING_COMMUNITY_RBAC_MATRIX.md`
+- `PEND-FRONTEND-E2E-MESSAGING-001` cerrada el 2026-07-16 con `frontend/tests/e2e/messaging/smoke.spec.ts`
+- `PEND-FRONTEND-DEEP-MESSAGING-001` cerrada el 2026-07-16 con `frontend/tests/e2e/messaging/direct-messages.spec.ts`
 - `PEND-CHAT-CONTRACT-001`
 
 ## 7. Notas RBAC
@@ -47,3 +49,11 @@ cd /root/ccf
 - `messaging/history` y `messaging/send` dependen hoy de `academy:manage`, no de `messaging:*`
 - `community/cards` sigue siendo público para create/delete en la firma actual
 - no asumir que chat directo y bandeja interna comparten exactamente el mismo gate
+
+## 8. Smoke frontend dedicado
+
+```bash
+cd /root/ccf/frontend
+npm run test:e2e:messaging
+npm run test:e2e:messaging:deep
+```

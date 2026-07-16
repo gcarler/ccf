@@ -1,10 +1,9 @@
 "use client";
 
+import '@/lib/agGrid';
 import {
-  AllCommunityModule,
   ColDef,
   GetRowIdParams,
-  ModuleRegistry,
   themeQuartz,
 } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
@@ -26,8 +25,6 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-ModuleRegistry.registerModules([AllCommunityModule]);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

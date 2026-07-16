@@ -84,7 +84,8 @@ Smoke frontend, si se toca UI:
 
 ```bash
 cd /root/ccf/frontend
-npx playwright test tests/e2e/evangelism/sessions-detail.spec.ts tests/e2e/evangelism/rankings-multiplication.spec.ts
+npm run test:e2e:evangelism
+npm run test:e2e:evangelism:deep
 ```
 
 ---
@@ -105,7 +106,10 @@ npx playwright test tests/e2e/evangelism/sessions-detail.spec.ts tests/e2e/evang
 | Tests backend | `tests/test_evangelism_*.py`, `tests/test_calculo_sesiones.py` | Regresion y cobertura |
 | Tests e2e | `frontend/tests/e2e/evangelism/` | Sesiones, rankings, multiplicacion |
 
-**Estado global:** El modulo tiene base funcional y flujo canonico auditado. El smoke minimo (`18 passed, 1 xfailed`) y la cobertura amplia (`219 passed`) quedaron validados el `2026-07-16`. Los riesgos vivos ya no estan en contratos backend de eventos/sesiones/follow-up/multiplicacion, sino en deuda estructural de la pantalla de estrategia, ampliacion del smoke canonico y remates de UX/QA sobre permisos runtime.
+**Estado global:** El modulo tiene base funcional y flujo canonico auditado. El smoke minimo (`18 passed, 1 xfailed`) y la cobertura amplia (`219 passed`) quedaron validados el `2026-07-16`. Los riesgos vivos ya no estan en contratos backend de eventos/sesiones/follow-up/multiplicacion, sino en deuda estructural de la pantalla de estrategia, ampliacion del script canónico y remates de UX/QA sobre permisos runtime.
+**Actualizacion QA 2026-07-16:** la cobertura profunda frontend ya no depende de arrancar Next manualmente. `npm run test:e2e:evangelism` y `npm run test:e2e:evangelism:deep` usan `frontend/scripts/run-managed-playwright.mjs` para levantar `webServer` administrado y ejecutar las suites profundas de sesiones, rankings y multiplication de forma repetible.
+**Actualizacion QA 2026-07-16 (events/scanner):** la cobertura profunda frontend ahora tambien cubre `/plataforma/evangelism/events`, `/plataforma/evangelism/events/[id]` y `/plataforma/evangelism/scanner` con `frontend/tests/e2e/evangelism/events-scanner.spec.ts`. La validacion ejecutada fue `npm run test:e2e:evangelism:deep` (`13 passed`) y `npm run test:e2e:evangelism` (`13 passed, 3 skipped`).
+**Actualizacion QA 2026-07-16 (script canonico):** `scripts/test_evangelism_quality.py` ya expone `--frontend-smoke`, `--frontend-deep` y `--expanded` como gates oficiales del modulo. La validacion ejecutada fue `./venv/bin/python scripts/test_evangelism_quality.py --frontend-deep` (`3 passed, 0 failed` a nivel de suites; incluye `13 passed` en Playwright deep).
 
 **Actualizacion documental 2026-07-16:** `PEND-RBAC-EVANGELISM-001` queda cerrada con `docs/EVANGELISMO_RBAC_MATRIX.md`. La matriz confirma que el modulo no esta homogeneamente migrado a `evangelism:*`.
 **Actualizacion operativa 2026-07-16:** `tests/test_evangelism_module_coverage.py` paso en verde (`219 passed`), por lo que `PARCIAL-EVENTS-001`, `PARCIAL-MULTIPLICATION-001`, `PARCIAL-FOLLOWUP-001`, `PEND-EVENTS-CONTRACT-001` y `PEND-SESSIONS-CONTRACT-001` dejan de ser backlog activo y pasan a historial de cierre validado.
@@ -216,8 +220,8 @@ Rutas principales:
 | `/plataforma/evangelism/strategies/[id]/analytics` | `strategies/[id]/analytics/page.tsx` | Hecho funcional, validar performance |
 | `/plataforma/evangelism/groups` | `groups/page.tsx` | Hecho funcional, requiere validar permisos en runtime |
 | `/plataforma/evangelism/groups/[id]` | `groups/[id]/page.tsx` | Hecho funcional, asistencia y detalle de grupo |
-| `/plataforma/evangelism/events` | `events/page.tsx` | Parcial segun cobertura historica de eventos |
-| `/plataforma/evangelism/events/[id]` | `events/[id]/page.tsx`, tabs | Parcial segun cobertura historica de eventos |
+| `/plataforma/evangelism/events` | `events/page.tsx` | Hecho funcional con gate profundo de creacion, asistencia y scanner |
+| `/plataforma/evangelism/events/[id]` | `events/[id]/page.tsx`, tabs | Hecho funcional con gate profundo de detalle, agenda y analitica |
 | `/plataforma/evangelism/rankings` | `rankings/page.tsx`, componentes | Hecho funcional |
 | `/plataforma/evangelism/multiplication` | `multiplication/page.tsx` | Parcial por validaciones backend abiertas |
 | `/plataforma/evangelism/scanner` | `scanner/page.tsx` | Hecho funcional, depende de permisos |
@@ -251,14 +255,11 @@ Componentes compartidos:
 ### Parcial
 
 1. **Detalle de estrategia** `[PARCIAL-STRATEGY-PAGE-001]` — `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` concentra demasiadas responsabilidades. Separar grupos, sesiones, asistencia, roles y seguimiento en componentes/hooks locales antes de seguir creciendo.
-2. **Smoke canónico aún parcial** `[PARCIAL-SMOKE-EVANGELISM-001]` — `scripts/test_evangelism_quality.py` ya existe, pero todavia no cubre frontend ni cobertura profunda completa.
 
 ### Pendiente
 
 1. **Descomposicion de estrategia** `[PEND-STRATEGY-DECOMPOSE-001]` — extraer hooks/componentes desde `strategies/[id]/page.tsx` y cubrirlos con prueba enfocada.
 2. **Busqueda remota de personas** `[PEND-PERSONAS-SEARCH-001]` — evolucionar asistencia a busqueda remota con debounce para volumen alto.
-3. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-EVANGELISM-001]` — extender `scripts/test_evangelism_quality.py` a frontend y cobertura mas profunda.
-4. **Smoke frontend Evangelismo** `[PEND-FRONTEND-E2E-EVANGELISM-001]` — cerrada el `2026-07-16` con `frontend/tests/e2e/evangelism/smoke.spec.ts`; cubre dashboard, groups y rankings con guard de consola/API/assets.
 
 ### Cerrado recientemente
 
@@ -269,6 +270,11 @@ Componentes compartidos:
 5. **Contrato unico de eventos** `[PEND-EVENTS-CONTRACT-001]` — cierre operativo confirmado por la suite amplia el `2026-07-16`.
 6. **Contrato unico de sesiones FARO/groups** `[PEND-SESSIONS-CONTRACT-001]` — aliases y contratos de sesiones validados por la suite amplia el `2026-07-16`.
 7. **Permisos runtime UI** `[PARCIAL-RUNTIME-AUTH-001]` — avance parcial confirmado el `2026-07-16`. La UI de estrategias ya no expone superficies protegidas de backend a usuarios fuera de `admin/administrador/pastor`; quedan pendientes solo remates de QA manual y decidir si otras pantallas de evangelismo deben endurecerse igual.
+8. **Smoke canónico frontend profundo** `[PARCIAL-SMOKE-EVANGELISM-001]` — cerrada el `2026-07-16` con `scripts/test_evangelism_quality.py`; el script raíz ya orquesta backend base y gates frontend vía `--frontend-smoke`, `--frontend-deep` y `--expanded`.
+9. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-EVANGELISM-001]` — cerrada el `2026-07-16` al formalizar el modo expandido y el gate frontend profundo desde `scripts/test_evangelism_quality.py`.
+10. **Smoke frontend Evangelismo** `[PEND-FRONTEND-E2E-EVANGELISM-001]` — cerrada el `2026-07-16` con `frontend/tests/e2e/evangelism/smoke.spec.ts`; cubre dashboard, groups y rankings con guard de consola/API/assets.
+11. **Smoke frontend profundo Evangelismo** `[PEND-FRONTEND-E2E-EVANGELISM-DEEP-001]` — cerrada el `2026-07-16` integrando `frontend/tests/e2e/evangelism/sessions-detail.spec.ts` y `frontend/tests/e2e/evangelism/rankings-multiplication.spec.ts` al runner modular del módulo.
+12. **Smoke frontend profundo events/scanner** `[PEND-FRONTEND-E2E-EVANGELISM-EVENTS-SCANNER-001]` — cerrada el `2026-07-16` con `frontend/tests/e2e/evangelism/events-scanner.spec.ts`; cubre creación de eventos, asistencia con scanner, detalle con agenda/analítica y validación standalone del escáner.
 
 ---
 
@@ -310,11 +316,11 @@ Componentes compartidos:
 | ID | Pieza | Archivo o area |
 |---|---|---|
 | `PARCIAL-STRATEGY-PAGE-001` | Detalle de estrategia demasiado grande | `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` |
-| `PARCIAL-SMOKE-EVANGELISM-001` | Script canónico existe, cobertura aún parcial | `scripts/test_evangelism_quality.py` |
 | `PEND-STRATEGY-DECOMPOSE-001` | Separar page de estrategia | frontend evangelism strategy detail |
 | `PEND-PERSONAS-SEARCH-001` | Busqueda remota personas asistencia | frontend + `/evangelism/personas/search` |
-| `PEND-EXPAND-SMOKE-EVANGELISM-001` | Ampliar script Evangelismo | `scripts/test_evangelism_quality.py` |
 | `PEND-RBAC-EVANGELISM-001` | Cerrada el 2026-07-16. Se mantiene solo como referencia historica del cierre documental RBAC. | `docs/EVANGELISMO_RBAC_MATRIX.md` |
+| `PARCIAL-SMOKE-EVANGELISM-001` | Cerrada el 2026-07-16. Script raíz ya orquesta backend base y gates frontend con flags formales. | `scripts/test_evangelism_quality.py` |
+| `PEND-EXPAND-SMOKE-EVANGELISM-001` | Cerrada el 2026-07-16. Modo expandido y gate frontend profundo definidos desde el script canónico. | `scripts/test_evangelism_quality.py` |
 | `PARCIAL-EVENTS-001` | Cerrada el 2026-07-16 tras validacion completa de la suite amplia del modulo. | `backend/api/evangelism_events/` + `frontend/src/app/plataforma/evangelism/events/` |
 | `PARCIAL-MULTIPLICATION-001` | Cerrada el 2026-07-16 tras validacion de `/multiplication/check`, `/split` y `/history` en la suite amplia. | `backend/api/evangelism_multiplication.py` |
 | `PARCIAL-FOLLOWUP-001` | Cerrada el 2026-07-16 tras validacion de follow-up y respuestas en la suite amplia. | `backend/api/evangelism_grupos/grupos_asistencias.py` |

@@ -87,7 +87,10 @@ export function useProjectPageData(id: string): UseProjectPageDataResult {
             setProject(projData);
             setTasks(Array.isArray(tasksData) ? tasksData : []);
             setActivities(Array.isArray(activityRows) ? activityRows : []);
-            if (Array.isArray(phasesData) && phasesData.length > 0) setPhases(phasesData);
+            // PEND-QUALITY-PHASE-SYNC-001 (2026-07-16): si el API devuelve
+            // ``[]`` se reemplaza el state de phases para evitar arrastrar
+            // columnas stale del proyecto anterior o de la última carga.
+            setPhases(Array.isArray(phasesData) ? phasesData : []);
             window.dispatchEvent(new CustomEvent('project-updated', { detail: { projectId: id } }));
         } catch (err) {
             setProject(null);
@@ -107,9 +110,19 @@ export function useProjectPageData(id: string): UseProjectPageDataResult {
 
     const createTask = useCallback(async (data: CreateTaskInput): Promise<boolean> => {
         if (!token || !id) return false;
+        // PEND-QUALITY-TASK-CREATE-001 (2026-07-16): bloquea creación local
+        // antes del round-trip al backend para evitar errores de validación
+        // (la vista list pasa ``title: ''`` literal desde
+        // ``ProjectViewsContent``). El backend también rechaza title vacío
+        // vía ``ProjectTaskBase.title`` ``min_length=1`` + strip.
+        const title = (data.title ?? '').trim();
+        if (!title) {
+            toast.error('Ingresa un título para la tarea');
+            return false;
+        }
         try {
             await apiFetch(`/projects/${id}/tasks`, {
-                method: 'POST', token, body: data,
+                method: 'POST', token, body: { ...data, title },
             });
             toast.success('Tarea creada');
             await loadProject();

@@ -168,6 +168,34 @@ class ChangePasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=8)
 
 
+class VerifyEmailRequest(BaseModel):
+    token: Optional[str] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: Optional[str] = None
+    new_password: Optional[str] = Field(default=None, min_length=8)
+    password: Optional[str] = Field(default=None, min_length=8)
+
+
+class SendVerificationEmailRequest(BaseModel):
+    email: Optional[str] = None
+
+
+class AuthSessionResponse(BaseModel):
+    id: str
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    last_active: Optional[str] = None
+    created_at: Optional[str] = None
+    expires_at: Optional[str] = None
+    revoked: bool = False
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -211,6 +239,18 @@ def _resolve_token(db: Session, token: str) -> TokenResetContrasena | None:
             TokenResetContrasena.expires_at > _utcnow(),
         )
         .first()
+    )
+
+
+def _serialize_session(row: TokenSesion) -> AuthSessionResponse:
+    return AuthSessionResponse(
+        id=str(row.id),
+        ip_address=row.ip_address,
+        user_agent=row.user_agent,
+        last_active=row.last_active.isoformat() if row.last_active else None,
+        created_at=row.created_at.isoformat() if row.created_at else None,
+        expires_at=row.expires_at.isoformat() if row.expires_at else None,
+        revoked=bool(row.revoked),
     )
 
 
@@ -856,17 +896,116 @@ def logout(
     return {"status": "success"}
 
 
+@router.get("/sessions", response_model=list[AuthSessionResponse])
+def list_sessions(
+    db: Session = Depends(get_db),
+    current_user_id: str = Depends(require_auth_dep),
+):
+    """Lista las refresh sessions activas y no expiradas del usuario actual."""
+    try:
+        auth_user_id = uuid.UUID(current_user_id)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Identidad de sesión inválida")
+
+    rows = (
+        db.query(TokenSesion)
+        .filter(
+            TokenSesion.user_id == auth_user_id,
+            TokenSesion.revoked.is_(False),
+        )
+        .order_by(TokenSesion.last_active.desc(), TokenSesion.created_at.desc())
+        .all()
+    )
+
+    active_rows: list[TokenSesion] = []
+    changed = False
+    now = _utcnow()
+    for row in rows:
+        expires_at = _as_aware(row.expires_at)
+        if expires_at is None or expires_at <= now:
+            row.revoked = True
+            changed = True
+            continue
+        active_rows.append(row)
+
+    if changed:
+        db.commit()
+
+    return [_serialize_session(row) for row in active_rows]
+
+
+@router.post("/sessions/{session_id}/revoke", response_model=dict)
+def revoke_session(
+    session_id: str,
+    db: Session = Depends(get_db),
+    current_user_id: str = Depends(require_auth_dep),
+):
+    """Revoca una refresh session propia."""
+    try:
+        auth_user_id = uuid.UUID(current_user_id)
+        target_session_id = uuid.UUID(session_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Identificador de sesión inválido")
+
+    row = (
+        db.query(TokenSesion)
+        .filter(
+            TokenSesion.id == target_session_id,
+            TokenSesion.user_id == auth_user_id,
+            TokenSesion.revoked.is_(False),
+        )
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
+
+    row.revoked = True
+    db.commit()
+    return {"status": "success", "session_id": str(row.id)}
+
+
+@router.post("/sessions/revoke-all", response_model=dict)
+def revoke_all_sessions(
+    db: Session = Depends(get_db),
+    current_user_id: str = Depends(require_auth_dep),
+):
+    """Revoca todas las refresh sessions activas del usuario actual."""
+    try:
+        auth_user_id = uuid.UUID(current_user_id)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Identidad de sesión inválida")
+
+    revoked_count = (
+        db.query(TokenSesion)
+        .filter(
+            TokenSesion.user_id == auth_user_id,
+            TokenSesion.revoked.is_(False),
+        )
+        .update({TokenSesion.revoked: True}, synchronize_session=False)
+    )
+    db.commit()
+    return {"status": "success", "revoked_count": int(revoked_count)}
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # 8. VERIFY EMAIL
 # ═══════════════════════════════════════════════════════════════════════
 
 
 @router.post("/verify-email")
-def verify_email(token: str, db: Session = Depends(get_db)):
+def verify_email(
+    payload: VerifyEmailRequest | None = None,
+    token: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
     """Verifica el correo electrónico usando un token enviado por email."""
     from backend.models_auth import TokenVerificacionEmail
 
-    row = db.query(TokenVerificacionEmail).filter(TokenVerificacionEmail.token == token).first()
+    provided_token = (payload.token if payload and payload.token else token or "").strip()
+    if not provided_token:
+        raise HTTPException(status_code=400, detail="Token de verificación requerido")
+
+    row = db.query(TokenVerificacionEmail).filter(TokenVerificacionEmail.token == provided_token).first()
     if not row or row.used:
         raise HTTPException(status_code=400, detail="Token de verificación inválido o expirado")
 
@@ -889,14 +1028,22 @@ def verify_email(token: str, db: Session = Depends(get_db)):
 
 
 @router.post("/forgot-password")
-def forgot_password(email: str, db: Session = Depends(get_db)):
+def forgot_password(
+    payload: ForgotPasswordRequest | None = None,
+    email: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
     """Solicita restablecimiento de contraseña. Envía email con token si el correo existe."""
     from datetime import timedelta
 
     from backend.models_auth import TokenResetContrasena
     from backend.services.email import render_reset_password, send_email
 
-    user = _resolve_user(db, email)
+    target_email = (payload.email if payload else email or "").strip()
+    if not target_email:
+        raise HTTPException(status_code=400, detail="Correo requerido")
+
+    user = _resolve_user(db, target_email)
     if not user:
         return {"status": "success", "message": "Si el correo existe, recibirás instrucciones"}
 
@@ -923,14 +1070,30 @@ def forgot_password(email: str, db: Session = Depends(get_db)):
 
 
 @router.post("/reset-password")
-def reset_password(token: str, new_password: str, db: Session = Depends(get_db)):
+def reset_password(
+    payload: ResetPasswordRequest | None = None,
+    token: Optional[str] = None,
+    new_password: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
     """Restablece la contraseña usando un token enviado por email."""
     from backend.models_auth import TokenResetContrasena
 
-    if len(new_password) < 8:
+    provided_token = (payload.token if payload and payload.token else token or "").strip()
+    provided_password = (
+        (payload.new_password if payload and payload.new_password else None)
+        or (payload.password if payload and payload.password else None)
+        or new_password
+        or ""
+    ).strip()
+
+    if not provided_token:
+        raise HTTPException(status_code=400, detail="Token de restablecimiento requerido")
+
+    if len(provided_password) < 8:
         raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 8 caracteres")
 
-    row = db.query(TokenResetContrasena).filter(TokenResetContrasena.token == token).first()
+    row = db.query(TokenResetContrasena).filter(TokenResetContrasena.token == provided_token).first()
     if not row or row.used:
         raise HTTPException(status_code=400, detail="Token de restablecimiento inválido, expirado o ya utilizado")
 
@@ -943,10 +1106,60 @@ def reset_password(token: str, new_password: str, db: Session = Depends(get_db))
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    user.password_hash = get_password_hash(new_password)
+    user.password_hash = get_password_hash(provided_password)
     db.commit()
 
     return {"status": "success", "message": "Contraseña restablecida exitosamente"}
+
+
+@router.post("/send-verification-email", response_model=dict)
+def send_verification_email(
+    payload: SendVerificationEmailRequest | None = None,
+    request: Request = None,
+    db: Session = Depends(get_db),
+    current_user_id: str = Depends(require_auth_dep),
+):
+    """Reenvía un correo de verificación al usuario autenticado."""
+    from backend.models_auth import TokenVerificacionEmail
+    from backend.services.email import render_verify_email, send_email
+
+    user = db.query(Usuario).filter(Usuario.id == current_user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    requested_email = (payload.email if payload and payload.email else user.email or "").strip().lower()
+    user_email = (user.email or "").strip().lower()
+    if not user_email:
+        raise HTTPException(status_code=400, detail="Usuario sin correo configurado")
+    if requested_email and requested_email != user_email:
+        raise HTTPException(status_code=403, detail="No puedes solicitar verificación para otro correo")
+    if user.is_email_verified:
+        return {"status": "success", "message": "El correo ya está verificado"}
+
+    expires_at = _utcnow() + timedelta(hours=24)
+    token_row = TokenVerificacionEmail(
+        user_id=user.id,
+        token=secrets.token_urlsafe(48),
+        expires_at=expires_at,
+        used=False,
+    )
+    db.add(token_row)
+    db.commit()
+    db.refresh(token_row)
+
+    subject, html = render_verify_email(token_row.token)
+    send_email(to=user.email, subject=subject, html=html)
+
+    _log_security(
+        db,
+        user.id,
+        "VERIFICATION_EMAIL_RESENT",
+        ip=request.client.host if request and request.client else None,
+        ua=request.headers.get("user-agent") if request else None,
+        detalles={"email": user.email},
+    )
+
+    return {"status": "success", "message": "Correo de verificación enviado"}
 
 
 # ─── Include this in the main app router ────────────────────────────

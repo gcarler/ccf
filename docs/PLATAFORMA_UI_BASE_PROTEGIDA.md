@@ -9,8 +9,11 @@ Este documento fija la superficie UI compartida que no puede tratarse como cambi
 ### 2.1. Shell de plataforma
 
 - `frontend/src/components/WorkspaceLayout.tsx`
+- `frontend/src/components/ProtectedRoute.tsx`
 - `frontend/src/components/WorkspaceMainSidebar.tsx`
 - `frontend/src/components/WorkspaceMiniSidebar.tsx`
+- `frontend/src/lib/workspaceAccess.ts`
+- `frontend/src/lib/protectedRouteAccess.ts`
 - `frontend/src/components/WorkspaceToolbar.tsx`
 - `frontend/src/components/WorkspaceInbox.tsx`
 
@@ -18,6 +21,8 @@ Contrato:
 
 - `WorkspaceLayout` es el shell de `/plataforma/**`.
 - Resuelve permisos por ruta y filtra navegacion via `hasModuleAccess(...)`.
+- `ProtectedRoute` debe gatear por `allowedPermissions` cuando el modulo ya tiene permiso canónico; `allowedRoles` queda solo para compatibilidad legacy.
+- El filtrado de rutas del shell y del mini sidebar debe salir de `frontend/src/lib/workspaceAccess.ts`, no de mapas locales duplicados.
 - Persiste estado de sidebars y focus mode en `localStorage`.
 - Coordina capas `S1` y `S2`; romper esta logica impacta CRM, Projects, Evangelism, Agenda, Academy, CMS, Community y Admin.
 
@@ -39,6 +44,7 @@ Contrato:
 
 Archivos observados el `2026-07-16`:
 
+- `frontend/src/lib/agGrid.ts`
 - `frontend/src/components/ui/TableView.tsx`
 - `frontend/src/components/ui/UniversalTableView.tsx`
 - `frontend/src/components/projects/ProjectTableView.tsx`
@@ -48,10 +54,11 @@ Archivos observados el `2026-07-16`:
 
 Contrato:
 
-- La plataforma usa `themeQuartz` y `ModuleRegistry.registerModules([AllCommunityModule])`.
+- La plataforma usa `themeQuartz` y registra `AllCommunityModule` una sola vez desde `frontend/src/lib/agGrid.ts`.
 - No se debe mezclar Theming API con CSS legacy de AG Grid en la misma pagina.
 - No se aprueba codigo nuevo que reintroduzca `ag-grid.css` o temas legacy de clase.
 - La inicializacion de modulos AG Grid se considera parte del contrato compartido porque una falla deja grids completos sin renderizar.
+- Los wrappers por modulo no deben volver a llamar `ModuleRegistry.registerModules(...)` directamente.
 
 ## 3. Regla de clasificacion
 

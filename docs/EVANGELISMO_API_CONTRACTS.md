@@ -2,6 +2,8 @@
 
 > **Objetivo:** documentar el contrato operativo de `/api/evangelism` para que frontend, tests y agentes no cambien endpoints por intuicion. El detalle definitivo vive en codigo; este archivo fija la forma esperada y los riesgos.
 
+Referencia obligatoria de permisos: `docs/EVANGELISMO_RBAC_MATRIX.md`.
+
 ## 1. Reglas generales
 
 - Prefijo backend: `/api/evangelism`.
@@ -11,7 +13,7 @@
 - Estrategias y grupos se filtran por `sede_id`.
 - Sesiones y asistencias heredan sede por grupo.
 - Listados activos excluyen `deleted_at`.
-- Los endpoints protegidos deben usar `require_module_access("evangelism", action)`.
+- Evangelismo no usa hoy un solo esquema de guard. Conviven `require_pastor_or_admin`, `require_active_user`, checks contextuales con `get_current_user` y una superficie puntual con `require_module_access("evangelism", action)`.
 
 ## 2. Acciones de permiso esperadas
 
@@ -21,7 +23,7 @@
 | `edit` | crear/editar asistencia, seguimiento, sesiones operativas |
 | `manage` | crear/eliminar estrategias, roles, configuracion, acciones masivas |
 
-Pendiente formal: `PEND-RBAC-EVANGELISM-001`.
+`PEND-RBAC-EVANGELISM-001` queda cerrada el **2026-07-16** con `docs/EVANGELISMO_RBAC_MATRIX.md`.
 
 ## 3. Estrategias
 
@@ -46,6 +48,7 @@ Reglas:
 - `strategy_id` es UUID string.
 - No crear sesiones para grupos eliminados.
 - Generacion debe respetar frecuencia y sede.
+- Esta superficie usa `require_pastor_or_admin`; no asumir `evangelism:manage` directo.
 
 ## 4. Roles de estrategia y excusas
 
@@ -90,6 +93,7 @@ Reglas:
 - `estrategia_id`/`evangelism_strategy_id` apunta a estrategia de la misma sede.
 - `mine` debe tener comportamiento documentado por rol antes de cambiarlo.
 - Delete debe respetar soft delete.
+- `/grupos` y `/groups` administrativos usan `require_pastor_or_admin`; `mine` usa auth + chequeo contextual.
 
 ## 6. Sesiones
 
@@ -115,6 +119,7 @@ Reglas:
 - Asistencia requiere `HABILITADO`.
 - Aliases `/grupos` y `/groups` deben devolver la misma forma.
 - Pendiente: `PEND-SESSIONS-CONTRACT-001`.
+- La mayoria de estas rutas usan `require_pastor_or_admin`, pero `/mine/pending` usa auth + chequeo contextual.
 
 ## 7. Asistencia y seguimiento
 
@@ -137,6 +142,7 @@ Reglas:
 - Primera vez puede activar CRM bridge.
 - Seguimiento debe retornar schema Pydantic, no ORM.
 - Errores de asistencia inexistente deben ser 404.
+- La asistencia se protege con `get_current_user` + validacion contextual del grupo; no por `evangelism:edit` puro.
 
 ## 8. Eventos
 
@@ -169,6 +175,7 @@ Reglas:
 - Duplicados de check-in deben responder controladamente, no violar constraint.
 - Roles de sistema bloqueados no deben eliminarse sin fallback valido.
 - Pendiente: `PEND-EVENTS-CONTRACT-001`.
+- Eventos mezcla `require_pastor_or_admin`, `require_active_user` y al menos un endpoint con `require_module_access("evangelism", "read")`.
 
 ## 9. Rankings, reportes, analytics y multiplicacion
 
@@ -193,6 +200,7 @@ Reglas:
 - Reportes y rankings deben respetar sede y soft delete.
 - Multiplicacion debe retornar 400/404 para precondiciones invalidas, no 500.
 - Analytics debe evitar N+1 en caminos principales.
+- Rankings, reportes y analytics usan `require_active_user`, no `evangelism:read` uniforme.
 
 ## 10. Scanner
 
@@ -211,6 +219,7 @@ Reglas:
 - Hash persistido en persona.
 - Token vencido o invalido retorna 403.
 - Persona inexistente retorna 404.
+- Scanner es la superficie alineada explicitamente con `evangelism:manage` y `evangelism:read`.
 
 ## 11. Codigos esperados
 
@@ -234,4 +243,3 @@ cd /root/ccf
   tests/test_evangelism_reports_api.py \
   tests/test_calculo_sesiones.py
 ```
-
