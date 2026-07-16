@@ -2,7 +2,7 @@
 
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { AllCommunityModule, ModuleRegistry, themeQuartz, ColDef } from '@/lib/ag-grid-community-no-style';
+import { AllCommunityModule, ModuleRegistry, themeQuartz, ColDef } from 'ag-grid-community';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 

@@ -12,7 +12,7 @@ ModuleRegistry,
 type ValueFormatterParams,
 type ValueGetterParams,
 themeQuartz
-} from "@/lib/ag-grid-community-no-style";
+} from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import clsx from "clsx";
 import {
