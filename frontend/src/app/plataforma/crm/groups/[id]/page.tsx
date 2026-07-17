@@ -39,7 +39,6 @@ export default function GroupDetailPage() {
                 const data = await apiFetch<GrupoDetail>(`/crm/grupos/${id}`, { token });
                 setGroup(data);
             } catch (err) {
-                console.error(err);
                 setGroup(null);
                 setError("No se pudo cargar el grupo.");
                 toast.error("Error al cargar detalle del grupo");

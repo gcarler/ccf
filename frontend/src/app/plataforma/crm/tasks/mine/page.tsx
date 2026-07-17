@@ -48,7 +48,6 @@ export default function MyTasks() {
             const data = await apiFetch<CrmTask[]>('/crm/tasks/mine', { token, cache: 'no-store' });
             setTasks(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error(err);
             setTasks([]);
             setError("No se pudieron cargar tus tareas pastorales.");
             addToast("Error al cargar tareas pastorales", "error");

@@ -55,7 +55,6 @@ export default function MessagingDetailPage() {
                 const data = await apiFetch<MessagingHistoryDetail>(`/crm/messaging/history/${id}`, { token });
                 setCampaign(data);
             } catch (err) {
-                console.error(err);
                 setCampaign(null);
                 setError('No se pudo cargar el detalle de la campaña.');
                 toast.error("Error al cargar detalle de campana");

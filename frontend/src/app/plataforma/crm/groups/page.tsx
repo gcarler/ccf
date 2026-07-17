@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { ApiError, apiFetch } from '@/lib/http';
+import { extractErrorMessage, apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import { motion } from 'framer-motion';
 import {
@@ -67,9 +67,7 @@ export default function CrmGroupsPage() {
             setGroups(data);
         } catch (err) {
             setGroups([]);
-            const message = err instanceof ApiError
-                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'Error al cargar grupos'))
-                : 'Error al cargar grupos';
+            const message = extractErrorMessage(err, 'Error al cargar grupos');
             setGroupsError(message);
             toast.error(message);
         } finally {
@@ -92,8 +90,12 @@ export default function CrmGroupsPage() {
                 const pageSize = 250;
                 let skip = 0;
                 const allPersonas: Persona[] = [];
+                const MAX_PAGES = 50;
+                let pageCount = 0;
 
                 while (true) {
+                    pageCount++;
+                    if (pageCount > MAX_PAGES) break;
                     const data = await apiFetch<unknown>('/crm/personas/', {
                         token,
                         query: {
@@ -122,9 +124,7 @@ export default function CrmGroupsPage() {
             } catch (err) {
                 if (!cancelled) {
                     setPersonas([]);
-                    const message = err instanceof ApiError
-                        ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'No se pudo cargar la lista de personas'))
-                        : 'No se pudo cargar la lista de personas';
+                    const message = extractErrorMessage(err, 'Error al cargar grupos');
                     setPersonasError(message);
                     toast.error(message);
                 }

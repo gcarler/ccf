@@ -52,7 +52,6 @@ export default function CounselingDetailPage() {
                 toast.error("No se pudo obtener el borrador");
             }
         } catch (err) {
-            console.error(err);
             toast.error("Error al llamar a AI Copilot");
         } finally {
             setCopilotLoading(false);
@@ -71,7 +70,6 @@ export default function CounselingDetailPage() {
             setIsEditing(false);
             toast.success("Notas guardadas correctamente");
         } catch (err) {
-            console.error(err);
             toast.error("Error al guardar las notas");
         } finally {
             setSaving(false);
@@ -98,7 +96,6 @@ export default function CounselingDetailPage() {
                 const data = await apiFetch<CounselingDetail>(`/crm/counseling/${id}`, { token });
                 setSession(data);
             } catch (err) {
-                console.error(err);
                 setSession(null);
                 setError("No se pudo cargar la sesión de consejería.");
                 toast.error("Error al cargar la sesion de consejeria");

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
-import { ApiError, apiFetch } from '@/lib/http';
+import { extractErrorMessage, apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -76,9 +76,7 @@ export default function VolunteersPage() {
             setVolunteers(data);
         } catch (err) {
             setVolunteers([]);
-            const message = err instanceof ApiError
-                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'Error al cargar servidores'))
-                : 'Error al cargar servidores';
+            const message = extractErrorMessage(err, 'Error al cargar servidores');
             setVolunteersError(message);
             toast.error(message);
         } finally {

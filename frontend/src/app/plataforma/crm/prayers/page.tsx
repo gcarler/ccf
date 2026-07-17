@@ -18,7 +18,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
-import { ApiError, apiFetch } from '@/lib/http';
+import { extractErrorMessage, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { DataTable } from '@/components/ui/DataTable';
@@ -80,9 +80,7 @@ export default function PrayerSupportCenter() {
             }
         } catch (err) {
             setRequests([]);
-            const message = err instanceof ApiError
-                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'Error al cargar peticiones'))
-                : 'Error al cargar peticiones';
+            const message = extractErrorMessage(err, 'Error al cargar peticiones');
             setRequestsError(message);
             addToast(message, 'error');
         }

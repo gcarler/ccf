@@ -37,7 +37,6 @@ export default function CRMClient() {
                 const data = await apiFetch<any>('/dashboard/crm', { token });
                 setDashboard(data);
             } catch (err) {
-                console.error('Error fetching CRM dashboard', err);
                 toast.error("Error al cargar el dashboard");
             } finally {
                 setLoading(false);
