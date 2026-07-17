@@ -133,6 +133,10 @@ Una tarea de CMS queda cerrada cuando:
 - `DONE-FRONTEND-E2E-CMS-001` cerrado el 2026-07-16 con `frontend/tests/e2e/cms/smoke.spec.ts`
 - `DONE-FRONTEND-DEEP-CMS-001` cerrado el 2026-07-16 con `frontend/tests/e2e/cms/pages-preview.spec.ts`
 
-## 11. Estado operativo
+## 11. Pendientes QA / backlog
 
-Sin pendientes abiertos en CMS al momento de esta lectura.
+- `PEND-CMS-BUILDER-001` — `/plataforma/cms/builder` reportado como no funcional; revisar sections/global blocks, estado de editor y contratos compartidos del builder.
+
+## 12. Estado operativo
+
+Sin otros pendientes abiertos en CMS al momento de esta lectura.
