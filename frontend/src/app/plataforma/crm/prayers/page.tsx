@@ -29,6 +29,7 @@ import clsx from 'clsx';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 import CrmShell from '@/components/crm/CrmShell';
+import type { PrayerRequest } from '@/types/crm';
 
 const PRAYER_STATUS_OPTIONS: StatusOption[] = [
     { label: 'ACTIVA', value: 'active', color: 'bg-rose-500', text: 'text-rose-600', bg: 'bg-rose-50' },
@@ -44,11 +45,11 @@ export default function PrayerSupportCenter() {
     const { token } = useAuth();
     const { canEditCrm } = useCrmAccess();
     const { addToast } = useToast();
-    const [requests, setRequests] = useState<any[]>([]);
+    const [requests, setRequests] = useState<PrayerRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [requestsError, setRequestsError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
-    const [selectedRequest, setSelectedRequest] = useState<any>(null);
+    const [selectedRequest, setSelectedRequest] = useState<PrayerRequest | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -66,15 +67,15 @@ export default function PrayerSupportCenter() {
         setLoading(true);
         setRequestsError(null);
         try {
-            const data = await apiFetch<any[]>('/crm/prayer-requests', { token });
+            const data = await apiFetch<PrayerRequest[]>('/crm/prayer-requests', { token });
             if (Array.isArray(data)) {
-                setRequests(data.map((r: any) => ({
+                setRequests(data.map((r: PrayerRequest) => ({
                     id: r.id,
-                    name: r.requester_name || r.name || 'Anónimo',
-                    request: r.request_text || r.request,
+                    name: r.requester_name || (r as any).name || 'Anónimo',
+                    request: r.request_text || (r as any).request,
                     category: r.category || 'General',
-                    status: r.status || (r.is_answered ? 'answered' : 'pending'),
-                    is_urgent: r.is_urgent || false,
+                    status: r.status || ((r as any).is_answered ? 'answered' : 'pending'),
+                    is_urgent: (r as any).is_urgent || false,
                     time: new Date(r.created_at).toLocaleDateString()
                 })));
             }
@@ -94,7 +95,7 @@ export default function PrayerSupportCenter() {
         if (!canEditCrm) return;
         setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
         // Sync selected request if open
-        setSelectedRequest((prev: any) => prev?.id === id ? { ...prev, status: newStatus } : prev);
+        setSelectedRequest((prev) => prev?.id === id ? { ...prev, status: newStatus } : prev);
         try {
             await apiFetch(`/crm/prayer-requests/${id}`, {
                 method: 'PATCH', token,
@@ -215,8 +216,7 @@ export default function PrayerSupportCenter() {
             label: PRAYER_STATUS_OPTIONS.find(o => o.value === status)?.label ?? status.toUpperCase(),
             items: filtered.filter(r => r.status === status),
         }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filtered]);
+    }, [filtered, PRAYER_STATUS_OPTIONS]);
 
     return (
         <CrmShell

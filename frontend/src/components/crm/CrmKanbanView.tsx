@@ -1,7 +1,8 @@
 "use client";
 
 import React from 'react';
-import { DndContext, DragEndEvent, PointerSensor, closestCorners, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, PointerSensor, TouchSensor, KeyboardSensor, closestCorners, useSensor, useSensors } from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { PersonaPipelineColumn } from '@/components/crm/PersonaPipeline';
 
 interface PipelineColumn {
@@ -18,7 +19,11 @@ interface CrmKanbanViewProps {
 }
 
 export default function CrmKanbanView({ columns, onDragEnd, onOpenPersona }: CrmKanbanViewProps) {
-    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
 
     return (
         <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={onDragEnd}>

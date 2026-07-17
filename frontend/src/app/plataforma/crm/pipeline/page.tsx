@@ -22,6 +22,7 @@ import { extractErrorMessage, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { useRouter } from 'next/navigation';
 import CrmShell from '@/components/crm/CrmShell';
+import type { PipelineLead } from '@/types/crm';
 
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
@@ -51,7 +52,7 @@ export default function ConsolidationPipelinePage() {
     const { addToast } = useToast();
     const router = useRouter();
 
-    const [leads, setLeads] = useState<any[]>([]);
+    const [leads, setLeads] = useState<PipelineLead[]>([]);
     const [loading, setLoading] = useState(true);
     const [leadsError, setLeadsError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
@@ -267,6 +268,7 @@ export default function ConsolidationPipelinePage() {
             cell: ({ row }) => (
                 <button
                     onClick={(e) => { e.stopPropagation(); handleLeadSelect(row.original); }}
+                    aria-label="Ver prospecto"
                     className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all"
                 >
                     <ArrowRight size={14} />
@@ -295,7 +297,7 @@ export default function ConsolidationPipelinePage() {
     }), [leads]);
 
     const groupedByDate = useMemo(() => {
-        const map: Record<string, { label: string; items: any[] }> = {};
+        const map: Record<string, { label: string; items: PipelineLead[] }> = {};
         for (const lead of filteredLeads) {
             const date = lead.created_at ? new Date(lead.created_at) : new Date();
             const isoKey = date.toISOString().slice(0, 10);
@@ -457,6 +459,9 @@ export default function ConsolidationPipelinePage() {
                                                 <div
                                                     key={lead.id}
                                                     onClick={() => handleLeadSelect(lead)}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLeadSelect(lead); } }}
                                                     className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-3 mb-3">

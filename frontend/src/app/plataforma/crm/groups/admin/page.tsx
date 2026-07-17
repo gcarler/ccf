@@ -25,6 +25,7 @@ export default function GrupoAdmin() {
     const [attendees, setAttendees] = useState<Attendee[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
+    const [loadingDrawer, setLoadingDrawer] = useState(false);
     const [groupNameDraft, setGroupNameDraft] = useState('');
     const [groupPromptOpen, setGroupPromptOpen] = useState(false);
     const [reloadKey, setReloadKey] = useState(0);
@@ -61,6 +62,7 @@ export default function GrupoAdmin() {
     const openReport = async (grupo: Grupo) => {
         if (!token) return;
         setSelectedGrupo(grupo);
+        setLoadingDrawer(true);
         try {
             setError(null);
             const [seasonData, detail] = await Promise.all([
@@ -85,12 +87,18 @@ export default function GrupoAdmin() {
         } catch {
             setSelectedGrupo(null);
             addToast("No se pudo preparar el reporte", "error");
+        } finally {
+            setLoadingDrawer(false);
         }
     };
 
     const sendReport = async () => {
         if (!token || !selectedGrupo || !seasonId) {
             addToast("Selecciona una temporada", "error");
+            return;
+        }
+        if (!reportDate) {
+            addToast("Selecciona una fecha para el reporte", "error");
             return;
         }
         setSubmitting(true);
@@ -121,7 +129,10 @@ export default function GrupoAdmin() {
 
     const submitCreateGrupo = async () => {
         const name = groupNameDraft.trim();
-        if (!token || !name) return;
+        if (!token || !name) {
+            addToast("El nombre del grupo es obligatorio", "error");
+            return;
+        }
         try {
             const created = await apiFetch<Grupo>("/community/grupos", { method: "POST", token, body: { name: name.trim(), status: "active" } });
             setGrupos((prev) => [created, ...prev]);
@@ -215,10 +226,15 @@ export default function GrupoAdmin() {
 
             <WorkspaceDrawer isOpen={Boolean(selectedGrupo)} onClose={() => setSelectedGrupo(null)} title={selectedGrupo?.name || "Reporte"} subtitle="REPORTE OPERATIVO SEMANAL">
                 <div className="space-y-3 pb-4">
+                    {loadingDrawer ? (
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 size={32} className="animate-spin text-[hsl(var(--primary))]" />
+                        </div>
+                    ) : (
                     <div className="grid grid-cols-2 gap-4">
-                        <Field label="Fecha"><input type="date" value={reportDate} onChange={(event) => setReportDate(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none" /></Field>
+                        <Field label="Fecha"><input type="date" required value={reportDate} onChange={(event) => setReportDate(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none" /></Field>
                         <Field label="Temporada">
-                            <select value={seasonId} onChange={(event) => setSeasonId(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none">
+                            <select required value={seasonId} onChange={(event) => setSeasonId(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none">
                                 <option value="">Selecciona</option>
                                 {seasons.map((season) => <option key={season.id} value={season.id}>{season.name}</option>)}
                             </select>
@@ -249,6 +265,7 @@ export default function GrupoAdmin() {
                         {submitting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} fill="currentColor" />}
                         Enviar Reporte Semanal
                     </button>
+                    )}
                 </div>
             </WorkspaceDrawer>
         </CrmShell>

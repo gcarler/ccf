@@ -160,10 +160,12 @@ function DetailPanel({
     const fileRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const initial: Record<string, string> = {};
-        (plantilla.variables_requeridas ?? []).forEach(v => { initial[v] = vars[v] ?? ''; });
-        setVars(initial);
-    }, [plantilla.id]); // eslint-disable-line react-hooks/exhaustive-deps
+        setVars(prev => {
+            const initial: Record<string, string> = {};
+            (plantilla.variables_requeridas ?? []).forEach(v => { initial[v] = prev[v] ?? ''; });
+            return initial;
+        });
+    }, [plantilla.id, plantilla.variables_requeridas]);
 
     useEffect(() => {
         if (tab === 'historial' && bitacora.length === 0) {
@@ -172,7 +174,7 @@ function DetailPanel({
                 .then(data => setBitacora(data ?? []))
                 .finally(() => setLoadingBit(false));
         }
-    }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [tab, bitacora.length, plantilla.id, token]);
 
     const previewText = hydrate(plantilla.contenido_texto, vars);
 
@@ -796,7 +798,7 @@ function SendDrawer({
         plantilla.variables_requeridas.forEach(v => { init[v] = ''; });
         setVars(init);
         setCampaignName(plantilla.titulo);
-    }, [plantilla?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [plantilla]);
 
     useEffect(() => {
         if (modo !== 'individual' || search.length < 2) { setResults([]); return; }

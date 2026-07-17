@@ -102,7 +102,31 @@ export interface CounselingSession {
   topic?: string;
   summary?: string;
   confidential_notes?: string;
+  priority_level?: string;
   created_at: string;
+}
+
+// ── Pipeline ──────────────────────────────────────────────────────────────
+export interface PipelineLead {
+  id: string;
+  nombre: string;
+  email?: string;
+  phone?: string;
+  stage?: string;
+  status?: string;
+  assigned_pastor_id?: string;
+  created_at?: string;
+}
+
+// ── Prayer Requests ───────────────────────────────────────────────────────
+export interface PrayerRequest {
+  id: string;
+  requester_name: string;
+  request_text: string;
+  category: string;
+  status: string;
+  is_public: boolean;
+  created_at?: string;
 }
 
 // ── Groups ────────────────────────────────────────────────────────────────

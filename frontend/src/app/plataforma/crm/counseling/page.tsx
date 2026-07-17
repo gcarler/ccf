@@ -35,6 +35,7 @@ export default function CounselingPage() {
     const { pushSidebarPanel, popSidebarPanel } = useSidebarLayers();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);   // ← Drawer, NO modal
     const [isSaving, setIsSaving] = useState(false);
+    const [drawerErrors, setDrawerErrors] = useState<{ topic?: boolean; scheduled_at?: boolean }>({});
     const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_counseling_view', 'grid'));
     const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_counseling_wiki_notes', {
@@ -87,6 +88,15 @@ export default function CounselingPage() {
 
     const handleCreateSession = async () => {
         if (!token) return;
+        const newErrors = {
+            topic: !newSession.topic.trim(),
+            scheduled_at: !newSession.scheduled_at.trim(),
+        };
+        setDrawerErrors(newErrors);
+        if (newErrors.topic || newErrors.scheduled_at) {
+            addToast('Completa los campos obligatorios', 'warning');
+            return;
+        }
         setIsSaving(true);
         try {
             await apiFetch('/crm/counseling/', {
@@ -199,6 +209,7 @@ export default function CounselingPage() {
                 <input
                     type="text"
                     placeholder="Buscar por tema..."
+                    aria-label="Buscar sesiones"
                     className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/30 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-1.5 pl-12 pr-4 text-sm text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:border-sky-500 transition-all"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -249,6 +260,9 @@ export default function CounselingPage() {
                         <div 
                             key={session.id} 
                             onClick={() => openSessionDetail(session)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSessionDetail(session); } }}
                             className="bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 space-y-3 hover:border-sky-500/40 hover:shadow-2xl hover:shadow-sky-500/5 transition-all group relative overflow-hidden cursor-pointer"
                         >
                             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity text-sky-500">
@@ -314,6 +328,9 @@ export default function CounselingPage() {
                         <div 
                             key={session.id} 
                             onClick={() => openSessionDetail(session)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSessionDetail(session); } }}
                             className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] transition-colors group relative cursor-pointer"
                         >
                             {/* Status Indicator & Priority */}
@@ -351,7 +368,7 @@ export default function CounselingPage() {
 
                             {/* Actions */}
                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity absolute right-4 sm:static">
-                                <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-sky-500 bg-[hsl(var(--surface-1))] dark:bg-black rounded-lg shadow-sm border border-[hsl(var(--border))] dark:border-white/10 transition-all">
+                                <button aria-label="Enviar mensaje" className="p-2 text-[hsl(var(--text-secondary))] hover:text-sky-500 bg-[hsl(var(--surface-1))] dark:bg-black rounded-lg shadow-sm border border-[hsl(var(--border))] dark:border-white/10 transition-all">
                                     <MessageSquare size={14} />
                                 </button>
                                 {session.status === 'Pendiente' && (
@@ -471,7 +488,7 @@ export default function CounselingPage() {
                         </div>
                         <div className="p-4 space-y-3 overflow-y-auto flex-1 custom-scrollbar">
                             {filteredSessions.filter(s => s.status === status).map(session => (
-                                <div key={session.id} onClick={() => openSessionDetail(session)} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#1A1A1A] p-3 space-y-4 shadow-sm hover:shadow-xl hover:shadow-sky-500/5 hover:border-sky-500/40 transition-all duration-300 group relative overflow-hidden flex flex-col cursor-pointer">
+                                        <div key={session.id} onClick={() => openSessionDetail(session)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSessionDetail(session); } }} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#1A1A1A] p-3 space-y-4 shadow-sm hover:shadow-xl hover:shadow-sky-500/5 hover:border-sky-500/40 transition-all duration-300 group relative overflow-hidden flex flex-col cursor-pointer">
                                     <div className="flex justify-between items-start">
                                         <div className="flex gap-1.5 flex-wrap">
                                             {(session as any).priority_level && (
@@ -480,7 +497,7 @@ export default function CounselingPage() {
                                                 </span>
                                             )}
                                         </div>
-                                        <button className="text-[hsl(var(--text-secondary))] opacity-0 group-hover:opacity-100 transition-opacity hover:text-[hsl(var(--text-primary))] dark:hover:text-white p-1 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-lg">
+                                        <button aria-label="Más opciones" className="text-[hsl(var(--text-secondary))] opacity-0 group-hover:opacity-100 transition-opacity hover:text-[hsl(var(--text-primary))] dark:hover:text-white p-1 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-lg">
                                             <MoreHorizontal size={16} />
                                         </button>
                                     </div>
@@ -534,7 +551,7 @@ export default function CounselingPage() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                             {payload.items.map(session => (
-                                <div key={session.id} onClick={() => openSessionDetail(session)} className="group rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] p-3 hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/5 transition-all flex gap-3 cursor-pointer">
+                                <div key={session.id} onClick={() => openSessionDetail(session)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSessionDetail(session); } }} className="group rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] p-3 hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/5 transition-all flex gap-3 cursor-pointer">
                                     <div className="flex flex-col items-center justify-center min-w-[50px] shrink-0">
                                         <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-none tracking-tighter">
                                             {new Date(session.scheduled_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false })}
@@ -681,11 +698,15 @@ export default function CounselingPage() {
                     <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Tema de la Sesión</label>
                     <input
                         type="text"
-                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-3 py-2 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold"
+                        required
+                        aria-invalid={!!drawerErrors.topic}
+                        aria-describedby="topic-error"
+                        className={`w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border rounded-lg px-3 py-2 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold ${drawerErrors.topic ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/10'}`}
                         placeholder="Ej: Orientación Familiar, Fortaleza..."
                         value={newSession.topic}
                         onChange={(e) => setNewSession({ ...newSession, topic: e.target.value })}
                     />
+                    {drawerErrors.topic && <p id="topic-error" className="text-red-500 text-xs mt-1">Campo requerido</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -703,11 +724,15 @@ export default function CounselingPage() {
                         <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Fecha y Hora</label>
                         <input
                             type="datetime-local"
-                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-4 py-2 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold"
+                            required
+                            aria-invalid={!!drawerErrors.scheduled_at}
+                            aria-describedby="scheduled_at-error"
+                            className={`w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border rounded-lg px-4 py-2 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 transition-all font-semibold ${drawerErrors.scheduled_at ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/10'}`}
                             style={{ colorScheme: theme === 'night' ? 'dark' : 'light' }}
                             value={newSession.scheduled_at}
                             onChange={(e) => setNewSession({ ...newSession, scheduled_at: e.target.value })}
                         />
+                        {drawerErrors.scheduled_at && <p id="scheduled_at-error" className="text-red-500 text-xs mt-1">Campo requerido</p>}
                     </div>
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Duración</label>
