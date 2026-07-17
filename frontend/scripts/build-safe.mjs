@@ -46,6 +46,27 @@ const exitCode = await new Promise((resolve) => {
 });
 
 if ((exitCode ?? 1) === 0) {
+    const aliasChild = spawn(
+        process.execPath,
+        [join(cwd, 'scripts', 'fix-next-static-aliases.mjs')],
+        {
+            stdio: 'inherit',
+            shell: false,
+        },
+    );
+
+    const aliasExitCode = await new Promise((resolve) => {
+        aliasChild.on('error', () => resolve(1));
+        aliasChild.on('close', resolve);
+    });
+
+    if ((aliasExitCode ?? 1) !== 0) {
+        if (hadPreviousBuild) {
+            await restoreBackup();
+        }
+        process.exit(aliasExitCode ?? 1);
+    }
+
     if (hadPreviousBuild) {
         await rm(backupDir, { recursive: true, force: true });
     }

@@ -82,6 +82,7 @@ export interface Strategy {
  codigo?: string;
  clase_raiz?: string;
  activa: boolean;
+ default_role_id?: string | null;
  typology: string;
  recurrence: string | null;
  day_of_week: string | null;
