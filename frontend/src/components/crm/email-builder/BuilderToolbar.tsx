@@ -10,12 +10,12 @@ export default function BuilderToolbar({ builder, templateName, onNameChange, on
   return (
     <div className="flex items-center justify-between h-12 px-4 border-b border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02]">
       <div className="flex items-center gap-3">
-        <button onClick={onBack} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors"><ArrowLeft size={14} /></button>
+        <button onClick={onBack} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors" aria-label="Volver"><ArrowLeft size={14} /></button>
         <input value={templateName} onChange={e => onNameChange(e.target.value)} className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white bg-transparent border-none focus:outline-none w-48" placeholder="Nombre de la plantilla" />
       </div>
       <div className="flex items-center gap-1">
-        <button onClick={undo} disabled={!canUndo} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] disabled:opacity-30"><Undo2 size={14} /></button>
-        <button onClick={redo} disabled={!canRedo} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] disabled:opacity-30"><Redo2 size={14} /></button>
+        <button onClick={undo} disabled={!canUndo} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] disabled:opacity-30" aria-label="Deshacer"><Undo2 size={14} /></button>
+        <button onClick={redo} disabled={!canRedo} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] disabled:opacity-30" aria-label="Rehacer"><Redo2 size={14} /></button>
       </div>
       <div className="flex items-center gap-2">
         <button onClick={onPreview} className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-xs font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"><Eye size={13} />Preview</button>

@@ -45,7 +45,7 @@ from backend.crud.crm_.resources import (
     update_plantilla,
 )
 from backend.crud.crm_.shared import resolve_persona_id_from_identity
-from backend.models_crm import CategoriaRecurso
+from backend.models_crm import CategoriaRecurso, EstadoEnvioPlantilla
 from backend.schemas.crm.automation import (
     AutomationTriggerPayload,
     AutomationTriggerResult,
@@ -399,7 +399,7 @@ async def enviar_plantilla(
         destinatario_id=payload.destinatario_id,
         payload_hidratado=payload_log,
     )
-    estado_final = "FALLIDO" if log_error else "ENVIADO"
+    estado_final = EstadoEnvioPlantilla.FALLIDO.value if log_error else EstadoEnvioPlantilla.ENVIADO.value
     envio = update_estado_envio(db, str(envio.id), estado_final)
     if log_error:
         envio.log_error = log_error
@@ -518,7 +518,7 @@ async def send_plantilla_campaign(
                     "error": "Destinatario sin datos de contacto",
                 },
             )
-            envio = update_estado_envio(db, str(envio.id), "FALLIDO")
+            envio = update_estado_envio(db, str(envio.id), EstadoEnvioPlantilla.FALLIDO.value)
             envio_ids.append(str(envio.id))
             continue
 
@@ -538,7 +538,7 @@ async def send_plantilla_campaign(
             destinatario_id=str(persona.id),
             payload_hidratado=payload_log,
         )
-        envio = update_estado_envio(db, str(envio.id), "ENVIADO")
+        envio = update_estado_envio(db, str(envio.id), EstadoEnvioPlantilla.ENVIADO.value)
         envio_ids.append(str(envio.id))
 
     return CampaignResultOut(

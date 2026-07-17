@@ -4,6 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -195,9 +196,6 @@ def archive_pipeline_stage(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-from pydantic import BaseModel
-
-
 class ReorderItem(BaseModel):
     id: UUID
     sort_order: int | None = None
@@ -225,7 +223,7 @@ def reorder_casos(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Error interno al reordenar casos")
 
     return {"status": "success"}
 
@@ -233,8 +231,6 @@ def reorder_casos(
 # --- GENUINE DATABASE-BACKED LOGIC FOR KANBAN & AUTOMATIONS ---
 
 from datetime import datetime, timedelta, timezone
-
-from pydantic import BaseModel
 
 
 class DragDropEventCreate(BaseModel):
@@ -775,7 +771,8 @@ def kanban_search(
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     query = case_query(db).filter(models.CasoCRM.sede_id == sede_id, models.CasoCRM.deleted_at.is_(None))
     if title:
-        query = query.filter(models.CasoCRM.titulo_caso.ilike(f"%{title}%"))
+        escaped = title.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        query = query.filter(models.CasoCRM.titulo_caso.ilike(f"%{escaped}%", escape="\\"))
 
     cards = query.order_by(models.CasoCRM.sort_order).all()
     return [
@@ -1222,7 +1219,10 @@ def kanban_sync_reorder(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    pipeline_id = UUID(payload["pipeline_id"])
+    try:
+        pipeline_id = UUID(payload["pipeline_id"])
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=f"pipeline_id invalido: {exc}")
     pipeline = (
         db.query(models.PipelineCRM)
         .filter(models.PipelineCRM.id == pipeline_id, models.PipelineCRM.sede_id == sede_id)
@@ -1245,7 +1245,10 @@ def flow_builder_three_node_render(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    flow_id = UUID(payload["flow_id"])
+    try:
+        flow_id = UUID(payload["flow_id"])
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=f"flow_id invalido: {exc}")
     flow = db.query(models.CrmAutomationFlow).filter(models.CrmAutomationFlow.id == flow_id).first()
     if not flow:
         raise HTTPException(status_code=404, detail="Flow no encontrado")
@@ -1272,7 +1275,10 @@ def reorder_trigger_automation(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    caso_id = UUID(payload["caso_id"])
+    try:
+        caso_id = UUID(payload["caso_id"])
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=f"caso_id invalido: {exc}")
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     caso = case_query(db).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not caso:
@@ -1305,9 +1311,13 @@ def branching_three_node_traversal(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
+    try:
+        pipeline_uuid = UUID(payload["pipeline_id"])
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=f"pipeline_id invalido: {exc}")
     pipeline = (
         db.query(models.PipelineCRM)
-        .filter(models.PipelineCRM.id == UUID(payload["pipeline_id"]), models.PipelineCRM.sede_id == sede_id)
+        .filter(models.PipelineCRM.id == pipeline_uuid, models.PipelineCRM.sede_id == sede_id)
         .first()
     )
     if not pipeline:
@@ -1330,8 +1340,11 @@ def lead_qualification(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    caso_id = UUID(payload["caso_id"])
-    target_etapa_id = UUID(payload["target_etapa_id"])
+    try:
+        caso_id = UUID(payload["caso_id"])
+        target_etapa_id = UUID(payload["target_etapa_id"])
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=f"Parametro invalido: {exc}")
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     caso = case_query(db).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not caso:
@@ -1347,7 +1360,10 @@ def support_ticket_routing(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    caso_id = UUID(payload["caso_id"])
+    try:
+        caso_id = UUID(payload["caso_id"])
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=f"caso_id invalido: {exc}")
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     caso = case_query(db).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not caso:
@@ -1368,7 +1384,10 @@ def cyclical_flow_resolution(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    flow_id = UUID(payload["flow_id"])
+    try:
+        flow_id = UUID(payload["flow_id"])
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=f"flow_id invalido: {exc}")
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
 
@@ -1391,9 +1410,12 @@ def bulk_reassignment_reorder(
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     for item in payload.get("casos", []):
-        caso_id = UUID(item["id"])
+        try:
+            caso_id = UUID(item["id"])
+            asignado_a_id = UUID(item["asignado_a_id"])
+        except (KeyError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail=f"Item invalido en casos: {exc}")
         sort_order = item["sort_order"]
-        asignado_a_id = UUID(item["asignado_a_id"])
         caso = case_query(db).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
         if caso:
             caso.sort_order = sort_order

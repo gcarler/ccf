@@ -61,8 +61,8 @@ export default function CrmTopBar({ title, view, onViewChange }: CrmTopBarProps)
             {/* Right: Actions */}
             <div className="flex items-center gap-2">
                 <div className="flex items-center gap-0.5 border-r border-[hsl(var(--border))] dark:border-white/10 pr-2 mr-1">
-                    <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-colors" title="Agentes"><Zap size={18} /></button>
-                    <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-colors" title="Automatizar"><Clock size={18} /></button>
+                    <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-colors" title="Agentes" aria-label="Agentes"><Zap size={18} /></button>
+                    <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-colors" title="Automatizar" aria-label="Automatizar"><Clock size={18} /></button>
                     <button className="p-2 text-cu-blue hover:bg-cu-blue/10 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-bold">
                         <MessageSquare size={16} /> Ask AI
                     </button>

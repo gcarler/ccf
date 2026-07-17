@@ -110,10 +110,14 @@ export interface CounselingSession {
 export interface PipelineLead {
   id: string;
   nombre: string;
+  nombre_completo?: string;
   email?: string;
   phone?: string;
+  telefono?: string;
+  source?: string;
   stage?: string;
   status?: string;
+  sort_order?: number;
   assigned_pastor_id?: string;
   created_at?: string;
 }
@@ -121,11 +125,16 @@ export interface PipelineLead {
 // ── Prayer Requests ───────────────────────────────────────────────────────
 export interface PrayerRequest {
   id: string;
-  requester_name: string;
-  request_text: string;
+  requester_name?: string;
+  request_text?: string;
   category: string;
   status: string;
-  is_public: boolean;
+  is_public?: boolean;
+  name?: string;
+  request?: string;
+  time?: string;
+  is_urgent?: boolean;
+  is_answered?: boolean;
   created_at?: string;
 }
 
@@ -178,7 +187,7 @@ export interface ConsolidationTask {
   id: string;
   title: string;
   description?: string;
-  status: 'pending' | 'in_progress' | 'done' | 'urgent';
+  status: string;
   priority: 'low' | 'medium' | 'high';
   assigned_to?: string;
   persona_name?: string;

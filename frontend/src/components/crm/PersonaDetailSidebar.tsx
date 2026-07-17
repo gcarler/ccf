@@ -57,8 +57,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
     useEffect(() => {
         if (!initialPersona) return;
         loadPersonaData(initialPersona.id);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [initialPersona]);
+    }, [initialPersona, token]);
 
     const loadPersonaData = async (personaId: string) => {
         if (!token) return;
@@ -173,6 +172,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                     <button
                         onClick={onClose}
                         className="p-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all shadow-sm border border-[hsl(var(--border))] dark:border-white/5 active:scale-95"
+                        aria-label="Cerrar"
                     >
                         <CloseIcon size={20} />
                     </button>
@@ -357,6 +357,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                                                 <button
                                                     onClick={() => handleUpdateTaskStatus(task.id, task.status === 'done' ? 'todo' : 'done')}
                                                     className={clsx("size-6 rounded-lg flex items-center justify-center border transition-all", task.status === 'done' ? "bg-emerald-500 border-emerald-500 text-white" : "border-[hsl(var(--border))] dark:border-white/10 text-transparent")}
+                                                    aria-label="Completar tarea"
                                                 >
                                                     <Check size={14} />
                                                 </button>

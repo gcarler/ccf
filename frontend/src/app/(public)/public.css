@@ -191,73 +191,13 @@
   --site-card-shadow: 0 32px 64px -16px rgba(0,0,0,0.3);
 }
 
-/* CCF Public Theme — Utility classes (ALL use --site-* variables, ZERO hardcoded colors) */
+/* CCF Public Theme — at-rules only (ALL use --site-* variables, ZERO hardcoded colors) */
 .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     vertical-align: middle;
 }
-.ccf-glass-nav {
-    background: var(--site-glass-bg);
-    backdrop-filter: blur(20px);
-}
-.ccf-beam-glow {
-    background: radial-gradient(circle at 50% 50%, var(--site-glow-subtle) 0%, transparent 70%);
-}
-.ccf-hero-gradient {
-    background: linear-gradient(135deg, var(--site-primary) 0%, var(--site-primary-container) 100%);
-}
-
-/* Extracted Stitch Specialized Styles — all use --site-* tokens */
 .bg-beam-gradient {
     background: radial-gradient(circle at 50% 0%, var(--site-glow-subtle) 0%, transparent 70%);
-}
-.text-glow {
-    text-shadow: 0 0 20px var(--site-glow-intense);
-}
-.glass-nav {
-    backdrop-filter: blur(20px);
-}
-.text-gradient-primary {
-    background: linear-gradient(135deg, var(--site-primary) 0%, var(--site-secondary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-.btn-gradient, .beam-gradient, .primary-gradient, .beam-effect {
-    background: var(--site-cta-gradient);
-}
-.glass-card {
-    background: var(--site-glass-bg);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--site-glass-border);
-}
-.calendar-day-hover:hover {
-    background: var(--site-card-highlight);
-}
-.hide-scrollbar::-webkit-scrollbar {
-    display: none;
-}
-.hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-.glassmorphic {
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-}
-.beam-glow {
-    box-shadow: 0 0 40px var(--site-glow-intense);
-}
-.bg-light-glow {
-    background: radial-gradient(circle at 50% 50%, var(--site-glow-subtle) 0%, transparent 70%);
-}
-.editorial-grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 2rem;
-}
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

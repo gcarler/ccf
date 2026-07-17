@@ -33,6 +33,7 @@ from backend.api.crm._shared import (
     _get_scoped_persona,
     _get_scoped_prayer_request,
     _get_scoped_task,
+    _payload_key,
     _persona_full_name,
     _resolve_assignee_for_task,
     _scope_by_user_sede_via_persona,
@@ -85,10 +86,6 @@ def _get_case_or_404(db: Session, case_id: str, user_sede: Optional[uuid.UUID]):
     if user_sede and str(case.sede_id) != str(user_sede):
         raise HTTPException(status_code=404, detail="Case not found")
     return prepare_case_for_output(db, case)
-
-
-def _payload_key(name: str) -> str:
-    return name
 
 
 def _stage_to_estado(stage: str) -> EstadoCasoEnum:
@@ -412,7 +409,7 @@ def create_caso_task(
         titulo=payload.title,
         descripcion=payload.description,
         fecha_vencimiento=payload.due_date or datetime.now(timezone.utc) + timedelta(days=1),
-        completada=payload.status == "completed",
+        completada=payload.status == "completed" if payload.status else False,
         fecha_completada=payload.completed_at,
     )
     db.add(row)
@@ -573,7 +570,7 @@ def update_caso_task(
     }
     for key, value in updates.items():
         if key == "status":
-            task.completada = value == "completed"
+            task.completada = value == "completed" if value else False
             task.fecha_completada = datetime.now(timezone.utc) if task.completada else None
         elif key != "assignment_id":
             setattr(task, field_map[key], value)
@@ -1205,7 +1202,6 @@ def get_copilot_draft(
             {"role": "user", "content": prompt}
         ]
 
-        from unittest.mock import MagicMock, Mock
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages
@@ -1226,7 +1222,8 @@ def get_copilot_draft(
             "suggestion": generated_content
         }
     except Exception as e:
-        fallback_msg = f"Fallback suggestion: An error occurred while calling the OpenAI service. Details: {str(e)}"
+        logger.warning("get_copilot_draft OpenAI error: %s", e)
+        fallback_msg = "Fallback suggestion: No se pudo generar sugerencia en este momento."
         return {
             "draft": fallback_msg,
             "suggestion": fallback_msg
@@ -1273,7 +1270,7 @@ def list_grupos(
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
-    q = db.query(models.GrupoEvangelismo)
+    q = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.deleted_at.is_(None))
     if user_sede:
         q = q.filter(models.GrupoEvangelismo.sede_id == user_sede)
     grupos = q.order_by(models.GrupoEvangelismo.nombre.asc()).all()
@@ -1596,11 +1593,13 @@ def list_crm_roles(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    rows = (
-        db.query(models.RoleDefinition)
-        .order_by(models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc())
-        .all()
-    )
+    user_sede = get_user_sede_id(db, current_user.id)
+    q = db.query(models.RoleDefinition).filter(models.RoleDefinition.deleted_at.is_(None))
+    if user_sede:
+        q = q.filter(
+            or_(models.RoleDefinition.sede_id == user_sede, models.RoleDefinition.sede_id.is_(None))
+        )
+    rows = q.order_by(models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc()).all()
     return [
         {
             "id": row.id,
@@ -1759,7 +1758,14 @@ def get_crm_analytics_summary(
         groups_q = groups_q.filter(models.GrupoEvangelismo.sede_id == user_sede)
     total_groups = groups_q.count()
 
-    total_families = db.query(models.Family).count()
+    total_families = (
+        db.query(models.Family)
+        .join(models.persona_familias, models.Family.id == models.persona_familias.c.family_id)
+        .join(models.Persona, models.persona_familias.c.persona_id == models.Persona.id)
+    )
+    if user_sede:
+        total_families = total_families.filter(models.Persona.sede_id == user_sede)
+    total_families = total_families.distinct().count()
     return {
         "total_personas": total_personas,
         "active_personas": active_personas,
@@ -1875,7 +1881,7 @@ def create_prayer_request(
         category=data.get("category", "General"),
         is_public=data.get("is_public", False),
         source=data.get("source", "crm"),
-        status="active",
+        status="pending",
         sede_id=user_sede,
     )
     db.add(prayer)
@@ -1940,7 +1946,7 @@ def create_volunteer(
             first_name=first_name,
             last_name=last_name,
             church_role=data.get("role_name") or "volunteer",
-            status="active",
+            estado_vital="ACTIVO",
         )
         db.add(persona)
         db.flush()
@@ -1966,7 +1972,7 @@ def create_volunteer(
         shift_start=shift_start,
         shift_end=shift_end,
         notes=data.get("notes"),
-        status=data.get("status", "active"),
+        status=data.get("status", "confirmed"),
     )
     db.add(shift)
     db.commit()
@@ -2211,9 +2217,11 @@ def get_newsletter_leads(
     if stage:
         query = query.filter(models.CasoCRM.estado == stage)
     if landing_page:
-        query = query.filter(cast(models.CasoCRM.payload_web, String).ilike(f"%{landing_page}%"))
+        escaped_lp = landing_page.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        query = query.filter(cast(models.CasoCRM.payload_web, String).ilike(f"%{escaped_lp}%", escape="\\"))
     if campaign:
-        query = query.filter(cast(models.CasoCRM.payload_web, String).ilike(f"%{campaign}%"))
+        escaped_camp = campaign.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        query = query.filter(cast(models.CasoCRM.payload_web, String).ilike(f"%{escaped_camp}%", escape="\\"))
     if date_from:
         if created_col is not None:
             query = query.filter(created_col >= date_from)

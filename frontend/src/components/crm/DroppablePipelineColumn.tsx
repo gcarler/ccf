@@ -76,11 +76,12 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                         <button
                             onClick={onNewLead}
                             className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:shadow-lg transition-all"
+                            aria-label="Agregar"
                         >
                             <UserPlus size={12} />
                         </button>
                     )}
-                    <button className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-all">
+                    <button className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-all" aria-label="Más opciones">
                         <MoreHorizontal size={12} />
                     </button>
                 </div>

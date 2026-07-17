@@ -98,7 +98,7 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                             <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">WhatsApp Disponible</p>
                         </div>
                     </div>
-                    <button className="p-2.5 bg-[hsl(var(--primary))] text-white rounded-md shadow-lg shadow-blue-500/20 active:scale-90 transition-all">
+                    <button className="p-2.5 bg-[hsl(var(--primary))] text-white rounded-md shadow-lg shadow-blue-500/20 active:scale-90 transition-all" aria-label="Llamar">
                         <Phone size={14} />
                     </button>
                 </div>

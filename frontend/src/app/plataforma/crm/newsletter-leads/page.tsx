@@ -414,6 +414,7 @@ export default function NewsletterLeadsPage() {
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page <= 1}
                                 className="size-8 rounded-md border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] disabled:opacity-30 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all"
+                                aria-label="Página anterior"
                             >
                                 <ChevronLeft size={14} />
                             </button>
@@ -421,6 +422,7 @@ export default function NewsletterLeadsPage() {
                                 onClick={() => setPage(p => Math.min(data.total_pages, p + 1))}
                                 disabled={page >= data.total_pages}
                                 className="size-8 rounded-md border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] disabled:opacity-30 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all"
+                                aria-label="Página siguiente"
                             >
                                 <ChevronRight size={14} />
                             </button>

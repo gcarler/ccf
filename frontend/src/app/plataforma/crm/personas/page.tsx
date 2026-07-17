@@ -547,7 +547,10 @@ export default function PersonasPage() {
 
                     {/* Personas List */}
                     {loading ? (
-                        <div className="text-center py-1.5 animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sincronizando base de datos...</div>
+                        <div className="flex items-center justify-center py-1.5 gap-3">
+                            <Loader2 size={18} className="animate-spin text-[hsl(var(--primary))]" />
+                            <span className="animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] text-xs">Sincronizando base de datos...</span>
+                        </div>
                     ) : viewType === 'list' ? (
                         <div className="space-y-1">
                             {personas.map(m => (
