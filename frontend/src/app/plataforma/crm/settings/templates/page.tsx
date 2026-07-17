@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/http";
 
 interface Plantilla {
@@ -28,11 +29,7 @@ export default function TemplatesPage() {
   const [formData, setFormData] = useState<Partial<Plantilla>>({});
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [catsRes, plantsRes] = await Promise.all([
@@ -46,7 +43,11 @@ export default function TemplatesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,7 +103,10 @@ export default function TemplatesPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-10">Cargando plantillas...</div>
+        <div className="flex items-center justify-center py-10 gap-3">
+          <Loader2 size={20} className="animate-spin text-blue-600" />
+          <span className="text-sm text-gray-500 dark:text-gray-400">Cargando plantillas...</span>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {plantillas.map(p => (

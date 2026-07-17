@@ -81,7 +81,7 @@ export default function MyTasks() {
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Calendar }, { label: 'Consolidación', icon: Users }, { label: 'Mis tareas', icon: Calendar }]}
             rightActions={
-                <button className="flex size-8 items-center justify-center rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-all">
+                <button className="flex size-8 items-center justify-center rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-all" aria-label="Buscar">
                     <Search size={20} />
                 </button>
             }
@@ -169,7 +169,7 @@ export default function MyTasks() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                     className="flex-1 min-w-[240px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-md p-4 shadow-sm relative overflow-hidden group task-aura"
-                    style={{ '--aura-color': 'rgba(244, 63, 94, 0.15)' } as any}
+                    style={{ '--aura-color': 'rgba(244, 63, 94, 0.15)' } as React.CSSProperties}
                 >
                     <div className="flex items-center gap-3 mb-3">
                         <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-md text-rose-500 border border-rose-100 dark:border-rose-800"><AlertCircle size={18} /></div>
@@ -270,7 +270,7 @@ export default function MyTasks() {
                                                         <span className={clsx("px-3 py-1 rounded-lg text-[8px] font-bold uppercase tracking-wide", statusTone[task.status] || statusTone.todo)}>
                                                             {task.status === 'done' ? 'Completada' : 'Pendiente'}
                                                         </span>
-                                                        <button className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] transition-all"><MoreHorizontal size={16} /></button>
+                                                        <button className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] transition-all" aria-label="Más opciones"><MoreHorizontal size={16} /></button>
                                                     </div>
                                                 </td>
                                             </motion.tr>

@@ -60,6 +60,7 @@ export default function ShiftDetailSidebar({ shift, onClose }: ShiftDetailSideba
                     <button 
                         onClick={onClose} 
                         className="p-2.5 bg-white/20 hover:bg-white/30 rounded-lg text-white backdrop-blur-md transition-all active:scale-95 border border-white/10"
+                        aria-label="Cerrar"
                     >
                         <CloseIcon size={20} />
                     </button>

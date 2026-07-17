@@ -326,7 +326,7 @@ export default function CrmGroupsPage() {
                                                     <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide ${isActive ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]'}`}>
                                                         {isActive ? 'Activo' : group.status}
                                                     </span>
-                                                    <button onClick={e => { e.stopPropagation(); }} className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors">
+                                                    <button onClick={e => { e.stopPropagation(); }} className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors" aria-label="Más opciones">
                                                         <MoreHorizontal size={16} />
                                                     </button>
                                                 </div>
@@ -387,7 +387,7 @@ export default function CrmGroupsPage() {
                                                     <span className="text-[11px] font-bold">{group.personas_count || 0} integrantes</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-[hsl(var(--text-secondary))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-md transition-colors">
+                                                    <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-[hsl(var(--text-secondary))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-md transition-colors" aria-label="Agregar">
                                                         <UserPlus size={14} />
                                                     </button>
                                                     <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />

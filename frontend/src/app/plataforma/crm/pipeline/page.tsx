@@ -119,7 +119,7 @@ export default function ConsolidationPipelinePage() {
             const data = await apiFetch<any[]>('/crm/pipeline/kanban/stages', { token, cache: 'no-store' });
             setPipelineStages(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error(err);
+            console.error(extractErrorMessage(err, "No se pudieron cargar las etapas del pipeline"));
             setPipelineStages([]);
         }
     }, [token]);

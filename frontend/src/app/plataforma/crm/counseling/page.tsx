@@ -274,9 +274,9 @@ export default function CounselingPage() {
                                     <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${session.status === 'Realizada' ? 'bg-emerald-500 text-white' : session.status === 'Cancelada' ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500 text-white'}`}>
                                         {session.status}
                                     </span>
-                                    {(session as any).priority_level && (
-                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 ${(session as any).priority_level === 'URGENTE' ? 'bg-rose-600 text-white animate-pulse' : (session as any).priority_level === 'ALTA' ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]'}`}>
-                                            <ShieldCheck size={10} /> {(session as any).priority_level}
+                                    {session.priority_level && (
+                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 ${session.priority_level === 'URGENTE' ? 'bg-rose-600 text-white animate-pulse' : session.priority_level === 'ALTA' ? 'bg-orange-500/20 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]'}`}>
+                                            <ShieldCheck size={10} /> {session.priority_level}
                                         </span>
                                     )}
                                 </div>
@@ -324,7 +324,19 @@ export default function CounselingPage() {
         {viewType === 'list' && (
             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden shadow-sm">
                 <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
-                    {filteredSessions.map(session => (
+                    {loading ? (
+                        [...Array(4)].map((_, i) => (
+                            <div key={i} className="p-4 animate-pulse">
+                                <div className="flex items-center gap-4">
+                                    <div className="size-2.5 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-4 w-1/3 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                        <div className="h-3 w-1/2 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : filteredSessions.map(session => (
                         <div 
                             key={session.id} 
                             onClick={() => openSessionDetail(session)}
@@ -339,9 +351,9 @@ export default function CounselingPage() {
                                     <div className={`size-2.5 rounded-full shadow-sm shrink-0 ${session.status === 'Pendiente' ? 'bg-amber-500 shadow-amber-500/50' : session.status === 'Realizada' ? 'bg-emerald-500 shadow-emerald-500/50' : 'bg-rose-500 shadow-rose-500/50'}`} />
                                     <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] w-20">{session.status}</span>
                                 </div>
-                                {(session as any).priority_level && (
-                                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 ${(session as any).priority_level === 'URGENTE' ? 'bg-rose-500 text-white' : (session as any).priority_level === 'ALTA' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]'}`}>
-                                        {(session as any).priority_level}
+                                {session.priority_level && (
+                                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 ${session.priority_level === 'URGENTE' ? 'bg-rose-500 text-white' : session.priority_level === 'ALTA' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]'}`}>
+                                        {session.priority_level}
                                     </span>
                                 )}
                             </div>
@@ -437,7 +449,7 @@ export default function CounselingPage() {
                         type: 'priority', 
                         width: '120px',
                         render: (val, session) => {
-                            const prior = (session as any).priority_level;
+                            const prior = session.priority_level;
                             if (!prior) return <span className="text-[hsl(var(--text-secondary))]">—</span>;
                             return (
                                 <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 w-max ${prior === 'URGENTE' ? 'bg-rose-500 text-white' : prior === 'ALTA' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]'}`}>
@@ -464,8 +476,8 @@ export default function CounselingPage() {
                         width: '100px',
                         render: (val, session) => session.status === 'Pendiente' ? (
                             <div className="flex gap-2 justify-end">
-                                <button onClick={(e) => { e.stopPropagation(); handleUpdateStatus(session.id, 'Realizada'); }} className="p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-emerald-500 rounded-lg transition-colors"><CheckCircle2 size={16} /></button>
-                                <button onClick={(e) => { e.stopPropagation(); handleUpdateStatus(session.id, 'Cancelada'); }} className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 rounded-lg transition-colors"><XCircle size={16} /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handleUpdateStatus(session.id, 'Realizada'); }} aria-label="Completar" className="p-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-emerald-500 rounded-lg transition-colors"><CheckCircle2 size={16} /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handleUpdateStatus(session.id, 'Cancelada'); }} aria-label="Cancelar" className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 rounded-lg transition-colors"><XCircle size={16} /></button>
                             </div>
                         ) : null
                     }
@@ -477,7 +489,24 @@ export default function CounselingPage() {
 
         {(viewType === 'board' || viewType === 'kanban') && (
             <div className="flex gap-4 overflow-x-auto pb-6 pt-2 items-start min-h-[60vh]">
-                {STATUS_ORDER.map(status => (
+                {loading ? (
+                    STATUS_ORDER.map(status => (
+                        <div key={status} className="w-80 shrink-0 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-2))]/50 dark:bg-white/[0.02] p-3">
+                            <div className="p-3 flex items-center gap-2.5 border-b border-[hsl(var(--border))] dark:border-white/5 mb-3">
+                                <div className="size-2.5 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                <div className="h-3 w-16 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                            </div>
+                            <div className="space-y-3">
+                                {[...Array(2)].map((_, i) => (
+                                    <div key={i} className="h-32 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 animate-pulse p-3 space-y-2">
+                                        <div className="h-3 w-2/3 rounded bg-[hsl(var(--surface-3))] dark:bg-white/10" />
+                                        <div className="h-2 w-1/2 rounded bg-[hsl(var(--surface-3))] dark:bg-white/10" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                ) : STATUS_ORDER.map(status => (
                     <div key={status} className="w-80 shrink-0 flex flex-col h-full max-h-[75vh] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-2))]/50 dark:bg-white/[0.02]">
                         <div className="p-3 flex items-center justify-between border-b border-[hsl(var(--border))] dark:border-white/5 bg-white/50 dark:bg-white/[0.02] backdrop-blur-md rounded-t-[32px] sticky top-0 z-10">
                             <div className="flex items-center gap-2.5">
@@ -491,9 +520,9 @@ export default function CounselingPage() {
                                         <div key={session.id} onClick={() => openSessionDetail(session)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSessionDetail(session); } }} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#1A1A1A] p-3 space-y-4 shadow-sm hover:shadow-xl hover:shadow-sky-500/5 hover:border-sky-500/40 transition-all duration-300 group relative overflow-hidden flex flex-col cursor-pointer">
                                     <div className="flex justify-between items-start">
                                         <div className="flex gap-1.5 flex-wrap">
-                                            {(session as any).priority_level && (
-                                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 ${(session as any).priority_level === 'URGENTE' ? 'bg-rose-500 text-white' : (session as any).priority_level === 'ALTA' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]'}`}>
-                                                    {(session as any).priority_level}
+                                            {session.priority_level && (
+                                                <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 ${session.priority_level === 'URGENTE' ? 'bg-rose-500 text-white' : session.priority_level === 'ALTA' ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]'}`}>
+                                                    {session.priority_level}
                                                 </span>
                                             )}
                                         </div>
@@ -538,7 +567,23 @@ export default function CounselingPage() {
                     <Calendar size={200} />
                 </div>
                 
-                {groupedByDate.map(([dateKey, payload]) => (
+                {loading ? (
+                    <div className="space-y-4 relative z-10">
+                        {[...Array(2)].map((_, i) => (
+                            <div key={i} className="space-y-3">
+                                <div className="h-4 w-32 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10 animate-pulse" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                                    {[...Array(3)].map((_, j) => (
+                                        <div key={j} className="h-20 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 animate-pulse p-3 space-y-2">
+                                            <div className="h-3 w-1/3 rounded bg-[hsl(var(--surface-3))] dark:bg-white/10" />
+                                            <div className="h-2 w-2/3 rounded bg-[hsl(var(--surface-3))] dark:bg-white/10" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : groupedByDate.map(([dateKey, payload]) => (
                     <div key={dateKey} className="relative z-10">
                         <div className="sticky top-0 bg-white/95 dark:bg-[#1E1F21]/95 backdrop-blur-md z-20 py-2 mb-5 -mx-4 px-4 flex items-center gap-3 border-b border-[hsl(var(--border))] dark:border-white/5">
                             <div className="size-8 rounded-md bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center text-sky-600">
@@ -564,7 +609,7 @@ export default function CounselingPage() {
                                             <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide ${session.status === 'Pendiente' ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-500' : session.status === 'Realizada' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-500' : 'bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-500'}`}>
                                                 {session.status}
                                             </span>
-                                            {(session as any).priority_level === 'URGENTE' && <ShieldCheck size={14} className="text-rose-500 animate-pulse" />}
+                                            {session.priority_level === 'URGENTE' && <ShieldCheck size={14} className="text-rose-500 animate-pulse" />}
                                         </div>
                                         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-snug truncate">{session.topic || 'Sin tema definido'}</p>
                                     </div>
@@ -598,13 +643,26 @@ export default function CounselingPage() {
                 </div>
 
                 <div className="space-y-3">
-                    {filteredSessions.map(session => (
+                    {loading ? (
+                        [...Array(3)].map((_, i) => (
+                            <div key={i} className="animate-pulse space-y-2">
+                                <div className="flex items-center justify-between px-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-2 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                        <div className="h-3 w-40 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                    </div>
+                                    <div className="h-3 w-8 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                </div>
+                                <div className="h-3.5 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                            </div>
+                        ))
+                    ) : filteredSessions.map(session => (
                         <div key={session.id} className="group relative">
                             <div className="flex items-center justify-between text-[11px] mb-2 px-1">
                                 <div className="flex items-center gap-3">
                                     <span className={`size-2 rounded-full ${session.status === 'Pendiente' ? 'bg-amber-500' : session.status === 'Realizada' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                                     <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{session.topic || 'Sin tema definido'}</span>
-                                    {(session as any).priority_level === 'URGENTE' && <span className="bg-rose-500 text-white text-[8px] px-1.5 py-0.5 rounded-sm font-bold uppercase">Urgente</span>}
+                                    {session.priority_level === 'URGENTE' && <span className="bg-rose-500 text-white text-[8px] px-1.5 py-0.5 rounded-sm font-bold uppercase">Urgente</span>}
                                 </div>
                                 <span className="font-bold text-[hsl(var(--text-secondary))] font-mono">{STATUS_PROGRESS[session.status] ?? 0}%</span>
                             </div>

@@ -197,12 +197,28 @@ export default function GrupoAdmin() {
                     <Stat label="Temporadas" value={seasons.length.toString()} />
                 </section>
 
+                {loading && !error && (
+                    <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {[...Array(3)].map((_, i) => (
+                            <div key={i} className="h-40 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-white/5 animate-pulse p-4 space-y-3">
+                                <div className="flex items-start justify-between">
+                                    <div className="size-9 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                    <div className="h-5 w-16 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                </div>
+                                <div className="h-4 w-2/3 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                <div className="h-3 w-1/3 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                            </div>
+                        ))}
+                    </section>
+                )}
+
                 {!loading && !error && grupos.length === 0 && (
                     <div className="rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-6 text-center text-sm text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5">
                         No hay grupos activos para mostrar.
                     </div>
                 )}
 
+                {!loading && (
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {grupos.map((grupo) => (
                         <motion.button
@@ -222,6 +238,7 @@ export default function GrupoAdmin() {
                         </motion.button>
                     ))}
                 </section>
+                )}
             </main>
 
             <WorkspaceDrawer isOpen={Boolean(selectedGrupo)} onClose={() => setSelectedGrupo(null)} title={selectedGrupo?.name || "Reporte"} subtitle="REPORTE OPERATIVO SEMANAL">
@@ -231,40 +248,42 @@ export default function GrupoAdmin() {
                             <Loader2 size={32} className="animate-spin text-[hsl(var(--primary))]" />
                         </div>
                     ) : (
-                    <div className="grid grid-cols-2 gap-4">
-                        <Field label="Fecha"><input type="date" required value={reportDate} onChange={(event) => setReportDate(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none" /></Field>
-                        <Field label="Temporada">
-                            <select required value={seasonId} onChange={(event) => setSeasonId(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none">
-                                <option value="">Selecciona</option>
-                                {seasons.map((season) => <option key={season.id} value={season.id}>{season.name}</option>)}
-                            </select>
-                        </Field>
-                    </div>
+                        <>
+                            <div className="grid grid-cols-2 gap-4">
+                                <Field label="Fecha"><input type="date" required value={reportDate} onChange={(event) => setReportDate(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none" /></Field>
+                                <Field label="Temporada">
+                                    <select required value={seasonId} onChange={(event) => setSeasonId(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none">
+                                        <option value="">Selecciona</option>
+                                        {seasons.map((season) => <option key={season.id} value={season.id}>{season.name}</option>)}
+                                    </select>
+                                </Field>
+                            </div>
 
-                    <section className="space-y-4">
-                        <div className="flex items-center justify-between px-2">
-                            <h5 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asistencia</h5>
-                            <button onClick={() => setSelectedIds(attendees.map((attendee) => attendee.persona_id))} className="text-[9px] font-bold uppercase text-[hsl(var(--primary))]">Seleccionar Todos</button>
-                        </div>
-                        <div className="space-y-2">
-                            {attendees.map((attendee) => (
-                                <label key={attendee.persona_id} className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/5 dark:bg-white/5">
-                                    <span className="text-xs font-bold">{attendee.name}</span>
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedIds.includes(attendee.persona_id)}
-                                        onChange={(event) => setSelectedIds((prev) => event.target.checked ? [...prev, attendee.persona_id] : prev.filter((id) => id !== attendee.persona_id))}
-                                    />
-                                </label>
-                            ))}
-                            {attendees.length === 0 && <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">No hay integrantes base asignados.</div>}
-                        </div>
-                    </section>
+                            <section className="space-y-4">
+                                <div className="flex items-center justify-between px-2">
+                                    <h5 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asistencia</h5>
+                                    <button onClick={() => setSelectedIds(attendees.map((attendee) => attendee.persona_id))} className="text-[9px] font-bold uppercase text-[hsl(var(--primary))]">Seleccionar Todos</button>
+                                </div>
+                                <div className="space-y-2">
+                                    {attendees.map((attendee) => (
+                                        <label key={attendee.persona_id} className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/5 dark:bg-white/5">
+                                            <span className="text-xs font-bold">{attendee.name}</span>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.includes(attendee.persona_id)}
+                                                onChange={(event) => setSelectedIds((prev) => event.target.checked ? [...prev, attendee.persona_id] : prev.filter((id) => id !== attendee.persona_id))}
+                                            />
+                                        </label>
+                                    ))}
+                                    {attendees.length === 0 && <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">No hay integrantes base asignados.</div>}
+                                </div>
+                            </section>
 
-                    <button onClick={sendReport} disabled={submitting} className="flex w-full items-center justify-center gap-3 rounded-lg bg-[hsl(var(--primary))] py-2 text-[11px] font-bold uppercase tracking-wide text-white disabled:opacity-50">
-                        {submitting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} fill="currentColor" />}
-                        Enviar Reporte Semanal
-                    </button>
+                            <button onClick={sendReport} disabled={submitting} className="flex w-full items-center justify-center gap-3 rounded-lg bg-[hsl(var(--primary))] py-2 text-[11px] font-bold uppercase tracking-wide text-white disabled:opacity-50">
+                                {submitting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} fill="currentColor" />}
+                                Enviar Reporte Semanal
+                            </button>
+                        </>
                     )}
                 </div>
             </WorkspaceDrawer>

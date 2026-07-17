@@ -17,13 +17,13 @@ export default function HtmlPreview({ html, onClose }: Props) {
           <div className="flex items-center gap-3">
             <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Preview del email</h3>
             <div className="flex items-center gap-1 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded-lg p-0.5">
-              <button onClick={() => setVp('desktop')} className={`size-7 flex items-center justify-center rounded-md ${vp === 'desktop' ? 'bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))]'}`}><Monitor size={13} /></button>
-              <button onClick={() => setVp('mobile')} className={`size-7 flex items-center justify-center rounded-md ${vp === 'mobile' ? 'bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))]'}`}><Smartphone size={13} /></button>
+              <button onClick={() => setVp('desktop')} className={`size-7 flex items-center justify-center rounded-md ${vp === 'desktop' ? 'bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))]'}`} aria-label="Vista escritorio"><Monitor size={13} /></button>
+              <button onClick={() => setVp('mobile')} className={`size-7 flex items-center justify-center rounded-md ${vp === 'mobile' ? 'bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))]'}`} aria-label="Vista móvil"><Smartphone size={13} /></button>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={copyHtml} className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-xs font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">{copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}{copied ? 'Copiado' : 'Copiar HTML'}</button>
-            <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"><X size={14} /></button>
+            <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]" aria-label="Cerrar"><X size={14} /></button>
           </div>
         </div>
         <div className="flex-1 overflow-auto p-6 flex justify-center bg-gray-100 dark:bg-black/20">

@@ -134,12 +134,14 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                 <button 
                     onClick={(e) => { e.stopPropagation(); window.open(`tel:${lead.phone}`); }}
                     className="size-7 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] flex items-center justify-center hover:bg-[hsl(var(--primary))] hover:text-white transition-all shadow-sm"
+                    aria-label="Llamar"
                 >
                     <Phone size={12} />
                 </button>
                 <button 
                     onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}`); }}
                     className="size-7 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                    aria-label="WhatsApp"
                 >
                     <MessageCircle size={12} />
                 </button>

@@ -159,6 +159,7 @@ class CounselingTicketUpdate(BaseModel):
     sentiment_score: Optional[float] = None
     sentiment_label: Optional[str] = None
     pastor_id: Optional[UUID] = None
+    include_details: Optional[bool] = None
 
 
 class CounselingTicket(CounselingTicketBase):
@@ -783,7 +784,7 @@ class PersonaMinistryAssignment(PersonaMinistryAssignmentBase):
 
 class PersonaPositionBase(BaseModel):
     persona_id: UUID
-    position_id: str
+    position_id: UUID
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     is_active: bool = True
@@ -833,7 +834,7 @@ class FormationLevel(FormationLevelBase):
 
 class PersonaFormationBase(BaseModel):
     persona_id: UUID
-    formation_level_id: str
+    formation_level_id: UUID
     role_in_level: str = "student"
     cohort: Optional[str] = None
     start_date: Optional[datetime] = None
@@ -943,7 +944,7 @@ class PersonaEvangelism(PersonaEvangelismBase):
 
 class TeachingAssignmentBase(BaseModel):
     persona_id: UUID
-    formation_level_id: str
+    formation_level_id: UUID
     subject: Optional[str] = None
     group_name: Optional[str] = None
     start_date: Optional[datetime] = None
@@ -978,8 +979,8 @@ class CaseUpdate(BaseModel):
     source_campaign: Optional[str] = None
     last_contact_at: Optional[datetime] = None
     next_contact_at: Optional[datetime] = None
-    assigned_pastor_id: Optional[str] = None
-    assigned_leader_id: Optional[str] = None
+    assigned_pastor_id: Optional[UUID] = None
+    assigned_leader_id: Optional[UUID] = None
     notes: Optional[str] = None
 
 

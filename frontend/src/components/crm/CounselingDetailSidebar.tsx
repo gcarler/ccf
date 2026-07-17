@@ -39,8 +39,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
     useEffect(() => {
         if (!initialSession?.id) return;
         fetchSessionDetails(initialSession.id);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [initialSession]);
+    }, [initialSession, token]);
 
     const fetchSessionDetails = async (id: number) => {
         setLoading(true);
@@ -91,6 +90,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                     <button 
                         onClick={onClose} 
                         className="p-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all shadow-sm border border-[hsl(var(--border))] dark:border-white/5 active:scale-95"
+                        aria-label="Cerrar"
                     >
                         <CloseIcon size={20} />
                     </button>

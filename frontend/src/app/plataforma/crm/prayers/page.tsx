@@ -69,15 +69,17 @@ export default function PrayerSupportCenter() {
         try {
             const data = await apiFetch<PrayerRequest[]>('/crm/prayer-requests', { token });
             if (Array.isArray(data)) {
-                setRequests(data.map((r: PrayerRequest) => ({
-                    id: r.id,
-                    name: r.requester_name || (r as any).name || 'Anónimo',
-                    request: r.request_text || (r as any).request,
-                    category: r.category || 'General',
-                    status: r.status || ((r as any).is_answered ? 'answered' : 'pending'),
-                    is_urgent: (r as any).is_urgent || false,
-                    time: new Date(r.created_at).toLocaleDateString()
-                })));
+                setRequests(data.map((r) => {
+                    const rr = r as PrayerRequest & { name?: string; request?: string; is_answered?: boolean; is_urgent?: boolean };
+                    return {
+                    id: rr.id,
+                    name: rr.requester_name || rr.name || 'Anónimo',
+                    request: rr.request_text || rr.request,
+                    category: rr.category || 'General',
+                    status: rr.status || (rr.is_answered ? 'answered' : 'pending'),
+                    is_urgent: rr.is_urgent || false,
+                    time: new Date(rr.created_at ?? Date.now()).toLocaleDateString()
+                }; }));
             }
         } catch (err) {
             setRequests([]);

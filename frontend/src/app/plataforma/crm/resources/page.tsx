@@ -8,7 +8,7 @@ import {
     Search, Send, Trash2, Upload, Users, X, Pencil, Clock,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
+import { extractErrorMessage, apiFetch } from '@/lib/http';
 import type {
     BitacoraEnvio, CampaignResult, CanalEnvio, CategoriaRecurso,
     PlantillaMensaje, RecursoAdjunto,
@@ -231,10 +231,10 @@ function DetailPanel({
                     <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{plantilla.titulo}</h3>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                    <button onClick={onEdit} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-colors">
+                    <button onClick={onEdit} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-colors" aria-label="Editar">
                         <Pencil size={14} />
                     </button>
-                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-colors">
+                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
                         <X size={14} />
                     </button>
                 </div>
@@ -358,7 +358,8 @@ function DetailPanel({
                                         <Download size={12} />
                                     </a>
                                     <button onClick={() => handleDeleteAdjunto(a.id)}
-                                        className="size-6 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors">
+                                        className="size-6 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors"
+                                        aria-label="Eliminar">
                                         <Trash2 size={12} />
                                     </button>
                                 </div>
@@ -514,7 +515,7 @@ function PlantillaDrawer({
                     <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">
                         {editing ? 'Editar plantilla' : 'Nueva plantilla'}
                     </h2>
-                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors">
+                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
                         <X size={15} />
                     </button>
                 </div>
@@ -603,7 +604,7 @@ function PlantillaDrawer({
                                 {form.variables_requeridas.map(v => (
                                     <span key={v} className="inline-flex items-center gap-1 text-xs font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-2 py-0.5 rounded-md">
                                         {`{{${v}}}`}
-                                        <button onClick={() => removeVar(v)} className="text-[hsl(var(--text-secondary))] hover:text-rose-500 ml-0.5">
+                                        <button onClick={() => removeVar(v)} className="text-[hsl(var(--text-secondary))] hover:text-rose-500 ml-0.5" aria-label="Eliminar variable">
                                             <X size={10} />
                                         </button>
                                     </span>
@@ -709,7 +710,7 @@ function CatDrawer({
             <div className="fixed right-0 top-0 bottom-0 w-80 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-l border-[hsl(var(--border))] dark:border-white/10 z-50 flex flex-col shadow-2xl">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))] dark:border-white/10">
                     <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Nueva categoría</h2>
-                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors">
+                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
                         <X size={15} />
                     </button>
                 </div>
@@ -863,7 +864,7 @@ function SendDrawer({
                 <div className="fixed right-0 top-0 bottom-0 w-[420px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-l border-[hsl(var(--border))] dark:border-white/10 z-50 flex flex-col shadow-2xl">
                     <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))] dark:border-white/10">
                         <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Campaña enviada</h2>
-                        <button onClick={() => { setCampResult(null); onClose(); }} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors">
+                        <button onClick={() => { setCampResult(null); onClose(); }} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
                             <X size={15} />
                         </button>
                     </div>
@@ -910,7 +911,7 @@ function SendDrawer({
                         <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Registrar envío</h2>
                         <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">{plantilla.titulo}</p>
                     </div>
-                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors">
+                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
                         <X size={15} />
                     </button>
                 </div>
@@ -1113,7 +1114,7 @@ export default function RecursosPage() {
             setCategorias(cats ?? []);
             setPlantillas(plts ?? []);
         } catch (err) {
-            console.error(err);
+            console.error(extractErrorMessage(err, 'No se pudo cargar el banco de recursos'));
             setCategorias([]);
             setPlantillas([]);
             setError('No se pudo cargar el banco de recursos');

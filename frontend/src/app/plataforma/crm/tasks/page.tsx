@@ -99,7 +99,7 @@ export default function CrmTasksPage() {
 
     const updateTaskStatus = useCallback(async (id: string, status: string) => {
         if (!canEditCrm) return;
-        setTasks(prev => prev.map(t => t.id === id ? { ...t, status: status as any } : t));
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t));
         try {
             await apiFetch(`/crm/tasks/${id}`, { method: 'PATCH', token, body: { status } });
         } catch {

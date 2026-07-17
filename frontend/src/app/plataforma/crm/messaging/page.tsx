@@ -197,7 +197,19 @@ export default function MessagingCampaignCenter() {
                 <div className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4">
                 {viewType === 'list' && (
  <div className="w-full space-y-3">
-                        {history.map((item) => (
+                        {loadingHistory ? (
+                            [...Array(4)].map((_, i) => (
+                                <div key={i} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 animate-pulse">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-2">
+                                            <div className="h-4 w-32 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                            <div className="h-3 w-48 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                        </div>
+                                        <div className="h-4 w-16 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                    </div>
+                                </div>
+                            ))
+                        ) : history.map((item) => (
                             <div 
                                 key={item.id} 
                                 onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
@@ -230,7 +242,13 @@ export default function MessagingCampaignCenter() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {history.map((item) => (
+                                {loadingHistory ? (
+                                    [...Array(4)].map((_, i) => (
+                                        <tr key={i} className="border-t border-[hsl(var(--border))] dark:border-white/5">
+                                            <td colSpan={5} className="px-4 py-3"><div className="h-4 w-3/4 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10 animate-pulse" /></td>
+                                        </tr>
+                                    ))
+                                ) : history.map((item) => (
                                     <tr 
                                         key={item.id} 
                                         onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
@@ -253,7 +271,24 @@ export default function MessagingCampaignCenter() {
 
                 {(viewType === 'board' || viewType === 'kanban') && (
  <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        {groupedByChannel.map(col => (
+                        {loadingHistory ? (
+                            ['WhatsApp', 'Email', 'SMS'].map((label, i) => (
+                                <div key={i} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-3">
+                                    <div className="mb-3 flex items-center justify-between">
+                                        <div className="h-3 w-16 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10 animate-pulse" />
+                                        <div className="h-3 w-4 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10 animate-pulse" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        {[...Array(2)].map((_, j) => (
+                                            <div key={j} className="h-14 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 animate-pulse p-3 space-y-2">
+                                                <div className="h-3 w-2/3 rounded bg-[hsl(var(--surface-3))] dark:bg-white/10" />
+                                                <div className="h-2 w-1/2 rounded bg-[hsl(var(--surface-3))] dark:bg-white/10" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))
+                        ) : groupedByChannel.map(col => (
                             <div key={col.key} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-3">
                                 <div className="mb-3 flex items-center justify-between">
                                     <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{col.label}</p>
@@ -281,7 +316,21 @@ export default function MessagingCampaignCenter() {
 
                 {viewType === 'calendar' && (
  <div className="w-full space-y-4">
-                            {!historyError && groupedByDate.map(([label, items]) => (
+                            {loadingHistory ? (
+                                [...Array(2)].map((_, i) => (
+                                    <div key={i} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 animate-pulse">
+                                        <div className="h-3 w-24 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10 mb-3" />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {[...Array(2)].map((_, j) => (
+                                                <div key={j} className="h-16 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 p-3 space-y-2">
+                                                    <div className="h-3 w-2/3 rounded bg-[hsl(var(--surface-3))] dark:bg-white/10" />
+                                                    <div className="h-2 w-1/2 rounded bg-[hsl(var(--surface-3))] dark:bg-white/10" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : !historyError && groupedByDate.map(([label, items]) => (
                             <div key={label} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                 <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -307,7 +356,17 @@ export default function MessagingCampaignCenter() {
                 {viewType === 'gantt' && (
  <div className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                         <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Avance de entrega</p>
-                        {history.map((item) => (
+                        {loadingHistory ? (
+                            [...Array(3)].map((_, i) => (
+                                <div key={i} className="space-y-1 p-2 animate-pulse">
+                                    <div className="flex items-center justify-between">
+                                        <div className="h-3 w-32 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                        <div className="h-3 w-8 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                    </div>
+                                    <div className="h-2 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                </div>
+                            ))
+                        ) : history.map((item) => (
                             <div 
                                 key={item.id} 
                                 onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
@@ -492,7 +551,6 @@ export default function MessagingCampaignCenter() {
                                         </div>
                                     </div>
                                 ))}
-                                )}
                             </div>
                             <button className="w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-white/5 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-all">
                                 Ver Reporte Completo

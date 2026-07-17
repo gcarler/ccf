@@ -222,21 +222,10 @@
     box-shadow: var(--shadow-glass);
   }
 
-  .glass-morphism {
-    @apply backdrop-blur-xl border border-white/20 dark:border-white/5;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-  }
-  
   .surface-card {
     background-color: hsl(var(--surface-1));
     border: 1px solid hsl(var(--border) / 0.5);
     @apply rounded-lg shadow-sm transition-all duration-150;
-  }
-
-  .surface-elevated {
-    background-color: hsl(var(--surface-2));
-    border: 1px solid hsl(var(--border));
-    @apply rounded-lg shadow-md;
   }
 
   .animate-fade-in-up {
@@ -246,19 +235,6 @@
   @keyframes fade-in-up {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes pulse-soft {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.05); }
-  }
-
-  .animate-pulse-soft {
-    animation: pulse-soft 3s infinite ease-in-out;
-  }
-
-  .hover-scale {
-    @apply transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98];
   }
 
   /* Sidebar nav item hover - ensures dark text in light theme */
@@ -289,18 +265,6 @@
   
   .dark .scrollbar-thin::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.05);
-  }
-
-  .floating-3d {
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .floating-3d:hover {
-    transform: translateY(-8px);
-  }
-
-  .floating-3d:active {
-    transform: translateY(4px) scale(0.96);
   }
 
   .hide-scrollbar::-webkit-scrollbar {
@@ -382,23 +346,14 @@
 
   .border-success { border-color: hsl(var(--success)); }
   .border-success-muted { border-color: hsl(var(--success-muted)); }
-  .border-warning { border-color: hsl(var(--warning)); }
   .border-warning-muted { border-color: hsl(var(--warning-muted)); }
   .border-info { border-color: hsl(var(--info)); }
   .border-info-muted { border-color: hsl(var(--info-muted)); }
   .border-danger { border-color: hsl(var(--danger)); }
   .border-danger-muted { border-color: hsl(var(--danger-muted)); }
 
-  .ring-success { --tw-ring-color: hsl(var(--success)); }
-  .ring-warning { --tw-ring-color: hsl(var(--warning)); }
-  .ring-info { --tw-ring-color: hsl(var(--info)); }
-  .ring-danger { --tw-ring-color: hsl(var(--danger)); }
-
   .shadow-primary { box-shadow: 0 4px 12px 0 hsl(var(--primary) / 0.15); }
   .shadow-success { box-shadow: 0 4px 12px 0 hsl(var(--success) / 0.15); }
-  .shadow-warning { box-shadow: 0 4px 12px 0 hsl(var(--warning) / 0.15); }
-  .shadow-info { box-shadow: 0 4px 12px 0 hsl(var(--info) / 0.15); }
-  .shadow-danger { box-shadow: 0 4px 12px 0 hsl(var(--danger) / 0.15); }
 
   /* ── Semantic Component Utilities ── */
   /* Badges: muted bg + text in light, soft bg + bright text in dark */

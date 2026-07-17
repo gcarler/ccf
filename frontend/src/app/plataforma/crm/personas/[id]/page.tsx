@@ -602,9 +602,9 @@ export default function PersonaDetailPage() {
             ]}
             rightActions={canEditCrm ? (
                 <div className="flex gap-2">
-                    <button title="Editar" onClick={() => setIsEditOpen(true)} className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Edit3 size={16} /></button>
-                    <button title="Compartir" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Share2 size={16} /></button>
-                    <button title="Más acciones" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><MoreHorizontal size={16} /></button>
+                    <button title="Editar" aria-label="Editar" onClick={() => setIsEditOpen(true)} className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Edit3 size={16} /></button>
+                    <button title="Compartir" aria-label="Compartir" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Share2 size={16} /></button>
+                    <button title="Más acciones" aria-label="Más acciones" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><MoreHorizontal size={16} /></button>
                 </div>
             ) : undefined}
         >

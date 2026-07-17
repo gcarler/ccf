@@ -146,9 +146,20 @@ export default function CrmAnalyticsPage() {
         >
             <div className="space-y-4 pb-6">
                 {loadingAnalytics && (
-                    <StatusBanner tone="neutral">
-                        Cargando analitica operativa desde CRM...
-                    </StatusBanner>
+                    <div className="space-y-4">
+                        <StatusBanner tone="neutral">
+                            Cargando analitica operativa desde CRM...
+                        </StatusBanner>
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                            {[...Array(4)].map((_, i) => (
+                                <div key={i} className="h-24 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-white/5 animate-pulse p-4 space-y-2">
+                                    <div className="h-3 w-1/2 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                    <div className="h-6 w-1/3 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                    <div className="h-2 w-2/3 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 )}
                 {analyticsError && (
                     <StatusBanner tone="warning">

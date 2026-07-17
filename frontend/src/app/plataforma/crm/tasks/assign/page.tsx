@@ -133,7 +133,7 @@ export default function TaskAssignment() {
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'Consolidación', icon: Users }, { label: 'Asignación', icon: UserCheck }]}
             rightActions={
-                <button className="flex size-8 items-center justify-center rounded-full bg-blue-50 text-[hsl(var(--primary))] hover:bg-blue-100 transition-all relative">
+                <button className="flex size-8 items-center justify-center rounded-full bg-blue-50 text-[hsl(var(--primary))] hover:bg-blue-100 transition-all relative" aria-label="Notificaciones">
                     <Bell size={20} />
                     <span className="absolute top-2 right-2 size-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
                 </button>
