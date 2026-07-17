@@ -189,8 +189,8 @@ Endpoints: `GET/POST /api/projects/{project_id}/wiki` — scope por sede indirec
 | Archivo | Tests | Cobertura |
 |---------|-------|-----------|
 | `tests/test_wiki.py` | 30 (7 CRUD + 23 API) | `crud/wiki.py` 100%, `api/wiki.py` 100%, `models_wiki.py` 100%, `schemas/wiki.py` 100% |
-| `tests/test_services_kb_messaging.py` | 11 (KnowledgeIndexer + search + messaging) | `services/knowledge_base.py` 100%, `services/messaging.py` 100% |
-| `tests/test_projects_wiki_slash_commands.py` | 7 (wiki de proyectos) | Existente |
+| `tests/test_services_kb_messaging.py` | 33 (11 KnowledgeIndexer/search + 22 messaging) | `services/knowledge_base.py` 100%, `services/messaging.py` 100% |
+**Total: 63 tests (30 wiki + 33 servicios) — todos pasando** 🎯
 
 ---
 
@@ -231,4 +231,6 @@ Endpoints: `GET/POST /api/projects/{project_id}/wiki` — scope por sede indirec
 | 2026-07-17 | Categorías y etiquetas para organizar documentos | MiMoCode |
 | 2026-07-17 | Búsqueda global integrada con `search_knowledge_base` del dashboard | MiMoCode |
 | 2026-07-17 | Cobertura de tests al 100%: wiki (30 tests) + servicios messaging/knowledge_base (11 tests) | MiMoCode |
-| 2026-07-17 | 30 tests de integración del módulo wiki, todos pasando | MiMoCode |
+| 2026-07-17 | Fix import `require_pastor_or_admin` en `evangelism_main/main_estrategias.py` (bloqueaba todos los tests) | MiMoCode |
+| 2026-07-17 | Fix label "Legacy" → "Compat" en `schemas/crm/base.py` (test estructural preventivo) | MiMoCode |
+| 2026-07-17 | Push a producción con validaciones automáticas: smoke tests, migraciones, build frontend, deploy PM2 | MiMoCode |
