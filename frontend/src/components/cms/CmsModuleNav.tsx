@@ -69,7 +69,10 @@ export function CmsModuleNav() {
   const [stats, setStats] = useState<CmsNavStats | null>(null);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !canEdit) {
+      setStats(null);
+      return;
+    }
     const controller = new AbortController();
     Promise.allSettled([
       apiFetch<{ items: unknown[]; total: number }>("/cms/media", { token, cache: "no-store", query: { include_archived: "false" }, signal: controller.signal }),
@@ -86,7 +89,7 @@ export function CmsModuleNav() {
       });
     });
     return () => controller.abort();
-  }, [token]);
+  }, [canEdit, token]);
 
   const availableTabs = CMS_TABS.filter((tab) => {
     if (tab.id === "sites") return canManage;

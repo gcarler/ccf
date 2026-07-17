@@ -18,6 +18,7 @@ import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
 import UniversalCalendarView from "@/components/ui/UniversalCalendarView";
 import UniversalGanttView from "@/components/ui/UniversalGanttView";
 import UniversalWikiView from "@/components/ui/UniversalWikiView";
+import { canEditCms } from "@/lib/cms/permissions";
 import {
   activeTestimonialMediaAssets,
   inferTestimonialMediaType,
@@ -106,6 +107,7 @@ function getAvatarColor(key: string): string {
 
 export default function CmsTestimonialsPage() {
   const { token, user } = useAuth();
+  const canEdit = canEditCms(user?.role);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [filter, setFilter] = useState("Todos");
   const [search, setSearch] = useState("");
@@ -120,7 +122,7 @@ export default function CmsTestimonialsPage() {
   const [mediaSearch, setMediaSearch] = useState("");
 
   const fetchTestimonials = useCallback(async () => {
-    if (!token) { setLoading(false); return; }
+    if (!token || !canEdit) { setLoading(false); return; }
     setLoading(true);
     try {
       const data = await apiFetch<Testimonial[]>("/admin/testimonials", { token, cache: "no-store" });
@@ -134,12 +136,12 @@ export default function CmsTestimonialsPage() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [canEdit, token]);
 
   useEffect(() => { fetchTestimonials(); }, [fetchTestimonials]);
 
   const fetchMedia = useCallback(async () => {
-    if (!token) {
+    if (!token || !canEdit) {
       setMediaItems([]);
       setMediaLoading(false);
       return;
@@ -154,7 +156,7 @@ export default function CmsTestimonialsPage() {
     } finally {
       setMediaLoading(false);
     }
-  }, [token]);
+  }, [canEdit, token]);
 
   useEffect(() => { fetchMedia(); }, [fetchMedia]);
 
@@ -375,6 +377,29 @@ export default function CmsTestimonialsPage() {
       ))}
     </div>
   );
+
+  if (!canEdit) {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="mx-auto max-w-3xl px-4 py-6">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-6 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">CMS</p>
+            <h1 className="mt-2 text-2xl font-semibold text-[hsl(var(--text-primary))]">Testimonios</h1>
+            <p className="mt-3 text-sm text-[hsl(var(--text-secondary))]">
+              Este panel requiere permisos de edición de CMS. Tu sesión actual puede ver el módulo, pero no administrar testimonios.
+            </p>
+            <Link
+              href="/plataforma/cms"
+              className="mt-5 inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] hover:border-[hsl(var(--primary))]"
+            >
+              Volver al resumen
+              <ChevronRight size={14} />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-deep))] overflow-hidden">
