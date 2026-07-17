@@ -70,6 +70,8 @@ export default function MessagingCampaignCenter() {
     const [history, setHistory] = useState<MessagingHistoryRow[]>([]);
     const [historyError, setHistoryError] = useState<string | null>(null);
     const [isSending, setIsSending] = useState(false);
+    const [loadingHistory, setLoadingHistory] = useState(true);
+    const [campaignErrors, setCampaignErrors] = useState<{ campaignName?: boolean; message?: boolean; segments?: boolean }>({});
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_messaging_view', 'grid'));
     const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_messaging_wiki_notes', {
         title: 'Wiki de mensajeria CRM',
@@ -78,8 +80,10 @@ export default function MessagingCampaignCenter() {
     const fetchHistory = useCallback(async () => {
         if (!token) {
             setHistory([]);
+            setLoadingHistory(false);
             return;
         }
+        setLoadingHistory(true);
         try {
             setHistoryError(null);
             const data = await apiFetch('/crm/messaging/history', { token });
@@ -89,6 +93,8 @@ export default function MessagingCampaignCenter() {
             const message = extractErrorMessage(err, 'No se pudo cargar el historial de mensajeria');
             setHistoryError(message);
             addToast(message, 'error');
+        } finally {
+            setLoadingHistory(false);
         }
     }, [addToast, token]);
 
@@ -97,7 +103,13 @@ export default function MessagingCampaignCenter() {
 
     const handleSendCampaign = async () => {
         if (!canEditCrm) return;
-        if (!message || !campaignName || segments.length === 0) {
+        const newErrors = {
+            campaignName: !campaignName.trim(),
+            message: !message.trim(),
+            segments: segments.length === 0,
+        };
+        setCampaignErrors(newErrors);
+        if (newErrors.campaignName || newErrors.message || newErrors.segments) {
             addToast('Completa todos los campos antes de enviar', 'warning');
             return;
         }
@@ -189,6 +201,9 @@ export default function MessagingCampaignCenter() {
                             <div 
                                 key={item.id} 
                                 onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
                                 className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer group"
                             >
                                 <div>
@@ -219,6 +234,9 @@ export default function MessagingCampaignCenter() {
                                     <tr 
                                         key={item.id} 
                                         onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
                                         className="border-t border-[hsl(var(--border))] dark:border-white/5 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
                                     >
                                         <td className="px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</td>
@@ -246,6 +264,9 @@ export default function MessagingCampaignCenter() {
                                         <div 
                                             key={item.id} 
                                             onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
                                             className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3 hover:border-blue-500/30 transition-all cursor-pointer"
                                         >
                                             <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</p>
@@ -268,6 +289,9 @@ export default function MessagingCampaignCenter() {
                                         <div 
                                             key={item.id} 
                                             onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
                                             className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-3 hover:border-blue-500/30 transition-all cursor-pointer bg-[hsl(var(--surface-1))] dark:bg-white/5"
                                         >
                                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</p>
@@ -287,7 +311,10 @@ export default function MessagingCampaignCenter() {
                             <div 
                                 key={item.id} 
                                 onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
-                                        className="space-y-1 cursor-pointer group p-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-md transition-all"
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
+                                className="space-y-1 cursor-pointer group p-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-md transition-all"
                             >
                                 <div className="flex items-center justify-between text-[11px]">
                                     <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</span>
@@ -337,27 +364,36 @@ export default function MessagingCampaignCenter() {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Nombre de la Campaña</label>
                                         <input 
+                                            required
                                             disabled={!canEditCrm}
+                                            aria-invalid={!!campaignErrors.campaignName}
+                                            aria-describedby="campaignName-error"
                                             value={campaignName} onChange={(e) => setCampaignName(e.target.value)}
                                         placeholder="Ej: Invitación Asamblea de Personas"
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-2 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                        className={`w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border rounded-lg py-2 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all ${campaignErrors.campaignName ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/5'}`}
                                     />
+                                    {campaignErrors.campaignName && <p id="campaignName-error" className="text-red-500 text-xs mt-1">Campo requerido</p>}
                                 </div>
 
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Mensaje (Personalización con {`{nombre}`})</label>
                                     <div className="relative">
                                         <textarea 
+                                            required
                                             disabled={!canEditCrm}
+                                            aria-invalid={!!campaignErrors.message}
+                                            aria-describedby="message-error"
                                             value={message} onChange={(e) => setMessage(e.target.value)}
                                             placeholder="Hola {nombre}, te escribimos de CCF para..."
-                                            className="w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-md p-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none"
+                                            className={`w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border rounded-md p-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none ${campaignErrors.message ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/5'}`}
                                         />
                                         <div className="absolute bottom-4 right-4 flex gap-2">
-                                            <button disabled={!canEditCrm} className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors shadow-sm disabled:opacity-50"><Bot size={18} /></button>
-                                            <button disabled={!canEditCrm} className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors shadow-sm disabled:opacity-50"><ImageIcon size={18} /></button>
+                                            <button disabled={!canEditCrm} aria-label="Generar con IA" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors shadow-sm disabled:opacity-50"><Bot size={18} /></button>
+                                            <button disabled={!canEditCrm} aria-label="Insertar imagen" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors shadow-sm disabled:opacity-50"><ImageIcon size={18} /></button>
                                         </div>
                                     </div>
+                                    {campaignErrors.message && <p id="message-error" className="text-red-500 text-xs mt-1">Campo requerido</p>}
+                                    {campaignErrors.segments && <p className="text-red-500 text-xs mt-1">Selecciona al menos un segmento</p>}
                                 </div>
                             </div>
 
@@ -421,10 +457,15 @@ export default function MessagingCampaignCenter() {
                                 <BarChart3 size={18} className="text-[hsl(var(--text-secondary))]" />
                             </div>
                             <div className="space-y-3">
-                                {history.map((item) => (
+                                {loadingHistory ? (
+                                    <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-gray-100 dark:bg-white/5 rounded animate-pulse" />)}</div>
+                                ) : history.map((item) => (
                                     <div 
                                         key={item.id} 
                                         onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
                                         className="flex items-center justify-between group cursor-pointer hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 p-2 rounded-lg transition-all"
                                     >
                                         <div className="flex items-center gap-4">
@@ -451,6 +492,7 @@ export default function MessagingCampaignCenter() {
                                         </div>
                                     </div>
                                 ))}
+                                )}
                             </div>
                             <button className="w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-white/5 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-all">
                                 Ver Reporte Completo

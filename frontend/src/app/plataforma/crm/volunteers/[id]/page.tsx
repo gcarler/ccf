@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useCrmAccess } from "@/hooks/useCrmAccess";
@@ -57,7 +57,7 @@ export default function VolunteerDetailPage() {
     // Edit form
     const [fRole, setFRole] = useState("");
 
-    const loadVolunteer = async () => {
+    const loadVolunteer = useCallback(async () => {
         if (!token || !id) return;
         try {
             setLoading(true);
@@ -68,10 +68,9 @@ export default function VolunteerDetailPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, token]);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { loadVolunteer(); }, [id, token]);
+    useEffect(() => { loadVolunteer(); }, [loadVolunteer]);
 
     const openEdit = () => {
         if (!volunteer) return;

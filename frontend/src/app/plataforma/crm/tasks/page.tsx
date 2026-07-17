@@ -228,7 +228,7 @@ export default function CrmTasksPage() {
                                                     {colTasks.length}
                                                 </span>
                                             </div>
-                                            {canEditCrm && <button onClick={() => setIsCreateOpen(true)} className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all">
+                                            {canEditCrm && <button onClick={() => setIsCreateOpen(true)} aria-label="Crear tarea" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all">
                                                 <Plus size={14} />
                                             </button>}
                                         </div>
@@ -279,6 +279,9 @@ export default function CrmTasksPage() {
                             <div
                                 key={task.id}
                                 onClick={() => router.push(`/plataforma/crm/tasks/${task.id}`)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/tasks/${task.id}`); } }}
                                 className="flex items-center gap-4 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer group"
                             >
                                 {canEditCrm ? (
@@ -332,6 +335,9 @@ export default function CrmTasksPage() {
                                         <tr
                                             key={task.id}
                                             onClick={() => router.push(`/plataforma/crm/tasks/${task.id}`)}
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/tasks/${task.id}`); } }}
                                             className="border-b border-[hsl(var(--border))] dark:border-white/5 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
                                         >
                                             <td className="py-1.5 px-3 text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white max-w-[250px] truncate">{task.title}</td>

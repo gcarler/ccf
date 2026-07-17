@@ -100,6 +100,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                             value={search}
                             onChange={e => onSearchChange(e.target.value)}
                             placeholder="Nombre, teléfono o etiqueta..."
+                            aria-label="Buscar prospectos"
                             className="w-full pl-12 pr-6 py-2 text-xs font-bold rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] bg-[hsl(var(--surface-1))] dark:bg-[#1a1b1d] outline-none focus:ring-4 focus:ring-blue-500/10 dark:text-white transition-all placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-primary))]"
                         />
                     </div>

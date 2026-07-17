@@ -59,6 +59,7 @@ export default function VolunteersPage() {
     const [showFilters, setShowFilters] = useState(false);
     const [showAddForm, setShowAddForm] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [formErrors, setFormErrors] = useState<{ name?: boolean }>({});
     const [form, setForm] = useState({
         name: '', role: VOLUNTEER_ROLES[2], team: TEAMS[0], notes: '',
         shift_start: '', shift_end: '',
@@ -125,7 +126,12 @@ export default function VolunteersPage() {
 
     const handleSave = async () => {
         if (!canEditCrm) return;
-        if (!form.name.trim()) return toast.error('El nombre es obligatorio');
+        const newErrors = { name: !form.name.trim() };
+        setFormErrors(newErrors);
+        if (newErrors.name) {
+            toast.error('El nombre es obligatorio');
+            return;
+        }
         setSaving(true);
         try {
             await apiFetch('/crm/volunteers', {
@@ -207,6 +213,7 @@ export default function VolunteersPage() {
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
                                 placeholder="Buscar servidor, equipo o rol..."
+                                aria-label="Buscar servidores"
                                 className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all placeholder:text-[hsl(var(--text-secondary))]"
                             />
                         </div>
@@ -246,16 +253,17 @@ export default function VolunteersPage() {
                             <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-blue-200 dark:border-blue-700/30 p-4 shadow-xl">
                                 <div className="flex items-center justify-between mb-5">
                                     <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Registrar Servidor</h3>
-                                    <button onClick={() => setShowAddForm(false)} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] transition-colors"><X size={16} /></button>
+                                    <button onClick={() => setShowAddForm(false)} aria-label="Cerrar" className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] transition-colors"><X size={16} /></button>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-1.5">Nombre Completo *</label>
-                                        <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Nombre del servidor..." className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-[hsl(var(--text-secondary))]" />
+                                        <input required aria-invalid={!!formErrors.name} aria-describedby="vol-name-error" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Nombre del servidor..." className={`w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-[hsl(var(--text-secondary))] ${formErrors.name ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/10'}`} />
+                                        {formErrors.name && <p id="vol-name-error" className="text-red-500 text-xs mt-1">Campo requerido</p>}
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-1.5">Equipo</label>
-                                        <select value={form.team} onChange={e => setForm(p => ({ ...p, team: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all">
+                                        <select required value={form.team} onChange={e => setForm(p => ({ ...p, team: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all">
                                             {TEAMS.map(t => <option key={t}>{t}</option>)}
                                         </select>
                                     </div>
@@ -327,6 +335,9 @@ export default function VolunteersPage() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: idx * 0.03 }}
                                                 onClick={() => router.push(`/plataforma/crm/volunteers/${v.id}`)}
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/volunteers/${v.id}`); } }}
                                                 className="group bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer overflow-hidden"
                                             >
                                                 <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${getTeamColor(team)} opacity-0 group-hover:opacity-100 transition-opacity`} />

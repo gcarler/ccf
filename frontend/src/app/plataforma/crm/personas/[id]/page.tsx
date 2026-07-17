@@ -547,8 +547,7 @@ export default function PersonaDetailPage() {
                 .catch(() => setHistory([]))
                 .finally(() => setLoadingHistory(false));
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab, id, token]);
+        }, [activeTab, id, token, history.length]);
 
     // Fetch donations when financial tab activated
     useEffect(() => {
@@ -559,8 +558,7 @@ export default function PersonaDetailPage() {
                 .catch(() => setDonations([]))
                 .finally(() => setLoadingDonations(false));
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab, id, token]);
+    }, [activeTab, id, token, donations.length]);
 
     if (loading) return (
         <div className="h-full flex flex-col items-center justify-center space-y-4">
