@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
-import { ApiError, apiFetch } from '@/lib/http';
+import { extractErrorMessage, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { Search, UserPlus, Phone, MessageSquare, Link2, Users, Plus, Loader2, Send, Calendar, BarChart3, BookOpen } from 'lucide-react';
 import CrmShell from '@/components/crm/CrmShell';
@@ -82,9 +82,7 @@ export default function ContactsPage() {
             setLeads(items);
         } catch (err) {
             setLeads([]);
-            const message = err instanceof ApiError
-                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'Error al cargar contactos'))
-                : 'Error al cargar contactos';
+            const message = extractErrorMessage(err, 'Error al cargar contactos');
             setLeadsError(message);
             addToast(message, 'error');
         } finally {

@@ -25,7 +25,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
-import { ApiError, apiFetch } from '@/lib/http';
+import { extractErrorMessage, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import clsx from 'clsx';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
@@ -85,11 +85,8 @@ export default function MessagingCampaignCenter() {
             const data = await apiFetch('/crm/messaging/history', { token });
             setHistory(Array.isArray(data) ? data.map(normalizeHistoryRow) : []);
         } catch (err) {
-            console.error(err);
             setHistory([]);
-            const message = err instanceof ApiError
-                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'No se pudo cargar el historial de mensajeria'))
-                : 'No se pudo cargar el historial de mensajeria';
+            const message = extractErrorMessage(err, 'No se pudo cargar el historial de mensajeria');
             setHistoryError(message);
             addToast(message, 'error');
         }

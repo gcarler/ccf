@@ -47,7 +47,6 @@ export default function CrmTaskDetailPage() {
                 const data = await apiFetch<any>(`/crm/tasks/${id}`, { token });
                 setTask(data);
             } catch (err) {
-                console.error(err);
                 setTask(null);
                 setError('No se pudo cargar la tarea pastoral.');
                 toast.error('Error al cargar la tarea pastoral');

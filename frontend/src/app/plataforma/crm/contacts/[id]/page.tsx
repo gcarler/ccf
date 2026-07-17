@@ -131,7 +131,6 @@ export default function LeadDetail() {
             }
             setCallLogs(logsData.status === 'fulfilled' && Array.isArray(logsData.value) ? logsData.value : []);
         } catch (err) {
-            console.error(err);
             setLead(null);
             setCallLogs([]);
             setCounselingSessions([]);

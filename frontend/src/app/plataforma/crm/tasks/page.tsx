@@ -17,7 +17,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
-import { ApiError, apiFetch } from '@/lib/http';
+import { extractErrorMessage, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
@@ -84,9 +84,7 @@ export default function CrmTasksPage() {
             setTasks(Array.isArray(data) ? data : []);
         } catch (err) {
             setTasks([]);
-            const message = err instanceof ApiError
-                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'Error al cargar tareas'))
-                : 'Error al cargar tareas';
+            const message = extractErrorMessage(err, 'Error al cargar tareas');
             setTasksError(message);
             addToast(message, 'error');
         } finally {

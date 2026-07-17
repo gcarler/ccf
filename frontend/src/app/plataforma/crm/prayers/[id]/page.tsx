@@ -48,7 +48,6 @@ export default function PrayerDetailPage() {
                 const data = await apiFetch<PrayerDetail>(`/crm/prayer-requests/${id}`, { token });
                 setPrayer(data);
             } catch (err) {
-                console.error(err);
                 setPrayer(null);
                 setError("No se pudo cargar la petición.");
                 toast.error("Error al cargar detalle de intercesion");

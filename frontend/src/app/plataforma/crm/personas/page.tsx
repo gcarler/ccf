@@ -43,7 +43,7 @@ import {
   INITIAL_PERSONA,
 } from '@/types/crm';
 import { FormSection, SelectField, PersonaField } from '@/components/crm/ui';
-import { ApiError, apiFetch } from '@/lib/http';
+import { extractErrorMessage, apiFetch } from '@/lib/http';
 
 interface PersonasPageResponse {
     items: any[];
@@ -140,9 +140,7 @@ export default function PersonasPage() {
         } catch (err) {
             setPersonasPage(null);
 
-            const message = err instanceof ApiError
-                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'No se pudo cargar la lista de personas'))
-                : 'No se pudo cargar la lista de personas';
+            const message = extractErrorMessage(err, 'No se pudo cargar la lista de personas');
             setPersonasError(message);
             toast.error(message);
         } finally {

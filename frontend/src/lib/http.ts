@@ -234,3 +234,17 @@ function safeJsonParse(payload: string) {
     return payload;
   }
 }
+
+export function extractErrorMessage(err: unknown, fallback = "Error inesperado"): string {
+  if (err instanceof ApiError) {
+    if (typeof err.detail === "object" && err.detail !== null) {
+      const detail = err.detail as Record<string, unknown>;
+      if (typeof detail.detail === "string") return detail.detail;
+      if (typeof detail.message === "string") return detail.message;
+    }
+    if (typeof err.detail === "string") return err.detail;
+    return err.message || fallback;
+  }
+  if (err instanceof Error) return err.message || fallback;
+  return fallback;
+}

@@ -73,7 +73,6 @@ export default function TaskAssignment() {
             setLeaders(usersData.filter(u => ['admin', 'pastor', 'coordinador', 'docente'].includes(u.role)));
             setPersonas(Array.isArray(personasData) ? personasData : []);
         } catch (err) {
-            console.error(err);
             setLeaders([]);
             setPersonas([]);
             setError("No se pudieron cargar los datos de asignación.");

@@ -18,7 +18,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
-import { ApiError, apiFetch } from '@/lib/http';
+import { extractErrorMessage, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { useRouter } from 'next/navigation';
 import CrmShell from '@/components/crm/CrmShell';
@@ -98,11 +98,8 @@ export default function ConsolidationPipelinePage() {
                     : [];
             setLeads(items);
         } catch (err) {
-            console.error(err);
             setLeads([]);
-            const message = err instanceof ApiError
-                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'No se pudo cargar el pipeline'))
-                : 'No se pudo cargar el pipeline';
+            const message = extractErrorMessage(err, 'No se pudo cargar el pipeline');
             setLeadsError(message);
             addToast(message, 'error');
         } finally {

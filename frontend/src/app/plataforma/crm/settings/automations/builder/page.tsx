@@ -152,7 +152,6 @@ export default function AutomationBuilderPage() {
             setNodes(rfNodes);
             setEdges(rfEdges);
         } catch (err) {
-            console.error(err);
             addToast('Error al cargar el flujo de automatizaciones', 'error');
         } finally {
             setLoading(false);
@@ -401,7 +400,6 @@ export default function AutomationBuilderPage() {
             addToast('Flujo guardado con éxito', 'success');
             await loadGraphData();
         } catch (err) {
-            console.error(err);
             addToast('Error al guardar el flujo', 'error');
         } finally {
             setSaving(false);

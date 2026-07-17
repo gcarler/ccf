@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, Plus, Calendar, Clock, Heart, Search, MessageSquare, History, Link2, ShieldCheck, CheckCircle2, XCircle, Loader2, ChevronRight, MoreHorizontal, BookOpen } from 'lucide-react';
 import UniversalTableView from '@/components/ui/UniversalTableView';
 import { useTheme } from '@/app/plataforma/theme/ThemeContext';
-import { ApiError, apiFetch } from '@/lib/http';
+import { extractErrorMessage, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
@@ -71,11 +71,8 @@ export default function CounselingPage() {
             const sessionsData = await apiFetch<CounselingSession[]>('/crm/counseling/', { token, cache: 'no-store' });
             setSessions(Array.isArray(sessionsData) ? sessionsData : []);
         } catch (err) {
-            console.error(err);
             setSessions([]);
-            const message = err instanceof ApiError
-                ? ((err.detail as any)?.detail || (err.detail as any)?.message || (typeof err.detail === 'string' ? err.detail : 'Error al cargar la sesion de consejeria'))
-                : 'Error al cargar la sesion de consejeria';
+            const message = extractErrorMessage(err, 'Error al cargar la sesion de consejeria');
             setSessionsError(message);
             addToast(message, 'error');
         } finally {
