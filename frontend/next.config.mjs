@@ -154,9 +154,6 @@ const nextConfig = {
             ...(config.resolve.alias || {}),
             'ag-grid-community$': path.join(__dirname, 'node_modules/ag-grid-community/dist/ag-grid-community.noStyle.js'),
         };
-        if (isServer) {
-            config.output.chunkFilename = "chunks/[name].js";
-        }
         return config;
     },
 };
