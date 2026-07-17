@@ -23,7 +23,7 @@ from backend.schemas.crm.pipeline import (
 router = APIRouter(tags=["CRM"])
 
 
-def _owned_pipeline(db: Session, pipeline_id: UUID, current_user) -> models.PipelineCRM:
+def _owned_pipeline(db: Session, pipeline_id: UUID, current_user: models.User) -> models.PipelineCRM:
     row = crm_pipeline.get_pipeline(db, pipeline_id)
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     if not row or row.sede_id != sede_id:
@@ -58,7 +58,7 @@ def _serialize_stage(row: models.EtapaPipeline) -> dict:
 @router.get("/pipelines", response_model=list[PipelineResponse])
 def list_pipelines(
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     return [_serialize_pipeline(row) for row in crm_pipeline.list_pipelines(db, sede_id)]
@@ -68,7 +68,7 @@ def list_pipelines(
 def create_pipeline(
     payload: PipelineCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     row = crm_pipeline.create_pipeline(
@@ -88,7 +88,7 @@ def create_pipeline(
 def get_pipeline(
     pipeline_id: UUID,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     return _serialize_pipeline(_owned_pipeline(db, pipeline_id, current_user))
 
@@ -98,7 +98,7 @@ def update_pipeline(
     pipeline_id: UUID,
     payload: PipelineCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     row = _owned_pipeline(db, pipeline_id, current_user)
     row = crm_pipeline.update_pipeline(
@@ -118,7 +118,7 @@ def update_pipeline(
 def archive_pipeline(
     pipeline_id: UUID,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     crm_pipeline.archive_pipeline(db, _owned_pipeline(db, pipeline_id, current_user))
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -128,7 +128,7 @@ def archive_pipeline(
 def list_pipeline_stages(
     pipeline_id: UUID,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     _owned_pipeline(db, pipeline_id, current_user)
     return [_serialize_stage(row) for row in crm_pipeline.list_stages(db, pipeline_id)]
@@ -143,7 +143,7 @@ def create_pipeline_stage(
     pipeline_id: UUID,
     payload: PipelineStageCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     _owned_pipeline(db, pipeline_id, current_user)
     row = crm_pipeline.create_stage(
@@ -163,7 +163,7 @@ def update_pipeline_stage(
     stage_id: UUID,
     payload: PipelineStageCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     row = crm_pipeline.get_stage(db, stage_id)
     if not row:
@@ -185,7 +185,7 @@ def update_pipeline_stage(
 def archive_pipeline_stage(
     stage_id: UUID,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     row = crm_pipeline.get_stage(db, stage_id)
     if not row:
@@ -208,7 +208,7 @@ class ReorderItem(BaseModel):
 def reorder_casos(
     payload: list[ReorderItem],
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     # Check for duplicate IDs
@@ -256,7 +256,7 @@ class MoveStagePayload(BaseModel):
 @router.get("/pipeline/kanban/layout")
 def kanban_layout(
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     pipeline = (
@@ -276,7 +276,7 @@ def kanban_layout(
 @router.get("/pipeline/kanban/stages")
 def kanban_stages(
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     stages = (
@@ -296,7 +296,7 @@ def kanban_stages(
 @router.get("/pipeline/kanban/columns")
 def kanban_columns(
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     return kanban_stages(db, current_user)
 
@@ -304,7 +304,7 @@ def kanban_columns(
 @router.get("/pipeline/kanban/cards")
 def kanban_cards(
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     cards = case_query(db).filter(models.CasoCRM.sede_id == sede_id, models.CasoCRM.deleted_at.is_(None)).order_by(
@@ -332,7 +332,7 @@ def kanban_filter(
     priority: str | None = None,
     status: str | None = None,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     user_sede_id = UUID(str(require_user_sede_id(db, current_user)))
     query = case_query(db).filter(models.CasoCRM.sede_id == user_sede_id, models.CasoCRM.deleted_at.is_(None))
@@ -365,7 +365,7 @@ def kanban_filter(
 def drag_drop_events(
     payload: DragDropEventCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     case = case_query(db).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
@@ -529,7 +529,7 @@ def evaluate_condition(key: str, op: str, expected_val: Any, variables: dict) ->
 
 @router.get("/automations/palette")
 def automations_palette(
-    _current_user=Depends(require_module_access("crm", "read")),
+    _current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Returns the genuine list of available trigger events and action types."""
     return {
@@ -554,7 +554,7 @@ def automations_palette(
 def automations_flows(
     payload: dict,
     db: Session = Depends(get_db),
-    _current_user=Depends(require_module_access("crm", "edit")),
+    _current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Saves automation flow metadata into the database."""
     name = payload.get("name", "Unnamed Flow")
@@ -567,7 +567,7 @@ def automations_flows(
 
 
 @router.post("/automations/flows/validate-path")
-def validate_path(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def validate_path(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     """Ensures a path exists from start triggers to actions, validating its length (min 3 nodes)."""
     payload = payload or {}
     try:
@@ -609,7 +609,7 @@ def validate_path(payload: dict = None, db: Session = Depends(get_db), current_u
 
 
 @router.get("/automations/branching/variables")
-def branching_variables(current_user=Depends(require_module_access("crm", "read"))):
+def branching_variables(current_user: models.User = Depends(require_module_access("crm", "read"))):
     """Returns available model fields for condition evaluations."""
     return [
         {"name": "nombre", "type": "string", "label": "Nombre del Contacto"},
@@ -622,7 +622,7 @@ def branching_variables(current_user=Depends(require_module_access("crm", "read"
 
 
 @router.post("/automations/branching/traverse")
-def branching_traverse(payload: dict, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def branching_traverse(payload: dict, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     """Simulates branching node traversal based on dynamic condition logic."""
     variables = payload.get("variables", {})
     conditions = payload.get("conditions", [])
@@ -639,7 +639,7 @@ def branching_traverse(payload: dict, db: Session = Depends(get_db), current_use
 
 
 @router.post("/automations/flows/check-cycles")
-def check_cycles(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def check_cycles(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     """DFS-based cycle checker."""
     payload = payload or {}
     try:
@@ -651,7 +651,7 @@ def check_cycles(payload: dict = None, db: Session = Depends(get_db), current_us
 
 
 @router.post("/automations/flows/validate")
-def flows_validate(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def flows_validate(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     try:
         nodes, edges = get_graph_from_payload_or_db(payload, db)
@@ -662,7 +662,7 @@ def flows_validate(payload: dict = None, db: Session = Depends(get_db), current_
 
 
 @router.post("/automations/flows/validate-node")
-def validate_node(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def validate_node(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     node_id = payload.get("node_id")
     try:
@@ -678,7 +678,7 @@ def validate_node(payload: dict = None, db: Session = Depends(get_db), current_u
 
 
 @router.post("/automations/validate-graph")
-def validate_graph(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def validate_graph(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     try:
         nodes, edges = get_graph_from_payload_or_db(payload, db)
@@ -692,7 +692,7 @@ def validate_graph(payload: dict = None, db: Session = Depends(get_db), current_
 def kanban_stage_empty(
     stage_id: UUID,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     stage = (
@@ -719,7 +719,7 @@ def kanban_stage_limit_cases(
     limit: int = 50,
     offset: int = 0,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     stage = (
@@ -770,7 +770,7 @@ def kanban_stage_limit_cases(
 def kanban_search(
     title: str | None = None,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     query = case_query(db).filter(models.CasoCRM.sede_id == sede_id, models.CasoCRM.deleted_at.is_(None))
@@ -796,7 +796,7 @@ def kanban_search(
 @router.get("/pipeline/kanban/unassigned")
 def kanban_unassigned(
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     cards = (
@@ -827,7 +827,7 @@ def kanban_unassigned(
 @router.get("/pipeline/kanban/stage/deleted")
 def kanban_stage_deleted(
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     cards = (
@@ -855,7 +855,7 @@ def kanban_stage_deleted(
 def drag_drop_same_stage(
     payload: ReorderSameStage,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     case = case_query(db).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
@@ -874,7 +874,7 @@ def drag_drop_same_stage(
 def drag_drop_invalid_stage(
     payload: MoveStagePayload,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     case = case_query(db).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
@@ -901,7 +901,7 @@ def drag_drop_invalid_stage(
 
 
 @router.post("/pipeline/kanban/drag-drop/missing-id")
-def drag_drop_missing_id(payload: dict, current_user=Depends(require_pastor_or_admin)):
+def drag_drop_missing_id(payload: dict, current_user: models.User = Depends(require_pastor_or_admin)):
     if "caso_id" not in payload or not payload["caso_id"]:
         raise HTTPException(status_code=400, detail="Missing ID")
     return {"status": "success"}
@@ -911,7 +911,7 @@ def drag_drop_missing_id(payload: dict, current_user=Depends(require_pastor_or_a
 def drag_drop_concurrent(
     payload: MoveStagePayload,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     case = case_query(db).filter(models.CasoCRM.id == payload.caso_id, models.CasoCRM.sede_id == sede_id).first()
@@ -951,7 +951,7 @@ def drag_drop_concurrent(
 def drag_drop_recovery(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     ten_seconds_ago = datetime.now(timezone.utc) - timedelta(seconds=10)
@@ -967,14 +967,14 @@ def drag_drop_recovery(
 
 
 @router.post("/automations/flows/empty")
-def flows_empty(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def flows_empty(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, _ = get_graph_from_payload_or_db(payload, db)
     return {"status": "success", "message": "Flow is empty" if not nodes else "Flow is not empty"}
 
 
 @router.post("/automations/flows/max-nodes-check")
-def flows_max_nodes_check(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def flows_max_nodes_check(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, _ = get_graph_from_payload_or_db(payload, db)
     if len(nodes) > 100:
@@ -983,7 +983,7 @@ def flows_max_nodes_check(payload: dict = None, db: Session = Depends(get_db), c
 
 
 @router.post("/automations/flows/disconnected-nodes")
-def flows_disconnected_nodes(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def flows_disconnected_nodes(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     if not nodes:
@@ -997,7 +997,7 @@ def flows_disconnected_nodes(payload: dict = None, db: Session = Depends(get_db)
 
 
 @router.post("/automations/flows/validate-types")
-def flows_validate_types(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
+def flows_validate_types(payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes = payload.get("nodes", [])
     valid_types = {
@@ -1021,12 +1021,12 @@ def flows_validate_types(payload: dict = None, current_user=Depends(require_modu
 
 
 @router.post("/automations/flows/unicode")
-def flows_unicode(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
+def flows_unicode(payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))):
     return {"status": "success"}
 
 
 @router.post("/automations/flows/validate-path-length")
-def validate_path_length_api(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def validate_path_length_api(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes_count = payload.get("nodes_count")
     if nodes_count is not None and nodes_count < 3:
@@ -1038,7 +1038,7 @@ def validate_path_length_api(payload: dict = None, db: Session = Depends(get_db)
 
 
 @router.post("/automations/flows/validate-multiple-inputs")
-def validate_multiple_inputs(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def validate_multiple_inputs(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     in_degree = {n: 0 for n in nodes}
@@ -1051,7 +1051,7 @@ def validate_multiple_inputs(payload: dict = None, db: Session = Depends(get_db)
 
 
 @router.post("/automations/flows/validate-multiple-outputs")
-def validate_multiple_outputs(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def validate_multiple_outputs(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     out_degree = {n: 0 for n in nodes}
@@ -1064,7 +1064,7 @@ def validate_multiple_outputs(payload: dict = None, db: Session = Depends(get_db
 
 
 @router.post("/automations/flows/clean-orphans")
-def clean_orphans(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def clean_orphans(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     node_set = set(nodes)
@@ -1073,7 +1073,7 @@ def clean_orphans(payload: dict = None, db: Session = Depends(get_db), current_u
 
 
 @router.post("/automations/flows/cross-flow-check")
-def cross_flow_check(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def cross_flow_check(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     flow_id = payload.get("flow_id")
     edges = payload.get("edges", [])
@@ -1097,7 +1097,7 @@ def cross_flow_check(payload: dict = None, db: Session = Depends(get_db), curren
 
 
 @router.post("/automations/branching/null-vars")
-def branching_null_vars(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
+def branching_null_vars(payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     variables = payload.get("variables", {})
     null_vars = [k for k, v in variables.items() if v is None]
@@ -1105,7 +1105,7 @@ def branching_null_vars(payload: dict = None, current_user=Depends(require_modul
 
 
 @router.post("/automations/branching/type-mismatch")
-def branching_type_mismatch(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
+def branching_type_mismatch(payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     variables = payload.get("variables", {})
     conditions = payload.get("conditions", [])
@@ -1128,7 +1128,7 @@ def branching_type_mismatch(payload: dict = None, current_user=Depends(require_m
 
 
 @router.post("/automations/branching/missing-else")
-def branching_missing_else(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
+def branching_missing_else(payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     branch_node_id = payload.get("node_id")
     edges = payload.get("edges", [])
@@ -1141,7 +1141,7 @@ def branching_missing_else(payload: dict = None, current_user=Depends(require_mo
 
 
 @router.post("/automations/branching/infinite-nesting")
-def branching_infinite_nesting(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
+def branching_infinite_nesting(payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes = payload.get("nodes", [])
     edges = payload.get("edges", [])
@@ -1176,7 +1176,7 @@ def branching_infinite_nesting(payload: dict = None, current_user=Depends(requir
 
 
 @router.post("/automations/branching/unexpected-op")
-def branching_unexpected_op(payload: dict = None, current_user=Depends(require_module_access("crm", "edit"))):
+def branching_unexpected_op(payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     conditions = payload.get("conditions", [])
     valid_ops = {"equals", "ne", "contains", "starts_with", "in", "gt", "lt", "always"}
@@ -1188,22 +1188,22 @@ def branching_unexpected_op(payload: dict = None, current_user=Depends(require_m
 
 
 @router.post("/automations/flows/cycle-deep")
-def cycle_deep(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def cycle_deep(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     return check_cycles(payload, db)
 
 
 @router.post("/automations/flows/multiple-cycles")
-def multiple_cycles(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def multiple_cycles(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     return check_cycles(payload, db)
 
 
 @router.post("/automations/flows/disconnected-subgraph-cycles")
-def disconnected_subgraph_cycles(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def disconnected_subgraph_cycles(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     return check_cycles(payload, db)
 
 
 @router.post("/automations/flows/validate-complex-dag")
-def validate_complex_dag(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def validate_complex_dag(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
@@ -1211,7 +1211,7 @@ def validate_complex_dag(payload: dict = None, db: Session = Depends(get_db), cu
 
 
 @router.post("/automations/flows/concurrent-cycle-checks")
-def concurrent_cycle_checks(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def concurrent_cycle_checks(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     return validate_complex_dag(payload, db)
 
 
@@ -1219,7 +1219,7 @@ def concurrent_cycle_checks(payload: dict = None, db: Session = Depends(get_db),
 def kanban_sync_reorder(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     pipeline_id = UUID(payload["pipeline_id"])
@@ -1243,7 +1243,7 @@ def kanban_sync_reorder(
 def flow_builder_three_node_render(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     flow_id = UUID(payload["flow_id"])
     flow = db.query(models.CrmAutomationFlow).filter(models.CrmAutomationFlow.id == flow_id).first()
@@ -1259,7 +1259,7 @@ def flow_builder_three_node_render(
 
 
 @router.post("/automations/branching/validate-cycles")
-def branching_validate_cycles(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_module_access("crm", "edit"))):
+def branching_validate_cycles(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
@@ -1270,7 +1270,7 @@ def branching_validate_cycles(payload: dict = None, db: Session = Depends(get_db
 def reorder_trigger_automation(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     caso_id = UUID(payload["caso_id"])
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
@@ -1302,7 +1302,7 @@ def reorder_trigger_automation(
 def branching_three_node_traversal(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     pipeline = (
@@ -1317,7 +1317,7 @@ def branching_three_node_traversal(
 
 
 @router.post("/pipeline/kanban/drag-drop/validate-cycles")
-def drag_drop_validate_cycles(payload: dict = None, db: Session = Depends(get_db), current_user=Depends(require_pastor_or_admin)):
+def drag_drop_validate_cycles(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_pastor_or_admin)):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
@@ -1328,7 +1328,7 @@ def drag_drop_validate_cycles(payload: dict = None, db: Session = Depends(get_db
 def lead_qualification(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     caso_id = UUID(payload["caso_id"])
     target_etapa_id = UUID(payload["target_etapa_id"])
@@ -1345,7 +1345,7 @@ def lead_qualification(
 def support_ticket_routing(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     caso_id = UUID(payload["caso_id"])
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
@@ -1366,7 +1366,7 @@ def support_ticket_routing(
 def cyclical_flow_resolution(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     flow_id = UUID(payload["flow_id"])
     nodes, edges = get_graph_from_payload_or_db(payload, db)
@@ -1387,7 +1387,7 @@ def cyclical_flow_resolution(
 def bulk_reassignment_reorder(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user=Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     for item in payload.get("casos", []):

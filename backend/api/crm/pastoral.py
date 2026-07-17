@@ -52,7 +52,6 @@ from backend.models_crm_pipeline import CanalOrigenEnum, EstadoCasoEnum, TipoInt
 from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
 from backend.services.messaging import (
     MessagingGateway,
-    StubMessagingGateway,  # noqa: F401 — disponible para override manual en tests
     get_messaging_gateway,
 )
 from backend.services.public_contact_tracking import ContactRecord, tracker

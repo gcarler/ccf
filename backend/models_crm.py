@@ -1,4 +1,3 @@
-# ruff: noqa: F405
 from __future__ import annotations
 
 import enum as _enum
@@ -10,8 +9,9 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy import func as _func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import validates
 
-from backend.models_shared import *  # noqa: F403
+from backend.models_shared import *  # noqa: F403 — re-exports SQLAlchemy primitives (Base, Column, UUID, etc.) used throughout this module
 from backend.models_shared import _utcnow
 
 
@@ -92,10 +92,6 @@ class CrmEvent(Base):
     target_persona_ids = Column(JSON, nullable=True)
     fixed_date = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
-
-    import uuid
-
-    from sqlalchemy.orm import validates
 
     @validates("target_persona_ids")
     def validate_target_persona_ids(self, key, value):
