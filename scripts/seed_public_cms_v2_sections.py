@@ -20,6 +20,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from sqlalchemy import text
+
 # ── 1. Project root & DATABASE_URL (must happen before any backend import) ─────
 _HERE = Path(__file__).resolve()
 _PROJECT_ROOT = next(
@@ -113,6 +115,12 @@ def _content_json(obj: Any) -> dict[str, Any]:
 
 def _parsed(obj: Any) -> dict[str, Any]:
     return {"parsed": obj}
+
+
+def _value(obj: Any, key: str) -> Any:
+    if hasattr(obj, key):
+        return getattr(obj, key)
+    return obj[key]
 
 
 def _media_lookup(db: Any) -> Any:
@@ -651,12 +659,12 @@ def _snapshot(page: Any, sections: list[dict[str, Any]]) -> dict[str, Any]:
     # page (initially ``draft``) matches its first published version afterwards.
     return {
         "page": {
-            "id": str(page.id),
-            "slug": page.slug,
-            "title": page.title,
+            "id": str(_value(page, "id")),
+            "slug": _value(page, "slug"),
+            "title": _value(page, "title"),
             "status": "published",
-            "seo_json": page.seo_json or {},
-            "locale": page.locale,
+            "seo_json": _value(page, "seo_json") or {},
+            "locale": _value(page, "locale"),
         },
         "sections": [
             {
@@ -672,7 +680,37 @@ def _snapshot(page: Any, sections: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def run() -> int:
+def _load_site_row(db, site_key: str) -> dict[str, Any] | None:
+    row = db.execute(
+        text(
+            """
+            SELECT id, site_key, name, base_path, is_active
+            FROM cms_sites
+            WHERE site_key = :site_key
+            LIMIT 1
+            """
+        ),
+        {"site_key": site_key},
+    ).mappings().first()
+    return dict(row) if row is not None else None
+
+
+def _load_page_row(db, site_id: Any, slug: str) -> dict[str, Any] | None:
+    row = db.execute(
+        text(
+            """
+            SELECT id, site_id, slug, title, status, seo_json, published_version_id, locale
+            FROM cms_pages
+            WHERE site_id = :site_id AND slug = :slug
+            LIMIT 1
+            """
+        ),
+        {"site_id": str(site_id), "slug": slug},
+    ).mappings().first()
+    return dict(row) if row is not None else None
+
+
+def run(site_key: str = "ccf") -> int:
     db = SessionLocal()
     try:
         print("=" * 60)
@@ -680,20 +718,18 @@ def run() -> int:
         print("=" * 60)
 
         # ── Site ────────────────────────────────────────────────────────────
-        site = db.query(models.CmsSite).filter(models.CmsSite.is_active.is_(True)).first()
+        site = _load_site_row(db, site_key)
         if site is None:
-            site = db.query(models.CmsSite).filter_by(site_key="ccf").first()
-        if site is None:
-            site = models.CmsSite(site_key="ccf", name="CCF", base_path="/", is_active=True)
+            site = models.CmsSite(site_key=site_key, name="CCF", base_path="/", is_active=True)
             db.add(site)
             db.commit()
-            db.refresh(site)
             print(f"Created CmsSite: {site.site_key} ({site.id})")
         else:
-            print(f"Using CmsSite: {site.site_key} ({site.id})")
+            print(f"Using CmsSite: {site['site_key']} ({site['id']})")
 
         media_find = _media_lookup(db)
         pages_specs = _build_pages(media_find)
+        site_id = _value(site, "id")
 
         created_pages = 0
         updated_pages = 0
@@ -704,10 +740,10 @@ def run() -> int:
         unchanged = 0
 
         for slug, sections in pages_specs.items():
-            page = db.query(models.CmsPage).filter_by(site_id=site.id, slug=slug).first()
+            page = _load_page_row(db, site_id, slug)
             if page is None:
                 page = models.CmsPage(
-                    site_id=site.id,
+                    site_id=site_id,
                     slug=slug,
                     title=_page_title(slug),
                     status="draft",
@@ -716,7 +752,6 @@ def run() -> int:
                 )
                 db.add(page)
                 db.commit()
-                db.refresh(page)
                 created_pages += 1
                 print(f"Created page: {slug}")
             else:
@@ -725,7 +760,7 @@ def run() -> int:
 
             existing_sections = {
                 s.section_key: s
-                for s in db.query(models.CmsSection).filter_by(page_id=page.id).all()
+                for s in db.query(models.CmsSection).filter_by(page_id=_value(page, "id")).all()
             }
             desired_keys = {s["key"] for s in sections}
 
@@ -753,7 +788,7 @@ def run() -> int:
                     updated_sections += 1
                 else:
                     section = models.CmsSection(
-                        page_id=page.id,
+                        page_id=_value(page, "id"),
                         section_key=key,
                         type=spec["type"],
                         props_json=spec["props"],
@@ -766,19 +801,20 @@ def run() -> int:
                 db.commit()
 
             # Refresh page relationship for snapshot
-            db.refresh(page)
-
             new_snapshot = _snapshot(page, sections)
             current_version = None
-            if page.published_version_id:
+            page_published_version_id = _value(page, "published_version_id")
+            page_status = _value(page, "status")
+
+            if page_published_version_id:
                 current_version = (
                     db.query(models.CmsPageVersion)
-                    .filter_by(id=page.published_version_id)
+                    .filter_by(id=page_published_version_id)
                     .first()
                 )
 
             if (
-                page.status == "published"
+                page_status == "published"
                 and current_version is not None
                 and current_version.snapshot_json == new_snapshot
             ):
@@ -789,34 +825,50 @@ def run() -> int:
             # Determine next version number
             max_version = (
                 db.query(models.CmsPageVersion)
-                .filter_by(page_id=page.id)
+                .filter_by(page_id=_value(page, "id"))
                 .order_by(models.CmsPageVersion.version_number.desc())
                 .first()
             )
             next_version = (max_version.version_number + 1) if max_version else 1
 
             version = models.CmsPageVersion(
-                page_id=page.id,
+                page_id=_value(page, "id"),
                 version_number=next_version,
                 snapshot_json=new_snapshot,
                 notes="Seed public CMS v2 sections",
             )
             db.add(version)
             db.commit()
-            db.refresh(version)
 
-            page.published_version_id = version.id
-            page.status = "published"
-            db.add(page)
+            if hasattr(page, "published_version_id"):
+                page.published_version_id = version.id
+                page.status = "published"
+                db.add(page)
+            else:
+                db.execute(
+                    text(
+                        """
+                        UPDATE cms_pages
+                        SET published_version_id = :published_version_id,
+                            status = :status
+                        WHERE id = :id
+                        """
+                    ),
+                    {
+                        "published_version_id": str(version.id),
+                        "status": "published",
+                        "id": str(page["id"]),
+                    },
+                )
             db.commit()
 
             log = models.CmsPublishLog(
-                site_id=site.id,
-                page_id=page.id,
+                site_id=site_id,
+                page_id=_value(page, "id"),
                 entity_type="page",
-                entity_id=str(page.id),
+                entity_id=str(_value(page, "id")),
                 action="publish",
-                from_status=current_version and "published" or "draft",
+                from_status="published" if current_version else "draft",
                 to_status="published",
                 metadata_json={"version_id": str(version.id), "version_number": next_version},
             )
