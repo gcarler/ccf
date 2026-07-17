@@ -484,12 +484,18 @@ def get_crm_automations(
     db: Session,
     only_active: bool = True,
     trigger_event: str | None = None,
+    sede_id: str | None = None,
 ) -> List[models.CrmAutomation]:
     q = db.query(models.CrmAutomation)
     if only_active:
         q = q.filter(models.CrmAutomation.is_active)
     if trigger_event:
         q = q.filter(models.CrmAutomation.trigger_event == trigger_event)
+    if sede_id:
+        q = q.filter(
+            models.CrmAutomation.sede_id.is_(None)
+            | (models.CrmAutomation.sede_id == sede_id)
+        )
     return q.order_by(models.CrmAutomation.name).all()
 
 
@@ -504,9 +510,12 @@ def get_crm_automation(
 
 
 def create_crm_automation(
-    db: Session, payload: CrmAutomationCreate
+    db: Session, payload: CrmAutomationCreate, sede_id: str | None = None
 ) -> models.CrmAutomation:
-    row = models.CrmAutomation(**payload.model_dump())
+    data = payload.model_dump()
+    if sede_id:
+        data["sede_id"] = sede_id
+    row = models.CrmAutomation(**data)
     db.add(row)
     db.commit()
     db.refresh(row)

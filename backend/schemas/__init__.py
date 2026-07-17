@@ -240,8 +240,9 @@ from backend.schemas.crm.base import (
                                      VolunteerShift,
                                      VolunteerShiftBase,
                                      VolunteerShiftCreate,
-                                     VolunteerShiftUpdate,
+                                      VolunteerShiftUpdate,
 )
+from backend.schemas.crm.base import CasoCreate, MessagingSend, GrupoUpdate, CrmSettingsUpdate, RoleCreate, RoleUpdate, VolunteerCreate, VolunteerUpdate
 
 # ── CRM Resources (Biblioteca de Recursos) ───────────────────────────
 from backend.schemas.crm.resources import (  # noqa: F401

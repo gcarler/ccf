@@ -1088,3 +1088,66 @@ class CaseCall(BaseModel):
     duration_seconds: int = 0
     created_at: datetime
     model_config = orm_config
+
+
+# ── Pastoral domain schemas (replacing raw dict payloads) ────────────
+
+
+class CasoCreate(BaseModel):
+    persona_id: UUID
+    stage: str = "new"
+    source: Optional[str] = None
+    source_campaign: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class MessagingSend(BaseModel):
+    template_id: UUID
+    recipient_ids: list[UUID] = Field(default_factory=list)
+    recipient_role: Optional[str] = None
+    variables: dict[str, str] = Field(default_factory=dict)
+
+
+class GrupoUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    leader_persona_id: Optional[UUID] = None
+    meeting_day: Optional[str] = None
+    meeting_time: Optional[str] = None
+    location: Optional[str] = None
+    max_members: Optional[int] = None
+    status: Optional[str] = None
+
+
+class CrmSettingsUpdate(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
+class RoleCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    color: str = Field(default="blue", max_length=50)
+    is_leadership: bool = False
+
+
+class RoleUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    color: Optional[str] = Field(default=None, max_length=50)
+    is_leadership: Optional[bool] = None
+
+
+class VolunteerCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    persona_id: Optional[UUID] = None
+    role_name: str = Field(..., min_length=1, max_length=100)
+    team_name: Optional[str] = None
+    sede_id: Optional[UUID] = None
+    status: str = "active"
+    shift_start: Optional[datetime] = None
+    shift_end: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class VolunteerUpdate(BaseModel):
+    role_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    team_name: Optional[str] = None
+    status: Optional[str] = None

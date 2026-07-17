@@ -10,6 +10,19 @@ from sqlalchemy import String, cast, func, or_
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
+from backend.schemas.crm.base import (
+    CasoCreate,
+    CounselingTicketUpdate,
+    CrmSettingsUpdate,
+    GrupoUpdate,
+    MessagingSend,
+    PrayerRequestCreate,
+    PrayerRequestUpdate,
+    RoleCreate,
+    RoleUpdate,
+    VolunteerCreate,
+    VolunteerUpdate,
+)
 from backend.api.crm._shared import (
     _case_created_column,
     _case_stage,
@@ -257,17 +270,18 @@ def get_caso_audit(
 
 @router.post("/casos", response_model=dict)
 def create_caso_crm(
-    payload: dict,
+    payload: CasoCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    if "persona_id" not in payload:
+    data = payload.model_dump()
+    if not payload.persona_id:
         user_sede = get_user_sede_id(db, current_user.id)
         if not user_sede:
             raise HTTPException(status_code=400, detail="El usuario no tiene sede asignada")
 
-        phone = str(payload.get("phone") or "").strip() or None
-        email = str(payload.get("email") or "").strip() or None
+        phone = str(data.get("phone") or "").strip() or None
+        email = str(data.get("email") or "").strip() or None
         conditions = []
         if phone:
             conditions.append(models.Persona.phone == phone)
@@ -282,11 +296,11 @@ def create_caso_crm(
         )
         if not persona:
             persona = models.Persona(
-                first_name=str(payload.get("first_name") or "Prospecto").strip() or "Prospecto",
-                last_name=str(payload.get("last_name") or "").strip(),
+                first_name=str(data.get("first_name") or "Prospecto").strip() or "Prospecto",
+                last_name=str(data.get("last_name") or "").strip(),
                 phone=phone,
                 email=email,
-                spiritual_status=str(payload.get("spiritual_status") or "Prospecto"),
+                spiritual_status=str(data.get("spiritual_status") or "Prospecto"),
                 church_role="Visitante",
                 sede_id=uuid.UUID(str(user_sede)),
             )
@@ -301,14 +315,14 @@ def create_caso_crm(
         )
         if not case:
             raise HTTPException(status_code=500, detail="No se pudo crear el caso CRM")
-        _update_case_field(case, "stage", payload.get("stage", "new"))
-        _update_case_field(case, "source", payload.get("source", "Visitante"))
-        _update_case_field(case, "notes", payload.get("notes"))
+        _update_case_field(case, "stage", data.get("stage", "new"))
+        _update_case_field(case, "source", data.get("source", "Visitante"))
+        _update_case_field(case, "notes", data.get("notes"))
         db.commit()
         db.refresh(case)
         return _serialize_case_safe(db, case)
 
-    p_uuid = uuid.UUID(payload["persona_id"]) if isinstance(payload["persona_id"], str) else payload["persona_id"]
+    p_uuid = payload.persona_id
     persona = persona_query(db).filter(models.Persona.id == p_uuid).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
@@ -324,8 +338,8 @@ def create_caso_crm(
     if not case:
         raise HTTPException(status_code=500, detail="No se pudo crear el caso de consolidacion")
     for key in ("stage", "status", "source", "notes", "assigned_pastor_id", "assigned_leader_id"):
-        if key in payload:
-            _update_case_field(case, key, payload[key])
+        if key in data:
+            _update_case_field(case, key, data[key])
     db.commit()
     db.refresh(case)
     return _serialize_case_safe(db, case)
@@ -614,19 +628,19 @@ def list_caso_interactions(
 
 @router.post("/messaging/send", response_model=dict)
 async def send_crm_message(
-    payload: dict,
+    payload: MessagingSend,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
     gateway: MessagingGateway = Depends(get_messaging_gateway),
 ):
-    channel = str(payload.get("channel") or "").strip().lower()
-    content = str(payload.get("content") or "").strip()
+    channel = str(getattr(payload, "channel", None) or "").strip().lower()
+    content = str(getattr(payload, "content", None) or "").strip()
     if not channel or not content:
         raise HTTPException(status_code=400, detail="channel and content are required")
 
-    campaign_name = payload.get("campaign_name") or payload.get("name")
-    persona_id = payload.get("persona_id")
-    target_segments = payload.get("target_segments") or []
+    campaign_name = getattr(payload, "campaign_name", None) or getattr(payload, "name", None)
+    persona_id = getattr(payload, "persona_id", None)
+    target_segments = getattr(payload, "target_segments", None) or []
 
     if persona_id:
         target_personas = [{"id": persona_id}]
@@ -1282,7 +1296,7 @@ def list_grupos(
 @router.put("/grupos/{grupo_id}", response_model=dict)
 def update_grupo(
     grupo_id: uuid.UUID,
-    payload: dict,
+    payload: GrupoUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
@@ -1292,6 +1306,7 @@ def update_grupo(
     """
     grupo = _get_scoped_grupo(db, current_user, grupo_id)
 
+    data = payload.model_dump(exclude_unset=True)
     field_map = {
         "code": "codigo",
         "name": "nombre",
@@ -1305,16 +1320,16 @@ def update_grupo(
         "start_time": "hora_reunion",
     }
     for payload_key, model_attr in field_map.items():
-        if payload_key in payload:
-            setattr(grupo, model_attr, payload[payload_key])
+        if payload_key in data:
+            setattr(grupo, model_attr, data[payload_key])
 
-    if "status" in payload:
-        raw = str(payload["status"]).strip().lower()
+    if "status" in data:
+        raw = str(data["status"]).strip().lower()
         grupo.activo = raw in ("active", "activo", "true", "1")
 
-    if "participante_ids" in payload and isinstance(payload["participante_ids"], list):
+    if "participante_ids" in data and isinstance(data["participante_ids"], list):
         normalized_ids = []
-        for raw_id in payload["participante_ids"]:
+        for raw_id in data["participante_ids"]:
             try:
                 normalized_ids.append(uuid.UUID(raw_id))
             except (TypeError, ValueError):
@@ -1485,7 +1500,7 @@ def get_counseling_by_lead(
 @router.patch("/counseling/{ticket_id}", response_model=dict)
 def update_counseling_ticket(
     ticket_id: UUID,
-    payload: dict,
+    payload: CounselingTicketUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
@@ -1498,21 +1513,23 @@ def update_counseling_ticket(
     """
     ticket = _get_scoped_counseling_ticket(db, current_user, ticket_id)
 
-    if "pastor_id" in payload:
+    data = payload.model_dump(exclude_unset=True)
+
+    if "pastor_id" in data:
         resolved_pastor_id = _resolve_pastor_identity(
-            db, current_user, payload["pastor_id"]
+            db, current_user, data["pastor_id"]
         )
         ticket.pastor_id = resolved_pastor_id
 
     for field in ("status", "notes", "priority_level"):
-        if field in payload:
+        if field in data:
             setattr(
                 ticket,
                 field if field != "priority_level" else "priority_level",
-                payload[field],
+                data[field],
             )
-    if "subject" in payload:
-        ticket.subject = payload["subject"]
+    if "subject" in data:
+        ticket.subject = data["subject"]
     db.commit()
     db.refresh(ticket)
     return {
@@ -1554,24 +1571,25 @@ def get_crm_settings(
 
 @router.post("/settings", response_model=dict)
 def save_crm_settings(
-    payload: dict,
+    payload: CrmSettingsUpdate,
     db: Session = Depends(get_db),
     _: models.User = Depends(require_module_access("crm", "edit")),
 ):
     import json
 
+    data = payload.model_dump(exclude_unset=True)
     row = db.query(models.SystemVariable).filter(models.SystemVariable.key == _CRM_SETTINGS_KEY).first()
     if row:
-        row.value = json.dumps(payload, ensure_ascii=False)
+        row.value = json.dumps(data, ensure_ascii=False)
     else:
         row = models.SystemVariable(
             key=_CRM_SETTINGS_KEY,
-            value=json.dumps(payload, ensure_ascii=False),
+            value=json.dumps(data, ensure_ascii=False),
             description="CRM module configuration",
         )
         db.add(row)
     db.commit()
-    return payload
+    return data
 
 
 @router.get("/roles", response_model=List[dict])
@@ -1597,12 +1615,13 @@ def list_crm_roles(
 
 @router.post("/roles", response_model=dict, status_code=201)
 def create_crm_role(
-    payload: dict,
+    payload: RoleCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    name = str(payload.get("name") or "").strip()
-    color = str(payload.get("color") or "").strip()
+    data = payload.model_dump()
+    name = str(data.get("name") or "").strip()
+    color = str(data.get("color") or "").strip()
     if not name or not color:
         raise HTTPException(status_code=400, detail="name and color are required")
     exists = db.query(models.RoleDefinition).filter(models.RoleDefinition.name == name).first()
@@ -1611,7 +1630,7 @@ def create_crm_role(
     row = models.RoleDefinition(
         name=name,
         color=color,
-        is_leadership=bool(payload.get("is_leadership")),
+        is_leadership=bool(data.get("is_leadership")),
     )
     db.add(row)
     db.commit()
@@ -1627,7 +1646,7 @@ def create_crm_role(
 @router.put("/roles/{role_id}", response_model=dict)
 def update_crm_role(
     role_id: UUID,
-    payload: dict,
+    payload: RoleUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
@@ -1635,7 +1654,9 @@ def update_crm_role(
     if not row:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
 
-    new_name = payload.get("name")
+    data = payload.model_dump(exclude_unset=True)
+
+    new_name = data.get("name")
     if new_name is not None:
         new_name = str(new_name).strip()
         if not new_name:
@@ -1653,10 +1674,10 @@ def update_crm_role(
         db.query(models.Persona).filter(models.Persona.church_role == row.name).update({"church_role": new_name})
         row.name = new_name
 
-    if "color" in payload:
-        row.color = str(payload.get("color") or "").strip()
-    if "is_leadership" in payload:
-        row.is_leadership = bool(payload.get("is_leadership"))
+    if "color" in data:
+        row.color = str(data.get("color") or "").strip()
+    if "is_leadership" in data:
+        row.is_leadership = bool(data.get("is_leadership"))
 
     db.commit()
     db.refresh(row)
@@ -1840,7 +1861,7 @@ def list_prayer_requests(
 
 @router.post("/prayer-requests", response_model=dict, status_code=201)
 def create_prayer_request(
-    payload: dict,
+    payload: PrayerRequestCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
@@ -1848,12 +1869,13 @@ def create_prayer_request(
     user_sede = get_user_sede_id(db, current_user.id)
     if not user_sede:
         raise HTTPException(status_code=400, detail="El usuario no tiene sede asignada")
+    data = payload.model_dump()
     prayer = models.PrayerRequest(
-        requester_name=payload.get("requester_name", current_user.username),
-        request_text=payload.get("request_text", ""),
-        category=payload.get("category", "General"),
-        is_public=payload.get("is_public", False),
-        source=payload.get("source", "crm"),
+        requester_name=data.get("requester_name", current_user.username),
+        request_text=data.get("request_text", ""),
+        category=data.get("category", "General"),
+        is_public=data.get("is_public", False),
+        source=data.get("source", "crm"),
         status="active",
         sede_id=user_sede,
     )
@@ -1874,15 +1896,16 @@ def create_prayer_request(
 @router.patch("/prayer-requests/{request_id}", response_model=dict)
 def update_prayer_request(
     request_id: UUID,
-    payload: dict,
+    payload: PrayerRequestUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Axioma 3: PATCH solo aplica si el prayer esta en scope (404 cross-sede)."""
     prayer = _get_scoped_prayer_request(db, current_user, request_id)
+    data = payload.model_dump(exclude_unset=True)
     for field in ("status", "category", "request_text", "requester_name", "source"):
-        if field in payload:
-            setattr(prayer, field, payload[field])
+        if field in data:
+            setattr(prayer, field, data[field])
     db.commit()
     db.refresh(prayer)
     return {
@@ -1898,16 +1921,17 @@ def update_prayer_request(
 
 @router.post("/volunteers", response_model=dict, status_code=201)
 def create_volunteer(
-    payload: dict,
+    payload: VolunteerCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Registra un nuevo servidor/voluntario."""
-    name = str(payload.get("name") or "").strip()
+    data = payload.model_dump()
+    name = str(data.get("name") or "").strip()
     if not name:
         raise HTTPException(status_code=400, detail="name is required")
 
-    persona_id = payload.get("persona_id")
+    persona_id = data.get("persona_id")
     if not persona_id:
         # Create a minimal persona record for standalone volunteers
         parts = name.split(" ", 1)
@@ -1916,7 +1940,7 @@ def create_volunteer(
         persona = models.Persona(
             first_name=first_name,
             last_name=last_name,
-            church_role=payload.get("role") or "volunteer",
+            church_role=data.get("role_name") or "volunteer",
             status="active",
         )
         db.add(persona)
@@ -1925,25 +1949,25 @@ def create_volunteer(
 
     shift_start = None
     shift_end = None
-    if payload.get("shift_start"):
+    if data.get("shift_start"):
         try:
-            shift_start = datetime.fromisoformat(str(payload["shift_start"]).replace("Z", "+00:00"))
+            shift_start = datetime.fromisoformat(str(data["shift_start"]).replace("Z", "+00:00"))
         except ValueError:
             pass
-    if payload.get("shift_end"):
+    if data.get("shift_end"):
         try:
-            shift_end = datetime.fromisoformat(str(payload["shift_end"]).replace("Z", "+00:00"))
+            shift_end = datetime.fromisoformat(str(data["shift_end"]).replace("Z", "+00:00"))
         except ValueError:
             pass
 
     shift = models.VolunteerShift(
         persona_id=persona_id,
-        team_name=payload.get("team"),
-        ministry=payload.get("role"),
+        team_name=data.get("team_name"),
+        role_name=data.get("role_name"),
         shift_start=shift_start,
         shift_end=shift_end,
-        notes=payload.get("notes"),
-        status="active",
+        notes=data.get("notes"),
+        status=data.get("status", "active"),
     )
     db.add(shift)
     db.commit()
@@ -2041,14 +2065,15 @@ def get_volunteer_detail(
 @router.patch("/volunteers/{persona_id}", response_model=dict)
 def update_volunteer(
     persona_id: str,
-    payload: dict,
+    payload: VolunteerUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     persona = _get_persona_or_404(db, persona_id, user_sede)
+    data = payload.model_dump(exclude_unset=True)
     allowed = {"church_role", "first_name", "last_name", "phone", "email"}
-    for k, v in payload.items():
+    for k, v in data.items():
         if k in allowed:
             setattr(persona, k, v)
     db.commit()
