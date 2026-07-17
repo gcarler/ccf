@@ -27,6 +27,7 @@ export default function BuilderSidebar({
     createPageFromTemplate,
     addTemplateSection,
   } = builder;
+  const popupTemplate = SECTION_TEMPLATES.find((template) => template.type === "popup_banner");
   return (
         <aside className="lg:col-span-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-3">
           <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sitio</label>
@@ -63,6 +64,22 @@ export default function BuilderSidebar({
 
           <div className="space-y-2 pt-2 border-t border-[hsl(var(--border))] dark:border-white/10">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Plantillas rápidas</p>
+            {popupTemplate && (
+              <div className="rounded-lg border border-rose-200 bg-rose-50/70 p-3 dark:border-rose-500/20 dark:bg-rose-500/5">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-200">Pop-up</p>
+                <p className="mt-1 text-[11px] text-[hsl(var(--text-secondary))]">
+                  Crea un aviso temporal sin editar el contenido principal de la página.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => addTemplateSection(popupTemplate)}
+                  disabled={!activeSlug || !canEdit}
+                  className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"
+                >
+                  <Plus size={12} /> Crear pop-up
+                </button>
+              </div>
+            )}
             {SECTION_TEMPLATES.map((template) => (
               <button
                 key={template.label}

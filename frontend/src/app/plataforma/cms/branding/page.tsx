@@ -14,6 +14,7 @@ import { useSiteBranding } from "@/lib/site-branding";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 import { listCmsThemes, patchCmsTheme } from "@/lib/cms/v2";
+import { canEditCms } from "@/lib/cms/permissions";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import { toast } from "sonner";
 
@@ -27,7 +28,8 @@ interface CmsMediaItem {
 }
 
 export default function CmsBrandingPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const canEdit = canEditCms(user?.role);
   const { logoUrl: currentLogoUrl, logoName: currentLogoName } = useSiteBranding();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -56,7 +58,10 @@ export default function CmsBrandingPage() {
   }, [showMediaPicker, token]);
 
   const handleUpload = useCallback(async (file: File) => {
-    if (!token) return;
+    if (!token || !canEdit) {
+      toast.error("No tienes permisos para editar el branding");
+      return;
+    }
     setUploading(true);
     try {
       const formData = new FormData();
@@ -77,7 +82,7 @@ export default function CmsBrandingPage() {
     } finally {
       setUploading(false);
     }
-  }, [token, logoName]);
+  }, [token, logoName, canEdit]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -86,7 +91,10 @@ export default function CmsBrandingPage() {
   };
 
   const handleSave = async () => {
-    if (!token) return;
+    if (!token || !canEdit) {
+      toast.error("No tienes permisos para guardar el branding");
+      return;
+    }
     setSaving(true);
     try {
       // Get the active theme for this site
@@ -112,6 +120,10 @@ export default function CmsBrandingPage() {
   };
 
   const handleRemoveLogo = () => {
+    if (!canEdit) {
+      toast.error("No tienes permisos para editar el branding");
+      return;
+    }
     setLogoUrl("");
     toast.success("Logo eliminado (se usará el fallback)");
   };
@@ -125,10 +137,15 @@ export default function CmsBrandingPage() {
           <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">
             Gestiona el logo y nombre que aparece en navbar, sidebar y footer del sitio público.
           </p>
+          {!canEdit && (
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-amber-600">
+              Solo lectura: este rol no puede guardar branding.
+            </p>
+          )}
         </div>
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !canEdit}
           className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] text-white px-4 py-2 text-xs font-semibold uppercase tracking-wide hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -174,7 +191,7 @@ export default function CmsBrandingPage() {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
+                disabled={uploading || !canEdit}
                 className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors disabled:opacity-50"
               >
                 {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
@@ -182,6 +199,7 @@ export default function CmsBrandingPage() {
               </button>
               <button
                 onClick={() => setShowMediaPicker(true)}
+                disabled={!canEdit}
                 className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors"
               >
                 <ImageIcon size={12} />
@@ -190,6 +208,7 @@ export default function CmsBrandingPage() {
               {logoUrl && (
                 <button
                   onClick={handleRemoveLogo}
+                  disabled={!canEdit}
                   className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
                 >
                   <Trash2 size={12} />
@@ -217,6 +236,7 @@ export default function CmsBrandingPage() {
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
                 placeholder="/api/static/cms/site_logo/..."
+                disabled={!canEdit}
                 className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-xs text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/50"
               />
               <p className="mt-1 text-[10px] text-[hsl(var(--text-secondary))]">
@@ -234,6 +254,7 @@ export default function CmsBrandingPage() {
                 value={logoName}
                 onChange={(e) => setLogoName(e.target.value)}
                 placeholder="El Faro"
+                disabled={!canEdit}
                 className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-xs text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/50"
               />
               <p className="mt-1 text-[10px] text-[hsl(var(--text-secondary))]">

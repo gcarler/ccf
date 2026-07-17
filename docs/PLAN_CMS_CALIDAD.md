@@ -68,19 +68,23 @@ Criterio de salida:
 
 ## 4. Fase 2 — Admin, builder y workflow editorial
 
-**IDs:** `DONE-BUILDER-CMS-001`, `DONE-PREVIEW-PUBLIC-CMS-001`, `DONE-DASHBOARD-CMS-001`
+**IDs:** `DONE-BUILDER-CMS-001`, `DONE-PREVIEW-PUBLIC-CMS-001`, `DONE-DASHBOARD-CMS-001`, `DONE-BUILDER-CMS-POPUP-001`, `DONE-BRANDING-CMS-001`, `PEND-CMS-BUILDER-001`
 
 Orden:
 
 1. Verificar dashboard, listado de páginas, builder, versiones, media, temas, menús y sites.
 2. Confirmar que la UI no permita estados que el backend no sostenga.
-3. Separar validación de preview, workflow y publicación del resto del editor.
+3. Separar validación de preview, workflow, branding y publicación del resto del editor.
 4. Documentar cualquier drift entre admin y backend antes de tocar la vista.
+5. Validar que el flujo de creación exponga también `popup_banner` o documentar su ausencia como deuda explícita.
 
 Criterio de salida:
 
 - El panel CMS refleja el contrato real del backend.
 - Builder y workflow dejan de depender de tolerancias silenciosas.
+- Branding queda alineado con la guardia de edición y evita el `PATCH` fallido para roles de solo lectura.
+- Builder deja de fallar en la ruta `/plataforma/cms/builder`.
+- La creación de pop-ups queda expuesta de forma clara en el builder.
 
 ## 5. Fase 3 — Preview, publicado y render público
 

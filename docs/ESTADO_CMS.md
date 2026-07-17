@@ -234,6 +234,10 @@ Frontend test existente:
 - validación de MIME/extension en uploads
 - helpers de scope `_cms_helpers`
 
+### Pendiente
+
+1. **Builder CMS no funcional** `[PEND-CMS-BUILDER-001]` — en `/plataforma/cms/builder` el editor reportado no funciona; owner probable: frontend CMS builder y contratos de sections/global blocks, con posible incidencia de estado de shell o datos del catálogo.
+
 ### Cerrado recientemente
 
 1. **Plan de calidad canónico enlazado** `[DONE-PLAN-CMS-LINK-001]` — cerrado el 2026-07-16; `docs/PLAN_CMS_CALIDAD.md` queda como subplan oficial del módulo dentro de la matriz modular y este handover, con `docs/PLAN_CMS_100.md` preservado como referencia de auditoría profunda.
@@ -249,6 +253,8 @@ Frontend test existente:
 11. **Smoke canónico expandido** `[DONE-EXPAND-SMOKE-CMS-001]` — cerrado el 2026-07-16; `scripts/test_cms_quality.py` incluye backend, unit, smoke E2E autenticado y contrato público.
 12. **Checklist visual preview/publicado** `[DONE-VISUAL-CMS-001]` — cerrado el 2026-07-16; `pages-preview.spec.ts` y `cms-public-contract.spec.ts` dejan el contrato visible y repetible.
 13. **Gate modular CMS** `[DONE-GATE-CMS-001]` — cerrado el 2026-07-16; el gate canónico y el exhaustivo pasan sin skips silenciosos.
+14. **Pop-up visible en builder** `[DONE-BUILDER-CMS-POPUP-001]` — cerrado el 2026-07-16; el builder expone una acción explícita de creación de pop-up en el sidebar y sigue manteniendo `popup_banner` en el catálogo y el renderer.
+15. **Branding guardado con guardia de edición** `[DONE-BRANDING-CMS-001]` — cerrado el 2026-07-16; la pantalla de branding alinea su guardia con `canEditCms`, bloquea guardado/subida/edición para roles de solo lectura y evita el `PATCH` fallido por falta de permiso.
 
 ---
 
@@ -301,6 +307,9 @@ Frontend test existente:
 | `DONE-EXPAND-SMOKE-CMS-001` | ✅ **Hecho 2026-07-16** — `scripts/test_cms_quality.py` ahora incluye backend, unit, smoke E2E autenticado y contrato público. | `scripts/test_cms_quality.py` |
 | `DONE-VISUAL-CMS-001` | ✅ **Hecho 2026-07-16** — checklist visual preview/publicado institucionalizado con suites reproducibles. | `frontend/tests/e2e/cms/pages-preview.spec.ts`, `frontend/tests/e2e/cms-public-contract.spec.ts` |
 | `DONE-GATE-CMS-001` | ✅ **Hecho 2026-07-16** — gate canónico y exhaustivo pasan sin skips silenciosos. | `scripts/test_cms_quality.py`, `frontend/tests/e2e/cms/smoke.spec.ts`, `frontend/tests/e2e/cms/pages-preview.spec.ts`, `frontend/tests/e2e/cms-public-contract.spec.ts` |
+| `PEND-CMS-BUILDER-001` | Builder de CMS reportado como no funcional desde `/plataforma/cms/builder` | `frontend/src/app/plataforma/cms/builder/page.tsx`, `frontend/src/components/cms/**`, `backend/api/cms_v2.py` |
+| `DONE-BUILDER-CMS-POPUP-001` | ✅ **Hecho 2026-07-16** — el builder expone una acción explícita de creación de pop-up y mantiene `popup_banner` en catálogo y renderer. | `frontend/src/components/cms/builder/BuilderSidebar.tsx`, `frontend/src/components/cms/builder/constants.ts`, `frontend/src/components/public/cms/PublicSectionRenderer.tsx` |
+| `DONE-BRANDING-CMS-001` | ✅ **Hecho 2026-07-16** — branding ahora respeta `canEditCms`, deshabilita edición para roles solo lectura y evita el `PATCH` fallido al guardar logo o nombre. | `frontend/src/app/plataforma/cms/branding/page.tsx`, `frontend/tests/cms-branding-permissions.test.tsx` |
 
 ---
 
@@ -312,3 +321,7 @@ Estado de cierre:
 - el smoke autenticado CMS y el contrato público pasan
 - preview, publicado y builder quedaron cubiertos por suites reproducibles
 - `docs/ESTADO_CMS.md`, `docs/CMS_API_CONTRACTS.md`, `docs/CMS_QA_CHECKLIST.md` y `docs/PLAN_CMS_CALIDAD.md` quedaron sincronizados con el estado final
+- branding sigue pendiente por el error de guardado en `/plataforma/cms/branding`
+- builder sigue pendiente por la regresión reportada en `/plataforma/cms/builder`
+- la creación de pop-ups quedó expuesta de forma clara en el builder
+- branding quedó alineado con la guardia de edición y ya no expone guardado para roles de solo lectura
