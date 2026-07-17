@@ -77,6 +77,15 @@ export interface AttendancePersona {
   notes?: string;
 }
 
+export interface SearchablePersona {
+  id: string;
+  nombre_completo?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  church_role?: string;
+}
+
 export interface AttendanceSaveResult {
   evento_integracion?: {
     estado?: string;
