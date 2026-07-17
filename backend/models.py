@@ -261,4 +261,4 @@ from backend.models_projects import (
     ProjectWhiteboard,
     TaskSupply,
 )
-from backend.models_wiki import WikiPage  # noqa: F401
+from backend.models_wiki import WikiPage, WikiPageVersion  # noqa: F401

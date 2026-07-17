@@ -235,11 +235,9 @@ class DonationCreate(DonationBase):
 class DonationUpdate(BaseModel):
     amount: Optional[float] = None
     donation_type: Optional[str] = None
-    fund_name: Optional[str] = None
     status: Optional[str] = None
-    notes: Optional[str] = None
-    anonymous: Optional[bool] = None
-    method: Optional[str] = None
+    payment_method: Optional[str] = None
+    fund_id: Optional[UUID] = None
 
 
 class Donation(DonationBase):
@@ -348,8 +346,8 @@ class VolunteerShiftUpdate(BaseModel):
     persona_id: Optional[UUID] = None
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None
-    location: Optional[str] = None
-    role: Optional[str] = None
+    role_name: Optional[str] = None
+    team_name: Optional[str] = None
     status: Optional[str] = None
     notes: Optional[str] = None
 
@@ -528,7 +526,7 @@ class Persona(BaseModel):
     spiritual_status: str = "Nuevo"
     family_id: Optional[UUID] = None
     birthday: Optional[datetime] = None
-    gender: Optional[str] = None
+    gender: Optional[str] = None  # Compat alias — DB column is 'sex'
     spiritual_health: float = 0.8
     academy_progress: float = 0.0
     talents: Optional[str] = None

@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from backend import crud, models
 from backend.api.evangelism_shared import sessions_grupo_has_estado_habilitacion
 from backend.core.database import get_db
-from backend.core.permissions import require_pastor_or_admin
+from backend.core.permissions import require_evangelism_manage, require_evangelism_read
 from backend.crud.evangelism import (
     create_estrategia as create_evangelism_strategy,
 )
@@ -81,7 +81,7 @@ def read_evangelism_strategies(
     clase_raiz: Optional[str] = None,
     sede_id: Optional[str] = None,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_read),
 ):
     from backend.crud.evangelism import get_estrategias
 
@@ -110,7 +110,7 @@ def read_evangelism_strategies_route(
     clase_raiz: Optional[str] = None,
     sede_id: Optional[str] = None,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_read),
 ):
     return read_evangelism_strategies(
         skip=skip,
@@ -127,7 +127,7 @@ def read_evangelism_strategies_route(
 def read_strategy(
     strategy_id: UUID,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_read),
 ):
     db_obj = _load_visible_strategy(
         db,
@@ -146,7 +146,7 @@ def read_strategy(
 def create_strategy(
     strategy: EvangelismStrategyCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     try:
         from backend.models import Sede as _Sede
@@ -191,7 +191,7 @@ def update_strategy(
     strategy_id: UUID,
     strategy: EvangelismStrategyUpdate,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_manage),
 ):
     try:
         user_sede_id = crud.get_user_sede_id(db, _user.id)
@@ -241,7 +241,7 @@ def generate_strategy_sessions(
     strategy_id: UUID,
     habilitar_inmediatamente: bool = True,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_manage),
 ):
     """Genera sesiones automáticas para todos los grupos de una estrategia según su recurrencia.
 
@@ -405,7 +405,7 @@ def generate_strategy_sessions(
 def delete_strategy(
     strategy_id: UUID,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_manage),
 ):
     if not delete_evangelism_strategy(db=db, strategy_id=strategy_id, actor_user_id=str(_user.id)):
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")

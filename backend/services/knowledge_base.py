@@ -24,10 +24,7 @@ class KnowledgeIndexer:
 
     def _has_table(self, table_name: str) -> bool:
         """Return True when the target table exists in the current database."""
-        try:
-            return inspect(self.db.bind).has_table(table_name)  # type: ignore[arg-type]
-        except Exception:
-            return False
+        return inspect(self.db.bind).has_table(table_name)  # type: ignore[arg-type]
 
     def rebuild_all(self, indexed_by_agent_id: _uuid.UUID | None = None) -> dict:
         """Reconstruye toda la KB desde cero."""
@@ -225,8 +222,6 @@ def search_knowledge_base_real(
         return []
 
     terms = query.strip().lower().split()
-    if not terms:
-        return []
 
     q = db.query(AgentKnowledgeBase).filter(
         AgentKnowledgeBase.is_active,
