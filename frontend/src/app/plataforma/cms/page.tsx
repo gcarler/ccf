@@ -208,7 +208,15 @@ export default function CmsHomePage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!token) {
+      if (!token || !canEdit) {
+        setRecentTestimonials([]);
+        setTopPages([]);
+        setRecentPosts([]);
+        setRecentActivity([]);
+        setPubsChart([]);
+        setContentTypeChart([]);
+        setStats(EMPTY_STATS);
+        setDataIssue(null);
         setLoading(false);
         return;
       }
@@ -281,7 +289,7 @@ export default function CmsHomePage() {
       setStats(EMPTY_STATS);
       setLoading(false);
     });
-  }, [token]);
+  }, [canEdit, token]);
 
   const quickLinks = useMemo(
     () => [
