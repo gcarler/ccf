@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -12,16 +12,19 @@ import { Cloud, CloudOff, Loader2 } from 'lucide-react';
 interface WikiEditorProps {
     initialContent: string;
     onSave: (content: string) => Promise<void>;
+    onContentChange?: () => void;
     placeholder?: string;
 }
 
 export default function WikiEditor({ 
     initialContent, 
     onSave, 
+    onContentChange,
     placeholder = "Escribe algo increíble..." 
 }: WikiEditorProps) {
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
+    const lastSavedContentRef = useRef(initialContent);
 
     const editor = useEditor({
         extensions: [
@@ -36,17 +39,33 @@ export default function WikiEditor({
                 class: 'prose prose-slate dark:prose-invert max-w-none focus:outline-none min-h-48 text-sm leading-relaxed',
             },
         },
+        onUpdate: () => {
+            onContentChange?.();
+        },
     });
 
-    // REGLA CRÍTICA: Autosave cada 2 segundos
+    // Sync content when initialContent changes (navigating between docs)
+    useEffect(() => {
+        if (editor && initialContent) {
+            const currentHtml = editor.getHTML();
+            if (currentHtml !== initialContent) {
+                editor.commands.setContent(initialContent);
+                lastSavedContentRef.current = initialContent;
+            }
+        }
+    }, [editor, initialContent]);
+
+    // Autosave cada 2 segundos — compara con lastSavedContentRef, no con initialContent
     useEffect(() => {
         if (!editor) return;
 
         const interval = setInterval(async () => {
-            if (editor.getHTML() !== initialContent && status !== 'saving') {
+            const currentHtml = editor.getHTML();
+            if (currentHtml !== lastSavedContentRef.current && status !== 'saving') {
                 setStatus('saving');
                 try {
-                    await onSave(editor.getHTML());
+                    await onSave(currentHtml);
+                    lastSavedContentRef.current = currentHtml;
                     setStatus('saved');
                     setLastSaved(new Date());
                     setTimeout(() => setStatus('idle'), 2000);
@@ -57,7 +76,33 @@ export default function WikiEditor({
         }, 2000);
 
         return () => clearInterval(interval);
-    }, [editor, onSave, initialContent, status]);
+    }, [editor, onSave, status]);
+
+    // Ctrl+S / Cmd+S para guardado manual
+    useEffect(() => {
+        if (!editor) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                const currentHtml = editor.getHTML();
+                if (currentHtml !== lastSavedContentRef.current) {
+                    setStatus('saving');
+                    onSave(currentHtml)
+                        .then(() => {
+                            lastSavedContentRef.current = currentHtml;
+                            setStatus('saved');
+                            setLastSaved(new Date());
+                            setTimeout(() => setStatus('idle'), 2000);
+                        })
+                        .catch(() => setStatus('error'));
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [editor, onSave]);
 
     return (
         <div className="relative w-full max-w-4xl mx-auto py-1.5 px-3">

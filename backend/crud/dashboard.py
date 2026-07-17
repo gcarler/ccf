@@ -1191,4 +1191,28 @@ def get_pilot_readiness(db: Session):
 
 
 def search_knowledge_base(db: Session, query: str):
-    return []
+    """Search across knowledge base sources: wiki pages and CMS content."""
+    results = []
+
+    # Wiki pages search
+    wiki_pages = (
+        db.query(models.WikiPage)
+        .filter(
+            models.WikiPage.deleted_at.is_(None),
+            models.WikiPage.title.ilike(f"%{query.strip()}%"),
+        )
+        .limit(10)
+        .all()
+    )
+    results.extend([
+        {
+            "type": "wiki",
+            "id": str(p.id),
+            "title": p.title,
+            "snippet": p.content[:200] if p.content else "",
+            "url": f"/plataforma/wiki/docs/{p.page_key}",
+        }
+        for p in wiki_pages
+    ])
+
+    return results

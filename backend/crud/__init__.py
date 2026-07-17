@@ -259,3 +259,6 @@ from backend.crud.projects import (
     get_task_supplies,
     set_project_phases,
 )
+
+# ── Wiki ───────────────────────────────────────────────────────────────────
+from backend.crud import wiki  # noqa: F401

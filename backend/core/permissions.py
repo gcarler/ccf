@@ -174,6 +174,14 @@ PERMISSIONS: Dict[str, Dict[str, str]] = {
         "label": "Vida Espiritual: gestor",
         "description": "Gestionar el módulo de vida espiritual",
     },
+    "wiki:read": {
+        "label": "Wiki: lector",
+        "description": "Ver documentos de la base de conocimiento",
+    },
+    "wiki:edit": {
+        "label": "Wiki: editor",
+        "description": "Crear y editar documentos de la wiki",
+    },
 }
 
 # ── Permission expansion helpers (must be before DEFAULT_ROLES) ────────
@@ -219,6 +227,7 @@ MODULE_PERMISSION_MAP: Dict[str, Dict[str, str]] = {
         "edit": "spiritual_life:edit",
         "manage": "spiritual_life:manage",
     },
+    "wiki": {"read": "wiki:read", "edit": "wiki:edit", "manage": "wiki:edit"},
 }
 
 
@@ -242,6 +251,7 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
             *expand_module_permissions("cms", "manage"),
             *expand_module_permissions("academy", "manage"),
             *expand_module_permissions("messaging", "edit"),
+            *expand_module_permissions("wiki", "edit"),
             "profile:manage",
         ],
     },
@@ -255,6 +265,7 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
             *expand_module_permissions("cms", "manage"),
             *expand_module_permissions("academy", "manage"),
             *expand_module_permissions("messaging", "edit"),
+            *expand_module_permissions("wiki", "edit"),
             "profile:manage",
         ],
     },
@@ -575,6 +586,15 @@ def require_permission(permission: str):
             return current_user
         if permission.startswith("crm:") and role == "pastor":
             return current_user
+        # Evangelismo: pastor tiene acceso total (gestión pastoral);
+        # coordinador (líder de célula) puede leer y editar (reportar
+        # asistencia, crear seguimientos), pero no gestionar (crear
+        # estrategias, dividir grupos, etc.) a menos que tenga el permiso
+        # granular explícito.
+        if permission.startswith("evangelism:") and role == "pastor":
+            return current_user
+        if permission in {"evangelism:read", "evangelism:edit"} and role == "coordinador":
+            return current_user
         if permission in {"academy:read", "academy:study"} and role in {
             "coordinador",
             "docente",
@@ -593,6 +613,13 @@ def require_permission(permission: str):
             "coordinador",
             "docente",
             "pastor",
+        }:
+            return current_user
+        if permission.startswith("wiki:") and role in {
+            "coordinador",
+            "docente",
+            "pastor",
+            "admin",
         }:
             return current_user
 
@@ -616,7 +643,13 @@ require_coordinator_or_admin = require_permission("projects:manage")
 async def require_pastor_or_admin(
     current_user=Depends(get_current_active_user),
 ):
-    """Require pastor or admin role (CRM-level access)."""
+    """Require pastor or admin role (CRM-level access).
+
+    NOTE: Esta función es el guard histórico del módulo CRM. Evangelismo
+    ahora usa sus propios guards via ``require_evangelism_*`` (ver abajo)
+    que resuelven contra la taxonomía ``evangelism:read/edit/manage``. No
+    agregar nuevos usos de este guard en módulos distintos de CRM.
+    """
     role = normalize_role(str(getattr(current_user, "role", "")))
     if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
         role = normalize_role(current_user.rol_plataforma.nombre)
@@ -632,6 +665,29 @@ async def require_pastor_or_admin(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Permisos insuficientes. Se requiere: crm:manage",
     )
+
+
+# ── Named guards (evangelism module — canonical taxonomy) ──────────────
+#
+# Evangelismo tiene su propia taxonomía (evangelism:read/edit/manage) que
+# ya está sembrada en ``seed_user_permissions.py`` y referenciada en
+# ``kernel_rbac.py``. Históricamente, los routers de evangelismo usaban
+# ``require_pastor_or_admin`` (un guard disfrazado de crm:manage) porque
+# ``require_permission`` no tenía un bypass para ``evangelism:*`` ni para
+# el rol ``pastor``/``coordinador``. Esto funcionaba solo por la
+# coincidencia de que los roles con ``evangelism:*`` también recibían
+# ``crm:manage`` vía seed.
+#
+# La migración radical reemplaza ``require_pastor_or_admin`` en todos los
+# routers de evangelismo por estos guards canónicos que resuelven contra
+# la taxonomía propia del módulo. El bypass por rol (pastor/coordinador)
+# se maneja centralmente en ``require_permission`` vía el bloque de
+# allowances por defecto (ver abajo: ``evangelism:*`` + pastor/coordinador).
+
+
+require_evangelism_read = require_module_access("evangelism", "read")
+require_evangelism_edit = require_module_access("evangelism", "edit")
+require_evangelism_manage = require_module_access("evangelism", "manage")
 
 
 # ── Password auth helpers ──────────────────────────────────────────────

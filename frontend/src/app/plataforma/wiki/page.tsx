@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     BookOpen, Search, Plus, FileText, 
     ChevronRight,
-    Zap, Bookmark, Clock
+    Zap, Bookmark, Clock, AlertCircle
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +16,8 @@ interface WikiDoc {
     id: string;
     page_key: string;
     title: string;
+    content?: string;
+    version?: number;
     updated_at: string;
 }
 
@@ -23,26 +25,42 @@ export default function WikiHomePage() {
     const { token } = useAuth();
     const [docs, setDocs] = useState<WikiDoc[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
     const [newTitle, setNewTitle] = useState("");
     const [search, setSearch] = useState("");
 
-    useEffect(() => {
-        fetchDocs();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token]);
-
-    const fetchDocs = async () => {
-        if (!token) return;
+    const fetchDocs = useCallback(async (searchTerm?: string) => {
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+        setError(null);
         try {
-            const data = await apiFetch<WikiDoc[]>('/wiki/pages', { token });
-            setDocs(Array.isArray(data) ? data.filter((doc) => doc.page_key.includes('wiki')) : []);
+            const url = searchTerm ? `/wiki/pages?search=${encodeURIComponent(searchTerm)}` : '/wiki/pages';
+            const data = await apiFetch<WikiDoc[]>(url, { token });
+            setDocs(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Error fetching docs:", error);
+            setError("No se pudieron cargar los documentos. Intenta de nuevo.");
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
+
+    useEffect(() => {
+        fetchDocs();
+    }, [fetchDocs]);
+
+    // Server-side search with debounce
+    useEffect(() => {
+        if (!token) return;
+        const timer = setTimeout(() => {
+            setLoading(true);
+            fetchDocs(search || undefined);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [search, token, fetchDocs]);
 
     const handleCreateDoc = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -63,6 +81,7 @@ export default function WikiHomePage() {
             fetchDocs();
         } catch (error) {
             console.error("Error creating doc:", error);
+            setError("No se pudo crear el documento. Intenta de nuevo.");
         }
     };
 
@@ -74,6 +93,10 @@ export default function WikiHomePage() {
             ]
         }
     ];
+
+    const filteredDocs = search.trim()
+        ? docs.filter((doc) => doc.title.toLowerCase().includes(search.trim().toLowerCase()))
+        : docs;
 
     return (
         <WorkspaceLayout sidebarTitle="Wiki" sidebarSections={sidebarSections}>
@@ -99,7 +122,7 @@ export default function WikiHomePage() {
                         />
                     </div>
                     <button 
-                        onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}
+                        onClick={() => setIsQuickAddOpen(prev => !prev)}
                         className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary)/0.85)] active:scale-95 transition-all flex items-center gap-2"
                     >
                         <Plus size={14} />
@@ -108,7 +131,7 @@ export default function WikiHomePage() {
                 </div>
             </header>
 
-            {/* QUICK ADD BAR (VIOLET) */}
+            {/* QUICK ADD BAR */}
             <AnimatePresence>
                 {isQuickAddOpen && (
                     <motion.div
@@ -138,8 +161,7 @@ export default function WikiHomePage() {
 
             {/* CONTENT AREA */}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
- <div className="w-full space-y-3">
-                    {/* Featured Section */}
+                <div className="w-full space-y-3">
                     <section>
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
                             DOCUMENTOS RECIENTES
@@ -151,11 +173,14 @@ export default function WikiHomePage() {
                                     <div key={i} className="h-48 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg animate-pulse border border-[hsl(var(--border))]/70 dark:border-white/5" />
                                 ))}
                             </div>
+                        ) : error ? (
+                            <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
+                                <AlertCircle size={32} className="text-rose-500" />
+                                <p className="font-bold text-sm text-rose-500">{error}</p>
+                            </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-3">
-                                {docs
-                                    .filter((doc) => doc.title.toLowerCase().includes(search.trim().toLowerCase()))
-                                    .map((doc, index) => (
+                                {filteredDocs.length > 0 ? filteredDocs.map((doc, index) => (
                                     <motion.div
                                         key={doc.id}
                                         initial={{ opacity: 0, y: 20 }}
@@ -163,7 +188,6 @@ export default function WikiHomePage() {
                                         transition={{ delay: index * 0.05 }}
                                         className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
                                     >
-                                        {/* Acento de color top */}
                                         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-600 to-sky-600" />
                                         
                                         <div className="flex-1 space-y-4">
@@ -181,7 +205,7 @@ export default function WikiHomePage() {
                                                     {doc.title}
                                                 </h3>
                                                 <p className="text-[12px] text-[hsl(var(--text-secondary))] mt-2 line-clamp-3 leading-relaxed">
-                                                    Última actualización por Equipo Pastoral. Visualización disponible para todos los roles.
+                                                    {doc.content ? doc.content.replace(/<[^>]+>/g, '').substring(0, 120) + '...' : 'Documento de la base de conocimiento.'}
                                                 </p>
                                             </div>
                                         </div>
@@ -192,30 +216,27 @@ export default function WikiHomePage() {
                                                 <span>{new Date(doc.updated_at).toLocaleDateString()}</span>
                                             </div>
                                             <Link 
-                                                href={`/wiki/docs/${doc.page_key}`}
+                                                href={`/plataforma/wiki/docs/${doc.page_key}`}
                                                 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all"
                                             >
                                                 EDITAR <ChevronRight size={12} />
                                             </Link>
                                         </div>
                                     </motion.div>
-                                ))}
+                                )) : (
+                                    <div className="col-span-full py-12 flex flex-col items-center justify-center text-center space-y-4 opacity-60">
+                                        <BookOpen size={40} className="text-[hsl(var(--text-secondary))]" />
+                                        <p className="font-bold text-lg text-[hsl(var(--text-primary))] dark:text-white">
+                                            {search ? `Sin resultados para "${search}"` : 'Tu Base de Conocimiento está vacía'}
+                                        </p>
+                                        <p className="text-sm text-[hsl(var(--text-secondary))]">
+                                            {search ? 'Prueba con otros términos de búsqueda.' : 'Crea guías pastorales, manuales de procesos o documentación técnica para tu equipo.'}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </section>
-
-                    {/* Empty State */}
-                    {!loading && docs.length === 0 && (
-                        <div className="py-1.5 flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-                            <div className="size-8 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-xl">
-                                <BookOpen size={40} />
-                            </div>
-                            <div className="max-w-sm">
-                                <p className="font-bold text-lg text-[hsl(var(--text-primary))] dark:text-white">Tu Base de Conocimiento está vacía</p>
-                                <p className="text-sm text-[hsl(var(--text-secondary))]">Crea guías pastorales, manuales de procesos o documentación técnica para tu equipo.</p>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>
