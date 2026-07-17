@@ -17,23 +17,10 @@ from backend.api.crm._shared import (
     prepare_case_for_output,
 )
 from backend.core.database import get_db
-from backend.core.permissions import normalize_role, require_module_access
+from backend.core.permissions import require_module_access
 from backend.core.tenant import get_user_sede_id
 
 router = APIRouter(tags=["CRM"])
-
-
-def _parse_uuid(val: str | uuid.UUID) -> uuid.UUID:
-    if isinstance(val, uuid.UUID):
-        return val
-    return uuid.UUID(str(val))
-
-
-def _get_user_role(user: models.User) -> str:
-    role = normalize_role(str(getattr(user, "role", "")))
-    if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
-        role = normalize_role(user.rol_plataforma.nombre)
-    return role
 
 
 def _serialize_persona_position(persona_position, position) -> dict:

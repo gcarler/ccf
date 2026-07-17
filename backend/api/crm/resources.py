@@ -330,7 +330,10 @@ async def enviar_plantilla(
         elif is_blocks_json(contenido_html_raw):
             # Blocks JSON del editor visual
             import json
-            blocks = json.loads(contenido_html_raw)
+            try:
+                blocks = json.loads(contenido_html_raw)
+            except (json.JSONDecodeError, TypeError):
+                blocks = []
             html_content = render_blocks_to_html(blocks, brand)
             # Hidratar variables en el HTML renderizado
             for var, valor in payload.variables.items():
@@ -458,7 +461,10 @@ async def send_plantilla_campaign(
                 html_content = render_email(template_type, merged_vars, brand)
             elif is_blocks_json(contenido_html_raw):
                 import json
-                blocks = json.loads(contenido_html_raw)
+                try:
+                    blocks = json.loads(contenido_html_raw)
+                except (json.JSONDecodeError, TypeError):
+                    blocks = []
                 html_content = render_blocks_to_html(blocks, brand)
                 for var, valor in merged_vars.items():
                     html_content = html_content.replace(f"{{{{{var}}}}}", valor)
@@ -584,7 +590,8 @@ def list_automations(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm")),
 ):
-    rows = get_crm_automations(db, only_active=only_active, trigger_event=trigger_event)
+    sede_id = get_user_sede_id(db, str(user.id))
+    rows = get_crm_automations(db, only_active=only_active, trigger_event=trigger_event, sede_id=sede_id)
     return [CrmAutomationOut.from_orm_safe(r) for r in rows]
 
 
@@ -594,7 +601,8 @@ def create_automation(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm", "edit")),
 ):
-    obj = create_crm_automation(db, payload)
+    sede_id = get_user_sede_id(db, str(user.id))
+    obj = create_crm_automation(db, payload, sede_id=sede_id)
     return CrmAutomationOut.from_orm_safe(obj)
 
 
@@ -606,7 +614,10 @@ def get_one_automation(
 ):
     obj = get_crm_automation(db, automation_id)
     if not obj:
-        raise HTTPException(404, "Automatizacion no encontrada")
+        raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
+    sede_id = get_user_sede_id(db, str(user.id))
+    if sede_id and obj.sede_id and str(obj.sede_id) != sede_id:
+        raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     return CrmAutomationOut.from_orm_safe(obj)
 
 
@@ -617,9 +628,13 @@ def patch_automation(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm", "edit")),
 ):
-    obj = update_crm_automation(db, automation_id, payload)
+    obj = get_crm_automation(db, automation_id)
     if not obj:
-        raise HTTPException(404, "Automatizacion no encontrada")
+        raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
+    sede_id = get_user_sede_id(db, str(user.id))
+    if sede_id and obj.sede_id and str(obj.sede_id) != sede_id:
+        raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
+    obj = update_crm_automation(db, automation_id, payload)
     return CrmAutomationOut.from_orm_safe(obj)
 
 
@@ -629,8 +644,14 @@ def del_automation(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm", "edit")),
 ):
+    obj = get_crm_automation(db, automation_id)
+    if not obj:
+        raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
+    sede_id = get_user_sede_id(db, str(user.id))
+    if sede_id and obj.sede_id and str(obj.sede_id) != sede_id:
+        raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     if not delete_crm_automation(db, automation_id):
-        raise HTTPException(404, "Automatizacion no encontrada")
+        raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
 
 
 @router.get("/automations/edges", response_model=List[CrmAutomationEdgeOut])
@@ -670,8 +691,8 @@ def delete_automation_edge(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm", "edit")),
 ):
-    if not delete_crm_automation_edge(db, edge_id):
-        raise HTTPException(404, "Edge not found")
+        if not delete_crm_automation_edge(db, edge_id):
+            raise HTTPException(status_code=404, detail="Edge not found")
 
 
 @router.post("/automations/trigger", response_model=List[AutomationTriggerResult])
@@ -681,7 +702,7 @@ async def trigger_automations(
     user=Depends(require_module_access("crm", "edit")),
     gateway: MessagingGateway = Depends(get_messaging_gateway),
 ):
-    automations = get_crm_automations(db, only_active=True, trigger_event=payload.trigger_event)
+    automations = get_crm_automations(db, only_active=True, trigger_event=payload.trigger_event, sede_id=get_user_sede_id(db, str(user.id)))
     if not automations:
         return []
 

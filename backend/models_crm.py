@@ -723,6 +723,7 @@ class CrmAutomation(Base):
     action_type = Column(String(50), nullable=False)
     action_payload = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     # Nuevos campos para flujos encadenados
@@ -819,6 +820,8 @@ class RoleDefinition(Base):
     color = Column(String(50), default="blue")
     is_leadership = Column(Boolean, default=False, index=True)
     is_system_locked = Column(Boolean, default=False, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
