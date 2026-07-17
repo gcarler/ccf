@@ -9,6 +9,7 @@ import {
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 
 import { apiFetch } from "@/lib/http";
+import { safeJsonParse } from "@/lib/safeJson";
 
 /* ── Tipos ── */
 interface YTVideo {
@@ -332,33 +333,37 @@ export default function PredicasPage() {
     }, []);
     useEffect(() => { load(); }, [load]);
 
-    const feed = feedContent?.content ? JSON.parse(feedContent.content) : null;
+    const feed = safeJsonParse<Record<string, unknown>>(feedContent?.content, {});
+    const feedString = (key: string) => {
+        const value = feed[key];
+        return typeof value === "string" ? value : "";
+    };
 
     const youtubeChannelUrl =
         typeof feedContent?.youtube_channel_url === "string"
             ? feedContent.youtube_channel_url
-            : (feed?.youtube_channel_url as string) ?? "";
+            : feedString("youtube_channel_url");
 
-    const heroEyebrow = feed?.hero_eyebrow ?? "";
-    const heroTitleLead = feed?.hero_title_lead ?? "";
-    const heroTitleAccent = feed?.hero_title_accent ?? "";
-    const heroDescription = feed?.hero_description ?? "";
-    const featuredBadge = feed?.featured_badge ?? "";
-    const retryLabel = feed?.retry_label ?? "";
-    const shareWhatsapp = feed?.share_whatsapp ?? "";
-    const copyLinkLabel = feed?.copy_link ?? "";
-    const copiedLabel = feed?.copied_label ?? "";
-    const viewOnYoutube = feed?.view_on_youtube ?? "";
-    const watchedLabel = feed?.watched_label ?? "";
-    const searchPlaceholder = feed?.search_placeholder ?? "";
-    const featuredLabel = feed?.featured_label ?? "";
-    const channelLinkLabel = feed?.channel_link_label ?? "";
-    const gridLabel = feed?.grid_label ?? "";
-    const resultsLabel = feed?.results_label ?? "";
-    const moreVideosLabel = feed?.more_videos_label ?? "";
-    const ctaLabel = feed?.cta_label ?? "";
-    const emptyTitle = feed?.empty_title ?? "";
-    const emptyDescription = feed?.empty_description ?? "";
+    const heroEyebrow = feedString("hero_eyebrow");
+    const heroTitleLead = feedString("hero_title_lead");
+    const heroTitleAccent = feedString("hero_title_accent");
+    const heroDescription = feedString("hero_description");
+    const featuredBadge = feedString("featured_badge");
+    const retryLabel = feedString("retry_label");
+    const shareWhatsapp = feedString("share_whatsapp");
+    const copyLinkLabel = feedString("copy_link");
+    const copiedLabel = feedString("copied_label");
+    const viewOnYoutube = feedString("view_on_youtube");
+    const watchedLabel = feedString("watched_label");
+    const searchPlaceholder = feedString("search_placeholder");
+    const featuredLabel = feedString("featured_label");
+    const channelLinkLabel = feedString("channel_link_label");
+    const gridLabel = feedString("grid_label");
+    const resultsLabel = feedString("results_label");
+    const moreVideosLabel = feedString("more_videos_label");
+    const ctaLabel = feedString("cta_label");
+    const emptyTitle = feedString("empty_title");
+    const emptyDescription = feedString("empty_description");
 
     const hasHero = heroTitleLead || heroTitleAccent || heroDescription || heroEyebrow;
 

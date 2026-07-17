@@ -33,10 +33,10 @@ import { getCmsPublicPage } from "@/lib/cms/v2";
 import { buildCmsPageBlocks } from "@/lib/cms/pageBlocks";
 import { SITE_KEY } from "@/lib/site-config";
 import type { CmsPublicPage } from "@/types/cms-v2";
-import { usePublicBootstrap } from "@/components/public/PublicBootstrapProvider";
+import { readBootstrappedPage } from "@/lib/publicBootstrap";
 
 export function useCmsV2Page(slug: string): CmsPublicPage | null {
-  const bootstrappedPage = usePublicBootstrap()?.pages?.[slug] ?? null;
+  const bootstrappedPage = readBootstrappedPage(slug);
   const [page, setPage] = useState<CmsPublicPage | null>(bootstrappedPage);
 
   useEffect(() => {

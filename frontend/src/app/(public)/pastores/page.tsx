@@ -8,6 +8,7 @@ import { useCmsV2Page } from '@/hooks/useCmsV2Page';
 import PublicHeroWithSlides from '@/components/public/PublicHeroWithSlides';
 import { getPublicPastoralTeam, type PastoralProfile } from '@/lib/cms/v2';
 import { SITE_KEY } from '@/lib/site-config';
+import { safeJsonParse } from '@/lib/safeJson';
 
 type CmsPastor = {
     id?: string;
@@ -27,8 +28,8 @@ export default function PastoresIndexPage() {
     const heroCms = page?.blocks?.hero;
     const feedCms = page?.blocks?.feed;
 
-    const heroContent = heroCms?.content ? JSON.parse(heroCms.content) : null;
-    const feedContent = feedCms?.content ? JSON.parse(feedCms.content) : null;
+    const heroContent = safeJsonParse<Record<string, unknown>>(heroCms?.content, {});
+    const feedContent = safeJsonParse<Record<string, unknown>>(feedCms?.content, {});
 
     // Fetch pastors from the pastoral-team API (source of truth)
     const [apiPastors, setApiPastors] = useState<PastoralProfile[]>([]);

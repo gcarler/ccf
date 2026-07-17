@@ -6,6 +6,7 @@ import RichText from "@/components/public/RichText";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { apiFetch } from "@/lib/http";
 import { SITE_NAME } from "@/lib/site-config";
+import { safeJsonParse } from "@/lib/safeJson";
 
 import { toast } from "sonner";
 
@@ -15,7 +16,7 @@ export default function BoletinPage() {
     const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
     const [email, setEmail] = useState("");
 
-    const content = cms?.content ? JSON.parse(cms.content) : null;
+    const content = safeJsonParse<Record<string, unknown>>(cms?.content, {});
     const title = typeof content?.title === "string" ? content.title : "";
     const subtitle = typeof content?.subtitle === "string" ? content.subtitle : "";
     const description = typeof content?.description === "string" ? content.description : "";
