@@ -24,6 +24,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 
 from backend import models  # noqa: E402
 from backend.core.database import SessionLocal  # noqa: E402
+from sqlalchemy import text  # noqa: E402
 
 SITE_KEY = "ccf"
 
@@ -96,6 +97,23 @@ def _stable_json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
 
 
+def _load_site_id(db, site_key: str) -> Any:
+    row = db.execute(
+        text(
+            """
+            SELECT id
+            FROM cms_sites
+            WHERE site_key = :site_key
+            LIMIT 1
+            """
+        ),
+        {"site_key": site_key},
+    ).mappings().first()
+    if row is None:
+        raise RuntimeError(f"CMS site {site_key!r} not found")
+    return row["id"]
+
+
 def _menu_item_spec(item: dict[str, Any], sort_order: int) -> dict[str, Any]:
     href = item["href"]
     meta: dict[str, Any] = {}
@@ -114,21 +132,21 @@ def _menu_item_spec(item: dict[str, Any], sort_order: int) -> dict[str, Any]:
 
 def _ensure_menu(
     db,
-    site: models.CmsSite,
+    site_id: Any,
     menu_key: str,
     menu_name: str,
     desired_specs: list[dict[str, Any]],
 ) -> tuple[bool, bool]:
     menu = (
         db.query(models.CmsMenu)
-        .filter(models.CmsMenu.site_id == site.id, models.CmsMenu.menu_key == menu_key)
+        .filter(models.CmsMenu.site_id == site_id, models.CmsMenu.menu_key == menu_key)
         .first()
     )
     created = False
     changed = False
     if menu is None:
         menu = models.CmsMenu(
-            site_id=site.id,
+            site_id=site_id,
             menu_key=menu_key,
             name=menu_name,
             is_active=True,
@@ -211,10 +229,10 @@ def _section_payload(props: dict[str, Any], sort_order: int) -> dict[str, Any]:
     }
 
 
-def _ensure_footer_page(db, site: models.CmsSite) -> tuple[bool, bool]:
+def _ensure_footer_page(db, site_id: Any) -> tuple[bool, bool]:
     page = (
         db.query(models.CmsPage)
-        .filter(models.CmsPage.site_id == site.id, models.CmsPage.slug == FOOTER_PAGE_SLUG)
+        .filter(models.CmsPage.site_id == site_id, models.CmsPage.slug == FOOTER_PAGE_SLUG)
         .first()
     )
     created = False
@@ -222,7 +240,7 @@ def _ensure_footer_page(db, site: models.CmsSite) -> tuple[bool, bool]:
 
     if page is None:
         page = models.CmsPage(
-            site_id=site.id,
+            site_id=site_id,
             slug=FOOTER_PAGE_SLUG,
             title=FOOTER_PAGE_TITLE,
             status="draft",
@@ -326,21 +344,15 @@ def _ensure_footer_page(db, site: models.CmsSite) -> tuple[bool, bool]:
 
 def main() -> int:
     with SessionLocal() as db:
-        site = (
-            db.query(models.CmsSite)
-            .filter(models.CmsSite.site_key == SITE_KEY)
-            .first()
-        )
-        if site is None:
-            raise RuntimeError(f"CMS site {SITE_KEY!r} not found")
+        site_id = _load_site_id(db, SITE_KEY)
 
         main_created, main_changed = _ensure_menu(
-            db, site, "main", "Menú principal", MAIN_MENU_ITEMS
+            db, site_id, "main", "Menú principal", MAIN_MENU_ITEMS
         )
         mobile_created, mobile_changed = _ensure_menu(
-            db, site, "mobile", "Menú móvil", MOBILE_MENU_ITEMS
+            db, site_id, "mobile", "Menú móvil", MOBILE_MENU_ITEMS
         )
-        footer_created, footer_changed = _ensure_footer_page(db, site)
+        footer_created, footer_changed = _ensure_footer_page(db, site_id)
 
         db.commit()
 

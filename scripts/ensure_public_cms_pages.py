@@ -30,6 +30,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from sqlalchemy import func  # noqa: E402
+from sqlalchemy import text  # noqa: E402
 
 from backend import models  # noqa: E402
 from backend.core.database import SessionLocal  # noqa: E402
@@ -49,17 +50,45 @@ PUBLIC_PAGES = {
 }
 
 
-def ensure_page(db, site, slug: str, title: str) -> tuple[bool, bool]:
+def _load_site_id(db, site_key: str):
+    row = db.execute(
+        text(
+            """
+            SELECT id
+            FROM cms_sites
+            WHERE site_key = :site_key
+            LIMIT 1
+            """
+        ),
+        {"site_key": site_key},
+    ).mappings().first()
+    if row is None:
+        raise RuntimeError(f"CMS site {site_key!r} not found")
+    return row["id"]
+
+
+def _load_page_row(db, site_id, slug: str):
+    row = db.execute(
+        text(
+            """
+            SELECT id, site_id, slug, title, status, seo_json, published_version_id
+            FROM cms_pages
+            WHERE site_id = :site_id AND slug = :slug
+            LIMIT 1
+            """
+        ),
+        {"site_id": str(site_id), "slug": slug},
+    ).mappings().first()
+    return dict(row) if row is not None else None
+
+
+def ensure_page(db, site_id, slug: str, title: str) -> tuple[bool, bool]:
     created = False
     published = False
-    page = (
-        db.query(models.CmsPage)
-        .filter(models.CmsPage.site_id == site.id, models.CmsPage.slug == slug)
-        .first()
-    )
+    page = _load_page_row(db, site_id, slug)
     if page is None:
         page = models.CmsPage(
-            site_id=site.id,
+            site_id=site_id,
             slug=slug,
             title=title,
             status="draft",
@@ -68,13 +97,23 @@ def ensure_page(db, site, slug: str, title: str) -> tuple[bool, bool]:
         db.add(page)
         db.flush()
         created = True
-    elif page.title != title:
-        page.title = title
+    elif page["title"] != title:
+        db.execute(
+            text(
+                """
+                UPDATE cms_pages
+                SET title = :title
+                WHERE id = :id
+                """
+            ),
+            {"title": title, "id": str(page["id"])},
+        )
+        page["title"] = title
 
     # Obtener secciones actuales en db
     sections = (
         db.query(models.CmsSection)
-        .filter(models.CmsSection.page_id == page.id)
+        .filter(models.CmsSection.page_id == (page.id if hasattr(page, "id") else page["id"]))
         .order_by(models.CmsSection.sort_order.asc())
         .all()
     )
@@ -93,10 +132,22 @@ def ensure_page(db, site, slug: str, title: str) -> tuple[bool, bool]:
 
     # Verificar si necesitamos publicar
     needs_publish = False
-    if page.status != "published" or page.published_version_id is None:
+    page_status = page.status if hasattr(page, "status") else page["status"]
+    page_published_version_id = (
+        page.published_version_id if hasattr(page, "published_version_id") else page["published_version_id"]
+    )
+    page_id = page.id if hasattr(page, "id") else page["id"]
+    page_seo_json = page.seo_json if hasattr(page, "seo_json") else page["seo_json"]
+    page_slug = page.slug if hasattr(page, "slug") else page["slug"]
+
+    if page_status != "published" or page_published_version_id is None:
         needs_publish = True
     else:
-        current_version = db.query(models.CmsPageVersion).filter(models.CmsPageVersion.id == page.published_version_id).first()
+        current_version = (
+            db.query(models.CmsPageVersion)
+            .filter(models.CmsPageVersion.id == page_published_version_id)
+            .first()
+        )
         if not current_version or not current_version.snapshot_json:
             needs_publish = True
         else:
@@ -112,19 +163,19 @@ def ensure_page(db, site, slug: str, title: str) -> tuple[bool, bool]:
     if needs_publish:
         max_version = (
             db.query(func.max(models.CmsPageVersion.version_number))
-            .filter(models.CmsPageVersion.page_id == page.id)
+            .filter(models.CmsPageVersion.page_id == page_id)
             .scalar()
             or 0
         )
         version = models.CmsPageVersion(
-            page_id=page.id,
+            page_id=page_id,
             version_number=int(max_version) + 1,
             snapshot_json={
                 "page": {
-                    "id": str(page.id),
-                    "slug": page.slug,
-                    "title": page.title,
-                    "seo_json": page.seo_json or {},
+                    "id": str(page_id),
+                    "slug": page_slug,
+                    "title": title,
+                    "seo_json": page_seo_json or {},
                     "status": "published",
                 },
                 "sections": sections_data,
@@ -133,16 +184,30 @@ def ensure_page(db, site, slug: str, title: str) -> tuple[bool, bool]:
         )
         db.add(version)
         db.flush()
-        page.status = "published"
-        page.published_version_id = version.id
+        if hasattr(page, "published_version_id"):
+            page.status = "published"
+            page.published_version_id = version.id
+            db.add(page)
+        else:
+            db.execute(
+                text(
+                    """
+                    UPDATE cms_pages
+                    SET status = 'published',
+                        published_version_id = :published_version_id
+                    WHERE id = :id
+                    """
+                ),
+                {"published_version_id": str(version.id), "id": str(page_id)},
+            )
         db.add(
             models.CmsPublishLog(
-                site_id=site.id,
-                page_id=page.id,
+                site_id=site_id,
+                page_id=page_id,
                 entity_type="page",
-                entity_id=page.id,
+                entity_id=str(page_id),
                 action="publish",
-                from_status="draft",
+                from_status=page_status,
                 to_status="published",
                 metadata_json={"source": "ensure_public_cms_pages"},
             )
@@ -154,14 +219,12 @@ def ensure_page(db, site, slug: str, title: str) -> tuple[bool, bool]:
 
 def main() -> int:
     with SessionLocal() as db:
-        site = db.query(models.CmsSite).filter(models.CmsSite.site_key == "ccf").first()
-        if site is None:
-            raise RuntimeError("CMS site 'ccf' not found")
+        site_id = _load_site_id(db, "ccf")
 
         created = 0
         published = 0
         for slug, title in PUBLIC_PAGES.items():
-            did_create, did_publish = ensure_page(db, site, slug, title)
+            did_create, did_publish = ensure_page(db, site_id, slug, title)
             created += int(did_create)
             published += int(did_publish)
         db.commit()

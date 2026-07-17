@@ -233,6 +233,7 @@ Frontend test existente:
 - plan CMS 100 y auditoría forense ya existentes
 - validación de MIME/extension en uploads
 - helpers de scope `_cms_helpers`
+- bootstrap de contenido público implementado y verificado para `ccf` con `scripts/bootstrap_public_cms_content.py`
 
 ### Pendiente
 
@@ -255,6 +256,7 @@ Frontend test existente:
 13. **Gate modular CMS** `[DONE-GATE-CMS-001]` — cerrado el 2026-07-16; el gate canónico y el exhaustivo pasan sin skips silenciosos.
 14. **Pop-up visible en builder** `[DONE-BUILDER-CMS-POPUP-001]` — cerrado el 2026-07-16; el builder expone una acción explícita de creación de pop-up en el sidebar y sigue manteniendo `popup_banner` en el catálogo y el renderer.
 15. **Branding guardado con guardia de edición** `[DONE-BRANDING-CMS-001]` — cerrado el 2026-07-16; la pantalla de branding alinea su guardia con `canEditCms`, bloquea guardado/subida/edición para roles de solo lectura y evita el `PATCH` fallido por falta de permiso.
+16. **Contenido público del CMS** `[DONE-CMS-PUBLIC-CONTENT-001]` — cerrado el 2026-07-17; bootstrap canónico `scripts/bootstrap_public_cms_content.py` recupera y publica el contenido público de `ccf` sin depender del snapshot de rescate.
 
 ---
 
@@ -310,6 +312,7 @@ Frontend test existente:
 | `PEND-CMS-BUILDER-001` | Builder de CMS reportado como no funcional desde `/plataforma/cms/builder` | `frontend/src/app/plataforma/cms/builder/page.tsx`, `frontend/src/components/cms/**`, `backend/api/cms_v2.py` |
 | `DONE-BUILDER-CMS-POPUP-001` | ✅ **Hecho 2026-07-16** — el builder expone una acción explícita de creación de pop-up y mantiene `popup_banner` en catálogo y renderer. | `frontend/src/components/cms/builder/BuilderSidebar.tsx`, `frontend/src/components/cms/builder/constants.ts`, `frontend/src/components/public/cms/PublicSectionRenderer.tsx` |
 | `DONE-BRANDING-CMS-001` | ✅ **Hecho 2026-07-16** — branding ahora respeta `canEditCms`, deshabilita edición para roles solo lectura y evita el `PATCH` fallido al guardar logo o nombre. | `frontend/src/app/plataforma/cms/branding/page.tsx`, `frontend/tests/cms-branding-permissions.test.tsx` |
+| `DONE-CMS-PUBLIC-CONTENT-001` | ✅ **Hecho 2026-07-17** — bootstrap público canónico para `ccf` ejecutado y verificado; publica las páginas núcleo, navegación, footer y contratos públicos desde CMS v2. | `docs/PLAN_CONTENIDO_PUBLICO_CMS.md`, `scripts/bootstrap_public_cms_content.py`, `scripts/seed_public_cms_v2_sections.py`, `scripts/seed_public_menus_and_footer.py`, `scripts/ensure_public_cms_pages.py` |
 
 ---
 
