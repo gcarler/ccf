@@ -84,6 +84,19 @@ def _seed_auth_roles(db_session: Session):
     db_session.commit()
 
 
+def _create_module_role(db_session: Session, module: str) -> str:
+    """Crea un rol con permisos canónicos del módulo para asignación real."""
+    from backend.models_auth import RolPlataforma
+
+    role = RolPlataforma(
+        nombre=f"{module.upper()}_ROLE_{uuid.uuid4().hex[:8]}",
+        permisos={f"{module}:read": "allow", f"{module}:edit": "allow"},
+    )
+    db_session.add(role)
+    db_session.commit()
+    return str(role.id)
+
+
 # ──────────────────────────────────────────────
 # TESTS
 # ──────────────────────────────────────────────
@@ -170,9 +183,7 @@ class TestUserModuleRoles:
         persona_id = _create_persona(db_session)
         auth_user_id = _create_auth_user(db_session, persona_id)
 
-        # Get a rol_id to assign
-        roles_resp = client.get("/api/admin/auth-role-definitions", headers={"Authorization": f"Bearer {token}"})
-        rol_id = roles_resp.json()[0]["id"]
+        rol_id = _create_module_role(db_session, "crm")
 
         # Assign module role
         resp = client.post(
@@ -196,10 +207,8 @@ class TestUserModuleRoles:
         token = _login_as_admin(client, db_session)
         persona_id = _create_persona(db_session)
         auth_user_id = _create_auth_user(db_session, persona_id)
-        roles_resp = client.get("/api/admin/auth-role-definitions", headers={"Authorization": f"Bearer {token}"})
-        roles = roles_resp.json()
-        rol_id_a = roles[0]["id"]
-        rol_id_b = roles[1]["id"] if len(roles) > 1 else roles[0]["id"]
+        rol_id_a = _create_module_role(db_session, "finance")
+        rol_id_b = _create_module_role(db_session, "finance")
 
         # Assign first role
         client.post(
@@ -221,8 +230,7 @@ class TestUserModuleRoles:
         token = _login_as_admin(client, db_session)
         persona_id = _create_persona(db_session)
         auth_user_id = _create_auth_user(db_session, persona_id)
-        roles_resp = client.get("/api/admin/auth-role-definitions", headers={"Authorization": f"Bearer {token}"})
-        rol_id = roles_resp.json()[0]["id"]
+        rol_id = _create_module_role(db_session, "projects")
 
         create_resp = client.post(
             "/api/admin/user-module-roles",
@@ -236,3 +244,55 @@ class TestUserModuleRoles:
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 204
+
+
+class TestEffectivePermissionResolution:
+    """Las asignaciones deben cambiar el acceso efectivo, no sólo persistir."""
+
+    def test_module_role_is_scoped_and_effective(self, db_session: Session):
+        from backend.core.permissions import get_user_effective_permissions
+        from backend.models_auth import RolPlataforma, Usuario, UsuarioRolModulo
+
+        persona_id = _create_persona(db_session)
+        user_id = _create_auth_user(db_session, persona_id)
+        module_role = RolPlataforma(
+            nombre=f"CRM_EDITOR_{uuid.uuid4().hex[:8]}",
+            permisos={"crm:edit": "allow", "finance:manage": "allow"},
+        )
+        db_session.add(module_role)
+        db_session.flush()
+        db_session.add(
+            UsuarioRolModulo(
+                user_id=uuid.UUID(user_id),
+                modulo="crm",
+                rol_id=module_role.id,
+            )
+        )
+        db_session.commit()
+
+        user = db_session.query(Usuario).filter(Usuario.id == uuid.UUID(user_id)).first()
+        effective = get_user_effective_permissions(db_session, user)
+
+        assert effective["crm:edit"] == "allow"
+        assert "finance:manage" not in effective
+
+    def test_direct_permissions_preserve_base_role(self, client: TestClient, db_session: Session):
+        from backend.models_auth import Usuario
+
+        token = _login_as_admin(client, db_session)
+        persona_id = _create_persona(db_session)
+        user_id = _create_auth_user(db_session, persona_id)
+        before = db_session.query(Usuario).filter(Usuario.id == uuid.UUID(user_id)).first()
+        base_role_id = before.rol_plataforma_id
+
+        response = client.put(
+            f"/api/admin/users/{user_id}/permissions",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"projects": "edit"},
+        )
+
+        assert response.status_code == 200, response.text
+        db_session.expire_all()
+        after = db_session.query(Usuario).filter(Usuario.id == uuid.UUID(user_id)).first()
+        assert after.rol_plataforma_id == base_role_id
+        assert response.json()["effective_permissions"]["projects:edit"] == "allow"

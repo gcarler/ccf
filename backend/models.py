@@ -63,6 +63,7 @@ from backend.models_auth import (
     TokenSesion,
     TokenVerificacionEmail,
     Usuario,
+    UsuarioPermisoOverride,
     UsuarioRolModulo,
 )
 from backend.models_cms import (  # noqa: F401

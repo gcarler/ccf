@@ -385,6 +385,42 @@ def get_user_effective_permissions(db: Session, user) -> dict:
             for k in role_perms:
                 user_perms[k] = "allow"
 
+    # Roles modulares y grants personales se combinan con el rol base; no se
+    # reemplaza el rol compartido.  La consulta se mantiene aquí para que
+    # guards, /auth/me y consumidores de este helper compartan la misma fuente
+    # de verdad aun cuando el usuario no haya sido eager-loaded.
+    user_id = getattr(user, "id", None)
+    if isinstance(user_id, uuid.UUID):
+        from backend.models_auth import UsuarioPermisoOverride, UsuarioRolModulo
+
+        assignments = (
+            db.query(UsuarioRolModulo)
+            .filter(
+                UsuarioRolModulo.user_id == user_id,
+                UsuarioRolModulo.deleted_at.is_(None),
+            )
+            .all()
+        )
+        for assignment in assignments:
+            role_permissions = getattr(assignment.rol, "permisos", {}) or {}
+            if not isinstance(role_permissions, dict):
+                continue
+            prefix = f"{assignment.modulo}:"
+            for key, value in role_permissions.items():
+                if key.startswith(prefix) and value:
+                    user_perms[key] = "allow"
+
+        override = (
+            db.query(UsuarioPermisoOverride)
+            .filter(UsuarioPermisoOverride.user_id == user_id)
+            .first()
+        )
+        override_permissions = override.permisos if override else {}
+        if isinstance(override_permissions, dict):
+            for key, value in override_permissions.items():
+                if value:
+                    user_perms[key] = "allow"
+
     if not user_perms:
         for role_def in DEFAULT_ROLES:
             if role_def["name"].lower() == role:
@@ -570,13 +606,7 @@ def require_permission(permission: str):
         if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
             role = normalize_role(current_user.rol_plataforma.nombre)
 
-        user_perms: set[str] = set()
-
-        # Granular permissions from Auth v3 roles.
-        if hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
-            rol_perms = current_user.rol_plataforma.permisos or {}
-            if isinstance(rol_perms, dict):
-                user_perms.update(k for k, v in rol_perms.items() if v)
+        user_perms = get_user_effective_permissions(db, current_user)
 
         if _has_permission(role, user_perms, permission):
             return current_user
