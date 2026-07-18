@@ -64,7 +64,7 @@ def require_event_access(db: Session, user: models.User, event_id: UUID | str) -
     Authorization level is enforced by the endpoint's canonical
     ``require_evangelism_*`` dependency. This helper deliberately owns only
     resource scope (sede + soft delete), so a granular permission cannot be
-    contradicted later by a legacy list of role names.
+    contradicted later by a hardcoded list of role names.
     """
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event or event.deleted_at is not None:
