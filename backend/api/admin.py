@@ -26,7 +26,7 @@ from backend.core.permissions import (
     require_admin,
 )
 from backend.core.audit import record_admin_action
-from backend.core.tenant import get_user_sede_id
+from backend.core.tenant import get_user_sede_id, require_user_sede_id
 from backend.models_auth import RolPlataforma, Usuario, UsuarioPermisoOverride, UsuarioRolModulo
 from backend.models_crm import Persona
 from backend.models_shared import _utcnow
@@ -190,9 +190,12 @@ def delete_role(
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
     assigned = db.query(Usuario).filter(Usuario.rol_plataforma_id == rid).count()
-    if assigned > 0:
+    modular_assigned = db.query(UsuarioRolModulo).filter(
+        UsuarioRolModulo.rol_id == rid, UsuarioRolModulo.deleted_at.is_(None)
+    ).count()
+    if assigned > 0 or modular_assigned > 0:
         raise HTTPException(
-            status_code=409, detail=f"Cannot delete role with {assigned} assigned users"
+            status_code=409, detail="Cannot delete role with active assignments"
         )
     # ccf-quality-bypass: RolPlataforma has no deleted_at column, hard delete is expected
     getattr(db, "delete")(role)
@@ -226,7 +229,7 @@ def get_user_permissions(
     """Obtiene los permisos actuales de un usuario auth_users."""
     try:
         uid = uuid.UUID(str(user_id))
-        user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == uid).first()
+        user = _visible_auth_user(db, current_user, uid)
     except ValueError:
         user = None
     if not user:
@@ -271,7 +274,7 @@ def set_user_permissions(
     # Resolve user from auth_users (UUID-based)
     try:
         uid = uuid.UUID(str(user_id))
-        user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == uid).first()
+        user = _visible_auth_user(db, current_user, uid)
     except ValueError:
         user = None
     if not user:
@@ -584,12 +587,34 @@ def _parse_auth_role_id(value, field_name: str) -> uuid.UUID:
         raise HTTPException(status_code=400, detail=f"{field_name} invalido")
 
 
+def _is_global_admin(user: Usuario) -> bool:
+    role = getattr(getattr(user, "rol_plataforma", None), "nombre", "")
+    return str(role).strip().lower().replace("_", " ") in {"super administrador", "superadmin"}
+
+
+def _visible_auth_user(db: Session, current_user: Usuario, user_id: uuid.UUID) -> Usuario:
+    query = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == user_id)
+    if not _is_global_admin(current_user):
+        query = query.filter(Usuario.sede_id == require_user_sede_id(db, current_user))
+    user = query.first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+def _visible_auth_users_query(db: Session, current_user: Usuario):
+    query = db.query(Usuario).options(joinedload(Usuario.rol_plataforma))
+    if not _is_global_admin(current_user):
+        query = query.filter(Usuario.sede_id == require_user_sede_id(db, current_user))
+    return query
+
+
 @router.get("/users", response_model=List[Dict[str, Any]])
 def list_admin_users(
     db: Session = Depends(get_db), current_user=Depends(require_admin)
 ):
     """Lista usuarios de auth_users para gestión de permisos granulares."""
-    users = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).all()
+    users = _visible_auth_users_query(db, current_user).all()
     return [_serialize_auth_user_row(u) for u in users]
 
 
@@ -605,14 +630,7 @@ def get_admin_user(
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id invalido")
 
-    user = (
-        db.query(Usuario)
-        .options(joinedload(Usuario.rol_plataforma))
-        .filter(Usuario.id == uid)
-        .first()
-    )
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = _visible_auth_user(db, current_user, uid)
     return _serialize_auth_user_row(user)
 
 
@@ -697,14 +715,7 @@ def update_admin_user(
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id invalido")
 
-    user = (
-        db.query(Usuario)
-        .options(joinedload(Usuario.rol_plataforma))
-        .filter(Usuario.id == uid)
-        .first()
-    )
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = _visible_auth_user(db, current_user, uid)
 
     if body.username is not None:
         user.username = body.username.strip()
@@ -742,9 +753,7 @@ def delete_admin_user(
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id invalido")
 
-    user = db.query(Usuario).filter(Usuario.id == uid).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = _visible_auth_user(db, current_user, uid)
     user.is_active = False
     db.commit()
     record_admin_action(db, current_user, "user.deactivate", "user", str(uid))
@@ -766,9 +775,7 @@ def change_user_role(
     if role_id is None:
         raise HTTPException(status_code=400, detail="role_id requerido")
 
-    user = db.query(Usuario).filter(Usuario.id == uid).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = _visible_auth_user(db, current_user, uid)
 
     role = db.query(RolPlataforma).filter(
         RolPlataforma.id == _parse_auth_role_id(role_id, "role_id")
@@ -1144,12 +1151,14 @@ def delete_auth_role_definition(
     if not rol:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
     assigned = db.query(Usuario).filter(Usuario.rol_plataforma_id == rid).count()
-    if assigned > 0:
+    modular_assigned = db.query(UsuarioRolModulo).filter(
+        UsuarioRolModulo.rol_id == rid, UsuarioRolModulo.deleted_at.is_(None)
+    ).count()
+    if assigned > 0 or modular_assigned > 0:
         raise HTTPException(
-            status_code=409,
-            detail=f"No se puede eliminar el rol \"{rol.nombre}\" porque tiene {assigned} usuario(s) asignado(s)",
+            status_code=409, detail="No se puede eliminar un rol con asignaciones activas",
         )
-    rol.deleted_at = _utcnow()
+    db.delete(rol)
     db.commit()
     record_admin_action(db, current_user, "auth_role.delete", "auth_role", role_id)
 
@@ -1198,9 +1207,7 @@ def assign_user_module_role(
         rid = uuid.UUID(body.rol_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id o rol_id invalidos")
-    user = db.query(Usuario).filter(Usuario.id == uid).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    user = _visible_auth_user(db, current_user, uid)
     rol = db.query(RolPlataforma).filter(RolPlataforma.id == rid).first()
     if not rol:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
@@ -1238,10 +1245,12 @@ def remove_user_module_role(
         aid = uuid.UUID(assignment_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="assignment_id invalido")
-    umr = db.query(UsuarioRolModulo).filter(
-        UsuarioRolModulo.id == aid,
-        UsuarioRolModulo.deleted_at.is_(None)
-    ).first()
+    umr_query = db.query(UsuarioRolModulo).join(Usuario).filter(
+        UsuarioRolModulo.id == aid, UsuarioRolModulo.deleted_at.is_(None)
+    )
+    if not _is_global_admin(current_user):
+        umr_query = umr_query.filter(Usuario.sede_id == require_user_sede_id(db, current_user))
+    umr = umr_query.first()
     if not umr:
         raise HTTPException(status_code=404, detail="Asignacion no encontrada")
     umr.deleted_at = datetime.now(timezone.utc)
@@ -1255,11 +1264,7 @@ def list_users_with_roles(
     current_user: models.User = Depends(require_admin),
 ):
     """Lista todos los usuarios auth v3 con sus roles de plataforma y modulares."""
-    users = (
-        db.query(Usuario)
-        .options(joinedload(Usuario.rol_plataforma))
-        .all()
-    )
+    users = _visible_auth_users_query(db, current_user).all()
 
     user_ids = [u.id for u in users]
     persona_map = {
