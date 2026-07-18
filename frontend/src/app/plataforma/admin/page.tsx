@@ -75,7 +75,7 @@ export default function AdminDashboardPage() {
 
   if (loading) {
       return (
-          <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden items-center justify-center space-y-3">
+          <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden items-center justify-center space-y-3">
               <div className="relative">
                   <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse" />
                   <Shield className="w-8 h-8 animate-pulse text-[hsl(var(--primary))] relative z-10" />
@@ -96,7 +96,7 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden font-sans relative">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden font-sans relative">
         <WorkspaceToolbar
             breadcrumbs={[{ label: 'Ecosistema', icon: Globe }, { label: 'Gestión Central', icon: Shield }]}
             viewType={viewType} setViewType={setViewType} availableViews={['grid']}

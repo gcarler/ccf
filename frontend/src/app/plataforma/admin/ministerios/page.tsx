@@ -114,7 +114,7 @@ export default function MinisteriosPage() {
         setForm(f => ({ ...f, [field]: e.target.value }));
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
@@ -144,7 +144,7 @@ export default function MinisteriosPage() {
                         const Icon = stat.icon;
                         return (
                             <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm flex items-center gap-4">
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm flex items-center gap-4">
                                 <div className={clsx("size-6 rounded-md flex items-center justify-center flex-shrink-0", stat.bg, stat.color)}>
                                     <Icon size={20} />
                                 </div>
@@ -183,7 +183,7 @@ export default function MinisteriosPage() {
                         )}
                     </motion.div>
                 ) : viewType === 'table' ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm overflow-hidden">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left min-w-[600px]">
                                 <thead className="bg-[hsl(var(--surface-1))] dark:bg-black/20">
@@ -261,7 +261,7 @@ export default function MinisteriosPage() {
                             <motion.div key={m.id}
                                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.06 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm hover:border-blue-500/20 transition-all group">
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm hover:border-blue-500/20 transition-all group">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="size-6 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                         <Church size={20} />
@@ -293,7 +293,7 @@ export default function MinisteriosPage() {
                             <motion.div key={m.id}
                                 initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: idx * 0.04 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-md border border-[hsl(var(--border))] dark:border-white/5 p-4 flex items-center gap-4 group hover:border-blue-500/20 transition-all">
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] dark:border-white/5 p-4 flex items-center gap-4 group hover:border-blue-500/20 transition-all">
                                 <div className="size-10 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0"><Church size={18} /></div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{m.name}</p>

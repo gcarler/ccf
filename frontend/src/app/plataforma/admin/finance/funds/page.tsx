@@ -135,7 +135,7 @@ export default function FundsPage() {
     const publicCount = funds.filter((f) => f.is_public).length;
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Administración", icon: LayoutDashboard, href: "/plataforma/admin" },
@@ -158,7 +158,7 @@ export default function FundsPage() {
                         { label: "Balance Total", value: `$${totalBalance.toLocaleString()}`, color: "text-emerald-600" },
                         { label: "Fondos Públicos", value: String(publicCount), color: "text-[hsl(var(--primary))]" },
                     ].map((s) => (
-                        <div key={s.label} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
+                        <div key={s.label} className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
                             <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{s.label}</p>
                             <p className={clsx("text-lg font-bold tracking-tight", s.color)}>{s.value}</p>
                         </div>
@@ -169,11 +169,11 @@ export default function FundsPage() {
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {[...Array(3)].map((_, i) => (
-                            <div key={i} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm animate-pulse h-36" />
+                            <div key={i} className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm animate-pulse h-36" />
                         ))}
                     </div>
                 ) : funds.length === 0 ? (
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 text-center shadow-sm">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 text-center shadow-sm">
                         <div className="size-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
                             <Wallet className="text-[hsl(var(--primary))]" size={28} />
                         </div>
@@ -188,7 +188,7 @@ export default function FundsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {funds.map((f) => (
                             <motion.div key={f.id} layout
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm group hover:shadow-md hover:border-blue-200 dark:hover:border-blue-500/20 transition-all">
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm group hover:shadow-md hover:border-blue-200 dark:hover:border-blue-500/20 transition-all">
                                 <div className="flex items-start justify-between gap-3 mb-3">
                                     <div className="size-10 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0">
                                         <Wallet size={18} />
@@ -244,7 +244,7 @@ export default function FundsPage() {
                             initial={{ x: "100%", opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                             exit={{ x: "100%", opacity: 0 }}
                             transition={{ type: "spring", damping: 26, stiffness: 260 }}
-                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] shadow-2xl rounded-l-[2.5rem] overflow-hidden flex flex-col">
+                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] shadow-2xl rounded-l-[2.5rem] overflow-hidden flex flex-col">
                             <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))] dark:border-white/5 flex-shrink-0">
                                 <div>
                                     <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
@@ -315,7 +315,7 @@ export default function FundsPage() {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg p-4 max-w-sm w-full shadow-2xl border border-[hsl(var(--border))] dark:border-white/10">
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg p-4 max-w-sm w-full shadow-2xl border border-[hsl(var(--border))] dark:border-white/10">
                             <div className="size-7 rounded-lg bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-600 mb-5">
                                 <Trash2 size={24} />
                             </div>

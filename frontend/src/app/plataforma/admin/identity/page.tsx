@@ -232,7 +232,7 @@ export default function IdentityManagementPage() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden font-sans">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden font-sans">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Administración', icon: Shield }, { label: 'Gestión de Identidad', icon: Users }]}
                 onSearch={setSearch}
@@ -264,7 +264,7 @@ export default function IdentityManagementPage() {
                     </div>
 
                     {/* Users Table */}
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none overflow-x-auto">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none overflow-x-auto">
                         {loading ? (
                             <div className="p-4 space-y-3">
                                 {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}
@@ -608,7 +608,7 @@ export default function IdentityManagementPage() {
 
 function StatCard({ icon: Icon, label, value, color, bg }: any) {
     return (
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 flex items-center gap-3">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 flex items-center gap-3">
             <div className={clsx("size-10 rounded-lg flex items-center justify-center", bg)}>
                 <Icon size={20} className={color} />
             </div>

@@ -36,7 +36,7 @@ export default function DonationDetailPage() {
     const amount = useMemo(() => Number(donation?.amount ?? 0), [donation?.amount]);
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0b0d11]">
+        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Administracion", icon: LayoutDashboard, href: "/plataforma/admin" },

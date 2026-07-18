@@ -25,7 +25,7 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
         sky: "text-sky-600 bg-sky-50 dark:bg-sky-500/10",
     };
     return (
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
             <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{label}</p>
             <p className={clsx("text-lg font-bold tracking-tight", colors[tone]?.split(" ")[0])}>{value}</p>
         </div>
@@ -157,7 +157,7 @@ export default function DonationsManagementPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Administración", icon: LayoutDashboard, href: "/plataforma/admin" },
@@ -199,7 +199,7 @@ export default function DonationsManagementPage() {
                         </div>
                     </div>
 
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm overflow-x-auto">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm overflow-x-auto">
                         <table className="w-full min-w-[520px] text-left">
                             <thead>
                                 <tr className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] border-b border-[hsl(var(--border))] dark:border-white/5">
@@ -279,7 +279,7 @@ export default function DonationsManagementPage() {
                             initial={{ x: "100%", opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                             exit={{ x: "100%", opacity: 0 }}
                             transition={{ type: "spring", damping: 26, stiffness: 260 }}
-                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] shadow-2xl rounded-l-[2.5rem] overflow-hidden flex flex-col">
+                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] shadow-2xl rounded-l-[2.5rem] overflow-hidden flex flex-col">
                             <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))] dark:border-white/5 flex-shrink-0">
                                 <div>
                                     <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
