@@ -17,12 +17,12 @@ Sprint 3 — Axioma 3 defense-in-depth
 
 from __future__ import annotations
 
-import asyncio
 import uuid as _uuid
-from collections import Counter
+from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -313,6 +313,7 @@ def _serialize_conversation(
     conv: models.Conversation,
     current_user_id: _uuid.UUID,
     current_persona_id,
+    unread_counts: dict | None = None,
 ) -> schemas.ConversationRead:
     # Batch-fetch all participant personas in one query (avoid N+1)
     participant_persona_ids = [cp.user_id for cp in conv.participants]
@@ -335,7 +336,10 @@ def _serialize_conversation(
             )
         )
 
-    unread = crud.get_unread_count_for_conversation(db, conv.id, current_user_id)
+    if unread_counts is not None:
+        unread = unread_counts.get(conv.id, 0)
+    else:
+        unread = crud.get_unread_count_for_conversation(db, conv.id, current_user_id)
 
     return schemas.ConversationRead(
         id=conv.id,
@@ -349,29 +353,30 @@ def _serialize_conversation(
 
 
 def _find_existing_dm(db: Session, user_id1: _uuid.UUID, user_id2: _uuid.UUID):
-    """Check if a 2-person DM conversation already exists."""
+    """Check if a 2-person DM conversation already exists.
+
+    Uses a direct join instead of fetching all participations for both users.
+    """
+    # Find conversations where both users are participants
     cps = (
-        db.query(models.ConversationParticipant)
+        db.query(models.ConversationParticipant.conversation_id)
         .filter(models.ConversationParticipant.user_id.in_([user_id1, user_id2]))
+        .group_by(models.ConversationParticipant.conversation_id)
+        .having(func.count(models.ConversationParticipant.id) == 2)
         .all()
     )
-    conv_ids = {cp.conversation_id for cp in cps}
-    counts: Counter = Counter()
-    if conv_ids:
-        all_cps = (
+    for (conv_id,) in cps:
+        # Verify these are the ONLY two participants
+        total = (
             db.query(models.ConversationParticipant)
-            .filter(models.ConversationParticipant.conversation_id.in_(conv_ids))
-            .all()
+            .filter(models.ConversationParticipant.conversation_id == conv_id)
+            .count()
         )
-        for cp in all_cps:
-            counts[cp.conversation_id] += 1
-    for conv_id, cnt in counts.items():
-        if cnt == 2:
-            pids = {cp.user_id for cp in all_cps if cp.conversation_id == conv_id}
-            if pids == {user_id1, user_id2}:
-                return db.query(models.Conversation).filter(
-                    models.Conversation.id == conv_id
-                ).first()
+        if total == 2:
+            return db.query(models.Conversation).filter(
+                models.Conversation.id == conv_id
+            ).first()
+    return None
     return None
 
 
@@ -415,9 +420,9 @@ def search_chat_users(
     return [
         {
             "id": str(persona.id),
-            "username": persona.nombre_completo,
+            "username": persona.nombre_completo or usuario.username or "",
             "email": persona.email or usuario.email or "",
-            "avatar_url": None,
+            "avatar_url": getattr(persona, 'photo_url', None),
         }
         for persona, usuario in users
     ]
@@ -436,7 +441,9 @@ def list_conversations(
     if not persona_id:
         return []
     convs = crud.get_user_conversations(db, current_user.id)
-    return [_serialize_conversation(db, c, current_user.id, persona_id) for c in convs]
+    conv_ids = [c.id for c in convs]
+    unread_counts = crud.get_unread_counts_batch(db, current_user.id, conv_ids)
+    return [_serialize_conversation(db, c, current_user.id, persona_id, unread_counts=unread_counts) for c in convs]
 
 
 @router.post(
@@ -520,7 +527,11 @@ def list_direct_messages(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
-    """List messages in a conversation (paginated, newest first)."""
+    """List messages in a conversation (paginated, newest first).
+
+    ``before`` accepts an ISO datetime string (preferred) for cursor-based
+    pagination, or a UUID string for backward compatibility.
+    """
     persona_id = _get_persona_id(db, current_user)
     if not persona_id:
         raise HTTPException(status_code=404, detail="Persona not found")
@@ -536,9 +547,24 @@ def list_direct_messages(
         .first()
     )
     if not is_participant:
-        raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+        # Existence-leak safe: 404 uniforme con el resto de chat.py endpoints.
+        raise HTTPException(status_code=404, detail="Conversation not found")
     _assert_conversation_sede_aligned(db, conv, current_user)
-    rows = crud.get_conversation_messages(db, conv_id, limit=limit, before_id=before)
+
+    before_created_at = None
+    before_id = None
+    if before:
+        try:
+            before_created_at = datetime.fromisoformat(before)
+        except (ValueError, TypeError):
+            try:
+                before_id = _uuid.UUID(before)
+            except (ValueError, TypeError):
+                pass
+
+    rows = crud.get_conversation_messages(
+        db, conv_id, limit=limit, before_id=before_id, before_created_at=before_created_at
+    )
     sender_ids = {r.sender_id for r in rows}
 
     # Map sender UUIDs to Personas (batch lookup)
@@ -569,6 +595,7 @@ def list_direct_messages(
 def send_direct_message(
     conv_id: str,
     payload: schemas.DirectMessageCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "edit")),
 ):
@@ -615,28 +642,23 @@ def send_direct_message(
     msg = crud.create_direct_message(db, conv_id, current_user.id, payload.content)
     persona = _get_persona(db, current_user)
     sender_name = _persona_display_name(persona)
-    # Broadcast via WebSocket (safe no-op if no event loop available)
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            asyncio.ensure_future(
-                manager.broadcast_event(
-                    {
-                        "event": "direct_message",
-                        "conversation_id": conv_id,
-                        "message": {
-                            "id": msg.id,
-                            "sender_id": str(current_user.id),
-                            "sender_name": sender_name,
-                            "content": msg.content,
-                            "created_at": str(msg.created_at),
-                        },
-                    },
-                    room=f"dm_{conv_id}",
-                )
-            )
-    except RuntimeError:
-        pass
+    # Broadcast via WebSocket (scheduled as background task to avoid RuntimeError
+    # from asyncio.get_running_loop in sync endpoint context)
+    ws_payload = {
+        "event": "direct_message",
+        "conversation_id": conv_id,
+        "message": {
+            "id": str(msg.id),
+            "sender_id": str(current_user.id),
+            "sender_name": sender_name,
+            "content": msg.content,
+            "created_at": msg.created_at.isoformat(),
+            "is_read": False,
+        },
+    }
+    background_tasks.add_task(
+        manager.broadcast_event, ws_payload, room=f"dm_{conv_id}"
+    )
     return schemas.DirectMessageItem(
         id=msg.id,
         sender_id=current_user.id,

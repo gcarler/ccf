@@ -6,7 +6,7 @@ const CURRENT_USER_ID = 'e2e-user';
 
 const BASE_CONVERSATIONS: ConversationRead[] = [
   {
-    id: 101,
+    id: '101',
     participants: [
       {
         persona_id: CURRENT_USER_ID,
@@ -26,7 +26,7 @@ const BASE_CONVERSATIONS: ConversationRead[] = [
     created_at: '2026-07-15T10:00:00Z',
   },
   {
-    id: 102,
+    id: '102',
     participants: [
       {
         persona_id: CURRENT_USER_ID,
@@ -47,17 +47,17 @@ const BASE_CONVERSATIONS: ConversationRead[] = [
   },
 ];
 
-const MESSAGE_SEED: Record<number, Array<{
-  id: number;
+const MESSAGE_SEED: Record<string, Array<{
+  id: string;
   sender_id: string;
   sender_name: string;
   content: string;
   created_at: string;
   is_read: boolean;
 }>> = {
-  101: [
+  '101': [
     {
-      id: 5001,
+      id: '5001',
       sender_id: 'persona-abigail',
       sender_name: 'Abigail Monsalve',
       content: 'Hola, ¿ya quedó lista la reunión de seguimiento?',
@@ -65,7 +65,7 @@ const MESSAGE_SEED: Record<number, Array<{
       is_read: true,
     },
     {
-      id: 5002,
+      id: '5002',
       sender_id: CURRENT_USER_ID,
       sender_name: 'pastor.e2e',
       content: 'Sí, la dejamos para las 6:00 PM.',
@@ -73,7 +73,7 @@ const MESSAGE_SEED: Record<number, Array<{
       is_read: true,
     },
     {
-      id: 5003,
+      id: '5003',
       sender_id: 'persona-abigail',
       sender_name: 'Abigail Monsalve',
       content: 'Nos vemos en el seguimiento de esta tarde.',
@@ -81,9 +81,9 @@ const MESSAGE_SEED: Record<number, Array<{
       is_read: false,
     },
   ],
-  102: [
+  '102': [
     {
-      id: 5101,
+      id: '5101',
       sender_id: CURRENT_USER_ID,
       sender_name: 'pastor.e2e',
       content: 'Te compartí el recurso de liderazgo.',
@@ -91,7 +91,7 @@ const MESSAGE_SEED: Record<number, Array<{
       is_read: true,
     },
     {
-      id: 5102,
+      id: '5102',
       sender_id: 'persona-carlos',
       sender_name: 'Carlos Rueda',
       content: 'Gracias por el recurso compartido.',
@@ -117,7 +117,7 @@ async function installMessagingDeepMocks(page: Page) {
   }));
   const messagesState = Object.fromEntries(
     Object.entries(MESSAGE_SEED).map(([key, messages]) => [
-      Number(key),
+      key,
       messages.map((message) => ({ ...message })),
     ]),
   ) as typeof MESSAGE_SEED;
@@ -139,6 +139,14 @@ async function installMessagingDeepMocks(page: Page) {
       static OPEN = 1;
       static CLOSING = 2;
       static CLOSED = 3;
+      static instances: FakeWebSocket[] = [];
+      static __dispatch(payload: object) {
+        for (const ws of FakeWebSocket.instances) {
+          ws.onmessage?.(new MessageEvent('message', {
+            data: JSON.stringify(payload),
+          }));
+        }
+      }
       readyState = FakeWebSocket.OPEN;
       onopen: ((event: Event) => void) | null = null;
       onclose: ((event: CloseEvent) => void) | null = null;
@@ -146,11 +154,13 @@ async function installMessagingDeepMocks(page: Page) {
       onmessage: ((event: MessageEvent) => void) | null = null;
 
       constructor() {
+        FakeWebSocket.instances.push(this);
         setTimeout(() => this.onopen?.(new Event('open')), 0);
       }
 
       send() {}
       close() {
+        FakeWebSocket.instances = FakeWebSocket.instances.filter((w) => w !== this);
         this.readyState = FakeWebSocket.CLOSED;
         this.onclose?.(new CloseEvent('close'));
       }
@@ -166,6 +176,12 @@ async function installMessagingDeepMocks(page: Page) {
       writable: true,
       value: FakeWebSocket,
     });
+
+    Object.defineProperty(window, '__wsDispatch', {
+      configurable: false,
+      writable: false,
+      value: (payload: object) => FakeWebSocket.__dispatch(payload),
+    });
   });
 
   await page.route('**/api/chat/conversations', async (route) => {
@@ -180,7 +196,7 @@ async function installMessagingDeepMocks(page: Page) {
           avatar_url: null,
         };
       const createdConversation = {
-        id: nextConversationId++,
+        id: String(nextConversationId++),
         participants: [
           {
             persona_id: CURRENT_USER_ID,
@@ -217,11 +233,11 @@ async function installMessagingDeepMocks(page: Page) {
   });
 
   await page.route('**/api/chat/conversations/*/messages**', async (route) => {
-    const conversationId = Number(route.request().url().split('/conversations/')[1]?.split('/messages')[0]);
+    const conversationId = route.request().url().split('/conversations/')[1]?.split('/messages')[0] ?? '';
     if (route.request().method() === 'POST') {
       const body = route.request().postDataJSON() as { content: string };
       const createdMessage = {
-        id: nextMessageId++,
+        id: String(nextMessageId++),
         sender_id: CURRENT_USER_ID,
         sender_name: 'pastor.e2e',
         content: body.content,
@@ -255,7 +271,7 @@ async function installMessagingDeepMocks(page: Page) {
   });
 
   await page.route('**/api/chat/conversations/*/read', async (route) => {
-    const conversationId = Number(route.request().url().split('/conversations/')[1]?.split('/read')[0]);
+    const conversationId = route.request().url().split('/conversations/')[1]?.split('/read')[0] ?? '';
     conversationsState = conversationsState.map((conversation) =>
       conversation.id === conversationId
         ? { ...conversation, unread_count: 0 }
@@ -324,9 +340,59 @@ test.describe('Messaging direct messages deep smoke', () => {
 
     await page.getByRole('button', { name: /Abigail Monsalve/i }).click();
     await page.getByPlaceholder(/Escribe un mensaje/i).fill('Queda confirmado el acompañamiento.');
-    await page.getByRole('button', { name: /^$/ }).last().click();
+    await page.getByRole('button', { name: /Enviar mensaje/i }).click();
 
     await expect(page.locator('body')).toContainText(/Queda confirmado el acompañamiento/i);
     await expect(page.locator('body')).toContainText(/✓/i);
+  });
+
+  test('receives real-time WS message and appends to thread', async ({ page }) => {
+    await page.goto('/plataforma/messages', { waitUntil: 'load' });
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.getByRole('button', { name: /Abigail Monsalve/i }).click();
+    await expect(page.locator('body')).toContainText(/Hola, ¿ya quedó lista la reunión de seguimiento/i);
+
+    await page.evaluate(() => {
+      (window as any).__wsDispatch({
+        event: 'direct_message',
+        conversation_id: '101',
+        message: {
+          id: '9900',
+          sender_id: 'persona-abigail',
+          sender_name: 'Abigail Monsalve',
+          content: 'Mensaje WS en tiempo real',
+          created_at: new Date().toISOString(),
+          is_read: false,
+        },
+      });
+    });
+
+    await expect(page.locator('body')).toContainText(/Mensaje WS en tiempo real/i);
+  });
+
+  test('marks unread badge updates when WS message arrives on non-active conversation', async ({ page }) => {
+    await page.goto('/plataforma/messages', { waitUntil: 'load' });
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.getByRole('button', { name: /Abigail Monsalve/i }).click();
+    await expect(page.locator('body')).toContainText(/Hola, ¿ya quedó lista/i);
+
+    await page.evaluate(() => {
+      (window as any).__wsDispatch({
+        event: 'direct_message',
+        conversation_id: '102',
+        message: {
+          id: '9901',
+          sender_id: 'persona-carlos',
+          sender_name: 'Carlos Rueda',
+          content: 'Nuevo mensaje de Carlos',
+          created_at: new Date().toISOString(),
+          is_read: false,
+        },
+      });
+    });
+
+    await expect(page.locator('body')).toContainText(/Carlos Rueda/i);
   });
 });

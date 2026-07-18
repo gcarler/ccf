@@ -17,10 +17,16 @@ class RedisPubSubManager:
     def __init__(self) -> None:
         self.active_connections: Dict[str, WebSocket] = {}
         self.rooms: Dict[str, Set[str]] = defaultdict(set)
-        self.redis = get_redis()
+        self._redis = None
         self.channel = f"{settings.environment}:ws"
         self.listener_task: Optional[asyncio.Task] = None
         self.listener_lock = asyncio.Lock()
+
+    @property
+    def redis(self):
+        if self._redis is None:
+            self._redis = get_redis()
+        return self._redis
 
     async def _ensure_listener(self) -> None:
         if self.listener_task and not self.listener_task.done():

@@ -6,6 +6,7 @@ import uuid as _uuid
 from datetime import date
 
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy import Index
 from sqlalchemy import func as _func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -28,6 +29,9 @@ class Family(Base):
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
+    __table_args__ = (
+        Index("ix_chat_messages_room_id_created_at", "room_id", "created_at"),
+    )
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sender_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False, index=True)
     room_id = Column(String(100), nullable=True, index=True)

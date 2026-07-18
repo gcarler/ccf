@@ -3,9 +3,10 @@
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/context/ToastContext";
 import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
 import { apiFetch } from "@/lib/http";
-import type { ConversationRead,DirectMessageItem } from "@/types/directMessages";
+import type { ConversationRead,DirectMessageItem, WsEvent } from "@/types/directMessages";
 import clsx from "clsx";
 import {
 ChevronLeft,
@@ -19,6 +20,11 @@ UserPlus
 } from "lucide-react";
 import React,{ useCallback,useEffect,useRef,useState } from "react";
 
+/** Strip HTML tags for defense-in-depth (React already escapes JSX by default) */
+function sanitizeText(text: string): string {
+    return text.replace(/<[^>]*>/g, "");
+}
+
 interface SearchedUser {
     id: string;
     username: string;
@@ -27,10 +33,11 @@ interface SearchedUser {
 }
 
 function AvatarInitial({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
-    const initials = name.slice(0, 2).toUpperCase();
+    const safeName = (name || "U").slice(0, 2).toUpperCase();
+    const initials = safeName;
     const colors = [
         "from-blue-500 to-blue-700",
-        "from-blue-500 to-blue-700",
+        "from-violet-500 to-violet-700",
         "from-emerald-500 to-emerald-700",
         "from-rose-500 to-rose-700",
         "from-amber-500 to-amber-700",
@@ -49,16 +56,20 @@ function AvatarInitial({ name, size = "md" }: { name: string; size?: "sm" | "md"
 
 export default function MessagesPage() {
     const { token, user } = useAuth();
+    const { addToast } = useToast();
     const [conversations, setConversations] = useState<ConversationRead[]>([]);
     const [activeConv, setActiveConv] = useState<ConversationRead | null>(null);
     const [messages, setMessages] = useState<DirectMessageItem[]>([]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(true);
     const [loadingMessages, setLoadingMessages] = useState(false);
+    const [sending, setSending] = useState(false);
     const [conversationFilter, setConversationFilter] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);
     const userId = user?.id ? String(user.id) : "";
     const inputRef = useRef<HTMLInputElement>(null);
+    const messagesRef = useRef<DirectMessageItem[]>([]);
+    const activeConvIdRef = useRef<string | null>(null);
 
     // ── New conversation drawer ──────────────────────────────────────────
     const [showNewConvDrawer, setShowNewConvDrawer] = useState(false);
@@ -70,57 +81,88 @@ export default function MessagesPage() {
     const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
+    // Keep refs in sync with state for stale-closure prevention
+    messagesRef.current = messages;
+    activeConvIdRef.current = activeConv?.id ?? null;
+
     const loadConversations = useCallback(() => {
-        if (!token) return;
+        if (!token) { setLoading(false); return; }
         apiFetch<ConversationRead[]>("/chat/conversations", { token })
             .then((data) => { if (Array.isArray(data)) setConversations(data); })
-            .catch(() => {})
+            .catch(() => { addToast("Error al cargar conversaciones", "error"); })
             .finally(() => setLoading(false));
-    }, [token]);
+    }, [token, addToast]);
 
     useEffect(() => { loadConversations(); }, [loadConversations]);
 
     useEffect(() => {
         if (!token || !activeConv) return;
+        const controller = new AbortController();
         setMessages([]);
         setLoadingMessages(true);
         apiFetch<DirectMessageItem[]>(
             `/chat/conversations/${activeConv.id}/messages`,
-            { token, query: { limit: "100" } }
+            { token, query: { limit: "100" }, signal: controller.signal }
         ).then((data) => { if (Array.isArray(data)) setMessages(data.reverse()); })
-        .catch(() => {})
-        .finally(() => setLoadingMessages(false));
-        apiFetch(`/chat/conversations/${activeConv.id}/read`, { method: "POST", token }).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeConv?.id, token]);
+        .catch((err) => { if (err?.name !== "AbortError") addToast("Error al cargar mensajes", "error"); })
+        .finally(() => { if (!controller.signal.aborted) setLoadingMessages(false); });
+        apiFetch(`/chat/conversations/${activeConv.id}/read`, { method: "POST", token, signal: controller.signal })
+            .catch(() => { addToast("No se pudo marcar como leído", "error"); });
+        return () => controller.abort();
+    }, [activeConv?.id, token, addToast]);
 
-    const handleSocketEvent = useCallback((payload: any) => {
-        if (payload?.event === "direct_message" && payload?.conversation_id === activeConv?.id) {
-            setMessages((prev) => [...prev, payload.message]);
-            setConversations((prev) => prev.map((c) =>
-                c.id === activeConv?.id
-                    ? { ...c, last_message_content: payload.message.content, last_message_at: payload.message.created_at, last_sender_id: payload.message.sender_id, unread_count: 0 }
-                    : c
-            ));
-        } else if (payload?.event === "direct_message") {
-            setConversations((prev) => prev.map((c) =>
-                c.id === payload.conversation_id
-                    ? { ...c, last_message_content: payload.message.content, last_message_at: payload.message.created_at, last_sender_id: payload.message.sender_id }
-                    : c
-            ));
+    const loadOlderMessages = useCallback(async () => {
+        if (!token || !activeConv || loadingMessages || messagesRef.current.length === 0) return;
+        setLoadingMessages(true);
+        try {
+            const oldest = messagesRef.current[0];
+            const older = await apiFetch<DirectMessageItem[]>(
+                `/chat/conversations/${activeConv.id}/messages`,
+                { token, query: { limit: "50", before: oldest.created_at } }
+            );
+            if (Array.isArray(older) && older.length > 0) {
+                setMessages((prev) => [...older.reverse(), ...prev]);
+            }
+        } catch { /* silent */ }
+        finally { setLoadingMessages(false); }
+    }, [token, activeConv?.id, loadingMessages]);
+
+    const handleSocketEvent = useCallback((payload: WsEvent) => {
+        if (payload.event === "direct_message" && "conversation_id" in payload && "message" in payload) {
+            const evt = payload as import("@/types/directMessages").WsDirectMessageEvent;
+            const currentActiveId = activeConvIdRef.current;
+            if (evt.conversation_id === currentActiveId) {
+                setMessages((prev) => [...prev, evt.message]);
+                setConversations((prev) => prev.map((c) =>
+                    c.id === currentActiveId
+                        ? { ...c, last_message_content: evt.message.content, last_message_at: evt.message.created_at, last_sender_id: evt.message.sender_id, unread_count: 0 }
+                        : c
+                ));
+            } else {
+                setConversations((prev) => prev.map((c) =>
+                    c.id === evt.conversation_id
+                        ? { ...c, last_message_content: evt.message.content, last_message_at: evt.message.created_at, last_sender_id: evt.message.sender_id, unread_count: (c.unread_count ?? 0) + 1 }
+                        : c
+                ));
+            }
         }
-    }, [activeConv?.id]);
+    }, []);
 
-    useWorkspaceSocket({ rooms: activeConv ? [`dm_${activeConv.id}`] : [], enabled: !!token && !!activeConv, onEvent: handleSocketEvent });
+    const { status: wsStatus } = useWorkspaceSocket({ rooms: activeConv ? [`dm_${activeConv.id}`] : [], enabled: !!token && !!activeConv, onEvent: handleSocketEvent });
 
     useEffect(() => {
-        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        if (scrollRef.current) {
+            const el = scrollRef.current;
+            const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
+            if (isNearBottom) el.scrollTop = el.scrollHeight;
+        }
     }, [messages]);
 
     const handleSend = async () => {
-        if (!input.trim() || !token || !activeConv) return;
+        if (!input.trim() || !token || !activeConv || sending) return;
         const content = input.trim();
         setInput("");
+        setSending(true);
         try {
             const msg = await apiFetch<DirectMessageItem>(
                 `/chat/conversations/${activeConv.id}/messages`,
@@ -129,6 +171,9 @@ export default function MessagesPage() {
             setMessages((prev) => [...prev, msg]);
         } catch {
             setInput(content);
+            addToast("Error al enviar mensaje", "error");
+        } finally {
+            setSending(false);
         }
     };
 
@@ -177,7 +222,10 @@ export default function MessagesPage() {
             const conv = await apiFetch<ConversationRead>("/chat/conversations", {
                 method: "POST", token, body: { participant_ids: [participantId] },
             });
-            await loadConversations();
+            setConversations((prev) => {
+                const exists = prev.some((c) => c.id === conv.id);
+                return exists ? prev : [conv, ...prev];
+            });
             setActiveConv(conv);
             setShowNewConvDrawer(false);
             setSearchQuery("");
@@ -220,6 +268,7 @@ export default function MessagesPage() {
                 <button
                     onClick={openNewConvDrawer}
                     className="size-6 rounded-md flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all"
+                    aria-label="Nueva conversación"
                     title="Nueva conversación"
                 >
                     <Plus size={13} />
@@ -235,6 +284,7 @@ export default function MessagesPage() {
                         value={conversationFilter}
                         onChange={(e) => setConversationFilter(e.target.value)}
                         placeholder="Buscar..."
+                        aria-label="Buscar conversaciones"
                         className="w-full pl-7 pr-3 py-1.5 text-[11px] bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/20 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
                     />
                 </div>
@@ -258,6 +308,7 @@ export default function MessagesPage() {
                         {!conversationFilter && (
                             <button
                                 onClick={openNewConvDrawer}
+                                aria-label="Iniciar nueva conversación"
                                 className="flex items-center gap-1.5 text-[11px] font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
                             >
                                 <UserPlus size={12} /> Iniciar chat
@@ -272,6 +323,7 @@ export default function MessagesPage() {
                             <button
                                 key={conv.id}
                                 onClick={() => selectConversation(conv)}
+                                aria-label={`Abrir conversación con ${other?.username || "Usuario"}`}
                                 className={clsx(
                                     "w-full text-left flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all group mb-0.5",
                                     isActive
@@ -290,7 +342,7 @@ export default function MessagesPage() {
                                         </p>
                                         {conv.last_message_at && (
                                             <span className="text-[9px] text-[hsl(var(--text-secondary))] shrink-0">
-                                                {new Date(conv.last_message_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
+                                                {new Date(conv.last_message_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                                             </span>
                                         )}
                                     </div>
@@ -332,6 +384,7 @@ export default function MessagesPage() {
                         </div>
                         <button
                             onClick={openNewConvDrawer}
+                            aria-label="Crear nueva conversación"
                             className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wide bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all shadow-sm shadow-blue-500/20 mt-1"
                         >
                             <Plus size={13} /> Nueva conversación
@@ -343,7 +396,9 @@ export default function MessagesPage() {
                         <div className="h-10 px-3 md:px-4 flex items-center gap-3 shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.05] bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
                             <button
                                 className="p-1 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] transition-all"
+                                aria-label="Volver a conversaciones"
                                 title="Volver a conversaciones"
+                                onClick={() => setActiveConv(null)}
                             >
                                 <ChevronLeft size={15} />
                             </button>
@@ -353,8 +408,22 @@ export default function MessagesPage() {
                                     {getOtherParticipant(activeConv)?.username || "Usuario"}
                                 </p>
                                 <div className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
-                                    <Circle size={7} className="fill-emerald-400 text-emerald-400" />
-                                    <span className="hidden xs:inline">Activo</span>
+                                    {wsStatus === "open" ? (
+                                        <>
+                                            <Circle size={7} className="fill-emerald-400 text-emerald-400" />
+                                            <span className="hidden xs:inline">Activo</span>
+                                        </>
+                                    ) : wsStatus === "error" ? (
+                                        <>
+                                            <Circle size={7} className="fill-red-400 text-red-400" />
+                                            <span className="hidden xs:inline">Desconectado</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Circle size={7} className="fill-amber-400 text-amber-400" />
+                                            <span className="hidden xs:inline">Conectando...</span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -362,6 +431,10 @@ export default function MessagesPage() {
                         {/* ── Messages ── */}
                         <div
                             ref={scrollRef}
+                            onScroll={(e) => {
+                                const el = e.currentTarget;
+                                if (el.scrollTop < 60) loadOlderMessages();
+                            }}
                             className="flex-1 overflow-y-auto scrollbar-thin p-3 md:p-4 space-y-3 bg-[hsl(var(--surface-1))]/30 dark:bg-[#111213]"
                         >
                             {loadingMessages ? (
@@ -402,14 +475,14 @@ export default function MessagesPage() {
                                                         ? "bg-[hsl(var(--primary))] text-white rounded-br-md"
                                                         : "bg-[hsl(var(--bg-primary))] dark:bg-white/[0.07] border border-[hsl(var(--border))] dark:border-white/[0.06] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-bl-md shadow-sm"
                                                 )}>
-                                                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                                                    <p className="whitespace-pre-wrap break-words">{sanitizeText(msg.content)}</p>
                                                 </div>
                                                 <div className={clsx("flex items-center gap-1", isOwn ? "justify-end pr-1" : "pl-1")}>
                                                     <span className={clsx(
                                                         "text-[10px]",
                                                         isOwn ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]"
                                                     )}>
-                                                        {new Date(msg.created_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
+                                                        {new Date(msg.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                                                     </span>
                                                     {isOwn && (
                                                         <span className="text-[10px] text-[hsl(var(--primary))]">{msg.is_read ? "✓✓" : "✓"}</span>
@@ -432,16 +505,19 @@ export default function MessagesPage() {
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={handleKeyDown}
+                                        disabled={sending}
                                         placeholder="Escribe un mensaje..."
-                                        className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] min-w-0"
+                                        aria-label="Escribe un mensaje"
+                                        className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] min-w-0 disabled:opacity-50"
                                     />
                                 </div>
                                 <button
                                     onClick={handleSend}
-                                    disabled={!input.trim()}
+                                    disabled={!input.trim() || sending}
+                                    aria-label="Enviar mensaje"
                                     className="size-9 rounded-xl bg-[hsl(var(--primary))] text-white flex items-center justify-center hover:bg-[hsl(var(--primary))] disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all shadow-sm shadow-blue-500/20 shrink-0"
                                 >
-                                    <Send size={15} />
+                                    {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                                 </button>
                             </div>
                         </div>
@@ -472,6 +548,7 @@ export default function MessagesPage() {
                             value={searchQuery}
                             onChange={(e) => handleSearchChange(e.target.value)}
                             placeholder="Buscar por nombre o email..."
+                            aria-label="Buscar usuario para nueva conversación"
                             className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
                             autoComplete="off"
                         />
@@ -492,6 +569,7 @@ export default function MessagesPage() {
                                     key={u.id}
                                     onClick={() => handleCreateConversation(String(u.id))}
                                     disabled={creatingConv}
+                                    aria-label={`Iniciar conversación con ${u.username}`}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors disabled:opacity-50 text-left"
                                 >
                                     <AvatarInitial name={u.username} />

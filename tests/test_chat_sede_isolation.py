@@ -340,11 +340,10 @@ def test_send_direct_message_blocks_cross_sede_inherited(client, db_session):
     db_session.expire_all()
     persisted = (
         db_session.query(models.ChatMessage)
-        .filter(models.ChatMessage.room_id.is_(None))
+        .filter(models.ChatMessage.content == "Mensaje cross-sede (debe fallar)")
         .all()
     )
-    leaked = [m for m in persisted if m.content == "Mensaje cross-sede (debe fallar)"]
-    assert len(leaked) == 0, f"FUGA: {len(leaked)} mensajes cross-sede persistidos"
+    assert len(persisted) == 0, f"FUGA: {len(persisted)} mensajes cross-sede persistidos"
 
 
 def test_mark_conversation_read_blocks_cross_sede_inherited(client, db_session):
