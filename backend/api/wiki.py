@@ -163,14 +163,20 @@ def create_wiki_page(
         )
 
     persona_id = _resolve_persona(db, current_user)
-    return crud_wiki.create_wiki_page(
-        db,
-        page_key=key,
-        title=data.title or key.replace("wiki_", "").replace("-", " ").title(),
-        content=data.content or "",
-        sede_id=sede_id,
-        author_id=persona_id,
-    )
+    try:
+        return crud_wiki.create_wiki_page(
+            db,
+            page_key=key,
+            title=data.title or key.replace("wiki_", "").replace("-", " ").title(),
+            content=data.content or "",
+            sede_id=sede_id,
+            author_id=persona_id,
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"wiki page '{key}' already exists for this sede",
+        )
 
 
 @router.patch("/pages/{page_key}", response_model=WikiPageRead)

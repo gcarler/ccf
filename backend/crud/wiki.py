@@ -99,7 +99,11 @@ def create_wiki_page(
         author_id=author_id,
     )
     db.add(row)
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise ValueError(f"page_key '{page_key}' already exists for this sede")
     db.refresh(row)
     return row
 

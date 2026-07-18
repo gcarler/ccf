@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import Link from 'next/link';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 
@@ -23,6 +24,7 @@ interface WikiDoc {
 
 export default function WikiHomePage() {
     const { token } = useAuth();
+    const { addToast } = useToast();
     const [docs, setDocs] = useState<WikiDoc[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -30,7 +32,7 @@ export default function WikiHomePage() {
     const [newTitle, setNewTitle] = useState("");
     const [search, setSearch] = useState("");
 
-    const fetchDocs = useCallback(async (searchTerm?: string) => {
+    const fetchDocs = useCallback(async (searchTerm?: string, signal?: AbortSignal) => {
         if (!token) {
             setLoading(false);
             return;
@@ -38,28 +40,36 @@ export default function WikiHomePage() {
         setError(null);
         try {
             const url = searchTerm ? `/wiki/pages?search=${encodeURIComponent(searchTerm)}` : '/wiki/pages';
-            const data = await apiFetch<WikiDoc[]>(url, { token });
+            const data = await apiFetch<WikiDoc[]>(url, { token, signal });
             setDocs(Array.isArray(data) ? data : []);
-        } catch (error) {
-            console.error("Error fetching docs:", error);
+        } catch (err: any) {
+            if (err?.name === 'AbortError') return;
+            console.error("Error fetching docs:", err);
+            addToast('No se pudieron cargar los documentos. Intenta de nuevo.', 'error');
             setError("No se pudieron cargar los documentos. Intenta de nuevo.");
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [token, addToast]);
 
     useEffect(() => {
-        fetchDocs();
+        const controller = new AbortController();
+        fetchDocs(undefined, controller.signal);
+        return () => controller.abort();
     }, [fetchDocs]);
 
     // Server-side search with debounce
     useEffect(() => {
         if (!token) return;
+        const controller = new AbortController();
         const timer = setTimeout(() => {
             setLoading(true);
-            fetchDocs(search || undefined);
+            fetchDocs(search || undefined, controller.signal);
         }, 400);
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
     }, [search, token, fetchDocs]);
 
     const handleCreateDoc = async (e?: React.FormEvent) => {

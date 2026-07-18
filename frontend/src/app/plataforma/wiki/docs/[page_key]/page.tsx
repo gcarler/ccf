@@ -3,11 +3,13 @@
 import WikiEditor from '@/components/wiki/WikiEditor';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { motion } from 'framer-motion';
 import { BookOpen, ChevronLeft, History, MoreHorizontal, Share2, AlertCircle, Eye, Download } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef, useCallback } from 'react';
+import sanitize from 'sanitize-html';
 
 interface WikiDoc {
     id: string;
@@ -25,12 +27,13 @@ export default function WikiDocEditPage() {
     const isReadonly = searchParams?.get('view') === 'read';
     const router = useRouter();
     const { token } = useAuth();
+    const { addToast } = useToast();
     const [doc, setDoc] = useState<WikiDoc | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const hasUnsavedRef = useRef(false);
 
-    const fetchDoc = useCallback(async () => {
+    const fetchDoc = useCallback(async (signal?: AbortSignal) => {
         if (!token || !page_key) {
             if (!token) setLoading(false);
             return;
@@ -38,18 +41,22 @@ export default function WikiDocEditPage() {
         setError(null);
         setLoading(true);
         try {
-            const data = await apiFetch<WikiDoc>(`/wiki/pages/${page_key}`, { token });
+            const data = await apiFetch<WikiDoc>(`/wiki/pages/${page_key}`, { token, signal });
             setDoc(data);
-        } catch (error) {
-            console.error("Error fetching doc:", error);
+        } catch (err: any) {
+            if (err?.name === 'AbortError') return;
+            console.error("Error fetching doc:", err);
+            addToast('No se pudo cargar el documento. Intenta de nuevo.', 'error');
             setError("No se pudo cargar el documento. Intenta de nuevo.");
         } finally {
             setLoading(false);
         }
-    }, [token, page_key]);
+    }, [token, page_key, addToast]);
 
     useEffect(() => {
-        fetchDoc();
+        const controller = new AbortController();
+        fetchDoc(controller.signal);
+        return () => controller.abort();
     }, [fetchDoc]);
 
     // beforeunload warning for unsaved changes
@@ -209,7 +216,7 @@ export default function WikiDocEditPage() {
                     <div className="max-w-4xl mx-auto py-8 px-6">
                         <div
                             className="prose prose-slate dark:prose-invert max-w-none"
-                            dangerouslySetInnerHTML={{ __html: doc.content }}
+                            dangerouslySetInnerHTML={{ __html: sanitize(doc.content || '') }}
                         />
                     </div>
                 ) : (

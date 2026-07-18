@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { ApiError, apiFetch } from '@/lib/http';
+import sanitize from 'sanitize-html';
 
 interface WikiDocument {
     title: string;
@@ -28,6 +29,7 @@ export function useWikiDocument(pageKey: string, options: UseWikiDocumentOptions
     const hydratedRef = useRef(false);
     const contentRef = useRef(content);
     const documentExistsRef = useRef(false);
+    const originalTitleRef = useRef<string | null>(null);
 
     useEffect(() => {
         contentRef.current = content;
@@ -59,11 +61,13 @@ export function useWikiDocument(pageKey: string, options: UseWikiDocumentOptions
                     cache: 'no-store',
                 });
                 documentExistsRef.current = true;
+                originalTitleRef.current = document.title;
                 if (!alive) return;
                 const serverContent = normalizeWikiContent(document.content);
                 if (serverContent) {
-                    setContent(serverContent);
-                    localStorage.setItem(pageKey, serverContent);
+                    const clean = sanitize(serverContent);
+                    setContent(clean);
+                    localStorage.setItem(pageKey, clean);
                 }
             } catch (err) {
                 if (err instanceof ApiError && err.status === 404) {
@@ -97,10 +101,12 @@ export function useWikiDocument(pageKey: string, options: UseWikiDocumentOptions
         setIsSaving(true);
         setError(null);
         try {
-            const payload = {
-                title: options.title || pageKey,
-                content: nextContent,
-            };
+            const currentTitle = options.title || pageKey;
+            const titleChanged = originalTitleRef.current !== null && currentTitle !== originalTitleRef.current;
+            const payload: Record<string, string> = { content: nextContent };
+            if (titleChanged) {
+                payload.title = currentTitle;
+            }
 
             if (!documentExistsRef.current) {
                 try {
@@ -143,6 +149,9 @@ export function useWikiDocument(pageKey: string, options: UseWikiDocumentOptions
                 }
             }
             setLastSaved(new Date());
+            if (titleChanged) {
+                originalTitleRef.current = currentTitle;
+            }
         } catch (err) {
             console.error(err);
             setError('No se pudo guardar la wiki compartida.');
