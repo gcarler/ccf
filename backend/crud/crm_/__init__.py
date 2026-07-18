@@ -68,6 +68,7 @@ from backend.crud.crm_.groups import (
 from backend.crud.crm_.milestones import (
     create_milestone,
     delete_milestone,
+    get_milestone,
     get_milestones,
     update_milestone,
 )
