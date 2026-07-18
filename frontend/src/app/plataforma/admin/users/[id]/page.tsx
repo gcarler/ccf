@@ -149,7 +149,7 @@ export default function UserDetailPage() {
     if (!user) return <div className="p-4 text-center font-semibold uppercase tracking-wide text-rose-500">Usuario no encontrado</div>;
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
@@ -180,7 +180,7 @@ export default function UserDetailPage() {
                     {/* Left Column - Main Info */}
                     <div className="lg:col-span-8 space-y-3">
                         {/* Profile Header */}
-                        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none flex flex-col md:flex-row items-center gap-3 relative overflow-hidden">
+                        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none flex flex-col md:flex-row items-center gap-3 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-48 bg-gradient-to-bl from-blue-500/10 to-transparent pointer-events-none rounded-bl-full" />
                             
                             <div className="size-10 rounded-full bg-[hsl(var(--surface-1))] dark:bg-black/20 flex items-center justify-center border-4 border-white dark:border-[#15171c] shadow-xl relative z-10">
@@ -215,7 +215,7 @@ export default function UserDetailPage() {
                                                 <select 
                                                     value={editRoleId || ''} 
                                                     onChange={e => setEditRoleId(e.target.value || null)}
-                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-w-[200px]"
+                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-w-[200px]"
                                                 >
                                                     <option value="">Sin rol asignado</option>
                                                     {roles.map(r => (
@@ -250,7 +250,7 @@ export default function UserDetailPage() {
                                                     type="email" 
                                                     value={editEmail} 
                                                     onChange={e => setEditEmail(e.target.value)}
-                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                                                     autoFocus
                                                 />
                                             ) : (
