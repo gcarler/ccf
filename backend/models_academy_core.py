@@ -64,13 +64,9 @@ class CoursePrerequisite(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False, index=True)
-    prerequisite_course_id = Column(
-        UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False, index=True
-    )
+    prerequisite_course_id = Column(UUID(as_uuid=True), ForeignKey("academy_courses.id"), nullable=False, index=True)
 
-    __table_args__ = (
-        UniqueConstraint("course_id", "prerequisite_course_id", name="uq_course_prerequisite"),
-    )
+    __table_args__ = (UniqueConstraint("course_id", "prerequisite_course_id", name="uq_course_prerequisite"),)
 
     course = relationship("Course", foreign_keys=[course_id], back_populates="prerequisites")
     prerequisite_course = relationship("Course", foreign_keys=[prerequisite_course_id])
@@ -108,9 +104,7 @@ class LessonProgress(Base):
     last_position_seconds = Column(Integer, default=0, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
 
-    __table_args__ = (
-        UniqueConstraint("persona_id", "lesson_id", name="uq_lesson_progress_persona_lesson"),
-    )
+    __table_args__ = (UniqueConstraint("persona_id", "lesson_id", name="uq_lesson_progress_persona_lesson"),)
 
 
 class Assessment(Base):
@@ -139,9 +133,7 @@ class AssessmentQuestion(Base):
     __tablename__ = "academy_assessment_questions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    assessment_id = Column(
-        UUID(as_uuid=True), ForeignKey("academy_assessments.id"), nullable=False, index=True
-    )
+    assessment_id = Column(UUID(as_uuid=True), ForeignKey("academy_assessments.id"), nullable=False, index=True)
     question_text = Column(Text, nullable=False)
     question_type = Column(String(50), default="multiple_choice", nullable=False)
     points = Column(Integer, default=1, nullable=False)
@@ -155,9 +147,7 @@ class AssessmentOption(Base):
     __tablename__ = "academy_assessment_options"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    question_id = Column(
-        UUID(as_uuid=True), ForeignKey("academy_assessment_questions.id"), nullable=False, index=True
-    )
+    question_id = Column(UUID(as_uuid=True), ForeignKey("academy_assessment_questions.id"), nullable=False, index=True)
     option_text = Column(Text, nullable=False)
     is_correct = Column(Boolean, default=False, nullable=False)
 
@@ -189,21 +179,15 @@ class Enrollment(Base):
     persona = relationship("Persona")
     course = relationship("Course", back_populates="enrollments")
 
-    __table_args__ = (
-        UniqueConstraint("persona_id", "course_id", name="uq_enrollment_persona_course"),
-    )
+    __table_args__ = (UniqueConstraint("persona_id", "course_id", name="uq_enrollment_persona_course"),)
 
 
 class AssessmentAttempt(Base):
     __tablename__ = "academy_assessment_attempts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    assessment_id = Column(
-        UUID(as_uuid=True), ForeignKey("academy_assessments.id"), nullable=False, index=True
-    )
-    enrollment_id = Column(
-        UUID(as_uuid=True), ForeignKey("academy_enrollments.id"), nullable=False, index=True
-    )
+    assessment_id = Column(UUID(as_uuid=True), ForeignKey("academy_assessments.id"), nullable=False, index=True)
+    enrollment_id = Column(UUID(as_uuid=True), ForeignKey("academy_enrollments.id"), nullable=False, index=True)
     score = Column(Float, nullable=True)
     passed = Column(Boolean, default=False, nullable=False)
     submitted_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
@@ -224,12 +208,8 @@ class AssessmentAnswer(Base):
         nullable=False,
         index=True,
     )
-    question_id = Column(
-        UUID(as_uuid=True), ForeignKey("academy_assessment_questions.id"), nullable=False
-    )
-    selected_option_id = Column(
-        UUID(as_uuid=True), ForeignKey("academy_assessment_options.id"), nullable=True
-    )
+    question_id = Column(UUID(as_uuid=True), ForeignKey("academy_assessment_questions.id"), nullable=False)
+    selected_option_id = Column(UUID(as_uuid=True), ForeignKey("academy_assessment_options.id"), nullable=True)
     text_response = Column(Text, nullable=True)
     is_correct = Column(Boolean, nullable=True)
     points_awarded = Column(Numeric(5, 2), default=0)
@@ -260,15 +240,23 @@ class AssignmentSubmission(Base):
     __tablename__ = "academy_assignment_submissions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    enrollment_id = Column(
-        UUID(as_uuid=True), ForeignKey("academy_enrollments.id"), nullable=False, index=True
-    )
+    enrollment_id = Column(UUID(as_uuid=True), ForeignKey("academy_enrollments.id"), nullable=False, index=True)
     lesson_id = Column(UUID(as_uuid=True), ForeignKey("academy_lessons.id"), nullable=False, index=True)
     file_url = Column("seaweed_fid", String(500), nullable=False)
     comment = Column(Text, nullable=True)
     teacher_feedback = Column(Text, nullable=True)
     grade = Column(Float, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    # ACAD-MED-003-FOLLOWUP (cierre): columna soft-delete habilita el archivado
+    # controlado por ``delete_submission_admin`` sin romper la integridad
+    # referencial. Los huerfanos en Seaweed se recuperan vía el evento
+    # ``assignment_submission_archived`` en ``AcademyActivityLog.payload_json``.
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    # ACAD-MED-003-FOLLOWUP: necesario para ``row.lesson.course_id`` en
+    # ``delete_submission_admin`` y para cualquier caller que necesite el
+    # scope sede sin JOIN explícito.
+    lesson = relationship("Lesson")
 
 
 class Resource(Base):
@@ -289,9 +277,7 @@ class Certificate(Base):
     __tablename__ = "academy_certificates"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    enrollment_id = Column(
-        UUID(as_uuid=True), ForeignKey("academy_enrollments.id"), nullable=False, index=True
-    )
+    enrollment_id = Column(UUID(as_uuid=True), ForeignKey("academy_enrollments.id"), nullable=False, index=True)
     certificate_code = Column(String(100), nullable=False, unique=True, index=True)
     certificate_type = Column(String(50), nullable=True)
     issued_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
@@ -319,9 +305,7 @@ class FormalActaEntry(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     acta_id = Column(UUID(as_uuid=True), ForeignKey("academy_formal_actas.id"), nullable=False)
-    enrollment_id = Column(
-        UUID(as_uuid=True), ForeignKey("academy_enrollments.id"), nullable=False
-    )
+    enrollment_id = Column(UUID(as_uuid=True), ForeignKey("academy_enrollments.id"), nullable=False)
     final_grade = Column(Float, nullable=True)
     attendance_percent = Column(Float, default=0.0, nullable=False)
     approved = Column(Boolean, default=False, nullable=False)
@@ -364,4 +348,9 @@ class AcademyActivityLog(Base):
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     modality = Column(String(20), nullable=True)
     value = Column(Numeric(10, 2), default=1.0)
+    # ACAD-MED-003-FOLLOWUP: payload_json captura metadatos del evento
+    # (file_url, lesson_id, enrollment_id, archived_at, archived_by_persona_id)
+    # que no caben en String(20) modality. Job batch de purga de Seaweed
+    # consultará por event_type="assignment_submission_archived" + payload_json.
+    payload_json = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)

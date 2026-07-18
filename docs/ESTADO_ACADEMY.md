@@ -328,7 +328,7 @@ grep -nE "PARCIAL-|PEND-|ACAD-" /root/ccf/docs/ESTADO_ACADEMY.md
 | `ACAD-HIGH-004` | Pendiente | Mover la configuración única de sidebar a un solo origen |
 | `ACAD-MED-001` | Pendiente | Permitir hilos globales solo a `Editor/Manager` |
 | `ACAD-MED-002` | Pendiente | `PATCH /forum/threads/{id}/resolve` |
-| `ACAD-MED-003` | Pendiente | `DELETE /admin/submissions/{id}` |
+| `ACAD-MED-003` | ✅ **Hecho 2026-07-18** | `DELETE /admin/submissions/{id}` con soft delete (`row.deleted_at = _utcnow()`), filtro `deleted_at IS NULL` también en `list_submissions` y `grade_submission`, modelo `AssignmentSubmission.deleted_at` añadido en migration `20260718_0003`. |
 | `ACAD-MED-004` | Pendiente | Refactor por vista → `CourseGrid.tsx`, `CourseBoard.tsx`, etc. |
 | `ACAD-MED-005` | Pendiente | Mejorar `AcademyClient` con `<EmptyState/>` y retry visible |
 | `ACAD-LOW-001` | Pendiente | Implementar `onClick` o quitar botones |

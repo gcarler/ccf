@@ -196,7 +196,7 @@ Pasos obligatorios antes de cualquier trabajo de Academy:
 |---|---|---|
 | C.1 | `ACAD-MED-001` | En `POST /forum/threads`, rechazar `course_id=None` si `current_user` no tiene `academy:edit` o superior. |
 | C.2 | `ACAD-MED-002` | Añadir `PATCH /forum/threads/{id}/resolve` para `Editor/Manager`; campo booleano alternante. |
-| C.3 | `ACAD-MED-003` | Añadir `DELETE /admin/submissions/{id}` con soft delete y audit trail opcional. |
+| C.3 | `ACAD-MED-003` | ✅ **Hecho 2026-07-18** — `DELETE /admin/submissions/{id}` con soft delete (`row.deleted_at = _utcnow()`, Regla 4), filtros `deleted_at IS NULL` propagados a `list_submissions` y `grade_submission`. Modelo `AssignmentSubmission.deleted_at` añadido en migration `20260718_0003`. Audit trail completo en `AcademyActivityLog.payload_json` con `submission_id`/`file_url`/`lesson_id`/`enrollment_id`/`archived_at`/`archived_by_persona_id` (migration `20260718_0002`). |
 | C.4 | `ACAD-MED-004` | Refactor `CourseCatalog.tsx`: extraer cada vista a `CourseGrid`, `CourseList`, `CourseBoard`, `CourseCalendar`, `CourseGantt`, `CourseWiki`. Sin cambio de comportamiento visible. |
 | C.5 | `ACAD-MED-005` | En `AcademyClient.tsx`, envolver contenido con `<EmptyState/>` y botón "Reintentar" cuando `dashboard === null` y `loading === false`. |
 

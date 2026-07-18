@@ -12,9 +12,9 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import and_, func, or_
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
 
 from backend import models
 from backend.core.database import get_db
@@ -37,11 +37,15 @@ AcademyManager = Annotated[models.User, Depends(require_module_access("academy",
 
 
 class ProgressUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     progress_percent: float = Field(ge=0, le=100)
     last_position_seconds: int = Field(default=0, ge=0)
 
 
 class CoursePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     code: str
     title: str
     description: str | None = None
@@ -57,6 +61,8 @@ class CoursePayload(BaseModel):
 
 
 class CourseUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     code: str | None = None
     title: str | None = None
     description: str | None = None
@@ -72,6 +78,8 @@ class CourseUpdate(BaseModel):
 
 
 class LessonPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     title: str
     content: str = ""
     content_type: str = "video"
@@ -82,6 +90,8 @@ class LessonPayload(BaseModel):
 
 
 class LessonUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     title: str | None = None
     content: str | None = None
     content_type: str | None = None
@@ -92,12 +102,28 @@ class LessonUpdate(BaseModel):
 
 
 class AssessmentPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     course_id: UUID
     lesson_id: UUID | None = None
     title: str
     description: str | None = None
     passing_score: float = Field(default=70, ge=0, le=100)
     questions: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class AssessmentUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str | None = None
+    passing_score: float | None = Field(default=None, ge=0, le=100)
+
+
+class GradeSubmissionPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    grade: float = Field(ge=0, le=100)
+    feedback: str | None = None
 
 
 def _can_edit_academy(db: Session, user: models.User) -> bool:
@@ -466,7 +492,12 @@ def my_enrollments(current_user: AcademyStudent, db: Session = Depends(get_db)):
 
 
 @router.get("/enrollments")
-def all_enrollments(current_user: AcademyManager, db: Session = Depends(get_db)):
+def all_enrollments(
+    current_user: AcademyManager,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=200, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
     sede_id = get_user_sede_id(db, current_user.id)
     query = (
         db.query(models.Enrollment)
@@ -475,7 +506,7 @@ def all_enrollments(current_user: AcademyManager, db: Session = Depends(get_db))
     )
     if sede_id:
         query = query.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
-    return [_serialize_enrollment(enrollment) for enrollment in query.all()]
+    return [_serialize_enrollment(enrollment) for enrollment in query.offset(skip).limit(limit).all()]
 
 
 @router.post("/enrollments/{enrollment_id}/check-in")
@@ -516,27 +547,41 @@ def my_progress(current_user: AcademyStudent, db: Session = Depends(get_db)):
         # con cursos de otra sede a través de este endpoint (Axioma 3).
         .all()
     )
-    result = []
-    for enrollment in enrollments:
-        total_lessons = (
-            db.query(models.Lesson)
+    course_ids = [enrollment.course_id for enrollment in enrollments]
+    total_lessons_map: dict[UUID, int] = {}
+    completed_map: dict[UUID, int] = {}
+    if course_ids:
+        total_rows = (
+            db.query(
+                models.Lesson.course_id,
+                func.count(models.Lesson.id).label("cnt"),
+            )
             .filter(
-                models.Lesson.course_id == enrollment.course_id,
+                models.Lesson.course_id.in_(course_ids),
                 models.Lesson.deleted_at.is_(None),
                 models.Lesson.is_published.is_(True),
             )
-            .count()
+            .group_by(models.Lesson.course_id)
+            .all()
         )
-        completed_lessons = (
-            db.query(models.LessonProgress)
+        total_lessons_map = {row.course_id: row.cnt for row in total_rows}
+        completed_rows = (
+            db.query(
+                models.Lesson.course_id,
+                func.count(models.LessonProgress.id).label("cnt"),
+            )
             .join(models.Lesson, models.LessonProgress.lesson_id == models.Lesson.id)
             .filter(
                 models.LessonProgress.persona_id == current_user.id,
-                models.Lesson.course_id == enrollment.course_id,
+                models.Lesson.course_id.in_(course_ids),
                 models.LessonProgress.is_completed.is_(True),
             )
-            .count()
+            .group_by(models.Lesson.course_id)
+            .all()  # sede_id scoped via persona_id boundary (Axioma 3) + course_ids
         )
+        completed_map = {row.course_id: row.cnt for row in completed_rows}
+    result = []
+    for enrollment in enrollments:
         result.append(
             {
                 "id": enrollment.course_id,
@@ -544,8 +589,8 @@ def my_progress(current_user: AcademyStudent, db: Session = Depends(get_db)):
                 "progress_percent": enrollment.progress_percent,
                 "status": enrollment.status,
                 "average_grade": enrollment.final_grade or 0,
-                "lessons_completed": completed_lessons,
-                "total_lessons": total_lessons,
+                "lessons_completed": completed_map.get(enrollment.course_id, 0),
+                "total_lessons": total_lessons_map.get(enrollment.course_id, 0),
                 "last_activity": enrollment.updated_at,
                 "certificate_issued": enrollment.certificate_issued,
             }
@@ -906,13 +951,18 @@ def list_submissions(
     # Axioma 3 — Multi-Tenant: las entregas SOLO se listan para cursos del scope del editor.
     # Join con Course (a través de Lesson) + filtro sede_id; los cursos globales (sede_id IS NULL)
     # son visibles para todos los editores con sede; un superadmin sin sede ve TODO lo no borrado.
+    # ACAD-MED-003-FOLLOWUP: ocultamos entregas archivadas (soft-deleted) para que
+    # el archivado desde ``delete_submission_admin`` se refleje en la lista.
     rows = (
         db.query(models.AssignmentSubmission, models.Lesson.title, models.Persona)
         .join(models.Lesson, models.AssignmentSubmission.lesson_id == models.Lesson.id)
         .join(models.Course, models.Lesson.course_id == models.Course.id)
         .join(models.Enrollment, models.AssignmentSubmission.enrollment_id == models.Enrollment.id)
         .join(models.Persona, models.Enrollment.persona_id == models.Persona.id)
-        .filter(models.Course.deleted_at.is_(None))
+        .filter(
+            models.Course.deleted_at.is_(None),
+            models.AssignmentSubmission.deleted_at.is_(None),
+        )
     )
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
@@ -939,8 +989,7 @@ def list_submissions(
 def grade_submission(
     submission_id: UUID,
     current_user: AcademyEditor,
-    grade: float = Query(ge=0, le=100),
-    feedback: str | None = None,
+    payload: GradeSubmissionPayload,
     db: Session = Depends(get_db),
 ):
     # Axioma 3 — Multi-Tenant: una entrega sólo puede mutarse si su Course pertenece
@@ -953,6 +1002,10 @@ def grade_submission(
         .join(models.Course, models.Lesson.course_id == models.Course.id)
         .filter(
             models.AssignmentSubmission.id == submission_id,
+            # ACAD-MED-003-FOLLOWUP: bloquea calificar entregas archivadas.
+            # Sin este filtro un editor podría mutar notas en submissions
+            # ya retiradas de la lista, contradiciendo el archivado.
+            models.AssignmentSubmission.deleted_at.is_(None),
             models.Course.deleted_at.is_(None),
             models.Lesson.deleted_at.is_(None),
         )
@@ -963,8 +1016,8 @@ def grade_submission(
     submission = query.first()
     if not submission:
         raise HTTPException(status_code=404, detail="Entrega no encontrada")
-    submission.grade = grade
-    submission.teacher_feedback = feedback
+    submission.grade = payload.grade
+    submission.teacher_feedback = payload.feedback
     db.commit()
     db.refresh(submission)
     return submission
@@ -1025,6 +1078,22 @@ def course_students(course_id: UUID, current_user: AcademyEditor, db: Session = 
         # el aislamiento por sede sin romper la query.
         query = query.filter(models.Course.sede_id == user_sede)
     enrollments = query.all()
+    enrollment_ids = [e.id for e in enrollments]
+    attendance_map: dict[UUID, int] = {}
+    if enrollment_ids:
+        attendance_rows = (
+            db.query(
+                models.CourseAttendance.enrollment_id,
+                func.count(models.CourseAttendance.id).label("cnt"),
+            )
+            .filter(
+                models.CourseAttendance.enrollment_id.in_(enrollment_ids),
+                models.CourseAttendance.status == "present",
+            )
+            .group_by(models.CourseAttendance.enrollment_id)
+            .all()
+        )
+        attendance_map = {row.enrollment_id: row.cnt for row in attendance_rows}
     return [
         {
             "id": enrollment.id,
@@ -1037,12 +1106,7 @@ def course_students(course_id: UUID, current_user: AcademyEditor, db: Session = 
             "status": enrollment.status,
             "progress": enrollment.progress_percent,
             "progress_percent": enrollment.progress_percent,
-            "attendance_count": db.query(models.CourseAttendance)
-            .filter(
-                models.CourseAttendance.enrollment_id == enrollment.id,
-                models.CourseAttendance.status == "present",
-            )
-            .count(),
+            "attendance_count": attendance_map.get(enrollment.id, 0),
             "average_grade": enrollment.final_grade or 0,
             "approved": enrollment.approved,
         }
@@ -1105,12 +1169,16 @@ def delete_submission_admin(
     se setea con ``_utcnow()`` siguiendo el patrón canónico de
     ``backend/crud/crm_/milestones.py::delete_milestone``.
 
-    TODO ACAD-MED-003-FOLLOWUP: el archivo físico en Seaweed queda huérfano tras el
-    soft delete. Evaluar job batch de purga o tabla ``academy_submission_audit`` con
-    columna JSON para preservar el file_url original antes del archivado.
+    ACAD-MED-003-FOLLOWUP (cierre): antes del archivado escribimos un evento en
+    ``AcademyActivityLog`` con ``event_type="assignment_submission_archived"`` y
+    ``payload_json`` conteniendo ``file_url``, ``lesson_id``, ``enrollment_id``,
+    ``archived_at`` y ``archived_by_persona_id``. Esto cierra el ciclo para que un
+    futuro job batch de purga de Seaweed pueda listar huérfanos consultando por
+    ``event_type`` (índice existente) y leyendo el JSON.
     """
     submission = (
         db.query(models.AssignmentSubmission)
+        .options(contains_eager(models.AssignmentSubmission.lesson))
         .join(models.Lesson, models.AssignmentSubmission.lesson_id == models.Lesson.id)
         .join(models.Course, models.Lesson.course_id == models.Course.id)
         .filter(
@@ -1129,7 +1197,8 @@ def delete_submission_admin(
     # ACAD-MED-003 (Regla 4): soft delete via deleted_at, NO db.delete(). Esto
     # preserva audit + integridad referencial y mantiene el modelo coherente con
     # ``Course``, ``Lesson`` y demás entidades transaccionales.
-    row.deleted_at = _utcnow()
+    archived_at = _utcnow()
+    row.deleted_at = archived_at
     db.add(
         models.AcademyActivityLog(
             event_type="assignment_submission_archived",
@@ -1137,6 +1206,17 @@ def delete_submission_admin(
             persona_id=current_user.id,
             modality=None,
             value=0,
+            # ACAD-MED-003-FOLLOWUP (cierre): payload_json conserva el file_url
+            # completo (que no cabe en String(20) de modality) + FKs para el job
+            # batch de purga de Seaweed.
+            payload_json={
+                "submission_id": str(row.id),
+                "file_url": row.file_url,
+                "lesson_id": str(row.lesson_id) if row.lesson_id else None,
+                "enrollment_id": str(row.enrollment_id) if row.enrollment_id else None,
+                "archived_at": archived_at.isoformat(),
+                "archived_by_persona_id": str(current_user.id),
+            },
         )
     )
     db.commit()
@@ -1186,7 +1266,7 @@ def create_assessment_admin(
 @router.patch("/admin/assessments/{assessment_id}")
 def update_assessment_admin(
     assessment_id: UUID,
-    payload: dict[str, Any],
+    payload: AssessmentUpdate,
     current_user: AcademyEditor,
     db: Session = Depends(get_db),
 ):
@@ -1198,10 +1278,11 @@ def update_assessment_admin(
     if not assessment:
         raise HTTPException(status_code=404, detail="Evaluación no encontrada")
     _get_scoped_course(db, current_user, assessment.course_id)
-    if "title" in payload:
-        assessment.title = str(payload["title"])
-    if "passing_score" in payload:
-        assessment.passing_score = float(payload["passing_score"])
+    changes = payload.model_dump(exclude_unset=True)
+    if "title" in changes:
+        assessment.title = str(changes["title"])
+    if "passing_score" in changes:
+        assessment.passing_score = float(changes["passing_score"])
     assessment.updated_at = _utcnow()
     db.commit()
     db.refresh(assessment)
