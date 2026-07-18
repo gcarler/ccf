@@ -1,5 +1,5 @@
 from backend import crud, schemas
-from tests.conftest import seed_admin
+from tests.conftest import auth_headers, seed_admin
 import uuid
 
 
@@ -107,3 +107,16 @@ def test_crm_schema_validation(db_session):
     messaging = MessagingSend(template_id=uuid.uuid4())
     assert len(messaging.recipient_ids) == 0
     assert messaging.variables == {}
+
+
+def test_crm_pipeline_wiki_page_bootstraps_as_empty_document(client, db_session):
+    seed_admin(db_session, email="crmwiki@example.com", password="testpass123")
+    headers = auth_headers(client, email="crmwiki@example.com", password="testpass123")
+
+    response = client.get("/api/wiki/pages/crm_pipeline_wiki_notes", headers=headers)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["page_key"] == "wiki_crm_pipeline_wiki_notes"
+    assert payload["content"] == ""
+    assert payload["version"] == 0

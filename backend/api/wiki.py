@@ -6,9 +6,10 @@ previous version for history.
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import re
 from typing import List, Optional
-from uuid import UUID
+from uuid import UUID, uuid5, NAMESPACE_URL
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -51,6 +52,29 @@ def _resolve_persona(db: Session, current_user) -> UUID | None:
     return resolve_persona_id_for_user(db, current_user.id)
 
 
+def _build_virtual_wiki_page(page_key: str, sede_id: UUID | None) -> WikiPageRead:
+    """Return an empty virtual wiki page for collaborative surfaces.
+
+    CRM and similar modules mount shared notes lazily. Returning an empty
+    document keeps the contract stable without requiring pre-seeded rows.
+    """
+    now = datetime.now(timezone.utc)
+    scope = str(sede_id) if sede_id else "global"
+    return WikiPageRead(
+        id=uuid5(NAMESPACE_URL, f"wiki:{scope}:{page_key}"),
+        page_key=page_key,
+        title=page_key.replace("wiki_", "").replace("-", " ").replace("_", " ").title(),
+        content="",
+        version=0,
+        category=None,
+        tags=[],
+        sede_id=sede_id,
+        author_id=None,
+        created_at=now,
+        updated_at=now,
+    )
+
+
 @router.get("/pages", response_model=List[WikiPageRead])
 def list_wiki_pages(
     search: Optional[str] = Query(None, description="Filtrar por título o page_key"),
@@ -86,12 +110,16 @@ def get_wiki_page(
     current_user: models.User = Depends(get_current_active_user),
     _: models.User = Depends(require_module_access("wiki", "read")),
 ):
-    """Get a single wiki page by key. Returns 404 if not found (no auto-create)."""
+    """Get a single wiki page by key.
+
+    Missing collaborative notes return an empty virtual document so module
+    surfaces can bootstrap shared wiki content without API runtime failures.
+    """
     key = _normalize_page_key(page_key)
     sede_id = _resolve_sede(db, current_user)
     row = crud_wiki.get_wiki_page(db, key, sede_id)
     if not row:
-        raise HTTPException(status_code=404, detail="wiki page not found")
+        return _build_virtual_wiki_page(key, sede_id)
     return row
 
 

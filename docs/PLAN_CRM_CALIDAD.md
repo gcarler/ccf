@@ -151,6 +151,16 @@ Criterio de salida:
 
 **ID:** `CRM-FASE6-QA`
 
+**Estado de ejecucion al 2026-07-18:** cerrado.
+
+Resumen de cierre:
+
+- `scripts/test_crm_quality.py` base: verde
+- `scripts/test_crm_quality.py --backend-deep --pipeline --concurrency`: verde (`5/5` suites)
+- `npm run test:e2e:crm`: verde (`14 passed`)
+- `npm run test:e2e:crm:deep`: verde (`17 passed`)
+- cierre estructural aplicado en contrato wiki compartido del pipeline CRM y en suites profundas alineadas al RBAC real
+
 Comandos mínimos:
 
 ```bash

@@ -4,7 +4,7 @@ import pytest
 from backend import models
 from backend.models_crm_pipeline import CasoCRM, EtapaPipeline, PipelineCRM, CrmReorderLock
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
-from tests.test_crm_visual import _seed_test_data
+from tests.test_crm_visual import _automation_headers, _seed_test_data
 
 def test_concurrency_same_stage_bypass_reorder_lock(client, db_session):
     """
@@ -62,11 +62,12 @@ def test_lock_recovery_boundary_exactly_ten_seconds(client, db_session):
     assert db_session.query(CrmReorderLock).filter(CrmReorderLock.stage_id == etapa1.id).count() == 0
 
 
-def test_cycle_detection_multiple_subgraph_isolated_cycles(client):
+def test_cycle_detection_multiple_subgraph_isolated_cycles(client, db_session):
     """
     Boundary case: check cycle detection when the graph has multiple disconnected components,
     each containing a cycle (e.g., n1<->n2 and n3<->n4).
     """
+    headers = _automation_headers(client, db_session, email="crm-challenger-admin@example.com")
     payload = {
         "nodes": ["n1", "n2", "n3", "n4", "n5"],
         "edges": [
@@ -76,23 +77,24 @@ def test_cycle_detection_multiple_subgraph_isolated_cycles(client):
             {"source": "n4", "target": "n3"},
         ]
     }
-    response = client.post("/api/crm/automations/flows/check-cycles", json=payload)
+    response = client.post("/api/crm/automations/flows/check-cycles", json=payload, headers=headers)
     assert response.status_code == 200
     cycles = response.json()["cycles"]
     # Should detect both cycles
     assert len(cycles) >= 2
 
 
-def test_branching_traverse_missing_and_mismatched_types(client):
+def test_branching_traverse_missing_and_mismatched_types(client, db_session):
     """
     Boundary case: branching traverse with missing variables, null values, or unexpected operators.
     """
+    headers = _automation_headers(client, db_session, email="crm-challenger-admin-2@example.com")
     # 1. Missing variable in conditions
     payload = {
         "variables": {"nombre": "Juan"},
         "conditions": [{"key": "nonexistent", "operator": "equals", "value": "Juan"}]
     }
-    response = client.post("/api/crm/automations/branching/traverse", json=payload)
+    response = client.post("/api/crm/automations/branching/traverse", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["result"] is False
 
@@ -101,7 +103,7 @@ def test_branching_traverse_missing_and_mismatched_types(client):
         "variables": {"sort_order": 5},
         "conditions": [{"key": "sort_order", "operator": "unknown_op", "value": "5"}]
     }
-    response = client.post("/api/crm/automations/branching/traverse", json=payload)
+    response = client.post("/api/crm/automations/branching/traverse", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["result"] is False
 
