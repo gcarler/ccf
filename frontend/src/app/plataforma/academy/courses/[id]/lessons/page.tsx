@@ -52,13 +52,13 @@ export default function LessonsPage() {
     const [saving, setSaving] = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
-    const load = useCallback(async () => {
+    const load = useCallback(async (signal?: AbortSignal) => {
         if (!token || !courseId) return;
         try {
             setLoading(true);
             const [courseData, lessonsData] = await Promise.allSettled([
-                apiFetch<any>(`/academy/courses/${courseId}`, { token }),
-                apiFetch<Lesson[]>(`/academy/courses/${courseId}/lessons`, { token }),
+                apiFetch<any>(`/academy/courses/${courseId}`, { token, signal }),
+                apiFetch<Lesson[]>(`/academy/courses/${courseId}/lessons`, { token, signal }),
             ]);
             if (courseData.status === 'fulfilled') setCourse(courseData.value);
             if (lessonsData.status === 'fulfilled') setLessons(lessonsData.value ?? []);
@@ -69,7 +69,11 @@ export default function LessonsPage() {
         }
     }, [token, courseId]);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        const ctrl = new AbortController();
+        load(ctrl.signal);
+        return () => ctrl.abort();
+    }, [load]);
 
     const openCreate = () => {
         setEditing(null);

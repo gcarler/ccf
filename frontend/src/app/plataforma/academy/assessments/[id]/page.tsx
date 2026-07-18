@@ -40,18 +40,21 @@ export default function AssessmentPage() {
     const [viewType, setViewType] = useState<ViewType>('grid');
 
     useEffect(() => {
+        const ctrl = new AbortController();
         const fetchAssessment = async () => {
             if (!token || !id) return;
             try {
-                const data = await apiFetch<any>(`/academy/assessments/${id}`, { token });
+                const data = await apiFetch<any>(`/academy/assessments/${id}`, { token, signal: ctrl.signal });
                 setAssessment(data);
             } catch (err) {
                 console.error("Error fetching assessment:", err);
+                toast.error('Error al cargar la evaluación');
             } finally {
                 setLoading(false);
             }
         };
         fetchAssessment();
+        return () => ctrl.abort();
     }, [id, token]);
 
     const handleAnswer = (questionId: string, update: any) => {
@@ -84,6 +87,7 @@ export default function AssessmentPage() {
             setResult(data);
         } catch (err) {
             console.error("Failed to submit assessment:", err);
+            toast.error('Error al enviar la evaluación');
         } finally {
             setIsSubmitting(false);
         }
@@ -133,7 +137,7 @@ export default function AssessmentPage() {
                             </button>
                             {!result.passed && (
                                 <button
-                                    onClick={() => window.location.reload()}
+                                    onClick={() => router.refresh()}
                                     className="w-full py-1.5 text-[hsl(var(--text-secondary))] font-bold text-sm uppercase tracking-wide hover:text-[hsl(var(--text-primary))] transition-colors"
                                 >
                                     Reintentar Evaluacion

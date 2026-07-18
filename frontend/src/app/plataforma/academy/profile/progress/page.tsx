@@ -51,16 +51,15 @@ export default function StudentProgressPage() {
 
     useEffect(() => {
         if (!token || !isAuthenticated) return;
+        const ctrl = new AbortController();
         const loadData = async () => {
             try {
                 setLoading(true);
-                // Simulamos una carga suave para la animación
                 await new Promise(r => setTimeout(r, 600));
-                const data = await apiFetch<CourseProgress[]>('/academy/me/progress', { token });
+                const data = await apiFetch<CourseProgress[]>('/academy/me/progress', { token, signal: ctrl.signal });
                 const arr = Array.isArray(data) ? data : [];
                 setProgress(arr);
                 
-                // Calculate basic stats
                 const completed = arr.filter(c => c.status === 'completed').length;
                 const avg = arr.length > 0 ? arr.reduce((acc, curr) => acc + curr.average_grade, 0) / arr.length : 0;
                 const certs = arr.filter(c => c.certificate_issued).length;
@@ -79,6 +78,7 @@ export default function StudentProgressPage() {
             }
         };
         loadData();
+        return () => ctrl.abort();
     }, [token, isAuthenticated, user?.id]);
 
     if (!isAuthenticated) return null;

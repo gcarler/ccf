@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
+import { toast } from 'sonner';
 
 export default function AcademyAccountPage() {
     const { token, user } = useAuth();
@@ -16,10 +17,12 @@ export default function AcademyAccountPage() {
 
     useEffect(() => {
         if (!token) return;
-        apiFetch<any[]>('/academy/courses', { token })
+        const ctrl = new AbortController();
+        apiFetch<any[]>('/academy/courses', { token, signal: ctrl.signal })
             .then(data => setEnrollments(Array.isArray(data) ? data.slice(0, 5) : []))
-            .catch(() => setEnrollments([]))
+            .catch(() => { setEnrollments([]); toast.error('Error al cargar inscripciones'); })
             .finally(() => setLoading(false));
+        return () => ctrl.abort();
     }, [token]);
 
     const stats = [

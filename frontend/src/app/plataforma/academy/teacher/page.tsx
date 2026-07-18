@@ -45,19 +45,21 @@ export default function TeacherWorkspace() {
         return ['admin', 'coordinador', 'docente', 'staff'].includes(role);
     }, [user?.role]);
 
-    const loadData = useCallback(async () => {
+    const loadData = useCallback(async (signal?: AbortSignal) => {
         try {
             setLoading(true);
             const [subRes, courseRes] = await Promise.all([
                 apiFetch<AssignmentSubmissionReview[]>(`/academy/admin/submissions?limit=50`, {
                     token,
                     cache: 'no-store',
+                    signal,
                 }),
-                apiFetch<any[]>(`/academy/courses/`, { token })
+                apiFetch<any[]>(`/academy/courses/`, { token, signal })
             ]);
             setSubmissions(Array.isArray(subRes) ? subRes : []);
             setCourses(Array.isArray(courseRes) ? courseRes : []);
         } catch (err) {
+            if ((err as Error).name === 'AbortError') return;
             console.error(err);
             toast.error('No pudimos cargar los datos del panel');
         } finally {
@@ -67,7 +69,9 @@ export default function TeacherWorkspace() {
 
     useEffect(() => {
         if (!token || !isAuthenticated) return;
-        loadData();
+        const ctrl = new AbortController();
+        loadData(ctrl.signal);
+        return () => ctrl.abort();
     }, [token, isAuthenticated, loadData]);
 
     useEffect(() => {
@@ -135,7 +139,7 @@ export default function TeacherWorkspace() {
                             </span>
                             <div className="h-4 w-px bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
                             <button 
-                                onClick={loadData}
+                                onClick={() => loadData()}
                                 className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]"
                             >
                                 <Loader2 size={16} className={clsx(loading && 'animate-spin')} />

@@ -33,7 +33,8 @@ export default function EditCoursePage() {
 
     useEffect(() => {
         if (!token || !id) return;
-        apiFetch<any>(`/academy/courses/${id}`, { token })
+        const ctrl = new AbortController();
+        apiFetch<any>(`/academy/courses/${id}`, { token, signal: ctrl.signal })
             .then(data => setForm({
                 code: data.code ?? '',
                 title: data.title ?? '',
@@ -46,6 +47,7 @@ export default function EditCoursePage() {
             }))
             .catch(() => toast.error('Error al cargar el curso'))
             .finally(() => setLoading(false));
+        return () => ctrl.abort();
     }, [id, token]);
 
     const handleSubmit = async (e: React.FormEvent) => {

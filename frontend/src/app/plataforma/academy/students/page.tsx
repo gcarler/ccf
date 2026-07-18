@@ -30,12 +30,14 @@ export default function AcademyStudentsPage() {
 
     useEffect(() => {
         if (!token) return;
+        const ctrl = new AbortController();
         const load = async () => {
             try {
                 setLoading(true);
                 const data = await apiFetch<StudentRow[]>("/academy/personas?role=student", {
                     token,
                     cache: "no-store",
+                    signal: ctrl.signal,
                 });
                 setStudents(Array.isArray(data) ? data : []);
             } catch (error) {
@@ -46,6 +48,7 @@ export default function AcademyStudentsPage() {
             }
         };
         load();
+        return () => ctrl.abort();
     }, [token]);
 
     const filtered = useMemo(() => {

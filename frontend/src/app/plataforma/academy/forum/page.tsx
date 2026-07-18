@@ -17,6 +17,7 @@ import clsx from "clsx";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
+import { toast } from "sonner";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 
@@ -34,17 +35,22 @@ export default function AcademyForumPage() {
     const [newThread, setNewThread] = useState({ title: "", category: "Teologia" });
 
     useEffect(() => {
+        const ctrl = new AbortController();
         const fetchThreads = async () => {
             if (!token) return;
             setLoading(true);
             try {
-                const data = await apiFetch<any[]>("/academy/forum/threads", { token });
+                const data = await apiFetch<any[]>("/academy/forum/threads", { token, signal: ctrl.signal });
                 setThreads((Array.isArray(data) ? data : []).map((thread) => normalizeThread(thread)));
+            } catch (err) {
+                console.error(err);
+                toast.error('Error al cargar hilos del foro');
             } finally {
                 setLoading(false);
             }
         };
         fetchThreads();
+        return () => ctrl.abort();
     }, [token]);
 
     const visibleThreads = useMemo(() => {

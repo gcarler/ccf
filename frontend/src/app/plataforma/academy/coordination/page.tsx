@@ -33,13 +33,14 @@ export default function CoordinationConsole() {
 
     useEffect(() => {
         if (!token || !isAuthenticated) return;
+        const ctrl = new AbortController();
         const load = async () => {
             try {
                 setLoading(true);
                 const [metricsData, readinessData, coursesData] = await Promise.all([
-                    apiFetch<DashboardMetrics>(`/academy/dashboard/metrics`, { token, cache: 'no-store' }),
-                    apiFetch<PilotReadiness>(`/academy/dashboard/pilot-readiness`, { token, cache: 'no-store' }),
-                    apiFetch<CourseSummary[]>(`/academy/courses/?modality=formal&published_only=false`, { token, cache: 'no-store' }),
+                    apiFetch<DashboardMetrics>(`/academy/dashboard/metrics`, { token, cache: 'no-store', signal: ctrl.signal }),
+                    apiFetch<PilotReadiness>(`/academy/dashboard/pilot-readiness`, { token, cache: 'no-store', signal: ctrl.signal }),
+                    apiFetch<CourseSummary[]>(`/academy/courses/?modality=formal&published_only=false`, { token, cache: 'no-store', signal: ctrl.signal }),
                 ]);
                 setMetrics(metricsData);
                 setReadiness(readinessData);
@@ -52,6 +53,7 @@ export default function CoordinationConsole() {
             }
         };
         load();
+        return () => ctrl.abort();
     }, [token, isAuthenticated]);
 
     useEffect(() => {

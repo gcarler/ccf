@@ -64,11 +64,12 @@ export default function CourseManagementPage() {
 
     useEffect(() => {
         if (!token || !isAuthenticated) return;
+        const ctrl = new AbortController();
         const loadData = async () => {
             try {
                 setLoading(true);
-                const courseReq = apiFetch<CourseDetails>(`/academy/courses/${id}`, { token }).catch(() => null);
-                const studentsReq = apiFetch<Student[]>(`/academy/admin/courses/${id}/students`, { token }).catch(() => []);
+                const courseReq = apiFetch<CourseDetails>(`/academy/courses/${id}`, { token, signal: ctrl.signal }).catch(() => null);
+                const studentsReq = apiFetch<Student[]>(`/academy/admin/courses/${id}/students`, { token, signal: ctrl.signal }).catch(() => []);
                 const [courseData, studentsData] = await Promise.all([courseReq, studentsReq]);
                 setCourse(courseData);
                 setStudents(Array.isArray(studentsData) ? studentsData : []);
@@ -80,6 +81,7 @@ export default function CourseManagementPage() {
             }
         };
         loadData();
+        return () => ctrl.abort();
     }, [id, token, isAuthenticated]);
 
     const filteredStudents = useMemo(() => {
