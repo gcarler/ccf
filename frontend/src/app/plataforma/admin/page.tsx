@@ -4,6 +4,7 @@ import { ViewType } from "@/components/ViewSwitcher";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
 import clsx from "clsx";
 import { motion } from 'framer-motion';
@@ -30,12 +31,14 @@ import { useEffect,useState } from "react";
 
 export default function AdminDashboardPage() {
   const { token } = useAuth();
+  const { addToast } = useToast();
   const [viewType, setViewType] = useState<ViewType>('grid');
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [agentTasks, setAgentTasks] = useState<any[]>([]);
   const [agentInsights, setAgentInsights] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,17 +46,19 @@ export default function AdminDashboardPage() {
       if (!token) return;
       setLoading(true);
       try {
-        const [testRes, taskRes, insightRes] = await Promise.allSettled([
+        const [testRes, taskRes, insightRes, statsRes] = await Promise.allSettled([
           apiFetch<any[]>("/admin/testimonials", { token, cache: 'no-store' }),
           apiFetch<any[]>("/agents/tasks", { token, cache: 'no-store' }),
           apiFetch<any[]>("/agents/insights", { token, cache: 'no-store' }),
+          apiFetch<any>("/admin/stats", { token, cache: 'no-store' }),
         ]);
 
         setTestimonials(testRes.status === 'fulfilled' && Array.isArray(testRes.value) ? testRes.value : []);
         setAgentTasks(taskRes.status === 'fulfilled' && Array.isArray(taskRes.value) ? taskRes.value : []);
         setAgentInsights(insightRes.status === 'fulfilled' && Array.isArray(insightRes.value) ? insightRes.value : []);
+        setStats(statsRes.status === 'fulfilled' && statsRes.value ? statsRes.value : null);
       } catch (e) {
-        console.error("Error fetching admin data", e);
+        addToast("Error al cargar datos del panel", "error");
       } finally {
         setLoading(false);
       }
@@ -122,7 +127,7 @@ export default function AdminDashboardPage() {
 
                         <div className="relative z-10 flex items-center justify-between mb-3">
                             <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-lg text-[9px] font-bold uppercase tracking-wide text-blue-100 border border-white/20">
-                                <Globe size={10} /> Tesorería Consolidada <span className="text-white/20">|</span> 2026
+                                <Globe size={10} /> Tesorería Consolidada <span className="text-white/20">|</span> {new Date().getFullYear()}
                             </div>
                             <button className="px-3 py-1 bg-white/10 hover:bg-[hsl(var(--bg-primary))] text-white hover:text-[#001b48] rounded-lg font-bold text-[9px] uppercase tracking-wide transition-all">
                                 Desglosar
@@ -131,19 +136,19 @@ export default function AdminDashboardPage() {
 
                         <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-3">
                             <div className="flex items-end gap-3">
-                                <h3 className="text-xl lg:text-xl font-bold tracking-tighter leading-none">$12,450<span className="text-lg text-blue-300">.00</span></h3>
+                                <h3 className="text-xl lg:text-xl font-bold tracking-tighter leading-none">${(stats?.donaciones_mes || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
                                 <div className="mb-1.5 px-2 py-0.5 bg-emerald-500 text-white rounded-md text-[9px] font-bold flex items-center gap-1 shadow-sm">
-                                     <TrendingUp size={10} strokeWidth={3} /> +15.2%
+                                     <TrendingUp size={10} strokeWidth={3} /> Activo
                                 </div>
                             </div>
                             <div className="flex gap-3 items-center">
-                                <div className="space-y-0.5"><p className="text-[9px] font-bold text-blue-200/60 uppercase tracking-wide">Diezmos</p><p className="text-lg font-bold leading-none">$8,200</p></div>
-                                <div className="space-y-0.5"><p className="text-[9px] font-bold text-blue-200/60 uppercase tracking-wide">Ofrendas</p><p className="text-lg font-bold leading-none">$4,250</p></div>
+                                <div className="space-y-0.5"><p className="text-[9px] font-bold text-blue-200/60 uppercase tracking-wide">Diezmos</p><p className="text-lg font-bold leading-none">${(stats?.diezmos_mes || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
+                                <div className="space-y-0.5"><p className="text-[9px] font-bold text-blue-200/60 uppercase tracking-wide">Ofrendas</p><p className="text-lg font-bold leading-none">${(stats?.ofrendas_mes || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
                             </div>
                         </div>
                     </div>
-                    <KpiCard title="Personas" value="1,240" trend="+42 nuevas" icon={Users} color="text-[hsl(var(--primary))]" />
-                    <KpiCard title="Asistencia" value="85%" trend="Óptimo" icon={Calendar} color="text-emerald-500" />
+                    <KpiCard title="Personas" value={(stats?.personas || 0).toLocaleString()} trend={stats?.personas_nuevas_mes ? `+${stats.personas_nuevas_mes} nuevas` : 'Sin cambios'} icon={Users} color="text-[hsl(var(--primary))]" />
+                    <KpiCard title="Asistencia" value={stats?.usuarios_activos ? `${Math.round(stats.usuarios_activos / Math.max(stats.personas, 1) * 100)}%` : '—'} trend={stats?.usuarios_activos ? `${stats.usuarios_activos} activos` : 'Sin datos'} icon={Calendar} color="text-emerald-500" />
                 </motion.section>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
@@ -182,7 +187,7 @@ export default function AdminDashboardPage() {
                     <aside className="lg:col-span-4 space-y-3">
 
                         {/* Optimus Neural Widget */}
-                        <motion.div variants={itemVariants} className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 shadow-sm relative overflow-hidden group">
+                        <motion.div variants={itemVariants} className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 shadow-sm relative overflow-hidden group">
                             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
                                 <Bot size={10} className="text-sky-600" />
                             </div>
@@ -202,7 +207,7 @@ export default function AdminDashboardPage() {
                                             <div key={insight.id} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5 space-y-1 group/insight cursor-pointer hover:border-sky-500/30 hover:shadow-sm transition-all">
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-none group-hover/insight:text-sky-600 transition-colors truncate">{insight.title}</p>
-                                                    <span className="text-[7px] font-bold px-1.5 py-0.5 bg-sky-50 dark:bg-sky-500/10 text-sky-600 rounded uppercase tracking-wide shrink-0">{insight.insight_type.split('_')[0]}</span>
+                                                    <span className="text-[7px] font-bold px-1.5 py-0.5 bg-sky-50 dark:bg-sky-500/10 text-sky-600 rounded uppercase tracking-wide shrink-0">{insight.insight_type?.split('_')[0] || insight.insight_type || '—'}</span>
                                                 </div>
                                                 <p className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-tight italic font-medium line-clamp-2">&ldquo;{insight.payload}&rdquo;</p>
                                             </div>
@@ -222,7 +227,7 @@ export default function AdminDashboardPage() {
                         </motion.div>
 
                         {/* Recent Activity Log */}
-                        <motion.div variants={itemVariants} className="space-y-3 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] p-4 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm">
+                        <motion.div variants={itemVariants} className="space-y-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] p-4 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm">
                             <h3 className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1.5 mb-3">
                                 <History size={10} /> Actividad del Staff
                             </h3>
@@ -261,7 +266,7 @@ export default function AdminDashboardPage() {
                 </section>
                 <section className="space-y-3">
                     <h4 className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1.5"><FileText size={10} className="text-[hsl(var(--primary))]"/> Descripción Técnica</h4>
-                    <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium shadow-inner">
+                    <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] rounded-md text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium shadow-inner">
                         {selectedTask?.description || selectedTask?.payload || 'Cargando detalles de la operación...'}
                     </div>
                 </section>
@@ -273,7 +278,7 @@ export default function AdminDashboardPage() {
 
 function KpiCard({ title, value, trend, icon: Icon, color }: any) {
     return (
-        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[hsl(var(--surface-2))] dark:from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-full pointer-events-none" />
             <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={clsx("size-10 rounded-md flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-black/20 shadow-inner group-hover:scale-105 transition-transform", color)}>
@@ -300,7 +305,7 @@ function AdminTaskRow({ task, onOpen, index }: any) {
             initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.03, type: 'spring', stiffness: 300, damping: 24 }}
             onClick={() => onOpen(task)}
             className={clsx(
-                "p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-blue-500/40 hover:shadow-sm shadow-sm transition-all cursor-pointer relative overflow-hidden",
+                "p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-blue-500/40 hover:shadow-sm shadow-sm transition-all cursor-pointer relative overflow-hidden",
                 task.is_special && "border-l-2 border-l-amber-400"
             )}
         >
