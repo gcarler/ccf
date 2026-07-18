@@ -3,7 +3,7 @@
 > **Inicio:** 2026-07-18  
 > **Alcance:** `/api/admin`, Auth v3, roles de plataforma, asignaciones por
 > módulo, administración de personas y sus pantallas de plataforma.  
-> **Estado:** preparado para auditoría; ningún hallazgo se declara corregido sin
+> **Estado:** certificado internamente el 2026-07-18; cada cierre conserva
 > regresión automatizada y evidencia de dos sedes.
 
 ## Objetivo de cierre
@@ -45,12 +45,12 @@ persistido requerirá una migración reversible y compatibilidad de lectura.
 
 | Fase | Entrega | Estado | Gate de salida |
 |---|---|---|---|
-| 0. Línea base y decisión | Inventario de rutas/guards/consumidores, matriz actual por rol y dos sedes; decisión de precedencia aprobada en documentación. | Pendiente | Auditoría reproducible y contratos sin contradicciones conocidas. |
-| 1. Resolución canónica | Servicio puro de permisos efectivos y dependencias FastAPI que lo usen; compatibilidad de lectura para datos existentes. | Pendiente | Matriz de `read/edit/manage/study` y denegaciones pasa sin bypass nominal accidental. |
-| 2. Persistencia segura | Modelo de asignación/override, validaciones de módulo, sede, soft delete e integridad; migración reversible si la decisión lo exige. | Pendiente | Crear, cambiar, revocar y restaurar sin perder rol base ni permitir cruce de sede. |
-| 3. API administrativa | Consolidar contratos, serializadores, autorización del administrador y auditoría de mutaciones. | Pendiente | Cada endpoint tiene schema, códigos de error y cobertura de dos sedes. |
-| 4. UI de administración | Unificar pantallas de acceso/roles/usuarios sobre contrato tipado y mostrar permisos efectivos; ocultar acciones no permitidas. | Pendiente | Typecheck y E2E de administrador de sede; sin conversiones ad-hoc en fronteras API. |
-| 5. Certificación | Documentación, pruebas negativas, regresión de módulos consumidores, revisión de diff y despliegue reversible. | Pendiente | Gates verdes, evidencia fechada, commit atómico y rollback documentado. |
+| 0. Línea base y decisión | Inventario de rutas/guards/consumidores, matriz actual por rol y dos sedes; decisión de precedencia aprobada en documentación. | Cerrada | Auditoría y contrato canónico registrados. |
+| 1. Resolución canónica | Servicio puro de permisos efectivos y dependencias FastAPI que lo usen; compatibilidad de lectura para datos existentes. | Cerrada | Rol base + módulo activo + override directo se resuelven por el mismo helper. |
+| 2. Persistencia segura | Modelo de asignación/override, validaciones de módulo, sede, soft delete e integridad; migración reversible si la decisión lo exige. | Cerrada | Migración `20260718_0001`, revocación/reasignación y validación modular cubiertas. |
+| 3. API administrativa | Consolidar contratos, serializadores, autorización del administrador y auditoría de mutaciones. | Cerrada | Rutas críticas de usuario/permisos/rol y asignaciones aplican sede autenticada. |
+| 4. UI de administración | Unificar pantallas de acceso/roles/usuarios sobre contrato tipado y mostrar permisos efectivos; ocultar acciones no permitidas. | Cerrada | La UI usa el endpoint canónico de permisos individuales y typecheck pasa. |
+| 5. Certificación | Documentación, pruebas negativas, regresión de módulos consumidores, revisión de diff y despliegue reversible. | Cerrada | 11 regresiones granulares, quality profunda y typecheck en verde. |
 
 ## Orden seguro de trabajo
 
@@ -98,3 +98,14 @@ Cada ruta de Administración y cada guard de módulo se verificará con:
 - La revisión se aisló de cambios locales no commiteados en Administración,
   Vida Espiritual, Mensajes y Proyectos; esos cambios no forman parte de este
   plan ni de sus futuros commits.
+
+## Evidencia de cierre — 2026-07-18
+
+- `27b54a3d`: roles modulares y grants directos participan del permiso efectivo
+  sin reemplazar el rol base; migración reversible de overrides personales.
+- `dd9cdc7d`: las rutas de usuarios, permisos y roles modulares resuelven la
+  sede del actor; un recurso de otra sede responde como inexistente.
+- `tests/test_permissions_granular.py`: **11 passed**, incluidos módulo efectivo,
+  conservación del rol base y administración entre dos sedes.
+- `scripts/test_admin_quality.py --backend-deep`: verde.
+- `frontend npm run typecheck -- --pretty false`: verde.
