@@ -84,7 +84,6 @@ export default function DonationsManagementPage() {
         }
     };
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { loadDonations(); }, [token]);
 
     const openCreate = () => {

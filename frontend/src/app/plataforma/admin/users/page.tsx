@@ -29,12 +29,13 @@ export default function AdminUsersPage() {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
-    const fetchUsers = async () => {
+    const fetchUsers = async (signal?: AbortSignal) => {
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/admin/users', { token });
+            const data = await apiFetch<any[]>('/admin/users', { token, signal });
             setUsers(Array.isArray(data) ? data : []);
-        } catch (err) {
+        } catch (err: any) {
+            if (err?.name === 'AbortError') return;
             addToast("Error al cargar lista de usuarios", "error");
         } finally {
             setLoading(false);
@@ -42,8 +43,9 @@ export default function AdminUsersPage() {
     };
 
     useEffect(() => {
-        fetchUsers();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        const controller = new AbortController();
+        fetchUsers(controller.signal);
+        return () => controller.abort();
     }, [token]);
 
     const handleBulkProvision = async () => {

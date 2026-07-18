@@ -73,11 +73,11 @@ export default function SystemSettings() {
     const [incidentNoteDraft, setIncidentNoteDraft] = useState('');
     const [incidentNoteTarget, setIncidentNoteTarget] = useState<string | null>(null);
 
-    const fetchConfig = useCallback(async () => {
+    const fetchConfig = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch('/workspace/config', { token, cache: 'no-store' });
+            const data = await apiFetch('/workspace/config', { token, cache: 'no-store', signal });
             setConfig(data || {
                 features_enabled: { lms: true, crm: true, ia: true, donations: false },
                 feature_rules: {
@@ -95,6 +95,7 @@ export default function SystemSettings() {
                     actor: auditFilters.actor || undefined,
                 },
                 cache: 'no-store',
+                signal,
             });
             setAuditEvents(Array.isArray(audit?.events) ? audit.events : []);
             const summary = await apiFetch<{ summary?: any }>('/workspace/flags/audit/summary', {
@@ -106,6 +107,7 @@ export default function SystemSettings() {
                     actor: auditFilters.actor || undefined,
                 },
                 cache: 'no-store',
+                signal,
             });
             setAuditSummary(summary?.summary || null);
             const anomalies = await apiFetch<{ anomalies?: any }>('/workspace/flags/audit/anomalies', {
@@ -119,42 +121,49 @@ export default function SystemSettings() {
                     actor: auditFilters.actor || undefined,
                 },
                 cache: 'no-store',
+                signal,
             });
             setAuditAnomalies(anomalies?.anomalies || null);
             const incidentsResult = await apiFetch<{ incidents?: any[] }>('/workspace/flags/incidents', {
                 token,
                 query: { limit: 20, mtta_target_minutes: slaTargets.mtta, mttr_target_minutes: slaTargets.mttr },
                 cache: 'no-store',
+                signal,
             });
             setIncidents(Array.isArray(incidentsResult?.incidents) ? incidentsResult.incidents : []);
             const incidentsSummaryResult = await apiFetch<{ summary?: any }>('/workspace/flags/incidents/summary', {
                 token,
                 query: { mtta_target_minutes: slaTargets.mtta, mttr_target_minutes: slaTargets.mttr },
                 cache: 'no-store',
+                signal,
             });
             setIncidentsSummary(incidentsSummaryResult?.summary || null);
             const trendsResult = await apiFetch<{ rows?: any[] }>('/workspace/flags/incidents/trends', {
                 token,
                 query: { days: 14 },
                 cache: 'no-store',
+                signal,
             });
             setIncidentTrends(Array.isArray(trendsResult?.rows) ? trendsResult.rows : []);
             const notificationsResult = await apiFetch<{ notifications?: any[] }>('/workspace/flags/incidents/notifications', {
                 token,
                 query: { limit: 20 },
                 cache: 'no-store',
+                signal,
             });
             setIncidentNotifications(Array.isArray(notificationsResult?.notifications) ? notificationsResult.notifications : []);
             const statsResult = await apiFetch<any>('/workspace/flags/incidents/stats', {
                 token,
                 query: { window: incidentStatsWindow },
                 cache: 'no-store',
+                signal,
             });
             setIncidentStats(statsResult || null);
             const historyResult = await apiFetch<{ history?: any[] }>('/workspace/flags/compliance/history', {
                 token,
                 query: { limit: 12 },
                 cache: 'no-store',
+                signal,
             });
             const historyRows = Array.isArray(historyResult?.history) ? historyResult.history : [];
             setComplianceHistory(historyRows);
@@ -170,24 +179,33 @@ export default function SystemSettings() {
                 token,
                 query: { weeks: 8 },
                 cache: 'no-store',
+                signal,
             });
             setComplianceWeeklySummary(Array.isArray(weeklySummaryResult?.rows) ? weeklySummaryResult.rows : []);
             const compliancePolicyResult = await apiFetch<{ policy?: any; resolved?: any }>('/workspace/flags/compliance/policy', {
                 token,
                 cache: 'no-store',
+                signal,
             });
             setCompliancePolicy({
                 policy: compliancePolicyResult?.policy || null,
                 resolved: compliancePolicyResult?.resolved || null,
             });
-        } catch (e) {
+        } catch (e: any) {
+            if (e?.name === 'AbortError') return;
             console.error("Config fetch failed", e);
+            addToast('Error al cargar la configuración del sistema', 'error');
         } finally {
             setLoading(false);
         }
     }, [token, auditFilters, slaTargets, incidentStatsWindow]);
 
-    useEffect(() => { if (isAuthenticated) fetchConfig(); }, [isAuthenticated, fetchConfig]);
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchConfig(controller.signal);
+        return () => controller.abort();
+    }, [isAuthenticated, fetchConfig]);
 
     const handleCriticalAction = async (action: string, label: string) => {
         setConfirmAction({

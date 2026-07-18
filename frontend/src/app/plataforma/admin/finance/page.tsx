@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { DataTable } from '@/components/ui/DataTable';
@@ -26,6 +27,7 @@ const FINANCE_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', '
 
 export default function FinanceAdminPage() {
     const { token } = useAuth();
+    const { addToast } = useToast();
     const [activeTab, setActiveTab] = useState<'summary' | 'transactions' | 'audit'>('summary');
     const [viewType, setViewType] = useState<ViewType>('grid');
     const [transactions, setTransactions] = useState<any[]>([]);
@@ -35,21 +37,25 @@ export default function FinanceAdminPage() {
     const [selectedTx, setSelectedTx] = useState<any>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
             const [txData, summaryData] = await Promise.all([
-                apiFetch<any[]>('/finance/transactions', { token, cache: 'no-store' }),
-                apiFetch<any>('/finance/summary', { token, cache: 'no-store' })
+                apiFetch<any[]>('/finance/transactions', { token, cache: 'no-store', signal }),
+                apiFetch<any>('/finance/summary', { token, cache: 'no-store', signal })
             ]);
             setTransactions(Array.isArray(txData) ? txData : []);
             setSummary(summaryData);
-        } catch (e) { console.error(e); }
+        } catch (e: any) { if (e?.name === 'AbortError') return; console.error(e); addToast('Error al cargar datos financieros', 'error'); }
         finally { setLoading(false); }
     }, [token]);
 
-    useEffect(() => { fetchData(); }, [fetchData]);
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchData(controller.signal);
+        return () => controller.abort();
+    }, [fetchData]);
 
     const handleOpenTx = (tx: any) => {
         setSelectedTx(tx);

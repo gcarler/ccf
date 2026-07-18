@@ -147,14 +147,15 @@ export default function AccessManagementPage() {
     // State for local permission editing
     const [localPermissions, setLocalPermissions] = useState<Record<string, string>>({});
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
             const [rolesData, usersData] = await Promise.all([
-                apiFetch<any[]>('/admin/auth-role-definitions', { token, cache: 'no-store' }),
-                apiFetch<any[]>('/admin/users', { token, cache: 'no-store' })
+                apiFetch<any[]>('/admin/auth-role-definitions', { token, cache: 'no-store', signal }),
+                apiFetch<any[]>('/admin/users', { token, cache: 'no-store', signal })
             ]);
+            if (signal?.aborted) return;
             // Map auth roles to the format expected by the UI
             const mappedRoles = (Array.isArray(rolesData) ? rolesData : []).map((r: any) => ({
                 id: r.id,
@@ -164,16 +165,20 @@ export default function AccessManagementPage() {
             }));
             setRoles(mappedRoles);
             setUsers(Array.isArray(usersData) ? usersData : []);
-        } catch (err) { 
+        } catch (err: any) { 
+            if (err?.name === 'AbortError') return;
             console.error(err);
             addToast("Error al cargar configuraciones de acceso", "error");
         } finally { 
-            setLoading(false); 
+            if (!signal?.aborted) setLoading(false); 
         }
     }, [token, addToast]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchData();
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchData(controller.signal);
+        return () => controller.abort();
     }, [isAuthenticated, fetchData]);
 
     const handleOpenEntity = async (entity: any) => {
