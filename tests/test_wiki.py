@@ -156,12 +156,16 @@ class TestWikiAPI:
         resp2 = client.post(f"{self.BASE}/wiki_dup_test", json=payload, headers=headers)
         assert resp2.status_code == 409
 
-    def test_get_nonexistent_returns_404(self, client, db_session):
-        """GET for a non-existent page_key must return 404 (no auto-create)."""
+    def test_get_nonexistent_returns_virtual_page(self, client, db_session):
+        """GET for a non-existent page_key returns a virtual page (200) with empty content."""
         token, sede = _ensure_sede_and_persona(db_session)
         headers = auth_headers(client)
         resp = client.get(f"{self.BASE}/wiki_nonexistent_404", headers=headers)
-        assert resp.status_code == 404
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data.get("content") == ""
+        assert data.get("version") == 0
+        assert data.get("title") is not None
 
     def test_patch_updates_content(self, client, db_session):
         """PATCH must update content and preserve other fields."""

@@ -119,6 +119,10 @@ def get_wiki_page(
     sede_id = _resolve_sede(db, current_user)
     row = crud_wiki.get_wiki_page(db, key, sede_id)
     if not row:
+        # Si la página existe pero está soft-deleted, retornar 404
+        deleted = crud_wiki.get_wiki_page_including_deleted(db, key, sede_id)
+        if deleted:
+            raise HTTPException(status_code=404, detail="wiki page not found (deleted)")
         return _build_virtual_wiki_page(key, sede_id)
     return row
 
