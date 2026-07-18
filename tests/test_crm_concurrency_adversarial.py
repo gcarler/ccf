@@ -57,6 +57,11 @@ def _seed_test_data(db_session):
     db_session.commit()
     return admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2
 
+
+def _crm_admin_headers(client, db_session, email: str = "automation-admin@example.com"):
+    admin, _, _ = seed_admin(db_session, email=email, password="testpass123")
+    return auth_headers(client, email=admin.email)
+
 # ==============================================================================
 # CONCURRENCY & LOCKS
 # ==============================================================================
@@ -217,21 +222,23 @@ def test_drag_drop_stage_different_sede_tenant(client, db_session):
 # AUTOMATION FLOW CYCLES & LOOP DETECTION
 # ==============================================================================
 
-def test_cycle_detection_self_loop(client):
+def test_cycle_detection_self_loop(client, db_session):
     """Check self loop (n1 -> n1) cycle detection."""
+    headers = _crm_admin_headers(client, db_session)
     payload = {
         "nodes": ["n1"],
         "edges": [{"source": "n1", "target": "n1"}]
     }
-    response = client.post("/api/crm/automations/flows/check-cycles", json=payload)
+    response = client.post("/api/crm/automations/flows/check-cycles", json=payload, headers=headers)
     assert response.status_code == 200
     cycles = response.json()["cycles"]
     assert len(cycles) > 0
     assert "n1" in cycles[0]
 
 
-def test_cycle_detection_disconnected_subgraph_cycle(client):
+def test_cycle_detection_disconnected_subgraph_cycle(client, db_session):
     """Check cycle detection in disconnected subgraphs."""
+    headers = _crm_admin_headers(client, db_session, email="automation-admin-2@example.com")
     payload = {
         "nodes": ["n1", "n2", "n3", "n4"],
         "edges": [
@@ -240,7 +247,7 @@ def test_cycle_detection_disconnected_subgraph_cycle(client):
             {"source": "n4", "target": "n3"} # Cycle here
         ]
     }
-    response = client.post("/api/crm/automations/flows/check-cycles", json=payload)
+    response = client.post("/api/crm/automations/flows/check-cycles", json=payload, headers=headers)
     assert response.status_code == 200
     cycles = response.json()["cycles"]
     assert len(cycles) > 0
@@ -248,8 +255,9 @@ def test_cycle_detection_disconnected_subgraph_cycle(client):
     assert "n4" in cycles[0]
 
 
-def test_validate_graph_endpoint_rejects_cycle(client):
+def test_validate_graph_endpoint_rejects_cycle(client, db_session):
     """Test validate-graph endpoint returns valid=False for a cyclic graph."""
+    headers = _crm_admin_headers(client, db_session, email="automation-admin-3@example.com")
     payload = {
         "nodes": ["n1", "n2"],
         "edges": [
@@ -257,20 +265,21 @@ def test_validate_graph_endpoint_rejects_cycle(client):
             {"source": "n2", "target": "n1"}
         ]
     }
-    response = client.post("/api/crm/automations/validate-graph", json=payload)
+    response = client.post("/api/crm/automations/validate-graph", json=payload, headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert data["valid"] is False
     assert "cycle detected" in data["error"]
 
 
-def test_validate_path_insufficient_nodes(client):
+def test_validate_path_insufficient_nodes(client, db_session):
     """Test path validation fails if path has less than 3 nodes."""
+    headers = _crm_admin_headers(client, db_session, email="automation-admin-4@example.com")
     payload = {
         "nodes": ["n1", "n2"],
         "edges": [{"source": "n1", "target": "n2"}]
     }
-    response = client.post("/api/crm/automations/flows/validate-path", json=payload)
+    response = client.post("/api/crm/automations/flows/validate-path", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is False
     assert "at least 3 nodes" in response.json()["error"]

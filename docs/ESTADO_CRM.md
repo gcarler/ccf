@@ -83,11 +83,12 @@ cd /root/ccf
 ```
 
 **Estado actual (2026-07-18):**
-- Backend smoke mínimo: **46 passed** ✅
+- Backend smoke mínimo: **47 passed** ✅
 - Backend RBAC HTTP: **31 passed** ✅
 - Frontend smoke dedicado (`npm run test:e2e:crm`): **14 passed** ✅
 - Frontend deep smoke (`npm run test:e2e:crm:deep`): **17 passed** ✅
-- Auditoría canónica: los bloques equivalentes quedaron validados el **2026-07-18** con `46 passed` backend smoke, `31 passed` RBAC HTTP, `14 passed` frontend smoke y `17 passed` frontend deep sobre el runner estable `build + next start` ✅
+- Backend deep (`scripts/test_crm_quality.py --backend-deep --pipeline --concurrency`): **24 + 99 + 21 passed** ✅
+- Auditoría canónica: los bloques equivalentes quedaron validados el **2026-07-18** con `47 passed` backend smoke, `31 passed` RBAC HTTP, `14 passed` frontend smoke, `17 passed` frontend deep y `5/5 suites` backend deep sobre el runner estable `build + next start` ✅
 
 Pendiente del plan modular:
 
@@ -113,7 +114,7 @@ Pendiente del plan modular:
 | UI principal | `frontend/src/app/plataforma/crm/**` | dashboard, personas, pipeline, tasks, counseling, groups, messaging, resources, volunteers |
 | Tests backend | `tests/test_crm_*.py` | dominio, seguridad, isolation, automations, concurrencia, visual, stress |
 
-**Estado global:** CRM quedó cerrado operativamente al **100%** y revalidado el **2026-07-18** para esta línea de trabajo: contratos, bridge con evangelismo, builder de automatizaciones, smoke vivo autenticado y cobertura profunda pasan sobre el código y el harness actual. Sigue siendo un módulo sensible por identidad, consolidación, automations y cruces con evangelismo, pero ya no queda deuda abierta de cierre funcional dentro del plan actual.
+**Estado global:** CRM quedó cerrado operativamente al **100%** y revalidado el **2026-07-18** para esta línea de trabajo: contratos, bridge con evangelismo, builder de automatizaciones, smoke vivo autenticado, backend profundo y cobertura frontend profunda pasan sobre el código y el harness actual. Sigue siendo un módulo sensible por identidad, consolidación, automations y cruces con evangelismo, pero ya no queda deuda abierta de cierre funcional dentro del plan actual.
 
 ---
 
@@ -228,6 +229,7 @@ Existe suite e2e CRM dedicada en `frontend/tests/e2e/crm/`, con smoke mínimo y 
 - Banco de recursos, plantillas y campañas.
 - Mentoría de personas y candidatos de mentor.
 - Dashboard CRM en frontend.
+- **Contrato lazy de wiki compartida CRM** alineado el **2026-07-18**: `useWikiDocument` dejó de depender de páginas presembradas y `GET /api/wiki/pages/{page_key}` materializa documento virtual vacío para superficies colaborativas como `crm_pipeline_wiki_notes`.
 - **Contrato dashboard alineado (2026-07-16):** corregido drift `pipeline_distribution` → `pipeline_funnel` en `CRMClient.tsx:94`; frontend usa `cards` + `growth_chart` + `pipeline_funnel` según contrato `CrmDashboard`.
 
 ### Parcial
@@ -242,7 +244,7 @@ No quedan frentes parciales activos dentro del plan de cierre fino ejecutado y r
 4. **Contrato de dashboard CRM** `[PEND-DASHBOARD-CONTRACT-001]` — cerrada el 2026-07-16 en `docs/CRM_API_CONTRACTS.md`; fija la shape operativa de `GET /api/dashboard/crm` y la separa del router `/api/crm`.
 5. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-CRM-001]` — cerrado operacionalmente y revalidado el **2026-07-18** para el alcance actual mediante `npm run test:e2e:crm`, `npm run test:e2e:crm:deep`, backend smoke `46 passed` y RBAC HTTP `31 passed`.
 
-**Actualizacion QA 2026-07-18:** el runner `frontend/scripts/run-managed-playwright.mjs` quedó estabilizado estructuralmente: limpia `.next`, hace `build` limpio, arranca `next start` en un puerto dedicado, espera readiness explícita y luego ejecuta Playwright. También `scripts/test_crm_quality.py` quedó ajustado para hacer streaming de los checks frontend largos. Con esa base, el cierre del CRM quedó validado con `npm run test:e2e:crm` = **14 passed**, `npm run test:e2e:crm:deep` = **17 passed**, backend smoke = **46 passed** y RBAC HTTP = **31 passed**.
+**Actualizacion QA 2026-07-18:** el runner `frontend/scripts/run-managed-playwright.mjs` quedó estabilizado estructuralmente: limpia `.next`, hace `build` limpio, arranca `next start` en un puerto dedicado, espera readiness explícita y luego ejecuta Playwright. También `scripts/test_crm_quality.py` quedó ajustado para hacer streaming de los checks frontend largos. Con esa base, el cierre del CRM quedó validado con `npm run test:e2e:crm` = **14 passed**, `npm run test:e2e:crm:deep` = **17 passed**, backend smoke = **47 passed**, RBAC HTTP = **31 passed** y backend deep = **5/5 suites verdes**.
 
 ---
 

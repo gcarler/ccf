@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
+import { ApiError, apiFetch } from '@/lib/http';
 
 interface WikiDocument {
     title: string;
@@ -27,6 +27,7 @@ export function useWikiDocument(pageKey: string, options: UseWikiDocumentOptions
     const [error, setError] = useState<string | null>(null);
     const hydratedRef = useRef(false);
     const contentRef = useRef(content);
+    const documentExistsRef = useRef(false);
 
     useEffect(() => {
         contentRef.current = content;
@@ -35,6 +36,7 @@ export function useWikiDocument(pageKey: string, options: UseWikiDocumentOptions
     useEffect(() => {
         let alive = true;
         hydratedRef.current = false;
+        documentExistsRef.current = false;
         setIsLoading(true);
         setError(null);
 
@@ -56,25 +58,20 @@ export function useWikiDocument(pageKey: string, options: UseWikiDocumentOptions
                     token,
                     cache: 'no-store',
                 });
+                documentExistsRef.current = true;
                 if (!alive) return;
                 const serverContent = normalizeWikiContent(document.content);
                 if (serverContent) {
                     setContent(serverContent);
                     localStorage.setItem(pageKey, serverContent);
-                } else if (localValue) {
-                    await apiFetch(`/wiki/pages/${pageKey}`, {
-                        method: 'POST',
-                        token,
-                        body: {
-                            title: options.title || pageKey,
-                            content: localValue,
-                        },
-                    });
-                    setLastSaved(new Date());
                 }
             } catch (err) {
-                console.error(err);
-                if (alive) setError('No se pudo cargar la wiki compartida.');
+                if (err instanceof ApiError && err.status === 404) {
+                    documentExistsRef.current = false;
+                } else {
+                    console.error(err);
+                    if (alive) setError('No se pudo cargar la wiki compartida.');
+                }
             } finally {
                 hydratedRef.current = true;
                 if (alive) setIsLoading(false);
@@ -100,14 +97,51 @@ export function useWikiDocument(pageKey: string, options: UseWikiDocumentOptions
         setIsSaving(true);
         setError(null);
         try {
-            await apiFetch(`/wiki/pages/${pageKey}`, {
-                method: 'POST',
-                token,
-                body: {
-                    title: options.title || pageKey,
-                    content: nextContent,
-                },
-            });
+            const payload = {
+                title: options.title || pageKey,
+                content: nextContent,
+            };
+
+            if (!documentExistsRef.current) {
+                try {
+                    await apiFetch(`/wiki/pages/${pageKey}`, {
+                        method: 'POST',
+                        token,
+                        body: payload,
+                    });
+                    documentExistsRef.current = true;
+                } catch (err) {
+                    if (!(err instanceof ApiError) || err.status !== 409) {
+                        throw err;
+                    }
+
+                    await apiFetch(`/wiki/pages/${pageKey}`, {
+                        method: 'PATCH',
+                        token,
+                        body: payload,
+                    });
+                    documentExistsRef.current = true;
+                }
+            } else {
+                try {
+                    await apiFetch(`/wiki/pages/${pageKey}`, {
+                        method: 'PATCH',
+                        token,
+                        body: payload,
+                    });
+                } catch (err) {
+                    if (!(err instanceof ApiError) || err.status !== 404) {
+                        throw err;
+                    }
+
+                    await apiFetch(`/wiki/pages/${pageKey}`, {
+                        method: 'POST',
+                        token,
+                        body: payload,
+                    });
+                    documentExistsRef.current = true;
+                }
+            }
             setLastSaved(new Date());
         } catch (err) {
             console.error(err);

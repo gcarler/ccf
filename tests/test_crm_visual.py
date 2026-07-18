@@ -65,6 +65,11 @@ def _seed_test_data(db_session):
     return admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2
 
 
+def _automation_headers(client, db_session, email: str = "crm-visual-admin@example.com"):
+    admin, _, _ = seed_admin(db_session, email=email, password="testpass123")
+    return auth_headers(client, email=admin.email)
+
+
 # ==============================================================================
 # TIER 1: FEATURE COVERAGE (40 tests, 5 per feature)
 # ==============================================================================
@@ -216,8 +221,9 @@ def test_tier1_f5_flow_builder_zoom_pan():
     assert "crm_flow_canvas_config" in Base.metadata.tables, "F5: crm_flow_canvas_config table not implemented"
 
 # Feature 6: 3-Node Connection (5 tests)
-def test_tier1_f6_three_node_connection_validation(client):
-    response = client.post("/api/crm/automations/flows/validate-path", json={})
+def test_tier1_f6_three_node_connection_validation(client, db_session):
+    headers = _automation_headers(client, db_session)
+    response = client.post("/api/crm/automations/flows/validate-path", json={}, headers=headers)
     assert response.status_code == 200, "F6: 3-node connection validation endpoint not implemented"
 
 def test_tier1_f6_three_node_connection_edge_model():
@@ -239,24 +245,27 @@ def test_tier1_f6_three_node_connection_integrity():
 def test_tier1_f7_backend_branching_logic():
     assert "crm_flow_branches" in Base.metadata.tables, "F7: crm_flow_branches table not implemented"
 
-def test_tier1_f7_backend_branching_variables(client):
-    response = client.get("/api/crm/automations/branching/variables")
+def test_tier1_f7_backend_branching_variables(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-2@example.com")
+    response = client.get("/api/crm/automations/branching/variables", headers=headers)
     assert response.status_code == 200, "F7: Branching variables endpoint not implemented"
 
-def test_tier1_f7_backend_branching_true_path(client):
+def test_tier1_f7_backend_branching_true_path(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-3@example.com")
     payload = {
         "variables": {"nombre": "Juan"},
         "conditions": [{"key": "nombre", "operator": "equals", "value": "Juan"}]
     }
-    response = client.post("/api/crm/automations/branching/traverse", json=payload)
+    response = client.post("/api/crm/automations/branching/traverse", json=payload, headers=headers)
     assert response.status_code == 200
 
-def test_tier1_f7_backend_branching_false_path(client):
+def test_tier1_f7_backend_branching_false_path(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-4@example.com")
     payload = {
         "variables": {"nombre": "Juan"},
         "conditions": [{"key": "nombre", "operator": "equals", "value": "Pedro"}]
     }
-    response = client.post("/api/crm/automations/branching/traverse", json=payload)
+    response = client.post("/api/crm/automations/branching/traverse", json=payload, headers=headers)
     assert response.status_code == 200
 
 def test_tier1_f7_backend_branching_multiple_conditions():
@@ -264,34 +273,38 @@ def test_tier1_f7_backend_branching_multiple_conditions():
     assert branches_table is not None and "conditions_logic" in branches_table.columns, "F7: crm_flow_branches missing conditions_logic column"
 
 # Feature 8: Loop/Cycle Validation (5 tests)
-def test_tier1_f8_loop_cycle_detection_method(client):
-    response = client.post("/api/crm/automations/flows/check-cycles", json={})
+def test_tier1_f8_loop_cycle_detection_method(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-5@example.com")
+    response = client.post("/api/crm/automations/flows/check-cycles", json={}, headers=headers)
     assert response.status_code == 200, "F8: Flow cycles check endpoint not implemented"
 
 def test_tier1_f8_loop_cycle_dfs_algorithm():
     assert "crm_flow_cycle_cache" in Base.metadata.tables, "F8: crm_flow_cycle_cache table not implemented"
 
-def test_tier1_f8_loop_cycle_raise_error(client):
+def test_tier1_f8_loop_cycle_raise_error(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-6@example.com")
     payload = {
         "nodes": ["n1", "n2"],
         "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n1"}]
     }
-    response = client.post("/api/crm/automations/flows/validate", json=payload)
+    response = client.post("/api/crm/automations/flows/validate", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is False
 
-def test_tier1_f8_loop_cycle_self_reference(client):
+def test_tier1_f8_loop_cycle_self_reference(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-7@example.com")
     payload = {
         "nodes": ["n1"],
         "node_id": "n1",
         "edges": [{"source": "n1", "target": "n1"}]
     }
-    response = client.post("/api/crm/automations/flows/validate-node", json=payload)
+    response = client.post("/api/crm/automations/flows/validate-node", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is False
 
-def test_tier1_f8_loop_cycle_validation_endpoint(client):
-    response = client.post("/api/crm/automations/validate-graph", json={})
+def test_tier1_f8_loop_cycle_validation_endpoint(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-8@example.com")
+    response = client.post("/api/crm/automations/validate-graph", json={}, headers=headers)
     assert response.status_code == 200, "F8: Validate graph cycle validation endpoint not implemented"
 
 
@@ -450,78 +463,92 @@ def test_tier2_f4_atomic_reorder_cross_sede_leakage():
     assert hasattr(CasoCRM, "verify_sede_isolation_on_reorder"), "F4 Tier 2: CasoCRM Sede isolation during reordering not implemented"
 
 # Feature 5: Flow Builder UI (5 tests)
-def test_tier2_f5_flow_builder_empty_canvas(client):
-    response = client.post("/api/crm/automations/flows/empty", json={"nodes": []})
+def test_tier2_f5_flow_builder_empty_canvas(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-9@example.com")
+    response = client.post("/api/crm/automations/flows/empty", json={"nodes": []}, headers=headers)
     assert response.status_code == 200
 
-def test_tier2_f5_flow_builder_excessive_nodes(client):
-    response = client.post("/api/crm/automations/flows/max-nodes-check", json={"nodes": ["n1"] * 105})
+def test_tier2_f5_flow_builder_excessive_nodes(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-10@example.com")
+    response = client.post("/api/crm/automations/flows/max-nodes-check", json={"nodes": ["n1"] * 105}, headers=headers)
     assert response.status_code == 400
 
-def test_tier2_f5_flow_builder_disconnected_node(client):
+def test_tier2_f5_flow_builder_disconnected_node(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-11@example.com")
     response = client.post("/api/crm/automations/flows/disconnected-nodes", json={
         "nodes": ["n1", "n2", "n3"],
         "edges": [{"source": "n1", "target": "n2"}]
-    })
+    }, headers=headers)
     assert response.status_code == 200
     assert response.json()["warning"] == "disconnected nodes"
     assert response.json()["nodes"] == ["n3"]
 
-def test_tier2_f5_flow_builder_invalid_node_type(client):
+def test_tier2_f5_flow_builder_invalid_node_type(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-12@example.com")
     response = client.post("/api/crm/automations/flows/validate-types", json={
         "nodes": [{"id": "n1", "type": "invalid_type"}]
-    })
+    }, headers=headers)
     assert response.status_code == 400
 
-def test_tier2_f5_flow_builder_unicode_labels(client):
-    response = client.post("/api/crm/automations/flows/unicode", json={"label": "🤖_unicode_flujo"})
+def test_tier2_f5_flow_builder_unicode_labels(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-13@example.com")
+    response = client.post("/api/crm/automations/flows/unicode", json={"label": "🤖_unicode_flujo"}, headers=headers)
     assert response.status_code == 200
 
 # Feature 6: 3-Node Connection (5 tests)
-def test_tier2_f6_three_node_connection_two_nodes(client):
-    response = client.post("/api/crm/automations/flows/validate-path-length", json={"nodes_count": 2})
+def test_tier2_f6_three_node_connection_two_nodes(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-14@example.com")
+    response = client.post("/api/crm/automations/flows/validate-path-length", json={"nodes_count": 2}, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is False
 
-def test_tier2_f6_three_node_connection_multiple_inputs(client):
-    response = client.post("/api/crm/automations/flows/validate-multiple-inputs", json={})
+def test_tier2_f6_three_node_connection_multiple_inputs(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-15@example.com")
+    response = client.post("/api/crm/automations/flows/validate-multiple-inputs", json={}, headers=headers)
     assert response.status_code == 200
 
-def test_tier2_f6_three_node_connection_multiple_outputs(client):
-    response = client.post("/api/crm/automations/flows/validate-multiple-outputs", json={})
+def test_tier2_f6_three_node_connection_multiple_outputs(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-16@example.com")
+    response = client.post("/api/crm/automations/flows/validate-multiple-outputs", json={}, headers=headers)
     assert response.status_code == 200
 
-def test_tier2_f6_three_node_connection_orphaned_edge(client):
-    response = client.post("/api/crm/automations/flows/clean-orphans", json={})
+def test_tier2_f6_three_node_connection_orphaned_edge(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-17@example.com")
+    response = client.post("/api/crm/automations/flows/clean-orphans", json={}, headers=headers)
     assert response.status_code == 200
 
-def test_tier2_f6_three_node_connection_cross_flow_edge(client):
-    response = client.post("/api/crm/automations/flows/cross-flow-check", json={})
+def test_tier2_f6_three_node_connection_cross_flow_edge(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-18@example.com")
+    response = client.post("/api/crm/automations/flows/cross-flow-check", json={}, headers=headers)
     assert response.status_code == 200
 
 # Feature 7: Backend Branching Traversal (5 tests)
-def test_tier2_f7_backend_branching_null_vars(client):
+def test_tier2_f7_backend_branching_null_vars(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-19@example.com")
     response = client.post("/api/crm/automations/branching/null-vars", json={
         "variables": {"nombre": None, "email": "test@example.com"}
-    })
+    }, headers=headers)
     assert response.status_code == 200
     assert response.json()["null_variables"] == ["nombre"]
 
-def test_tier2_f7_backend_branching_type_mismatch(client):
+def test_tier2_f7_backend_branching_type_mismatch(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-20@example.com")
     response = client.post("/api/crm/automations/branching/type-mismatch", json={
         "variables": {"sort_order": 10},
         "conditions": [{"key": "sort_order", "operator": "gt", "value": "not-numeric"}]
-    })
+    }, headers=headers)
     assert response.status_code == 400
 
-def test_tier2_f7_backend_branching_missing_else(client):
+def test_tier2_f7_backend_branching_missing_else(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-21@example.com")
     response = client.post("/api/crm/automations/branching/missing-else", json={
         "node_id": "n1",
         "edges": [{"source": "n1", "target": "n2", "source_port": "true"}]
-    })
+    }, headers=headers)
     assert response.status_code == 400
 
-def test_tier2_f7_backend_branching_infinite_nesting(client):
+def test_tier2_f7_backend_branching_infinite_nesting(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-22@example.com")
     response = client.post("/api/crm/automations/branching/infinite-nesting", json={
         "nodes": ["n1", "n2", "n3"],
         "edges": [
@@ -529,34 +556,40 @@ def test_tier2_f7_backend_branching_infinite_nesting(client):
             {"source": "n2", "target": "n3"},
             {"source": "n3", "target": "n1"}
         ]
-    })
+    }, headers=headers)
     assert response.status_code == 400
 
-def test_tier2_f7_backend_branching_unexpected_operator(client):
+def test_tier2_f7_backend_branching_unexpected_operator(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-23@example.com")
     response = client.post("/api/crm/automations/branching/unexpected-op", json={
         "conditions": [{"key": "nombre", "operator": "invalid_op", "value": "Juan"}]
-    })
+    }, headers=headers)
     assert response.status_code == 400
 
 # Feature 8: Loop/Cycle Validation (5 tests)
-def test_tier2_f8_loop_cycle_deep_nesting(client):
-    response = client.post("/api/crm/automations/flows/cycle-deep", json={})
+def test_tier2_f8_loop_cycle_deep_nesting(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-24@example.com")
+    response = client.post("/api/crm/automations/flows/cycle-deep", json={}, headers=headers)
     assert response.status_code == 200
 
-def test_tier2_f8_loop_cycle_multiple_cycles(client):
-    response = client.post("/api/crm/automations/flows/multiple-cycles", json={})
+def test_tier2_f8_loop_cycle_multiple_cycles(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-25@example.com")
+    response = client.post("/api/crm/automations/flows/multiple-cycles", json={}, headers=headers)
     assert response.status_code == 200
 
-def test_tier2_f8_loop_cycle_disconnected_cycles(client):
-    response = client.post("/api/crm/automations/flows/disconnected-subgraph-cycles", json={})
+def test_tier2_f8_loop_cycle_disconnected_cycles(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-26@example.com")
+    response = client.post("/api/crm/automations/flows/disconnected-subgraph-cycles", json={}, headers=headers)
     assert response.status_code == 200
 
-def test_tier2_f8_loop_cycle_valid_dag_false_alarm(client):
-    response = client.post("/api/crm/automations/flows/validate-complex-dag", json={})
+def test_tier2_f8_loop_cycle_valid_dag_false_alarm(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-27@example.com")
+    response = client.post("/api/crm/automations/flows/validate-complex-dag", json={}, headers=headers)
     assert response.status_code == 200
 
-def test_tier2_f8_loop_cycle_concurrent_validation(client):
-    response = client.post("/api/crm/automations/flows/concurrent-cycle-checks", json={})
+def test_tier2_f8_loop_cycle_concurrent_validation(client, db_session):
+    headers = _automation_headers(client, db_session, email="crm-visual-admin-28@example.com")
+    response = client.post("/api/crm/automations/flows/concurrent-cycle-checks", json={}, headers=headers)
     assert response.status_code == 200
 
 
