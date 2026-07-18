@@ -191,3 +191,104 @@ cd /root/ccf
 - además del permiso granular existe fallback por `role` normalizado dentro de `require_permission(...)`
 - student flows combinan RBAC con ownership estricto sobre `persona_id` o `enrollment_id`
 - ver `ACADEMY_RBAC_MATRIX.md` para las asimetrías entre seed persistido, `DEFAULT_ROLES` y role fallback
+
+---
+
+## 12. Hallazgos auditoría API 2026-07-18
+
+Actualización derivada de la auditoría contra el código vigente. IDs referencia en `ESTADO_ACADEMY.md §15`.
+
+### 12.1. Desconexión dashboard frontend ↔ backend (`ACAD-CRIT-002`)
+
+**Síntoma.** `AcademyClient.tsx` consume `GET /dashboard/academy` y espera los campos:
+
+- `cards: MetricCard[]`
+- `enrollment_trends: ChartDataPoint[]`
+- `top_courses: {title: str, count: int}[]`
+
+**Realidad backend.** `GET /academy/dashboard/metrics` solo retorna:
+
+- `active_students`, `completion_rate`, `certificates_issued`
+- `total_courses`, `total_enrollments`, `completed_enrollments`
+- `cards` con solo 3 entradas
+
+**Consecuencia:** `dashboard.enrollment_trends` y `dashboard.top_courses` son `undefined` en cliente. `dashboard?.top_courses.map(...)` produce excepción silenciosa → sección "Cursos Top Performance" queda vacía o rompe render.
+
+**Fix propuesto:**
+
+1. Extender `GET /academy/dashboard/metrics` para retornar `enrollment_trends` y `top_courses` (GROUP BY por mes y por curso).
+2. O, alternativamente, cambiar `AcademyClient.tsx` para consumir solo `cards` y diseñar gráfico "Top Performance" aparte.
+
+Commit recomendado: front + back coordinados.
+
+### 12.2. Endpoints faltantes detectados (`MED-002`, `MED-003`, `MED-004`)
+
+| Recurso | Modelo | CRUD disponible | Acción pendiente |
+|---|---|---|---|
+| `ForumComment` | existe en `models_academy_core.py:171` | ninguno | Crear router con `GET/POST/DELETE`; respetar threading anidado (`parent_id`) |
+| `Resource` | existe (Recursos por lección) | ninguno directo | Crear `POST /lessons/{id}/resources` y `DELETE /resources/{id}` usando `storage_service` |
+| `ForumThread` (categoría) | columna `category` existe | ningún filtro | Aceptar `category` como query param en `GET /forum/threads` |
+| `AssignmentSubmission` | existe | sin DELETE | Crear `DELETE /admin/submissions/{id}` con soft delete |
+| `ForumThread.is_resolved` | existe | sin PATCH | Crear `PATCH /forum/threads/{id}/resolve` para `Editor/Manager` |
+
+### 12.3. Mismatch de IDs en cliente (`ACAD-CRIT-001`)
+
+`CourseCatalog.tsx:38-46` declara `Course.id: number` y `enrolledCourseIds?: number[]`. Backend retorna UUID string (modelo `Course` PK = `UUID(as_uuid=True)`). Misma tensión en cualquier consumo con `Assignments.postBased` o comparaciones `.includes(...)`.
+
+**Acción.** Fijar tipos compartidos en `frontend/src/types/academy.ts` (crear) y propagar.
+
+### 12.4. URL/payload redundante en `submit_assessment` (`ACAD-LOW-002`)
+
+El cliente envía `enrollment_id` en el body (`AssessmentDrawer.tsx:79`). El backend ignora ese campo y lo deduce desde `current_user.id`. Inocuo pero confuso.
+
+**Acción.** Normalizar: aceptar `enrollment_id` opcional y derivar siempre del usuario autenticado.
+
+### 12.5. Forma del contrato de respuesta esperada (propuesta)
+
+```ts
+type AcademyDashboard = {
+  cards: MetricCard[],
+  enrollment_trends: ChartDataPoint[],    // zona horaria UTC
+  top_courses: { title: string, count: number }[],
+  completion_rate?: number,
+  at_risk_students_count?: number,
+  filters?: DashboardFilter[],
+  geo_data?: GeoBucket[],
+  last_updated?: string                  // ISO 8601
+};
+```
+
+Si se opta por la ruta (2) de `ACAD-CRIT-002`, este shape es el que el cliente asume y debe aparecer en el endpoint.
+
+### 12.6. Códigos esperados a verificar en QA
+
+| Código | Escena | Verificación adicional |
+|---|---|---|
+| `403` | `POST /enrollments` con `persona_id != current_user.id` | Verificar mensaje exacto |
+| `403` | `POST /lessons/{id}/submit-assignment` sin enrollment propio | Verificar mensaje exacto |
+| `403` | `POST /assessments/{id}/submit` sin enrollment propio | Verificar mensaje exacto |
+| `403` | `POST /forum/threads` con `course_id=None` por Student sin `edit` | Caso del fix `ACAD-MED-001` |
+| `404` | `_course_scope` con curso de otra sede | Caso Axioma 3 ya cubierto |
+| `404` | `_get_own_enrollment` con enrollment de otro usuario | Caso ownership ya cubierto |
+
+### 12.7. Reglas de scope para nuevos endpoints
+
+Cualquier endpoint nuevo en este módulo debe:
+
+1. Usar `_course_scope` o equivalente para cursos.
+2. Verificar ownership en rutas `/me/*` y `/enrollments/{id}/*`.
+3. Devolver error tipado cuando el usuario intenta actuar sobre una sede ajena (no leak con existence-leak en `404`).
+4. Registrar `AcademyActivityLog` cuando la acción sea material (matricular, entregar, certificar).
+
+### 12.8. Estado de contratos
+
+| Contrato | Estado | Última revisión |
+|---|---|---|
+| `/api/academy/courses` | Estable | 2026-07-16 |
+| `/api/academy/me/*` | Estable | 2026-07-16 |
+| `/api/academy/admin/*` | Estable | 2026-07-16 |
+| `/api/academy/forum/threads` | Pendiente fix `ACAD-MED-001` y `ACAD-MED-002` | 2026-07-18 |
+| `/api/academy/dashboard/metrics` | Pendiente fix `ACAD-CRIT-002` (extender shape) | 2026-07-18 |
+| `/api/academy/lessons/{id}/assignments` (por crear) | Pendiente diseño | 2026-07-18 |
+| `/api/academy/resources` (por crear) | Pendiente diseño | 2026-07-18 |
+| `/api/academy/forum/threads/{id}/resolve` (por crear) | Pendiente diseño | 2026-07-18 |

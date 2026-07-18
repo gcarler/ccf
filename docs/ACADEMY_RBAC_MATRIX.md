@@ -159,3 +159,58 @@ Validar mínimo:
 
 - `PEND-RBAC-ACADEMY-001` queda cerrada el `2026-07-16` como documentación del contrato actual
 - permanece drift visible entre seed persistido, fallback runtime y role normalization
+
+---
+
+## 11. Hallazgos RBAC auditoría 2026-07-18
+
+Dos hallazgos nuevos impactan la matriz operativa. IDs referencia en `ESTADO_ACADEMY.md §15`.
+
+### 11.1. Filtrado del sidebar no respeta nivel (`ACAD-HIGH-001`)
+
+**Síntoma.** En `app/plataforma/academy/layout.tsx`, el `WorkspaceLayout` recibe `allowedPermissions: ['academy:read', 'academy:study', 'academy:edit', 'academy:manage']`. Cualquier estudiante con `academy:read` (inlcuso `LECTOR` o `MIEMBRO`) desbloquea TODO el módulo y el sidebar muestra items como "Panel Docente" y "Coordinación" que requieren `academy:edit` o `academy:manage`.
+
+**Esperado.** Solo deberían:
+- "Resumen", "Cursos", "Curriculum", "Calificaciones", "Certificados", "Materiales", "Horarios", "Foro Estudiantil", "Mi Perfil" → visibles a `academy:read`.
+- "Panel Docente" → requiere `academy:edit`.
+- "Coordinación" → requiere `academy:manage`.
+
+**Fix propuesto.** Dividir `SIDEBAR_SECTIONS` por nivel y aplicar el filtrado dinámico que ya existe en `moduleConfigs.ts` (patrón `filterWorkspaceSectionsByAccess(...)`). Esto unifica el comportamiento con otros módulos.
+
+### 11.2. Doble configuración de sidebar (`ACAD-HIGH-004`)
+
+**Síntoma.** Módulo Academia tiene dos fuentes de items:
+
+- `app/plataforma/academy/layout.tsx` → 5 grupos + 12 ítems (efectiva).
+- `moduleConfigs.ts` → 4 ítems (`academy` root key).
+
+En la práctica solo el layout local gana porque el módulo lo sobreescribe. Pero el `moduleConfigs.ts` queda desactualizado y crea confusión para futuros mantenimientos.
+
+**Fix propuesto.** Consolidar en un solo origen: extraer la definición local a `frontend/src/components/workspace/academySidebarConfig.ts` y consumir desde layout + moduleConfigs. Eliminar duplicación.
+
+### 11.3. Implicaciones en QA
+
+Los nuevos IDs `ACAD-HIGH-001` y `ACAD-HIGH-004` exigen que QA valide roles que antes no se chequeaban porque el sidebar les daba acceso aparente:
+
+| Rol | Antes (estado buggy) | Después (correcto) |
+|---|---|---|
+| `MIEMBRO` con `academy:study` | Ve links "Panel Docente" / "Coordinación" (broken UX) | Solo ve links de capacidad real; links de admin ocultos y protegido por 403 al intentar entrar |
+| `EDITOR` persistido (`academy:read`) | Ve links admin aunque sin permiso real | Ve solo lo que puede, sin UX rota |
+| `LECTOR` (`academy:read`) | Confundido por opciones que no puede usar | UX clara |
+| `ADMINISTRADOR` / `GESTOR` | Ve todo | Ve todo (sin cambio) |
+
+### 11.4. Estado de la matriz post-auditoría
+
+| ID | Severidad | Estado |
+|---|---|---|
+| `ACAD-HIGH-001` | 🟠 | Pendiente — bloquea experiencia de usuarios con nivel bajo |
+| `ACAD-HIGH-004` | 🟠 | Pendiente — sincronizar con moduleConfigs.ts |
+
+### 11.5. Cierre
+
+La auditoría no descubrió nuevos permisos faltantes; lo que se identificó es:
+
+1. UX que sugiere capabilities que el backend niega (sidebar).
+2. Drift en la configuración del sidebar entre el layout local y la configuración global del módulo.
+
+Ambos son remediables sin tocar rutas backend ni RBAC core.

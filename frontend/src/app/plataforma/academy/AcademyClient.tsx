@@ -1,6 +1,7 @@
 "use client";
 
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import EmptyState from '@/components/ui/EmptyState';
 import { useAuth } from '@/context/AuthContext';
 import { DSCard } from '@/design/components/DSCard';
 import { DSChart } from '@/design/components/DSChart';
@@ -10,9 +11,10 @@ import {
 GraduationCap,
 Sparkles,
 TrendingUp,
+AlertTriangle,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect,useState } from 'react';
+import { useCallback,useEffect,useState } from 'react';
 import { toast } from 'sonner';
 
 export default function AcademyClient() {
@@ -20,23 +22,84 @@ export default function AcademyClient() {
     const router = useRouter();
     const [dashboard, setDashboard] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
+    // ACAD-CRIT-002: conectamos al endpoint del propio módulo (AcademyManager)
+    // para obtener `cards`, `enrollment_trends` y `top_courses` reales.
+    // Si el usuario no tiene `academy:manage` (caso 99%), cae al endpoint genérico
+    // `/dashboard/academy` que sigue entregando métricas a cualquier rol con `academy:read`.
+    const loadData = useCallback(async () => {
         if (!token) return;
-        const loadData = async () => {
-            try {
-                const data = await apiFetch<any>('/dashboard/academy', { token });
-                setDashboard(data);
-            } catch (err) {
-                toast.error('Error al cargar métricas de la Academia');
-            } finally {
-                setLoading(false);
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await apiFetch<any>('/academy/dashboard/metrics', { token });
+            setDashboard(data);
+        } catch (err: any) {
+            const status = err?.status ?? err?.response?.status;
+            if (status === 403 || status === 404) {
+                // Fallback operativo: estudiantes no son Manager pero tienen derecho a un resumen.
+                try {
+                    const fallback = await apiFetch<any>('/dashboard/academy', { token });
+                    setDashboard(fallback);
+                    return;
+                } catch (fallbackErr: any) {
+                    const message =
+                        fallbackErr?.detail || fallbackErr?.message ||
+                        'Error al cargar métricas de la Academia';
+                    setError(message);
+                    toast.error(message);
+                    return;
+                }
             }
-        };
-        loadData();
+            const message =
+                err?.detail || err?.message || 'Error al cargar métricas de la Academia';
+            setError(message);
+            toast.error(message);
+        } finally {
+            setLoading(false);
+        }
     }, [token]);
 
-    if (loading) return <div className="p-8 text-center text-[hsl(var(--text-secondary))] font-black animate-pulse uppercase tracking-wide">Cargando Dashboard Pro...</div>;
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+    if (loading && !dashboard) {
+        return (
+            <div className="p-8 text-center text-[hsl(var(--text-secondary))] font-black animate-pulse uppercase tracking-wide">
+                Cargando Dashboard Pro...
+            </div>
+        );
+    }
+
+    if (error && !dashboard) {
+        return (
+            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] p-4">
+                <EmptyState
+                    title="No pudimos cargar el dashboard"
+                    description={error}
+                    icon={AlertTriangle}
+                    actionLabel="Reintentar"
+                    onAction={loadData}
+                />
+            </div>
+        );
+    }
+
+    if (!dashboard) {
+        return (
+            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] p-4">
+                <EmptyState
+                    title="Sin métricas disponibles"
+                    description="Cuando haya cursos publicados verás aquí las estadísticas."
+                    icon={TrendingUp}
+                    actionLabel="Reintentar"
+                    onAction={loadData}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">

@@ -264,5 +264,85 @@ Suites frontend dedicadas vigentes:
 Busqueda rapida:
 
 ```bash
-grep -nE "PARCIAL-|PEND-" /root/ccf/docs/ESTADO_ACADEMY.md
+grep -nE "PARCIAL-|PEND-|ACAD-" /root/ccf/docs/ESTADO_ACADEMY.md
 ```
+
+---
+
+## 15. Auditoría forense 2026-07-18 (nuevos hallazgos)
+
+**Alcance.** Lectura completa de `backend/api/academy.py` (700 línea), `models_academy_core.py`, `schemas/academy.py`, `crud/academy.py`, `frontend/src/app/plataforma/academy/**` (layout, page, AcademyClient, loading, error), `frontend/src/components/academy/*`, `CourseCatalog.tsx`, `MyEnrollments.tsx` y `moduleConfigs.ts`. Fecha de cierre de la sesión: **2026-07-18**.
+
+### 15.1. Hallazgos CRÍTICOS (`CRIT`)
+
+| ID | Severidad | Hallazgo | Archivo |
+|---|---|---|---|
+| `ACAD-CRIT-001` | 🔴 | **Mismatch UUID vs `id:number`** en `CourseCatalog.tsx`. La interfaz `Course` declara `id: number` y `enrolledCourseIds?: number[]`, pero el backend retorna UUID string. `enrolledCourseIds.includes(course.id)` siempre devolverá `false` y el botón mostrará "Inscribirme Ahora" para cursos ya inscritos. | `frontend/src/components/CourseCatalog.tsx` |
+| `ACAD-CRIT-002` | 🔴 | **Dashboard endpoint incorrecto.** `AcademyClient.tsx` consume `GET /dashboard/academy` pero espera `cards`, `enrollment_trends` y `top_courses`. El endpoint real `GET /academy/dashboard/metrics` solo retorna `cards` con 3 entries. `enrollment_trends` y `top_courses` son `undefined` → `.map()` sobre undefined genera sección vacía o crash. | `frontend/src/app/plataforma/academy/AcademyClient.tsx`, `backend/api/academy.py:354` |
+
+### 15.2. Hallazgos ALTOS (`HIGH`)
+
+| ID | Severidad | Hallazgo |
+|---|---|---|
+| `ACAD-HIGH-001` | 🟠 | **Filtrado del sidebar no respeta nivel.** El layout del módulo lista "Panel Docente" y "Coordinación" con `allowedPermissions: ['academy:read', 'academy:study', 'academy:edit', 'academy:manage']`; cualquier estudiante con `read` los ve en el S2 aunque el backend le niegue los endpoints `/admin/*`. |
+| `ACAD-HIGH-002` | 🟠 | **QR code externo inseguro.** `CertificateView.tsx:84` produce el QR a través de `api.qrserver.com` (externo gratuito). Expone metadata y crea dependencia de un proveedor fuera del perímetro institucional. |
+| `ACAD-HIGH-003` | 🟠 | **Doble shell redundante.** `AcademyDetailShell` se monta en algunas rutas mientras el resto del módulo usa `WorkspaceLayout` con su propio `sidebarTitle`/`sidebarSections`. Visualmente hay dos microclimas: detalle limpio radial vs listado canónico. |
+| `ACAD-HIGH-004` | 🟠 | **Sidebar doble configuración.** `moduleConfigs.ts` declara 4 ítems académicos; `app/plataforma/academy/layout.tsx` sobreescribe con 5 grupos y 12 ítems. El comportamiento efectivo es el del layout local, pero el primero sirve de fallback para el sidebar S1/S2 del módulo raíz. |
+
+### 15.3. Hallazgos MEDIOS (`MED`)
+
+| ID | Severidad | Hallazgo |
+|---|---|---|
+| `ACAD-MED-001` | 🟡 | **Foro con `course_id=None` abierto.** Cualquier `AcademyStudent` puede `POST` hilo global. Riesgo: ruido cross-sede + contenido fuera del contexto del módulo. |
+| `ACAD-MED-002` | 🟡 | **`ForumThread.is_resolved` sin endpoint PATCH.** El campo existe pero ningún endpoint permite cambiarlo; ni usuarios ni moderadores pueden cerrar hilos. |
+| `ACAD-MED-003` | 🟡 | **`AssignmentSubmission` sin DELETE/retract.** No hay forma de borrar entregas erróneas; quedan ahí hasta `grade=...` desde editor. |
+| `ACAD-MED-004` | 🟡 | **`CourseCatalog.tsx` con 8 vistas inline.** grid/list/table/board/kanban/calendar/gantt/wiki renderizadas en un solo archivo > 400 líneas. Candidato a refactor en sub-componentes. |
+| `ACAD-MED-005` | 🟡 | **`AcademyClient` sin `ModuleErrorBoundary` visual.** Único feedback de error es `toast.error`; sin retry, sin empty state explícito. |
+
+### 15.4. Hallazgos BAJOS (`LOW`)
+
+| ID | Severidad | Hallazgo |
+|---|---|---|
+| `ACAD-LOW-001` | 🟢 | **CertificateView.Download/Share sin handler.** Botones renderizados pero sin `onClick` real. Funcionalidad cosmética hasta hoy. |
+| `ACAD-LOW-002` | 🟢 | **`enrollment_id` redundante en payload de `submit_assessment`.** El backend lo lee del `current_user.id` + lookup; el cliente igual lo manda. Inocuo pero confuso. |
+
+### 15.5. Endpoints faltantes detectados
+
+| Recurso | Falta |
+|---|---|
+| `ForumComment` | Modelo existe pero sin CRUD en router. No hay GET/POST/DELETE para respuestas ni threading anidado. |
+| `Resource` (lesson materials) | `academy_resources` se modela y se carga vía `selectinload`, pero no hay GET/POST/DELETE directo. |
+| `ForumThread` categorías | Columna `category` existe pero el `GET /forum/threads` no acepta filtro. |
+| `AssignmentSubmission` | Sin DELETE; no se puede retractar. |
+| `ForumThread.is_resolved` | Sin endpoint para resolver. |
+
+### 15.6. Tabla consolidada del estado de los nuevos hallazgos
+
+| ID | Estado | Notas |
+|---|---|---|
+| `ACAD-CRIT-001` | Pendiente | Bloque catalog UI; requiere decisión coordinada entre frontend y tipos compartidos |
+| `ACAD-CRIT-002` | Pendiente | Tocar `/academy/dashboard/metrics` para añadir `enrollment_trends` y `top_courses`, o ajustar el cliente |
+| `ACAD-HIGH-001` | Pendiente | Filtro `hasModuleAccess('academy', 'edit')` por item S2 |
+| `ACAD-HIGH-002` | Pendiente | Local QR (`qrcode` lib en backend → base64 o `react-qr-code` en frontend) |
+| `ACAD-HIGH-003` | Pendiente | Decidir si `AcademyDetailShell` se mantiene o se consolida con `WorkspaceLayout` |
+| `ACAD-HIGH-004` | Pendiente | Mover la configuración única de sidebar a un solo origen |
+| `ACAD-MED-001` | Pendiente | Permitir hilos globales solo a `Editor/Manager` |
+| `ACAD-MED-002` | Pendiente | `PATCH /forum/threads/{id}/resolve` |
+| `ACAD-MED-003` | Pendiente | `DELETE /admin/submissions/{id}` |
+| `ACAD-MED-004` | Pendiente | Refactor por vista → `CourseGrid.tsx`, `CourseBoard.tsx`, etc. |
+| `ACAD-MED-005` | Pendiente | Mejorar `AcademyClient` con `<EmptyState/>` y retry visible |
+| `ACAD-LOW-001` | Pendiente | Implementar `onClick` o quitar botones |
+| `ACAD-LOW-002` | Pendiente | Aceptar `enrollment_id` opcional y normalizar |
+
+---
+
+## 16. Fases operativas derivadas (referencia)
+
+Detalle de los fixes priorizados en `docs/PLAN_ACADEMY_CALIDAD.md` (versión 2026-07-18):
+
+- **Fase A — críticos**: cerrar `ACAD-CRIT-001` y `ACAD-CRIT-002` antes de cualquier otra tarea.
+- **Fase B — altos**: `ACAD-HIGH-001..004` con cambios pequeños pero coordinados (filtros + lib externa + shells + sidebar).
+- **Fase C — medios**: ampliar cobertura de endpoints faltantes y refactor de catálogo.
+- **Fase D — bajos**: completar UX cosmético.
+- **Fase E — re-validación**: smoke completo (`scripts/test_academy_quality.py` + frontend e2e dedicado).
+
