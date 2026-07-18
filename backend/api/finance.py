@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.core.database import get_db
 from backend.core.permissions import require_admin, require_module_access
+from backend.core.tenant import get_user_sede_id
 from backend.models_shared import _utcnow
 
 router = APIRouter(prefix="/finance", tags=["Finance"])
@@ -19,12 +20,17 @@ def get_finance_summary(
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
     """Resumen financiero para el dashboard de administración."""
+    sede_id = get_user_sede_id(db, current_user.id)
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     total_income = (
         db.query(func.sum(models.Donation.amount))
-        .filter(models.Donation.created_at >= month_start)
+        .filter(
+            models.Donation.created_at >= month_start,
+            models.Donation.sede_id == sede_id,
+            models.Donation.deleted_at.is_(None),
+        )
         .scalar()
         or 0
     )
@@ -50,12 +56,17 @@ def get_ministerial_funds(
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
     """Resumen de fondos en tiempo real calculado desde donations."""
+    sede_id = get_user_sede_id(db, current_user.id)
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     total_ingresos = (
         db.query(func.sum(models.Donation.amount))
-        .filter(models.Donation.created_at >= month_start)
+        .filter(
+            models.Donation.created_at >= month_start,
+            models.Donation.sede_id == sede_id,
+            models.Donation.deleted_at.is_(None),
+        )
         .scalar()
         or 0
     )
@@ -65,12 +76,24 @@ def get_ministerial_funds(
             models.Donation.donation_type,
             func.sum(models.Donation.amount).label("total"),
         )
-        .filter(models.Donation.created_at >= month_start)
+        .filter(
+            models.Donation.created_at >= month_start,
+            models.Donation.sede_id == sede_id,
+            models.Donation.deleted_at.is_(None),
+        )
         .group_by(models.Donation.donation_type)
         .all()
     )
 
-    total_all_time = db.query(func.sum(models.Donation.amount)).scalar() or 0
+    total_all_time = (
+        db.query(func.sum(models.Donation.amount))
+        .filter(
+            models.Donation.sede_id == sede_id,
+            models.Donation.deleted_at.is_(None),
+        )
+        .scalar()
+        or 0
+    )
 
     return {
         "ingresos_mes": round(total_ingresos),
@@ -92,7 +115,15 @@ def get_transactions(
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
     """Historial de transacciones reales desde la tabla donations."""
-    q = db.query(models.Donation).order_by(models.Donation.created_at.desc())
+    sede_id = get_user_sede_id(db, current_user.id)
+    q = (
+        db.query(models.Donation)
+        .filter(
+            models.Donation.sede_id == sede_id,
+            models.Donation.deleted_at.is_(None),
+        )
+        .order_by(models.Donation.created_at.desc())
+    )
     rows = q.limit(limit).all()
 
     result = []

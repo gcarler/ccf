@@ -47,6 +47,7 @@ def test_finance_transactions(client, db_session):
         donation_type="Ofrenda",
         donor_name="Pedro Perez",
         persona_id=persona.id,
+        sede_id=sede.id,
     )
     db_session.add(donation)
     db_session.commit()
