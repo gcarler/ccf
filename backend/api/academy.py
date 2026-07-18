@@ -243,9 +243,7 @@ def list_assessments(course_id: UUID, current_user: AcademyReader, db: Session =
 def get_assessment(assessment_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)):
     assessment = (
         db.query(models.Assessment)
-        .options(
-            selectinload(models.Assessment.questions).selectinload(models.AssessmentQuestion.options)
-        )
+        .options(selectinload(models.Assessment.questions).selectinload(models.AssessmentQuestion.options))
         .filter(models.Assessment.id == assessment_id, models.Assessment.deleted_at.is_(None))
         .first()
     )
@@ -262,11 +260,12 @@ def submit_assessment(
     current_user: AcademyStudent,
     db: Session = Depends(get_db),
 ):
+    # ACAD-LOW-002: aceptar enrollment_id opcional del payload pero siempre derivar
+    # el enrollment desde current_user.id. Evita dependency-on-payload y mantiene
+    # ownership estricto.
     assessment = (
         db.query(models.Assessment)
-        .options(
-            selectinload(models.Assessment.questions).selectinload(models.AssessmentQuestion.options)
-        )
+        .options(selectinload(models.Assessment.questions).selectinload(models.AssessmentQuestion.options))
         .filter(models.Assessment.id == assessment_id, models.Assessment.deleted_at.is_(None))
         .first()
     )
@@ -287,9 +286,7 @@ def submit_assessment(
     answer_by_question = {str(answer.question_id): answer for answer in payload.answers or []}
     points_awarded = 0.0
     total_points = float(sum(question.points or 0 for question in assessment.questions))
-    attempt = models.AssessmentAttempt(
-        assessment_id=assessment.id, enrollment_id=enrollment.id, score=0, passed=False
-    )
+    attempt = models.AssessmentAttempt(assessment_id=assessment.id, enrollment_id=enrollment.id, score=0, passed=False)
     db.add(attempt)
     db.flush()
 
@@ -327,9 +324,7 @@ def submit_assessment(
 
 
 @router.get("/lessons/{lesson_id}/progress")
-def get_lesson_progress(
-    lesson_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)
-):
+def get_lesson_progress(lesson_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)):
     progress = (
         db.query(models.LessonProgress)
         .filter(
@@ -352,9 +347,7 @@ def update_lesson_progress(
     current_user: AcademyStudent,
     db: Session = Depends(get_db),
 ):
-    lesson = db.query(models.Lesson).filter(
-        models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)
-    ).first()
+    lesson = db.query(models.Lesson).filter(models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lección no encontrada")
     enrollment = (
@@ -384,18 +377,25 @@ def update_lesson_progress(
     progress.is_completed = payload.progress_percent >= 100
     db.flush()
 
-    lesson_ids = [row[0] for row in db.query(models.Lesson.id).filter(
-        models.Lesson.course_id == lesson.course_id,
-        models.Lesson.deleted_at.is_(None),
-        models.Lesson.is_published.is_(True),
-    )]
+    lesson_ids = [
+        row[0]
+        for row in db.query(models.Lesson.id).filter(
+            models.Lesson.course_id == lesson.course_id,
+            models.Lesson.deleted_at.is_(None),
+            models.Lesson.is_published.is_(True),
+        )
+    ]
     completed = 0
     if lesson_ids:
-        completed = db.query(models.LessonProgress).filter(
-            models.LessonProgress.persona_id == current_user.id,
-            models.LessonProgress.lesson_id.in_(lesson_ids),
-            models.LessonProgress.is_completed.is_(True),
-        ).count()
+        completed = (
+            db.query(models.LessonProgress)
+            .filter(
+                models.LessonProgress.persona_id == current_user.id,
+                models.LessonProgress.lesson_id.in_(lesson_ids),
+                models.LessonProgress.is_completed.is_(True),
+            )
+            .count()
+        )
     enrollment.progress_percent = round((completed / len(lesson_ids)) * 100, 2) if lesson_ids else 0
     if enrollment.progress_percent >= 100:
         enrollment.status = "completed"
@@ -417,10 +417,14 @@ def create_enrollment(
     course = _get_scoped_course(db, current_user, payload.course_id)
     if not course.is_published:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
-    existing = db.query(models.Enrollment).filter(
-        models.Enrollment.persona_id == current_user.id,
-        models.Enrollment.course_id == course.id,
-    ).first()
+    existing = (
+        db.query(models.Enrollment)
+        .filter(
+            models.Enrollment.persona_id == current_user.id,
+            models.Enrollment.course_id == course.id,
+        )
+        .first()
+    )
     if existing and existing.deleted_at is None:
         return _serialize_enrollment(existing)
     if existing:
@@ -464,8 +468,10 @@ def my_enrollments(current_user: AcademyStudent, db: Session = Depends(get_db)):
 @router.get("/enrollments")
 def all_enrollments(current_user: AcademyManager, db: Session = Depends(get_db)):
     sede_id = get_user_sede_id(db, current_user.id)
-    query = db.query(models.Enrollment).join(models.Course).filter(
-        models.Enrollment.deleted_at.is_(None), models.Course.deleted_at.is_(None)
+    query = (
+        db.query(models.Enrollment)
+        .join(models.Course)
+        .filter(models.Enrollment.deleted_at.is_(None), models.Course.deleted_at.is_(None))
     )
     if sede_id:
         query = query.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
@@ -476,10 +482,14 @@ def all_enrollments(current_user: AcademyManager, db: Session = Depends(get_db))
 def check_in(enrollment_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)):
     enrollment = _get_own_enrollment(db, current_user, enrollment_id)
     today = date.today()
-    attendance = db.query(models.CourseAttendance).filter(
-        models.CourseAttendance.enrollment_id == enrollment.id,
-        func.date(models.CourseAttendance.session_date) == today,
-    ).first()
+    attendance = (
+        db.query(models.CourseAttendance)
+        .filter(
+            models.CourseAttendance.enrollment_id == enrollment.id,
+            func.date(models.CourseAttendance.session_date) == today,
+        )
+        .first()
+    )
     if not attendance:
         attendance = models.CourseAttendance(
             enrollment_id=enrollment.id,
@@ -508,18 +518,25 @@ def my_progress(current_user: AcademyStudent, db: Session = Depends(get_db)):
     )
     result = []
     for enrollment in enrollments:
-        total_lessons = db.query(models.Lesson).filter(
-            models.Lesson.course_id == enrollment.course_id,
-            models.Lesson.deleted_at.is_(None),
-            models.Lesson.is_published.is_(True),
-        ).count()
-        completed_lessons = db.query(models.LessonProgress).join(
-            models.Lesson, models.LessonProgress.lesson_id == models.Lesson.id
-        ).filter(
-            models.LessonProgress.persona_id == current_user.id,
-            models.Lesson.course_id == enrollment.course_id,
-            models.LessonProgress.is_completed.is_(True),
-        ).count()
+        total_lessons = (
+            db.query(models.Lesson)
+            .filter(
+                models.Lesson.course_id == enrollment.course_id,
+                models.Lesson.deleted_at.is_(None),
+                models.Lesson.is_published.is_(True),
+            )
+            .count()
+        )
+        completed_lessons = (
+            db.query(models.LessonProgress)
+            .join(models.Lesson, models.LessonProgress.lesson_id == models.Lesson.id)
+            .filter(
+                models.LessonProgress.persona_id == current_user.id,
+                models.Lesson.course_id == enrollment.course_id,
+                models.LessonProgress.is_completed.is_(True),
+            )
+            .count()
+        )
         result.append(
             {
                 "id": enrollment.course_id,
@@ -538,18 +555,30 @@ def my_progress(current_user: AcademyStudent, db: Session = Depends(get_db)):
 
 @router.get("/me/profile")
 def my_profile(current_user: AcademyStudent, db: Session = Depends(get_db)):
-    enrollments = db.query(models.Enrollment).options(joinedload(models.Enrollment.course)).filter(
-        models.Enrollment.persona_id == current_user.id,
-        models.Enrollment.deleted_at.is_(None),
-        # Aislado por boundary de persona_id (Axioma 3). Los JOINs con Course son
-        # solo para hidratación y no abren puerta a leak cross-sede.
-    ).all()
-    certificates = db.query(models.Certificate).join(models.Enrollment).filter(
-        models.Enrollment.persona_id == current_user.id,
-        models.Enrollment.deleted_at.is_(None),
-        # Aislado por boundary de persona_id (Axioma 3). Mismo razonamiento que arriba.
-    ).all()
-    average = sum(enrollment.progress_percent or 0 for enrollment in enrollments) / len(enrollments) if enrollments else 0
+    enrollments = (
+        db.query(models.Enrollment)
+        .options(joinedload(models.Enrollment.course))
+        .filter(
+            models.Enrollment.persona_id == current_user.id,
+            models.Enrollment.deleted_at.is_(None),
+            # Aislado por boundary de persona_id (Axioma 3). Los JOINs con Course son
+            # solo para hidratación y no abren puerta a leak cross-sede.
+        )
+        .all()
+    )
+    certificates = (
+        db.query(models.Certificate)
+        .join(models.Enrollment)
+        .filter(
+            models.Enrollment.persona_id == current_user.id,
+            models.Enrollment.deleted_at.is_(None),
+            # Aislado por boundary de persona_id (Axioma 3). Mismo razonamiento que arriba.
+        )
+        .all()
+    )
+    average = (
+        sum(enrollment.progress_percent or 0 for enrollment in enrollments) / len(enrollments) if enrollments else 0
+    )
     return {
         "persona_id": current_user.id,
         "username": getattr(current_user, "username", None) or getattr(current_user, "email", ""),
@@ -564,11 +593,14 @@ def my_profile(current_user: AcademyStudent, db: Session = Depends(get_db)):
 @router.get("/me/certificates")
 def my_certificates(current_user: AcademyStudent, db: Session = Depends(get_db)):
     user_sede = get_user_sede_id(db, current_user.id)
-    query = db.query(models.Certificate, models.Course.title).join(
-        models.Enrollment, models.Certificate.enrollment_id == models.Enrollment.id
-    ).join(models.Course, models.Enrollment.course_id == models.Course.id).filter(
-        models.Enrollment.persona_id == current_user.id,
-        models.Enrollment.deleted_at.is_(None),
+    query = (
+        db.query(models.Certificate, models.Course.title)
+        .join(models.Enrollment, models.Certificate.enrollment_id == models.Enrollment.id)
+        .join(models.Course, models.Enrollment.course_id == models.Course.id)
+        .filter(
+            models.Enrollment.persona_id == current_user.id,
+            models.Enrollment.deleted_at.is_(None),
+        )
     )
     if user_sede is not None:
         # ``Enrollment`` no tiene ``sede_id`` propio; la sede vive en ``Course``
@@ -590,15 +622,11 @@ def my_certificates(current_user: AcademyStudent, db: Session = Depends(get_db))
 
 
 @router.post("/enrollments/{enrollment_id}/request-certificate")
-def request_certificate(
-    enrollment_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)
-):
+def request_certificate(enrollment_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)):
     enrollment = _get_own_enrollment(db, current_user, enrollment_id)
     if enrollment.status != "completed" and not enrollment.approved:
         raise HTTPException(status_code=400, detail="El curso todavía no está aprobado")
-    existing = db.query(models.Certificate).filter(
-        models.Certificate.enrollment_id == enrollment.id
-    ).first()
+    existing = db.query(models.Certificate).filter(models.Certificate.enrollment_id == enrollment.id).first()
     if existing:
         return existing
     code = f"CCF-ACA-{enrollment.id.hex[:12].upper()}"
@@ -633,11 +661,15 @@ async def submit_assignment(
     db: Session = Depends(get_db),
 ):
     enrollment = _get_own_enrollment(db, current_user, enrollment_id)
-    lesson = db.query(models.Lesson).filter(
-        models.Lesson.id == lesson_id,
-        models.Lesson.course_id == enrollment.course_id,
-        models.Lesson.deleted_at.is_(None),
-    ).first()
+    lesson = (
+        db.query(models.Lesson)
+        .filter(
+            models.Lesson.id == lesson_id,
+            models.Lesson.course_id == enrollment.course_id,
+            models.Lesson.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not lesson:
         raise HTTPException(status_code=404, detail="Lección no encontrada")
     contents = await file.read()
@@ -665,9 +697,7 @@ def forum_threads(
     # Axioma 3: ForumThread.course_id IS NULL → anuncio global (visible a todas las sedes).
     # Hilos vinculados a Course: scope por Course.sede_id via outerjoin (preserva huerfanos).
     # Hilos de cursos con deleted_at != NULL quedan ocultos automáticamente.
-    query = db.query(models.ForumThread).outerjoin(
-        models.Course, models.ForumThread.course_id == models.Course.id
-    )
+    query = db.query(models.ForumThread).outerjoin(models.Course, models.ForumThread.course_id == models.Course.id)
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
         course_scope = and_(
@@ -680,12 +710,8 @@ def forum_threads(
     else:
         # Superadmin sin sede: ve cursos no borrados + huerfanos.
         course_scope = models.Course.deleted_at.is_(None)
-    query = query.filter(
-        or_(models.ForumThread.course_id.is_(None), course_scope)
-    )
-    return query.order_by(
-        models.ForumThread.created_at.desc()
-    ).limit(limit).all()
+    query = query.filter(or_(models.ForumThread.course_id.is_(None), course_scope))
+    return query.order_by(models.ForumThread.created_at.desc()).limit(limit).all()
 
 
 @router.post("/forum/threads", status_code=status.HTTP_201_CREATED)
@@ -694,6 +720,15 @@ def create_forum_thread(
     current_user: AcademyStudent,
     db: Session = Depends(get_db),
 ):
+    # ACAD-MED-001: solo Editor/Manager pueden publicar hilos globales (course_id=None).
+    # Esto evita que cualquier Student cree anuncios cross-sede o ruido global.
+    if payload.course_id is None:
+        permissions = get_user_effective_permissions(db, current_user)
+        if "academy:edit" not in permissions and "academy:manage" not in permissions:
+            raise HTTPException(
+                status_code=403,
+                detail="Solo Editor/Manager pueden publicar hilos globales del foro",
+            )
     if payload.course_id:
         _get_scoped_course(db, current_user, payload.course_id)
     thread = models.ForumThread(
@@ -704,6 +739,24 @@ def create_forum_thread(
         content=payload.content or payload.title,
     )
     db.add(thread)
+    db.commit()
+    db.refresh(thread)
+    return thread
+
+
+@router.patch("/forum/threads/{thread_id}/resolve")
+def resolve_forum_thread(
+    thread_id: UUID,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    # ACAD-MED-002: alternar is_resolved. Solo Editor/Manager.
+    thread = db.query(models.ForumThread).filter(models.ForumThread.id == thread_id).first()
+    if not thread:
+        raise HTTPException(status_code=404, detail="Hilo no encontrado")
+    if thread.course_id:
+        _get_scoped_course(db, current_user, thread.course_id)
+    thread.is_resolved = not bool(thread.is_resolved)
     db.commit()
     db.refresh(thread)
     return thread
@@ -754,15 +807,68 @@ def dashboard_metrics(current_user: AcademyManager, db: Session = Depends(get_db
     courses = _course_scope(db, current_user)
     # sede_id applied via _course_scope helper (Axioma 3)
     course_ids = [row[0] for row in courses.with_entities(models.Course.id).all()]
-    enrollments = db.query(models.Enrollment).filter(
-        models.Enrollment.course_id.in_(course_ids), models.Enrollment.deleted_at.is_(None)
-    ) if course_ids else db.query(models.Enrollment).filter(False)
+    enrollments = (
+        db.query(models.Enrollment).filter(
+            models.Enrollment.course_id.in_(course_ids), models.Enrollment.deleted_at.is_(None)
+        )
+        if course_ids
+        else db.query(models.Enrollment).filter(False)
+    )
     total = enrollments.count()
     completed = enrollments.filter(models.Enrollment.status == "completed").count()
-    certificates = db.query(models.Certificate).join(models.Enrollment).filter(
-        models.Enrollment.course_id.in_(course_ids)
-    ).count() if course_ids else 0
+    certificates = (
+        db.query(models.Certificate).join(models.Enrollment).filter(models.Enrollment.course_id.in_(course_ids)).count()
+        if course_ids
+        else 0
+    )
     completion_rate = round((completed / total) * 100, 2) if total else 0
+    # ACAD-CRIT-002: enrollment_trends (nuevas matrículas por mes) + top_courses (N cursos con m\u00e1s matr\u00edculas)
+    enrollment_trends: list[dict[str, Any]] = []
+    if course_ids:
+        # Acotamos a últimos 12 meses para no crecer indefinidamente
+        from datetime import datetime, timedelta, timezone
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=365)
+        monthly = (
+            db.query(
+                func.date_trunc("month", models.Enrollment.created_at).label("month"),
+                func.count(models.Enrollment.id).label("count"),
+            )
+            .filter(
+                models.Enrollment.course_id.in_(course_ids),
+                models.Enrollment.deleted_at.is_(None),
+                models.Enrollment.created_at >= cutoff,
+            )
+            .group_by("month")
+            .order_by("month")
+            .all()  # sede_id scoped via _course_scope(course_ids)
+        )
+        for month_value, count_value in monthly:
+            enrollment_trends.append(
+                {
+                    "label": month_value.strftime("%Y-%m"),
+                    "value": int(count_value or 0),
+                }
+            )
+    top_courses: list[dict[str, Any]] = []
+    if course_ids:
+        top_rows = (
+            db.query(
+                models.Course.title,
+                func.count(models.Enrollment.id).label("count"),
+            )
+            .join(models.Enrollment, models.Enrollment.course_id == models.Course.id)
+            .filter(
+                models.Course.id.in_(course_ids),
+                models.Enrollment.deleted_at.is_(None),
+            )
+            .group_by(models.Course.title)
+            .order_by(func.count(models.Enrollment.id).desc())
+            .limit(5)
+            .all()  # sede_id scoped via _course_scope(course_ids)
+        )
+        for title, count_value in top_rows:
+            top_courses.append({"title": title, "count": int(count_value or 0)})
     return {
         "active_students": total,
         "completion_rate": completion_rate,
@@ -775,6 +881,9 @@ def dashboard_metrics(current_user: AcademyManager, db: Session = Depends(get_db
             {"title": "Estudiantes", "value": str(total), "trend": "", "color": "green"},
             {"title": "Finalización", "value": f"{completion_rate}%", "trend": "", "color": "amber"},
         ],
+        # Nuevos campos — alimentación del AcademyClient.tsx (ACAD-CRIT-002)
+        "enrollment_trends": enrollment_trends,
+        "top_courses": top_courses,
     }
 
 
@@ -807,18 +916,14 @@ def list_submissions(
     )
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
-        rows = rows.filter(
-            or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None))
-        )
+        rows = rows.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
     rows = rows.limit(limit).all()
     return [
         {
             "id": submission.id,
             "enrollment_id": submission.enrollment_id,
             "lesson_id": submission.lesson_id,
-            "student_name": " ".join(
-                part for part in [persona.first_name, persona.last_name] if part
-            ),
+            "student_name": " ".join(part for part in [persona.first_name, persona.last_name] if part),
             "lesson_title": lesson_title,
             "file_url": submission.file_url,
             "comment": submission.comment,
@@ -854,9 +959,7 @@ def grade_submission(
     )
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
-        query = query.filter(
-            or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None))
-        )
+        query = query.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
     submission = query.first()
     if not submission:
         raise HTTPException(status_code=404, detail="Entrega no encontrada")
@@ -868,14 +971,10 @@ def grade_submission(
 
 
 @router.post("/admin/courses", status_code=status.HTTP_201_CREATED)
-def create_course_admin(
-    payload: CoursePayload, current_user: AcademyEditor, db: Session = Depends(get_db)
-):
+def create_course_admin(payload: CoursePayload, current_user: AcademyEditor, db: Session = Depends(get_db)):
     if payload.access_level not in {"open", "persona", "advanced"}:
         raise HTTPException(status_code=422, detail="Nivel de acceso inválido")
-    course = models.Course(
-        **payload.model_dump(), sede_id=get_user_sede_id(db, current_user.id)
-    )
+    course = models.Course(**payload.model_dump(), sede_id=get_user_sede_id(db, current_user.id))
     db.add(course)
     db.commit()
     db.refresh(course)
@@ -902,23 +1001,23 @@ def update_course_admin(
 
 
 @router.delete("/admin/courses/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
-def archive_course_admin(
-    course_id: UUID, current_user: AcademyManager, db: Session = Depends(get_db)
-):
+def archive_course_admin(course_id: UUID, current_user: AcademyManager, db: Session = Depends(get_db)):
     course = _get_scoped_course(db, current_user, course_id)
     course.deleted_at = _utcnow()
     db.commit()
 
 
 @router.get("/admin/courses/{course_id}/students")
-def course_students(
-    course_id: UUID, current_user: AcademyEditor, db: Session = Depends(get_db)
-):
+def course_students(course_id: UUID, current_user: AcademyEditor, db: Session = Depends(get_db)):
     _get_scoped_course(db, current_user, course_id)
     user_sede = get_user_sede_id(db, current_user.id)
-    query = db.query(models.Enrollment).options(joinedload(models.Enrollment.persona)).filter(
-        models.Enrollment.course_id == course_id,
-        models.Enrollment.deleted_at.is_(None),
+    query = (
+        db.query(models.Enrollment)
+        .options(joinedload(models.Enrollment.persona))
+        .filter(
+            models.Enrollment.course_id == course_id,
+            models.Enrollment.deleted_at.is_(None),
+        )
     )
     if user_sede is not None:
         # ``Enrollment`` no tiene ``sede_id`` propio; la sede vive en ``Course``
@@ -932,18 +1031,18 @@ def course_students(
             "enrollment_id": enrollment.id,
             "persona_id": enrollment.persona_id,
             "username": " ".join(
-                part
-                for part in [enrollment.persona.first_name, enrollment.persona.last_name]
-                if part
+                part for part in [enrollment.persona.first_name, enrollment.persona.last_name] if part
             ),
             "email": enrollment.persona.email,
             "status": enrollment.status,
             "progress": enrollment.progress_percent,
             "progress_percent": enrollment.progress_percent,
-            "attendance_count": db.query(models.CourseAttendance).filter(
+            "attendance_count": db.query(models.CourseAttendance)
+            .filter(
                 models.CourseAttendance.enrollment_id == enrollment.id,
                 models.CourseAttendance.status == "present",
-            ).count(),
+            )
+            .count(),
             "average_grade": enrollment.final_grade or 0,
             "approved": enrollment.approved,
         }
@@ -973,9 +1072,7 @@ def update_lesson_admin(
     current_user: AcademyEditor,
     db: Session = Depends(get_db),
 ):
-    lesson = db.query(models.Lesson).filter(
-        models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)
-    ).first()
+    lesson = db.query(models.Lesson).filter(models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lección no encontrada")
     _get_scoped_course(db, current_user, lesson.course_id)
@@ -988,16 +1085,60 @@ def update_lesson_admin(
 
 
 @router.delete("/admin/lessons/{lesson_id}", status_code=status.HTTP_204_NO_CONTENT)
-def archive_lesson_admin(
-    lesson_id: UUID, current_user: AcademyEditor, db: Session = Depends(get_db)
-):
-    lesson = db.query(models.Lesson).filter(
-        models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)
-    ).first()
+def archive_lesson_admin(lesson_id: UUID, current_user: AcademyEditor, db: Session = Depends(get_db)):
+    lesson = db.query(models.Lesson).filter(models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lección no encontrada")
     _get_scoped_course(db, current_user, lesson.course_id)
     lesson.deleted_at = _utcnow()
+    db.commit()
+
+
+@router.delete("/admin/submissions/{submission_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_submission_admin(
+    submission_id: UUID,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    """ACAD-MED-003: soft delete de una entrega (Regla 4 del proyecto, regla.platform).
+    Editor/Manager puede retractarla. El campo `deleted_at` de ``AssignmentSubmission``
+    se setea con ``_utcnow()`` siguiendo el patrón canónico de
+    ``backend/crud/crm_/milestones.py::delete_milestone``.
+
+    TODO ACAD-MED-003-FOLLOWUP: el archivo físico en Seaweed queda huérfano tras el
+    soft delete. Evaluar job batch de purga o tabla ``academy_submission_audit`` con
+    columna JSON para preservar el file_url original antes del archivado.
+    """
+    submission = (
+        db.query(models.AssignmentSubmission)
+        .join(models.Lesson, models.AssignmentSubmission.lesson_id == models.Lesson.id)
+        .join(models.Course, models.Lesson.course_id == models.Course.id)
+        .filter(
+            models.AssignmentSubmission.id == submission_id,
+            models.AssignmentSubmission.deleted_at.is_(None),
+            models.Course.deleted_at.is_(None),
+            models.Lesson.deleted_at.is_(None),
+        )
+    )
+    sede_id = get_user_sede_id(db, current_user.id)
+    if sede_id:
+        submission = submission.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
+    row = submission.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Entrega no encontrada")
+    # ACAD-MED-003 (Regla 4): soft delete via deleted_at, NO db.delete(). Esto
+    # preserva audit + integridad referencial y mantiene el modelo coherente con
+    # ``Course``, ``Lesson`` y demás entidades transaccionales.
+    row.deleted_at = _utcnow()
+    db.add(
+        models.AcademyActivityLog(
+            event_type="assignment_submission_archived",
+            course_id=row.lesson.course_id if row.lesson else None,
+            persona_id=current_user.id,
+            modality=None,
+            value=0,
+        )
+    )
     db.commit()
 
 
@@ -1049,9 +1190,11 @@ def update_assessment_admin(
     current_user: AcademyEditor,
     db: Session = Depends(get_db),
 ):
-    assessment = db.query(models.Assessment).filter(
-        models.Assessment.id == assessment_id, models.Assessment.deleted_at.is_(None)
-    ).first()
+    assessment = (
+        db.query(models.Assessment)
+        .filter(models.Assessment.id == assessment_id, models.Assessment.deleted_at.is_(None))
+        .first()
+    )
     if not assessment:
         raise HTTPException(status_code=404, detail="Evaluación no encontrada")
     _get_scoped_course(db, current_user, assessment.course_id)

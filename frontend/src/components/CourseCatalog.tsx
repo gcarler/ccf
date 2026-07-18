@@ -24,7 +24,7 @@ const ACCESS_COLOR: Record<AccessLevel, string> = {
 };
 
 interface Course {
-  id: number;
+  id: string;
   code: string;
   title: string;
   description: string;
@@ -40,7 +40,7 @@ interface Course {
 
 interface CourseCatalogProps {
   token: string;
-  enrolledCourseIds?: number[];
+  enrolledCourseIds?: string[];
   initialCourses?: Course[];
   viewType?: ViewType;
   onViewTypeChange?: (view: ViewType) => void;
@@ -132,7 +132,7 @@ export default function CourseCatalog({
   }, [courses]);
 
 
-  const handleEnrollClick = (courseId: number) => {
+  const handleEnrollClick = (courseId: string) => {
     if (enrolledCourseIds.includes(courseId)) {
       router.push(`/plataforma/academy/course/${courseId}`);
     } else {

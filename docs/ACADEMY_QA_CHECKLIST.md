@@ -147,3 +147,167 @@ Una tarea de Academy queda cerrada cuando:
 - consola no muestra errores nuevos
 - si cambia contrato, `ACADEMY_API_CONTRACTS.md` se actualiza
 - si cambia estado o backlog, `ESTADO_ACADEMY.md` se actualiza
+
+---
+
+## 10. Casos adicionales auditoría 2026-07-18 (ACAD-*)
+
+Estos casos son obligatorios mientras los IDs `ACAD-*` de `docs/ESTADO_ACADEMY.md §15` estén en estado Pendiente.
+
+### 10.1. CRÍTICOS
+
+#### Caso ACAD-CRIT-001 — Mismatch UUID
+
+**Setup.** Usuario autenticado (cualquier rol con `academy:read`) en `/plataforma/academy/courses`.
+
+**Pasos:**
+1. Inspeccionar network al cargar cursos: `response[i].id` debe ser string UUID, no number.
+2. Verificar que el cliente **no** declare `id: number` en `CourseCatalog.tsx`.
+3. Cross-check: si el usuario tiene una inscripción previa (`enrolledCourseIds`), el botón debe mostrar "Continuar Curso", no "Inscribirme Ahora".
+
+**Verificación automática:**
+```bash
+grep -n "id: number" frontend/src/components/CourseCatalog.tsx   # debe estar vacio
+grep -n "id: number" frontend/src/components/MyEnrollments.tsx   # debe estar vacio
+```
+
+#### Caso ACAD-CRIT-002 — Dashboard endpoint
+
+**Setup.** Manager en `/plataforma/academy`.
+
+**Pasos:**
+1. Abrir DevTools → Network.
+2. Verificar que el fetch principal va a `/dashboard/academy` (NO `/academy/dashboard/metrics`).
+3. Inspeccionar payload: debe contener `cards`, `enrollment_trends`, `top_courses`.
+4. Si backend solo retorna `cards`, documentar el gap y elegir fix (extender backend o reducir cliente).
+
+**Comando de inspección backend:**
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/academy/dashboard/metrics | jq 'keys'
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/dashboard/academy | jq 'keys'
+```
+
+### 10.2. ALTOS
+
+#### Caso ACAD-HIGH-001 — Sidebar filtrado por nivel
+
+**Setup.** Tres roles: LECTOR, EDITOR, GESTOR (ADMIN), en `/plataforma/academy`.
+
+**Pasos:**
+1. Como LECTOR: el sidebar NO debe mostrar "Panel Docente" ni "Coordinación".
+2. Como EDITOR: debe mostrar "Panel Docente" pero NO "Coordinación".
+3. Como GESTOR: debe mostrar ambos.
+4. Click en un link oculto inconsistente responde `403` o `404` (managed por backend), no rompe la UI.
+
+#### Caso ACAD-HIGH-002 — QR code local
+
+**Setup.** Estudiante con certificado emitido en `/plataforma/academy/certificates`.
+
+**Pasos:**
+1. Inspeccionar network al cargar CertificateView: NO debe haber request a `api.qrserver.com` ni similares.
+2. El QR debe generarse client-side con `react-qr-code` o server-side como base64.
+3. Validar visualmente que el QR escaneado devuelve URL del certificado.
+
+#### Caso ACAD-HIGH-003 — Shells (AcademyDetailShell vs WorkspaceLayout)
+
+**Setup.** Navegar por todas las rutas `/plataforma/academy/**/*`.
+
+**Pasos:**
+1. Identificar cuáles rutas rinden con `AcademyDetailShell` y cuáles con `WorkspaceLayout`.
+2. Verificar visualmente que ambas tienen coherencia de tokens (`bg-primary`, `--border`, etc.) y dark mode.
+3. Decidir consolidación o documentar la variante.
+
+#### Caso ACAD-HIGH-004 — Sidebar config dual
+
+**Setup.** Editor.
+
+**Pasos:**
+1. `grep` debe mostrar que los items del sidebar académico vienen de una SOLA fuente.
+2. `moduleConfigs.ts:academy` y `app/plataforma/academy/layout.tsx` deben tener los mismos items.
+
+### 10.3. MEDIOS
+
+#### Caso ACAD-MED-001 — Foro global solo para Editor/Manager
+
+**Setup.** Student sin `academy:edit`.
+
+**Pasos:**
+1. Intentar `POST /forum/threads` con `course_id=null` y `title="hack"`.
+2. Debe responder `403` con mensaje claro (no genérico 403).
+
+#### Caso ACAD-MED-002 — Marcar hilo como resuelto
+
+**Setup.** Cualquier usuario autenticado.
+
+**Pasos:**
+1. `PATCH /forum/threads/{id}/resolve` debe alternar `is_resolved`.
+2. Solo Editor/Manager pueden invocar; otros reciben 403.
+
+#### Caso ACAD-MED-003 — Retractar entrega
+
+**Setup.** Estudiante que entregó una asignación incorrecta.
+
+**Pasos:**
+1. `DELETE /admin/submissions/{id}` con `AcademyEditor` o el propio estudiante (ownership).
+2. Soft delete (`deleted_at`), no hard delete.
+
+### 10.4. BAJOS
+
+#### Caso ACAD-LOW-001 — Download/Share certificado
+
+**Setup.** `/plataforma/academy/certificates/[code]`.
+
+**Pasos:**
+1. Click en "Descargar PDF": o descarga real, o botón removido.
+2. Click en "Compartir Logro": o copia link al portapapeles, o botón removido.
+
+#### Caso ACAD-LOW-002 — Submit assessment sin enrollment_id válido
+
+**Setup.** Estudiante inscrito en un curso.
+
+**Pasos:**
+1. `POST /assessments/{id}/submit` con `enrollment_id` random.
+2. Backend ignora el payload y opera sobre el enrollment propio del usuario autenticado.
+3. Comprobar que el log del backend muestra uso de `current_user.id`.
+
+### 10.5. Gates adicionales en smoke
+
+Para que su QA de Academy cierre Fase 0 (auditoría 2026-07-18):
+
+- [ ] No hay requests a `api.qrserver.com` en build.
+- [ ] Network en `/plataforma/academy` contiene al menos 1 fetch a `/dashboard/academy` (o `/academy/dashboard/metrics` si se elige ese fix).
+- [ ] Sidebar S2 como LECTOR debería mostrar 3 grupos y ~8 items, no 12.
+- [ ] Build de frontend no muestra warning de TypeScript sobre `id: number` vs `id: string`.
+
+---
+
+## 11. Checklist completo de regresión
+
+Consolidación rápida (marca o expande):
+
+```bash
+# 1. Smoke backend
+cd /root/ccf && ./venv/bin/python scripts/test_academy_quality.py
+
+# 2. Pytest backend
+cd /root/ccf && ./venv/bin/python -m pytest -q -o addopts='' \
+  tests/test_academy_api.py \
+  tests/test_academy_domain.py
+
+# 3. Typecheck frontend
+cd /root/ccf/frontend && npx tsc --noEmit
+
+# 4. E2E academy
+cd /root/ccf/frontend && npm run test:e2e:academy
+cd /root/ccf/frontend && npm run test:e2e:academy:deep
+
+# 5. Build frontend (opcional)
+cd /root/ccf/frontend && npm run build
+
+# 6. Inspección específica auditoría
+grep -rn "id: number" frontend/src/components/CourseCatalog.tsx frontend/src/components/MyEnrollments.tsx
+grep -rn "api.qrserver.com" frontend/
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/dashboard/academy | jq '. | keys'
+```
+
+Cierre completo → no queda ningún ACAD-* Pendiente.
