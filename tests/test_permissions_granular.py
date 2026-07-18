@@ -296,3 +296,32 @@ class TestEffectivePermissionResolution:
         after = db_session.query(Usuario).filter(Usuario.id == uuid.UUID(user_id)).first()
         assert after.rol_plataforma_id == base_role_id
         assert response.json()["effective_permissions"]["projects:edit"] == "allow"
+
+
+class TestAdminSedeIsolation:
+    def test_admin_cannot_read_or_assign_permissions_cross_sede(self, client: TestClient, db_session: Session):
+        from backend import models as m
+        from tests.conftest import seed_admin, seed_user_with_role
+
+        admin, _, _ = seed_admin(db_session, email="sede-admin@ccf.test", password="test123")
+        foreign_sede = m.Sede(nombre="Sede Externa", ciudad="Pasto", es_activa=True)
+        db_session.add(foreign_sede)
+        db_session.commit()
+        foreign_user, _, _ = seed_user_with_role(
+            db_session,
+            role_name="LECTOR_EXTERNO",
+            email="sede-foreign@ccf.test",
+            password="test123",
+            sede_id=foreign_sede.id,
+            permisos={"academy:study": "allow"},
+        )
+        token = client.post("/api/v3/auth/login", json={"email": admin.email, "password": "test123"}).json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        assert client.get(f"/api/admin/users/{foreign_user.id}", headers=headers).status_code == 404
+        assert client.get(f"/api/admin/users/{foreign_user.id}/permissions", headers=headers).status_code == 404
+        assert client.put(
+            f"/api/admin/users/{foreign_user.id}/permissions",
+            headers=headers,
+            json={"projects": "read"},
+        ).status_code == 404
