@@ -55,7 +55,7 @@ def count_wiki_pages(
 def get_wiki_page(
     db: Session, page_key: str, sede_id: UUID | None
 ) -> models.WikiPage | None:
-    """Get a single wiki page by key and sede."""
+    """Get a single active (not deleted) wiki page by key and sede."""
     return (
         db.query(models.WikiPage)
         .filter(
@@ -65,6 +65,20 @@ def get_wiki_page(
         )
         .first()
     )
+
+
+def get_wiki_page_including_deleted(
+    db: Session, page_key: str, sede_id: UUID | None
+) -> models.WikiPage | None:
+    """Get a wiki page by key and sede, including soft-deleted ones."""
+    return (
+        db.query(models.WikiPage)
+        .filter(
+            models.WikiPage.page_key == page_key,
+            models.WikiPage.sede_id == sede_id,
+        )
+        .first()
+   )
 
 
 def create_wiki_page(
