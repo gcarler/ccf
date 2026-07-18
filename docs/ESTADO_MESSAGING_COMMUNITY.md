@@ -96,10 +96,11 @@ cd /root/ccf
 
 1. **Script canonico del modulo** `[PEND-MESSAGING-SMOKE-001]` — cerrada el 2026-07-16 con `scripts/test_messaging_quality.py`; agrupa inbox/notificaciones, isolation/ownership y chat directo.
 2. **Matriz RBAC por superficie** `[PEND-MESSAGING-RBAC-001]` — cerrada el 2026-07-16 en `MESSAGING_COMMUNITY_RBAC_MATRIX.md`; documenta la diferencia entre notifications/chat, inbox interno gateado por `academy:manage`, community pública y mutaciones community.
-3. **Contrato de chat directo** `[PEND-CHAT-CONTRACT-001]` — endurecer y cerrar contrato por rol y paginacion; la superficie ya quedó cubierta por smoke profundo de conversación, pero falta cerrar el contrato documental y de backend.
+3. **Contrato de chat directo** `[PEND-CHAT-CONTRACT-001]` — cerrada el 2026-07-18 en `MESSAGING_COMMUNITY_API_CONTRACTS.md`; documenta paginación (`before`, `limit`), tipos de respuesta y RBAC por endpoint. Backend y frontend al 100%.
 4. **Plan operativo del modulo** `[PEND-PLAN-MESSAGING-001]` — cerrada el 2026-07-16 con `docs/PLAN_MESSAGING_CALIDAD.md`; fija fases para inbox, chat directo, community pública, bridge CRM y smoke frontend.
 5. **Smoke frontend Messaging / Community** `[PEND-FRONTEND-E2E-MESSAGING-001]` — cerrada el 2026-07-16 con `frontend/tests/e2e/messaging/smoke.spec.ts`; cubre inbox, mensajes directos, hub community y eventos con guard de consola/API/assets.
 6. **Smoke profundo de chat directo** `[PEND-FRONTEND-DEEP-MESSAGING-001]` — cerrada el 2026-07-16 con `frontend/tests/e2e/messaging/direct-messages.spec.ts`; valida listado, hilo, búsqueda, creación de conversación y envío de mensajes con runner administrado.
+7. **Auditoría técnica chat** `[PEND-CHAT-AUDIT-001]` — cerrada el 2026-07-18; 7 CRITICAL + 17 HIGH + 13 MEDIUM corregidos: WS broadcast (BackgroundTasks), batch unread (GROUP BY), schema validation, XSS defense, back button, typed WS events, error UI, stale closures, cursor tiebreaker, existence-leak fix (403→404), unused imports cleanup. `tsc --noEmit` limpio, 35 pytest pasan (32 + 3 nuevos: WS broadcast test, empty content validation, duplicate conv dedup).
 
 ## 10. Archivos a revisar primero si falla
 

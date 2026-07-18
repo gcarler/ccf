@@ -50,6 +50,11 @@ Archivo: `backend/api/chat.py`.
 | `GET` | `/chat/conversations` | `messaging:read` |
 | `POST` | `/chat/conversations` | `messaging:edit` |
 | `GET` | `/chat/conversations/{conv_id}/messages` | `messaging:read` |
+
+Parámetros de consulta soportados:
+
+- `limit` (int, default 50, max 200) — cantidad máxima de mensajes a retornar.
+- `before` (string) — cursor de paginación: acepta ISO datetime string (preferido) o UUID string para retrocompatibilidad. Retorna mensajes con `created_at < before`.
 | `POST` | `/chat/conversations/{conv_id}/messages` | `messaging:edit` |
 | `POST` | `/chat/conversations/{conv_id}/read` | `messaging:read` |
 | `DELETE` | `/chat/messages/{message_id}` | `messaging:edit` |

@@ -12,6 +12,9 @@ from backend.schemas._common import orm_config
 class ConversationCreate(BaseModel):
     participant_ids: List[UUID]
 
+    def deduplicate_participants(self) -> "ConversationCreate":
+        return ConversationCreate(participant_ids=list(dict.fromkeys(self.participant_ids)))
+
 
 class ConversationParticipantRead(BaseModel):
     persona_id: UUID
@@ -33,6 +36,12 @@ class ConversationRead(BaseModel):
 
 class DirectMessageCreate(BaseModel):
     content: str
+
+    def model_post_init(self, __context) -> None:
+        if not self.content or not self.content.strip():
+            raise ValueError("Message content cannot be empty")
+        if len(self.content) > 5000:
+            raise ValueError("Message content exceeds 5000 characters")
 
 
 class DirectMessageItem(BaseModel):

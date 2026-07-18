@@ -848,6 +848,17 @@ def get_chat_message(db: Session, message_id: UUID) -> Optional[models.ChatMessa
 def create_chat_message(db: Session, payload: ChatMessageCreate) -> models.ChatMessage:
     row = models.ChatMessage(**payload.model_dump())
     db.add(row)
+    db.flush()
+    if row.room_id and row.room_id.startswith("dm_"):
+        try:
+            conv_uuid = UUID(row.room_id[len("dm_"):])
+            conv = get_conversation(db, conv_uuid)
+            if conv:
+                conv.last_message_content = row.content
+                conv.last_message_at = row.created_at or _utcnow()
+                conv.last_sender_id = row.sender_id
+        except (ValueError, TypeError):
+            pass
     db.commit()
     db.refresh(row)
     return row
@@ -890,9 +901,11 @@ def create_conversation_by_persona(db: Session, persona_ids: list[uuid.UUID]) ->
 
 
 def get_user_conversations(db: Session, user_id: uuid.UUID) -> list[models.Conversation]:
+    from sqlalchemy.orm import joinedload
     return (
         db.query(models.Conversation)
         .join(models.ConversationParticipant)
+        .options(joinedload(models.Conversation.participants))
         .filter(
             models.ConversationParticipant.user_id == user_id,
             models.ConversationParticipant.is_archived.is_(False),
@@ -920,30 +933,52 @@ def get_conversation_messages(
     conversation_id: UUID,
     limit: int = 50,
     before_id: Optional[UUID] = None,
+    before_created_at: Optional[datetime] = None,
 ) -> list[models.ChatMessage]:
+    from sqlalchemy import or_, and_
+
     q = db.query(models.ChatMessage).filter(
         models.ChatMessage.room_id == f"dm_{conversation_id}",
         models.ChatMessage.deleted_at.is_(None),
     )
-    if before_id:
+    if before_created_at and before_id:
+        # Compound cursor: (created_at, id) < (before_created_at, before_id)
+        q = q.filter(
+            or_(
+                models.ChatMessage.created_at < before_created_at,
+                and_(
+                    models.ChatMessage.created_at == before_created_at,
+                    models.ChatMessage.id < before_id,
+                ),
+            )
+        )
+    elif before_created_at:
+        q = q.filter(
+            models.ChatMessage.created_at < before_created_at
+        )
+    elif before_id:
         q = q.filter(models.ChatMessage.id < before_id)
-    return q.order_by(models.ChatMessage.created_at.desc()).limit(limit).all()
+    return q.order_by(
+        models.ChatMessage.created_at.desc(),
+        models.ChatMessage.id.desc(),
+    ).limit(limit).all()
 
 
 def create_direct_message(
     db: Session, conversation_id: UUID, sender_id: uuid.UUID, content: str
 ) -> models.ChatMessage:
+    conv = get_conversation(db, conversation_id)
+    if not conv:
+        raise ValueError(f"Conversation {conversation_id} does not exist")
     msg = models.ChatMessage(
         sender_id=sender_id,
         room_id=f"dm_{conversation_id}",
         content=content,
     )
     db.add(msg)
-    conv = get_conversation(db, conversation_id)
-    if conv:
-        conv.last_message_content = content
-        conv.last_message_at = _utcnow()
-        conv.last_sender_id = sender_id
+    conv.last_message_content = content
+    conv.last_message_at = _utcnow()
+    conv.last_sender_id = sender_id
     db.commit()
     db.refresh(msg)
     return msg
@@ -967,15 +1002,10 @@ def mark_conversation_read(
         )
         .first()
     )
-    if cp:
-        cp.last_read_at = _utcnow()
-    else:
-        cp = models.ConversationParticipant(
-            conversation_id=conversation_id,
-            user_id=user_id,
-            last_read_at=_utcnow(),
-        )
-        db.add(cp)
+    if not cp:
+        # Participant was removed — do NOT re-insert (privilege escalation risk).
+        return
+    cp.last_read_at = _utcnow()
     db.commit()
 
 
@@ -997,7 +1027,9 @@ def get_unread_count_for_conversation(
         )
         .first()
     )
-    since = (cp.last_read_at if cp and cp.last_read_at else _utcnow())
+    conv = get_conversation(db, conversation_id)
+    fallback = conv.created_at if conv else _utcnow()
+    since = (cp.last_read_at if cp and cp.last_read_at else fallback)
     return (
         db.query(models.ChatMessage)
         .filter(
@@ -1014,3 +1046,77 @@ def get_unread_count_for_conversation_by_persona(
 ) -> int:
     """Versión de get_unread_count_for_conversation que acepta persona_id UUID (FK personas.id)."""
     return get_unread_count_for_conversation(db, conversation_id, persona_id)
+
+
+def get_unread_counts_batch(
+    db: Session, user_id: uuid.UUID, conversation_ids: list[UUID]
+) -> dict[UUID, int]:
+    """Return {conversation_id: unread_count} for all given conversations in one query.
+
+    Avoids N+1 when listing conversations.
+    """
+    if not conversation_ids:
+        return {}
+
+    # Fetch last_read_at for all conversations at once
+    cps = (
+        db.query(
+            models.ConversationParticipant.conversation_id,
+            models.ConversationParticipant.last_read_at,
+        )
+        .filter(
+            models.ConversationParticipant.conversation_id.in_(conversation_ids),
+            models.ConversationParticipant.user_id == user_id,
+        )
+        .all()
+    )
+    read_map: dict[UUID, datetime | None] = {cp.conversation_id: cp.last_read_at for cp in cps}
+
+    # Fetch conversation created_at as fallback for never-read conversations
+    convs = (
+        db.query(models.Conversation.id, models.Conversation.created_at)
+        .filter(models.Conversation.id.in_(conversation_ids))
+        .all()
+    )
+    conv_created_map = {c.id: c.created_at for c in convs}
+
+    # Fetch unread counts in a single query using a subquery
+    unread_counts: dict[UUID, int] = {cid: 0 for cid in conversation_ids}
+
+    # Build per-conversation "since" timestamps for a single query
+    since_map: dict[UUID, datetime] = {}
+    for cid in conversation_ids:
+        last_read = read_map.get(cid)
+        fallback = conv_created_map.get(cid) or _utcnow()
+        since_map[cid] = last_read if last_read else fallback
+
+    # Single query: count unread messages per conversation
+    from sqlalchemy import func, case
+
+    room_conditions = case(
+        *[(models.ChatMessage.room_id == f"dm_{cid}", since_map[cid]) for cid in conversation_ids],
+        else_=_utcnow(),  # should never match
+    )
+    rows = (
+        db.query(
+            models.ChatMessage.room_id,
+            func.count(models.ChatMessage.id),
+        )
+        .filter(
+            models.ChatMessage.room_id.in_([f"dm_{cid}" for cid in conversation_ids]),
+            models.ChatMessage.sender_id != user_id,
+            models.ChatMessage.created_at > room_conditions,
+        )
+        .group_by(models.ChatMessage.room_id)
+        .all()
+    )
+    for room_id, count in rows:
+        # Extract conversation_id from "dm_<uuid>"
+        cid_str = room_id.replace("dm_", "", 1)
+        try:
+            cid = UUID(cid_str)
+            unread_counts[cid] = count
+        except (ValueError, AttributeError):
+            pass
+
+    return unread_counts

@@ -1,5 +1,5 @@
 export interface ConversationRead {
-  id: number;
+  id: string;
   participants: ConversationParticipantRead[];
   last_message_content: string | null;
   last_message_at: string | null;
@@ -15,10 +15,23 @@ export interface ConversationParticipantRead {
 }
 
 export interface DirectMessageItem {
-  id: number;
+  id: string;
   sender_id: string;
   sender_name: string;
   content: string;
   created_at: string;
   is_read: boolean;
 }
+
+export interface WsDirectMessageEvent {
+  event: "direct_message";
+  conversation_id: string;
+  message: DirectMessageItem;
+}
+
+export interface WsRawEvent {
+  event: string;
+  [key: string]: unknown;
+}
+
+export type WsEvent = WsDirectMessageEvent | WsRawEvent;
