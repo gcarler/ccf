@@ -92,6 +92,7 @@ class CrmEvent(Base):
     target_persona_ids = Column(JSON, nullable=True)
     fixed_date = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     @validates("target_persona_ids")
     def validate_target_persona_ids(self, key, value):

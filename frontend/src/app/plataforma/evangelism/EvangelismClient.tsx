@@ -26,7 +26,7 @@ import type { Strategy } from './types';
 export type EvangelismStrategy = Strategy;
 
 export default function EvangelismClient() {
- const { token, user, loading: authLoading } = useAuth();
+ const { token, loading: authLoading, hasModuleAccess } = useAuth();
  const router = useRouter();
  const { viewType, setViewType } = useViewType('evangelism_dashboard', 'table');
  const [data, setData] = useState<EvangelismStrategy[]>([]);
@@ -34,11 +34,11 @@ export default function EvangelismClient() {
  const [search, setSearch] = useState('');
  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
- const role = (user?.role || '').toLowerCase();
- const canManageStrategies = ['admin', 'administrador', 'pastor'].includes(role);
+ const canReadStrategies = hasModuleAccess('evangelism', 'read');
+ const canManageStrategies = hasModuleAccess('evangelism', 'manage');
 
  const fetchStrategies = useCallback(async () => {
- if (!token || !canManageStrategies) return;
+ if (!token || !canReadStrategies) return;
  setLoading(true);
  try {
  const result = await apiFetch<EvangelismStrategy[]>('/evangelism/strategies', { token, silent: true });
@@ -48,20 +48,20 @@ export default function EvangelismClient() {
  } finally {
  setLoading(false);
  }
- }, [canManageStrategies, token]);
+ }, [canReadStrategies, token]);
 
  useEffect(() => {
  if (authLoading) return;
- if (!token || !canManageStrategies) {
+ if (!token || !canReadStrategies) {
  setLoading(false);
  return;
  }
  fetchStrategies();
- }, [authLoading, canManageStrategies, fetchStrategies, token]);
+ }, [authLoading, canReadStrategies, fetchStrategies, token]);
 
  // Reactively refresh when a new strategy is created globally
  useEffect(() => {
- if (!canManageStrategies) return;
+ if (!canReadStrategies) return;
  const handleCreated = () => {
  fetchStrategies();
  };
@@ -69,7 +69,7 @@ export default function EvangelismClient() {
  return () => {
  window.removeEventListener('evangelism-strategy-created', handleCreated);
  };
- }, [canManageStrategies, fetchStrategies]);
+ }, [canReadStrategies, fetchStrategies]);
 
  // El cierre del panel lateral ahora navega a la vista de detalle
 
@@ -113,7 +113,7 @@ export default function EvangelismClient() {
  }
  };
 
- if (!authLoading && !canManageStrategies) {
+ if (!authLoading && !canReadStrategies) {
  return (
  <ModuleErrorBoundary moduleName="Evangelismo">
  <EvangelismShell
@@ -126,7 +126,7 @@ export default function EvangelismClient() {
  <div className="max-w-md w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-8 text-center">
  <h2 className="text-lg font-bold text-amber-900">Acceso restringido</h2>
  <p className="mt-2 text-sm font-medium text-amber-800">
- Esta vista de estrategias requiere rol pastoral o administrativo.
+ Esta vista requiere permisos de lectura sobre evangelismo.
  </p>
  </div>
  </div>
@@ -147,6 +147,7 @@ export default function EvangelismClient() {
  onViewChange={setViewType}
  onSearch={setSearch}
  rightActions={
+ canManageStrategies ? (
  <button
  onClick={handleAddItem}
  className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-[7px] transition-all shadow-sm"
@@ -154,6 +155,7 @@ export default function EvangelismClient() {
  <Plus size={12} />
  Crear estrategia
  </button>
+ ) : null
  }
  >
  <div className="h-full flex flex-col relative">
@@ -166,8 +168,8 @@ export default function EvangelismClient() {
  title="No hay estrategias"
  description="Las estrategias te permiten planificar campañas de alcance, consolidación y discipulado en tu comunidad."
  icon={Flame}
- onAction={handleAddItem}
- actionLabel="Crear estrategia"
+ onAction={canManageStrategies ? handleAddItem : undefined}
+ actionLabel={canManageStrategies ? "Crear estrategia" : undefined}
  />
  ) : (
  <div className="pb-16 flex-1">
@@ -382,11 +384,13 @@ export default function EvangelismClient() {
  </div>
 
  {/* ── Strategy Creation Drawer ── */}
+ {canManageStrategies ? (
  <StrategyCreationDrawer
  isOpen={isCreateDrawerOpen}
  onClose={() => setIsCreateDrawerOpen(false)}
  onCreated={fetchStrategies}
  />
+ ) : null}
  </EvangelismShell>
  </ModuleErrorBoundary>
  );

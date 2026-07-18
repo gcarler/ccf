@@ -11,6 +11,11 @@ import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import TextPromptDrawer from "@/components/ui/TextPromptDrawer";
 import { Grupo, GrupoApi, Season, Attendee } from "@/types/crm";
+import {
+    createCrmEvangelismAttendanceSession,
+    loadCrmEvangelismGroupReportContext,
+    submitCrmEvangelismAttendance,
+} from "./evangelismBridge";
 
 export default function GrupoAdmin() {
     const { token, isAuthenticated } = useAuth();
@@ -65,24 +70,16 @@ export default function GrupoAdmin() {
         setLoadingDrawer(true);
         try {
             setError(null);
-            const [seasonData, detail] = await Promise.all([
-                apiFetch<Season[]>("/evangelism/groups/seasons", { token }),
-                apiFetch<any>(`/evangelism/grupos/${grupo.id}`, { token }),
-            ]);
-            const nextSeasons = Array.isArray(seasonData) ? seasonData : [];
-            const baseAttendees = Array.isArray(detail.base_attendees) ? detail.base_attendees : [];
-            const leaderId = detail.lider_id ?? detail.leader_id ?? '';
-            const assistantId = detail.asistente_id ?? detail.assistant_id ?? '';
-            const hostId = detail.anfitrion_id ?? detail.host_id ?? '';
-            setSeasons(nextSeasons);
-            setSeasonId((nextSeasons.find((season) => season.status === "Activa") || nextSeasons[0])?.id || "");
-            setAttendees(baseAttendees);
-            setSelectedIds(baseAttendees.map((persona: Attendee) => persona.persona_id));
+            const reportContext = await loadCrmEvangelismGroupReportContext(token, grupo.id);
+            setSeasons(reportContext.seasons);
+            setSeasonId(reportContext.selectedSeasonId);
+            setAttendees(reportContext.attendees);
+            setSelectedIds(reportContext.selectedIds);
             setSelectedGrupo((prev) => prev ? {
                 ...prev,
-                leader_id: leaderId,
-                assistant_id: assistantId,
-                host_id: hostId,
+                leader_id: reportContext.leaderId,
+                assistant_id: reportContext.assistantId,
+                host_id: reportContext.hostId,
             } : prev);
         } catch {
             setSelectedGrupo(null);
@@ -103,16 +100,12 @@ export default function GrupoAdmin() {
         }
         setSubmitting(true);
         try {
-            const session = await apiFetch<any>("/evangelism/groups/sessions", {
-                method: "POST",
-                token,
-                body: { season_id: seasonId, grupo_id: selectedGrupo.id, session_date: reportDate },
+            const session = await createCrmEvangelismAttendanceSession(token, {
+                season_id: seasonId,
+                grupo_id: selectedGrupo.id,
+                session_date: reportDate,
             });
-            await apiFetch(`/evangelism/groups/sessions/${session.id}/attendance`, {
-                method: "POST",
-                token,
-                body: { persona_ids: selectedIds },
-            });
+            await submitCrmEvangelismAttendance(token, session.id, selectedIds);
             addToast(`Reporte enviado para ${selectedGrupo.name}`, "success");
             setSelectedGrupo(null);
         } catch {

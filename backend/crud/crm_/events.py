@@ -8,8 +8,12 @@ from backend import models, schemas
 from backend.crud._utils import _utcnow
 
 
+def _active_events_query(db: Session):
+    return db.query(models.CrmEvent).filter(models.CrmEvent.deleted_at.is_(None))
+
+
 def get_crm_events(db: Session, sede_id: str | None = None, skip: int = 0, limit: int = 100) -> List[models.CrmEvent]:
-    q = db.query(models.CrmEvent)
+    q = _active_events_query(db)
     if sede_id:
         q = q.filter(models.CrmEvent.sede_id == sede_id)
     return q.order_by(models.CrmEvent.event_date.desc()).offset(skip).limit(limit).all()
@@ -36,14 +40,14 @@ def create_crm_event(db: Session, payload: schemas.CrmEventCreate) -> models.Crm
 
 
 def get_crm_event(db: Session, event_id: UUID) -> Optional[models.CrmEvent]:
-    return db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    return _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
 
 
 def update_crm_event(
     db: Session, event_id: UUID, payload: schemas.CrmEventUpdate
 ) -> Optional[models.CrmEvent]:
     """Actualiza un evento mediante el contrato Pydantic canónico."""
-    row = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    row = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
     if not row:
         return None
     changes = payload.model_dump(exclude_unset=True)
@@ -55,7 +59,7 @@ def update_crm_event(
 
 
 def delete_crm_event(db: Session, event_id: UUID) -> bool:
-    row = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    row = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()

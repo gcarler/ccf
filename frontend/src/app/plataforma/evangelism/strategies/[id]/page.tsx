@@ -6,7 +6,8 @@ import type {
  GenerateSessionsResponse,
  GroupDetailResponse,
  SessionDetailResponse,
- StrategyMetrics,
+ SessionRow,
+ StrategyGroup,
 } from '../../types';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import dynamic from 'next/dynamic';
@@ -16,22 +17,28 @@ import {
  CustomRole,
  customRoleValue,
  FALLBACK_MEMBER_ROLES,
- FollowUpRecord,
  formatLocalDate,
  isAssistantLeaderRole,
  isPrimaryLeaderRole,
  ROLE_COLORS,
  roleMatches,
- SessionRow,
  STATUS_COLORS,
  STATUS_LABELS,
- Strategy,
- StrategyGroup,
  TABS,
  TabId,
  TYPOLOGY_COLORS,
  TYPOLOGY_LABELS,
 } from './strategyDetailShared';
+import {
+ useCustomRoles,
+ useFollowUps,
+ useGroups,
+ useMetrics,
+ useRemotePersonaSearch,
+ useSessionActions,
+ useSessions,
+ useStrategy,
+} from './useStrategyDetail';
 
 const UniversalCalendarView = dynamic(() => import('@/components/ui/UniversalCalendarView'), { ssr: false });
 const UniversalGanttView = dynamic(() => import('@/components/ui/UniversalGanttView'), { ssr: false });
@@ -130,39 +137,60 @@ export default function StrategyDetailPage() {
  const params = useParams();
  const router = useRouter();
  const id = (params?.id as string) || '';
- const { token, loading: authLoading, user } = useAuth();
- const role = (user?.role || '').toLowerCase();
- const canManageStrategySurface = ['admin', 'administrador', 'pastor'].includes(role);
- const [strategy, setStrategy] = useState<Strategy | null>(null);
- const [loading, setLoading] = useState(true);
- const [loadError, setLoadError] = useState(false);
- const [saving, setSaving] = useState(false);
- const [editName, setEditName] = useState('');
- const [editDesc, setEditDesc] = useState('');
- const [editType, setEditType] = useState('');
- const [editStatus, setEditStatus] = useState<'active' | 'pending' | 'done'>('pending');
- const [editActiva, setEditActiva] = useState(true);
- const [editClaseRaiz, setEditClaseRaiz] = useState('');
- const [editDefaultRoleId, setEditDefaultRoleId] = useState<string | null | undefined>(undefined);
- const [editStartDate, setEditStartDate] = useState('');
- const [editEndDate, setEditEndDate] = useState('');
- const [editRecurrence, setEditRecurrence] = useState<string | null>(null);
+ const { token, loading: authLoading, hasModuleAccess } = useAuth();
+ const canReadStrategySurface = hasModuleAccess('evangelism', 'read');
+ const canManageStrategySurface = hasModuleAccess('evangelism', 'manage');
+ const {
+ strategy,
+ loading,
+ loadError,
+ saving,
+ editName,
+ setEditName,
+ editDesc,
+ setEditDesc,
+ editType,
+ setEditType,
+ editStatus,
+ setEditStatus,
+ editActiva,
+ setEditActiva,
+ editClaseRaiz,
+ setEditClaseRaiz,
+ editDefaultRoleId,
+ setEditDefaultRoleId,
+ editStartDate,
+ setEditStartDate,
+ editEndDate,
+ setEditEndDate,
+ editRecurrence,
+ setEditRecurrence,
+ fetchStrategy,
+ handleSave,
+ handleDelete,
+ } = useStrategy(id, token);
 
  // Roles personalizados
- const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
- const [loadingRoles, setLoadingRoles] = useState(false);
- const [showRoleForm, setShowRoleForm] = useState(false);
- const [newRoleName, setNewRoleName] = useState('');
- const [newRoleDesc, setNewRoleDesc] = useState('');
+ const {
+ customRoles,
+ setCustomRoles,
+ loadingRoles,
+ showRoleForm,
+ setShowRoleForm,
+ newRoleName,
+ setNewRoleName,
+ newRoleDesc,
+ setNewRoleDesc,
+ fetchCustomRoles,
+ } = useCustomRoles(id, token);
 
  // Seguimiento
- const [followUps, setFollowUps] = useState<FollowUpRecord[]>([]);
- const [loadingFollowUps, setLoadingFollowUps] = useState(false);
+ const { followUps, loadingFollowUps, fetchFollowUps } = useFollowUps(token);
  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
  const [activeTab, setActiveTab] = useState<TabId>('overview');
  const { viewType, setViewType } = useViewType(`strategy_${id}`, 'dashboard');
- const [groups, setGroups] = useState<StrategyGroup[]>([]);
- const [metrics, setMetrics] = useState<any>(null);
+ const { groups, groupsLoading, fetchGroups } = useGroups(id, token);
+ const { metrics, fetchMetrics } = useMetrics(id, token);
  const [personaCache, setPersonaCache] = useState<Record<string, any>>({});
  const [roleResults, setRoleResults] = useState<Record<string, any[]>>({});
  const [roleLoading, setRoleLoading] = useState<Record<string, boolean>>({});
@@ -188,7 +216,7 @@ export default function StrategyDetailPage() {
  const [personaSaving, setPersonaSaving] = useState(false);
  const [personaSplitHeight, setPersonaSplitHeight] = useState(200);
  const personaSplitRef = useRef<HTMLDivElement>(null);
- const personaSearchAbortRef = useRef<AbortController | null>(null);
+ const { search: searchPersonas, cancel: cancelPersonaSearch } = useRemotePersonaSearch(token);
 
  const handlePersonaSplitDrag = useCallback((e: React.MouseEvent) => {
  e.preventDefault();
@@ -209,11 +237,9 @@ export default function StrategyDetailPage() {
  document.addEventListener('mouseup', onMouseUp);
  }, []);
 
- // Groups + Sessions loading
- const [groupsLoading, setGroupsLoading] = useState(false);
  // Sessions
- const [sessions, setSessions] = useState<SessionRow[]>([]);
- const [sessionsLoading, setSessionsLoading] = useState(false);
+ const { sessions, setSessions, sessionsLoading, fetchSessions } = useSessions(id, token);
+ const { toggleSessionHabilitacion, handleDeleteSession: deleteSession } = useSessionActions(fetchSessions, token);
  const [isNewSessionDrawerOpen, setIsNewSessionDrawerOpen] = useState(false);
  const [sessionForm, setSessionForm] = useState({
  grupo_id: '' as string | number,
@@ -247,7 +273,7 @@ export default function StrategyDetailPage() {
  const [showNewVisitorForm, setShowNewVisitorForm] = useState(false);
  const [newVisitorForm, setNewVisitorForm] = useState({ first_name: '', last_name: '', phone: '', whatsapp: '', email: '', address: '' });
  const [savingNewVisitor, setSavingNewVisitor] = useState(false);
- const visitorSearchAbortRef = useRef<AbortController | null>(null);
+ const { search: searchVisitors, cancel: cancelVisitorSearch } = useRemotePersonaSearch(token);
  useEffect(() => {
  if (sessionMenuId === null) return;
  const close = () => setSessionMenuId(null);
@@ -276,6 +302,7 @@ export default function StrategyDetailPage() {
  const defaultPersonaRoleLinkLabel = selectedDefaultRole?.nombre_rol
  || personaRoleOptions[0]?.label
  || 'Persona';
+ const strategyGroupCount = strategy?.grupos_count ?? null;
 
  const getRoleLabel = (value: string, fallback?: string) => {
  const customId = value?.startsWith('custom:') ? value.split(':')[1] : null;
@@ -320,139 +347,30 @@ export default function StrategyDetailPage() {
  };
  };
 
- const fetchStrategy = useCallback(async () => {
- if (!token) return;
- setLoading(true);
- setLoadError(false);
- try {
- const result = await apiFetch<Strategy>(`/evangelism/strategies/${id}`, { token, silent: true });
- setStrategy(result);
- setEditName(result.name);
- setEditDesc(result.description || '');
- setEditType(result.strategy_type || '');
- setEditStatus(result.status || 'pending');
- setEditActiva(result.activa !== undefined ? result.activa : true);
- setEditClaseRaiz(result.clase_raiz || result.typology || '');
- setEditDefaultRoleId(result.default_role_id ?? null);
- setEditStartDate(result.start_date ? result.start_date.substring(0, 10) : '');
- setEditEndDate(result.end_date ? result.end_date.substring(0, 10) : '');
- setEditRecurrence(result.recurrence || null);
- } catch (e: any) {
- setStrategy(null);
- setLoadError(true);
- } finally {
- setLoading(false);
- }
- }, [id, token]);
-
- const fetchCustomRoles = useCallback(async () => {
- if (!token) return;
- setLoadingRoles(true);
- try {
- const result = await apiFetch<CustomRole[]>(`/evangelism/strategies/${id}/roles`, { token, silent: true });
- setCustomRoles(result || []);
- } catch {
- // Roles endpoint may not exist for old strategies without codigo
- setCustomRoles([]);
- } finally {
- setLoadingRoles(false);
- }
- }, [id, token]);
-
- const fetchFollowUps = useCallback(async () => {
- if (!token) return;
- setLoadingFollowUps(true);
- try {
- const result = await apiFetch<FollowUpRecord[]>('/evangelism/follow-up/pending', { token, silent: true });
- setFollowUps(result || []);
- } catch {
- setFollowUps([]);
- } finally {
- setLoadingFollowUps(false);
- }
- }, [token]);
-
  useEffect(() => {
  if (authLoading) return;
- if (!token || !canManageStrategySurface) {
- setLoading(false);
- setLoadingRoles(false);
- setLoadingFollowUps(false);
- return;
- }
+ if (!token || !canReadStrategySurface) return;
  fetchStrategy();
- fetchCustomRoles();
  fetchFollowUps();
- }, [authLoading, canManageStrategySurface, fetchStrategy, fetchCustomRoles, fetchFollowUps, token]);
-
- const fetchGroups = useCallback(async () => {
- if (!token) return;
- setGroupsLoading(true);
- try {
- const all = await apiFetch<StrategyGroup[]>('/evangelism/grupos', { token, silent: true, query: { evangelism_strategy_id: id } });
- setGroups(all || []);
- } catch {
- setGroups([]);
- } finally {
- setGroupsLoading(false);
+ if (canManageStrategySurface) {
+ fetchCustomRoles();
+ } else {
+ setCustomRoles([]);
  }
- }, [id, token]);
+ }, [authLoading, canManageStrategySurface, canReadStrategySurface, fetchStrategy, fetchCustomRoles, fetchFollowUps, setCustomRoles, token]);
 
  // Cargar grupos al montar para que aparezcan en el sidebar
  useEffect(() => {
- if (token && canManageStrategySurface) fetchGroups();
- }, [canManageStrategySurface, fetchGroups, token]);
-
- const fetchMetrics = useCallback(async () => {
- if (!token) return;
- try {
- const m = await apiFetch<StrategyMetrics>(`/evangelism/strategies/${id}/metrics`, { token, silent: true });
- setMetrics(m);
- } catch {
- setMetrics(null);
- }
- }, [id, token]);
-
- const fetchSessions = useCallback(async () => {
- if (!token) return;
- setSessionsLoading(true);
- try {
- const data = await apiFetch<SessionRow[]>(`/evangelism/sessions?strategy_id=${id}`, { token, silent: true });
- setSessions(data || []);
- } catch {
- setSessions([]);
- } finally {
- setSessionsLoading(false);
- }
- }, [id, token]);
-
- const toggleSessionHabilitacion = useCallback(async (session: SessionRow) => {
- if (session.estado_habilitacion === 'CERRADO' || session.estado_habilitacion === 'CANCELADA') {
- toast.error('Esta sesión no se puede habilitar');
- return;
- }
- const accion = session.estado_habilitacion === 'HABILITADO' ? 'DESHABILITAR' : 'HABILITAR';
- try {
- await apiFetch(`/evangelism/sessions/${session.id}/habilitacion`, {
- method: 'PATCH',
- token,
- silent: true,
- body: { accion },
- });
- toast.success(accion === 'HABILITAR' ? 'Sesión habilitada' : 'Sesión bloqueada');
- fetchSessions();
- } catch {
- toast.error('Error al cambiar estado');
- }
- }, [fetchSessions, token]);
+ if (token && canReadStrategySurface) fetchGroups();
+ }, [canReadStrategySurface, fetchGroups, token]);
 
  useEffect(() => {
- if (!token || !canManageStrategySurface) return;
+ if (!token || !canReadStrategySurface) return;
  if (activeTab === 'groups') fetchGroups();
  if (activeTab === 'metrics') fetchMetrics();
  if (activeTab === 'sessions') { fetchGroups(); fetchSessions(); }
  if (activeTab === 'attendance') { fetchGroups(); fetchSessions(); }
- }, [activeTab, canManageStrategySurface, fetchGroups, fetchMetrics, fetchSessions, token]);
+ }, [activeTab, canReadStrategySurface, fetchGroups, fetchMetrics, fetchSessions, token]);
 
  useEffect(() => {
  if (!roleDropdown || !token || !canManageStrategySurface) return;
@@ -568,42 +486,27 @@ export default function StrategyDetailPage() {
  if (q.length < 3) {
  setPersonaSearchLoading(false);
  setPersonaSearchResults([]);
- if (personaSearchAbortRef.current) {
- personaSearchAbortRef.current.abort();
- personaSearchAbortRef.current = null;
- }
+ cancelPersonaSearch();
  return;
  }
- if (personaSearchAbortRef.current) {
- personaSearchAbortRef.current.abort();
- }
- const controller = new AbortController();
- personaSearchAbortRef.current = controller;
  setPersonaSearchLoading(true);
  const handle = setTimeout(() => {
- apiFetch<{ results: SearchablePersona[] }>('/evangelism/personas/search', {
- token,
- silent: true,
- query: { q, limit: 12 },
- signal: controller.signal,
- })
- .then(res => {
- if (controller.signal.aborted) return;
- setPersonaSearchResults(res.results || []);
+ searchPersonas(q, 12)
+ .then(results => {
+ setPersonaSearchResults(results);
  })
  .catch(() => {
- if (controller.signal.aborted) return;
  setPersonaSearchResults([]);
  })
  .finally(() => {
- if (!controller.signal.aborted) setPersonaSearchLoading(false);
+ setPersonaSearchLoading(false);
  });
  }, 300);
  return () => {
  clearTimeout(handle);
- controller.abort();
+ cancelPersonaSearch();
  };
- }, [isPersonaDrawerOpen, personaSearch, token]);
+ }, [cancelPersonaSearch, isPersonaDrawerOpen, personaSearch, searchPersonas, token]);
 
  useEffect(() => {
  if (!token || !showVisitorSearch) return;
@@ -611,42 +514,27 @@ export default function StrategyDetailPage() {
  if (q.length < 3) {
  setVisitorSearchLoading(false);
  setVisitorSearchResults([]);
- if (visitorSearchAbortRef.current) {
- visitorSearchAbortRef.current.abort();
- visitorSearchAbortRef.current = null;
- }
+ cancelVisitorSearch();
  return;
  }
- if (visitorSearchAbortRef.current) {
- visitorSearchAbortRef.current.abort();
- }
- const controller = new AbortController();
- visitorSearchAbortRef.current = controller;
  setVisitorSearchLoading(true);
  const handle = setTimeout(() => {
- apiFetch<{ results: SearchablePersona[] }>('/evangelism/personas/search', {
- token,
- silent: true,
- query: { q, limit: 10 },
- signal: controller.signal,
- })
- .then(res => {
- if (controller.signal.aborted) return;
- setVisitorSearchResults(res.results || []);
+ searchVisitors(q, 10)
+ .then(results => {
+ setVisitorSearchResults(results);
  })
  .catch(() => {
- if (controller.signal.aborted) return;
  setVisitorSearchResults([]);
  })
  .finally(() => {
- if (!controller.signal.aborted) setVisitorSearchLoading(false);
+ setVisitorSearchLoading(false);
  });
  }, 300);
  return () => {
  clearTimeout(handle);
- controller.abort();
+ cancelVisitorSearch();
  };
- }, [showVisitorSearch, token, visitorSearch]);
+ }, [cancelVisitorSearch, searchVisitors, showVisitorSearch, token, visitorSearch]);
 
  const handleSavePersonas = async () => {
  if (!selectedGroup) return;
@@ -861,64 +749,17 @@ export default function StrategyDetailPage() {
  } finally { setSavingNewVisitor(false); }
  };
 
- const handleDeleteSession = async (sessionId: string) => {
- try {
- await apiFetch(`/evangelism/sessions/${sessionId}`, { method: 'DELETE', token, silent: true });
- toast.success('Sesión eliminada');
- fetchSessions();
- } catch (e: any) {
- toast.error('Error: ' + (e.message || 'Intente de nuevo'));
- }
- setSessionMenuId(null);
- };
-
  const requestDeleteSession = (sessionId: string) => {
  setConfirmAction({
  title: 'Eliminar sesión',
  description: 'Se eliminará esta sesión y su asistencia registrada.',
  confirmLabel: 'Eliminar',
  destructive: true,
- onConfirm: () => handleDeleteSession(sessionId),
- });
- };
-
- const handleSave = async () => {
- if (!strategy) return;
- setSaving(true);
- try {
- await apiFetch(`/evangelism/strategies/${id}`, {
- method: 'PUT', token, silent: true,
- body: {
- name: editName, description: editDesc, strategy_type: editType,
- status: editStatus,
- activa: editActiva,
- clase_raiz: editClaseRaiz || null,
- default_role_id: editDefaultRoleId ?? null,
- recurrence: editRecurrence,
- start_date: editStartDate ? `${editStartDate}T12:00:00` : null,
- end_date: editEndDate ? `${editEndDate}T12:00:00` : null,
+ onConfirm: async () => {
+ await deleteSession(sessionId);
+ setSessionMenuId(null);
  },
  });
- toast.success('Estrategia actualizada');
- window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
- fetchStrategy();
- fetchCustomRoles();
- } catch (e: any) {
- toast.error('Error al guardar: ' + (e?.message || 'Error desconocido'));
- }
- finally { setSaving(false); }
- };
-
- const handleDelete = async () => {
- if (!strategy) return;
- try {
- await apiFetch(`/evangelism/strategies/${id}`, { method: 'DELETE', token, silent: true });
- toast.success('Estrategia eliminada');
- window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
- router.push('/plataforma/evangelism');
- } catch (e: any) {
- toast.error('Error al eliminar: ' + (e?.message || 'Intente de nuevo'));
- }
  };
 
  const requestDeleteStrategy = () => {
@@ -1031,7 +872,7 @@ export default function StrategyDetailPage() {
  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [sessions, sessionGroupFilter, sessionHabFilter, sessionMonthFilter, sessionSearch]);
 
- if (!authLoading && !canManageStrategySurface) {
+ if (!authLoading && !canReadStrategySurface) {
  return (
  <EvangelismShell breadcrumbs={[
  { label: 'Evangelismo', icon: Flame, href: '/plataforma/evangelism' },
@@ -1042,7 +883,7 @@ export default function StrategyDetailPage() {
  <AlertCircle size={48} className="text-[hsl(var(--text-secondary))] mb-4" />
  <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">Acceso restringido</h2>
  <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] max-w-md">
- Esta vista de estrategia requiere rol pastoral o administrativo porque consume superficies protegidas del modulo.
+ Esta vista requiere permisos de lectura sobre evangelismo.
  </p>
  <button onClick={() => router.push('/plataforma/evangelism')}
  className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
@@ -1137,16 +978,18 @@ export default function StrategyDetailPage() {
  style={{ backgroundColor: `${STATUS_COLORS[strategy.status]}18`, color: STATUS_COLORS[strategy.status] }}>
  {STATUS_LABELS[strategy.status]}
  </span>
- {strategy.group_count !== undefined && (
- <span className="inline-flex items-center gap-1.5"><Users size={12} />{strategy.group_count} grupo{strategy.group_count !== 1 ? 's' : ''}</span>
+ {strategyGroupCount !== null && (
+ <span className="inline-flex items-center gap-1.5"><Users size={12} />{strategyGroupCount} grupo{strategyGroupCount !== 1 ? 's' : ''}</span>
  )}
  </div>
  </div>
  </div>
+ {canManageStrategySurface ? (
  <button onClick={requestDeleteStrategy}
  className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10 transition-all" title="Eliminar estrategia">
  <Trash2 size={16} />
  </button>
+ ) : null}
  </div>
 
  {/* Tabs */}
@@ -1165,6 +1008,12 @@ export default function StrategyDetailPage() {
  <div className="flex-1" />
  <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={FULL_VIEWS} />
  </div>
+
+ {!canManageStrategySurface && (
+ <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] font-medium text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-200">
+  Vista en modo lectura. Las acciones de edición y gestión quedan reservadas para usuarios con `evangelism:manage`.
+ </div>
+ )}
 
  {/* ── View: Calendar ── */}
  {viewType === 'calendar' && (
@@ -1269,8 +1118,8 @@ export default function StrategyDetailPage() {
  data={groups}
  isLoading={groupsLoading}
  emptyMessage="Sin grupos en esta estrategia"
- onAddItem={() => setIsGroupDrawerOpen(true)}
- onUpdateItem={async (rowId, field, value) => {
+ onAddItem={canManageStrategySurface ? () => setIsGroupDrawerOpen(true) : undefined}
+ onUpdateItem={canManageStrategySurface ? async (rowId, field, value) => {
  const group = groups.find(g => g.id === rowId);
  if (!group) return false;
  try {
@@ -1285,13 +1134,13 @@ export default function StrategyDetailPage() {
  toast.error('Error al actualizar');
  return false;
  }
- }}
+ } : undefined}
  columns={[
  {
  key: 'name',
  label: 'Nombre',
  type: 'text',
- editable: true,
+ editable: canManageStrategySurface,
  },
  {
  key: 'personas_count',
@@ -1316,7 +1165,7 @@ export default function StrategyDetailPage() {
  key: 'zone',
  label: 'Zona',
  type: 'text',
- editable: true,
+ editable: canManageStrategySurface,
  },
  {
  key: 'capacity',
@@ -1339,7 +1188,7 @@ export default function StrategyDetailPage() {
  width: '150',
  editable: false,
  filterable: false,
- hidden: false,
+ hidden: !canManageStrategySurface,
  render: (_: any, item: any) => (
  <div className="flex items-center gap-1">
  <button
@@ -1382,7 +1231,7 @@ export default function StrategyDetailPage() {
  }))}
  isLoading={sessionsLoading}
  emptyMessage="Sin sesiones registradas"
- onUpdateItem={async (rowId, field, value) => {
+ onUpdateItem={canManageStrategySurface ? async (rowId, field, value) => {
  const actualField = field === '__displayName' ? 'topic' : field;
  try {
  await apiFetch(`/evangelism/sessions/${rowId}`, {
@@ -1396,13 +1245,13 @@ export default function StrategyDetailPage() {
  toast.error('Error al actualizar');
  return false;
  }
- }}
+ } : undefined}
  columns={[
  {
  key: '__displayName',
  label: 'Tema / Sesión',
  type: 'text',
- editable: true,
+ editable: canManageStrategySurface,
  },
  {
  key: 'grupo_nombre',
@@ -1539,19 +1388,19 @@ export default function StrategyDetailPage() {
  <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg p-4 space-y-4">
  <div>
  <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Nombre</label>
- <input type="text" value={editName} onChange={e => setEditName(e.target.value)}
+ <input type="text" value={editName} onChange={e => setEditName(e.target.value)} readOnly={!canManageStrategySurface}
  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors" />
  </div>
  <div>
  <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Descripción</label>
- <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3}
+ <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3} readOnly={!canManageStrategySurface}
  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors resize-none"
  placeholder="Detalles sobre la estrategia..." />
  </div>
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div>
  <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Tipo</label>
- <select value={editType} onChange={e => setEditType(e.target.value)}
+ <select value={editType} onChange={e => setEditType(e.target.value)} disabled={!canManageStrategySurface}
  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors">
  <option value="">General</option>
  <option value="Geográfica">Geográfica</option>
@@ -1563,7 +1412,7 @@ export default function StrategyDetailPage() {
  </div>
  <div>
  <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Estado</label>
- <select value={editStatus} onChange={e => setEditStatus(e.target.value as any)}
+ <select value={editStatus} onChange={e => setEditStatus(e.target.value as any)} disabled={!canManageStrategySurface}
  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors">
  <option value="pending">No iniciada</option>
  <option value="active">Iniciada</option>
@@ -1576,7 +1425,7 @@ export default function StrategyDetailPage() {
  <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Clase Raíz</label>
  <div className="flex gap-2">
  {['relacional', 'evento_masivo', 'sectorial'].map(c => (
- <button key={c} onClick={() => setEditClaseRaiz(c)}
+ <button key={c} onClick={() => canManageStrategySurface && setEditClaseRaiz(c)} disabled={!canManageStrategySurface}
  className={`flex-1 px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all capitalize ${
  editClaseRaiz === c
  ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
@@ -1589,7 +1438,7 @@ export default function StrategyDetailPage() {
  </div>
  <div>
  <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Activa</label>
- <button onClick={() => setEditActiva(!editActiva)}
+ <button onClick={() => canManageStrategySurface && setEditActiva(!editActiva)} disabled={!canManageStrategySurface}
  className={`w-full px-3 py-2 rounded-lg text-[12px] font-bold transition-all text-left ${
  editActiva
  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
@@ -1602,7 +1451,7 @@ export default function StrategyDetailPage() {
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div>
  <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Recurrencia</label>
- <select value={editRecurrence || ''} onChange={e => setEditRecurrence(e.target.value || null)}
+ <select value={editRecurrence || ''} onChange={e => setEditRecurrence(e.target.value || null)} disabled={!canManageStrategySurface}
  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors">
  <option value="">Sin recurrencia</option>
  <option value="SEMANAL">Semanal</option>
@@ -1616,15 +1465,16 @@ export default function StrategyDetailPage() {
  </select>
  </div>
  <div>
- <input type="date" value={editStartDate} onChange={e => setEditStartDate(e.target.value)}
+ <input type="date" value={editStartDate} onChange={e => setEditStartDate(e.target.value)} readOnly={!canManageStrategySurface}
  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors" />
  </div>
  <div>
  <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Fecha de fin</label>
- <input type="date" value={editEndDate} onChange={e => setEditEndDate(e.target.value)}
+ <input type="date" value={editEndDate} onChange={e => setEditEndDate(e.target.value)} readOnly={!canManageStrategySurface}
  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors" />
  </div>
  </div>
+ {canManageStrategySurface ? (
  <div className="flex items-center justify-end gap-2 pt-2 border-t border-[hsl(var(--border-primary))]">
  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
  onClick={handleSave} disabled={saving}
@@ -1632,6 +1482,7 @@ export default function StrategyDetailPage() {
  <Save size={14} />{saving ? 'Guardando...' : 'Guardar cambios'}
  </motion.button>
  </div>
+ ) : null}
  </div>
  )}
 
@@ -1647,10 +1498,12 @@ export default function StrategyDetailPage() {
  </p>
  )}
  </div>
+ {canManageStrategySurface ? (
  <button onClick={openGroupDrawer}
  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
  <Plus size={14} />Nuevo grupo
  </button>
+ ) : null}
  </div>
  {groups.length === 0 ? (
  <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg">
@@ -1663,19 +1516,23 @@ export default function StrategyDetailPage() {
  {groups.map(g => (
  <div key={g.id}
  className="group bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer relative"
- onClick={() => openPersonaDrawer(g)}>
+ onClick={() => canManageStrategySurface ? openPersonaDrawer(g) : router.push(`/plataforma/evangelism/groups/${g.id}`)}>
+ {canManageStrategySurface ? (
  <button onClick={e => { e.stopPropagation(); requestDeleteGroup(g.id, g.name); }}
  className="absolute top-2 right-2 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Eliminar">
  <Trash2 size={14} />
  </button>
+ ) : null}
  <button onClick={e => { e.stopPropagation(); router.push(`/plataforma/evangelism/groups/${g.id}`); }}
  className="absolute top-2 right-8 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Ver detalle">
  <Calendar size={14} />
  </button>
+ {canManageStrategySurface ? (
  <button onClick={e => { e.stopPropagation(); openGroupAttendance(g); }}
  className="absolute top-2 right-[3.25rem] p-1 rounded text-[hsl(var(--text-secondary))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Registrar asistencia">
  <ClipboardList size={14} />
  </button>
+ ) : null}
  {/* Share button + dropdown */}
  <div className="absolute top-2 right-[4.75rem] z-20">
  <button
@@ -1727,7 +1584,7 @@ export default function StrategyDetailPage() {
  <div className="flex items-center justify-between flex-wrap gap-2">
  <h2 className="text-sm font-bold text-[hsl(var(--text-primary))]">Registro de sesiones</h2>
  <div className="flex items-center gap-2 flex-wrap">
- {strategy.recurrence && strategy.start_date && strategy.end_date && (
+ {canManageStrategySurface && strategy.recurrence && strategy.start_date && strategy.end_date && (
  <button onClick={async () => {
  const btn = toast.loading('Generando sesiones...');
  try {
@@ -1748,6 +1605,7 @@ export default function StrategyDetailPage() {
  <Sparkles size={14} />Generar sesiones
  </button>
  )}
+ {canManageStrategySurface ? (
  <button onClick={async () => {
  try {
  const res = await apiFetch<BulkHabilitacionResponse>(`/evangelism/strategies/${id}/habilitar-todas`, { method: 'POST', token, silent: true });
@@ -1758,10 +1616,14 @@ export default function StrategyDetailPage() {
  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
  <CheckCircle2 size={14} />Habilitar sesiones
  </button>
+ ) : null}
+ {canManageStrategySurface ? (
  <button onClick={requestBlockAllSessions}
  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 text-xs font-semibold hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors">
  <AlertCircle size={14} />Bloquear sesiones
  </button>
+ ) : null}
+ {canManageStrategySurface ? (
  <button onClick={() => {
  setSessionForm({ grupo_id: groups[0]?.id || '', session_date: formatLocalDate(new Date()), topic: '', offering_amount: '', report_notes: '' });
  setIsNewSessionDrawerOpen(true);
@@ -1769,6 +1631,7 @@ export default function StrategyDetailPage() {
  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:opacity-90 transition-colors">
  <Plus size={14} />Nueva sesión
  </button>
+ ) : null}
  </div>
  </div>
 
@@ -1882,6 +1745,7 @@ export default function StrategyDetailPage() {
  </div>
  <div className="flex items-center gap-2">
  {/* Toggle habilitación individual */}
+ {canManageStrategySurface ? (
  <button
  onClick={() => toggleSessionHabilitacion(s)}
  title={s.estado_habilitacion === 'HABILITADO' ? 'Bloquear sesión' : 'Habilitar sesión'}
@@ -1893,10 +1757,14 @@ export default function StrategyDetailPage() {
  >
  {s.estado_habilitacion === 'HABILITADO' ? '✓' : '○'}
  </button>
+ ) : null}
+ {canManageStrategySurface ? (
  <button onClick={() => openAttendanceDrawer(s)}
  className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[11px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
  <Users size={12} />Asistencia
  </button>
+ ) : null}
+ {canManageStrategySurface ? (
  <div className="relative">
  <button onClick={() => setSessionMenuId(sessionMenuId === s.id ? null : s.id)}
  className="w-7 h-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10 hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-colors">
@@ -1912,6 +1780,7 @@ export default function StrategyDetailPage() {
  </div>
  )}
  </div>
+ ) : null}
  </div>
  </div>
  ))}
@@ -1958,7 +1827,7 @@ export default function StrategyDetailPage() {
            <span>{grp.personas_count} personas</span>
           </div>
          </div>
-         {latest && isHabilitado && (
+         {latest && isHabilitado && canManageStrategySurface && (
           <button
            onClick={() => openAttendanceDrawer(latest)}
            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all active:scale-95 bg-[hsl(var(--primary))] text-white hover:opacity-90 shadow-sm"
@@ -1995,7 +1864,7 @@ export default function StrategyDetailPage() {
             </div>
             {!isClosed && (
              <div className="shrink-0 flex items-center gap-2">
-              {s.estado_habilitacion !== 'HABILITADO' && (
+              {canManageStrategySurface && s.estado_habilitacion !== 'HABILITADO' && (
                <button
                 onClick={() => toggleSessionHabilitacion(s)}
                 className="text-[11px] font-semibold text-amber-600 hover:text-emerald-700 transition-colors whitespace-nowrap"
@@ -2003,7 +1872,7 @@ export default function StrategyDetailPage() {
                 Habilitar
                </button>
               )}
-              {s.estado_habilitacion === 'HABILITADO' && (
+              {canManageStrategySurface && s.estado_habilitacion === 'HABILITADO' && (
                <button
                 onClick={() => openAttendanceDrawer(s)}
                 className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
@@ -2083,10 +1952,12 @@ export default function StrategyDetailPage() {
  <div className="bg-[hsl(var(--bg-secondary))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
  <div className="flex items-center justify-between mb-3">
  <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Roles Personalizados</h3>
+ {canManageStrategySurface ? (
  <button onClick={() => setShowRoleForm(!showRoleForm)}
  className="text-[11px] font-bold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] flex items-center gap-1">
  <Plus size={12} />{showRoleForm ? 'Cancelar' : 'Agregar'}
  </button>
+ ) : null}
  </div>
 
  <div className="mb-3">
@@ -2094,7 +1965,7 @@ export default function StrategyDetailPage() {
  <select
  value={editDefaultRoleId ?? ''}
  onChange={e => setEditDefaultRoleId(e.target.value || null)}
- disabled={customRoles.length === 0}
+ disabled={customRoles.length === 0 || !canManageStrategySurface}
  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors disabled:opacity-60"
  >
  <option value="">Sin rol por defecto</option>
@@ -2109,7 +1980,7 @@ export default function StrategyDetailPage() {
  </p>
  </div>
 
- {showRoleForm && (
+ {canManageStrategySurface && showRoleForm && (
  <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg space-y-2">
  <input value={newRoleName} onChange={e => setNewRoleName(e.target.value)}
  placeholder="Nombre del rol (ej: Coordinador de zona)"
@@ -2154,9 +2025,11 @@ export default function StrategyDetailPage() {
  </div>
  {r.descripcion && <p className="text-[10px] text-[hsl(var(--text-secondary))]">{r.descripcion}</p>}
  </div>
+ {canManageStrategySurface ? (
  <button onClick={() => requestDeleteRole(r)} className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
  <X size={12} />
  </button>
+ ) : null}
  </div>
  ))}
  </div>
@@ -2185,6 +2058,7 @@ export default function StrategyDetailPage() {
  </span>
  <span className="text-[11px] text-[hsl(var(--text-secondary))]">{f.observaciones || '—'}</span>
  </div>
+ {canManageStrategySurface ? (
  <button onClick={async () => {
  try {
  await apiFetch(`/evangelism/follow-up/${f.id}`, {
@@ -2197,6 +2071,7 @@ export default function StrategyDetailPage() {
  }} className="px-2 py-0.5 text-[10px] font-bold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded transition-colors">
  Completar
  </button>
+ ) : null}
  </div>
  ))}
  </div>
@@ -2207,7 +2082,7 @@ export default function StrategyDetailPage() {
  </div>
 
  {/* ── Group Creation Drawer ── */}
- <WorkspaceDrawer isOpen={isGroupDrawerOpen} onClose={() => setIsGroupDrawerOpen(false)}
+ <WorkspaceDrawer isOpen={isGroupDrawerOpen && canManageStrategySurface} onClose={() => setIsGroupDrawerOpen(false)}
  title="Nuevo Grupo" subtitle={`Estrategia: ${strategy?.name}`}
  actions={<>
  <button onClick={() => setIsGroupDrawerOpen(false)}
@@ -2344,7 +2219,7 @@ export default function StrategyDetailPage() {
  </WorkspaceDrawer>
 
  {/* ── Persona Management Drawer ── */}
- <WorkspaceDrawer isOpen={isPersonaDrawerOpen} onClose={() => setIsPersonaDrawerOpen(false)}
+ <WorkspaceDrawer isOpen={isPersonaDrawerOpen && canManageStrategySurface} onClose={() => setIsPersonaDrawerOpen(false)}
  title="Gestionar Personas" subtitle={selectedGroup?.name || ''}
  actions={<>
  <button onClick={() => setIsPersonaDrawerOpen(false)}
@@ -2437,7 +2312,7 @@ export default function StrategyDetailPage() {
  </WorkspaceDrawer>
 
  {/* ── New Session Drawer ── */}
- <WorkspaceDrawer isOpen={isNewSessionDrawerOpen} onClose={() => setIsNewSessionDrawerOpen(false)}
+ <WorkspaceDrawer isOpen={isNewSessionDrawerOpen && canManageStrategySurface} onClose={() => setIsNewSessionDrawerOpen(false)}
  title="Registrar sesión" subtitle={`Estrategia: ${strategy?.name}`}
  actions={<>
  <button onClick={() => setIsNewSessionDrawerOpen(false)}
@@ -2483,7 +2358,7 @@ export default function StrategyDetailPage() {
  </WorkspaceDrawer>
 
  {/* ── Attendance Drawer ── */}
- <WorkspaceDrawer isOpen={isAttendanceDrawerOpen} onClose={() => setIsAttendanceDrawerOpen(false)}
+ <WorkspaceDrawer isOpen={isAttendanceDrawerOpen && canManageStrategySurface} onClose={() => setIsAttendanceDrawerOpen(false)}
  title="Registrar Asistencia"
  subtitle={attendanceSession ? new Date(attendanceSession.session_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : ''}
  actions={<>

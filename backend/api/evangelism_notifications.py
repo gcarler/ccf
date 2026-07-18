@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.api.evangelism_shared import session_read_only_options, session_read_value, utc_now
 from backend.core.database import get_db
-from backend.core.permissions import require_pastor_or_admin
+from backend.core.permissions import require_evangelism_manage
 from backend.crud.crm import get_user_sede_id
 
 router = APIRouter()
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 @router.post("/notifications/send-reminders", response_model=Dict)
 def send_reminders(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Send notifications to group leaders for:
 

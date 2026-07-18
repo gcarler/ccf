@@ -59,6 +59,18 @@ const formatLocalDate = (date: Date) => {
  return `${year}-${month}-${day}`;
 };
 
+const normalizeMinistryEvent = (raw: MinistryEvent): MinistryEvent => ({
+ ...raw,
+ target_role_ids: Array.isArray(raw.target_role_ids)
+  ? raw.target_role_ids.map(String)
+  : raw.target_role_id
+   ? [String(raw.target_role_id)]
+   : [],
+ target_persona_ids: Array.isArray(raw.target_persona_ids)
+  ? raw.target_persona_ids.map(String)
+  : [],
+});
+
 interface AudiencePreset {
  id: string;
  name: string;
@@ -121,9 +133,11 @@ function EventsPage() {
  const [deletingEventLoadingId, setDeletingEventLoadingId] = useState<string | null>(null);
 
  useEffect(() => {
+ const abort = new AbortController();
  if (token) {
- apiFetch<RoleDefinition[]>('/evangelism/roles', { token, silent: true }).then(setRoles).catch(() => {});
+ apiFetch<RoleDefinition[]>('/evangelism/roles', { token, silent: true, signal: abort.signal }).then(setRoles).catch(() => {});
  }
+ return () => abort.abort();
  }, [token]);
 
  // Attendance State
@@ -179,7 +193,7 @@ function EventsPage() {
  apiFetch<Persona[]>('/crm/personas', { token, silent: true, query: { limit: 200 }, cache: 'no-store' }),
  apiFetch<EventDashboardStat[]>('/evangelism/events/dashboard-stats', { token, silent: true, cache: 'no-store' })
  ]);
- setEvents(Array.isArray(eventsRes) ? eventsRes : []);
+ setEvents(Array.isArray(eventsRes) ? eventsRes.map(normalizeMinistryEvent) : []);
  setPersonas(Array.isArray(personasRes) ? personasRes : []);
  setStats(Array.isArray(statsRes) ? statsRes : []);
  } catch {
@@ -494,7 +508,7 @@ function EventsPage() {
 
 
  const openQr = (ev: MinistryEvent) => {
- setSelectedEvent(ev);
+ setSelectedEvent(normalizeMinistryEvent(ev));
  setIsQrDrawerOpen(true);
  };
 
@@ -523,7 +537,7 @@ function EventsPage() {
  };
 
  const openAttendance = (ev: MinistryEvent) => {
- setSelectedEvent(ev);
+ setSelectedEvent(normalizeMinistryEvent(ev));
  setIsAttendanceDrawerOpen(true);
  setAttendanceDate(formatLocalDate(new Date()));
  setAttendedPersonaIds([]);
@@ -535,21 +549,23 @@ function EventsPage() {
 
  useEffect(() => {
  if (!token || !selectedEvent || !isAttendanceDrawerOpen || !attendanceDate) return;
+ const abort = new AbortController();
 
  const loadAttendanceSession = async () => {
  setAttendanceLoading(true);
  try {
- const data = await apiFetch<EventSessionAttendanceData>(`/evangelism/events/${selectedEvent.id}/sessions/${attendanceDate}`, { token, silent: true });
+ const data = await apiFetch<EventSessionAttendanceData>(`/evangelism/events/${selectedEvent.id}/sessions/${attendanceDate}`, { token, silent: true, signal: abort.signal });
  setAttendedPersonaIds(Array.isArray(data?.attendees) ? data.attendees.map((item) => item.persona_id) : []);
  } catch {
- setAttendedPersonaIds([]);
+ if (!abort.signal.aborted) setAttendedPersonaIds([]);
  } finally {
- setAttendanceLoading(false);
+ if (!abort.signal.aborted) setAttendanceLoading(false);
  }
  };
 
  loadAttendanceSession();
- }, [addToast, attendanceDate, isAttendanceDrawerOpen, selectedEvent, token]);
+ return () => abort.abort();
+ }, [attendanceDate, isAttendanceDrawerOpen, selectedEvent, token]);
 
  const saveAttendance = async (forceEmpty = false) => {
  if (!selectedEvent) return;
@@ -759,7 +775,9 @@ function EventsPage() {
  setUpdatingEventId(evId);
  try {
  await apiFetch(`/evangelism/events/${evId}`, { method: 'PUT', body: payload, token, silent: true });
- setEvents(prev => prev.map(e => e.id === evId ? { ...e, ...payload } : e));
+ setEvents(prev => prev.map((event) => (
+  event.id === evId ? normalizeMinistryEvent({ ...event, ...payload }) : event
+ )));
  toast.success('Evento actualizado con éxito');
  setEditingEvent(null);
  } catch (error: any) {

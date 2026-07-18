@@ -62,8 +62,9 @@ con `ProjectTaskBase.title`.
 
 Notas:
 
-- Decorador alineado con el docstring del endpoint ("Solo administradores y gestores"). `Editor` recibe **403**; `Gestor` y `Admin` pasan por jerarquía `manage → edit → read`.
-- Baseline congelado en ``tests/test_projects_rbac.py::test_editor_blocked_from_put_phases`` (cierre ``PEND-QUALITY-PHASES-RBAC-001``).
+- Decorador alineado con el docstring del endpoint ("Solo administradores y gestores"). `Editor` recibe **403** para un proyecto existente en su sede; recibe **404** (Axioma 3) para un `project_id` inexistente o de otra sede. `Gestor` y `Admin` pasan por jerarquía `manage → edit → read`.
+- Guard actual: `require_project_access("manage")`.
+- Baseline congelado en ``tests/test_projects_rbac.py::test_editor_blocked_from_put_phases`` y ``test_editor_blocked_from_put_phases_existing_project`` (cierre ``PEND-QUALITY-PHASES-RBAC-001``).
 
 ## 4. Tareas
 

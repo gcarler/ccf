@@ -85,7 +85,7 @@ Nota operativa:
 ## 7. Deuda documentada que sigue viva
 
 - ~~asimetría `DELETE /projects/{id}` vs `PATCH /projects/{id}`~~ → resuelta como **política confirmada** el 2026-07-16 (ver `PROJECTS_RBAC_MATRIX.md` §6.1 y `PROJECTS_API_CONTRACTS.md` §11)
-- ~~gap RBAC de `PUT /projects/{id}/phases`~~ → cerrado el 2026-07-16; el guard es `projects:manage` y `Editor` recibe 403 (ver `PROJECTS_RBAC_MATRIX.md` §4.2 y §10.2)
+- ~~gap RBAC de `PUT /projects/{id}/phases`~~ → cerrado el 2026-07-16 y reforzado el 2026-07-17; el guard es `require_project_access("manage")`, `Editor` recibe 403 para proyecto existente en su sede y 404 para project_id inexistente/cross-sede (Axioma 3). Ver `PROJECTS_RBAC_MATRIX.md` §4.2 y §10.2
 - la matriz compacta vive en `docs/PROJECTS_RBAC_MATRIX.md` y debe mantenerse sincronizada con `tests/test_projects_rbac.py`
 - `PEND-FRONTEND-E2E-PROJECTS-001` cerrada el 2026-07-16 con `frontend/tests/e2e/projects/smoke.spec.ts`
 - `PEND-FRONTEND-E2E-PROJECTS-DETAIL-001` cerrada el 2026-07-16 con `frontend/tests/e2e/projects/detail.spec.ts`

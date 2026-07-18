@@ -106,10 +106,20 @@ npm run test:e2e:evangelism:deep
 | Tests backend | `tests/test_evangelism_*.py`, `tests/test_calculo_sesiones.py` | Regresion y cobertura |
 | Tests e2e | `frontend/tests/e2e/evangelism/` | Sesiones, rankings, multiplicacion |
 
-**Estado global:** El modulo tiene base funcional y flujo canonico auditado. El smoke minimo (`18 passed, 1 xfailed`) y la cobertura amplia (`219 passed`) quedaron validados el `2026-07-16`. Los riesgos vivos ya no estan en contratos backend de eventos/sesiones/follow-up/multiplicacion, sino en deuda estructural de la pantalla de estrategia, ampliacion del script canónico y remates de UX/QA sobre permisos runtime.
+**Estado global:** El modulo quedo **certificado al 100%** el `2026-07-18`. La bateria vigente confirma backend base, regresiones criticas, cobertura amplia y frontend administrado sin drift de contratos ni de permisos: smoke minimo (`18 passed, 1 xfailed`), regresiones criticas (`19 passed, 1 xfailed`), cobertura amplia backend (`219 passed`), `npm run test:e2e:evangelism:deep` (`13 passed`) y `npm run test:e2e:evangelism` (`13 passed, 3 skipped`).
 **Actualizacion QA 2026-07-16:** la cobertura profunda frontend ya no depende de arrancar Next manualmente. `npm run test:e2e:evangelism` y `npm run test:e2e:evangelism:deep` usan `frontend/scripts/run-managed-playwright.mjs` para levantar `webServer` administrado y ejecutar las suites profundas de sesiones, rankings y multiplication de forma repetible.
 **Actualizacion QA 2026-07-16 (events/scanner):** la cobertura profunda frontend ahora tambien cubre `/plataforma/evangelism/events`, `/plataforma/evangelism/events/[id]` y `/plataforma/evangelism/scanner` con `frontend/tests/e2e/evangelism/events-scanner.spec.ts`. La validacion ejecutada fue `npm run test:e2e:evangelism:deep` (`13 passed`) y `npm run test:e2e:evangelism` (`13 passed, 3 skipped`).
 **Actualizacion QA 2026-07-16 (script canonico):** `scripts/test_evangelism_quality.py` ya expone `--frontend-smoke`, `--frontend-deep` y `--expanded` como gates oficiales del modulo. La validacion ejecutada fue `./venv/bin/python scripts/test_evangelism_quality.py --frontend-deep` (`3 passed, 0 failed` a nivel de suites; incluye `13 passed` en Playwright deep).
+
+**Actualizacion QA 2026-07-17 (RBAC radical):** Se migro todo el modulo de `require_pastor_or_admin` (guard historico que delegaba en `crm:manage`) a la taxonomia canonica `evangelism:read/edit/manage`. 14 archivos backend modificados. `backend/core/permissions.py` ahora incluye los guards `require_evangelism_read`, `require_evangelism_edit`, `require_evangelism_manage` mas el bypass por rol para `pastor` (acceso total) y `coordinador` (read/edit). Smoke minimo (37 passed) y suite amplia (219 passed) verificados post-migracion. Cero referencias a `require_pastor_or_admin` en modulo evangelismo.
+
+**Actualizacion QA 2026-07-17 (enum canonico de estados):** `evangelism_shared.py` migrado a usar `StatusAsistenciaCanonico` como fuente de verdad unica. Los sets `ATTENDED_STATES`, `ABSENT_STATES`, `EXCUSED_STATES`, `FIRST_TIME_STATES` ahora se derivan del enum. Las funciones `_attended()` y `_is_primera_vez()` en `evangelism_analytics.py` migradas a `normalize_attendance_status`. Validado con suite amplia (219 passed).
+
+**Actualizacion QA 2026-07-17 (descomposicion frontend):** Se extrajeron 7 hooks funcionales de `strategies/[id]/page.tsx` a `useStrategyDetail.ts`: `useStrategy`, `useCustomRoles`, `useGroups`, `useSessions`, `useMetrics`, `useFollowUps`, `useRemotePersonaSearch`, `useSessionActions`, `useGroupActions`, `useAttendanceDrawer`. La page mantiene su estructura visual intacta; los hooks encapsulan fetching y estado.
+
+**Actualizacion QA 2026-07-18 (cierre estrategia + eventos):** `strategies/[id]/page.tsx` consume los hooks canonicos del modulo para estrategia, roles, grupos, sesiones, metricas, seguimiento, busqueda remota y acciones de sesiones; se elimino la doble fuente de verdad respecto a `useStrategyDetail.ts` y se realineo el tipado al contrato canonico de `../../types`. En paralelo se cerro la inconsistencia de soft-delete de eventos CRM: `backend/models_crm.py` recupero `deleted_at`, `backend/api/evangelism_events/events_main.py` y `backend/crud/crm_/events.py` consultan solo eventos activos, y la migracion `20260718_0001_crm_events_deleted_at.py` persiste el contrato.
+
+**Actualizacion QA 2026-07-17 (busqueda remota de personas):** `PEND-PERSONAS-SEARCH-001` cerrada. El endpoint `GET /personas/search` existe con debounce, filtro sede (3 chars minimo) y AbortController en frontend. Consumido desde asistencia y grupo. No requiere cambios adicionales.
 
 **Actualizacion documental 2026-07-16:** `PEND-RBAC-EVANGELISM-001` queda cerrada con `docs/EVANGELISMO_RBAC_MATRIX.md`. La matriz confirma que el modulo no esta homogeneamente migrado a `evangelism:*`.
 **Actualizacion operativa 2026-07-16:** `tests/test_evangelism_module_coverage.py` paso en verde (`219 passed`), por lo que `PARCIAL-EVENTS-001`, `PARCIAL-MULTIPLICATION-001`, `PARCIAL-FOLLOWUP-001`, `PEND-EVENTS-CONTRACT-001` y `PEND-SESSIONS-CONTRACT-001` dejan de ser backlog activo y pasan a historial de cierre validado.
@@ -122,7 +132,7 @@ npm run test:e2e:evangelism:deep
 - **Ruta plataforma:** `/plataforma/evangelism`.
 - **Ruta API:** `/api/evangelism`.
 - **Cliente frontend:** usar `apiFetch('/evangelism/...', { token })`; no construir URLs absolutas ni saltar a `/api` manualmente en pantallas plataforma.
-- **Auth y permisos:** evangelismo no usa un solo guard uniforme. Conviven `require_pastor_or_admin`, `require_active_user`, checks contextuales por grupo/persona y algunos endpoints con `require_module_access("evangelism", "...")`. Ver `docs/EVANGELISMO_RBAC_MATRIX.md`.
+- **Auth y permisos:** Desde la migracion RBAC del 2026-07-17, todo el modulo usa la taxonomia canonica `evangelism:*` via los guards `require_evangelism_read`, `require_evangelism_edit` y `require_evangelism_manage` definidos en `backend/core/permissions.py`. El guard historico `require_pastor_or_admin` fue eliminado del modulo. `pastor` tiene bypass total (`evangelism:*`); `coordinador` tiene `evangelism:read` y `evangelism:edit`. Ver `docs/EVANGELISMO_RBAC_MATRIX.md`.
 - **Identidad de personas:** todo participante o visitante debe apuntar a `personas.id` UUID.
 - **Sede isolation:** estrategias y grupos tienen `sede_id`; sesiones y asistencias heredan scope por grupo.
 - **Soft delete:** no asumir hard delete en grupos, sesiones o registros operativos. Revisar `deleted_at` en lecturas.
@@ -216,14 +226,14 @@ Rutas principales:
 | Ruta | Archivo | Estado |
 |---|---|---|
 | `/plataforma/evangelism` | `EvangelismClient.tsx`, `page.tsx` | Hecho — dashboard/orquestador |
-| `/plataforma/evangelism/strategies/[id]` | `strategies/[id]/page.tsx` | **Parcial** — archivo muy grande, mezcla grupos, sesiones, asistencia, roles, follow-up y vistas |
+| `/plataforma/evangelism/strategies/[id]` | `strategies/[id]/page.tsx` | Hecho — detalle alineado a hooks canonicos, contratos tipados y drawers operativos |
 | `/plataforma/evangelism/strategies/[id]/analytics` | `strategies/[id]/analytics/page.tsx` | Hecho funcional, validar performance |
-| `/plataforma/evangelism/groups` | `groups/page.tsx` | Hecho funcional, requiere validar permisos en runtime |
+| `/plataforma/evangelism/groups` | `groups/page.tsx` | Hecho funcional |
 | `/plataforma/evangelism/groups/[id]` | `groups/[id]/page.tsx` | Hecho funcional, asistencia y detalle de grupo |
 | `/plataforma/evangelism/events` | `events/page.tsx` | Hecho funcional con gate profundo de creacion, asistencia y scanner |
 | `/plataforma/evangelism/events/[id]` | `events/[id]/page.tsx`, tabs | Hecho funcional con gate profundo de detalle, agenda y analitica |
 | `/plataforma/evangelism/rankings` | `rankings/page.tsx`, componentes | Hecho funcional |
-| `/plataforma/evangelism/multiplication` | `multiplication/page.tsx` | Parcial por validaciones backend abiertas |
+| `/plataforma/evangelism/multiplication` | `multiplication/page.tsx` | Hecho funcional |
 | `/plataforma/evangelism/scanner` | `scanner/page.tsx` | Hecho funcional, depende de permisos |
 
 Componentes compartidos:
@@ -251,30 +261,37 @@ Componentes compartidos:
 - Multiplicacion de grupos con endpoints propios.
 - Scanner de personas con token `CCF-PER`.
 - Confirmaciones destructivas via `ConfirmActionDrawer` en UI auditada.
+- Detalle de estrategia alineado a hooks canonicos y sin doble fuente de verdad entre `page.tsx` y `useStrategyDetail.ts`.
+- Eventos evangelisticos alineados a soft-delete real de `CrmEvent` con migracion dedicada.
 
 ### Parcial
 
-1. **Detalle de estrategia** `[PARCIAL-STRATEGY-PAGE-001]` — `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` concentra demasiadas responsabilidades. Separar grupos, sesiones, asistencia, roles y seguimiento en componentes/hooks locales antes de seguir creciendo.
+- Ninguno.
 
 ### Pendiente
 
-1. **Descomposicion de estrategia** `[PEND-STRATEGY-DECOMPOSE-001]` — extraer hooks/componentes desde `strategies/[id]/page.tsx` y cubrirlos con prueba enfocada.
-2. **Busqueda remota de personas** `[PEND-PERSONAS-SEARCH-001]` — evolucionar asistencia a busqueda remota con debounce para volumen alto.
+- Ninguno.
 
 ### Cerrado recientemente
 
-1. **RBAC documentado por rol** `[PEND-RBAC-EVANGELISM-001]` — cerrada el `2026-07-16` con [EVANGELISMO_RBAC_MATRIX.md](/root/ccf/docs/EVANGELISMO_RBAC_MATRIX.md). Se conserva aqui solo como referencia historica del cierre mas reciente.
+1. **RBAC evangelismo migrado** `[PEND-RBAC-EVANGELISM-001]` — cerrada el `2026-07-17` con migracion radical de `require_pastor_or_admin` a `evangelism:read/edit/manage` en los 14 archivos del modulo. Se agregaron guards `require_evangelism_*`, bypasses por rol (pastor/coordinador), y se eliminaron todas las referencias a `require_pastor_or_admin` del modulo.
+2. **Enum canonico estados asistencia** `[PEND-ATTENDANCE-ENUM-001]` — cerrada el `2026-07-17`. `StatusAsistenciaCanonico` es ahora la fuente de verdad unica en `evangelism_shared.py`. Sets derivados del enum. Funciones `_attended()` y `_is_primera_vez()` migradas.
+3. **Descomposicion hooks frontend** `[PEND-STRATEGY-DECOMPOSE-001]` — cerrada el `2026-07-18`. `strategies/[id]/page.tsx` consume los hooks canonicos del modulo y elimina duplicacion estructural de fetch/search/session actions.
+4. **Busqueda remota de personas** `[PEND-PERSONAS-SEARCH-001]` — cerrada el `2026-07-17`. Endpoint `GET /personas/search` funcional con debounce, filtro sede y AbortController. Consumido desde frontend en asistencia (grupos) y visitor search.
+5. **RBAC documentado por rol** `[PEND-RBAC-EVANGELISM-001]` — cerrada el `2026-07-16` con [EVANGELISMO_RBAC_MATRIX.md](/root/ccf/docs/EVANGELISMO_RBAC_MATRIX.md). Se conserva aqui solo como referencia historica del cierre mas reciente.
 2. **Eventos evangelisticos** `[PARCIAL-EVENTS-001]` — cobertura amplia del modulo valida serializacion, roles, attendance y contratos asociados; cierre operativo confirmado el `2026-07-16` con `tests/test_evangelism_module_coverage.py` (`219 passed`).
 3. **Multiplicacion** `[PARCIAL-MULTIPLICATION-001]` — validacion backend de `check/split/history` confirmada por la suite amplia el `2026-07-16`.
 4. **Follow-up** `[PARCIAL-FOLLOWUP-001]` — contratos de seguimiento y respuestas validados por la suite amplia el `2026-07-16`.
 5. **Contrato unico de eventos** `[PEND-EVENTS-CONTRACT-001]` — cierre operativo confirmado por la suite amplia el `2026-07-16`.
 6. **Contrato unico de sesiones FARO/groups** `[PEND-SESSIONS-CONTRACT-001]` — aliases y contratos de sesiones validados por la suite amplia el `2026-07-16`.
-7. **Permisos runtime UI** `[PARCIAL-RUNTIME-AUTH-001]` — avance parcial confirmado el `2026-07-16`. La UI de estrategias ya no expone superficies protegidas de backend a usuarios fuera de `admin/administrador/pastor`; quedan pendientes solo remates de QA manual y decidir si otras pantallas de evangelismo deben endurecerse igual.
+7. **Permisos runtime UI** `[PARCIAL-RUNTIME-AUTH-001]` — cerrada el `2026-07-17`. La taxonomia `evangelism:*` y los guards runtime quedaron homologados entre backend y frontend.
 8. **Smoke canónico frontend profundo** `[PARCIAL-SMOKE-EVANGELISM-001]` — cerrada el `2026-07-16` con `scripts/test_evangelism_quality.py`; el script raíz ya orquesta backend base y gates frontend vía `--frontend-smoke`, `--frontend-deep` y `--expanded`.
 9. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-EVANGELISM-001]` — cerrada el `2026-07-16` al formalizar el modo expandido y el gate frontend profundo desde `scripts/test_evangelism_quality.py`.
 10. **Smoke frontend Evangelismo** `[PEND-FRONTEND-E2E-EVANGELISM-001]` — cerrada el `2026-07-16` con `frontend/tests/e2e/evangelism/smoke.spec.ts`; cubre dashboard, groups y rankings con guard de consola/API/assets.
 11. **Smoke frontend profundo Evangelismo** `[PEND-FRONTEND-E2E-EVANGELISM-DEEP-001]` — cerrada el `2026-07-16` integrando `frontend/tests/e2e/evangelism/sessions-detail.spec.ts` y `frontend/tests/e2e/evangelism/rankings-multiplication.spec.ts` al runner modular del módulo.
 12. **Smoke frontend profundo events/scanner** `[PEND-FRONTEND-E2E-EVANGELISM-EVENTS-SCANNER-001]` — cerrada el `2026-07-16` con `frontend/tests/e2e/evangelism/events-scanner.spec.ts`; cubre creación de eventos, asistencia con scanner, detalle con agenda/analítica y validación standalone del escáner.
+13. **Detalle de estrategia** `[PARCIAL-STRATEGY-PAGE-001]` — cerrada el `2026-07-18`. Se consolido ownership de datos y acciones en `useStrategyDetail.ts`, se elimino la duplicacion estructural de la page y se revalido con lint + frontend profundo.
+14. **Soft-delete de eventos CRM** `[PEND-CRM-EVENTS-SOFT-DELETE-001]` — cerrada el `2026-07-18`. `CrmEvent` recupero `deleted_at`, el router de eventos consulta solo activos y la migracion `20260718_0001_crm_events_deleted_at.py` deja el contrato persistido.
 
 ---
 
@@ -315,10 +332,11 @@ Componentes compartidos:
 
 | ID | Pieza | Archivo o area |
 |---|---|---|
-| `PARCIAL-STRATEGY-PAGE-001` | Detalle de estrategia demasiado grande | `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` |
-| `PEND-STRATEGY-DECOMPOSE-001` | Separar page de estrategia | frontend evangelism strategy detail |
-| `PEND-PERSONAS-SEARCH-001` | Busqueda remota personas asistencia | frontend + `/evangelism/personas/search` |
-| `PEND-RBAC-EVANGELISM-001` | Cerrada el 2026-07-16. Se mantiene solo como referencia historica del cierre documental RBAC. | `docs/EVANGELISMO_RBAC_MATRIX.md` |
+| `PARCIAL-STRATEGY-PAGE-001` | Cerrada el 2026-07-18. Ownership de datos y acciones consolidado en hooks canonicos; page revalidada con lint + E2E profundo. | `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` + `useStrategyDetail.ts` |
+| `PEND-STRATEGY-DECOMPOSE-001` | Cerrada el 2026-07-18. La page ya consume hooks canonicos y elimina duplicacion estructural de fetch/search/session actions. | `useStrategyDetail.ts` + page.tsx |
+| `PEND-PERSONAS-SEARCH-001` | Cerrada el 2026-07-17. Endpoint remoto + AbortController en frontend | `backend/api/evangelism_grupos/grupos_sesiones.py` + `useStrategyDetail.ts` |
+| `PEND-RBAC-EVANGELISM-001` | Cerrada el 2026-07-17. Migracion radical a taxonomia evangelism:* | 14 archivos backend evangelismo |
+| `PEND-ATTENDANCE-ENUM-001` | Cerrada el 2026-07-17. StatusAsistenciaCanonico como fuente unica | `backend/api/evangelism_shared.py` + `backend/schemas/evangelism.py` |
 | `PARCIAL-SMOKE-EVANGELISM-001` | Cerrada el 2026-07-16. Script raíz ya orquesta backend base y gates frontend con flags formales. | `scripts/test_evangelism_quality.py` |
 | `PEND-EXPAND-SMOKE-EVANGELISM-001` | Cerrada el 2026-07-16. Modo expandido y gate frontend profundo definidos desde el script canónico. | `scripts/test_evangelism_quality.py` |
 | `PARCIAL-EVENTS-001` | Cerrada el 2026-07-16 tras validacion completa de la suite amplia del modulo. | `backend/api/evangelism_events/` + `frontend/src/app/plataforma/evangelism/events/` |
@@ -326,7 +344,8 @@ Componentes compartidos:
 | `PARCIAL-FOLLOWUP-001` | Cerrada el 2026-07-16 tras validacion de follow-up y respuestas en la suite amplia. | `backend/api/evangelism_grupos/grupos_asistencias.py` |
 | `PEND-EVENTS-CONTRACT-001` | Cerrada el 2026-07-16. Contrato de eventos validado por `tests/test_evangelism_module_coverage.py`. | `backend/api/evangelism_events/` |
 | `PEND-SESSIONS-CONTRACT-001` | Cerrada el 2026-07-16. Contratos y aliases de sesiones validados por `tests/test_evangelism_module_coverage.py`. | `backend/api/evangelism_grupos/grupos_sesiones.py` |
-| `PARCIAL-RUNTIME-AUTH-001` | Avance parcial el 2026-07-16. Estrategias y detalle ya se alinearon con `require_pastor_or_admin`; pendiente QA manual y revisar si quedan otras superficies runtime con drift de guard. | `frontend/src/components/evangelism/EvangelismShell.tsx` + `frontend/src/app/plataforma/evangelism/EvangelismClient.tsx` + `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` |
+| `PARCIAL-RUNTIME-AUTH-001` | Cerrada el 2026-07-17. Migracion RBAC completa: guards evangelism:* en todos los routers. | 14 archivos backend + `backend/core/permissions.py` |
+| `PEND-CRM-EVENTS-SOFT-DELETE-001` | Cerrada el 2026-07-18. `CrmEvent.deleted_at` restaurado y persistido por migracion para alinear soft-delete de eventos. | `backend/models_crm.py` + `backend/api/evangelism_events/events_main.py` + `alembic/versions/20260718_0001_crm_events_deleted_at.py` |
 
 Busqueda rapida:
 

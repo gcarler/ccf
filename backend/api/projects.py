@@ -402,6 +402,10 @@ def require_project_access(min_level: str = "read"):
     * ``manage`` level remains strictly role-based.
     * Endpoints without a ``project_id`` or ``task_id`` path parameter
       fall back to role-based checks (assignment cannot be determined).
+    * Axioma 3: before returning 403, the dependency checks whether the
+      referenced project/task exists in the actor's sede. If it does not
+      exist or belongs to another sede, 404 is returned instead, even for
+      the ``manage`` level.
 
     This implements the product decision that in the Projects module
     access is driven by task/project assignment, not only by platform role.
@@ -414,6 +418,52 @@ def require_project_access(min_level: str = "read"):
         # Role-based access (admin bypass + projects:* permissions)
         if _has_role_based_project_access(db, current_user, min_level):
             return current_user
+
+        project_id = request.path_params.get("project_id")
+        task_id = request.path_params.get("task_id")
+
+        # Axioma 3 — existence-leak safe: before rejecting with 403, verify the
+        # resource exists in the actor's scope. If the project/task belongs to
+        # another sede (or does not exist), return 404 so cross-sede probing is
+        # indistinguishable from a missing resource. This applies to all levels,
+        # including manage, so a user without projects:manage still gets 404
+        # (not 403) when the resource is cross-sede or non-existent.
+        user_sede = get_user_sede_id(db, current_user.id)
+        if user_sede is not None and (project_id or task_id):
+            target_project_id = None
+            if task_id:
+                task_row = (
+                    db.query(models.ProjectTask.project_id)
+                    .filter(
+                        models.ProjectTask.id == _to_uuid(task_id),
+                        models.ProjectTask.deleted_at.is_(None),
+                    )
+                    .first()
+                )
+                if not task_row:
+                    raise HTTPException(status_code=404, detail="Task not found")
+                target_project_id = task_row.project_id
+                # If the path also carries a project_id, it must match the
+                # task's parent project. Otherwise the resource is not
+                # where the URL says it is.
+                if project_id:
+                    path_project_uuid = _to_uuid(project_id)
+                    if str(target_project_id) != str(path_project_uuid):
+                        raise HTTPException(status_code=404, detail="Task not found in project")
+            elif project_id:
+                target_project_id = _to_uuid(project_id)
+
+            if target_project_id is not None:
+                project_sede = (
+                    db.query(models.Project.sede_id)
+                    .filter(
+                        models.Project.id == target_project_id,
+                        models.Project.deleted_at.is_(None),
+                    )
+                    .scalar()
+                )
+                if project_sede is None or str(project_sede) != str(user_sede):
+                    raise HTTPException(status_code=404, detail="Project not found")
 
         # manage level is strictly role-based
         if min_level == "manage":
@@ -428,9 +478,6 @@ def require_project_access(min_level: str = "read"):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Permisos insuficientes. Se requiere: projects:{min_level}",
             )
-
-        project_id = request.path_params.get("project_id")
-        task_id = request.path_params.get("task_id")
 
         # Task-level endpoints take precedence when task_id is present
         if task_id and _is_assigned_to_task(db, task_id, persona_id):
@@ -488,7 +535,8 @@ def _assert_assignee_in_sede(
     if not persona:
         raise HTTPException(status_code=404, detail="Assignee not found")
     if persona.sede_id is not None and str(persona.sede_id) != str(user_sede):
-        raise HTTPException(status_code=404, detail="Assignee not in your sede")
+        # Existence-leak safe: indistinguishable from "not found".
+        raise HTTPException(status_code=404, detail="Assignee not found")
 
 
 def _assert_status_in_project_phases(
@@ -746,11 +794,14 @@ def set_project_phases(
     project_id: str,
     phases: List[schemas.ProjectPhaseInput],
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "manage")),
+    current_user: models.User = Depends(require_project_access("manage")),
 ):
     """Reemplaza todas las fases del proyecto (reordenar / renombrar / agregar / eliminar).
     El orden en el array define el order_index de cada fase.
     Solo administradores y gestores pueden modificar fases.
+    El acceso se valida con ``require_project_access("manage")``; por tanto,
+    un usuario sin permisos de manage recibe 404 (no 403) cuando el proyecto
+    no existe o pertenece a otra sede (Axioma 3).
     """
     user_sede = get_user_sede_id(db, current_user.id)
     _project = _ensure_project(db, project_id, user_sede=user_sede)

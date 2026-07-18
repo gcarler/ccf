@@ -174,7 +174,7 @@ def get_one_plantilla(
         raise HTTPException(404, "Plantilla no encontrada")
     sede_id = get_user_sede_id(db, str(user.id))
     if str(obj.sede_id) != str(sede_id):
-        raise HTTPException(403, "Acceso no autorizado")
+        raise HTTPException(404, "Recurso no encontrado")
     return PlantillaMensajeOut.from_orm_safe(obj, total_envios=count_envios(db, plantilla_id))
 
 
@@ -190,7 +190,7 @@ def patch_plantilla(
         raise HTTPException(404, "Plantilla no encontrada")
     sede_id = get_user_sede_id(db, str(user.id))
     if str(obj.sede_id) != str(sede_id):
-        raise HTTPException(403, "Acceso no autorizado")
+        raise HTTPException(404, "Recurso no encontrado")
     obj = update_plantilla(db, plantilla_id, payload)
     return PlantillaMensajeOut.from_orm_safe(obj, total_envios=count_envios(db, plantilla_id))
 
@@ -206,7 +206,7 @@ def del_plantilla(
         raise HTTPException(404, "Plantilla no encontrada")
     sede_id = get_user_sede_id(db, str(user.id))
     if str(obj.sede_id) != str(sede_id):
-        raise HTTPException(403, "Acceso no autorizado")
+        raise HTTPException(404, "Recurso no encontrado")
     if not delete_plantilla(db, plantilla_id):
         raise HTTPException(404, "Plantilla no encontrada")
 
@@ -225,7 +225,7 @@ def get_adjuntos(
         raise HTTPException(404, "Plantilla no encontrada")
     sede_id = get_user_sede_id(db, str(user.id))
     if str(obj.sede_id) != str(sede_id):
-        raise HTTPException(403, "Acceso no autorizado")
+        raise HTTPException(404, "Recurso no encontrado")
     return [RecursoAdjuntoOut.from_orm_safe(r) for r in list_adjuntos(db, plantilla_id=plantilla_id)]
 
 
@@ -242,7 +242,7 @@ async def upload_adjunto(
         raise HTTPException(404, "Plantilla no encontrada")
     sede_id = get_user_sede_id(db, str(user.id))
     if str(plantilla.sede_id) != str(sede_id):
-        raise HTTPException(403, "Acceso no autorizado")
+        raise HTTPException(404, "Recurso no encontrado")
 
     safe_name = sanitize_filename(file.filename or "upload")
     try:
@@ -288,7 +288,7 @@ def del_adjunto(
         raise HTTPException(404, "Adjunto no encontrado")
     sede_id = get_user_sede_id(db, str(user.id))
     if str(obj.sede_id) != str(sede_id):
-        raise HTTPException(403, "Acceso no autorizado")
+        raise HTTPException(404, "Recurso no encontrado")
     if not delete_adjunto(db, adjunto_id):
         raise HTTPException(404, "Adjunto no encontrado")
 
@@ -309,7 +309,7 @@ async def enviar_plantilla(
         raise HTTPException(404, "Plantilla no encontrada")
     sede_id = get_user_sede_id(db, str(user.id))
     if str(plantilla.sede_id) != str(sede_id):
-        raise HTTPException(403, "Acceso no autorizado")
+        raise HTTPException(404, "Recurso no encontrado")
 
     texto = plantilla.contenido_texto
     for var, valor in payload.variables.items():
@@ -428,7 +428,7 @@ async def send_plantilla_campaign(
         raise HTTPException(404, "Plantilla no encontrada")
     sede_id = get_user_sede_id(db, str(user.id))
     if str(plantilla.sede_id) != str(sede_id):
-        raise HTTPException(403, "Acceso no autorizado")
+        raise HTTPException(404, "Recurso no encontrado")
     sender_persona_id = resolve_persona_id_from_identity(db, str(user.id))
 
     personas = _resolve_campaign_personas(db, payload.target_segments, sede_id=sede_id)
@@ -606,6 +606,100 @@ def create_automation(
     return CrmAutomationOut.from_orm_safe(obj)
 
 
+def _list_automation_edges_response(
+    source_id: Optional[UUID] = None,
+    target_id: Optional[UUID] = None,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+):
+    rows = get_crm_automation_edges(db, source_id=source_id, target_id=target_id)
+    return [CrmAutomationEdgeOut.from_orm_safe(r) for r in rows]
+
+
+def _create_automation_edge_response(
+    payload: CrmAutomationEdgeCreate,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm", "edit")),
+):
+    # Validate source automation exists
+    source = get_crm_automation(db, payload.source_id)
+    if not source:
+        raise HTTPException(404, f"Source automation with id {payload.source_id} not found")
+
+    # Validate target automation exists
+    target = get_crm_automation(db, payload.target_id)
+    if not target:
+        raise HTTPException(404, f"Target automation with id {payload.target_id} not found")
+
+    obj = create_crm_automation_edge(db, payload)
+    return CrmAutomationEdgeOut.from_orm_safe(obj)
+
+
+def _delete_automation_edge_response(
+    edge_id: UUID,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm", "edit")),
+):
+    if not delete_crm_automation_edge(db, edge_id):
+        raise HTTPException(status_code=404, detail="Edge not found")
+
+
+@router.get("/automation-edges", response_model=List[CrmAutomationEdgeOut])
+def list_automation_edges(
+    source_id: Optional[UUID] = None,
+    target_id: Optional[UUID] = None,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+):
+    return _list_automation_edges_response(source_id=source_id, target_id=target_id, db=db, user=user)
+
+
+@router.post("/automation-edges", response_model=CrmAutomationEdgeOut, status_code=201)
+def create_automation_edge(
+    payload: CrmAutomationEdgeCreate,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm", "edit")),
+):
+    return _create_automation_edge_response(payload=payload, db=db, user=user)
+
+
+@router.delete("/automation-edges/{edge_id}", status_code=204)
+def delete_automation_edge(
+    edge_id: UUID,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm", "edit")),
+):
+    return _delete_automation_edge_response(edge_id=edge_id, db=db, user=user)
+
+
+@router.get("/automations/edges", response_model=List[CrmAutomationEdgeOut])
+def list_automation_edges_legacy(
+    source_id: Optional[UUID] = None,
+    target_id: Optional[UUID] = None,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm")),
+):
+    return _list_automation_edges_response(source_id=source_id, target_id=target_id, db=db, user=user)
+
+
+@router.post("/automations/edges", response_model=CrmAutomationEdgeOut, status_code=201)
+def create_automation_edge_legacy(
+    payload: CrmAutomationEdgeCreate,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm", "edit")),
+):
+    return _create_automation_edge_response(payload=payload, db=db, user=user)
+
+
+@router.delete("/automations/edges/{edge_id}", status_code=204)
+def delete_automation_edge_legacy(
+    edge_id: UUID,
+    db: Session = Depends(get_db),
+    user=Depends(require_module_access("crm", "edit")),
+):
+    return _delete_automation_edge_response(edge_id=edge_id, db=db, user=user)
+
+
 @router.get("/automations/{automation_id}", response_model=CrmAutomationOut)
 def get_one_automation(
     automation_id: UUID,
@@ -652,47 +746,6 @@ def del_automation(
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     if not delete_crm_automation(db, automation_id):
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
-
-
-@router.get("/automations/edges", response_model=List[CrmAutomationEdgeOut])
-def list_automation_edges(
-    source_id: Optional[UUID] = None,
-    target_id: Optional[UUID] = None,
-    db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm")),
-):
-    rows = get_crm_automation_edges(db, source_id=source_id, target_id=target_id)
-    return [CrmAutomationEdgeOut.from_orm_safe(r) for r in rows]
-
-
-@router.post("/automations/edges", response_model=CrmAutomationEdgeOut, status_code=201)
-def create_automation_edge(
-    payload: CrmAutomationEdgeCreate,
-    db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm", "edit")),
-):
-    # Validate source automation exists
-    source = get_crm_automation(db, payload.source_id)
-    if not source:
-        raise HTTPException(404, f"Source automation with id {payload.source_id} not found")
-
-    # Validate target automation exists
-    target = get_crm_automation(db, payload.target_id)
-    if not target:
-        raise HTTPException(404, f"Target automation with id {payload.target_id} not found")
-
-    obj = create_crm_automation_edge(db, payload)
-    return CrmAutomationEdgeOut.from_orm_safe(obj)
-
-
-@router.delete("/automations/edges/{edge_id}", status_code=204)
-def delete_automation_edge(
-    edge_id: UUID,
-    db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm", "edit")),
-):
-        if not delete_crm_automation_edge(db, edge_id):
-            raise HTTPException(status_code=404, detail="Edge not found")
 
 
 @router.post("/automations/trigger", response_model=List[AutomationTriggerResult])

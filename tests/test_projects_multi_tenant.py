@@ -23,10 +23,12 @@ from sqlalchemy import text as _sql_text
 import pytest
 
 from backend import models as _models
+from backend.models_crm import Persona
 from backend.models_projects import Project
 from tests.conftest import auth_headers, seed_admin
 from tests.factories_projects import (
     create_project_factory,
+    create_subtask_factory,
     create_task_factory,
 )
 
@@ -40,6 +42,14 @@ def _seed_paired_sedes(db):
     _, _, s_a = seed_admin(db, email="adminA@test.com")
     _, _, s_b = seed_admin(db, email="adminB@test.com")
     return s_a, s_b
+
+
+def _seed_paired_sedes_with_personas(db):
+    """Return (sede_A, persona_A, sede_B, persona_B) for tests that need
+    the persona records of the paired admins users."""
+    _, p_a, s_a = seed_admin(db, email="adminA@test.com")
+    _, p_b, s_b = seed_admin(db, email="adminB@test.com")
+    return s_a, p_a, s_b, p_b
 
 
 # ── A: API-layer cross-sede → 404 (existence-leak safe) ──────────────────
@@ -111,6 +121,90 @@ class TestMultiTenantAPIScope:
             headers=hdr_b,
         )
         assert resp.status_code == 404
+
+
+# ── A.1: Assignee scope must be existence-leak safe ─────────────────────
+
+
+class TestAssigneeSedeScope:
+    """_assert_assignee_in_sede must return the same 404 for missing and cross-sede personas."""
+
+    def test_create_task_with_nonexistent_assignee_returns_404(self, client, db_session):
+        s_a, _, _, _ = _seed_paired_sedes_with_personas(db_session)
+        proj_in_a = create_project_factory(db_session, sede_id=s_a.id)
+        hdr_a = auth_headers(client, email="adminA@test.com")
+        resp = client.post(
+            f"/api/projects/{proj_in_a.id}/tasks",
+            json={"title": "Task with missing assignee", "assignee_id": str(_uuid.uuid4())},
+            headers=hdr_a,
+        )
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Assignee not found"
+
+    def test_create_task_with_cross_sede_assignee_returns_404(self, client, db_session):
+        s_a, _, _, persona_b = _seed_paired_sedes_with_personas(db_session)
+        proj_in_a = create_project_factory(db_session, sede_id=s_a.id)
+        hdr_a = auth_headers(client, email="adminA@test.com")
+        resp = client.post(
+            f"/api/projects/{proj_in_a.id}/tasks",
+            json={"title": "Task with cross-sede assignee", "assignee_id": str(persona_b.id)},
+            headers=hdr_a,
+        )
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Assignee not found"
+
+    def test_update_task_with_cross_sede_assignee_returns_404(self, client, db_session):
+        s_a, persona_a, _, persona_b = _seed_paired_sedes_with_personas(db_session)
+        proj_in_a = create_project_factory(db_session, sede_id=s_a.id)
+        task = create_task_factory(db_session, proj_in_a.id, assignee_id=persona_a.id)
+        hdr_a = auth_headers(client, email="adminA@test.com")
+        resp = client.patch(
+            f"/api/projects/{proj_in_a.id}/tasks/{task.id}",
+            json={"assignee_id": str(persona_b.id)},
+            headers=hdr_a,
+        )
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Assignee not found"
+
+    def test_create_subtask_with_cross_sede_assignee_returns_404(self, client, db_session):
+        s_a, persona_a, _, persona_b = _seed_paired_sedes_with_personas(db_session)
+        proj_in_a = create_project_factory(db_session, sede_id=s_a.id)
+        task = create_task_factory(db_session, proj_in_a.id, assignee_id=persona_a.id)
+        hdr_a = auth_headers(client, email="adminA@test.com")
+        resp = client.post(
+            f"/api/projects/{proj_in_a.id}/tasks/{task.id}/subtasks",
+            json={"title": "Subtask with cross-sede assignee", "assignee_id": str(persona_b.id)},
+            headers=hdr_a,
+        )
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Assignee not found"
+
+    def test_update_subtask_with_cross_sede_assignee_returns_404(self, client, db_session):
+        s_a, persona_a, _, persona_b = _seed_paired_sedes_with_personas(db_session)
+        proj_in_a = create_project_factory(db_session, sede_id=s_a.id)
+        task = create_task_factory(db_session, proj_in_a.id, assignee_id=persona_a.id)
+        subtask = create_subtask_factory(db_session, task.id, proj_in_a.id, assignee_id=persona_a.id)
+        hdr_a = auth_headers(client, email="adminA@test.com")
+        resp = client.patch(
+            f"/api/projects/{proj_in_a.id}/tasks/{task.id}/subtasks/{subtask.id}",
+            json={"assignee_id": str(persona_b.id)},
+            headers=hdr_a,
+        )
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Assignee not found"
+
+    def test_update_task_flat_with_cross_sede_assignee_returns_404(self, client, db_session):
+        s_a, persona_a, _, persona_b = _seed_paired_sedes_with_personas(db_session)
+        proj_in_a = create_project_factory(db_session, sede_id=s_a.id)
+        task = create_task_factory(db_session, proj_in_a.id, assignee_id=persona_a.id)
+        hdr_a = auth_headers(client, email="adminA@test.com")
+        resp = client.patch(
+            f"/api/projects/tasks/{task.id}",
+            json={"assignee_id": str(persona_b.id)},
+            headers=hdr_a,
+        )
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Assignee not found"
 
 
 # ── B: CRUD-layer defense-in-depth (the gap!) ────────────────────────────

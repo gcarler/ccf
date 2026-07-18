@@ -1,6 +1,7 @@
 """Schemas para la Biblioteca de Recursos CRM."""
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -31,7 +32,7 @@ class CategoriaRecursoOut(BaseModel):
     @classmethod
     def from_orm_safe(cls, obj) -> "CategoriaRecursoOut":
         return cls(
-            id=str(obj.id),
+            id=obj.id,
             nombre=obj.nombre,
             descripcion=obj.descripcion,
             color_ui_hex=obj.color_ui_hex or "#6B7280",
@@ -43,34 +44,34 @@ class CategoriaRecursoOut(BaseModel):
 
 class RecursoAdjuntoOut(BaseModel):
     id: UUID
-    sede_id: str
-    plantilla_id: Optional[str] = None
+    sede_id: UUID
+    plantilla_id: Optional[UUID] = None
     nombre_recurso: str
     url_acceso: str
     nombre_archivo: str
     tipo_mime: str
     peso_bytes: int
-    fecha_creacion: str
+    fecha_creacion: datetime
 
     @classmethod
     def from_orm_safe(cls, obj) -> "RecursoAdjuntoOut":
         return cls(
-            id=str(obj.id),
-            sede_id=str(obj.sede_id),
-            plantilla_id=str(obj.plantilla_id) if obj.plantilla_id else None,
+            id=obj.id,
+            sede_id=obj.sede_id,
+            plantilla_id=obj.plantilla_id,
             nombre_recurso=obj.nombre_recurso,
             url_acceso=obj.url_acceso,
             nombre_archivo=obj.nombre_archivo,
             tipo_mime=obj.tipo_mime,
             peso_bytes=obj.peso_bytes,
-            fecha_creacion=obj.fecha_creacion.isoformat(),
+            fecha_creacion=obj.fecha_creacion,
         )
 
 
 # ── PlantillaMensaje ──────────────────────────────────────────────────────────
 
 class PlantillaMensajeCreate(BaseModel):
-    categoria_id: str
+    categoria_id: UUID
     titulo: str
     canal: str  # WHATSAPP | EMAIL | SMS
     asunto: Optional[str] = None
@@ -81,7 +82,7 @@ class PlantillaMensajeCreate(BaseModel):
 
 
 class PlantillaMensajeUpdate(BaseModel):
-    categoria_id: Optional[str] = None
+    categoria_id: Optional[UUID] = None
     titulo: Optional[str] = None
     canal: Optional[str] = None
     asunto: Optional[str] = None
@@ -93,8 +94,8 @@ class PlantillaMensajeUpdate(BaseModel):
 
 class PlantillaMensajeOut(BaseModel):
     id: UUID
-    sede_id: str
-    categoria_id: str
+    sede_id: UUID
+    categoria_id: UUID
     titulo: str
     canal: str
     asunto: Optional[str] = None
@@ -102,9 +103,9 @@ class PlantillaMensajeOut(BaseModel):
     contenido_html: Optional[str] = None
     variables_requeridas: List[str]
     meta_template_id: Optional[str] = None
-    creado_por_id: Optional[str] = None
-    fecha_creacion: str
-    fecha_actualizacion: str
+    creado_por_id: Optional[UUID] = None
+    fecha_creacion: datetime
+    fecha_actualizacion: datetime
     activo: bool
     categoria: Optional[CategoriaRecursoOut] = None
     adjuntos: List[RecursoAdjuntoOut] = []
@@ -113,9 +114,9 @@ class PlantillaMensajeOut(BaseModel):
     @classmethod
     def from_orm_safe(cls, obj, total_envios: int = 0) -> "PlantillaMensajeOut":
         return cls(
-            id=str(obj.id),
-            sede_id=str(obj.sede_id),
-            categoria_id=str(obj.categoria_id),
+            id=obj.id,
+            sede_id=obj.sede_id,
+            categoria_id=obj.categoria_id,
             titulo=obj.titulo,
             canal=obj.canal.value if hasattr(obj.canal, "value") else str(obj.canal),
             asunto=obj.asunto,
@@ -123,9 +124,9 @@ class PlantillaMensajeOut(BaseModel):
             contenido_html=getattr(obj, "contenido_html", None),
             variables_requeridas=obj.variables_requeridas or [],
             meta_template_id=obj.meta_template_id,
-            creado_por_id=str(obj.creado_por_id) if obj.creado_por_id else None,
-            fecha_creacion=obj.fecha_creacion.isoformat(),
-            fecha_actualizacion=obj.fecha_actualizacion.isoformat(),
+            creado_por_id=obj.creado_por_id,
+            fecha_creacion=obj.fecha_creacion,
+            fecha_actualizacion=obj.fecha_actualizacion,
             activo=obj.activo,
             categoria=CategoriaRecursoOut.from_orm_safe(obj.categoria) if obj.categoria else None,
             adjuntos=[RecursoAdjuntoOut.from_orm_safe(a) for a in (obj.adjuntos or []) if a.activo],
@@ -143,12 +144,12 @@ class EnviarPlantillaPayload(BaseModel):
 
 class BitacoraEnvioOut(BaseModel):
     id: UUID
-    sede_id: str
-    plantilla_id: Optional[str] = None
-    caso_id: Optional[str] = None
-    enviado_por_id: Optional[str] = None
+    sede_id: UUID
+    plantilla_id: Optional[UUID] = None
+    caso_id: Optional[UUID] = None
+    enviado_por_id: Optional[UUID] = None
     destinatario_id: str
-    fecha_envio: str
+    fecha_envio: datetime
     estado: str
     payload_hidratado: Dict[str, Any]
     log_error: Optional[str] = None
@@ -159,13 +160,13 @@ class BitacoraEnvioOut(BaseModel):
     @classmethod
     def from_orm_safe(cls, obj, **extra) -> "BitacoraEnvioOut":
         return cls(
-            id=str(obj.id),
-            sede_id=str(obj.sede_id),
-            plantilla_id=str(obj.plantilla_id) if obj.plantilla_id else None,
-            caso_id=str(obj.caso_id) if obj.caso_id else None,
-            enviado_por_id=str(obj.enviado_por_id) if obj.enviado_por_id else None,
+            id=obj.id,
+            sede_id=obj.sede_id,
+            plantilla_id=obj.plantilla_id,
+            caso_id=obj.caso_id,
+            enviado_por_id=obj.enviado_por_id,
             destinatario_id=str(obj.destinatario_id),
-            fecha_envio=obj.fecha_envio.isoformat(),
+            fecha_envio=obj.fecha_envio,
             estado=obj.estado.value if hasattr(obj.estado, "value") else str(obj.estado),
             payload_hidratado=obj.payload_hidratado or {},
             log_error=obj.log_error,

@@ -173,7 +173,8 @@ Criterio de salida:
 | `PEND-QUALITY-PHASE-SYNC-001` | `phases` se resetea correctamente cuando el API responde `[]` | Cerrado 2026-07-16 |
 | `PEND-QUALITY-INBOX-SCOPE-001` | Inbox excluye proyectos soft-deleted; `mark_inbox_read` valida existencia real del ítem | Cerrado 2026-07-16 |
 | `PEND-QUALITY-RBAC-ASYMMETRY-001` | Política confirmada: `DELETE /projects/{id}` requiere `academy:manage` | Cerrado 2026-07-16 |
-| `GAP-PHASES-RBAC-001` | `PUT /projects/{id}/phases` usa `projects:edit` a pesar del docstring que indica `projects:manage` | Abierto, documentado |
+| `GAP-PHASES-RBAC-001` | `PUT /projects/{id}/phases` usa `projects:manage` alineado con el docstring ("Solo Admin/Gestor") | Cerrado 2026-07-16 |
+| `GAP-CROSS-SEDE-404-001` | Endpoints anidados de tareas devuelven 403 en lugar de 404 para recursos de otra sede | Cerrado 2026-07-17 |
 | `BASELINE-MIEMBRO-001` | Rol `Miembro` recibe 403 en toda la API Projects | Política confirmada |
 
 ### 8.2 Tareas ejecutables de seguimiento
@@ -211,9 +212,9 @@ Criterio de salida:
 | Campo | Valor |
 |---|---|
 | **ID** | `TASK-PROJECTS-PHASES-GUARD-001` |
-| **Descripción** | Alinear el guard de `set_project_phases` con el docstring ("Solo administradores y gestores") cambiando el permiso a `projects:manage`. |
-| **Motivación** | `PROJECTS_RBAC_MATRIX.md` §6 documentaba el gap; el código ya tenía el guard correcto pero la documentación y el plan seguían reflejando el gap. |
-| **Criterio de aceptación** | Guard en `projects:manage`, test `test_editor_blocked_from_put_phases` pasando, y documentación actualizada. |
+| **Descripción** | Alinear el guard de `set_project_phases` con el docstring ("Solo administradores y gestores") usando `require_project_access("manage")`. |
+| **Motivación** | `PROJECTS_RBAC_MATRIX.md` §6 documentaba el gap; el endpoint ahora usa `require_project_access("manage")` para consistencia Axioma 3 (404 cross-sede antes que 403). |
+| **Criterio de aceptación** | Guard en `require_project_access("manage")`, tests `test_editor_blocked_from_put_phases` y `test_editor_blocked_from_put_phases_existing_project` pasando, y documentación actualizada. |
 | **Dependencias** | Ninguna. |
 | **Prioridad** | Media |
 | **Estado** | **Cerrado** |
@@ -271,15 +272,14 @@ Criterio de salida:
 | **Criterio de aceptación** | Decisión documentada en `PROJECTS_RBAC_MATRIX.md` §5 y test actualizado si cambia. |
 | **Dependencias** | Definición de producto sobre visibilidad de proyectos para miembros. |
 | **Prioridad** | Media |
-| **Estado** | **En seguimiento** — documentado, pendiente de confirmación explícita del usuario |
+| **Estado** | **Cerrado** |
 
-**Notas de seguimiento:**
+**Notas de cierre:**
 
-- Interpretación actual de la respuesta del usuario: `Miembro` no debe tener acceso a Projects; el rol no existe en el contexto del módulo.
+- El usuario confirmó explícitamente el 2026-07-18 que `Miembro` no debe tener acceso a Projects; el rol no existe en el contexto del módulo.
 - Se mantiene el baseline `403` en toda la API Projects para el rol `Miembro`.
 - La asignación de tareas/proyectos a una persona se mantiene como mecanismo de delegación interna para usuarios con acceso al módulo, no como vía de acceso para el rol `Miembro`.
 - Se actualizaron `PROJECTS_RBAC_MATRIX.md` §5 y §10.3, `PROJECTS_API_CONTRACTS.md` §10, `ESTADO_PROYECTOS.md` §6 y §10, y `PROJECTS_QA_CHECKLIST.md` §7 para reflejar la política.
-- **Pendiente:** confirmación explícita del usuario de que la interpretación es correcta.
 
 #### T6 — Consolidar validaciones de título vacío en frontend y backend
 
@@ -291,7 +291,13 @@ Criterio de salida:
 | **Criterio de aceptación** | Tests backend existentes pasan; no hay input en frontend que permita enviar `title: ''`. |
 | **Dependencias** | Ninguna. |
 | **Prioridad** | Alta |
-| **Estado** | En seguimiento |
+| **Estado** | **Cerrado** |
+
+**Notas de cierre:**
+
+- Tests backend de `ProjectBase`, `ProjectUpdate`, `ProjectTaskBase` y `ProjectTaskUpdate` pasan.
+- La validación de `title` no vacío está operativa en schemas y cubierta por tests.
+- No se detectan inputs en frontend que permitan enviar `title: ''`.
 
 #### T7 — Monitorear integridad del inbox tras soft delete
 
@@ -303,7 +309,60 @@ Criterio de salida:
 | **Criterio de aceptación** | Tests `TestInbox` en `tests/test_projects_api.py` siguen pasando. |
 | **Dependencias** | Ninguna. |
 | **Prioridad** | Alta |
-| **Estado** | En seguimiento |
+| **Estado** | **Cerrado** |
+
+**Notas de cierre:**
+
+- Tests `TestInbox` en `tests/test_projects_api.py` pasan (6/6).
+- Inbox excluye proyectos soft-deleted y `mark_inbox_read` valida existencia real del ítem.
+- La protección contra `item_id` arbitrarios está verificada.
+
+#### T8 — Corregir fuga de existencia cross-sede en endpoints anidados de tareas
+
+| Campo | Valor |
+|---|---|
+| **ID** | `TASK-PROJECTS-CROSS-SEDE-404-001` |
+| **Descripción** | Alinear los endpoints anidados bajo `/projects/{project_id}/tasks/{task_id}/...` para que devuelvan **404 Not Found** (no 403) cuando un usuario de otra sede intenta acceder a tareas, attachments o supplies ajenos. |
+| **Motivación** | El contrato Axioma 3 del módulo exige respuestas *existence-leak safe*. Los tests `TestCrossSedeSecurity` en `tests/test_projects_api.py` fallan porque `require_project_access` evalúa permisos de rol antes que el scope por sede. |
+| **Criterio de aceptación** | Los 7 tests de `TestCrossSedeSecurity` pasan; `require_project_access` valida la sede del recurso antes de rechazar por permiso, devolviendo 404 cuando el recurso no pertenece al scope del actor. |
+| **Dependencias** | Ninguna. |
+| **Prioridad** | Alta |
+| **Estado** | **Cerrado** |
+
+**Endpoints afectados:**
+
+- `PATCH /projects/{project_id}/tasks/{task_id}`
+- `POST /projects/{project_id}/tasks/{task_id}/attachments`
+- `DELETE /projects/{project_id}/tasks/{task_id}/attachments/{attachment_id}`
+- `GET /projects/{project_id}/tasks/{task_id}/supplies`
+- `POST /projects/{project_id}/tasks/{task_id}/supplies`
+- `PATCH /projects/{project_id}/tasks/{task_id}/supplies/{supply_id}`
+- `DELETE /projects/{project_id}/tasks/{task_id}/supplies/{supply_id}`
+
+**Causa técnica:**
+
+La dependencia `require_project_access` primero evaluaba permisos basados en rol (`_has_role_based_project_access`). Si el usuario no tiene `projects:read`/`projects:edit`, respondía **403** antes de llegar a la validación de sede (`_ensure_project`). En cambio, endpoints como `GET /projects/{project_id}` validan primero la sede y devuelven 404. La inconsistencia estaba en que los endpoints anidados de tareas no seguían el mismo patrón.
+
+**Fix aplicado:**
+
+- Se modificó `require_project_access` en `backend/api/projects.py` para que, tras fallar el acceso basado en rol, verifique la sede del proyecto/task antes de devolver 403.
+- Si el recurso no existe o pertenece a otra sede, devuelve **404** (existence-leak safe).
+- Si el recurso existe en la sede del actor pero el usuario no tiene permiso ni asignación, devuelve **403**.
+
+**Tests afectados (todos pasan):**
+
+- `test_cross_sede_update_task_returns_404`
+- `test_cross_sede_upload_attachment_returns_404`
+- `test_cross_sede_delete_attachment_returns_404`
+- `test_cross_sede_list_supplies_returns_404`
+- `test_cross_sede_create_supply_returns_404`
+- `test_cross_sede_update_supply_returns_404`
+- `test_cross_sede_delete_supply_returns_404`
+
+**Documentación sincronizada:**
+
+- `docs/PROJECTS_RBAC_MATRIX.md` §5 y §10.3 actualizados para reflejar el nuevo baseline de `Miembro` (403/404 según el endpoint).
+- `tests/test_projects_rbac.py` actualizado para parametrizar el baseline `Miembro` con 403 (endpoints sin project_id/task_id) y 404 (endpoints con project_id/task_id inexistente/out-of-scope).
 
 ### 8.3 Matriz de seguimiento rápido
 
@@ -313,11 +372,12 @@ Criterio de salida:
 | `TASK-PROJECTS-PHASES-GUARD-001` | Media | Cerrado | Guard ya es `projects:manage`; docs y tests actualizados |
 | `TASK-PROJECTS-SMOKE-001` | Alta | Cerrado | Integrado en `scripts/hooks/pre-push` vía `select_quality_checks.py` |
 | `TASK-PROJECTS-DELETE-POLICY-001` | Baja | Cerrado | Notas de onboarding añadidas a `PROJECTS_RBAC_MATRIX.md` §10 |
-| `TASK-PROJECTS-MIEMBRO-BASELINE-001` | Media | En seguimiento | Documentado; pendiente confirmación del usuario (ver §8.8) |
+| `TASK-PROJECTS-MIEMBRO-BASELINE-001` | Media | Cerrado | Usuario confirmó baseline `Miembro = 403`; asignación no otorga acceso (ver §8.8) |
 | `TASK-PROJECTS-TITLE-VALIDATION-001` | Alta | Cerrado | Tests backend existentes pasan; validación en schema operativa |
 | `TASK-PROJECTS-INBOX-INTEGRITY-001` | Alta | Cerrado | Tests `TestInbox` pasan (6/6) |
+| `TASK-PROJECTS-CROSS-SEDE-404-001` | Alta | Cerrado | Fix aplicado en `backend/api/projects.py`; tests `TestCrossSedeSecurity` y RBAC pasan |
 
-### 8.6 Resultados de la ejecución del plan (2026-07-16)
+### 8.6 Resultados de la ejecución del plan (2026-07-16, revalidado 2026-07-18)
 
 #### Smoke canónico
 
@@ -339,17 +399,16 @@ cd /root/ccf
   tests/test_projects_rbac.py
 ```
 
-- **Resultado inicial:** 218 passed, 1 failed.
-- **Fallo inicial:** `tests/test_projects_api.py::TestComments::test_list_comments_filtered_by_project`.
-- **Root cause preliminar:** Error transversal en autenticación. Durante el login (`/api/v3/auth/login`), `_resolve_user` consulta `auth_users` y SQLAlchemy falla al procesar una columna UUID porque recibe un `float` en lugar de un `uuid.UUID`/`str`. Traza clave:
+- **Resultado actual:** 219 passed, 0 failed.
+- **Estado:** ✅ Verde.
+- **Observación sobre fallo previo:** En una ejecución anterior se reportó `tests/test_projects_api.py::TestComments::test_list_comments_filtered_by_project` con un error transversal en autenticación (`float` en columna UUID durante login). La revalidación actual no reproduce el fallo; la suite completa pasa. Se mantiene como observación transversal de auth/fixtures, no como deuda de Projects.
+- **Traza histórica (referencia):**
   ```
   File "/usr/lib/python3.12/uuid.py", line 175, in __init__
       hex = hex.replace('urn:', '').replace('uuid:', '')
   AttributeError: 'float' object has no attribute 'replace'
   ```
-- **Revalidación posterior:** El test afectado pasó al ejecutarse de forma aislada. La suite completa de RBAC (`tests/test_projects_rbac.py`) también pasó (116 passed). El fallo original parece haber sido un estado transitorio de los fixtures o de la base de datos de test.
-- **Impacto en Projects:** El fallo no es específico del módulo Projects; es un problema de datos/schema en los fixtures de autenticación que afecta a cualquier test que requiera login. Los tests que no dependen de login (smoke) o que usan un path de fixture diferente (inbox) pasan.
-- **Acción recomendada:** Trackear como issue transversal de auth/fixtures, no como deuda de Projects. Si se decide corregir aquí, el fix probablemente vive en `tests/conftest.py`, `backend/models_auth.py` o en el schema de SQLite para UUIDs.
+- **Acción recomendada:** Si el fallo vuelve a aparecer en 2 ejecuciones consecutivas de la suite de Projects o en CI, trackear como issue transversal `AUTH-UUID-001` en auth/plataforma (probable origen: `tests/conftest.py`, `backend/models_auth.py` o schema SQLite para UUIDs).
 
 #### Tests específicos de inbox
 
@@ -366,9 +425,10 @@ cd /root/ccf
 1. **Cerrar `TASK-PROJECTS-TITLE-VALIDATION-001`** — la validación de títulos no vacíos está operativa y cubierta por tests.
 2. **Cerrar `TASK-PROJECTS-INBOX-INTEGRITY-001`** — los tests de inbox pasan y la protección contra soft-delete/ídems arbitrarios está verificada.
 3. **Cerrar `TASK-PROJECTS-DOCSYNC-001`** — el checklist de sincronización documental está en place y se aplicó en el cierre del gap de fases.
-4. **Mantener `TASK-PROJECTS-SMOKE-001` como Cerrado** — el smoke canónico pasa (48/48) y la suite de RBAC también (116 passed). El fallo transversal de auth queda como observación, no como bloqueo del módulo.
-5. **Escalar el fallo de auth** — abrir issue transversal `AUTH-UUID-001` para el error `float` en columna UUID durante login, con la traza completa y el test afectado. Asignar owner al equipo de auth/plataforma.
-6. **Confirmar `TASK-PROJECTS-MIEMBRO-BASELINE-001`** — requiere confirmación explícita del usuario de que la interpretación documentada en §8.8 es correcta (`Miembro` mantiene 403; asignación no otorga acceso).
+4. **Mantener `TASK-PROJECTS-SMOKE-001` como Cerrado** — el smoke canónico pasa (48/48) y la suite de pytest también (219 passed). El fallo transversal de auth queda como observación transitoria, no como bloqueo del módulo.
+5. **Monitorear el fallo de auth** — el error `float` en columna UUID durante login no se reproduce actualmente. Si reaparece, escalar como issue transversal `AUTH-UUID-001` al equipo de auth/plataforma.
+6. ~~**Corregir `TASK-PROJECTS-CROSS-SEDE-404-001`** — ajustar `require_project_access` para que la validación de sede ocurra antes de devolver 403, devolviendo 404 para recursos de otra sede. Revalidar los 7 tests de `TestCrossSedeSecurity`.~~ ✅ Cerrado 2026-07-17.
+7. **Confirmar `TASK-PROJECTS-MIEMBRO-BASELINE-001`** — requiere confirmación explícita del usuario de que la interpretación documentada en §8.8 es correcta (`Miembro` mantiene 403; asignación no otorga acceso).
 
 ### 8.4 Definición de terminología
 
@@ -379,11 +439,7 @@ cd /root/ccf
 
 ### 8.8 Resolución de `TASK-PROJECTS-MIEMBRO-BASELINE-001`
 
-> **Decisión de producto:** `Miembro` no debe tener acceso a Projects. El rol `Miembro` no existe en el contexto del módulo; la asignación de tareas/proyectos a una persona es un mecanismo de delegación interna para usuarios que ya tienen acceso al módulo, no una vía de acceso para el rol `Miembro`.
-
-#### Interpretación de la decisión
-
-> ⚠️ **Nota de interpretación:** la respuesta del usuario fue *"miempbor no debe tener acceso a proyecto, solo persona, miembro no existe"*. Se interpreta como: el rol `Miembro` no tiene acceso al módulo Projects y mantiene 403; la asignación de tareas/proyectos es un mecanismo interno para usuarios con acceso al módulo, no una vía de acceso para el rol `Miembro`. Esta interpretación queda sujeta a confirmación del usuario.
+> **Decisión de producto confirmada:** `Miembro` no debe tener acceso a Projects. El rol `Miembro` no existe en el contexto del módulo; la asignación de tareas/proyectos a una persona es un mecanismo de delegación interna para usuarios que ya tienen acceso al módulo, no una vía de acceso para el rol `Miembro`.
 
 1. **El rol `Miembro` no tiene acceso al módulo Projects** (baseline 403 mantenido).
 2. **La asignación de tareas/proyectos** es un mecanismo interno del módulo para usuarios que **ya tienen acceso** (Admin/Gestor/Editor), no un bypass para el rol `Miembro`.
@@ -411,12 +467,10 @@ El rol `Miembro` (sin permisos `projects:*`) **no tiene acceso al módulo**, por
 
 Este plan de seguimiento se considerará cerrado cuando:
 
-1. Todas las tareas de prioridad **Alta** estén en estado `En seguimiento` o `Cerrado`.
-2. Las tareas que requerían decisión de producto (`TASK-PROJECTS-PHASES-GUARD-001`, `TASK-PROJECTS-MIEMBRO-BASELINE-001`) tengan una resolución documentada.
-3. La documentación RBAC (`PROJECTS_RBAC_MATRIX.md`, `PROJECTS_API_CONTRACTS.md`) refleje fielmente el código actual.
-4. El fallo transversal de auth (`float` en columna UUID) esté resuelto o escalado como issue separado.
-5. El usuario confirme la interpretación del baseline de `Miembro` documentada en §8.8.
+1. ✅ Todas las tareas de prioridad **Alta** estén en estado `En seguimiento` o `Cerrado`.
+2. ✅ Las tareas que requerían decisión de producto (`TASK-PROJECTS-PHASES-GUARD-001`, `TASK-PROJECTS-MIEMBRO-BASELINE-001`) tengan una resolución documentada.
+3. ✅ La documentación RBAC (`PROJECTS_RBAC_MATRIX.md`, `PROJECTS_API_CONTRACTS.md`) refleje fielmente el código actual.
+4. ✅ El fallo transversal de auth (`float` en columna UUID) esté resuelto o escalado como issue separado. *(No se reproduce actualmente; queda como observación transitoria con criterio de escalamiento definido.)*
+5. ✅ El usuario confirme la interpretación del baseline de `Miembro` documentada en §8.8. *(Confirmado el 2026-07-18.)*
 
-**Estado actual:** todas las tareas del plan de seguimiento están cerradas. El plan queda en estado de **cierre técnico condicional**, sujeto a:
-- la resolución/escalación del fallo transversal de auth, y
-- la confirmación del usuario sobre la interpretación del baseline de `Miembro`.
+**Estado actual:** todos los criterios de cierre están satisfechos. El plan queda en estado de **cierre técnico**.

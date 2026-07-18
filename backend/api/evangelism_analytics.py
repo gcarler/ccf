@@ -24,9 +24,14 @@ from sqlalchemy import func as _func
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.api.evangelism_shared import ATTENDED_STATES, session_read_only_options
+from backend.api.evangelism_shared import (
+    ATTENDED_STATES,
+    FIRST_TIME_STATES,
+    normalize_attendance_status,
+    session_read_only_options,
+)
 from backend.core.database import get_db
-from backend.core.permissions import require_active_user
+from backend.core.permissions import require_evangelism_read
 from backend.core.tenant import get_user_sede_id
 
 router = APIRouter()
@@ -173,7 +178,7 @@ def strategy_kpis(
     strategy_id: UUID,
     period: str = Query("30d"),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     # sede_id is optional — if user has no sede we show all groups (super-admin case)
     sede_id = get_user_sede_id(db, current_user)
@@ -307,7 +312,7 @@ def strategy_trend(
     strategy_id: UUID,
     period: str = Query("90d"),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     sede_id = get_user_sede_id(db, current_user)
     _get_strategy_or_404(db, strategy_id)
@@ -408,7 +413,7 @@ def _bucket_label(key: str, use_weeks: bool) -> str:
 def strategy_funnel(
     strategy_id: UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     """
     Embudo ministerial basado en roles personalizados de la estrategia.
@@ -526,7 +531,7 @@ def strategy_heatmap(
     strategy_id: UUID,
     period: str = Query("90d"),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     sede_id = get_user_sede_id(db, current_user)
     _get_strategy_or_404(db, strategy_id)
@@ -598,7 +603,7 @@ def strategy_alerts(
     threshold_pct: int = Query(60),
     consecutive_sessions: int = Query(3),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     sede_id = get_user_sede_id(db, current_user)
     _get_strategy_or_404(db, strategy_id)
@@ -786,7 +791,7 @@ def strategy_alerts(
 def strategy_velocity(
     strategy_id: UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     # Validate strategy exists
     _get_strategy_or_404(db, strategy_id)
@@ -844,7 +849,7 @@ def strategy_groups_detail(
     strategy_id: UUID,
     period: str = Query("30d"),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     sede_id = get_user_sede_id(db, current_user)
     _get_strategy_or_404(db, strategy_id)
@@ -1032,11 +1037,11 @@ def _age_bucket(birthday) -> str:
 
 
 def _attended(estado: str | None) -> bool:
-    return str(estado or "").lower().strip() in {"presente", "asistio", "primera_vez", "primera vez"}
+    return normalize_attendance_status(estado) in {"present", "first_time"}
 
 
 def _is_primera_vez(a) -> bool:
-    return bool(a.es_primera_vez) or str(a.estado or "").lower().strip() in {"primera_vez", "primera vez"}
+    return bool(a.es_primera_vez) or str(a.estado or "").lower().strip() in FIRST_TIME_STATES
 
 
 @router.get("/analytics/strategy/{strategy_id}/full", response_model=dict)
@@ -1044,7 +1049,7 @@ def get_strategy_full_analytics(
     strategy_id: UUID,
     weeks: int = Query(default=12, ge=1, le=104),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     """10-dimension analytics engine for an evangelism strategy."""
 

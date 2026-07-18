@@ -78,7 +78,7 @@ export default function GroupDetailPage() {
  const params = useParams();
  const id = params?.id as string | undefined;
  const router = useRouter();
- const { token, user } = useAuth();
+ const { token, hasModuleAccess } = useAuth();
  const { pushSidebarPanel } = useSidebarLayers();
 
  const [house, setHouse] = useState<HouseDetail | null>(null);
@@ -119,8 +119,7 @@ export default function GroupDetailPage() {
  const [isCreatingPersona, setIsCreatingPersona] = useState(false);
  const [newPersonaForm, setNewPersonaForm] = useState({ first_name: '', last_name: '', phone: '', email: '' });
  const [creatingPersona, setCreatingPersona] = useState(false);
- const role = String(user?.role || '').toLowerCase();
- const isPrivileged = ['admin', 'administrador', 'pastor'].includes(role);
+ const canManageEvangelism = hasModuleAccess('evangelism', 'manage');
  const activeSessionEnabled = activeSession?.estado_habilitacion === 'HABILITADO';
 
  // Load house detail
@@ -163,7 +162,7 @@ export default function GroupDetailPage() {
  <Calendar size={12} /> Sesiones Registradas
  </h2>
  {/* New Session Action */}
- {isPrivileged && <button 
+ {canManageEvangelism && <button 
  onClick={async () => {
  try {
  const session = await apiFetch<{ id: string }>(`/evangelism/sessions`, {
@@ -232,7 +231,7 @@ export default function GroupDetailPage() {
  </div>
  )
  });
- }, [house, activeSession, isPrivileged, router, pushSidebarPanel, token]);
+ }, [house, activeSession, canManageEvangelism, router, pushSidebarPanel, token]);
 
  // Load attendance when session changes
  useEffect(() => {

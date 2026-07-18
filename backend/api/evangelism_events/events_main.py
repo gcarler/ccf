@@ -11,7 +11,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -29,8 +29,9 @@ from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import (
     require_active_user,
-    require_module_access,
-    require_pastor_or_admin,
+    require_evangelism_edit,
+    require_evangelism_manage,
+    require_evangelism_read,
 )
 from backend.core.tenant import require_user_sede_id
 
@@ -57,19 +58,27 @@ class EventAudienceUpdate(BaseModel):
     target_role_ids: Optional[List[UUID]] = None
     target_persona_ids: Optional[List[str]] = None
 
+    @model_validator(mode="after")
+    def _validate_audience(self):
+        if self.target_audience == "ROLE" and not self.target_role_id and not self.target_role_ids:
+            raise ValueError("target_role_id or target_role_ids required when target_audience is ROLE")
+        return self
+
+
+def _active_events_query(db: Session):
+    return db.query(models.CrmEvent).filter(models.CrmEvent.deleted_at.is_(None))
+
 
 @static_router.get("/events/", response_model=List[schemas.CrmEvent])
 def list_events(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
-    if _get_user_role(current_user) not in {"admin", "administrador", "pastor"}:
-        raise HTTPException(status_code=403, detail="Permisos insuficientes. Se requiere: crm:manage")
     user_sede = require_user_sede_id(db, current_user)
     events = (
-        db.query(models.CrmEvent)
+        _active_events_query(db)
         .filter(models.CrmEvent.sede_id == user_sede)
         .order_by(models.CrmEvent.event_date.desc())
         .offset(skip)
@@ -89,7 +98,7 @@ def list_events(
 def create_event(
     payload: schemas.CrmEventCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     payload = schemas.CrmEventCreate(**normalize_role_scope_payload(payload.model_dump()))
     user_sede = require_user_sede_id(db, current_user)
@@ -113,7 +122,7 @@ def update_event(
     event_id: str,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     # NOTA: event_id se mantiene como ``str`` (revertido de UUID constraint)
     # porque los alias paths ``/events/dashboard-stats``, ``/events/roles``
@@ -121,7 +130,7 @@ def update_event(
     # Pydantic strict con UUID devolvía 422 cuando el dynamic capturaba
     # matches no-UUID antes que las rutas estáticas.
     require_event_access(db, current_user, event_id)
-    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    event = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     payload = normalize_role_scope_payload(payload)
@@ -164,15 +173,16 @@ def update_event(
 def delete_event(
     event_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
-    """Cancela un evento (soft-delete: marca como CANCELLED)."""
+    """Cancela un evento (soft-delete: marca como CANCELLED + deleted_at)."""
     require_event_access(db, current_user, event_id)
-    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    event = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     event.status = "CANCELLED"
     event.cancellation_reason = "Eliminado por usuario"
+    event.deleted_at = utc_now()
     db.commit()
     record_admin_action(
         db,
@@ -188,10 +198,10 @@ def delete_event(
 def get_event_detail(
     event_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     require_event_access(db, current_user, event_id)
-    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    event = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
@@ -224,7 +234,7 @@ def update_event_audience(
     event_id: str,
     payload: EventAudienceUpdate,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_manage),
 ):
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:
@@ -244,7 +254,7 @@ def get_global_event_analytics(
     period: str = Query("MONTH"),
     event_type: Optional[str] = Query(None),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     from sqlalchemy import func
 
@@ -329,10 +339,10 @@ def get_global_event_analytics(
 @static_router.get("/events/dashboard-stats")
 def get_events_dashboard_stats(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     user_sede = require_user_sede_id(db, current_user)
-    events = db.query(models.CrmEvent).filter(models.CrmEvent.sede_id == user_sede).all()
+    events = _active_events_query(db).filter(models.CrmEvent.sede_id == user_sede).all()
     if not events:
         return []
 
@@ -412,9 +422,9 @@ def get_events_dashboard_stats(
 def get_event_analytics(
     event_id: str,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_read),
 ):
-    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    event = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
@@ -466,9 +476,9 @@ def export_event_session_report(
     event_id: str,
     session_date: datetime.date,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
-    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    event = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
@@ -525,7 +535,7 @@ def export_event_session_report(
 @static_router.get("/roles")
 def get_roles(
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_active_user),
+    _user: models.User = Depends(require_evangelism_read),
 ):
     return (
         db.query(models.RoleDefinition)
@@ -539,7 +549,7 @@ def get_roles(
 def create_role(
     payload: RoleDefinitionCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     exists = db.query(models.RoleDefinition).filter(models.RoleDefinition.name == payload.name).first()
     if exists:
@@ -557,7 +567,7 @@ def update_role(
     role_id: str,
     payload: RoleDefinitionUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     role = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
     if not role:
@@ -593,7 +603,7 @@ def delete_role(
     role_id: str,
     fallback_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     if fallback_id == role_id:
         raise HTTPException(
@@ -631,7 +641,7 @@ def delete_role(
 def get_persona_attendance_history(
     persona_id: str,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("evangelism", "read")),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
     if not persona:

@@ -114,3 +114,23 @@ def analyze_pastoral_sentiment(content: str):
         label = "NEUTRAL"
 
     return round(score, 2), label
+
+
+def _slugify(value: str) -> str:
+    """Normalize a string to a URL-safe slug.
+    
+    Shared utility used by CMS, Wiki, and Evangelism modules.
+    """
+    import unicodedata
+    text = unicodedata.normalize("NFD", str(value or "").strip().lower())
+    text = "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+    cleaned = []
+    previous_dash = False
+    for ch in text:
+        if ch.isalnum():
+            cleaned.append(ch)
+            previous_dash = False
+        elif not previous_dash:
+            cleaned.append("-")
+            previous_dash = True
+    return "".join(cleaned).strip("-")

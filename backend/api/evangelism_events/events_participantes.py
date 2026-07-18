@@ -18,7 +18,12 @@ from backend.api.evangelism_shared import (
     utc_now,
 )
 from backend.core.database import get_db
-from backend.core.permissions import require_active_user, require_pastor_or_admin
+from backend.core.permissions import (
+    require_active_user,
+    require_evangelism_edit,
+    require_evangelism_manage,
+    require_evangelism_read,
+)
 from backend.crud._utils import _utcnow
 
 router = APIRouter()
@@ -38,7 +43,7 @@ class EventSessionSync(BaseModel):
 def get_event_attendance_report(
     event_id: UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     require_event_access(db, current_user, event_id)
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
@@ -88,7 +93,7 @@ def get_event_attendance_report(
 def register_attendance(
     payload: schemas.EventAttendanceCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_edit),
 ):
     require_event_access(db, current_user, payload.event_id)
     return crud.create_event_attendance(db, payload)
@@ -98,7 +103,7 @@ def register_attendance(
 def register_bulk_attendance(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_edit),
 ):
     event_id = payload.get("event_id")
     if event_id:
@@ -136,7 +141,7 @@ def register_bulk_attendance(
         try:
             normalized_persona_uuids.append(uuid.UUID(pid))
         except ValueError:
-            pass
+            invalid_persona_ids.append(pid)
 
     valid_persona_uuids = (
         {row[0] for row in db.query(models.Persona.id).filter(models.Persona.id.in_(normalized_persona_uuids)).all()}
@@ -214,7 +219,7 @@ def get_event_session_detail(
     event_id: UUID,
     session_date: datetime.date,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     require_event_access(db, current_user, event_id)
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
@@ -316,7 +321,7 @@ def sync_event_assignments(
     event_id: UUID,
     payload: EventSessionSync,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
     if not event:

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from backend import models, schemas
 from backend import crud
 from backend.core.database import get_db
-from backend.core.permissions import require_pastor_or_admin
+from backend.core.permissions import require_evangelism_manage
 
 roles_router = APIRouter(tags=["Evangelismo - Roles y Excusas"])
 
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 def list_strategy_roles(
     strategy_id: UUID,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_manage),
 ):
     """Lista los roles personalizados de una estrategia."""
     from backend.crud.evangelism import get_roles_personalizados
@@ -65,7 +65,7 @@ def create_strategy_role(
     strategy_id: UUID,
     payload: schemas.RolPersonalizadoEstrategiaCreate,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_manage),
 ):
     """Crea un rol personalizado para una estrategia."""
     from backend.crud.evangelism import create_rol_personalizado
@@ -89,7 +89,7 @@ def delete_strategy_role(
     strategy_id: UUID,
     role_id: UUID,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_manage),
 ):
     """Elimina un rol personalizado de una estrategia."""
     from backend.crud.evangelism import delete_rol_personalizado
@@ -120,7 +120,7 @@ def delete_strategy_role(
 def list_motivos_excusa(
     solo_activos: bool = True,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_manage),
 ):
     """Lista el catálogo de motivos de excusa."""
     from backend.crud.evangelism import get_motivos_excusa
@@ -132,7 +132,7 @@ def list_motivos_excusa(
 def create_motivo_excusa(
     payload: schemas.MotivoExcusaCreate,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_manage),
 ):
     """Crea un nuevo motivo de excusa."""
     from backend.crud.evangelism import create_motivo_excusa
@@ -145,7 +145,7 @@ def update_motivo_excusa(
     excusa_id: UUID,
     payload: schemas.MotivoExcusaUpdate,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_manage),
 ):
     """Actualiza un motivo de excusa (no permite modificar los del sistema)."""
     from backend.crud.evangelism import update_motivo_excusa
@@ -160,7 +160,7 @@ def update_motivo_excusa(
 def delete_motivo_excusa(
     excusa_id: UUID,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_manage),
 ):
     """Elimina un motivo de excusa (no permite eliminar los del sistema)."""
     from backend.crud.evangelism import delete_motivo_excusa
@@ -173,7 +173,7 @@ def delete_motivo_excusa(
 @roles_router.post("/excuses/seed")
 def seed_motivos_excusa(
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_manage),
 ):
     """Inserta las excusas base del sistema (SALUD, TRABAJO, FAMILIA, OTRA)."""
     from backend.crud.evangelism import seed_motivos_excusa

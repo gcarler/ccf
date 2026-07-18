@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
 
 const apiBase = (process.env.E2E_API_URL || process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
 const email = process.env.E2E_EMAIL || '';
@@ -22,6 +23,8 @@ async function tryLogin() {
 }
 
 function seedViaPython() {
+  const preferredPython = process.env.PYTHON_BIN || path.join(repoRoot, 'venv', 'bin', 'python');
+  const pythonBin = fs.existsSync(preferredPython) ? preferredPython : 'python3';
   const script = String.raw`
 import os
 import sys
@@ -94,7 +97,7 @@ finally:
     session.close()
 `;
 
-  const result = spawnSync('python3', ['-c', script], {
+  const result = spawnSync(pythonBin, ['-c', script], {
     cwd: repoRoot,
     env: {
       ...process.env,

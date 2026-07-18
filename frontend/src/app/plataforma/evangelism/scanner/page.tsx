@@ -139,7 +139,7 @@ export default function ScannerPage() {
  <div className="space-y-2">
  <h2 className="text-lg font-bold text-white">{scannedData?.persona_name}</h2>
  <p className="text-emerald-500 font-extrabold uppercase tracking-wide text-xs px-3 py-1 bg-emerald-500/10 rounded-full inline-block">
- {scannedData?.role} â€¢ VALIDADO
+ {scannedData?.role} - VALIDADO
  </p>
  </div>
  <p className="text-[hsl(var(--text-secondary))] text-sm max-w-[240px]">
@@ -170,5 +170,4 @@ export default function ScannerPage() {
  </EvangelismShell>
  );
 }
-
 
