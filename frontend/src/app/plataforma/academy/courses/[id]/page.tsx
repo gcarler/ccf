@@ -38,11 +38,12 @@ export default function CourseCoordinationPage() {
     useEffect(() => {
         if (!token || !isAuthenticated || !id) return;
         
+        const ctrl = new AbortController();
         const loadData = async () => {
             try {
                 setLoading(true);
                 const [courseData, statsData] = await Promise.all([
-                    apiFetch<any>(`/academy/courses/${id}`, { token }),
+                    apiFetch<any>(`/academy/courses/${id}`, { token, signal: ctrl.signal }),
                     Promise.resolve({
                         total_enrolled: 42,
                         completion_rate: 85,
@@ -60,6 +61,7 @@ export default function CourseCoordinationPage() {
             }
         };
         loadData();
+        return () => ctrl.abort();
     }, [id, token, isAuthenticated]);
 
     if (loading) return (

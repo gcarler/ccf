@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { apiFetch } from '@/lib/http';
+import { toast } from 'sonner';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
 import { motion } from 'framer-motion';
@@ -27,47 +29,94 @@ export default function ForumThreadDetail() {
     const params = useParams<{ id: string }>();
     const id = params?.id ?? '';
     const router = useRouter();
-    const { token, user } = useAuth();
+    const { token } = useAuth();
     const { addToast } = useToast();
     const [thread, setThread] = useState<any>(null);
     const [replies, setReplies] = useState<any[]>([]);
     const [inputText, setInputText] = useState('');
     const [viewType, setViewType] = useState<ViewType>('list');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!token) return;
+        if (!token || !id) return;
+        const ctrl = new AbortController();
+        setLoading(true);
 
-        setThread({
-            id,
-            title: 'Interpretación de Romanos 8:28 en el contexto del sufrimiento',
-            content: 'Hermanos, abro este debate para profundizar en la promesa de que "todas las cosas ayudan a bien". ¿Cómo debemos explicar esto a alguien que está pasando por una pérdida profunda?',
-            author: 'Pastor Carlos',
-            category: 'Teología',
-            upvotes: 56,
-            created_at: 'Ayer, 4:30 PM',
-            author_role: 'Pastor Principal'
-        });
-        setReplies([
-            { id: 1, text: 'Excelente pregunta. El contexto del capítulo habla de la gloria venidera que no se compara con el presente.', author: 'Elena Rodriguez', time: 'Hace 2 horas', upvotes: 12, is_pastoral: true, is_accepted: true },
-            { id: 2, text: 'Yo creo que debemos enfocarnos en la soberanía de Dios más que en el bienestar terrenal.', author: 'Marcos Lopez', time: 'Hace 45 min', upvotes: 4, is_pastoral: false, is_accepted: false },
-        ]);
+        const fetchThread = async () => {
+            try {
+                const data = await apiFetch<any>(`/academy/forum/threads/${id}`, { token, signal: ctrl.signal });
+                setThread(data);
+            } catch (err: any) {
+                if (err?.name !== 'AbortError') {
+                    toast.error('Error al cargar el debate');
+                }
+            }
+        };
+
+        const fetchReplies = async () => {
+            try {
+                const data = await apiFetch<any[]>(`/academy/forum/threads/${id}/comments`, { token, signal: ctrl.signal });
+                setReplies((Array.isArray(data) ? data : []).map((c) => ({
+                    ...c,
+                    text: c.text || c.content || '',
+                    time: c.time || (c.created_at ? new Date(c.created_at).toLocaleString('es-CO') : ''),
+                    author: c.author || c.author_name || `Usuario ${c.author_id ?? ''}`.trim(),
+                    upvotes: c.upvotes ?? 0,
+                    is_accepted: c.is_accepted ?? false,
+                    is_pastoral: c.is_pastoral ?? false,
+                })));
+            } catch (err: any) {
+                if (err?.name !== 'AbortError') {
+                    toast.error('Error al cargar las respuestas');
+                }
+            }
+        };
+
+        Promise.all([fetchThread(), fetchReplies()]).finally(() => setLoading(false));
+        return () => ctrl.abort();
     }, [id, token]);
 
-    const handleSendReply = () => {
-        if (!inputText.trim()) return;
-
-        const newReply = {
-            id: Date.now(),
-            text: inputText,
-            author: user?.username,
-            time: 'Ahora',
-            upvotes: 0,
-            is_pastoral: user?.role === 'admin'
-        };
-        setReplies([...replies, newReply]);
+    const handleSendReply = async () => {
+        if (!inputText.trim() || !token) return;
+        const text = inputText;
         setInputText('');
-        addToast('Respuesta publicada', 'success');
+        try {
+            const created = await apiFetch<any>(`/academy/forum/threads/${id}/comments`, {
+                method: 'POST',
+                token,
+                body: { content: text },
+            });
+            setReplies((prev) => [...prev, created]);
+            addToast('Respuesta publicada', 'success');
+        } catch {
+            setInputText(text);
+            toast.error('Error al publicar la respuesta');
+        }
     };
+
+    if (loading) {
+        return (
+            <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/50 dark:bg-[#1e1f21] overflow-hidden font-display">
+                <WorkspaceToolbar
+                    breadcrumbs={[
+                        { label: 'Foro Academia', icon: MessageSquare },
+                        { label: 'Detalle de Debate', icon: Share2 }
+                    ]}
+                    viewType={viewType}
+                    setViewType={setViewType}
+                    availableViews={['list', 'grid', 'table']}
+                    rightActions={
+                        <button onClick={() => router.back()} className="flex items-center gap-2 px-4 py-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all text-[11px] font-semibold uppercase tracking-wide">
+                            <ChevronLeft size={16} /> Volver al Foro
+                        </button>
+                    }
+                />
+                <main className="flex-1 flex items-center justify-center">
+                    <p className="text-sm font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide animate-pulse">Cargando...</p>
+                </main>
+            </div>
+        );
+    }
 
     if (!thread) return null;
 

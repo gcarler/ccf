@@ -39,14 +39,15 @@ export default function StudentProfilePage() {
     const [viewType, setViewType] = useState<ViewType>('grid');
 
     useEffect(() => {
+        const ctrl = new AbortController();
         const fetchData = async () => {
             if (!token || !user?.id) return;
             try {
                 setLoading(true);
                 setError(null);
                 const [profileData, certsData] = await Promise.all([
-                    apiFetch<AcademyStudentProfile>(`/academy/me/profile`, { token, cache: 'no-store' }),
-                    apiFetch<CertificateRecord[]>(`/academy/me/certificates`, { token, cache: 'no-store' })
+                    apiFetch<AcademyStudentProfile>(`/academy/me/profile`, { token, cache: 'no-store', signal: ctrl.signal }),
+                    apiFetch<CertificateRecord[]>(`/academy/me/certificates`, { token, cache: 'no-store', signal: ctrl.signal })
                 ]);
                 setProfile(profileData);
                 setCertificates(Array.isArray(certsData) ? certsData : []);
@@ -59,6 +60,7 @@ export default function StudentProfilePage() {
             }
         };
         fetchData();
+        return () => ctrl.abort();
     }, [token, user]);
 
     const activeCourses = useMemo(() => profile?.active_courses ?? [], [profile]);

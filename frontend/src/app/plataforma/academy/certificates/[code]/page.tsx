@@ -1,19 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
 import CertificateView from '@/components/academy/CertificateView';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
 export default function PublicCertificatePage() {
     const params = useParams();
+    const router = useRouter();
     const code = (params?.code as string) ?? null;
     const [certificate, setCertificate] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
 
     useEffect(() => {
+        const ctrl = new AbortController();
         const fetchCertificate = async () => {
             if (!code) {
                 setError(true);
@@ -21,7 +23,7 @@ export default function PublicCertificatePage() {
                 return;
             }
             try {
-                const data = await apiFetch(`/academy/certificates/validate/${code}`);
+                const data = await apiFetch(`/academy/certificates/validate/${code}`, { signal: ctrl.signal });
                 setCertificate(data);
             } catch (err) {
                 console.error("Error validating certificate:", err);
@@ -31,6 +33,7 @@ export default function PublicCertificatePage() {
             }
         };
         fetchCertificate();
+        return () => ctrl.abort();
     }, [code]);
 
     if (loading) return (
@@ -46,7 +49,7 @@ export default function PublicCertificatePage() {
                 <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Certificado No Valido</h2>
                 <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">El codigo de certificado proporcionado no existe en nuestros registros oficiales.</p>
                 <button
-                    onClick={() => window.location.href = '/'}
+                    onClick={() => router.push('/')}
                     className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-black text-xs uppercase tracking-wide"
                 >
                     Volver al Inicio

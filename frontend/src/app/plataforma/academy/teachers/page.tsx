@@ -26,12 +26,14 @@ export default function AcademyTeachersPage() {
 
     useEffect(() => {
         if (!token) return;
+        const ctrl = new AbortController();
         const load = async () => {
             try {
                 setLoading(true);
                 const data = await apiFetch<TeacherRow[]>("/academy/personas?role=teacher", {
                     token,
                     cache: "no-store",
+                    signal: ctrl.signal,
                 });
                 setTeachers(Array.isArray(data) ? data : []);
             } catch (error) {
@@ -42,6 +44,7 @@ export default function AcademyTeachersPage() {
             }
         };
         load();
+        return () => ctrl.abort();
     }, [token]);
 
     const filtered = useMemo(() => {
