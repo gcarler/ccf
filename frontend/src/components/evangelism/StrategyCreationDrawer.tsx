@@ -6,7 +6,7 @@ import {
     Users, Flame, Target, MapPin, Clock, Sparkles, Calendar, X
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { apiFetch } from '@/lib/http';
+import { ApiError, apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
@@ -36,6 +36,17 @@ interface FormValues {
     strategyType: string;
     startDate: string;
     endDate: string;
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof ApiError) {
+        const detail = error.detail;
+        if (typeof detail === 'string') return detail;
+        if (detail && typeof detail === 'object' && 'detail' in detail) {
+            return String((detail as { detail?: unknown }).detail || fallback);
+        }
+    }
+    return error instanceof Error ? error.message : fallback;
 }
 
 const formatLocalDate = (date: Date) => {
@@ -152,8 +163,8 @@ export default function StrategyCreationDrawer({
             reset();
             onCreated?.();
             onClose();
-        } catch (e: any) {
-            toast.error('Error al crear: ' + (e.message || 'Intente de nuevo más tarde'));
+        } catch (error: unknown) {
+            toast.error('Error al crear: ' + getErrorMessage(error, 'Intente de nuevo más tarde'));
         }
     };
 

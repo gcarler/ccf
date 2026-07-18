@@ -9,9 +9,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend import crud, models
-from backend.api.evangelism_shared import sessions_grupo_has_estado_habilitacion
+from backend.api.evangelism_shared import get_visible_strategy, sessions_grupo_has_estado_habilitacion
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_manage, require_evangelism_read
+from backend.core.tenant import require_user_sede_id
 from backend.crud.evangelism import (
     create_estrategia as create_evangelism_strategy,
 )
@@ -63,15 +64,9 @@ def _load_visible_strategy(
     strategy_id: UUID,
     user_sede_id: str | None,
 ):
-    from backend.models_evangelism import EstrategiaEvangelismo as StrategyModel
-
-    query = db.query(StrategyModel).filter(
-        StrategyModel.id == strategy_id,
-        StrategyModel.deleted_at.is_(None),
-    )
-    if user_sede_id is not None:
-        query = query.filter(StrategyModel.sede_id == user_sede_id)
-    return query.first()
+    if user_sede_id is None:
+        return None
+    return get_visible_strategy(db, strategy_id, user_sede_id)
 
 
 def read_evangelism_strategies(
@@ -85,13 +80,19 @@ def read_evangelism_strategies(
 ):
     from backend.crud.evangelism import get_estrategias
 
+    # The authenticated user's sede is the authority for this collection.
+    # ``sede_id`` is retained as a backwards-compatible query parameter, but
+    # must never widen the result set beyond the caller's tenant.
+    user_sede_id = require_user_sede_id(db, _user)
+    if sede_id is not None and str(sede_id) != user_sede_id:
+        return []
     strategies = get_estrategias(
         db,
         skip=skip,
         limit=limit,
         activa=activa,
         clase_raiz=clase_raiz,
-        sede_id=sede_id,
+        sede_id=user_sede_id,
     )
     result = []
     for s in strategies:
@@ -132,7 +133,7 @@ def read_strategy(
     db_obj = _load_visible_strategy(
         db,
         strategy_id,
-        crud.get_user_sede_id(db, _user.id),
+        require_user_sede_id(db, _user),
     )
     if not db_obj:
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
@@ -189,7 +190,7 @@ def update_strategy(
     _user: models.User = Depends(require_evangelism_manage),
 ):
     try:
-        user_sede_id = crud.get_user_sede_id(db, _user.id)
+        user_sede_id = require_user_sede_id(db, _user)
         if strategy.default_role_id is not None:
             from backend.models_evangelism import RolPersonalizadoEstrategia
 
@@ -258,7 +259,12 @@ def generate_strategy_sessions(
     from backend.models_evangelism import GrupoEvangelismo
     from backend.services.calculo_sesiones import calcular_sesiones
 
-    strat = db.query(StratModel).filter(StratModel.id == strategy_id).first()
+    user_sede_id = require_user_sede_id(db, _user)
+    strat = db.query(StratModel).filter(
+        StratModel.id == strategy_id,
+        StratModel.sede_id == user_sede_id,
+        StratModel.deleted_at.is_(None),
+    ).first()
     if not strat:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
     if not strat.frecuencia or not strat.fecha_inicio or not strat.fecha_fin:
@@ -269,6 +275,7 @@ def generate_strategy_sessions(
 
     groups = db.query(GrupoEvangelismo).filter(
         GrupoEvangelismo.estrategia_id == strategy_id,
+        GrupoEvangelismo.sede_id == user_sede_id,
         GrupoEvangelismo.deleted_at.is_(None),
     ).all()
 

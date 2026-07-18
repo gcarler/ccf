@@ -45,10 +45,7 @@ def get_event_attendance_report(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    require_event_access(db, current_user, event_id)
-    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+    event = require_event_access(db, current_user, event_id)
 
     rows = (
         db.query(models.EventAttendance)
@@ -118,9 +115,7 @@ def register_bulk_attendance(
     if not isinstance(persona_ids, list):
         raise HTTPException(status_code=400, detail="persona_ids must be a list")
 
-    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+    event = require_event_access(db, current_user, event_id)
     if str(event.status or "").upper() == "CANCELLED":
         raise HTTPException(
             status_code=409,
@@ -221,10 +216,7 @@ def get_event_session_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    require_event_access(db, current_user, event_id)
-    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+    event = require_event_access(db, current_user, event_id)
 
     assignments_db = (
         db.query(models.EventAssignment)
@@ -323,9 +315,7 @@ def sync_event_assignments(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_manage),
 ):
-    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+    event = require_event_access(db, current_user, event_id)
 
     db.query(models.EventAssignment).filter(
         models.EventAssignment.event_id == event_id,

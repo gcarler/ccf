@@ -2,18 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
-
-type EventAnalyticsData = {
-  kpis: {
-    historical_avg: number;
-    trend_percentage: number;
-    peak_month: { month: string; avg: number };
-  };
-  monthly_data: Array<{
-    month: string;
-    avg_attendance: number;
-  }>;
-};
+import type { EventAnalyticsData } from "@/app/plataforma/evangelism/types";
 
 interface AnalyticsTabProps {
   eventId: string;
@@ -25,23 +14,28 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  const loadAnalytics = async () => {
+  const loadAnalytics = async (signal: AbortSignal) => {
     if (!token) return;
     setLoadingAnalytics(true);
     setFailed(false);
     try {
-      const data = await apiFetch<EventAnalyticsData>(`/evangelism/events/${eventId}/analytics`, { token, silent: true });
+      const data = await apiFetch<EventAnalyticsData>(`/evangelism/events/${eventId}/analytics`, { token, silent: true, signal });
+      if (signal.aborted) return;
       setAnalytics(data);
     } catch {
-      setAnalytics(null);
-      setFailed(true);
+      if (!signal.aborted) {
+        setAnalytics(null);
+        setFailed(true);
+      }
     } finally {
-      setLoadingAnalytics(false);
+      if (!signal.aborted) setLoadingAnalytics(false);
     }
   };
 
   useEffect(() => {
-    loadAnalytics();
+    const abort = new AbortController();
+    loadAnalytics(abort.signal);
+    return () => abort.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId, token]);
 

@@ -29,6 +29,26 @@ import type {
   SearchablePersona as SharedSearchablePersona,
 } from './strategyDetailShared';
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+  error instanceof Error && error.message ? error.message : fallback;
+
+const toAttendanceStatus = (value: string | undefined): AttendancePersona['status'] =>
+  value === 'absent' || value === 'first_time' ? value : 'present';
+
+type GroupActionForm = {
+  name: string;
+  zone: string;
+  address: string;
+  capacity: number;
+  day_of_week: string;
+  start_time: string;
+  end_time: string;
+};
+type RoleDrivenAssignments = {
+  fixed: { leader_id: string | null; assistant_id: string | null; host_id: string | null };
+  base_attendees_with_roles: Array<{ persona_id: string; role: string; rol_personalizado_id: string }>;
+};
+
 // ── Hook: Estrategia ────────────────────────────────────────────────
 
 export function useStrategy(id: string, token: string | null) {
@@ -92,8 +112,8 @@ export function useStrategy(id: string, token: string | null) {
       toast.success('Estrategia actualizada');
       window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
       await fetchStrategy();
-    } catch (e: any) {
-      toast.error('Error al guardar: ' + (e?.message || 'Error desconocido'));
+    } catch (error: unknown) {
+      toast.error('Error al guardar: ' + getErrorMessage(error, 'Error desconocido'));
     } finally {
       setSaving(false);
     }
@@ -106,8 +126,8 @@ export function useStrategy(id: string, token: string | null) {
       toast.success('Estrategia eliminada');
       window.dispatchEvent(new CustomEvent('evangelism-strategy-created'));
       window.location.href = '/plataforma/evangelism';
-    } catch (e: any) {
-      toast.error('Error al eliminar: ' + (e?.message || 'Intente de nuevo'));
+    } catch (error: unknown) {
+      toast.error('Error al eliminar: ' + getErrorMessage(error, 'Intente de nuevo'));
     }
   }, [strategy, id, token]);
 
@@ -268,8 +288,8 @@ export function useSessionActions(fetchSessions: () => void, token: string | nul
       await apiFetch(`/evangelism/sessions/${sessionId}`, { method: 'DELETE', token, silent: true });
       toast.success('Sesión eliminada');
       fetchSessions();
-    } catch (e: any) {
-      toast.error('Error: ' + (e.message || 'Intente de nuevo'));
+    } catch (error: unknown) {
+      toast.error('Error: ' + getErrorMessage(error, 'Intente de nuevo'));
     }
   }, [fetchSessions, token]);
 
@@ -286,12 +306,12 @@ export function useGroupActions(
 ) {
   const [isGroupDrawerOpen, setIsGroupDrawerOpen] = useState(false);
   const [groupSaving, setGroupSaving] = useState(false);
-  const [roleResults, setRoleResults] = useState<Record<string, any[]>>({});
+  const [roleResults, setRoleResults] = useState<Record<string, SharedSearchablePersona[]>>({});
   const [roleLoading, setRoleLoading] = useState<Record<string, boolean>>({});
 
   const handleCreateGroup = useCallback(async (
-    groupForm: any,
-    buildRoleDrivenAssignments: () => any,
+    groupForm: GroupActionForm,
+    buildRoleDrivenAssignments: () => RoleDrivenAssignments,
     resetForm: () => void,
   ) => {
     if (!groupForm.name.trim()) { toast.error('El nombre del grupo es obligatorio'); return; }
@@ -320,8 +340,8 @@ export function useGroupActions(
       resetForm();
       fetchGroups();
       fetchStrategy();
-    } catch (e: any) {
-      toast.error('Error al crear: ' + (e.message || 'Intente de nuevo'));
+    } catch (error: unknown) {
+      toast.error('Error al crear: ' + getErrorMessage(error, 'Intente de nuevo'));
     } finally {
       setGroupSaving(false);
     }
@@ -401,12 +421,12 @@ export function useAttendanceDrawer(id: string, token: string | null, fetchSessi
           existingMap[a.persona_id] = { status: a.status, notes: a.notes || '' };
         }
       }
-      const personaList = house?.base_attendees?.map((a: any) => ({
+      const personaList = house?.base_attendees?.map((a) => ({
         persona_id: a.persona_id,
         name: a.name || a.persona?.nombre_completo || '',
         role: a.role || 'persona',
         role_label: a.role_label,
-        status: (existingMap[a.persona_id]?.status as any) || 'present',
+        status: toAttendanceStatus(existingMap[a.persona_id]?.status),
         notes: existingMap[a.persona_id]?.notes || '',
       })) || [];
       setAttendancePersonas(personaList);
@@ -435,8 +455,8 @@ export function useAttendanceDrawer(id: string, token: string | null, fetchSessi
       toast.success('Asistencia registrada');
       setIsAttendanceDrawerOpen(false);
       fetchSessions();
-    } catch (e: any) {
-      toast.error('Error: ' + (e.message || 'Intente de nuevo'));
+    } catch (error: unknown) {
+      toast.error('Error: ' + getErrorMessage(error, 'Intente de nuevo'));
     } finally {
       setAttendanceSaving(false);
     }

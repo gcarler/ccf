@@ -162,6 +162,52 @@ def _get_persona_for_user(db: Session, user_id) -> Optional[models.Persona]:
     return db.query(models.Persona).filter(models.Persona.id == uid).first()
 
 
+def get_visible_strategy(db: Session, strategy_id: UUID, sede_id: str):
+    """Resolve an active Evangelism strategy inside exactly one tenant.
+
+    This is the canonical scope primitive for strategy-owned resources. Callers
+    choose their compatible 404/403 response, while the query itself always
+    applies soft-delete and sede isolation together.
+    """
+    return (
+        db.query(models.EstrategiaEvangelismo)
+        .filter(
+            models.EstrategiaEvangelismo.id == strategy_id,
+            models.EstrategiaEvangelismo.sede_id == sede_id,
+            models.EstrategiaEvangelismo.deleted_at.is_(None),
+        )
+        .first()
+    )
+
+
+def get_visible_group(db: Session, grupo_id: UUID, sede_id: str):
+    """Resolve a non-deleted group inside the caller's tenant."""
+    return (
+        db.query(models.GrupoEvangelismo)
+        .filter(
+            models.GrupoEvangelismo.id == grupo_id,
+            models.GrupoEvangelismo.sede_id == sede_id,
+            models.GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .first()
+    )
+
+
+def get_visible_session(db: Session, session_id: UUID, sede_id: str):
+    """Resolve a non-deleted session only through an active group in tenant."""
+    return (
+        db.query(models.SesionGrupo)
+        .join(models.GrupoEvangelismo, models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id)
+        .filter(
+            models.SesionGrupo.id == session_id,
+            models.SesionGrupo.deleted_at.is_(None),
+            models.GrupoEvangelismo.deleted_at.is_(None),
+            models.GrupoEvangelismo.sede_id == sede_id,
+        )
+        .first()
+    )
+
+
 def _can_manage_grupo(db: Session, user, house) -> bool:
     """Check if user can manage a group (shared helper)."""
     if _is_crm_admin_or_pastor(user):

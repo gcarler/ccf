@@ -18,7 +18,7 @@ from backend import models
 from backend.api.evangelism_shared import session_read_only_options, session_read_value, utc_now
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_manage
-from backend.crud.crm import get_user_sede_id
+from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ def send_reminders(
     tomorrow_start = datetime.datetime.combine(tomorrow, datetime.time.min, tzinfo=datetime.timezone.utc)
     tomorrow_end = datetime.datetime.combine(tomorrow, datetime.time.max, tzinfo=datetime.timezone.utc)
 
-    user_sede_id = get_user_sede_id(db, current_user.id)
+    user_sede_id = require_user_sede_id(db, current_user)
     sessions_q = (
         db.query(models.SesionGrupo)
         .options(session_read_only_options(db))
@@ -74,8 +74,7 @@ def send_reminders(
             func.lower(models.SesionGrupo.estado) == "pendiente",
         )
     )
-    if user_sede_id:
-        sessions_q = sessions_q.filter(models.GrupoEvangelismo.sede_id == user_sede_id)
+    sessions_q = sessions_q.filter(models.GrupoEvangelismo.sede_id == user_sede_id)
     sessions_tomorrow = sessions_q.all()
 
     group_ids_tomorrow = {s.grupo_id for s in sessions_tomorrow}

@@ -12,7 +12,7 @@ import type {
   MultiplicationHistoryItem,
   SplitResponse,
 } from '@/app/plataforma/evangelism/types';
-import { apiFetch } from '@/lib/http';
+import { ApiError, apiFetch } from '@/lib/http';
 import {
   GitBranch,
   History,
@@ -65,14 +65,25 @@ function normalizeHistoryItem(raw: unknown): MultiplicationHistoryItem {
 }
 function normalizeSplitResponse(res: unknown): SplitResponse {
   const obj = (res ?? {}) as Record<string, unknown>;
-  const personas_transferidas = Number((obj as any)?.personas_transferidas ?? 0);
+  const personas_transferidas = Number(obj.personas_transferidas ?? 0);
   return {
     ok: Boolean(obj.ok),
     mensaje: String(obj.mensaje ?? ''),
-    grupo_original: normalizeGroupSummary((obj as any)?.grupo_original),
-    nuevo_grupo: normalizeGroupSummary((obj as any)?.nuevo_grupo),
+    grupo_original: normalizeGroupSummary(obj.grupo_original),
+    nuevo_grupo: normalizeGroupSummary(obj.nuevo_grupo),
     personas_transferidas,
   };
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiError) {
+    const detail = error.detail;
+    if (typeof detail === 'string') return detail;
+    if (detail && typeof detail === 'object' && 'detail' in detail) {
+      return String((detail as { detail?: unknown }).detail || fallback);
+    }
+  }
+  return error instanceof Error ? error.message : fallback;
 }
 
 export default function MultiplicationPage() {
@@ -95,7 +106,7 @@ export default function MultiplicationPage() {
       if (!token) return;
       setLoadingChecks(true);
       try {
-        const raw = await apiFetch<any[]>('/evangelism/multiplication/check', {
+        const raw = await apiFetch<unknown[]>('/evangelism/multiplication/check', {
           token,
           query: { umbral: String(threshold) },
         });
@@ -114,7 +125,7 @@ export default function MultiplicationPage() {
     if (!token) return;
     setLoadingHistory(true);
       try {
-        const raw = await apiFetch<any[]>('/evangelism/multiplication/history', {
+        const raw = await apiFetch<unknown[]>('/evangelism/multiplication/history', {
           token,
         });
         const result = Array.isArray(raw) ? raw.map(normalizeHistoryItem) : [];
@@ -172,7 +183,7 @@ export default function MultiplicationPage() {
     }
     setSavingSplit(true);
     try {
-      const raw = await apiFetch<any>('/evangelism/multiplication/split', {
+      const raw = await apiFetch<unknown>('/evangelism/multiplication/split', {
         method: 'POST',
         token,
         body: {
@@ -186,12 +197,8 @@ export default function MultiplicationPage() {
       setSplitDrawerOpen(false);
       fetchChecks(umbral);
       fetchHistory();
-    } catch (e: any) {
-      const detail =
-        e?.detail && typeof e.detail === 'object' && 'detail' in e.detail
-          ? String(e.detail.detail)
-          : e?.message;
-      toast.error(detail || 'Error al dividir el grupo');
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Error al dividir el grupo'));
     } finally {
       setSavingSplit(false);
     }

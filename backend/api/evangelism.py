@@ -21,6 +21,7 @@ from backend.api.evangelism_reports import router as reports_router
 from backend.api.evangelism_shared import utc_now
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
+from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
 router.include_router(events_router)
@@ -34,14 +35,35 @@ router.include_router(reports_router)
 router.include_router(analytics_router)
 
 
-def _generate_scanner_token(persona_id: uuid.UUID, db: Session) -> dict:
-    """Generate a one-time-visible CCF-PER token for a canonical persona."""
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+def _get_scoped_scanner_persona(
+    persona_id: uuid.UUID,
+    db: Session,
+    current_user: models.User,
+) -> models.Persona:
+    """Return a canonical persona only when it belongs to the caller's sede.
+
+    Scanner tokens identify a person and therefore follow the same tenant
+    boundary as the rest of Evangelism.  A 404 intentionally avoids exposing
+    whether a persona exists in another sede.
+    """
+    user_sede_id = require_user_sede_id(db, current_user)
+    persona = (
+        db.query(models.Persona)
+        .filter(
+            models.Persona.id == persona_id,
+            models.Persona.sede_id == user_sede_id,
+        )
+        .first()
+    )
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
+    return persona
 
+
+def _generate_scanner_token(persona: models.Persona, db: Session) -> dict:
+    """Generate a one-time-visible CCF-PER token for a canonical persona."""
     secret = secrets.token_hex(16)
-    token = f"CCF-PER-{persona_id}-{secret}"
+    token = f"CCF-PER-{persona.id}-{secret}"
     expires_at = datetime.datetime.now(timezone.utc) + datetime.timedelta(days=365)
     persona.scanner_token_hash = hashlib.sha256(secret.encode()).hexdigest()
     persona.scanner_token_expires_at = expires_at
@@ -53,16 +75,17 @@ def _generate_scanner_token(persona_id: uuid.UUID, db: Session) -> dict:
 def generate_scanner_token(
     persona_id: uuid.UUID,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_module_access("evangelism", "manage")),
+    current_user: models.User = Depends(require_module_access("evangelism", "manage")),
 ):
-    return _generate_scanner_token(persona_id, db)
+    persona = _get_scoped_scanner_persona(persona_id, db, current_user)
+    return _generate_scanner_token(persona, db)
 
 
 @router.post("/scanner/validate/{token}", response_model=dict)
 def validate_scanner_token(
     token: str,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_module_access("evangelism", "read")),
+    current_user: models.User = Depends(require_module_access("evangelism", "read")),
 ):
     if not token.startswith("CCF-PER-"):
         raise HTTPException(status_code=400, detail="Formato de código inválido")
@@ -78,9 +101,7 @@ def validate_scanner_token(
         raise HTTPException(status_code=400, detail="Token malformado")
     secret = payload[37:]
 
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
-    if not persona:
-        raise HTTPException(status_code=404, detail="Persona no encontrada")
+    persona = _get_scoped_scanner_persona(persona_id, db, current_user)
     if not persona.scanner_token_hash:
         raise HTTPException(status_code=403, detail="La persona no tiene un token activo")
 

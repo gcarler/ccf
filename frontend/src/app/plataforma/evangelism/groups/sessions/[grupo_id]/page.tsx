@@ -64,6 +64,19 @@ interface AttendanceSaveResult {
  } | null;
 }
 
+interface SessionCreateResult { id: string; }
+
+function getErrorMessage(error: unknown, fallback: string): string {
+ if (error instanceof ApiError) {
+  const detail = error.detail;
+  if (typeof detail === 'string') return detail;
+  if (detail && typeof detail === 'object' && 'detail' in detail) {
+   return String((detail as { detail?: unknown }).detail || fallback);
+  }
+ }
+ return error instanceof Error ? error.message : fallback;
+}
+
 export default function SessionReportPage() {
  const params = useParams();
  const router = useRouter();
@@ -165,7 +178,7 @@ export default function SessionReportPage() {
  if (!house || !token) return;
  setSaving(true);
  try {
- const sessionData = await apiFetch<any>('/evangelism/sessions', {
+ const sessionData = await apiFetch<SessionCreateResult>('/evangelism/sessions', {
   method: 'POST', token, silent: true,
   body: {
   grupo_id: grupoId,
@@ -215,8 +228,8 @@ method: 'POST', token: token, silent: true, body: attPayload,
 
  toast.success(`Reporte: ${stats.present} presentes, ${stats.absent} ausentes, ${stats.firstTime} nuevos`);
   router.push(`/plataforma/evangelism/groups`);
- } catch (error: any) {
- toast.error(error?.message || 'Error al guardar');
+ } catch (error: unknown) {
+ toast.error(getErrorMessage(error, 'Error al guardar'));
  } finally {
  setSaving(false);
  }

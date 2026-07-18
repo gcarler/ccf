@@ -41,6 +41,7 @@ from backend.models_evangelism import (
 )
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
+from tests.conftest import seed_user_with_role as _seed_user_with_role
 
 
 def _uuid_str() -> str:
@@ -2439,6 +2440,24 @@ class TestFastCheckinVisitor:
         assert resp.status_code == 200, resp.text
         assert resp.json()["is_duplicate"] is True
 
+    def test_fast_checkin_existing_person_creates_attendance(self, full):
+        event_id = self._create_event(full)
+        existing_persona = full["personas"][0]
+        resp = full["c"].post(
+            f"/api/evangelism/events/{event_id}/sessions/2026-09-20/visitors",
+            json={
+                "first_name": existing_persona.first_name,
+                "last_name": existing_persona.last_name,
+                "email": existing_persona.email,
+            },
+            headers=full["h"],
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["is_duplicate"] is False
+        assert full["c"].get(
+            f"/api/evangelism/events/{event_id}/attendance", headers=full["h"]
+        ).json()["total_records"] == 1
+
     def test_fast_checkin_invalid_date(self, full):
         event_id = self._create_event(full)
         resp = full["c"].post(
@@ -2455,6 +2474,250 @@ class TestFastCheckinVisitor:
             headers=full["h"],
         )
         assert resp.status_code == 404
+
+    def test_fast_checkin_rejects_soft_deleted_event(self, full):
+        event_id = self._create_event(full)
+        deleted = full["c"].delete(f"/api/evangelism/events/{event_id}", headers=full["h"])
+        assert deleted.status_code == 200, deleted.text
+        resp = full["c"].post(
+            f"/api/evangelism/events/{event_id}/sessions/2026-09-20/visitors",
+            json={"first_name": "Removed", "last_name": "Event"},
+            headers=full["h"],
+        )
+        assert resp.status_code == 404, resp.text
+
+
+class TestEventScopeAndGranularPermissions:
+    """Regressions for sede isolation and canonical evangelism RBAC."""
+
+    @staticmethod
+    def _set_evangelism_permissions(db_session, user, permissions):
+        user.rol_plataforma.permisos = permissions
+        db_session.commit()
+
+    @staticmethod
+    def _create_event(full):
+        response = full["c"].post(
+            "/api/evangelism/events/",
+            json={"name": "Evento con alcance", "target_audience": "ALL"},
+            headers=full["h"],
+        )
+        assert response.status_code == 200, response.text
+        return response.json()["id"]
+
+    def test_granular_reader_can_open_same_sede_event(self, full, db_session):
+        event_id = self._create_event(full)
+        reader, _, _ = _seed_user_with_role(
+            db_session,
+            role_name="EVANGELISM_READER",
+            email="reader.evangelism@example.com",
+            sede_id=full["sede"].id,
+        )
+        self._set_evangelism_permissions(db_session, reader, {"evangelism:read": "allow"})
+        headers = _auth_headers(full["c"], email=reader.email)
+
+        response = full["c"].get(f"/api/evangelism/events/{event_id}", headers=headers)
+        assert response.status_code == 200, response.text
+
+    def test_other_sede_cannot_read_or_mutate_event(self, full, db_session):
+        event_id = self._create_event(full)
+        other_sede = models.Sede(nombre="Sede Alterna", ciudad="Medellin", es_activa=True)
+        db_session.add(other_sede)
+        db_session.commit()
+
+        reader, _, _ = _seed_user_with_role(
+            db_session,
+            role_name="EVANGELISM_OTHER_READER",
+            email="other.reader@example.com",
+            sede_id=other_sede.id,
+        )
+        self._set_evangelism_permissions(db_session, reader, {"evangelism:read": "allow"})
+        reader_headers = _auth_headers(full["c"], email=reader.email)
+        for path in (
+            f"/api/evangelism/events/{event_id}",
+            f"/api/evangelism/events/{event_id}/analytics",
+            f"/api/evangelism/events/{event_id}/sessions/2026-09-20/export",
+        ):
+            response = full["c"].get(path, headers=reader_headers)
+            assert response.status_code == 403, response.text
+
+        manager, _, _ = _seed_user_with_role(
+            db_session,
+            role_name="EVANGELISM_OTHER_MANAGER",
+            email="other.manager@example.com",
+            sede_id=other_sede.id,
+        )
+        self._set_evangelism_permissions(db_session, manager, {"evangelism:manage": "allow"})
+        manager_headers = _auth_headers(full["c"], email=manager.email)
+        response = full["c"].put(
+            f"/api/evangelism/events/{event_id}/audience",
+            json={"target_audience": "ALL"},
+            headers=manager_headers,
+        )
+        assert response.status_code == 403, response.text
+        response = full["c"].post(
+            f"/api/evangelism/events/{event_id}/assignments",
+            json={"session_date": "2026-09-20", "assignments": []},
+            headers=manager_headers,
+        )
+        assert response.status_code == 403, response.text
+
+
+class TestEvangelismPermissionMatrix:
+    """Canonical capability and tenant regressions for Evangelism surfaces."""
+
+    @staticmethod
+    def _grant(db_session, user, permissions):
+        user.rol_plataforma.permisos = permissions
+        db_session.commit()
+
+    def test_reader_can_list_same_sede_but_cannot_manage_strategy(self, full, db_session):
+        reader, _, _ = _seed_user_with_role(
+            db_session,
+            role_name="EVANGELISM_MATRIX_READER",
+            email="matrix.reader@example.com",
+            sede_id=full["sede"].id,
+        )
+        self._grant(db_session, reader, {"evangelism:read": "allow"})
+        headers = _auth_headers(full["c"], email=reader.email)
+
+        listed = full["c"].get("/api/evangelism/strategies", headers=headers)
+        assert listed.status_code == 200, listed.text
+        assert {row["id"] for row in listed.json()} >= {str(full["estrategia"].id)}
+
+        groups = full["c"].get("/api/evangelism/groups", headers=headers)
+        assert groups.status_code == 200, groups.text
+        assert {row["id"] for row in groups.json()} >= {str(full["grupos"][0].id)}
+
+        sessions = full["c"].get("/api/evangelism/groups/sessions", headers=headers)
+        assert sessions.status_code == 200, sessions.text
+        assert {row["id"] for row in sessions.json()} >= {str(full["sesiones"][0].id)}
+
+        denied = full["c"].post(
+            "/api/evangelism/strategies",
+            json={"name": "No autorizado", "typology": "relacional"},
+            headers=headers,
+        )
+        assert denied.status_code == 403, denied.text
+        denied_group = full["c"].post(
+            "/api/evangelism/groups",
+            json={"name": "Grupo no autorizado"},
+            headers=headers,
+        )
+        assert denied_group.status_code == 403, denied_group.text
+
+    def test_strategy_list_and_scanner_are_sede_scoped(self, full, db_session):
+        other_sede = models.Sede(nombre="Sede Matriz", ciudad="Cali", es_activa=True)
+        db_session.add(other_sede)
+        db_session.flush()
+        other_person = models.Persona(
+            first_name="Persona",
+            last_name="OtraSede",
+            email=f"matrix-other-{uuid.uuid4().hex[:8]}@ccf.test",
+            sede_id=other_sede.id,
+        )
+        other_strategy = EstrategiaEvangelismo(
+            nombre="Estrategia no visible",
+            sede_id=other_sede.id,
+            categoria_id=full["categoria"].id,
+            activa=True,
+        )
+        db_session.add_all([other_person, other_strategy])
+        db_session.flush()
+        other_group = GrupoEvangelismo(
+            nombre="Grupo no visible",
+            codigo=f"X-{uuid.uuid4().hex[:6]}",
+            sede_id=other_sede.id,
+            estrategia_id=other_strategy.id,
+            activo=True,
+        )
+        db_session.add(other_group)
+        db_session.commit()
+
+        listed = full["c"].get("/api/evangelism/strategies", headers=full["h"])
+        assert listed.status_code == 200, listed.text
+        assert str(other_strategy.id) not in {row["id"] for row in listed.json()}
+
+        foreign_filter = full["c"].get(
+            f"/api/evangelism/strategies?sede_id={other_sede.id}", headers=full["h"]
+        )
+        assert foreign_filter.status_code == 200, foreign_filter.text
+        assert foreign_filter.json() == []
+
+        groups = full["c"].get("/api/evangelism/groups", headers=full["h"])
+        assert groups.status_code == 200, groups.text
+        assert str(other_group.id) not in {row["id"] for row in groups.json()}
+
+        foreign_group = full["c"].post(
+            "/api/evangelism/groups",
+            json={
+                "name": "Grupo cruzado",
+                "evangelism_strategy_id": str(other_strategy.id),
+                "leader_id": str(other_person.id),
+            },
+            headers=full["h"],
+        )
+        assert foreign_group.status_code == 404, foreign_group.text
+
+        foreign_roles = full["c"].get(
+            f"/api/evangelism/strategies/{other_strategy.id}/roles", headers=full["h"]
+        )
+        assert foreign_roles.status_code == 404, foreign_roles.text
+        foreign_sessions = full["c"].post(
+            f"/api/evangelism/strategies/{other_strategy.id}/generate-sessions",
+            headers=full["h"],
+        )
+        assert foreign_sessions.status_code == 404, foreign_sessions.text
+
+        for suffix in ("", "/trend", "/funnel", "/velocity", "/full"):
+            analytics = full["c"].get(
+                f"/api/evangelism/analytics/strategy/{other_strategy.id}{suffix}",
+                headers=full["h"],
+            )
+            assert analytics.status_code == 404, analytics.text
+
+        denied = full["c"].post(
+            f"/api/evangelism/scanner/generate/{other_person.id}", headers=full["h"]
+        )
+        assert denied.status_code == 404, denied.text
+
+        generated = full["c"].post(
+            f"/api/evangelism/scanner/generate/{full['personas'][0].id}", headers=full["h"]
+        )
+        assert generated.status_code == 200, generated.text
+        reader, _, _ = _seed_user_with_role(
+            db_session,
+            role_name="EVANGELISM_SCANNER_OTHER_SEDE",
+            email="scanner.other.sede@example.com",
+            sede_id=other_sede.id,
+        )
+        self._grant(db_session, reader, {"evangelism:read": "allow"})
+        reader_headers = _auth_headers(full["c"], email=reader.email)
+        validation = full["c"].post(
+            f"/api/evangelism/scanner/validate/{generated.json()['token']}", headers=reader_headers
+        )
+        assert validation.status_code == 404, validation.text
+
+    def test_contextual_group_and_attendance_stay_in_user_sede(self, full, db_session):
+        other_sede = models.Sede(nombre="Sede Contextual", ciudad="Pereira", es_activa=True)
+        db_session.add(other_sede)
+        db_session.commit()
+        coordinator, _, _ = _seed_user_with_role(
+            db_session,
+            role_name="coordinador",
+            email="coordinator.other.sede@example.com",
+            sede_id=other_sede.id,
+        )
+        headers = _auth_headers(full["c"], email=coordinator.email)
+        group = full["grupos"][0]
+        session = full["sesiones"][0]
+
+        detail = full["c"].get(f"/api/evangelism/grupos/{group.id}", headers=headers)
+        assert detail.status_code == 404, detail.text
+        attendance = full["c"].get(
+            f"/api/evangelism/grupos/sessions/{session.id}/attendance", headers=headers
+        )
+        assert attendance.status_code == 404, attendance.text
 
 
 # ════════════════════════════════════════════════════════════════════

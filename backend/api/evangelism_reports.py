@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.api.evangelism_shared import (
     ATTENDED_STATES,
+    get_visible_strategy,
     is_absent_status,
     is_attended_status,
     is_excused_status,
@@ -367,13 +368,7 @@ def strategy_summary(
 ):
     """Resumen de todos los grupos de una estrategia de evangelismo."""
     user_sede = require_user_sede_id(db, current_user)
-    estrategia_q = db.query(models.EstrategiaEvangelismo).filter(
-        models.EstrategiaEvangelismo.id == strategy_id,
-        models.EstrategiaEvangelismo.deleted_at.is_(None),
-    )
-    if user_sede is not None:
-        estrategia_q = estrategia_q.filter(models.EstrategiaEvangelismo.sede_id == user_sede)
-    estrategia = estrategia_q.first()
+    estrategia = get_visible_strategy(db, strategy_id, user_sede)
     if not estrategia:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
 
@@ -381,8 +376,7 @@ def strategy_summary(
         models.GrupoEvangelismo.estrategia_id == strategy_id,
         models.GrupoEvangelismo.deleted_at.is_(None),
     )
-    if user_sede is not None:
-        grupos_q = grupos_q.filter(models.GrupoEvangelismo.sede_id == user_sede)
+    grupos_q = grupos_q.filter(models.GrupoEvangelismo.sede_id == user_sede)
     grupos = grupos_q.all()
     grupo_ids = [grupo.id for grupo in grupos]
 

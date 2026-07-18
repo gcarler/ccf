@@ -7,6 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -34,10 +35,8 @@ def fast_checkin_visitor(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_edit),
 ):
-    require_event_access(db, current_user, event_id)
-    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+    event = require_event_access(db, current_user, event_id)
+    user_sede_id = require_user_sede_id(db, current_user)
 
     try:
         session_day = datetime.datetime.strptime(session_date, "%Y-%m-%d").date()
@@ -52,18 +51,40 @@ def fast_checkin_visitor(
         db.commit()
         db.refresh(role)
 
+    attendance_lookup = db.query(models.EventAttendance).join(models.Persona).filter(
+        models.EventAttendance.event_id == event_id,
+        models.EventAttendance.session_date == session_day,
+    )
+    identifiers = []
+    if visitor.email:
+        identifiers.append(models.Persona.email == visitor.email)
+    if visitor.phone:
+        identifiers.append(models.Persona.phone == visitor.phone)
+    if identifiers and attendance_lookup.filter(or_(*identifiers)).first():
+        existing_attendance = attendance_lookup.filter(or_(*identifiers)).first()
+        return {
+            "status": "success",
+            "visitor_id": existing_attendance.persona_id,
+            "message": "Visitante ya registrado. Asistencia actualizada.",
+            "is_duplicate": True,
+        }
+
     existing_persona = None
     if visitor.email:
-        existing_persona = db.query(models.Persona).filter(models.Persona.email == visitor.email).first()
+        candidate = db.query(models.Persona).filter(models.Persona.email == visitor.email).first()
+        if candidate and str(candidate.sede_id) == str(user_sede_id):
+            existing_persona = candidate
     if not existing_persona and visitor.phone:
-        existing_persona = db.query(models.Persona).filter(models.Persona.phone == visitor.phone).first()
+        candidate = db.query(models.Persona).filter(models.Persona.phone == visitor.phone).first()
+        if candidate and str(candidate.sede_id) == str(user_sede_id):
+            existing_persona = candidate
 
     if existing_persona:
         new_visitor = existing_persona
-        already_exists = True
+        is_new_visitor = False
     else:
-        already_exists = False
-        sede_id = event.sede_id or require_user_sede_id(db, current_user)
+        is_new_visitor = True
+        sede_id = event.sede_id or user_sede_id
         new_visitor = models.Persona(
             first_name=visitor.first_name,
             last_name=visitor.last_name,
@@ -76,41 +97,32 @@ def fast_checkin_visitor(
         db.commit()
         db.refresh(new_visitor)
 
-    # Si el visitante ya estaba registrado (por email o phone), devolvemos marcador
-    # de duplicado SIN re-insertar EventAttendance (UNIQUE constraint
-    # event_id + session_date + persona_id). Esto evita el 500 al hacer
-    # check-in dos veces para la misma persona y misma sesión.
-    if already_exists:
-        return {
-            "status": "success",
-            "visitor_id": new_visitor.id,
-            "message": "Visitante ya registrado. Asistencia actualizada.",
-            "is_duplicate": True,
-        }
-
-    if role:
+    # La idempotencia es de asistencia, no de persona: un miembro ya existente
+    # puede asistir por primera vez a esta sesión.
+    if is_new_visitor and role:
         db.add(models.PersonaRoleLink(persona_id=new_visitor.id, role_id=role.id))
 
-    db.add(
-        models.EventAttendance(
-            event_id=event_id,
-            session_date=session_day,
-            persona_id=new_visitor.id,
-            attended=True,
-        )
+    attendance = models.EventAttendance(
+        event_id=event_id,
+        session_date=session_day,
+        persona_id=new_visitor.id,
+        attended=True,
     )
+    db.add(attendance)
+    # Persist the core check-in before the optional CRM bridge. A bridge
+    # integration failure must never make a successful attendance disappear.
+    db.commit()
 
     # Create CRM follow-up records for new visitors.
     # This is auxiliary: if the CRM bridge is temporarily out of sync with
     # production schema, we keep the visitor registration successful.
     from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
 
-    try:
-        crear_caso_nuevo_visitante(db, new_visitor, new_visitor.sede_id)
-    except Exception as exc:
-        logger.warning("Failed to create CRM follow-up for evangelism event visitor %s: %s", new_visitor.id, exc)
-
-    db.commit()
+    if is_new_visitor:
+        try:
+            crear_caso_nuevo_visitante(db, new_visitor, new_visitor.sede_id)
+        except Exception as exc:
+            logger.warning("Failed to create CRM follow-up for evangelism event visitor %s: %s", new_visitor.id, exc)
 
     return {
         "status": "success",
