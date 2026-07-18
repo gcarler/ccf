@@ -7,14 +7,9 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-class WikiPageBase(BaseModel):
-    page_key: str = Field(..., min_length=1, max_length=120, description="URL-safe key for the wiki page")
-    title: str = Field(..., min_length=1, max_length=255, description="Display title")
+class WikiPageCreate(BaseModel):
+    title: Optional[str] = Field(None, min_length=1, max_length=255)
     content: Optional[str] = Field("", description="HTML content")
-
-
-class WikiPageCreate(WikiPageBase):
-    pass
 
 
 class WikiPageUpdate(BaseModel):
