@@ -173,6 +173,7 @@ from backend.crud.crm import (
     get_family_personas,
     get_grupo,
     get_grupos,
+    get_milestone,
     get_milestones,
     get_persona,
     get_persona_donations,
@@ -217,6 +218,7 @@ from backend.crud.crm_.extended import (
     create_direct_message,
     get_conversation_messages,
     get_unread_count_for_conversation,
+    get_unread_counts_batch,
     get_user_conversations,
     mark_conversation_read,
 )

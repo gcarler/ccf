@@ -52,6 +52,7 @@ from backend.crud.crm_ import (
     get_family_personas,
     get_grupo,
     get_grupos,
+    get_milestone,
     get_milestones,
     get_persona,
     get_persona_donations,
