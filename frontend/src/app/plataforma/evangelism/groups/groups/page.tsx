@@ -3,7 +3,7 @@
 import React, { useState, Suspense, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/http';
+import { ApiError, apiFetch } from '@/lib/http';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
@@ -55,6 +55,17 @@ interface Grupo {
  start_time?: string;
  end_time?: string;
  status: string;
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+ if (error instanceof ApiError) {
+  const detail = error.detail;
+  if (typeof detail === 'string') return detail;
+  if (detail && typeof detail === 'object' && 'detail' in detail) {
+   return String((detail as { detail?: unknown }).detail || fallback);
+  }
+ }
+ return error instanceof Error ? error.message : fallback;
 }
 
 interface Persona {
@@ -344,9 +355,8 @@ if (!cancelled) setLoading(false);
  );
  toast.success('Grupo actualizado');
  }
- } catch (error: any) {
- const msg = error?.message || 'Error al guardar grupo';
- toast.error(msg);
+ } catch (error: unknown) {
+ toast.error(getErrorMessage(error, 'Error al guardar grupo'));
  } finally {
  setSaving(false);
  }
@@ -365,9 +375,8 @@ if (!cancelled) setLoading(false);
  setIsCreating(false);
  }
  toast.success(`Grupo "${house.name}" eliminado`);
- } catch (error: any) {
- const msg = error?.message || 'Error al eliminar grupo';
- toast.error(msg);
+ } catch (error: unknown) {
+ toast.error(getErrorMessage(error, 'Error al eliminar grupo'));
  }
  }, [token, houses, selectedHouse]);
 

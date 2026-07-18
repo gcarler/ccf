@@ -17,7 +17,8 @@ from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(status):
-    return status in (200, 201, 400, 403, 404, 405, 422, 500)
+    """Allow documented success/client outcomes, never server failures."""
+    return status in (200, 201, 400, 403, 404, 405, 422)
 
 
 @pytest.fixture
@@ -153,6 +154,11 @@ def full(client, db_session):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestPureHelpers:
+    def test_ok_rejects_internal_server_errors(self):
+        assert _ok(200) is True
+        assert _ok(422) is True
+        assert _ok(500) is False
+
     def test_normalize_rol(self):
         from backend.api.evangelism_analytics import _normalize_rol
         assert _normalize_rol("Líder") == "lider"

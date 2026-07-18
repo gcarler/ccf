@@ -17,6 +17,8 @@ from backend.api.evangelism_shared import (
     _check_first_time_lead_trigger,
     _sessions_grupo_live_column_names,
     expected_group_rows,
+    get_visible_group,
+    get_visible_session,
     persona_payload,
     session_estado_habilitacion,
     session_read_only_options,
@@ -54,16 +56,11 @@ def get_groups_session_attendance(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    session = db.query(SesionGrupo).options(_session_read_options(db)).filter(
-        models.SesionGrupo.id == session_id,
-        models.SesionGrupo.deleted_at.is_(None),
-    ).first()
+    user_sede = require_user_sede_id(db, current_user)
+    session = get_visible_session(db, session_id, user_sede)
     if not session:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
-    house = db.query(GrupoEvangelismo).filter(
-        models.GrupoEvangelismo.id == session.grupo_id,
-        models.GrupoEvangelismo.deleted_at.is_(None),
-    ).first()
+    house = get_visible_group(db, session.grupo_id, user_sede)
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house):
@@ -160,16 +157,11 @@ def add_groups_attendance(
                 canonical_status = _normalize_status_alias(item.get("status"))
                 item["attended"] = canonical_status in {"present", "first_time"}
 
-    session = db.query(SesionGrupo).options(_session_read_options(db)).filter(
-        models.SesionGrupo.id == session_id,
-        models.SesionGrupo.deleted_at.is_(None),
-    ).first()
+    user_sede = require_user_sede_id(db, current_user)
+    session = get_visible_session(db, session_id, user_sede)
     if not session:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
-    house = db.query(GrupoEvangelismo).filter(
-        models.GrupoEvangelismo.id == session.grupo_id,
-        models.GrupoEvangelismo.deleted_at.is_(None),
-    ).first()
+    house = get_visible_group(db, session.grupo_id, user_sede)
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house):

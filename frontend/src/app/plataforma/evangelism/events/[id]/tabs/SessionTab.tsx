@@ -5,23 +5,7 @@ import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import { Calendar, CheckCircle2, Download, Mic, Save, UserPlus, Users, X } from "lucide-react";
-import type { Persona } from "@/app/plataforma/evangelism/types";
-
-type Assignment = { persona_id: string; role: string; persona_name?: string };
-
-type SessionData = {
-  event_id: string;
-  session_date: string;
-  assignments: Assignment[];
-  metrics: Record<string, number>;
-  attendees: { persona_id: string; name: string; role: string; scanned_at: string | null }[];
-  absentees: { persona_id: string; name: string; role: string; phone: string }[];
-  total_absentees: number;
-  absentees_truncated: boolean;
-  total_attendance: number;
-  total_expected: number;
-  attendance_rate: number;
-};
+import type { EventAssignment, EventSessionData, Persona } from "@/app/plataforma/evangelism/types";
 
 interface PersonaSelectProps {
   personas: Persona[];
@@ -132,7 +116,7 @@ interface SessionTabProps {
 
 export default function SessionTab({ eventId, token, eventName }: SessionTabProps) {
   const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [sessionData, setSessionData] = useState<SessionData | null>(null);
+  const [sessionData, setSessionData] = useState<EventSessionData | null>(null);
   const [initialSessionFingerprint, setInitialSessionFingerprint] = useState<string | null>(null);
   const [sessionLoading, setSessionLoading] = useState(false);
   const [isVisitorDrawerOpen, setIsVisitorDrawerOpen] = useState(false);
@@ -163,19 +147,23 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
   );
 
   useEffect(() => {
+    const abort = new AbortController();
     if (token) {
-      apiFetch<Persona[]>('/crm/personas', { token, silent: true, query: { limit: 1000 } })
+      apiFetch<Persona[]>('/crm/personas', { token, silent: true, signal: abort.signal, query: { limit: 1000 } })
         .then(setPersonas)
-        .catch(() => setPersonas([]));
+        .catch(() => { if (!abort.signal.aborted) setPersonas([]); });
     }
+    return () => abort.abort();
   }, [token]);
 
   useEffect(() => {
     if (!sessionDate || !token) return;
+    const abort = new AbortController();
     const loadSession = async () => {
       try {
         setSessionLoading(true);
-        const data = await apiFetch<SessionData>(`/evangelism/events/${eventId}/sessions/${sessionDate}`, { token, silent: true });
+        const data = await apiFetch<EventSessionData>(`/evangelism/events/${eventId}/sessions/${sessionDate}`, { token, silent: true, signal: abort.signal });
+        if (abort.signal.aborted) return;
         setSessionData(data);
 
         // Pre-fill forms
@@ -191,13 +179,14 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
           preachers: pre.map((a) => a.persona_id).sort((a, b) => a.localeCompare(b)),
           offering: off?.persona_id || null,
         }));
-      } catch (err) {
-        setSessionData(null);
+      } catch {
+        if (!abort.signal.aborted) setSessionData(null);
       } finally {
-        setSessionLoading(false);
+        if (!abort.signal.aborted) setSessionLoading(false);
       }
     };
     loadSession();
+    return () => abort.abort();
   }, [sessionDate, token, eventId, refreshKey]);
 
   const handleExportCsv = async () => {
@@ -246,7 +235,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
     if (!token || !sessionDate) return;
     setSavingSession(true);
     try {
-      const assignments: Assignment[] = [];
+      const assignments: EventAssignment[] = [];
       if (mcId) assignments.push({ persona_id: mcId, role: 'MC' });
       if (offeringId) assignments.push({ persona_id: offeringId, role: 'OFFERING' });
       preacherIds.forEach(pid => assignments.push({ persona_id: pid, role: 'PREACHER' }));

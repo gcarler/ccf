@@ -133,6 +133,30 @@ type SearchablePersona = {
  church_role?: string;
 };
 
+type GroupForm = {
+ name: string;
+ zone: string;
+ address: string;
+ capacity: number;
+ day_of_week: string;
+ start_time: string;
+ end_time: string;
+};
+
+type RoleSearchPersona = SearchablePersona & { role_label?: string };
+type RoleSearchQuery = { limit: number; search?: string; sort_by?: string; sort_dir?: string };
+const getErrorMessage = (error: unknown, fallback: string) =>
+ error instanceof Error && error.message ? error.message : fallback;
+
+const toAttendanceStatus = (value: string | undefined): AttendancePersona['status'] =>
+ value === 'absent' || value === 'first_time' ? value : 'present';
+const isStrategyStatus = (value: string): value is 'active' | 'pending' | 'done' =>
+ ['active', 'pending', 'done'].includes(value);
+const isStrategyGroup = (value: unknown): value is StrategyGroup =>
+ typeof value === 'object' && value !== null && 'id' in value && 'name' in value;
+const isSessionRow = (value: unknown): value is SessionRow =>
+ typeof value === 'object' && value !== null && 'id' in value && 'grupo_id' in value;
+
 export default function StrategyDetailPage() {
  const params = useParams();
  const router = useRouter();
@@ -191,13 +215,13 @@ export default function StrategyDetailPage() {
  const { viewType, setViewType } = useViewType(`strategy_${id}`, 'dashboard');
  const { groups, groupsLoading, fetchGroups } = useGroups(id, token);
  const { metrics, fetchMetrics } = useMetrics(id, token);
- const [personaCache, setPersonaCache] = useState<Record<string, any>>({});
- const [roleResults, setRoleResults] = useState<Record<string, any[]>>({});
+ const [personaCache, setPersonaCache] = useState<Record<string, RoleSearchPersona>>({});
+ const [roleResults, setRoleResults] = useState<Record<string, RoleSearchPersona[]>>({});
  const [roleLoading, setRoleLoading] = useState<Record<string, boolean>>({});
 
  // Group creation drawer
  const [isGroupDrawerOpen, setIsGroupDrawerOpen] = useState(false);
- const [groupForm, setGroupForm] = useState({
+ const [groupForm, setGroupForm] = useState<GroupForm>({
  name: '', zone: '', address: '', capacity: 15,
  day_of_week: '', start_time: '', end_time: '',
  });
@@ -317,7 +341,10 @@ export default function StrategyDetailPage() {
  return ROLE_COLORS[value] || ROLE_COLORS.persona;
  };
 
- const buildRoleDrivenGroupAssignments = () => {
+ const buildRoleDrivenGroupAssignments = (): {
+ fixed: { leader_id: string | null; assistant_id: string | null; host_id: string | null };
+ base_attendees_with_roles: Array<{ persona_id: string; role: string; rol_personalizado_id: string }>;
+ } => {
  const assigned = customRoles
  .map(role => ({
  role,
@@ -379,10 +406,10 @@ export default function StrategyDetailPage() {
  setRoleLoading(l => ({ ...l, [field]: true }));
  const timer = setTimeout(async () => {
  try {
- const params: Record<string, any> = query.length >= 1
+ const params: RoleSearchQuery = query.length >= 1
  ? { limit: 200, search: query }
  : { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' };
- const res = await apiFetch<any[]>('/crm/personas', { token, silent: true, query: params });
+ const res = await apiFetch<RoleSearchPersona[]>('/crm/personas', { token, silent: true, query: params });
  setRoleResults(r => ({ ...r, [field]: res || [] }));
  } catch {
  setRoleResults(r => ({ ...r, [field]: [] }));
@@ -438,8 +465,8 @@ export default function StrategyDetailPage() {
  toast.success('Grupo creado');
  setIsGroupDrawerOpen(false);
  fetchGroups(); fetchStrategy();
- } catch (e: any) {
- toast.error('Error al crear: ' + (e.message || 'Intente de nuevo'));
+ } catch (error: unknown) {
+ toast.error('Error al crear: ' + getErrorMessage(error, 'Intente de nuevo'));
  } finally { setGroupSaving(false); }
  };
 
@@ -470,7 +497,7 @@ export default function StrategyDetailPage() {
  setPersonaSplitHeight(200);
  try {
  const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${group.id}`, { token, silent: true });
- setGroupPersonas(house?.base_attendees?.map((a: any) => ({
+ setGroupPersonas(house?.base_attendees?.map((a) => ({
  id: a.persona_id,
  name: a.name || a.persona?.nombre_completo || '',
  email: a.persona?.email || '',
@@ -554,12 +581,12 @@ export default function StrategyDetailPage() {
  toast.success('Personas actualizados');
  setIsPersonaDrawerOpen(false);
  fetchGroups();
- } catch (e: any) {
- toast.error('Error al guardar: ' + (e.message || 'Intente de nuevo'));
+ } catch (error: unknown) {
+ toast.error('Error al guardar: ' + getErrorMessage(error, 'Intente de nuevo'));
  } finally { setPersonaSaving(false); }
  };
 
- const addPersonaToGroup = (persona: any) => {
+ const addPersonaToGroup = (persona: SearchablePersona) => {
  if (groupPersonas.find(m => m.id === persona.id)) return;
  setGroupPersonas(prev => [...prev, {
  id: persona.id,
@@ -599,8 +626,8 @@ export default function StrategyDetailPage() {
  setIsNewSessionDrawerOpen(false);
  setSessionForm({ grupo_id: '', session_date: formatLocalDate(new Date()), topic: '', offering_amount: '', report_notes: '' });
  fetchSessions();
- } catch (e: any) {
- toast.error('Error al guardar: ' + (e.message || 'Intente de nuevo'));
+ } catch (error: unknown) {
+ toast.error('Error al guardar: ' + getErrorMessage(error, 'Intente de nuevo'));
  } finally { setSessionSaving(false); }
  };
 
@@ -647,12 +674,12 @@ export default function StrategyDetailPage() {
  existingMap[a.persona_id] = { status: a.status, notes: a.notes || '' };
  }
  }
- const personaList = house?.base_attendees?.map((a: any) => ({
+ const personaList = house?.base_attendees?.map((a) => ({
  persona_id: a.persona_id,
  name: a.name || a.persona?.nombre_completo || '',
  role: a.role || 'persona',
  role_label: a.role_label,
- status: (existingMap[a.persona_id]?.status as any) || 'present',
+ status: toAttendanceStatus(existingMap[a.persona_id]?.status),
  notes: existingMap[a.persona_id]?.notes || '',
  })) || [];
  setAttendancePersonas(personaList);
@@ -685,8 +712,8 @@ export default function StrategyDetailPage() {
  }
  setIsAttendanceDrawerOpen(false);
  fetchSessions();
- } catch (e: any) {
- toast.error('Error: ' + (e.message || 'Intente de nuevo'));
+ } catch (error: unknown) {
+ toast.error('Error: ' + getErrorMessage(error, 'Intente de nuevo'));
  } finally { setAttendanceSaving(false); }
  };
 
@@ -744,8 +771,8 @@ export default function StrategyDetailPage() {
  setShowNewVisitorForm(false);
  fetchGroups();
  fetchStrategy();
- } catch (e: any) {
- toast.error('Error al registrar visitante: ' + (e.message || 'Intente de nuevo'));
+ } catch (error: unknown) {
+ toast.error('Error al registrar visitante: ' + getErrorMessage(error, 'Intente de nuevo'));
  } finally { setSavingNewVisitor(false); }
  };
 
@@ -784,7 +811,7 @@ export default function StrategyDetailPage() {
  const res = await apiFetch<BulkHabilitacionResponse>(`/evangelism/strategies/${id}/deshabilitar-todas`, { method: 'POST', token, silent: true });
  toast.success(`${res.sesiones_deshabilitadas} sesiones bloqueadas`);
  fetchSessions();
- } catch (e: any) { toast.error('Error al deshabilitar sesiones'); }
+ } catch { toast.error('Error al deshabilitar sesiones'); }
  },
  });
  };
@@ -1149,9 +1176,9 @@ export default function StrategyDetailPage() {
  width: '95',
  editable: false,
  filterable: true,
- render: (v: any) => (
+ render: (v: unknown) => (
  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[11px] font-semibold">
- <Users size={10} />{v}
+ <Users size={10} />{String(v ?? '—')}
  </span>
  ),
  },
@@ -1189,7 +1216,7 @@ export default function StrategyDetailPage() {
  editable: false,
  filterable: false,
  hidden: !canManageStrategySurface,
- render: (_: any, item: any) => (
+ render: (_: unknown, item) => isStrategyGroup(item) ? (
  <div className="flex items-center gap-1">
  <button
  onClick={(e) => { e.stopPropagation(); openPersonaDrawer(item); }}
@@ -1211,7 +1238,7 @@ export default function StrategyDetailPage() {
  <Share2 size={10} />
  </button>
  </div>
- ),
+ ) : null,
  },
  ]}
  />
@@ -1288,7 +1315,7 @@ export default function StrategyDetailPage() {
  width: '160',
  editable: false,
  filterable: false,
- render: (_: any, item: any) => (
+ render: (_: unknown, item) => isSessionRow(item) ? (
  <div className="flex items-center gap-1">
  <button
  onClick={(e) => { e.stopPropagation(); openAttendanceDrawer(item); }}
@@ -1317,7 +1344,7 @@ export default function StrategyDetailPage() {
  <Trash2 size={11} />
  </button>
  </div>
- ),
+ ) : null,
  },
  ]}
  />
@@ -1412,7 +1439,7 @@ export default function StrategyDetailPage() {
  </div>
  <div>
  <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Estado</label>
- <select value={editStatus} onChange={e => setEditStatus(e.target.value as any)} disabled={!canManageStrategySurface}
+ <select value={editStatus} onChange={e => { if (isStrategyStatus(e.target.value)) setEditStatus(e.target.value); }} disabled={!canManageStrategySurface}
  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors">
  <option value="pending">No iniciada</option>
  <option value="active">Iniciada</option>
@@ -1596,9 +1623,9 @@ export default function StrategyDetailPage() {
  toast.success(`Sesiones generadas: ${res.sessions_per_group || ''} por grupo (${res.total_sessions_created} totales)`);
  }
  fetchSessions();
- } catch (e: any) {
+ } catch (error: unknown) {
  toast.dismiss(btn);
- toast.error('Error: ' + (e.message || 'Verifica fechas y frecuencia'));
+ toast.error('Error: ' + getErrorMessage(error, 'Verifica fechas y frecuencia'));
  }
  }}
  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[hsl(var(--border-primary))] dark:border-white/20 text-[hsl(var(--text-secondary))] text-xs font-semibold hover:bg-[hsl(var(--bg-muted))] transition-colors">
@@ -1611,7 +1638,7 @@ export default function StrategyDetailPage() {
  const res = await apiFetch<BulkHabilitacionResponse>(`/evangelism/strategies/${id}/habilitar-todas`, { method: 'POST', token, silent: true });
  toast.success(`${res.sesiones_habilitadas} sesiones habilitadas`);
  fetchSessions();
- } catch (e: any) { toast.error('Error al habilitar sesiones'); }
+ } catch { toast.error('Error al habilitar sesiones'); }
  }}
  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
  <CheckCircle2 size={14} />Habilitar sesiones
@@ -2099,14 +2126,14 @@ export default function StrategyDetailPage() {
  <p>Recurrencia: {strategy.recurrence} · Día: {strategy.day_of_week} · Hora: {strategy.start_time}</p>
  </div>
  )}
- {[
+ {([
  { label: 'Nombre del grupo *', field: 'name', placeholder: 'Ej: Grupo Norte' },
  { label: 'Zona / Sector', field: 'zone', placeholder: 'Ej: Zona Norte' },
  { label: 'Dirección', field: 'address', placeholder: 'Dirección completa' },
- ].map(({ label, field, placeholder }) => (
+ ] as const).map(({ label, field, placeholder }) => (
  <div key={field}>
  <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">{label}</label>
- <input value={(groupForm as any)[field]} onChange={e => setGroupForm(f => ({ ...f, [field]: e.target.value }))}
+ <input value={groupForm[field]} onChange={e => setGroupForm(f => ({ ...f, [field]: e.target.value }))}
  placeholder={placeholder}
  className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]" />
  </div>
@@ -2400,13 +2427,13 @@ export default function StrategyDetailPage() {
  </span>
  </div>
  <div className="flex items-center gap-1">
- {[
+ {([
  { status: 'present', label: 'P', cls: 'bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-[hsl(var(--secondary))]', activeCls: 'ring-2 ring-green-500' },
  { status: 'absent', label: 'A', cls: 'bg-red-100 text-[hsl(var(--destructive))] dark:bg-red-900/30 dark:text-[hsl(var(--destructive))]', activeCls: 'ring-2 ring-red-500' },
  { status: 'first_time', label: '1°', cls: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-[hsl(var(--primary))]', activeCls: 'ring-2 ring-blue-500' },
- ].map(opt => (
+ ] as const).map(opt => (
  <button key={opt.status}
- onClick={() => setAttendancePersonas(prev => prev.map((x, j) => j === i ? { ...x, status: opt.status as any } : x))}
+ onClick={() => setAttendancePersonas(prev => prev.map((x, j) => j === i ? { ...x, status: opt.status } : x))}
  className={`w-8 h-8 rounded-lg text-[11px] font-bold transition-all ${opt.cls} ${m.status === opt.status ? opt.activeCls : 'opacity-50 hover:opacity-100'}`}>
  {opt.label}
  </button>

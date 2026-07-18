@@ -9,12 +9,21 @@ from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend import crud
+from backend.api.evangelism_shared import get_visible_strategy
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_manage
+from backend.core.tenant import require_user_sede_id
 
 roles_router = APIRouter(tags=["Evangelismo - Roles y Excusas"])
 
 logger = logging.getLogger(__name__)
+
+
+def _require_visible_strategy(db: Session, strategy_id: UUID, user) -> models.EstrategiaEvangelismo:
+    strategy = get_visible_strategy(db, strategy_id, require_user_sede_id(db, user))
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Estrategia no encontrada")
+    return strategy
 
 
 # ──────────────────────────────────────────────
@@ -34,16 +43,7 @@ def list_strategy_roles(
     """Lista los roles personalizados de una estrategia."""
     from backend.crud.evangelism import get_roles_personalizados
 
-    user_sede_id = crud.get_user_sede_id(db, _user.id)
-    strategy_query = db.query(models.EstrategiaEvangelismo).filter(
-        models.EstrategiaEvangelismo.id == strategy_id,
-        models.EstrategiaEvangelismo.deleted_at.is_(None),
-    )
-    if user_sede_id is not None:
-        strategy_query = strategy_query.filter(models.EstrategiaEvangelismo.sede_id == user_sede_id)
-    strategy = strategy_query.first()
-    if not strategy:
-        raise HTTPException(status_code=404, detail="Estrategia no encontrada")
+    _require_visible_strategy(db, strategy_id, _user)
     rows = get_roles_personalizados(db, estrategia_id=strategy_id)
     # Serializa cada ORM a dict (UUID→str) para ResponseValidation strict.
     return [
@@ -70,16 +70,7 @@ def create_strategy_role(
     """Crea un rol personalizado para una estrategia."""
     from backend.crud.evangelism import create_rol_personalizado
 
-    user_sede_id = crud.get_user_sede_id(db, _user.id)
-    strategy_query = db.query(models.EstrategiaEvangelismo).filter(
-        models.EstrategiaEvangelismo.id == strategy_id,
-        models.EstrategiaEvangelismo.deleted_at.is_(None),
-    )
-    if user_sede_id is not None:
-        strategy_query = strategy_query.filter(models.EstrategiaEvangelismo.sede_id == user_sede_id)
-    strategy = strategy_query.first()
-    if not strategy:
-        raise HTTPException(status_code=404, detail="Estrategia no encontrada")
+    _require_visible_strategy(db, strategy_id, _user)
     payload.estrategia_id = strategy_id
     return _serialize_rol_personalizado(create_rol_personalizado(db, payload, actor_user_id=str(_user.id)))
 
@@ -94,16 +85,7 @@ def delete_strategy_role(
     """Elimina un rol personalizado de una estrategia."""
     from backend.crud.evangelism import delete_rol_personalizado
 
-    user_sede_id = crud.get_user_sede_id(db, _user.id)
-    strategy_query = db.query(models.EstrategiaEvangelismo).filter(
-        models.EstrategiaEvangelismo.id == strategy_id,
-        models.EstrategiaEvangelismo.deleted_at.is_(None),
-    )
-    if user_sede_id is not None:
-        strategy_query = strategy_query.filter(models.EstrategiaEvangelismo.sede_id == user_sede_id)
-    strategy = strategy_query.first()
-    if not strategy:
-        raise HTTPException(status_code=404, detail="Estrategia no encontrada")
+    strategy = _require_visible_strategy(db, strategy_id, _user)
     if strategy.default_role_id == role_id:
         strategy.default_role_id = None
     if not delete_rol_personalizado(db, role_id, actor_user_id=str(_user.id)):

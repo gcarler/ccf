@@ -339,6 +339,7 @@ from backend.schemas.operational import (
                                      CommunityBoardCardUpdate,
                                      Milestone,
                                      MilestoneCreate,
+                                     MilestoneUpdate,
                                      PastorRadarSchema,
                                      PublicRegistrationCreate,
                                      SupportTicket,

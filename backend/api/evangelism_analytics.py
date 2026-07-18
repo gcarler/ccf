@@ -28,11 +28,12 @@ from backend.api.evangelism_shared import (
     ATTENDED_STATES,
     FIRST_TIME_STATES,
     normalize_attendance_status,
+    get_visible_strategy,
     session_read_only_options,
 )
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_read
-from backend.core.tenant import get_user_sede_id
+from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -91,11 +92,9 @@ def _prev_range(days: int):
     return end - _dt.timedelta(days=days), end
 
 
-def _get_strategy_or_404(db: Session, strategy_id: UUID):
-    s = db.query(models.EstrategiaEvangelismo).filter(
-        models.EstrategiaEvangelismo.id == strategy_id,
-        models.EstrategiaEvangelismo.deleted_at.is_(None),
-    ).first()
+def _get_strategy_or_404(db: Session, strategy_id: UUID, sede_id: str):
+    """Resolve an active strategy inside the caller's tenant only."""
+    s = get_visible_strategy(db, strategy_id, sede_id)
     if not s:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
     return s
@@ -106,8 +105,7 @@ def _group_ids_for_strategy(db: Session, strategy_id: UUID, sede_id) -> list[_uu
         models.GrupoEvangelismo.estrategia_id == strategy_id,
         models.GrupoEvangelismo.deleted_at.is_(None),
     )
-    if sede_id:
-        q = q.filter(models.GrupoEvangelismo.sede_id == sede_id)
+    q = q.filter(models.GrupoEvangelismo.sede_id == sede_id)
     return [r[0] for r in q.all()]
 
 
@@ -180,9 +178,8 @@ def strategy_kpis(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    # sede_id is optional — if user has no sede we show all groups (super-admin case)
-    sede_id = get_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id)
+    sede_id = require_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id, sede_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
 
     days = _parse_period(period)
@@ -314,8 +311,8 @@ def strategy_trend(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    sede_id = get_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id)
+    sede_id = require_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id, sede_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
     if not group_ids:
         return {"buckets": [], "groups": []}
@@ -423,8 +420,8 @@ def strategy_funnel(
     cuando rol_base = 'personalizado'. Para personas sin rol personalizado asignado
     se muestran en 'Sin rol asignado'.
     """
-    sede_id = get_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id)
+    sede_id = require_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id, sede_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
 
     if not group_ids:
@@ -533,8 +530,8 @@ def strategy_heatmap(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    sede_id = get_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id)
+    sede_id = require_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id, sede_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
     if not group_ids:
         return {"cells": []}
@@ -605,8 +602,8 @@ def strategy_alerts(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    sede_id = get_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id)
+    sede_id = require_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id, sede_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
     if not group_ids:
         return {"alerts": []}
@@ -793,8 +790,20 @@ def strategy_velocity(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    # Validate strategy exists
-    _get_strategy_or_404(db, strategy_id)
+    sede_id = require_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id, sede_id)
+    group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
+    if not group_ids:
+        return {"stages": []}
+
+    strategy_person_ids = (
+        db.query(models.ParticipanteGrupo.persona_id)
+        .filter(
+            models.ParticipanteGrupo.grupo_id.in_(group_ids),
+            models.ParticipanteGrupo.deleted_at.is_(None),
+        )
+        .distinct()
+    )
 
     rows = (
         db.query(
@@ -802,7 +811,10 @@ def strategy_velocity(
             _func.avg(models.HistorialEmbudo.dias_en_estado_anterior),
             _func.count(models.HistorialEmbudo.id),
         )
-        .filter(models.HistorialEmbudo.deleted_at.is_(None))
+        .filter(
+            models.HistorialEmbudo.deleted_at.is_(None),
+            models.HistorialEmbudo.persona_id.in_(strategy_person_ids),
+        )
         .group_by(models.HistorialEmbudo.rol_nuevo)
         .all()
     )
@@ -851,8 +863,8 @@ def strategy_groups_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    sede_id = get_user_sede_id(db, current_user)
-    _get_strategy_or_404(db, strategy_id)
+    sede_id = require_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id, sede_id)
     group_ids = _group_ids_for_strategy(db, strategy_id, sede_id)
     if not group_ids:
         return {"groups": []}
@@ -1053,6 +1065,9 @@ def get_strategy_full_analytics(
 ):
     """10-dimension analytics engine for an evangelism strategy."""
 
+    sede_id = require_user_sede_id(db, current_user)
+    _get_strategy_or_404(db, strategy_id, sede_id)
+
     # ── 0. Base data load (bulk, no N+1) ──────────────────────
     fecha_hasta = _dt.date.today()
     fecha_desde = fecha_hasta - _dt.timedelta(weeks=weeks)
@@ -1061,6 +1076,7 @@ def get_strategy_full_analytics(
         db.query(models.GrupoEvangelismo)
         .filter(
             models.GrupoEvangelismo.estrategia_id == strategy_id,
+            models.GrupoEvangelismo.sede_id == sede_id,
             models.GrupoEvangelismo.deleted_at.is_(None),
         )
         .all()

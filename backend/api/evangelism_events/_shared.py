@@ -58,17 +58,18 @@ def is_event_assignee(db: Session, user: models.User, event_id: UUID) -> bool:
     return assignment is not None
 
 
-def require_event_access(db: Session, user: models.User, event_id: UUID) -> None:
-    """Raise 403 if user lacks read access to the event."""
-    event_sede = db.query(models.CrmEvent.sede_id).filter(models.CrmEvent.id == event_id).scalar()
+def require_event_access(db: Session, user: models.User, event_id: UUID | str) -> models.CrmEvent:
+    """Return an active event in the user's sede or raise a scoped error.
+
+    Authorization level is enforced by the endpoint's canonical
+    ``require_evangelism_*`` dependency. This helper deliberately owns only
+    resource scope (sede + soft delete), so a granular permission cannot be
+    contradicted later by a legacy list of role names.
+    """
+    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    if not event or event.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Event not found")
     user_sede = require_user_sede_id(db, user)
-    if event_sede and str(event_sede) != str(user_sede):
+    if event.sede_id and str(event.sede_id) != str(user_sede):
         raise HTTPException(status_code=403, detail="Evento no pertenece a tu sede")
-    if is_event_reader_role(user):
-        return
-    if is_event_assignee(db, user, event_id):
-        return
-    raise HTTPException(
-        status_code=403,
-        detail="Permisos insuficientes. Se requiere acceso de lectura del módulo o asignación al evento.",
-    )
+    return event

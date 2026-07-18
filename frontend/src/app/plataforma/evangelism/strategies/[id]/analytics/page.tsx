@@ -211,10 +211,9 @@ function ChartBox({ children, height, className }: { children: React.ReactNode; 
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const renderPieLabel = ({ name, percent }: any) => `${name} ${(((percent as number) ?? 0) * 100).toFixed(0)}%`;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const renderPiePct = ({ percent }: any) => `${(((percent as number) ?? 0) * 100).toFixed(0)}%`;
+type PieLabelPayload = { name?: string; percent?: number };
+const renderPieLabel = ({ name = '', percent = 0 }: PieLabelPayload) => `${name} ${(percent * 100).toFixed(0)}%`;
+const renderPiePct = ({ percent = 0 }: PieLabelPayload) => `${(percent * 100).toFixed(0)}%`;
 
 // ── Main Page ──────────────────────────────────────────────────────────
 

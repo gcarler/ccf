@@ -2,7 +2,7 @@
 
 > **Objetivo:** fijar el contrato operativo real de `/api/evangelism` para frontend, tests y mantenimiento.
 >
-> **Fecha de verificación:** 2026-07-17
+> **Fecha de verificación:** 2026-07-18
 > **Fuente de verdad:** código en `backend/api/evangelism*.py`, `backend/schemas/evangelism.py`, `backend/core/permissions.py`
 
 ## 1. Reglas generales
@@ -14,6 +14,9 @@
 - Estrategias y grupos respetan `sede_id`
 - Sesiones, asistencias, analytics, rankings y reportes respetan sede a través de grupo o validación directa
 - Los listados activos excluyen `deleted_at` cuando la entidad soporta soft delete
+- Una sede autenticada es obligatoria para toda operación de recurso con alcance
+  ministerial; un UUID de otra sede responde `404` o `403` según el contrato de
+  la superficie y nunca amplía el resultado por query string.
 
 ## 2. Modelo de acceso
 
@@ -29,7 +32,7 @@ Pero no toda ruta es RBAC puro:
 
 - Superficies administrativas usan `require_evangelism_*`
 - Rutas personales y de asistencia de grupo usan `get_current_user` + validación contextual
-- Check-in rápido de visitantes en eventos usa `require_active_user`
+- Check-in rápido de visitantes en eventos usa `require_evangelism_edit` y alcance de sede
 - Scanner usa `require_module_access("evangelism", ...)`, equivalente funcional a la taxonomía canónica
 
 Referencia obligatoria: [EVANGELISMO_RBAC_MATRIX.md](/root/ccf/docs/EVANGELISMO_RBAC_MATRIX.md)
@@ -69,6 +72,7 @@ Reglas:
 
 - `strategy_id` es UUID
 - Estrategias se filtran por sede
+- `generate-sessions` también resuelve la estrategia y sus grupos dentro de la sede
 - Crear estrategia sin `sede_id` derivable del usuario debe fallar
 - La proyección de fases a proyectos para `evento_masivo` es auxiliar y no debe romper la estrategia si falla
 
@@ -101,7 +105,7 @@ Archivo: `backend/api/evangelism_grupos/grupos_main.py`
 |---|---|---|---|
 | `GET` | `/grupos` | `/groups` | `require_evangelism_read` |
 | `GET` | `/grupos/mine` | `/groups/mine` | `get_current_user` |
-| `GET` | `/grupos/{grupo_id}` | `/groups/{grupo_id}`, `/micro/{grupo_id}` | `require_evangelism_read` |
+| `GET` | `/grupos/{grupo_id}` | `/groups/{grupo_id}`, `/micro/{grupo_id}` | `get_current_user` + `_can_manage_grupo(...)` |
 | `POST` | `/grupos` | `/groups` | `require_evangelism_manage` |
 | `PUT` | `/grupos/{grupo_id}` | `/groups/{grupo_id}` | `require_evangelism_manage` |
 | `DELETE` | `/grupos/{grupo_id}` | `/groups/{grupo_id}` | `require_evangelism_manage` |
@@ -114,7 +118,9 @@ Reglas:
 - `grupo_id` es UUID
 - Los aliases `/grupos` y `/groups` deben mantener la misma forma contractual
 - `mine` es contextual: liderazgo/ownership, no solo permiso granular
-- El detalle administrativo serializa dicts compatibles con frontend, no ORM crudo
+- El detalle es contextual a liderazgo/ownership; los listados globales usan el
+  guard canónico de lectura.
+- Al crear un grupo, estrategia y todas las personas enlazadas deben pertenecer a la sede autenticada.
 
 ## 7. Sesiones
 
@@ -204,7 +210,7 @@ Archivos:
 
 | Método | Ruta | Guard |
 |---|---|---|
-| `POST` | `/events/{event_id}/sessions/{session_date}/visitors` | `require_active_user` + `require_event_access(...)` |
+| `POST` | `/events/{event_id}/sessions/{session_date}/visitors` | `require_evangelism_edit` + `require_event_access(...)` |
 
 ### 9.5 Roles de evento e historial
 
@@ -223,6 +229,7 @@ Reglas:
 - `DELETE /events/{event_id}` es soft delete operativo: estado cancelado + `deleted_at`
 - `attendance/bulk` debe responder `400` si recibe IDs inválidos, no ignorarlos silenciosamente
 - El check-in rápido de visitantes evita duplicados de attendance para misma persona/fecha/evento
+- Todo detalle, analytics, export y mutación de evento queda restringido a la sede del usuario y excluye eventos con `deleted_at`.
 
 ## 10. Multiplicación
 
@@ -311,6 +318,11 @@ Archivo: `backend/api/evangelism_analytics.py`
 
 Reglas:
 
+- Cada variante resuelve primero una estrategia activa de la sede autenticada.
+- `velocity` agrega únicamente el historial de participantes de los grupos de la estrategia.
+
+Reglas:
+
 - Estas superficies ya no deben documentarse como `require_active_user`
 - Deben respetar sede y soft delete
 
@@ -322,6 +334,10 @@ Archivo: `backend/api/evangelism.py`
 |---|---|---|
 | `POST` | `/scanner/generate/{persona_id}` | `require_module_access("evangelism", "manage")` |
 | `POST` | `/scanner/validate/{token}` | `require_module_access("evangelism", "read")` |
+
+Reglas:
+
+- Generar y validar un token exige que la persona pertenezca a la sede autenticada.
 
 Reglas:
 

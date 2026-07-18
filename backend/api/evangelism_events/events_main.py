@@ -129,10 +129,7 @@ def update_event(
     # se registran DESPUÉS de ``/events/{event_id}`` en este archivo y
     # Pydantic strict con UUID devolvía 422 cuando el dynamic capturaba
     # matches no-UUID antes que las rutas estáticas.
-    require_event_access(db, current_user, event_id)
-    event = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+    event = require_event_access(db, current_user, event_id)
     payload = normalize_role_scope_payload(payload)
     editable = [
         "name",
@@ -176,10 +173,7 @@ def delete_event(
     current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Cancela un evento (soft-delete: marca como CANCELLED + deleted_at)."""
-    require_event_access(db, current_user, event_id)
-    event = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+    event = require_event_access(db, current_user, event_id)
     event.status = "CANCELLED"
     event.cancellation_reason = "Eliminado por usuario"
     event.deleted_at = utc_now()
@@ -200,10 +194,7 @@ def get_event_detail(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    require_event_access(db, current_user, event_id)
-    event = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+    event = require_event_access(db, current_user, event_id)
 
     attendees_count = db.query(models.EventAttendance).filter(models.EventAttendance.event_id == event_id).count()
     event_status = event.status or "SCHEDULED"
@@ -234,11 +225,9 @@ def update_event_audience(
     event_id: str,
     payload: EventAudienceUpdate,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_evangelism_manage),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
-    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+    event = require_event_access(db, current_user, event_id)
 
     normalized = normalize_role_scope_payload(payload.model_dump())
     event.target_audience = normalized["target_audience"]
@@ -258,11 +247,16 @@ def get_global_event_analytics(
 ):
     from sqlalchemy import func
 
+    user_sede = require_user_sede_id(db, current_user)
     query = db.query(
         models.EventAttendance.session_date,
         func.count(models.EventAttendance.id).label("attended_count"),
     ).join(models.CrmEvent)
 
+    query = query.filter(
+        models.CrmEvent.sede_id == user_sede,
+        models.CrmEvent.deleted_at.is_(None),
+    )
     if event_type and event_type != "ALL":
         query = query.filter(models.CrmEvent.event_type == event_type)
 
@@ -422,11 +416,9 @@ def get_events_dashboard_stats(
 def get_event_analytics(
     event_id: str,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_evangelism_read),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
-    event = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+    event = require_event_access(db, current_user, event_id)
 
     attendances = db.query(models.EventAttendance).filter(models.EventAttendance.event_id == event_id).all()
     sessions_by_month = collections.defaultdict(set)
@@ -478,9 +470,7 @@ def export_event_session_report(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    event = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+    event = require_event_access(db, current_user, event_id)
 
     attendances_db = (
         db.query(models.EventAttendance)
@@ -643,25 +633,23 @@ def get_persona_attendance_history(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    persona = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    user_sede = require_user_sede_id(db, current_user)
+    persona = (
+        db.query(models.Persona)
+        .filter(models.Persona.id == persona_id, models.Persona.sede_id == user_sede)
+        .first()
+    )
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
-
-    current_persona = _get_persona_for_user(db, current_user.id)
-    is_self = bool(current_persona and current_persona.id == persona.id)
-    is_staff = _get_user_role(current_user) in [
-        "admin",
-        "administrador",
-        "pastor",
-        "coordinador",
-    ]
-    if not is_self and not is_staff:
-        raise HTTPException(status_code=403, detail="No autorizado para ver este historial")
 
     rows = (
         db.query(models.EventAttendance)
         .filter(models.EventAttendance.persona_id == persona_id)
         .join(models.CrmEvent)
+        .filter(
+            models.CrmEvent.sede_id == user_sede,
+            models.CrmEvent.deleted_at.is_(None),
+        )
         .order_by(
             models.CrmEvent.event_date.desc().nullslast(),
             models.CrmEvent.created_at.desc(),

@@ -59,6 +59,9 @@ const formatLocalDate = (date: Date) => {
  return `${year}-${month}-${day}`;
 };
 
+const getErrorMessage = (error: unknown, fallback: string) =>
+ error instanceof Error && error.message ? error.message : fallback;
+
 const normalizeMinistryEvent = (raw: MinistryEvent): MinistryEvent => ({
  ...raw,
  target_role_ids: Array.isArray(raw.target_role_ids)
@@ -82,7 +85,9 @@ interface AudiencePreset {
 
 
 function EventsPage() {
- const { token } = useAuth();
+ const { token, hasModuleAccess } = useAuth();
+ const canManageEvents = hasModuleAccess('evangelism', 'manage');
+ const canEditEvents = hasModuleAccess('evangelism', 'edit');
  const router = useRouter();
  const { addToast } = useToast();
  const [viewType, setViewType] = useState<ViewType>(() => getStoredView('evangelism_events_view', 'grid'));
@@ -184,19 +189,24 @@ function EventsPage() {
  }
  };
 
- const fetchData = async () => {
+ const fetchData = async (signal?: AbortSignal) => {
  if (!token) return;
  setLoading(true);
  try {
- const [eventsRes, personasRes, statsRes] = await Promise.all([
- apiFetch<MinistryEvent[]>('/evangelism/events/', { token, silent: true, cache: 'no-store' }),
- apiFetch<Persona[]>('/crm/personas', { token, silent: true, query: { limit: 200 }, cache: 'no-store' }),
- apiFetch<EventDashboardStat[]>('/evangelism/events/dashboard-stats', { token, silent: true, cache: 'no-store' })
+ const eventsRes = await apiFetch<MinistryEvent[]>('/evangelism/events/', { token, silent: true, cache: 'no-store', signal });
+ const [personasRes, statsRes] = await Promise.all([
+ canManageEvents || canEditEvents
+ ? apiFetch<Persona[]>('/crm/personas', { token, silent: true, query: { limit: 200 }, cache: 'no-store', signal })
+ : Promise.resolve([] as Persona[]),
+ canManageEvents
+ ? apiFetch<EventDashboardStat[]>('/evangelism/events/dashboard-stats', { token, silent: true, cache: 'no-store', signal })
+ : Promise.resolve([] as EventDashboardStat[]),
  ]);
  setEvents(Array.isArray(eventsRes) ? eventsRes.map(normalizeMinistryEvent) : []);
  setPersonas(Array.isArray(personasRes) ? personasRes : []);
  setStats(Array.isArray(statsRes) ? statsRes : []);
  } catch {
+ if (signal?.aborted) return;
  setEvents([]);
  setPersonas([]);
  setStats([]);
@@ -206,9 +216,11 @@ function EventsPage() {
  };
 
  useEffect(() => {
- fetchData();
+ const abort = new AbortController();
+ fetchData(abort.signal);
+ return () => abort.abort();
  // eslint-disable-next-line react-hooks/exhaustive-deps
- }, [token]);
+ }, [token, canEditEvents, canManageEvents]);
 
  useEffect(() => {
  try {
@@ -396,8 +408,9 @@ function EventsPage() {
  addToast(`Sugerencias agregadas: ${toAdd.length}`, "success");
  };
 
- const handleCreateEvent = async (e: React.FormEvent) => {
+const handleCreateEvent = async (e: React.FormEvent) => {
  e.preventDefault();
+ if (!canManageEvents) return;
  if (!newEvent.name) return;
  if (newEvent.target_audience === 'ROLE' && newEvent.target_role_ids.length === 0) {
  addToast("Selecciona al menos un rol esperado para este evento", "error");
@@ -470,8 +483,8 @@ function EventsPage() {
  setIsCreateDrawerOpen(false);
  setNewEvent({ name: '', description: '', event_type: 'PERMANENT', target_audience: 'ALL', target_role_id: '', target_role_ids: [], target_persona_ids: [], day_of_week: '0', month_day: '', fixed_date: '', start_time: '', end_time: '' });
  fetchData();
- } catch (error: any) {
- const msg = error?.message || "Error de conexión";
+ } catch (error: unknown) {
+ const msg = getErrorMessage(error, "Error de conexión");
  addToast(msg, "error");
  } finally {
  setSavingCreateEvent(false);
@@ -536,7 +549,8 @@ function EventsPage() {
  img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
  };
 
- const openAttendance = (ev: MinistryEvent) => {
+const openAttendance = (ev: MinistryEvent) => {
+ if (!canEditEvents) return;
  setSelectedEvent(normalizeMinistryEvent(ev));
  setIsAttendanceDrawerOpen(true);
  setAttendanceDate(formatLocalDate(new Date()));
@@ -567,8 +581,8 @@ function EventsPage() {
  return () => abort.abort();
  }, [attendanceDate, isAttendanceDrawerOpen, selectedEvent, token]);
 
- const saveAttendance = async (forceEmpty = false) => {
- if (!selectedEvent) return;
+const saveAttendance = async (forceEmpty = false) => {
+ if (!selectedEvent || !canEditEvents) return;
  const normalizedStatus = String(selectedEvent.status || '').toUpperCase();
  if (normalizedStatus === 'CANCELLED' || normalizedStatus === 'CANCELED') {
  addToast("No se puede registrar asistencia en eventos cancelados", "error");
@@ -711,8 +725,8 @@ function EventsPage() {
  },
  ];
 
- const handleDeleteEvent = async (evId: string) => {
- if (!token) return;
+const handleDeleteEvent = async (evId: string) => {
+ if (!token || !canManageEvents) return;
  setDeletingEventLoadingId(evId);
  try {
  await apiFetch(`/evangelism/events/${evId}`, { method: 'DELETE', token, silent: true });
@@ -726,12 +740,12 @@ function EventsPage() {
  }
  };
 
- const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> & {
+const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> & {
  target_audience?: string;
  target_role_ids?: string[];
  target_persona_ids?: string[];
  }) => {
- if (!token) return;
+ if (!token || !canManageEvents) return;
  if (payload.target_audience === 'ROLE' && (!Array.isArray(payload.target_role_ids) || payload.target_role_ids.length === 0)) {
  toast.error('Selecciona al menos un rol esperado antes de guardar');
  return;
@@ -780,8 +794,8 @@ function EventsPage() {
  )));
  toast.success('Evento actualizado con éxito');
  setEditingEvent(null);
- } catch (error: any) {
- const msg = error?.message || 'Error al actualizar el evento';
+ } catch (error: unknown) {
+ const msg = getErrorMessage(error, 'Error al actualizar el evento');
  toast.error(msg);
  } finally {
  setUpdatingEventId(null);
@@ -819,7 +833,7 @@ function EventsPage() {
  viewOptions={ALL_VIEWS}
  viewType={viewType}
  onViewChange={(view) => setViewType(view as ViewType)}
- onAdd={() => setIsCreateDrawerOpen(true)}
+ onAdd={canManageEvents ? () => setIsCreateDrawerOpen(true) : undefined}
  >
  <div className="p-4 space-y-3">
  {/* GRID VIEW */}
@@ -1057,7 +1071,7 @@ function EventsPage() {
 
  {/* Drawer: Crear evento */}
  <WorkspaceDrawer
- isOpen={isCreateDrawerOpen}
+ isOpen={isCreateDrawerOpen && canManageEvents}
  onClose={() => setIsCreateDrawerOpen(false)}
  title="Nuevo Evento"
  subtitle="Configura un evento de la iglesia"

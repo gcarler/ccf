@@ -29,7 +29,8 @@ export default function EventDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
-  const { token } = useAuth();
+  const { token, hasModuleAccess } = useAuth();
+  const canOperateEvents = hasModuleAccess('evangelism', 'edit');
 
   const [event, setEvent] = useState<MinistryEventDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -143,10 +144,12 @@ export default function EventDetailPage() {
                   onClick={() => setActiveTab('details')}
                   className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'details' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
                 >Detalles Generales</button>
-                <button
-                  onClick={() => setActiveTab('session')}
-                  className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'session' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
-                >Configurar sesión</button>
+                {canOperateEvents && (
+                  <button
+                    onClick={() => setActiveTab('session')}
+                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'session' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
+                  >Configurar sesión</button>
+                )}
                 <button
                   onClick={() => setActiveTab('analytics')}
                   className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'analytics' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
@@ -176,7 +179,7 @@ export default function EventDetailPage() {
 
           {activeTab === 'analytics' && <AnalyticsTab eventId={id} token={token} />}
 
-          {activeTab === 'session' && <SessionTab eventId={id} token={token} eventName={event.name} />}
+          {activeTab === 'session' && canOperateEvents && <SessionTab eventId={id} token={token} eventName={event.name} />}
         </div>
       </main>
     </EvangelismShell>

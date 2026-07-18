@@ -46,6 +46,36 @@ export interface EventSessionAttendanceData {
  attendees: { persona_id: string }[];
 }
 
+export interface EventAssignment {
+ id?: string;
+ persona_id: string;
+ role: string;
+ persona_name?: string;
+}
+
+export interface EventSessionData {
+ event_id: string;
+ session_date: string;
+ assignments: EventAssignment[];
+ metrics: Record<string, number>;
+ attendees: Array<{ persona_id: string; name: string; role: string; scanned_at: string | null }>;
+ absentees: Array<{ persona_id: string; name: string; role: string; phone: string }>;
+ total_absentees: number;
+ absentees_truncated: boolean;
+ total_attendance: number;
+ total_expected: number;
+ attendance_rate: number;
+}
+
+export interface EventAnalyticsData {
+ kpis: {
+ historical_avg: number;
+ trend_percentage: number;
+ peak_month: { month: string; avg: number };
+ };
+ monthly_data: Array<{ month: string; avg_attendance: number }>;
+}
+
 export interface ScanValidationResult {
  valid: boolean;
  persona_id: string;
@@ -225,13 +255,19 @@ export interface GroupDetailResponse {
  latitude?: number | null;
  longitude?: number | null;
  base_attendee_ids?: string[];
- base_attendees?: Array<{
- persona_id: string;
- name: string;
- role: string;
- church_role?: string;
- phone?: string;
- }>;
+  base_attendees?: Array<{
+    persona_id: string;
+    name: string;
+    role: string;
+    role_label?: string;
+    church_role?: string;
+    phone?: string;
+    persona?: {
+      nombre_completo?: string;
+      email?: string;
+      telefono?: string;
+    };
+  }>;
  sessions: SessionRow[];
  total_sessions?: number;
  total_attendance?: number;

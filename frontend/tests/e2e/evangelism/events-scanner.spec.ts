@@ -117,7 +117,17 @@ const ANALYTICS_DATA = {
 
 const TODAY = new Date().toISOString().split('T')[0];
 
-async function installEvangelismEventsMocks(page: Page) {
+async function installEvangelismEventsMocks(
+  page: Page,
+  session: { role: string; permissions: Record<string, 'allow' | 'deny'> } = {
+    role: 'admin',
+    permissions: {
+      'evangelism:read': 'allow',
+      'evangelism:manage': 'allow',
+      'crm:read': 'allow',
+    },
+  },
+) {
   let eventsState = BASE_EVENTS.map((event) => ({ ...event, target_role_ids: [...(event.target_role_ids ?? [])], target_persona_ids: [...(event.target_persona_ids ?? [])] }));
   let statsState: EventDashboardStat[] = [
     { event_id: 'event-1', latest_session: TODAY, attended: 1, expected: 1, rate: 100 },
@@ -183,12 +193,8 @@ async function installEvangelismEventsMocks(page: Page) {
   };
 
   await installMockPlatformSession(page, {
-    role: 'admin',
-    permissions: {
-      'evangelism:read': 'allow',
-      'evangelism:manage': 'allow',
-      'crm:read': 'allow',
-    },
+    role: session.role,
+    permissions: session.permissions,
   });
 
   await page.route('**/api/evangelism/strategies**', async (route) => {
@@ -480,6 +486,30 @@ test.describe('Evangelism events and scanner deep smoke', () => {
     await page.getByRole('button', { name: /Guardar agenda/i }).click();
     await expect.poll(() => mocks.getLastAssignmentsPayload()).not.toBeNull();
     await expect.poll(() => mocks.getLastAssignmentsPayload()?.assignments[0]?.persona_id).toBe('persona-carlos');
+  });
+
+  test('reader sees events and analytics without management requests or controls', async ({ page }) => {
+    const forbiddenRequests: string[] = [];
+    page.on('request', (request) => {
+      const url = request.url();
+      if (url.includes('/api/evangelism/events/dashboard-stats') || url.includes('/api/crm/personas')) {
+        forbiddenRequests.push(url);
+      }
+    });
+    await installEvangelismEventsMocks(page, {
+      role: 'lector',
+      permissions: { 'evangelism:read': 'allow' },
+    });
+
+    await page.goto('/plataforma/evangelism/events', { waitUntil: 'load' });
+    await expect(page.locator('body')).toContainText(/Noche de Esperanza/i);
+    await expect(page.getByRole('button', { name: /^Nuevo$/i })).toHaveCount(0);
+    await expect(forbiddenRequests).toEqual([]);
+
+    await page.goto('/plataforma/evangelism/events/event-1', { waitUntil: 'load' });
+    await expect(page.getByRole('button', { name: /Configurar sesión/i })).toHaveCount(0);
+    await page.getByRole('button', { name: /Analítica/i }).click();
+    await expect(page.locator('body')).toContainText(/Promedio Histórico/i);
   });
 
   test('validates scanner tokens from the standalone route and recovers after errors', async ({ page }) => {

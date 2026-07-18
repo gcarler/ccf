@@ -15,6 +15,7 @@ from backend import crud, models, schemas
 from backend.api.evangelism_shared import (
     FIRST_TIME_STATES,
     _can_manage_grupo,
+    get_visible_group,
     _get_persona_for_user,
     _is_crm_admin_or_pastor,
     is_absent_status,
@@ -296,10 +297,7 @@ def get_grupo(
 ):
     from backend.models_evangelism import Asistencia, GrupoEvangelismo, SesionGrupo
 
-    house = db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.id == grupo_id,
-        GrupoEvangelismo.deleted_at.is_(None),
-    ).first()
+    house = get_visible_group(db, grupo_id, require_user_sede_id(db, current_user))
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house):
@@ -529,12 +527,44 @@ async def create_grupo(
     current_user: models.User = Depends(require_evangelism_manage),
 ):
     body = payload.model_dump(exclude_unset=True)
+    user_sede = require_user_sede_id(db, current_user)
+    if payload.evangelism_strategy_id:
+        strategy = (
+            db.query(models.EstrategiaEvangelismo)
+            .filter(
+                models.EstrategiaEvangelismo.id == payload.evangelism_strategy_id,
+                models.EstrategiaEvangelismo.sede_id == user_sede,
+                models.EstrategiaEvangelismo.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not strategy:
+            raise HTTPException(status_code=404, detail="Estrategia no encontrada")
+
+    linked_persona_ids = {
+        persona_id
+        for persona_id in (
+            payload.leader_id,
+            payload.assistant_id,
+            payload.host_id,
+            *(item.persona_id for item in payload.base_attendees_with_roles or []),
+            *(payload.base_attendee_ids or []),
+        )
+        if persona_id is not None
+    }
+    if linked_persona_ids:
+        visible_personas = (
+            db.query(models.Persona.id)
+            .filter(
+                models.Persona.id.in_(linked_persona_ids),
+                models.Persona.sede_id == user_sede,
+            )
+            .all()
+        )
+        if {row[0] for row in visible_personas} != linked_persona_ids:
+            raise HTTPException(status_code=404, detail="Persona no encontrada")
+
     _validate_strategy_group_roles(db, payload.evangelism_strategy_id, body)
-    # Infer sede_id from user's profile, fallback to first sede
-    user_sede = crud.get_user_sede_id(db, current_user.id)
-    if not user_sede:
-        primera_sede = db.query(models.Sede).order_by("nombre").first()
-        user_sede = str(primera_sede.id) if primera_sede else None
     obj = crud.create_grupo(db, payload, sede_id=user_sede)
     return {
         "id": obj.id,
@@ -562,10 +592,7 @@ def update_grupo(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    house_db = db.query(GrupoEvangelismo).filter(
-        models.GrupoEvangelismo.id == grupo_id,
-        models.GrupoEvangelismo.deleted_at.is_(None),
-    ).first()
+    house_db = get_visible_group(db, grupo_id, require_user_sede_id(db, current_user))
     if not house_db:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     if not _can_manage_grupo(db, current_user, house_db):

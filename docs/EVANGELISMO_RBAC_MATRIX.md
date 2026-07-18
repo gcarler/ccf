@@ -2,7 +2,7 @@
 
 > **Objetivo:** documentar el control de acceso real del módulo de evangelismo según el código vigente.
 >
-> **Fecha de verificación:** 2026-07-17
+> **Fecha de verificación:** 2026-07-18
 > **Fuente de verdad:** código backend en `backend/api/evangelism*` y `backend/core/permissions.py`
 
 ## 1. Resumen ejecutivo
@@ -18,8 +18,8 @@ El estado actual del backend es híbrido, pero con una taxonomía canónica ya i
 - Superficies contextuales que siguen usando `get_current_user`:
   - rutas personales tipo `mine`
   - asistencia de grupos por ownership/liderazgo
-- Superficies puntuales con `require_active_user`:
-  - check-in rápido de visitantes en eventos
+- Check-in rápido de visitantes en eventos:
+  - `require_evangelism_edit` + alcance del evento y sede
 - Scanner:
   - sigue montado con `require_module_access("evangelism", "...")`, equivalente funcional de los guards canónicos
 
@@ -111,7 +111,8 @@ Archivo: `backend/api/evangelism_grupos/grupos_main.py`
 
 | Superficie | Guard real |
 |---|---|
-| `/grupos`, `/groups`, resúmenes, analytics y detalle administrativo | `require_evangelism_read` o `require_evangelism_manage` según operación |
+| `/grupos`, `/groups`, resúmenes y analytics | `require_evangelism_read` o `require_evangelism_manage` según operación |
+| detalle de grupo y asistencia | `get_current_user` + ownership/liderazgo contextual |
 | creación, edición y delete | `require_evangelism_manage` |
 | `/grupos/mine`, `/groups/mine` | `get_current_user` + ownership/liderazgo |
 
@@ -164,12 +165,12 @@ Archivos:
 | listar/ver analytics/export básico | `require_evangelism_read` |
 | CRUD, dashboards administrativos, audiencia, roles, assignments | `require_evangelism_manage` |
 | operaciones operativas de participación | `require_evangelism_edit` o `require_evangelism_manage` según endpoint |
-| check-in rápido de visitantes | `require_active_user` + `require_event_access(...)` |
+| check-in rápido de visitantes | `require_evangelism_edit` + `require_event_access(...)` |
 
 Lectura:
 
 - Eventos ya no debe describirse como superficie basada en `require_pastor_or_admin`.
-- Sigue existiendo un flujo puntual de visitante con `require_active_user`, protegido además por acceso contextual al evento.
+- El check-in de visitante exige `evangelism:edit` y alcance de sede del evento.
 
 ### 5.8 Multiplicación
 
@@ -202,6 +203,10 @@ Archivos:
 | rankings | `require_evangelism_read` |
 | reportes | `require_evangelism_read` |
 | analytics | `require_evangelism_read` |
+
+Además del guard, Analytics, Scanner, Estrategias y creación de Grupos resuelven
+el recurso dentro de la sede autenticada. El permiso nunca sustituye el alcance
+de tenant.
 
 ## 6. Lectura por rol operativo
 

@@ -38,6 +38,32 @@ interface SeasonForm {
  end_date: string;
  periodicity: 'SEMANAL' | 'MENSUAL';
 }
+interface CounselingListResponse { items?: unknown[]; }
+interface ReminderResponse {
+ notifications_created?: number;
+ created?: number;
+ sessions_tomorrow_count?: number;
+ inactive_groups_count?: number;
+}
+interface SessionCreatePayload {
+ season_id: string;
+ create_for_all_groups: boolean;
+ session_date: string;
+ topic: string | null;
+ report_deadline: string | null;
+ grupo_id?: string;
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+ if (error instanceof ApiError) {
+   const detail = error.detail;
+   if (typeof detail === 'string') return detail;
+   if (detail && typeof detail === 'object' && 'detail' in detail) {
+     return String((detail as { detail?: unknown }).detail || fallback);
+   }
+ }
+ return error instanceof Error ? error.message : fallback;
+}
 
 const PERIODICITY_LABEL: Record<string, string> = { SEMANAL: 'Semanal', MENSUAL: 'Mensual' };
 
@@ -101,8 +127,8 @@ export default function GroupPage() {
 
  useEffect(() => {
    if (!token) return;
-   apiFetch<unknown>('/crm/counseling', { token, silent: true, query: { status: 'open', limit: 1 } })
-     .then((res: any) => {
+   apiFetch<CounselingListResponse | unknown[]>('/crm/counseling', { token, silent: true, query: { status: 'open', limit: 1 } })
+     .then((res) => {
        const arr = Array.isArray(res) ? res : Array.isArray(res?.items) ? res.items : [];
        setCounselingCount(arr.length);
      })
@@ -112,18 +138,18 @@ export default function GroupPage() {
  const triggerReminders = async () => {
    setSendingReminders(true);
    try {
-     const res: any = await apiFetch('/evangelism/notifications/send-reminders', { method: 'POST', token, silent: true });
-     const total = res?.notifications_created ?? res?.created ?? 0;
-     const sessionsT = res?.sessions_tomorrow_count ?? 0;
-     const inactive = res?.inactive_groups_count ?? 0;
+     const res = await apiFetch<ReminderResponse>('/evangelism/notifications/send-reminders', { method: 'POST', token, silent: true });
+     const total = res.notifications_created ?? res.created ?? 0;
+     const sessionsT = res.sessions_tomorrow_count ?? 0;
+     const inactive = res.inactive_groups_count ?? 0;
      toast.success(
        total
          ? `Se enviaron ${total} recordatorios (${sessionsT} sesiones de mañana, ${inactive} grupos sin reporte)`
          : 'Sin recordatorios pendientes. Todos los líderes están al día.'
      );
      setConfirmReminders(null);
-   } catch (e: any) {
-     toast.error(e?.message || 'Error al enviar recordatorios');
+   } catch (error: unknown) {
+     toast.error(getErrorMessage(error, 'Error al enviar recordatorios'));
    } finally {
      setSendingReminders(false);
    }
@@ -162,7 +188,7 @@ export default function GroupPage() {
  }
  setSavingSession(true);
  try {
- const bodyPayload: any = {
+ const bodyPayload: SessionCreatePayload = {
    season_id: activeSeason.id,
    create_for_all_groups: sessionForm.create_for_all_groups,
    session_date: sessionForm.session_date,
