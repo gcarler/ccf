@@ -673,7 +673,7 @@ def delete_automation_edge(
 
 
 @router.get("/automations/edges", response_model=List[CrmAutomationEdgeOut])
-def list_automation_edges_legacy(
+def list_automation_edges_fallback(
     source_id: Optional[UUID] = None,
     target_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
@@ -683,7 +683,7 @@ def list_automation_edges_legacy(
 
 
 @router.post("/automations/edges", response_model=CrmAutomationEdgeOut, status_code=201)
-def create_automation_edge_legacy(
+def create_automation_edge_fallback(
     payload: CrmAutomationEdgeCreate,
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm", "edit")),
@@ -692,7 +692,7 @@ def create_automation_edge_legacy(
 
 
 @router.delete("/automations/edges/{edge_id}", status_code=204)
-def delete_automation_edge_legacy(
+def delete_automation_edge_fallback(
     edge_id: UUID,
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm", "edit")),
