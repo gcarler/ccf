@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 const API_BASE = (process.env.API_BASE_URL || process.env.E2E_API_URL || 'http://127.0.0.1:8000/api').replace(/\/$/, '')
 const PRIMARY_COLLECTION_PATH = '/crm/resources/automation-edges'
-const LEGACY_COLLECTION_PATH = '/crm/resources/automations/edges'
+const FALLBACK_COLLECTION_PATH = '/crm/resources/automations/edges'
 
 function buildBackendUrl(path: string, request: Request) {
   const backendUrl = new URL(`${API_BASE}${path}`)
@@ -50,14 +50,14 @@ export async function proxyAutomationEdgesCollection(request: Request) {
   if (primary.status !== 404) {
     return primary
   }
-  const legacy = await forward(request, LEGACY_COLLECTION_PATH, { body })
-  if (request.method === 'GET' && legacy.status === 422) {
-    // Legacy backends can still resolve this collection against the dynamic
+  const fallback = await forward(request, FALLBACK_COLLECTION_PATH, { body })
+  if (request.method === 'GET' && fallback.status === 422) {
+    // Backends without the dedicated collection route can still resolve this
     // `/automations/{automation_id}` route and emit 422. For builder boot,
     // that should degrade to an empty graph instead of crashing the screen.
     return NextResponse.json([])
   }
-  return legacy
+  return fallback
 }
 
 export async function proxyAutomationEdgesItem(request: Request, edgeId: string) {
@@ -65,5 +65,5 @@ export async function proxyAutomationEdgesItem(request: Request, edgeId: string)
   if (primary.status !== 404) {
     return primary
   }
-  return forward(request, `${LEGACY_COLLECTION_PATH}/${edgeId}`)
+  return forward(request, `${FALLBACK_COLLECTION_PATH}/${edgeId}`)
 }
