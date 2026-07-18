@@ -250,6 +250,7 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/dashboard/ac
 **Pasos:**
 1. `DELETE /admin/submissions/{id}` con `AcademyEditor` o el propio estudiante (ownership).
 2. Soft delete (`deleted_at`), no hard delete.
+3. **Verificación posterior (cierre 2026-07-18):** `AcademyActivityLog` con `event_type="assignment_submission_archived"` debe existir y contener `payload_json` con `submission_id`, `file_url`, `lesson_id`, `enrollment_id`, `archived_at`, `archived_by_persona_id`. Las llamadas posteriores a `GET /admin/submissions` y `PATCH /admin/submissions/{id}/grade` deben **no** ver/modificar entregas archivadas. `pytest tests/test_academy_api.py::test_delete_submission_archives_with_payload_json` automatiza este path.
 
 ### 10.4. BAJOS
 

@@ -40,9 +40,7 @@ def test_lector_can_enroll_and_update_own_progress(client, db_session):
     )
     db_session.add_all([course, lesson])
     db_session.commit()
-    headers = auth_headers(
-        client, email=student.email, password="testpass123"
-    )
+    headers = auth_headers(client, email=student.email, password="testpass123")
 
     enrollment = client.post(
         "/api/academy/enrollments",
@@ -80,9 +78,7 @@ def test_lector_cannot_enroll_another_persona(client, db_session):
     )
     db_session.add(course)
     db_session.commit()
-    headers = auth_headers(
-        client, email=student.email, password="testpass123"
-    )
+    headers = auth_headers(client, email=student.email, password="testpass123")
 
     response = client.post(
         "/api/academy/enrollments",
@@ -107,12 +103,8 @@ def test_forum_threads_isolate_by_sede(client, db_session):
     """
     import uuid as _uuid
 
-    admin_a, persona_a, sede_a = seed_admin(
-        db_session, email="adminA@example.com", password="testpass123"
-    )
-    admin_b, persona_b, sede_b = seed_admin(
-        db_session, email="adminB@example.com", password="testpass123"
-    )
+    admin_a, persona_a, sede_a = seed_admin(db_session, email="adminA@example.com", password="testpass123")
+    admin_b, persona_b, sede_b = seed_admin(db_session, email="adminB@example.com", password="testpass123")
     assert sede_a.id != sede_b.id, "Las sedes A y B deben ser distintas"
 
     base_time = _utcnow()
@@ -182,12 +174,8 @@ def test_forum_threads_isolate_by_sede(client, db_session):
     titles_a = {t["title"] for t in resp_a.json()}
     assert "Thread A" in titles_a
     assert "Global Announcement" in titles_a
-    assert "Thread B" not in titles_a, (
-        "Fuga de aislamiento: admin A de sede_a ve Thread B de sede_b"
-    )
-    assert "Thread on deleted Course" not in titles_a, (
-        "Hilo de curso soft-deleted debe estar OCULTO para admin A"
-    )
+    assert "Thread B" not in titles_a, "Fuga de aislamiento: admin A de sede_a ve Thread B de sede_b"
+    assert "Thread on deleted Course" not in titles_a, "Hilo de curso soft-deleted debe estar OCULTO para admin A"
     response_a = [t["title"] for t in resp_a.json()]
     assert len(response_a) == 2, (
         f"Admin A debería ver exactamente 2 hilos (suyos + global), vio {len(response_a)}: {response_a}"
@@ -200,12 +188,8 @@ def test_forum_threads_isolate_by_sede(client, db_session):
     titles_b = {t["title"] for t in resp_b.json()}
     assert "Thread B" in titles_b
     assert "Global Announcement" in titles_b
-    assert "Thread A" not in titles_b, (
-        "Fuga de aislamiento: admin B de sede_b ve Thread A de sede_a"
-    )
-    assert "Thread on deleted Course" not in titles_b, (
-        "Hilo de curso soft-deleted debe estar OCULTO para admin B"
-    )
+    assert "Thread A" not in titles_b, "Fuga de aislamiento: admin B de sede_b ve Thread A de sede_a"
+    assert "Thread on deleted Course" not in titles_b, "Hilo de curso soft-deleted debe estar OCULTO para admin B"
     response_b = [t["title"] for t in resp_b.json()]
     assert len(response_b) == 2, (
         f"Admin B debería ver exactamente 2 hilos (suyos + global), vio {len(response_b)}: {response_b}"
@@ -215,6 +199,122 @@ def test_forum_threads_isolate_by_sede(client, db_session):
     assert response_b[0] == "Global Announcement", (
         f"Orden DESC incorrecto; primero deberia ser Global Announcement, fue {response_b[0]}"
     )
+
+
+def test_delete_submission_archives_with_payload_json(client, db_session):
+    """ACAD-MED-003 + ACAD-MED-003-FOLLOWUP: DELETE /admin/submissions/{id} debe
+    soft-deleted la entrega (Regla 4, sin db.delete()) y preservar ``file_url``,
+    ``lesson_id`` y ``enrollment_id`` en ``AcademyActivityLog.payload_json``.
+
+    El job batch de purga de Seaweed consultará ``event_type='assignment_submission_archived'``
+    y leerá ``payload_json`` para listar archivos huérfanos.
+    """
+    import uuid as _uuid
+
+    editor, _persona_editor, sede = seed_admin(db_session, email="archiver.editor@example.com", password="testpass123")
+    editor.rol_plataforma.permisos = {"academy:edit": "allow", "academy:manage": "allow"}
+    db_session.commit()
+
+    student, persona_student, _ = seed_user_with_role(
+        db_session,
+        role_name="academy_student",
+        email="archiver.student@example.com",
+        password="testpass123",
+    )
+
+    course = models.Course(
+        code=f"ACA-ARCH-{_uuid.uuid4().hex[:6]}",
+        title="Archivable Course",
+        modality="formal",
+        sede_id=sede.id,
+        is_published=True,
+    )
+    db_session.add(course)
+    db_session.commit()
+
+    lesson = models.Lesson(
+        course_id=course.id,
+        title="Lesson to Archive",
+        content="x",
+        order_index=1,
+        is_published=True,
+    )
+    db_session.add(lesson)
+    db_session.commit()
+
+    enrollment = models.Enrollment(persona_id=persona_student.id, course_id=course.id)
+    db_session.add(enrollment)
+    db_session.commit()
+
+    original_file_url = f"https://seaweed.local/ccf/academy/{_uuid.uuid4().hex}.pdf"
+    submission = models.AssignmentSubmission(
+        enrollment_id=enrollment.id,
+        lesson_id=lesson.id,
+        file_url=original_file_url,
+        comment="entrega archivable",
+    )
+    db_session.add(submission)
+    db_session.commit()
+
+    submission_id = submission.id
+    lesson_id = lesson.id
+    enrollment_id = enrollment.id
+
+    headers = auth_headers(client, email="archiver.editor@example.com")
+    resp = client.delete(
+        f"/api/academy/admin/submissions/{submission_id}",
+        headers=headers,
+    )
+    assert resp.status_code == 204, f"DELETE submission debe devolver 204 (status {resp.status_code}): {resp.text}"
+
+    # 1. Soft delete (Regla 4): row sigue en DB pero con deleted_at poblado.
+    db_session.expire_all()
+    archived = (
+        db_session.query(models.AssignmentSubmission).filter(models.AssignmentSubmission.id == submission_id).first()
+    )
+    assert archived is not None, "Regla 4 violada: row fue eliminado en lugar de archivado (deleted_at)"
+    assert archived.deleted_at is not None, "Regla 4 violada: deleted_at no fue seteado tras DELETE"
+
+    # 2. Idempotencia: un segundo DELETE sobre el mismo id devuelve 404.
+    resp_again = client.delete(
+        f"/api/academy/admin/submissions/{submission_id}",
+        headers=headers,
+    )
+    assert resp_again.status_code == 404, (
+        f"Segundo DELETE debe ser 404 (status {resp_again.status_code}): {resp_again.text}"
+    )
+
+    # 3. ACAD-MED-003-FOLLOWUP (cierre): AcademyActivityLog archivó el payload completo.
+    log = (
+        db_session.query(models.AcademyActivityLog)
+        .filter(
+            models.AcademyActivityLog.event_type == "assignment_submission_archived",
+            models.AcademyActivityLog.persona_id == editor.id,
+        )
+        .order_by(models.AcademyActivityLog.created_at.desc())
+        .first()
+    )
+    assert log is not None, (
+        "ACAD-MED-003: AcademyActivityLog con event_type='assignment_submission_archived' debe existir tras DELETE"
+    )
+    payload = log.payload_json or {}
+    assert payload.get("submission_id") == str(submission_id), (
+        f"payload_json.submission_id esperado {submission_id}, obtuve {payload.get('submission_id')}"
+    )
+    assert payload.get("file_url") == original_file_url, (
+        f"payload_json.file_url esperado {original_file_url}, "
+        f"obtuve {payload.get('file_url')} — ACAD-MED-003 incompleto"
+    )
+    assert payload.get("lesson_id") == str(lesson_id), (
+        f"payload_json.lesson_id esperado {lesson_id}, obtuve {payload.get('lesson_id')}"
+    )
+    assert payload.get("enrollment_id") == str(enrollment_id), (
+        f"payload_json.enrollment_id esperado {enrollment_id}, obtuve {payload.get('enrollment_id')}"
+    )
+    assert payload.get("archived_by_persona_id") == str(editor.id), (
+        f"payload_json.archived_by_persona_id esperado {editor.id}, obtuve {payload.get('archived_by_persona_id')}"
+    )
+    assert "archived_at" in payload, "payload_json.archived_at debe estar presente para forense temporal"
 
 
 def test_grade_submission_blocks_cross_sede(client, db_session):
@@ -227,9 +327,7 @@ def test_grade_submission_blocks_cross_sede(client, db_session):
     import uuid as _uuid
 
     # Editor: ADMIN en sede_a (posee academy:edit por permisos `*`).
-    admin_a, _persona_a, sede_a = seed_admin(
-        db_session, email="editorA@example.com", password="testpass123"
-    )
+    admin_a, _persona_a, sede_a = seed_admin(db_session, email="editorA@example.com", password="testpass123")
     # Estudiante + sede B independientes (cada seed crea su propia Sede).
     sede_b_id = _uuid.uuid4()
     _student_b, persona_b, sede_b = seed_user_with_role(
@@ -241,15 +339,11 @@ def test_grade_submission_blocks_cross_sede(client, db_session):
     )
     assert sede_a.id != sede_b.id, "Las sedes A y B deben ser distintas"
 
-    course_b = models.Course(
-        code=f"CB-{_uuid.uuid4().hex[:6]}", title="Course B", modality="online", sede_id=sede_b.id
-    )
+    course_b = models.Course(code=f"CB-{_uuid.uuid4().hex[:6]}", title="Course B", modality="online", sede_id=sede_b.id)
     db_session.add(course_b)
     db_session.commit()
 
-    lesson_b = models.Lesson(
-        course_id=course_b.id, title="Lesson B", content="x", order_index=1, is_published=True
-    )
+    lesson_b = models.Lesson(course_id=course_b.id, title="Lesson B", content="x", order_index=1, is_published=True)
     db_session.add(lesson_b)
     db_session.commit()
 
@@ -270,7 +364,7 @@ def test_grade_submission_blocks_cross_sede(client, db_session):
     headers_a = auth_headers(client, email="editorA@example.com")
     resp = client.patch(
         f"/api/academy/admin/submissions/{submission_b.id}/grade",
-        params={"grade": 95.0, "feedback": "A deberia poder verlos"},
+        json={"grade": 95.0, "feedback": "A deberia poder verlos"},
         headers=headers_a,
     )
     assert resp.status_code == 404, (
@@ -278,27 +372,21 @@ def test_grade_submission_blocks_cross_sede(client, db_session):
         f"(status {resp.status_code}); body={resp.text}"
     )
     db_session.refresh(submission_b)
-    assert submission_b.grade is None, (
-        "El grade de la submission cross-sede NO debe persistir"
-    )
+    assert submission_b.grade is None, "El grade de la submission cross-sede NO debe persistir"
 
     # Sanity: la Submission SÍ es calificable por un editor reasignado a sede_b.
-    admin_b, _persona_b_admin, _sede_extra = seed_admin(
-        db_session, email="editorB@example.com", password="testpass123"
-    )
+    admin_b, _persona_b_admin, _sede_extra = seed_admin(db_session, email="editorB@example.com", password="testpass123")
     # Reasignamos manualmente al editor_b la sede_b para reproducir el path feliz.
     admin_b.sede_id = sede_b.id
     db_session.commit()
     headers_b = auth_headers(client, email="editorB@example.com")
     resp_ok = client.patch(
         f"/api/academy/admin/submissions/{submission_b.id}/grade",
-        params={"grade": 88.0, "feedback": "ok"},
+        json={"grade": 88.0, "feedback": "ok"},
         headers=headers_b,
     )
     assert resp_ok.status_code == 200, (
         f"Editor de sede_b no pudo calificar su propia sede (status {resp_ok.status_code}): {resp_ok.text}"
     )
     db_session.refresh(submission_b)
-    assert submission_b.grade == 88.0, (
-        f"Grade persistido incorrectamente; esperado 88.0, obtuve {submission_b.grade}"
-    )
+    assert submission_b.grade == 88.0, f"Grade persistido incorrectamente; esperado 88.0, obtuve {submission_b.grade}"
