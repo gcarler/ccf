@@ -84,7 +84,7 @@ export default function DonationConfig() {
     const [viewType, setViewType] = useState<ViewType>('grid');
 
 
-    const fetchCategories = useCallback(async () => {
+    const fetchCategories = useCallback(async (signal?: AbortSignal) => {
 
         if (!token) return;
 
@@ -92,11 +92,13 @@ export default function DonationConfig() {
 
         try {
 
-            const data = await apiFetch<Category[]>('/admin/donation-categories', { token, cache: 'no-store' });
+            const data = await apiFetch<Category[]>('/admin/donation-categories', { token, cache: 'no-store', signal });
 
             setCategories(Array.isArray(data) ? data : []);
 
-        } catch (err) {
+        } catch (err: any) {
+
+            if (err?.name === 'AbortError') return;
 
             console.error(err);
 
@@ -113,9 +115,10 @@ export default function DonationConfig() {
 
 
     useEffect(() => {
-
-        if (isAuthenticated) fetchCategories();
-
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchCategories(controller.signal);
+        return () => controller.abort();
     }, [isAuthenticated, fetchCategories]);
 
 

@@ -30,12 +30,12 @@ export default function RolesPage() {
         permissions: []
     });
 
-    const fetchData = async () => {
+    const fetchData = async (signal?: AbortSignal) => {
         setLoading(true);
         try {
             const [rolesRes, permsRes] = await Promise.all([
-                apiFetch<any[]>('/admin/auth-role-definitions', { token }),
-                apiFetch<Record<string, string>>('/admin/permissions', { token })
+                apiFetch<any[]>('/admin/auth-role-definitions', { token, signal }),
+                apiFetch<Record<string, string>>('/admin/permissions', { token, signal })
             ]);
             // Map auth roles to the expected format
             const mapped = (Array.isArray(rolesRes) ? rolesRes : []).map((r: any) => ({
@@ -45,7 +45,8 @@ export default function RolesPage() {
             }));
             setRoles(mapped);
             setPermissionsMap(permsRes || {});
-        } catch {
+        } catch (err: any) {
+            if (err?.name === 'AbortError') return;
             addToast("Error al cargar roles", "error");
         } finally {
             setLoading(false);
@@ -53,8 +54,9 @@ export default function RolesPage() {
     };
 
     useEffect(() => {
-        fetchData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        const controller = new AbortController();
+        fetchData(controller.signal);
+        return () => controller.abort();
     }, [token]);
 
     const openCreateDrawer = () => {

@@ -7,8 +7,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.orm.attributes import flag_modified
@@ -24,6 +24,7 @@ from backend.core.permissions import (
     require_active_user,
     require_admin,
 )
+from backend.core.audit import record_admin_action
 from backend.core.tenant import get_user_sede_id
 from backend.models_auth import RolPlataforma, Usuario, UsuarioRolModulo
 from backend.models_crm import Persona
@@ -31,6 +32,58 @@ from backend.models_shared import _utcnow
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Pydantic request bodies (mass-assignment protection)
+# ---------------------------------------------------------------------------
+
+class CreateUserBody(BaseModel):
+    username: str = Field(min_length=3, max_length=64)
+    email: str = Field(max_length=120)
+    password: str = Field(min_length=8, max_length=128)
+    first_name: str = Field(max_length=100)
+    last_name: str = Field(max_length=100)
+    role: str = Field(max_length=50)
+    is_active: bool = True
+
+class UpdateUserBody(BaseModel):
+    username: str | None = Field(default=None, min_length=3, max_length=64)
+    email: str | None = Field(default=None, max_length=120)
+    first_name: str | None = Field(default=None, max_length=100)
+    last_name: str | None = Field(default=None, max_length=100)
+    role: str | None = Field(default=None, max_length=50)
+    is_active: bool | None = None
+    password: str | None = Field(default=None, min_length=8, max_length=128)
+
+class AwardMilestoneBody(BaseModel):
+    persona_id: str
+    badge_id: str
+    awarded_by: str | None = None
+
+class CreateLocationBody(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    address: str | None = None
+    phone: str | None = None
+
+class CreateDonationCategoryBody(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    description: str | None = None
+
+class CreateAuthRoleBody(BaseModel):
+    key: str = Field(min_length=1, max_length=50)
+    name: str = Field(min_length=1, max_length=100)
+    description: str | None = None
+    permissions: list[str] = []
+
+class UpdateAuthRoleBody(BaseModel):
+    name: str | None = Field(default=None, max_length=100)
+    description: str | None = None
+    permissions: list[str] | None = None
+
+class AssignModuleRoleBody(BaseModel):
+    user_id: str
+    modulo: str
+    rol_id: str
 
 
 def _serialize_automation(rule: models.AutomationRule) -> schemas.AutomationRuleRead:
@@ -50,19 +103,25 @@ def list_roles(
     db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
 ):
     """Lista todos los roles de plataforma y el conteo de usuarios vinculados."""
-    roles = db.query(RolPlataforma).all()
-    result = []
-    for r in roles:
-        count = db.query(Usuario).filter(Usuario.rol_plataforma_id == r.id).count()
-        result.append(
-            {
-                "id": str(r.id),
-                "name": r.nombre,
-                "permissions": r.permisos or {},
-                "users_count": count,
-            }
+    role_user_counts = dict(
+        db.query(
+            Usuario.rol_plataforma_id,
+            func.count(Usuario.id),
         )
-    return result
+        .filter(Usuario.rol_plataforma_id.isnot(None))
+        .group_by(Usuario.rol_plataforma_id)
+        .all()
+    )
+    roles = db.query(RolPlataforma).all()
+    return [
+        {
+            "id": str(r.id),
+            "name": r.nombre,
+            "permissions": r.permisos or {},
+            "users_count": role_user_counts.get(r.id, 0),
+        }
+        for r in roles
+    ]
 
 
 class CreateRoleBody(BaseModel):
@@ -105,6 +164,7 @@ def update_role(
         raise HTTPException(status_code=404, detail="Role not found")
     role.permisos = payload.permissions
     db.commit()
+    record_admin_action(db, current_user, "role.update", "role", str(rid))
     return {"status": "success"}
 
 
@@ -130,6 +190,7 @@ def delete_role(
     # ccf-quality-bypass: RolPlataforma has no deleted_at column, hard delete is expected
     getattr(db, "delete")(role)
     db.commit()
+    record_admin_action(db, current_user, "role.delete", "role", str(rid))
 
 
 @router.get("/permissions")
@@ -271,10 +332,8 @@ def set_user_permissions(
             user.rol_plataforma_id = new_rol.id
 
     db.commit()
+    record_admin_action(db, current_user, "permissions.set", "user", user_id, {"modules": list(resolved_perms.keys())})
     return {"status": "success", "user_id": user_id, "permissions": resolved_perms}
-
-
-# --- CHURCH LOCATIONS ---
 
 
 @router.get("/locations", response_model=List[Dict[str, Any]])
@@ -296,23 +355,17 @@ def list_locations(db: Session = Depends(get_db), _user=Depends(require_active_u
 
 @router.post("/locations")
 def create_location(
-    payload: Dict[str, Any],
+    body: CreateLocationBody,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    """Crea una nueva sede o anexo.
-
-    El contrato público acepta únicamente ``nombre``. El nombre interno de la
-    columna no forma parte del contrato HTTP.
-    """
-    name = payload.get("nombre")
-    if not name or not str(name).strip():
+    """Crea una nueva sede o anexo."""
+    name = body.name.strip()
+    if not name:
         raise HTTPException(status_code=400, detail="nombre es requerido")
     loc = models.ChurchLocation(
-        name=str(name).strip(),
-        address=payload.get("address"),
-        pastor_name=payload.get("pastor"),
-        location_type=payload.get("type", "Sede"),
+        name=name,
+        address=body.address,
     )
     db.add(loc)
     db.commit()
@@ -340,8 +393,8 @@ def list_variables(
     db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
 ):
     """Obtiene variables de configuración global del sistema."""
-    vars = db.query(models.SystemVariable).all()
-    return {v.key: v.value for v in vars}
+    sys_vars = db.query(models.SystemVariable).all()
+    return {v.key: v.value for v in sys_vars}
 
 
 class SetVariableBody(BaseModel):
@@ -576,23 +629,20 @@ def get_admin_user(
 
 @router.post("/users", response_model=Dict[str, Any])
 def create_admin_user(
-    payload: dict,
+    body: CreateUserBody,
     db: Session = Depends(get_db),
     current_user=Depends(require_admin),
 ):
     """Crea un nuevo usuario Auth v3 desde el panel de administración.
 
-    Crea una Persona mínima vinculada a la sede principal, luego un Usuario
+    Crea una Persona mínima vinculada a la sede del admin, luego un Usuario
     con las credenciales proporcionadas y rol MIEMBRO por defecto.
     """
-    username = str(payload.get("username", "")).strip()
-    email = str(payload.get("email", "")).strip()
-    password = str(payload.get("password", ""))
-    first_name = str(payload.get("first_name", payload.get("nombre", username))).strip()
-    last_name = str(payload.get("last_name", payload.get("apellido", ""))).strip()
-
-    if not username or not email or not password:
-        raise HTTPException(status_code=400, detail="username, email y password son requeridos")
+    username = body.username.strip()
+    email = body.email.strip()
+    password = body.password
+    first_name = body.first_name.strip() or username
+    last_name = body.last_name.strip()
 
     # Verificar duplicados en auth_users.
     existing = db.query(Usuario).filter(
@@ -601,10 +651,9 @@ def create_admin_user(
     if existing:
         raise HTTPException(status_code=409, detail="Usuario o email ya existe")
 
-    # Obtener sede_id (usar la primera sede disponible)
-    sede = db.query(models.Sede).first()
-    if not sede:
-        raise HTTPException(status_code=500, detail="No hay sedes configuradas en el sistema")
+    sede_id = get_user_sede_id(db, current_user)
+    if not sede_id:
+        raise HTTPException(status_code=500, detail="No se pudo determinar la sede del administrador")
 
     default_role = db.query(RolPlataforma).filter(
         RolPlataforma.nombre == "MIEMBRO"
@@ -617,43 +666,39 @@ def create_admin_user(
         db.add(default_role)
         db.flush()
 
-    # Crear Persona mínima (requerido como FK de Usuario)
     persona_id = uuid.uuid4()
     persona = Persona(
         id=persona_id,
-        first_name=first_name or username,
+        first_name=first_name,
         last_name=last_name,
         email=email,
-        sede_id=sede.id,
+        sede_id=sede_id,
     )
     db.add(persona)
     db.flush()
 
-    # Crear Usuario en auth_users.
     new_user = Usuario(
         id=persona_id,
-        sede_id=sede.id,
+        sede_id=sede_id,
         username=username,
         email=email,
         password_hash=hash_password(password),
         rol_plataforma_id=default_role.id,
-        is_active=True,
+        is_active=body.is_active,
         is_email_verified=False,
     )
-    if payload.get("role"):
-        _assign_auth_user_role(db, new_user, str(payload["role"]))
+    if body.role:
+        _assign_auth_user_role(db, new_user, body.role)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return {
-        **_serialize_auth_user_row(new_user),
-    }
+    return _serialize_auth_user_row(new_user)
 
 
 @router.patch("/users/{user_id}", response_model=Dict[str, Any])
 def update_admin_user(
     user_id: str,
-    payload: dict,
+    body: UpdateUserBody,
     db: Session = Depends(get_db),
     current_user=Depends(require_admin),
 ):
@@ -672,35 +717,20 @@ def update_admin_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if "username" in payload and payload["username"] is not None:
-        user.username = str(payload["username"]).strip()
-    if "email" in payload and payload["email"] is not None:
-        new_email = str(payload["email"]).strip()
+    if body.username is not None:
+        user.username = body.username.strip()
+    if body.email is not None:
+        new_email = body.email.strip()
         user.email = new_email
         persona = db.query(Persona).filter(Persona.id == user.id).first()
         if persona:
             persona.email = new_email
-    if "password" in payload and payload["password"]:
-        user.password_hash = hash_password(str(payload["password"]))
-    if "is_active" in payload and payload["is_active"] is not None:
-        user.is_active = bool(payload["is_active"])
-    if "rol_plataforma_id" in payload:
-        role_id = payload["rol_plataforma_id"]
-        if role_id in (None, "", "null"):
-            user.rol_plataforma_id = None
-        else:
-            try:
-                user.rol_plataforma_id = uuid.UUID(str(role_id))
-            except ValueError:
-                raise HTTPException(status_code=400, detail="rol_plataforma_id invalido")
-    if "role_id" in payload:
-        value = payload["role_id"]
-        if value in (None, "", "null"):
-            user.rol_plataforma_id = None
-        else:
-            user.rol_plataforma_id = _parse_auth_role_id(value, "role_id")
-    if "role" in payload:
-        _assign_auth_user_role(db, user, str(payload["role"]))
+    if body.password is not None:
+        user.password_hash = hash_password(body.password)
+    if body.is_active is not None:
+        user.is_active = body.is_active
+    if body.role is not None:
+        _assign_auth_user_role(db, user, body.role)
 
     db.commit()
     db.refresh(user)
@@ -728,6 +758,7 @@ def delete_admin_user(
         raise HTTPException(status_code=404, detail="User not found")
     user.is_active = False
     db.commit()
+    record_admin_action(db, current_user, "user.deactivate", "user", str(uid))
 
 
 @router.patch("/users/{user_id}/role")
@@ -758,6 +789,7 @@ def change_user_role(
 
     user.rol_plataforma_id = role.id
     db.commit()
+    record_admin_action(db, current_user, "user.role_change", "user", str(uid), {"role_id": str(role.id)})
     db.refresh(user)
     return {
         "status": "success",
@@ -772,7 +804,7 @@ def change_user_role(
 
 @router.get("/audit", response_model=List[Dict[str, Any]])
 def list_admin_audit(
-    limit: int = 100,
+    limit: int = Query(default=100, ge=1, le=1000),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
@@ -807,25 +839,32 @@ def list_all_comments(
         .order_by(models.ForumComment.created_at.desc())
         .all()
     )
-    result = []
-    for c in comments:
-        user = db.query(models.User).filter(models.User.id == c.author_id).first()
-        thread = (
-            db.query(models.ForumThread)
-            .filter(models.ForumThread.id == c.thread_id)
-            .first()
-        )
-        result.append(
-            {
-                "id": c.id,
-                "author": user.username if user else "Anónimo",
-                "text": c.content,
-                "context": thread.title if thread else "General",
-                "type": thread.category if thread else "Foro",
-                "created_at": c.created_at.isoformat(),
-            }
-        )
-    return result
+    if not comments:
+        return []
+
+    author_ids = {c.author_id for c in comments if c.author_id}
+    thread_ids = {c.thread_id for c in comments if c.thread_id}
+
+    users_map = {
+        u.id: u
+        for u in db.query(models.User).filter(models.User.id.in_(author_ids)).all()
+    } if author_ids else {}
+    threads_map = {
+        t.id: t
+        for t in db.query(models.ForumThread).filter(models.ForumThread.id.in_(thread_ids)).all()
+    } if thread_ids else {}
+
+    return [
+        {
+            "id": c.id,
+            "author": users_map.get(c.author_id).username if users_map.get(c.author_id) else "Anónimo",
+            "text": c.content,
+            "context": threads_map.get(c.thread_id).title if threads_map.get(c.thread_id) else "General",
+            "type": threads_map.get(c.thread_id).category if threads_map.get(c.thread_id) else "Foro",
+            "created_at": c.created_at.isoformat(),
+        }
+        for c in comments
+    ]
 
 
 @router.delete("/comments/{comment_id}")
@@ -844,6 +883,7 @@ def delete_comment(
         raise HTTPException(status_code=404, detail="Comment not found")
     comment.deleted_at = _utcnow()
     db.commit()
+    record_admin_action(db, current_user, "comment.delete", "comment", comment_id)
     return {"status": "success"}
 
 
@@ -853,60 +893,60 @@ def delete_comment(
 @router.get("/milestones", response_model=List[Dict[str, Any]])
 def list_milestones(db: Session = Depends(get_db), _user=Depends(require_active_user)):
     """Lista hitos espirituales (insignias) y estadísticas de obtención."""
+    badge_counts = dict(
+        db.query(
+            models.MedallaUsuario.badge_id,
+            func.count(models.MedallaUsuario.id),
+        )
+        .group_by(models.MedallaUsuario.badge_id)
+        .all()
+    )
     badges = db.query(models.Medalla).all()
-    result = []
-    for b in badges:
-        count = (
-            db.query(models.MedallaUsuario).filter(models.MedallaUsuario.badge_id == b.id).count()
-        )
-        result.append(
-            {
-                "id": b.id,
-                "name": b.name,
-                "description": b.description,
-                "icon": b.icon_key,
-                "xp": b.xp_reward,
-                "count": count,
-            }
-        )
-    return result
+    return [
+        {
+            "id": b.id,
+            "name": b.name,
+            "description": b.description,
+            "icon": b.icon_key,
+            "xp": b.xp_reward,
+            "count": badge_counts.get(b.id, 0),
+        }
+        for b in badges
+    ]
 
 
 @router.post("/milestones/award")
 def award_milestone_bulk(
-    payload: Dict[str, Any],
+    body: AwardMilestoneBody,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
     """Asigna un hito a una lista de personas de forma masiva."""
-    badge_id = payload["badge_id"]
-    persona_ids = payload.get("persona_ids", [])
+    badge = db.query(models.Medalla).filter(models.Medalla.id == body.badge_id).first()
+    if not badge:
+        raise HTTPException(status_code=404, detail="Badge not found")
 
-    awarded_count = 0
-    for persona_id in persona_ids:
-        try:
-            pid = uuid.UUID(str(persona_id))
-        except (ValueError, AttributeError):
-            continue
-        persona = db.query(models.Persona).filter(models.Persona.id == pid).first()
-        user = db.query(models.Usuario).filter(models.Usuario.id == pid).first()
-        if persona and user:
-            exists = (
-                db.query(models.MedallaUsuario)
-                .filter(
-                    models.MedallaUsuario.user_id == user.id,
-                    models.MedallaUsuario.badge_id == badge_id,
-                )
-                .first()
-            )
+    pid = uuid.UUID(str(body.persona_id))
+    persona = db.query(models.Persona).filter(models.Persona.id == pid).first()
+    user = db.query(models.Usuario).filter(models.Usuario.id == pid).first()
+    if not persona or not user:
+        raise HTTPException(status_code=404, detail="Persona not found")
 
-            if not exists:
-                ub = models.MedallaUsuario(user_id=user.id, badge_id=badge_id)
-                db.add(ub)
-                awarded_count += 1
+    exists = (
+        db.query(models.MedallaUsuario)
+        .filter(
+            models.MedallaUsuario.user_id == user.id,
+            models.MedallaUsuario.badge_id == badge.id,
+        )
+        .first()
+    )
+    if exists:
+        raise HTTPException(status_code=409, detail="Badge already awarded to this persona")
 
+    ub = models.MedallaUsuario(user_id=user.id, badge_id=badge.id)
+    db.add(ub)
     db.commit()
-    return {"status": "success", "awarded": awarded_count}
+    return {"status": "success", "awarded": 1}
 
 
 # --- DONATION CATEGORIES ---
@@ -930,24 +970,18 @@ def list_donation_categories(db: Session = Depends(get_db), _user=Depends(requir
 
 @router.post("/donation-categories")
 def create_donation_category(
-    payload: Dict[str, Any],
+    body: CreateDonationCategoryBody,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    """Crea una nueva categoría de donación.
-
-    El contrato público usa únicamente ``nombre``, ``descripcion`` y ``color``.
-    ``nombre`` es requerido (sin cadena vacía).
-    """
-    name = str(payload.get("nombre") or "").strip()
+    """Crea una nueva categoría de donación."""
+    name = body.name.strip()
     if not name:
         raise HTTPException(status_code=400, detail="nombre es requerido")
-    description = payload.get("descripcion")
-    color = payload.get("color") or "blue"
     cat = models.DonationCategory(
         name=name,
-        description=description,
-        color_code=color,
+        description=body.description,
+        color_code="blue",
     )
     db.add(cat)
     db.commit()
@@ -1030,9 +1064,8 @@ def delete_automation(
         raise HTTPException(status_code=404, detail="Automation rule not found")
     rule.deleted_at = _utcnow()
     db.commit()
+    record_admin_action(db, current_user, "automation.delete", "automation", rule_id)
     return {"status": "success"}
-
-
 # ──────────────────────────────────────────────
 # ROLES MODULARES GRANULARES (auth_user_module_roles)
 # ──────────────────────────────────────────────
@@ -1056,18 +1089,18 @@ def list_auth_role_definitions(
 
 @router.post("/auth-role-definitions")
 def create_auth_role_definition(
-    payload: dict,
+    body: CreateAuthRoleBody,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
     """Crea un nuevo rol auth (RolPlataforma)."""
-    nombre = str(payload.get("nombre", "")).strip()
+    nombre = body.name.strip()
     if not nombre:
         raise HTTPException(status_code=400, detail="nombre es requerido")
     existing = db.query(RolPlataforma).filter(RolPlataforma.nombre == nombre).first()
     if existing:
         raise HTTPException(status_code=409, detail="El rol ya existe")
-    permisos = payload.get("permisos", {})
+    permisos = {p: "allow" for p in body.permissions} if body.permissions else {}
     rol = RolPlataforma(nombre=nombre, permisos=permisos)
     db.add(rol)
     db.commit()
@@ -1078,7 +1111,7 @@ def create_auth_role_definition(
 @router.patch("/auth-role-definitions/{role_id}")
 def update_auth_role_definition(
     role_id: str,
-    payload: dict,
+    body: UpdateAuthRoleBody,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
@@ -1090,10 +1123,10 @@ def update_auth_role_definition(
     rol = db.query(RolPlataforma).filter(RolPlataforma.id == rid).first()
     if not rol:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
-    if "permisos" in payload:
-        rol.permisos = payload["permisos"]
-    if "nombre" in payload:
-        rol.nombre = payload["nombre"]
+    if body.permissions is not None:
+        rol.permisos = {p: "allow" for p in body.permissions}
+    if body.name is not None:
+        rol.nombre = body.name
     db.commit()
     db.refresh(rol)
     return {"id": str(rol.id), "nombre": rol.nombre, "permisos": rol.permisos}
@@ -1121,6 +1154,7 @@ def delete_auth_role_definition(
         )
     rol.deleted_at = _utcnow()
     db.commit()
+    record_admin_action(db, current_user, "auth_role.delete", "auth_role", role_id)
 
 
 @router.get("/user-module-roles")
@@ -1153,19 +1187,17 @@ def list_user_module_roles(
 
 @router.post("/user-module-roles")
 def assign_user_module_role(
-    payload: dict,
+    body: AssignModuleRoleBody,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
     """Asigna un rol modular a un usuario UUID-based."""
-    user_id_str = str(payload.get("user_id", ""))
-    modulo = str(payload.get("modulo", "")).strip().lower()
-    rol_id_str = str(payload.get("rol_id", ""))
-    if not user_id_str or not modulo or not rol_id_str:
-        raise HTTPException(status_code=400, detail="user_id, modulo y rol_id son requeridos")
+    modulo = body.modulo.strip().lower()
+    if not modulo:
+        raise HTTPException(status_code=400, detail="modulo es requerido")
     try:
-        uid = uuid.UUID(user_id_str)
-        rid = uuid.UUID(rol_id_str)
+        uid = uuid.UUID(body.user_id)
+        rid = uuid.UUID(body.rol_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id o rol_id invalidos")
     user = db.query(Usuario).filter(Usuario.id == uid).first()
@@ -1209,6 +1241,7 @@ def remove_user_module_role(
         raise HTTPException(status_code=404, detail="Asignacion no encontrada")
     umr.deleted_at = datetime.now(timezone.utc)
     db.commit()
+    record_admin_action(db, current_user, "module_role.remove", "module_role", assignment_id)
 
 
 @router.get("/users-with-roles")
@@ -1216,35 +1249,43 @@ def list_users_with_roles(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    """Lista todos los usuarios auth v3 con sus roles de plataforma y modulares.
+    """Lista todos los usuarios auth v3 con sus roles de plataforma y modulares."""
+    users = (
+        db.query(Usuario)
+        .options(joinedload(Usuario.rol_plataforma))
+        .all()
+    )
 
-    Util para el panel de administracion de permisos granulares.
-    """
-    users = db.query(Usuario).all()
-    result = []
-    for u in users:
-        persona = db.query(Persona).filter(Persona.id == u.id).first()
-        nombre = persona.nombre_completo if persona else "—"
+    user_ids = [u.id for u in users]
+    persona_map = {
+        p.id: p
+        for p in db.query(Persona).filter(Persona.id.in_(user_ids)).all()
+    } if user_ids else {}
 
-        rol_plat = db.query(RolPlataforma).filter(RolPlataforma.id == u.rol_plataforma_id).first() if u.rol_plataforma_id else None
+    modulares_rows = (
+        db.query(UsuarioRolModulo, RolPlataforma)
+        .join(RolPlataforma, RolPlataforma.id == UsuarioRolModulo.rol_id)
+        .filter(UsuarioRolModulo.user_id.in_(user_ids))
+        .all()
+    ) if user_ids else []
+    modulares_by_user: dict = {}
+    for umr, r in modulares_rows:
+        modulares_by_user.setdefault(umr.user_id, []).append(
+            {"id": str(umr.id), "modulo": umr.modulo, "rol_id": str(r.id), "rol_nombre": r.nombre}
+        )
 
-        modulares = db.query(UsuarioRolModulo, RolPlataforma).join(
-            RolPlataforma, RolPlataforma.id == UsuarioRolModulo.rol_id
-        ).filter(UsuarioRolModulo.user_id == u.id).all()
-
-        result.append({
+    return [
+        {
             "user_id": str(u.id),
             "username": u.username,
             "email": u.email,
-            "nombre": nombre,
+            "nombre": (persona_map.get(u.id).nombre_completo if persona_map.get(u.id) else "—"),
             "is_active": u.is_active,
-            "rol_plataforma": {"id": str(rol_plat.id), "nombre": rol_plat.nombre} if rol_plat else None,
-            "roles_modulares": [
-                {"id": str(umr.id), "modulo": umr.modulo, "rol_id": str(r.id), "rol_nombre": r.nombre}
-                for umr, r in modulares
-            ],
-        })
-    return result
+            "rol_plataforma": {"id": str(u.rol_plataforma.id), "nombre": u.rol_plataforma.nombre} if u.rol_plataforma else None,
+            "roles_modulares": modulares_by_user.get(u.id, []),
+        }
+        for u in users
+    ]
 
 
 # ── PROVISIONAMIENTO MASIVO DE CUENTAS ─────────────────────────────────────
@@ -1255,9 +1296,9 @@ def provision_personas_sin_cuenta(
     db: Session = Depends(get_db),
     current_user=Depends(require_admin),
 ):
-    """Crea cuentas de plataforma para todas las personas con email que aún no tienen auth_user.
+    """Crea cuentas de plataforma para personas sin auth_user (max 50 por llamada).
     - username = prefijo del email
-    - password = aleatoria de 12 caracteres (el admin la distribuye; el usuario puede usar forgot-password)
+    - password = aleatoria de 12 caracteres
     - rol = MIEMBRO
     """
     def _generate_password(length: int = 12) -> str:
@@ -1289,8 +1330,19 @@ def provision_personas_sin_cuenta(
             WHERE (p.email IS NOT NULL AND p.email != '')
               AND NOT EXISTS (SELECT 1 FROM auth_users u WHERE u.id = p.id)
             ORDER BY p.created_at ASC
+            LIMIT 50
         """)
     ).fetchall()
+
+    remaining_query = db.execute(
+        text("""
+            SELECT COUNT(*)
+            FROM personas p
+            WHERE (p.email IS NOT NULL AND p.email != '')
+              AND NOT EXISTS (SELECT 1 FROM auth_users u WHERE u.id = p.id)
+        """)
+    ).scalar()
+    truncated = remaining_query > 50
 
     created = 0
     skipped = 0
@@ -1348,9 +1400,14 @@ def provision_personas_sin_cuenta(
             continue
 
     db.commit()
+    record_admin_action(
+        db, current_user, "provision_accounts", "accounts",
+        metadata={"created": created, "skipped": skipped},
+    )
     return {
         "created": created,
         "skipped": skipped,
+        "truncated": truncated,
         "errors": errors,
         "accounts": accounts_created,
         "message": f"{created} cuentas creadas. {skipped} omitidas. Distribuir contraseñas temporales a cada usuario.",

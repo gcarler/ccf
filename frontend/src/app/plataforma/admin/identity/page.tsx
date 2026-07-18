@@ -84,31 +84,42 @@ export default function IdentityManagementPage() {
     const [newPassword, setNewPassword] = useState('');
     const [newRole, setNewRole] = useState('MIEMBRO');
 
-    const fetchUsers = useCallback(async () => {
+    // Password reset modal
+    const [showResetModal, setShowResetModal] = useState(false);
+    const [resetPassword, setResetPassword] = useState('');
+    const [resetUserId, setResetUserId] = useState('');
+
+    const fetchUsers = useCallback(async ({ signal }: { signal?: AbortSignal } = {}) => {
         setLoading(true);
         try {
-            const data = await apiFetch<UserSummary[]>('/admin/users', { token });
+            const data = await apiFetch<UserSummary[]>('/admin/users', { token, signal });
             setUsers(Array.isArray(data) ? data : []);
-        } catch {
+        } catch (err: any) {
+            if (err?.name === 'AbortError') return;
             addToast('Error al cargar usuarios', 'error');
         } finally {
             setLoading(false);
         }
     }, [token, addToast]);
 
-    useEffect(() => { fetchUsers(); }, [fetchUsers]);
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchUsers({ signal: controller.signal });
+        return () => controller.abort();
+    }, [fetchUsers]);
 
-    const loadProfile = async (user: UserSummary) => {
+    const loadProfile = async (user: UserSummary, signal?: AbortSignal) => {
         setProfileLoading(true);
         try {
-            const data = await apiFetch<KernelProfile>(`/kernel/profile/${user.id}`, { token });
+            const data = await apiFetch<KernelProfile>(`/kernel/profile/${user.id}`, { token, signal });
             setProfile(data);
             setActivityStatus(data.activity_status || 'ACTIVO');
             setChurchRole(data.church_role || '');
             setMinistries((data.ministries || []).map((m: any) => m.ministry));
             setPrimaryMinistry((data.ministries || []).find((m: any) => m.is_primary)?.ministry || '');
             setPlatformRole(data.platform_roles?.[0]?.role || 'MIEMBRO');
-        } catch {
+        } catch (err: any) {
+            if (err?.name === 'AbortError') return;
             addToast('Error al cargar perfil kernel', 'error');
         } finally {
             setProfileLoading(false);
@@ -202,18 +213,26 @@ export default function IdentityManagementPage() {
 
     const handleResetPassword = async () => {
         if (!selectedUser) return;
-        const newPassword = prompt('Nueva contraseña para ' + selectedUser.username + ':');
-        if (!newPassword || newPassword.length < 6) {
+        setResetUserId(selectedUser.id);
+        setResetPassword('');
+        setShowResetModal(true);
+    };
+
+    const submitResetPassword = async () => {
+        if (!resetUserId) return;
+        if (!resetPassword || resetPassword.length < 6) {
             addToast('La contraseña debe tener al menos 6 caracteres', 'error');
             return;
         }
         setSaving(true);
         try {
-            await apiFetch(`/admin/users/${selectedUser.id}`, {
+            await apiFetch(`/admin/users/${resetUserId}`, {
                 method: 'PATCH', token,
-                body: { password: newPassword },
+                body: { password: resetPassword },
             });
             addToast('Contraseña actualizada', 'success');
+            setShowResetModal(false);
+            setResetPassword('');
         } catch (e: any) {
             addToast('Error: ' + (e.message || 'Intente de nuevo'), 'error');
         } finally {
@@ -602,6 +621,46 @@ export default function IdentityManagementPage() {
                     </div>
                 </div>
             </WorkspaceDrawer>
+
+            {/* Password Reset Modal */}
+            {showResetModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/10 rounded-xl shadow-2xl w-full max-w-sm mx-4 p-5 space-y-4">
+                        <div className="flex items-center gap-2">
+                            <Key size={18} className="text-amber-500" />
+                            <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Resetear Contraseña</h3>
+                        </div>
+                        <p className="text-xs text-[hsl(var(--text-secondary))]">
+                            Ingrese la nueva contraseña para <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white">{selectedUser?.username}</span>.
+                        </p>
+                        <input
+                            type="password"
+                            value={resetPassword}
+                            onChange={e => setResetPassword(e.target.value)}
+                            placeholder="Mínimo 6 caracteres"
+                            autoFocus
+                            onKeyDown={e => { if (e.key === 'Enter') submitResetPassword(); if (e.key === 'Escape') setShowResetModal(false); }}
+                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-blue-500"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={() => setShowResetModal(false)}
+                                className="px-3 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                disabled={saving || !resetPassword || resetPassword.length < 6}
+                                onClick={submitResetPassword}
+                                className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {saving ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
+                                {saving ? 'Guardando...' : 'Confirmar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

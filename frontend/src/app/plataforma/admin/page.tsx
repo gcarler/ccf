@@ -27,9 +27,11 @@ Sparkles,
 TrendingUp,Users,
 Zap
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect,useState } from "react";
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const { token } = useAuth();
   const { addToast } = useToast();
   const [viewType, setViewType] = useState<ViewType>('grid');
@@ -173,7 +175,7 @@ export default function AdminDashboardPage() {
                             {pendingTestimonials > 0 && (
                                 <AdminTaskRow
                                     task={{ title: 'Moderador de Testimonios', description: `Hay ${pendingTestimonials} nuevos milagros esperando aprobación.`, priority: 'medium', status: 'Pendiente', is_special: true }}
-                                    onOpen={() => window.location.href = '/plataforma/admin/cms'}
+                                    onOpen={() => router.push('/plataforma/admin/cms')}
                                     index={100}
                                 />
                             )}

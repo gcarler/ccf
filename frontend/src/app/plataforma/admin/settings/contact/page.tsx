@@ -103,7 +103,6 @@ export default function AdminSettingsContactPage() {
 
   useEffect(() => {
     fetchConfig();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const fetchConfig = async () => {

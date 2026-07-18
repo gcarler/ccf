@@ -20,7 +20,7 @@ export default function SecurityAuditPage() {
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchLogs = async () => {
+    const fetchLogs = async (signal?: AbortSignal) => {
         if (!token) {
             setLoading(false);
             return;
@@ -31,9 +31,11 @@ export default function SecurityAuditPage() {
                 token,
                 query: { limit: 100 },
                 cache: 'no-store',
+                signal,
             });
             setLogs(Array.isArray(data?.events) ? data.events : []);
-        } catch (error) {
+        } catch (error: any) {
+            if (error?.name === 'AbortError') return;
             console.error(error);
         } finally {
             setLoading(false);
@@ -41,8 +43,10 @@ export default function SecurityAuditPage() {
     };
 
     useEffect(() => {
-        if (isAuthenticated) fetchLogs();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchLogs(controller.signal);
+        return () => controller.abort();
     }, [isAuthenticated, token]);
 
     if (!isAuthenticated) return null;
@@ -97,7 +101,7 @@ export default function SecurityAuditPage() {
                         </div>
                     </div>
                     <button 
-                        onClick={fetchLogs}
+                        onClick={() => fetchLogs()}
                         className="px-3 py-2.5 bg-emerald-950/50 text-emerald-400 border border-emerald-500/30 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-emerald-900 transition-colors flex items-center gap-2 group"
                     >
                         <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-700" />
