@@ -1,9 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { installMockPlatformSession } from '../helpers/mockPlatformSession';
+import type { ConversationRead } from '@/types/directMessages';
 
 const CURRENT_USER_ID = 'e2e-user';
 
-const BASE_CONVERSATIONS = [
+const BASE_CONVERSATIONS: ConversationRead[] = [
   {
     id: 101,
     participants: [

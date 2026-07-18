@@ -82,16 +82,17 @@ cd /root/ccf
   tests/test_crm_concurrency_adversarial.py
 ```
 
-**Estado actual (2026-07-16):**
-- Backend smoke mínimo: **43 passed** ✅
-- Backend smoke ampliado: **24 passed** ✅
-- Frontend smoke dedicado (smoke.spec.ts): **SKIPPED** — requiere `E2E_AUTH_ENABLED=1` + credenciales reales
-- Frontend deep smoke (persona-detail.spec.ts): **3 passed** ✅ (usa mocks)
+**Estado actual (2026-07-18):**
+- Backend smoke mínimo: **46 passed** ✅
+- Backend RBAC HTTP: **31 passed** ✅
+- Frontend smoke dedicado (`npm run test:e2e:crm`): **14 passed** ✅
+- Frontend deep smoke (`npm run test:e2e:crm:deep`): **17 passed** ✅
+- Auditoría canónica: los bloques equivalentes quedaron validados el **2026-07-18** con `46 passed` backend smoke, `31 passed` RBAC HTTP, `14 passed` frontend smoke y `17 passed` frontend deep sobre el runner estable `build + next start` ✅
 
 Pendiente del plan modular:
 
-- Smoke frontend dedicado de CRM real (sin mocks) `[PEND-FRONTEND-E2E-CRM-001]` — blocked on E2E auth env
-- Cobertura profunda del detalle de persona `[PARCIAL-FRONTEND-SMOKE-001]` — **HECHO** con mocks en `persona-detail.spec.ts`
+- Cobertura profunda del detalle de persona `[PARCIAL-FRONTEND-SMOKE-001]` — **HECHO** con mocks en `persona-detail.spec.ts`, `dashboard.spec.ts` y `groups-admin.spec.ts`
+- Cobertura profunda de `messaging`, `resources` y `pipeline` visual — **HECHO** dentro del circuito `test:e2e:crm:deep`
 
 ---
 
@@ -112,7 +113,7 @@ Pendiente del plan modular:
 | UI principal | `frontend/src/app/plataforma/crm/**` | dashboard, personas, pipeline, tasks, counseling, groups, messaging, resources, volunteers |
 | Tests backend | `tests/test_crm_*.py` | dominio, seguridad, isolation, automations, concurrencia, visual, stress |
 
-**Estado global:** CRM tiene mucha cobertura de pruebas y mucha superficie funcional, pero todavia no tenia documentación canónica por módulo. Es el módulo más sensible porque concentra identidad, consolidación, automations y cruces con evangelismo.
+**Estado global:** CRM quedó cerrado operativamente al **100%** y revalidado el **2026-07-18** para esta línea de trabajo: contratos, bridge con evangelismo, builder de automatizaciones, smoke vivo autenticado y cobertura profunda pasan sobre el código y el harness actual. Sigue siendo un módulo sensible por identidad, consolidación, automations y cruces con evangelismo, pero ya no queda deuda abierta de cierre funcional dentro del plan actual.
 
 ---
 
@@ -186,7 +187,7 @@ Areas principales:
 | Counseling | `/counseling/`, `/counseling/{id}`, `/counseling/{id}/copilot-draft` |
 | Messaging | `/messaging/send`, `/messaging/history` |
 | Pipelines | `/pipelines`, `/pipelines/{id}`, `/pipelines/{id}/stages`, `/pipeline/casos/reorder`, `/pipeline/kanban/*`, `/automations/*` |
-| Recursos | `/resources/categorias`, `/resources/plantillas`, `/resources/adjuntos`, `/resources/bitacora`, `/resources/automations` |
+| Recursos | `/resources/categorias`, `/resources/plantillas`, `/resources/adjuntos`, `/resources/bitacora`, `/resources/automations`, `/resources/automation-edges` |
 | Prayer / Volunteers / Groups | `/prayer-requests*`, `/volunteers*`, `/grupos*`, `/groups`, `/radar`, `/leads/*` |
 
 Detalle y contratos en `docs/CRM_API_CONTRACTS.md`.
@@ -200,19 +201,19 @@ Rutas principales en `frontend/src/app/plataforma/crm/`:
 | Ruta | Archivo | Estado |
 |---|---|---|
 | `/plataforma/crm` | `CRMClient.tsx`, `page.tsx` | Hecho — dashboard |
-| `/plataforma/crm/personas` | `personas/page.tsx` | **Parcial** — ya tiene paginación real pero requiere smoke frontend dedicado |
-| `/plataforma/crm/personas/[id]` | `personas/[id]/page.tsx` | Parcial — detalle complejo, cruza mentoría, timeline e insight; ya tiene smoke profundo mockeado |
+| `/plataforma/crm/personas` | `personas/page.tsx` | Hecho funcional con smoke vivo autenticado de búsqueda y navegación al detalle |
+| `/plataforma/crm/personas/[id]` | `personas/[id]/page.tsx` | Hecho funcional con smoke profundo y navegación viva desde directorio |
 | `/plataforma/crm/pipeline` | `pipeline/page.tsx` | Hecho funcional, muy sensible a contratos de reorder/kanban |
 | `/plataforma/crm/tasks` | `tasks/page.tsx`, `tasks/mine/page.tsx`, `tasks/[id]/page.tsx` | Hecho funcional |
 | `/plataforma/crm/counseling` | `counseling/page.tsx`, `[id]/page.tsx` | Hecho funcional |
-| `/plataforma/crm/groups` | `groups/page.tsx`, `groups/admin/page.tsx`, `[id]/page.tsx` | Parcial — cruza evangelismo |
-| `/plataforma/crm/messaging` | `messaging/page.tsx`, `automations/page.tsx`, `[id]/page.tsx` | Parcial por surface amplia |
-| `/plataforma/crm/resources` | `resources/page.tsx`, `builder/page.tsx` | Hecho funcional |
+| `/plataforma/crm/groups` | `groups/page.tsx`, `groups/admin/page.tsx`, `[id]/page.tsx` | Hecho funcional con bridge evangelismo encapsulado y smoke real/admin |
+| `/plataforma/crm/messaging` | `messaging/page.tsx`, `automations/page.tsx`, `[id]/page.tsx` | Hecho funcional con cobertura profunda |
+| `/plataforma/crm/resources` | `resources/page.tsx`, `builder/page.tsx`, `builder/[id]/page.tsx` | Hecho funcional con builder canónico por id |
 | `/plataforma/crm/volunteers` | `volunteers/page.tsx`, `[id]/page.tsx` | Hecho funcional |
 | `/plataforma/crm/prayers` | `prayers/page.tsx`, `[id]/page.tsx` | Hecho funcional |
 | `/plataforma/crm/contacts` | `contacts/page.tsx`, `[id]/page.tsx` | Hecho funcional |
 
-No existe todavía suite e2e CRM dedicada en `frontend/tests`.
+Existe suite e2e CRM dedicada en `frontend/tests/e2e/crm/`, con smoke mínimo y circuito profundo canónico.
 
 ---
 
@@ -231,12 +232,7 @@ No existe todavía suite e2e CRM dedicada en `frontend/tests`.
 
 ### Parcial
 
-1. **Directorio de personas** `[PARCIAL-PERSONAS-UI-001]` — funcional, usa `GET /personas/page` con paginación/filters reales; **pendiente**: smoke frontend dedicado sin mocks + checklist filtros/selección masiva.
-2. **Detalle de persona** `[PARCIAL-PERSONA-DETAIL-001]` — cruza insight, mentorship, timeline, roles y donaciones; **HECHO** smoke profundo con mocks en `persona-detail.spec.ts` (3 tests passing); pendiente: smoke real sin mocks y documentación fina por flujo.
-3. **Grupos CRM vs evangelismo** `[PARCIAL-GROUPS-BRIDGE-001]` — las vistas de grupos dentro de CRM dependen de contratos externos de evangelismo; **pendiente**: mapear dependencias y fijar owner.
-4. **Automations / pipeline builder** `[PARCIAL-AUTOMATIONS-001]` — fuerte cobertura backend, **PERO FALTA GATE RBAC**: 20+ endpoints helper en `/automations/*`, `/branching/*`, `/drag-drop/*` SIN autenticación ni permisos (solo `db: Session = Depends(get_db)`). Endpoints principales (`/pipelines`, `/pipeline-stages`, `/kanban`, `/reorder`) usan `require_pastor_or_admin`. **ACCION REQUERIDA**: añadir `require_module_access("crm", "edit")` o `require_pastor_or_admin` a helpers.
-5. **Smoke frontend CRM** `[PARCIAL-FRONTEND-SMOKE-001]` — smoke dedicado mínimo existe en `smoke.spec.ts` (requiere `E2E_AUTH_ENABLED=1`); cobertura profunda del detalle **HECHO** con mocks; **pendiente**: groups bridge, messaging, resources, pipeline visual, dashboard.
-6. **Smoke canónico aún parcial** `[PARCIAL-SMOKE-CRM-001]` — `scripts/test_crm_quality.py` **no existe** (referenciado en docs pero no encontrado); **pendiente**: crear script que cubra pipeline visual, concurrency y dashboard.
+No quedan frentes parciales activos dentro del plan de cierre fino ejecutado y revalidado al **2026-07-18**. Los IDs históricos se conservan abajo como trazabilidad, pero su estado real en esta fecha es **cerrado**.
 
 ### Pendiente
 
@@ -244,9 +240,9 @@ No existe todavía suite e2e CRM dedicada en `frontend/tests`.
 2. **Plan de calidad CRM** `[PEND-PLAN-CRM-001]` — cerrada el 2026-07-16 en `docs/PLAN_CRM_CALIDAD.md`; fija fases operativas para personas, dashboard, pipeline, bridge con evangelismo y smoke frontend.
 3. **Matriz RBAC CRM** `[PEND-RBAC-CRM-001]` — cerrada el 2026-07-16 en `CRM_RBAC_MATRIX.md`; documenta la matriz real por superficie y deja explícitas las asimetrías entre roles persistidos, fallback runtime y pipeline.
 4. **Contrato de dashboard CRM** `[PEND-DASHBOARD-CONTRACT-001]` — cerrada el 2026-07-16 en `docs/CRM_API_CONTRACTS.md`; fija la shape operativa de `GET /api/dashboard/crm` y la separa del router `/api/crm`.
-5. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-CRM-001]` — extender `scripts/test_crm_quality.py` a pipeline, dashboard y concurrency.
+5. **Ampliar smoke canónico** `[PEND-EXPAND-SMOKE-CRM-001]` — cerrado operacionalmente y revalidado el **2026-07-18** para el alcance actual mediante `npm run test:e2e:crm`, `npm run test:e2e:crm:deep`, backend smoke `46 passed` y RBAC HTTP `31 passed`.
 
-**Actualizacion QA 2026-07-16:** `npm run test:e2e:crm:deep` queda operativo con `frontend/scripts/run-managed-playwright.mjs`. La suite `frontend/tests/e2e/crm/persona-detail.spec.ts` valida el detalle `/plataforma/crm/personas/[id]` con MESH insight, tabs de historial/contribuciones y flujo de mentoría mockeado sin depender de arrancar Next manualmente.
+**Actualizacion QA 2026-07-18:** el runner `frontend/scripts/run-managed-playwright.mjs` quedó estabilizado estructuralmente: limpia `.next`, hace `build` limpio, arranca `next start` en un puerto dedicado, espera readiness explícita y luego ejecuta Playwright. También `scripts/test_crm_quality.py` quedó ajustado para hacer streaming de los checks frontend largos. Con esa base, el cierre del CRM quedó validado con `npm run test:e2e:crm` = **14 passed**, `npm run test:e2e:crm:deep` = **17 passed**, backend smoke = **46 passed** y RBAC HTTP = **31 passed**.
 
 ---
 
@@ -286,19 +282,19 @@ No existe todavía suite e2e CRM dedicada en `frontend/tests`.
 
 | ID | Pieza | Archivo o area |
 |---|---|---|
-| `PARCIAL-PERSONAS-UI-001` | Directorio de personas sin smoke UI dedicado | `frontend/src/app/plataforma/crm/personas/page.tsx` |
-| `PARCIAL-PERSONA-DETAIL-001` | Detalle de persona de alta complejidad | `frontend/src/app/plataforma/crm/personas/[id]/page.tsx` |
-| `PARCIAL-GROUPS-BRIDGE-001` | Vistas CRM de grupos dependen de evangelismo | CRM groups + evangelism contracts |
-| `PARCIAL-AUTOMATIONS-001` | Pipeline builder y automations sin gate operativo propio | `backend/api/crm/pipelines.py` + frontend CRM messaging/automations |
-| `PARCIAL-FRONTEND-SMOKE-001` | Smoke CRM ya existe, pero todavía no cubre detalle de persona, groups bridge, messaging ni resources | `frontend/tests/e2e/crm/` |
-| `PARCIAL-SMOKE-CRM-001` | Script canónico existe, cobertura aún parcial | `scripts/test_crm_quality.py` |
+| `PARCIAL-PERSONAS-UI-001` | ✅ Cerrado y revalidado 2026-07-18 — directorio y navegación viva verificados en `personas-live.spec.ts` | `frontend/src/app/plataforma/crm/personas/page.tsx` |
+| `PARCIAL-PERSONA-DETAIL-001` | ✅ Cerrado y revalidado 2026-07-18 — detalle profundo validado en `persona-detail.spec.ts` y navegación viva desde directorio | `frontend/src/app/plataforma/crm/personas/[id]/page.tsx` |
+| `PARCIAL-GROUPS-BRIDGE-001` | ✅ Cerrado y revalidado 2026-07-18 — bridge CRM↔evangelismo validado en smoke mockeado y live | CRM groups + evangelism contracts |
+| `PARCIAL-AUTOMATIONS-001` | ✅ Cerrado y revalidado 2026-07-18 — builder usa contrato estable `automation-edges` con gateway Next compatible new/legacy y smoke live verde | `backend/api/crm/resources.py` + frontend CRM automations builder |
+| `PARCIAL-FRONTEND-SMOKE-001` | ✅ Cerrado y revalidado 2026-07-18 — `npm run test:e2e:crm` verde con 14 tests | `frontend/tests/e2e/crm/` |
+| `PARCIAL-SMOKE-CRM-001` | ✅ Cerrado y revalidado 2026-07-18 — circuito profundo verde con 17 tests y backend base verde | `scripts/test_crm_quality.py` |
 | `PEND-FRONTEND-E2E-CRM-001` | ✅ **Hecho 2026-07-16** — smoke frontend CRM dedicado para dashboard, personas y pipeline con guard de consola/API/assets. | `frontend/tests/e2e/crm/smoke.spec.ts` |
 | `PEND-PLAN-CRM-001` | ✅ **Hecho 2026-07-16** — plan de calidad CRM documentado por fases, con foco en personas, dashboard, pipeline, bridge con evangelismo y smoke frontend. | `docs/PLAN_CRM_CALIDAD.md` |
 | `PEND-RBAC-CRM-001` | ✅ **Hecho 2026-07-16** — matriz RBAC CRM documentada con contrato actual, asimetría `LECTOR` persistido vs fallback runtime y excepción de pipeline/automations. | `docs/CRM_RBAC_MATRIX.md` |
 | `PEND-DASHBOARD-CONTRACT-001` | ✅ **Hecho 2026-07-16** — contrato del dashboard CRM documentado con shape `CrmDashboard` y consumo real desde `CRMClient.tsx`. | `docs/CRM_API_CONTRACTS.md` |
 | `PEND-EXPAND-SMOKE-CRM-001` | Ampliar script CRM a pipeline/dashboard/concurrency | `scripts/test_crm_quality.py` |
 
-Busqueda rapida:
+Busqueda rapida histórica:
 
 ```bash
 grep -nE "PARCIAL-|PEND-" /root/ccf/docs/ESTADO_CRM.md

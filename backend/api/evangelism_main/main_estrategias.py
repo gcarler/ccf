@@ -154,11 +154,7 @@ def create_strategy(
         # Asignar sede_id desde el usuario autenticado
         sede_id = crud.get_user_sede_id(db, current_user.id)
         if not sede_id:
-            # Fallback: usar la primera sede disponible
-            primera_sede = db.query(_Sede).order_by("nombre").first()
-            if not primera_sede:
-                raise HTTPException(400, detail="No hay sedes configuradas en el sistema.")
-            sede_id = str(primera_sede.id)
+            raise HTTPException(403, detail="Usuario sin sede asignada")
         # Asignar categoria_id por defecto (tomar la primera disponible, o crear una genérica)
         primera_categoria = db.query(CategoriaEstrategia).order_by("id").first()
         if not primera_categoria:
@@ -176,9 +172,8 @@ def create_strategy(
     # ── Phase scheduling trigger ──
     if strategy.typology == "evento_masivo" and strategy.phases:
         try:
-            _project_phases_as_tasks(db, result.id, result.name, strategy.phases, strategy.start_date)
+            _project_phases_as_tasks(db, result.id, result.name, strategy.phases, strategy.start_date, sede_id=sede_id)
         except Exception:
-            db.rollback()
             logger.warning(
                 "Phase task generation failed for evangelism strategy=%s; keeping strategy saved",
                 result.id,
@@ -226,9 +221,8 @@ def update_strategy(
     # ── Phase scheduling trigger ──
     if strategy.typology == "evento_masivo" and strategy.phases:
         try:
-            _project_phases_as_tasks(db, strategy_id, result.name, strategy.phases, strategy.start_date)
+            _project_phases_as_tasks(db, strategy_id, result.name, strategy.phases, strategy.start_date, sede_id=user_sede_id)
         except Exception:
-            db.rollback()
             logger.exception(
                 "Phase task regeneration failed for evangelism strategy=%s; keeping update saved",
                 strategy_id,
@@ -411,53 +405,64 @@ def delete_strategy(
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
 
 
-def _project_phases_as_tasks(db, strategy_id: UUID, strategy_name: str, phases: list[dict], start_date=None):
-    """Create N1 tasks in Projects module for each phase of a mass event."""
+def _project_phases_as_tasks(db, strategy_id: UUID, strategy_name: str, phases: list[dict], start_date=None, *, sede_id: str | None = None):
+    """Create N1 tasks in Projects module for each phase of a mass event.
+
+    All-or-nothing: if any task creation fails, the project is rolled back.
+    Args:
+        sede_id: Multi-tenant scope for the created project.
+    """
     from datetime import datetime as dt
 
     from backend.models_projects import Project, ProjectTask
 
-    # Create a project linked to the strategy
-    project = Project(
-        title=f"[MASIVO] {strategy_name}",
-        description=f"Evento masivo generado desde estrategia de evangelismo #{strategy_id}",
-        status="active",
-        created_at=dt.now(_tz.utc),
-    )
-    # Store strategy link in description
-    db.add(project)
-    db.flush()
-
-    for i, phase in enumerate(phases):
-        phase_name = phase.get("name", f"Fase {i + 1}")
-        phase_type = phase.get("type", "general")
-        phase_start = phase.get("start_date")
-        phase_end = phase.get("end_date")
-
-        try:
-            sd = dt.fromisoformat(phase_start.replace("Z", "+00:00")) if phase_start else None
-        except Exception as exc:
-            logger.debug("Failed to parse phase start_date=%r: %s", phase_start, exc)
-            sd = None
-        try:
-            dd = dt.fromisoformat(phase_end.replace("Z", "+00:00")) if phase_end else None
-        except Exception as exc:
-            logger.debug("Failed to parse phase end_date=%r: %s", phase_end, exc)
-            dd = None
-
-        task = ProjectTask(
-            project_id=project.id,
-            title=f"[N1] {phase_name}",
-            description=f"Fase '{phase_type}' del evento masivo '{strategy_name}'. Generada automáticamente.",
-            priority="urgent",  # N1 = highest priority
-            status="todo",
-            start_date=sd,
-            due_date=dd,
-            order_index=i,
-            labels=["N1", "Evangelismo", phase_type] if phase_type else ["N1", "Evangelismo"],
+    try:
+        # All-or-nothing: project + tasks in a single transaction
+        project = Project(
+            title=f"[MASIVO] {strategy_name}",
+            description=f"Evento masivo generado desde estrategia de evangelismo #{strategy_id}",
+            status="active",
+            sede_id=sede_id,
             created_at=dt.now(_tz.utc),
         )
-        db.add(task)
+        # Store strategy link in description
+        db.add(project)
+        db.flush()
 
-    db.commit()
-    return project
+        for i, phase in enumerate(phases):
+            phase_name = phase.get("name", f"Fase {i + 1}")
+            phase_type = phase.get("type", "general")
+            phase_start = phase.get("start_date")
+            phase_end = phase.get("end_date")
+
+            try:
+                sd = dt.fromisoformat(phase_start.replace("Z", "+00:00")) if phase_start else None
+            except Exception as exc:
+                logger.debug("Failed to parse phase start_date=%r: %s", phase_start, exc)
+                sd = None
+            try:
+                dd = dt.fromisoformat(phase_end.replace("Z", "+00:00")) if phase_end else None
+            except Exception as exc:
+                logger.debug("Failed to parse phase end_date=%r: %s", phase_end, exc)
+                dd = None
+
+            task = ProjectTask(
+                project_id=project.id,
+                title=f"[N1] {phase_name}",
+                description=f"Fase '{phase_type}' del evento masivo '{strategy_name}'. Generada automáticamente.",
+                priority="urgent",  # N1 = highest priority
+                status="todo",
+                start_date=sd,
+                due_date=dd,
+                order_index=i,
+                labels=["N1", "Evangelismo", phase_type] if phase_type else ["N1", "Evangelismo"],
+                created_at=dt.now(_tz.utc),
+            )
+            db.add(task)
+
+        db.commit()
+        return project
+    except Exception:
+        db.rollback()
+        logger.exception("Phase task creation failed for strategy=%s; project rolled back", strategy_id)
+        raise

@@ -176,8 +176,13 @@ def create_persona(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    """Crea una nueva persona."""
-    return crud.create_persona(db, payload)
+    """Crea una nueva persona con sede_id auto-asignado."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    if not user_sede:
+        raise HTTPException(status_code=400, detail="El usuario no tiene sede asignada")
+    data = payload.model_dump()
+    data["sede_id"] = user_sede
+    return crud.create_persona(db, schemas.PersonaCreate(**data))
 
 
 @router.put("/personas/{persona_id}", response_model=schemas.PersonaResponse)

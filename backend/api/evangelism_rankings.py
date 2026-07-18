@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.api.evangelism_shared import ATTENDED_STATES
 from backend.core.database import get_db
-from backend.core.permissions import require_active_user
+from backend.core.permissions import require_evangelism_read
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
@@ -71,7 +71,7 @@ def rankings_groups(
     by: str = Query("attendance", description="attendance | growth | visitors"),
     strategy_id: Optional[UUID] = Query(None),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     """Top-10 grupos ordenados por asistencia, crecimiento o visitantes."""
 
@@ -210,7 +210,7 @@ def _rank_by_visitors(db: Session, groups, start, end):
 def monthly_comparison(
     strategy_id: Optional[UUID] = Query(None),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     """Comparativa mensual: este mes vs mes pasado."""
     sede_id = require_user_sede_id(db, current_user)
@@ -327,7 +327,7 @@ def monthly_comparison(
 def rankings_leaders(
     strategy_id: Optional[UUID] = Query(None),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     """Tablero de líderes con nombre, grupo, % asistencia, personas, visitantes este mes."""
     sede_id = require_user_sede_id(db, current_user)

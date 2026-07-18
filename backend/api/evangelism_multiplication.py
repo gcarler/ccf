@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from backend import models
 from backend.core.database import get_db
-from backend.core.permissions import require_pastor_or_admin
+from backend.core.permissions import require_evangelism_manage
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
@@ -129,7 +129,7 @@ def _serialize_grupo(grupo: models.GrupoEvangelismo, db: Session) -> dict:
 def check_multiplication(
     umbral: int = Query(15, description="Umbral de personas para sugerir división"),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Analiza todos los grupos y devuelve los que superan el umbral de personas,
     sugiriendo división."""
@@ -175,7 +175,7 @@ def check_multiplication(
 def split_group(
     payload: SplitRequest,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Divide un grupo existente en dos, transfiriendo la mitad de las personas
     al nuevo grupo. Registra el historial de multiplicación."""
@@ -291,7 +291,7 @@ def split_group(
 @router.get("/multiplication/history", response_model=List[MultiplicationHistoryItem])
 def multiplication_history(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Devuelve el historial de multiplicaciones: todos los grupos que tienen
     un parent_group_id (es decir, que nacieron de una división)."""

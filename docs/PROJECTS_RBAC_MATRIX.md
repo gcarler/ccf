@@ -54,7 +54,7 @@ La suite `tests/test_projects_rbac.py` valida estas cuatro superficies de rol:
 | Ruta | Guard real | Observacion |
 |---|---|---|
 | `GET /projects/{id}/phases` | `projects:read` | lectura normal |
-| `PUT /projects/{id}/phases` | `projects:manage` | alineado con docstring ("Solo Admin/Gestor"). Editor recibe 403; Gestor/Admin pasan. **Gap cerrado** (`PEND-QUALITY-PHASES-RBAC-001`, 2026-07-16) |
+| `PUT /projects/{id}/phases` | `require_project_access("manage")` | alineado con docstring ("Solo Admin/Gestor"). Editor recibe 403; Gestor/Admin pasan. Miembro recibe **404** para project_id inexistente/cross-sede (Axioma 3). **Gap cerrado** (`PEND-QUALITY-PHASES-RBAC-001`, 2026-07-16) |
 
 ### 4.3 Tareas y extensiones
 
@@ -82,10 +82,19 @@ La suite `tests/test_projects_rbac.py` valida estas cuatro superficies de rol:
 
 | Superficie | Guard real |
 |---|---|
-| wiki | `projects:read` / `projects:edit` |
-| whiteboard | `projects:read` / `projects:edit` |
-| mensajes | `projects:read` / `projects:edit` |
-| milestones | `projects:read` / `projects:edit` |
+| wiki | `require_project_access("read"/"edit")` |
+| whiteboard | `require_project_access("read"/"edit")` |
+| mensajes | `require_module_access("projects", "read"/"edit")` |
+| milestones | `require_module_access("projects", "read"/"edit")` |
+
+**Nota sobre mensajes y milestones:** estos endpoints usan
+`require_module_access` en lugar de `require_project_access`. Esto es una
+**decisión consciente**: migrarlos a `require_project_access` abriría la
+puerta a que un rol `Miembro` asignado al proyecto accediera a mensajes y
+hitos, rompiendo el baseline documentado de que `Miembro` no tiene acceso al
+módulo Projects. Por tanto, `Miembro` recibe **403** en estas rutas (incluso
+con `project_id` en el path). Admin/Gestor/Editor siguen pasando, y para
+ellos `_ensure_project` garantiza 404 cross-sede.
 
 ## 5. Baseline por rol
 
@@ -106,7 +115,9 @@ La suite `tests/test_projects_rbac.py` valida estas cuatro superficies de rol:
 
 ### Miembro
 
-- baseline actual verificado: `403` en toda la API Projects
+- baseline actual verificado:
+  - **403** en endpoints de módulo sin `project_id`/`task_id` específico (ej. `GET /api/projects`, `GET /api/projects/summary`, `POST /api/projects`, etc.).
+  - **404** en endpoints con `project_id` o `task_id` protegidos por `require_project_access` cuando el recurso no existe o no pertenece a la sede del actor (Axioma 3 / existence-leak safe).
 - **política confirmada**: el rol `Miembro` no existe en el contexto del módulo Projects; no tiene acceso al módulo
 - cualquier cambio de granularidad debe romper la suite y abrir decision explicita
 
@@ -228,7 +239,8 @@ Resumen de políticas que todo desarrollador del módulo Projects debe conocer p
 
 ### 10.3 Baseline del rol `Miembro`
 
-- `Miembro` recibe **403** en toda la API Projects.
+- `Miembro` recibe **403** en endpoints de módulo sin `project_id`/`task_id` específico.
+- `Miembro` recibe **404** en endpoints con `project_id`/`task_id` protegidos por `require_project_access` cuando el recurso no existe o no pertenece a su sede (Axioma 3 / existence-leak safe).
 - **Política confirmada**: el rol `Miembro` no existe en el contexto del módulo Projects. La asignación de tareas/proyectos a una persona es un mecanismo de delegación interna para usuarios que ya tienen acceso al módulo, no una vía de acceso para el rol `Miembro`.
 - Cualquier apertura de granularidad debe romper `tests/test_projects_rbac.py` y requerir decisión explícita.
 

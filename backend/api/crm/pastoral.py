@@ -1066,10 +1066,8 @@ def get_counseling_detail(
         "topic": ticket.subject,
         "summary": ticket.subject,
         "notes": ticket.notes,
-        "confidential_notes": ticket.notes,
         "status": ticket.status,
         "priority_level": ticket.priority_level,
-        "duration_minutes": 60,
         "history": [
             {
                 "id": row.id,
@@ -1128,19 +1126,6 @@ def get_copilot_draft(
         os.getenv("OPENROUTER_API_KEY") or
         getattr(settings, "openai_api_key", None)
     )
-
-    is_mock = False
-    try:
-        from unittest.mock import MagicMock, Mock
-
-        from openai import OpenAI
-        if isinstance(OpenAI, (MagicMock, Mock)) or hasattr(OpenAI, "_mock_return_value"):
-            is_mock = True
-    except Exception as exc:
-        logger.debug("OpenAI mock detection failed (likely import error): %s", exc)
-
-    if is_mock:
-        openai_api_key = openai_api_key or "mock_key_for_testing"
 
     if not openai_api_key:
         fallback_msg = "Fallback suggestion: OpenAI API key is missing. Please configure OPENAI_API_KEY."
@@ -1208,14 +1193,8 @@ def get_copilot_draft(
         )
 
         generated_content = response.choices[0].message.content
-        if not generated_content or isinstance(generated_content, (MagicMock, Mock)) or not isinstance(generated_content, str):
-            if not os.getenv("OPENAI_API_KEY") and not os.getenv("OPENROUTER_API_KEY") and not getattr(settings, "openai_api_key", None):
-                fallback_msg = "Fallback suggestion: OpenAI API key is missing. Please configure OPENAI_API_KEY."
-                return {
-                    "draft": fallback_msg,
-                    "suggestion": fallback_msg
-                }
-            generated_content = "Mocked AI Response Suggestion"
+        if not generated_content or not isinstance(generated_content, str):
+            generated_content = "No se pudo generar sugerencia en este momento."
 
         return {
             "draft": generated_content,
@@ -1766,6 +1745,26 @@ def get_crm_analytics_summary(
     if user_sede:
         total_families = total_families.filter(models.Persona.sede_id == user_sede)
     total_families = total_families.distinct().count()
+
+    leads_q = case_query(db).filter(
+        models.CasoCRM.deleted_at.is_(None),
+        models.CasoCRM.origen_canal == CanalOrigenEnum.WEB_FORM,
+    )
+    if user_sede:
+        leads_q = leads_q.filter(models.CasoCRM.sede_id == user_sede)
+    total_leads = leads_q.count()
+
+    pipeline_by_stage = {}
+    stage_rows = (
+        db.query(models.CasoCRM.estado, func.count(models.CasoCRM.id))
+        .filter(models.CasoCRM.deleted_at.is_(None))
+    )
+    if user_sede:
+        stage_rows = stage_rows.filter(models.CasoCRM.sede_id == user_sede)
+    for stage_val, cnt in stage_rows.group_by(models.CasoCRM.estado).all():
+        key = stage_val.value if hasattr(stage_val, "value") else str(stage_val)
+        pipeline_by_stage[key] = cnt
+
     return {
         "total_personas": total_personas,
         "active_personas": active_personas,
@@ -1773,8 +1772,8 @@ def get_crm_analytics_summary(
         "events_this_month": events_this_month,
         "total_groups": total_groups,
         "total_families": total_families,
-        "total_leads": 0,
-        "pipeline_by_stage": {},
+        "total_leads": total_leads,
+        "pipeline_by_stage": pipeline_by_stage,
     }
 
 
@@ -1858,7 +1857,7 @@ def list_prayer_requests(
             "status": p.status,
             "source": p.source,
             "is_public": p.is_public,
-            "created_at": str(p.created_at) if p.created_at else None,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
         }
         for p in prayers
     ]
@@ -1942,11 +1941,13 @@ def create_volunteer(
         parts = name.split(" ", 1)
         first_name = parts[0]
         last_name = parts[1] if len(parts) > 1 else ""
+        user_sede = get_user_sede_id(db, current_user.id)
         persona = models.Persona(
             first_name=first_name,
             last_name=last_name,
             church_role=data.get("role_name") or "volunteer",
             estado_vital="ACTIVO",
+            sede_id=user_sede,
         )
         db.add(persona)
         db.flush()

@@ -31,7 +31,7 @@ from backend.api.evangelism_shared import (
     session_read_value,
 )
 from backend.core.database import get_db
-from backend.core.permissions import require_active_user
+from backend.core.permissions import require_evangelism_read
 from backend.core.tenant import require_user_sede_id
 
 logger = logging.getLogger(__name__)
@@ -226,7 +226,7 @@ def _generate_attendance_pdf(
 def attendance_pdf(
     grupo_id: UUID,
     db: Session = Depends(get_db),
-    current_user=Depends(require_active_user),
+    current_user=Depends(require_evangelism_read),
 ):
     """Genera PDF de asistencia del grupo con tabla de sesiones y línea de firma."""
     grupo = _get_group_or_404(db, grupo_id)
@@ -335,7 +335,7 @@ def _generate_attendance_excel(
 def attendance_excel(
     grupo_id: UUID,
     db: Session = Depends(get_db),
-    current_user=Depends(require_active_user),
+    current_user=Depends(require_evangelism_read),
 ):
     """Genera Excel de asistencia del grupo con tabla de sesiones."""
     grupo = _get_group_or_404(db, grupo_id)
@@ -363,7 +363,7 @@ def attendance_excel(
 def strategy_summary(
     strategy_id: UUID,
     db: Session = Depends(get_db),
-    current_user=Depends(require_active_user),
+    current_user=Depends(require_evangelism_read),
 ):
     """Resumen de todos los grupos de una estrategia de evangelismo."""
     user_sede = require_user_sede_id(db, current_user)

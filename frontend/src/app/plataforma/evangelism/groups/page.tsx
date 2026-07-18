@@ -42,7 +42,7 @@ interface SeasonForm {
 const PERIODICITY_LABEL: Record<string, string> = { SEMANAL: 'Semanal', MENSUAL: 'Mensual' };
 
 export default function GroupPage() {
- const { token, user } = useAuth();
+ const { token, hasModuleAccess } = useAuth();
  const router = useRouter();
  const { viewType, setViewType } = useViewType('evangelism_groups', 'grid');
  const [seasons, setSeasons] = useState<GroupSeason[]>([]);
@@ -68,8 +68,7 @@ export default function GroupPage() {
  const [seasonForm, setSeasonForm] = useState<SeasonForm>({ name: '', start_date: '', end_date: '', periodicity: 'SEMANAL' });
  const isSeasonFormValid = Boolean(seasonForm.name.trim() && seasonForm.start_date && seasonForm.end_date);
  const isSessionFormValid = Boolean(sessionForm.session_date && activeSeason && (sessionForm.create_for_all_groups || sessionForm.grupo_id));
- const role = String(user?.role || '').toLowerCase();
- const isPrivileged = ['admin', 'administrador', 'pastor'].includes(role);
+ const canManageEvangelism = hasModuleAccess('evangelism', 'manage');
 
  const load = useCallback(async () => {
  if (!token) return;
@@ -261,7 +260,7 @@ export default function GroupPage() {
  <DSMetric label="Promedio / Sesión" value={String(analytics?.avg_per_session ?? '—')} tone="amber" trend="Por semana" />
  </div>
 
- {isPrivileged && (
+ {canManageEvangelism && (
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
    <button onClick={requestSendReminders} disabled={sendingReminders}
     className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md transition-all text-left disabled:opacity-60">
@@ -323,7 +322,7 @@ export default function GroupPage() {
  </section>
 
  {/* Temporadas */}
- {isPrivileged && (
+ {canManageEvangelism && (
  <section>
  <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Temporadas</h2>
  {seasons.length === 0 ? (
@@ -360,7 +359,7 @@ export default function GroupPage() {
  )}
 
  {/* Desempeño por Grupo */}
- {isPrivileged && Boolean(analytics && analytics.per_group && analytics.per_group.length > 0) && (
+ {canManageEvangelism && Boolean(analytics && analytics.per_group && analytics.per_group.length > 0) && (
  <section>
  <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Desempeño por Grupo · {activeSeason?.name}</h2>
  <DSCard tone="light" className="shadow-2xl overflow-hidden rounded-lg">
@@ -404,7 +403,7 @@ export default function GroupPage() {
 
  {/* NEW SEASON DRAWER */}
  <WorkspaceDrawer
- isOpen={showNewSeason && isPrivileged}
+ isOpen={showNewSeason && canManageEvangelism}
  onClose={() => setShowNewSeason(false)}
  title="Nueva Temporada"
  subtitle="Configura una nueva temporada para Grupos en Casa"
@@ -442,7 +441,7 @@ export default function GroupPage() {
 
  {/* NEW SESSION DRAWER */}
  <WorkspaceDrawer
- isOpen={showNewSession && !!activeSeason && isPrivileged}
+ isOpen={showNewSession && !!activeSeason && canManageEvangelism}
  onClose={() => setShowNewSession(false)}
  title="Registrar Sesión Semanal"
  subtitle="Ingresa la asistencia y detalles de la reunión"
@@ -467,7 +466,7 @@ export default function GroupPage() {
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Grupo</label>
  <select value={sessionForm.grupo_id} onChange={e => setSessionForm(p => ({ ...p, grupo_id: e.target.value, create_for_all_groups: e.target.value === 'all' }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
  <option value="">— Seleccionar Grupo —</option>
- {isPrivileged && <option value="all" className="font-bold">✨ TODOS LOS GRUPOS ACTIVOS</option>}
+ {canManageEvangelism && <option value="all" className="font-bold">✨ TODOS LOS GRUPOS ACTIVOS</option>}
  {houses.map(h => <option key={h.id} value={h.id}>{h.name} {h.leader_name ? `· Líder: ${h.leader_name}` : ''}</option>)}
  </select>
  {sessionForm.grupo_id === 'all' && (

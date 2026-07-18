@@ -23,6 +23,8 @@ export async function installMockPlatformSession(
     ({ seededAccessToken, seededRefreshToken }) => {
       sessionStorage.setItem('ccf_token', seededAccessToken);
       sessionStorage.setItem('ccf_refresh_token', seededRefreshToken);
+      localStorage.setItem('ccf_token', seededAccessToken);
+      localStorage.setItem('ccf_refresh_token', seededRefreshToken);
     },
     {
       seededAccessToken: accessToken,
@@ -47,6 +49,29 @@ export async function installMockPlatformSession(
     });
   };
 
-  await page.route('**/api/v3/auth/me', fulfillAuthMe);
-  await page.route('**/api/auth/v3/me', fulfillAuthMe);
+  const fulfillRefresh = async (route: Route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      }),
+    });
+  };
+
+  const fulfillLogout = async (route: Route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true }),
+    });
+  };
+
+  await page.route('**/api/v3/auth/me**', fulfillAuthMe);
+  await page.route('**/api/auth/v3/me**', fulfillAuthMe);
+  await page.route('**/api/v3/auth/refresh**', fulfillRefresh);
+  await page.route('**/api/auth/v3/refresh**', fulfillRefresh);
+  await page.route('**/api/v3/auth/logout**', fulfillLogout);
+  await page.route('**/api/auth/v3/logout**', fulfillLogout);
 }

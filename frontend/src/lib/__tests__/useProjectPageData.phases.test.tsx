@@ -21,6 +21,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act, cleanup, fireEvent } from "@testing-library/react";
 import React from "react";
+import type { PhaseDef } from "@/context/ProjectUpdateContext";
 
 // Mocks que ``useProjectPageData`` toca al montar.
 vi.mock("@/lib/http", () => ({
@@ -39,11 +40,12 @@ interface PhaseSeed {
   id: string;
   slug: string;
   name: string;
+  color: string;
   order_index: number;
 }
 
 interface PageDataSnapshotShape {
-  phases: PhaseSeed[];
+  phases: PhaseDef[];
   projectId: string | null;
 }
 
@@ -74,9 +76,9 @@ function Harness() {
 }
 
 const FAKE_PHASES_A: PhaseSeed[] = [
-  { id: "00000000-0000-0000-0000-000000000001", slug: "todo", name: "Por hacer", order_index: 0 },
-  { id: "00000000-0000-0000-0000-000000000002", slug: "in_progress", name: "En progreso", order_index: 1 },
-  { id: "00000000-0000-0000-0000-000000000003", slug: "completed", name: "Completada", order_index: 2 },
+  { id: "00000000-0000-0000-0000-000000000001", slug: "todo", name: "Por hacer", color: "#94a3b8", order_index: 0 },
+  { id: "00000000-0000-0000-0000-000000000002", slug: "in_progress", name: "En progreso", color: "#3b82f6", order_index: 1 },
+  { id: "00000000-0000-0000-0000-000000000003", slug: "completed", name: "Completada", color: "#22c55e", order_index: 2 },
 ];
 
 describe("useProjectPageData — phase sync reset (PEND-QUALITY-PHASE-SYNC-001)", () => {

@@ -11,12 +11,10 @@
  * - La page sigue siendo el orquestador que decide qué renderizar.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import type {
-  BulkHabilitacionResponse,
-  GenerateSessionsResponse,
   GroupDetailResponse,
   SessionDetailResponse,
   SessionRow,
@@ -152,7 +150,7 @@ export function useCustomRoles(id: string, token: string | null) {
   }, [id, token]);
 
   return {
-    customRoles, loadingRoles, showRoleForm, setShowRoleForm,
+    customRoles, setCustomRoles, loadingRoles, showRoleForm, setShowRoleForm,
     newRoleName, setNewRoleName, newRoleDesc, setNewRoleDesc,
     fetchCustomRoles,
   };

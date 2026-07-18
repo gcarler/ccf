@@ -131,7 +131,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const hasModuleAccess = (module: string, minLevel = 'read') => {
         if (!user?.permissions) return false;
-        if (user.role === 'admin' || user.role === 'administrador') return true;
+        const role = String(user.role || '').toLowerCase();
+        if (role === 'admin' || role === 'administrador') return true;
+        if (module === 'evangelism') {
+            if (role === 'pastor') return true;
+            if (role === 'coordinador' && (minLevel === 'read' || minLevel === 'edit')) return true;
+        }
         const k = `${module}:${minLevel}`;
         if (user.permissions[k] === 'allow') return true;
         if (minLevel === 'read' && (

@@ -9,6 +9,7 @@ from sqlalchemy import inspect, or_
 from sqlalchemy.orm import Session, load_only
 
 from backend import models
+from backend.schemas.evangelism import StatusAsistenciaCanonico
 from backend.services.messaging_outcomes import DELIVERED_OUTCOMES, CommunicationOutcome
 
 logger = logging.getLogger(__name__)
@@ -22,10 +23,16 @@ ABSENCE_REASON_LABELS = {
     "other": "Otro",
 }
 
-ATTENDED_STATES = {"ASISTIO", "Presente", "present", "presente", "primera_vez", "first_time"}
-ABSENT_STATES = {"FALTO", "Ausente", "absent", "ausente"}
-EXCUSED_STATES = {"EXCUSA", "Excusa", "excusa"}
-FIRST_TIME_STATES = {"primera_vez", "first_time"}
+# ── Estados canónicos de asistencia ──
+# Centralizados desde StatusAsistenciaCanonico (schemas/evangelism.py).
+# Los sets históricos (ATTENDED_STATES, ABSENT_STATES, EXCUSED_STATES,
+# FIRST_TIME_STATES) se derivan del enum para que cualquier extensión
+# solo requiera tocar el enum, no 4 sets paralelos.
+
+ATTENDED_STATES = {StatusAsistenciaCanonico.PRESENT.value, StatusAsistenciaCanonico.FIRST_TIME.value, "ASISTIO", "Presente", "presente", "first_time"}
+ABSENT_STATES = {StatusAsistenciaCanonico.ABSENT.value, "FALTO", "Ausente", "ausente"}
+EXCUSED_STATES = {StatusAsistenciaCanonico.EXCUSED.value, "EXCUSA", "Excusa", "excusa"}
+FIRST_TIME_STATES = {StatusAsistenciaCanonico.FIRST_TIME.value, "primera_vez", "first_time"}
 
 
 def sessions_grupo_has_estado_habilitacion(db: Session) -> bool:
@@ -98,15 +105,27 @@ def session_read_only_options(db: Session):
 
 
 def normalize_attendance_status(value) -> str:
+    """Normaliza un estado de asistencia a un valor canónico.
+    
+    Esta es la fuente de verdad única para la normalización de estados.
+    Todos los valores de entrada se mapean a uno de los 4 miembros de
+    ``StatusAsistenciaCanonico`` (present/absent/excused/first_time).
+    
+    NOTA: ``primera_vez`` y ``first_time`` se normalizan a ``present``
+    porque la semántica operativa es "asistió" (el flag de primera vez
+    se maneja por separado en el modelo vía ``es_primera_vez``). Los
+    valores desconocidos se retornan tal cual para que la capa Pydantic
+    los rechace con 422.
+    """
     normalized = str(value or "").strip().lower()
     if normalized in {state.lower() for state in FIRST_TIME_STATES}:
-        return "present"
+        return StatusAsistenciaCanonico.PRESENT.value
     if normalized in {state.lower() for state in ATTENDED_STATES}:
-        return "present"
+        return StatusAsistenciaCanonico.PRESENT.value
     if normalized in {state.lower() for state in ABSENT_STATES}:
-        return "absent"
+        return StatusAsistenciaCanonico.ABSENT.value
     if normalized in {state.lower() for state in EXCUSED_STATES}:
-        return "excused"
+        return StatusAsistenciaCanonico.EXCUSED.value
     return normalized
 
 

@@ -18,8 +18,8 @@ export interface MinistryEvent {
  end_time?: string | null;
  target_audience?: EventAudience;
  target_role_id?: string | null;
- target_role_ids?: string[];
- target_persona_ids?: string[];
+ target_role_ids: string[];
+ target_persona_ids: string[];
  day_of_week?: number;
  month_day?: string;
  fixed_date?: string;
@@ -278,3 +278,50 @@ export interface GroupDetailResponse {
 }
 
 export type HabilitacionAccion = 'HABILITAR' | 'DESHABILITAR' | 'CERRAR';
+
+// ── Multiplication types ──
+
+export interface GrupoSummary {
+  id: string;
+  nombre: string;
+  total_personas: number;
+}
+
+export interface MultiplicationCheckItem {
+  grupo_id: string;
+  grupo_nombre: string;
+  lider_nombre: string | null;
+  total_personas: number;
+  excede_umbral: boolean;
+  sugerencia: string;
+}
+
+export interface MultiplicationHistoryItem {
+  grupo_id: string;
+  grupo_nombre: string;
+  parent_group_id: string | null;
+  parent_group_nombre: string | null;
+  notes_historial: string | null;
+  created_at: string | null;
+  personas_actuales: number;
+  lider_nombre: string | null;
+}
+
+export interface SplitResponse {
+  ok: boolean;
+  mensaje: string;
+  grupo_original: GrupoSummary;
+  nuevo_grupo: GrupoSummary;
+  personas_transferidas: number;
+}
+
+// ── Attendance record for session forms ──
+
+export interface AttendanceRecord {
+  persona_id: string;
+  name?: string;
+  status: 'present' | 'absent' | 'excused' | 'first_time';
+  notes?: string | null;
+  es_primera_vez?: boolean;
+  requires_seguimiento?: boolean;
+}

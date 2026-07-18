@@ -69,24 +69,22 @@ export default function EvangelismShell({
     sidebarGroups,
 }: EvangelismShellProps) {
     const { user, loading, token, hasModuleAccess } = useAuth();
-    const role = (user?.role || '').toLowerCase();
-    const isPastoralOrAdmin = ['admin', 'administrador', 'pastor'].includes(role);
-    const isAuthorized = isPastoralOrAdmin || hasModuleAccess('evangelism', 'read');
+    const canReadEvangelism = hasModuleAccess('evangelism', 'read');
     const [strategies, setStrategies] = useState<StrategyItem[]>([]);
 
     const fetchStrategies = useCallback(async () => {
-        if (!token || !isPastoralOrAdmin) return;
+        if (!token || !canReadEvangelism) return;
         try {
             const result = await apiFetch<StrategyItem[]>('/evangelism/strategies', { token, silent: true });
             setStrategies(Array.isArray(result) ? result : []);
         } catch {
             setStrategies([]);
         }
-    }, [isPastoralOrAdmin, token]);
+    }, [canReadEvangelism, token]);
 
     useEffect(() => {
-        if (isPastoralOrAdmin) fetchStrategies();
-    }, [fetchStrategies, isPastoralOrAdmin]);
+        if (canReadEvangelism) fetchStrategies();
+    }, [fetchStrategies, canReadEvangelism]);
 
     // Listen for newly created strategies
     useEffect(() => {
@@ -96,7 +94,7 @@ export default function EvangelismShell({
     }, [fetchStrategies]);
 
     const sidebarSections = [
-        ...(isPastoralOrAdmin ? [{
+        ...(canReadEvangelism ? [{
             title: 'Estrategias',
             items: [
                 { id: 'ev-strategies', label: 'Todas las Estrategias', href: '/plataforma/evangelism', icon: Flame, count: strategies.length },
@@ -144,7 +142,7 @@ export default function EvangelismShell({
         );
     }
 
-    if (!isAuthorized) {
+    if (!canReadEvangelism) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center p-3">
                 <div className="max-w-md w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-8 text-center">
@@ -153,7 +151,7 @@ export default function EvangelismShell({
                     </div>
                     <h2 className="text-lg font-bold text-amber-900">Acceso restringido</h2>
                     <p className="mt-2 text-sm font-medium text-amber-800">
-                        Este módulo requiere rol pastoral o administrativo.
+                        Este módulo requiere permisos de lectura sobre evangelismo.
                     </p>
                 </div>
             </div>

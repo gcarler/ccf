@@ -141,7 +141,7 @@ const nextConfig = {
         ];
     },
     async rewrites() {
-        const target = process.env.API_PROXY_TARGET || 'http://backend:8000';
+        const target = apiProxyTarget || 'http://backend:8000';
         return [
             {
                 source: '/api/:path*',

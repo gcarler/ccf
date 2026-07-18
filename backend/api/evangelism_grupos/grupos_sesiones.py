@@ -22,7 +22,12 @@ from backend.api.evangelism_shared import (
     utc_now,
 )
 from backend.core.database import get_db
-from backend.core.permissions import get_current_user, require_pastor_or_admin
+from backend.core.permissions import (
+    get_current_user,
+    require_evangelism_edit,
+    require_evangelism_manage,
+    require_evangelism_read,
+)
 from backend.core.tenant import require_user_sede_id
 from backend.models import Asistencia, GrupoEvangelismo, SesionGrupo
 from backend.models_evangelism import ParticipanteGrupo
@@ -47,7 +52,7 @@ def list_groups_sessions(
     season_id: Optional[UUID] = None,
     grupo_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     user_sede = require_user_sede_id(db, current_user)
     query = db.query(SesionGrupo).options(
@@ -113,7 +118,7 @@ def list_groups_sessions(
 @static_router.get("/groups/sessions/mine/pending")
 def list_my_pending_groups_sessions(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     house_ids: list[int]
     if _is_crm_admin_or_pastor(current_user):
@@ -231,7 +236,7 @@ def list_my_pending_groups_sessions(
 def create_groups_session(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     try:
         from datetime import date as date_type
@@ -357,7 +362,7 @@ def list_sessions(
     strategy_id: Optional[UUID] = None,
     house_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     """List sessions, optionally filtered by strategy or house."""
 
@@ -406,7 +411,7 @@ def list_sessions(
 def create_session(
     data: schemas.SesionGrupoCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Create a new session."""
 
@@ -465,7 +470,7 @@ def create_session(
 def get_session_detail(
     session_id: UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     """Get session with attendance records including persona names."""
     from backend.models_crm import Persona
@@ -550,7 +555,7 @@ def update_session(
     session_id: UUID,
     update: schemas.SesionGrupoUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Update session."""
 
@@ -587,7 +592,7 @@ def update_session(
 def delete_session(
     session_id: UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Cancela una sesion (soft-delete: marca como CANCELADA)."""
 
@@ -619,7 +624,7 @@ def toggle_session_habilitacion(
     session_id: UUID,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Admin: habilita o deshabilita manualmente una sesion para recibir reportes."""
     from backend.models_evangelism import HabilitacionSesionEnum
@@ -667,7 +672,7 @@ def toggle_session_habilitacion(
 def habilitar_todas_sesiones(
     strategy_id: UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Admin: habilita todas las sesiones de una estrategia de un golpe."""
     from backend.models_evangelism import GrupoEvangelismo, HabilitacionSesionEnum
@@ -703,7 +708,7 @@ def habilitar_todas_sesiones(
 def deshabilitar_todas_sesiones(
     strategy_id: UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Admin: bloquea todas las sesiones de una estrategia."""
     from backend.models_evangelism import GrupoEvangelismo, HabilitacionSesionEnum
@@ -754,7 +759,7 @@ def search_personas_for_attendance(
     q: str = "",
     limit: int = 10,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     """Búsqueda remota con debounce de personas para el formulario de asistencia.
 

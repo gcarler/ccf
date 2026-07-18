@@ -137,6 +137,36 @@ _READ_ENDPOINTS = [
     ("GET", "/api/projects/comments"),
 ]
 
+# Endpoints where Miembro should receive 403 (module-level access denied)
+_READ_ENDPOINTS_MIEMBRO_403 = [
+    ("GET", "/api/projects"),
+    ("GET", "/api/projects/summary"),
+    ("GET", "/api/projects/workload"),
+    ("GET", "/api/projects/activities"),
+    ("GET", "/api/projects/inbox"),
+    ("GET", "/api/projects/whiteboards"),
+    ("GET", "/api/projects/tasks"),
+    ("GET", "/api/projects/comments"),
+]
+
+# Endpoints protected by require_project_access with a project/task ID:
+# Axioma 3 requires 404 for non-existent or out-of-scope resources.
+_READ_ENDPOINTS_MIEMBRO_404 = [
+    ("GET", f"/api/projects/{FAKE}"),
+    ("GET", f"/api/projects/{FAKE}/phases"),
+    ("GET", f"/api/projects/{FAKE}/wiki"),
+    ("GET", f"/api/projects/{FAKE}/whiteboard"),
+    ("GET", f"/api/projects/tasks/{FAKE}"),
+]
+
+# Endpoints scoped to a project ID but still protected by
+# require_module_access (not require_project_access), so Miembro keeps
+# receiving 403.
+_READ_ENDPOINTS_MIEMBRO_403_PROJECT_SCOPED = [
+    ("GET", f"/api/projects/{FAKE}/milestones"),
+    ("GET", f"/api/projects/{FAKE}/messages"),
+]
+
 # (method, path, json_payload or None)
 _EDIT_ENDPOINTS = [
     ("POST", "/api/projects", {"title": "Test", "description": "desc"}),
@@ -159,6 +189,29 @@ _EDIT_ENDPOINTS = [
     ("DELETE", f"/api/projects/{FAKE}", None),
     ("POST", f"/api/projects/{FAKE}/messages", {"content": "msg"}),
     ("DELETE", f"/api/projects/{FAKE}/tasks/{_uuid.uuid4()}", None),
+]
+
+# Endpoints where Miembro should receive 403 (module-level access denied)
+_EDIT_ENDPOINTS_MIEMBRO_403 = [
+    ("POST", "/api/projects", {"title": "Test", "description": "desc"}),
+    ("POST", f"/api/projects/inbox/{FAKE}/read", None),
+    ("POST", "/api/projects/comments", {"project_id": FAKE, "content": "c"}),
+    ("PATCH", f"/api/projects/comments/{_uuid.uuid4()}", {"content": "u"}),
+    ("DELETE", f"/api/projects/comments/{_uuid.uuid4()}", None),
+    ("DELETE", f"/api/projects/{FAKE}", None),
+    ("POST", f"/api/projects/{FAKE}/messages", {"content": "msg"}),
+    ("DELETE", f"/api/projects/{FAKE}/tasks/{_uuid.uuid4()}", None),
+]
+
+# Endpoints protected by require_project_access with a project/task ID:
+# Axioma 3 requires 404 for non-existent or out-of-scope resources.
+_EDIT_ENDPOINTS_MIEMBRO_404 = [
+    ("POST", f"/api/projects/{FAKE}/tasks",
+     {"title": "T", "status": "todo", "priority": "medium"}),
+    ("POST", f"/api/projects/{FAKE}/wiki", {"title": "W", "content": "c"}),
+    ("POST", f"/api/projects/{FAKE}/whiteboard", {"elements_json": "[]"}),
+    ("DELETE", f"/api/projects/{FAKE}/whiteboard", None),
+    ("PATCH", f"/api/projects/tasks/{FAKE}", {"title": "Updated"}),
 ]
 
 
@@ -277,12 +330,16 @@ class TestEditorReadEdit:
 
 class TestMiembroBaseline:
     """Documenta el baseline actual PEND-RBAC-001: ``Miembro`` no tiene
-    permisos ``projects:*`` y por tanto recibe **403** en TODA la API
-    del módulo. Cualquier cambio futuro que añada acceso granular a
-    Miembro romperá estos tests y obligará a un debate explícito sobre
-    el modelo de permisos."""
+    permisos ``projects:*`` y por tanto recibe **403** en los endpoints
+    de módulo (sin project_id/task_id específico). En endpoints con
+    ``project_id`` o ``task_id`` el contrato Axioma 3 exige 404 cuando
+    el recurso no existe o no pertenece a la sede del actor, incluso
+    para Miembro (existence-leak safe)."""
 
-    @pytest.mark.parametrize("method, path", _READ_ENDPOINTS)
+    @pytest.mark.parametrize(
+        "method, path",
+        _READ_ENDPOINTS_MIEMBRO_403 + _READ_ENDPOINTS_MIEMBRO_403_PROJECT_SCOPED,
+    )
     def test_miembro_read_returns_403(self, client, role_headers, method, path):
         resp = _issue(client, method, path, None, role_headers["miembro"])
         assert resp.status_code == status.HTTP_403_FORBIDDEN, (
@@ -290,11 +347,27 @@ class TestMiembroBaseline:
             f"regresión de baseline PEND-RBAC-001: {resp.text}"
         )
 
-    @pytest.mark.parametrize("method, path, payload", _EDIT_ENDPOINTS)
+    @pytest.mark.parametrize("method, path", _READ_ENDPOINTS_MIEMBRO_404)
+    def test_miembro_read_returns_404(self, client, role_headers, method, path):
+        resp = _issue(client, method, path, None, role_headers["miembro"])
+        assert resp.status_code == status.HTTP_404_NOT_FOUND, (
+            f"Miembro debería recibir 404 (Axioma 3) en {method} {path} — "
+            f"recibió {resp.status_code}: {resp.text}"
+        )
+
+    @pytest.mark.parametrize("method, path, payload", _EDIT_ENDPOINTS_MIEMBRO_403)
     def test_miembro_write_returns_403(self, client, role_headers, method, path, payload):
         resp = _issue(client, method, path, payload, role_headers["miembro"])
         assert resp.status_code == status.HTTP_403_FORBIDDEN, (
             f"Miembro NO bloqueado en {method} {path}: {resp.text}"
+        )
+
+    @pytest.mark.parametrize("method, path, payload", _EDIT_ENDPOINTS_MIEMBRO_404)
+    def test_miembro_write_returns_404(self, client, role_headers, method, path, payload):
+        resp = _issue(client, method, path, payload, role_headers["miembro"])
+        assert resp.status_code == status.HTTP_404_NOT_FOUND, (
+            f"Miembro debería recibir 404 (Axioma 3) en {method} {path} — "
+            f"recibió {resp.status_code}: {resp.text}"
         )
 
 
@@ -354,20 +427,53 @@ class TestPermissionGranularityGaps:
     def test_editor_blocked_from_put_phases(self, client, role_headers):
         """Cierre de ``PEND-QUALITY-PHASES-RBAC-001`` (2026-07-16):
         ``PUT /projects/{id}/phases`` está protegido con
-        ``require_module_access("projects", "manage")``. Editor (que solo
-        tiene ``projects:edit``) recibe **403**, alineado con el docstring
-        del endpoint ("Solo administradores y gestores pueden modificar
-        fases"). Gestor (con ``projects:manage``) sigue pasando
-        (ver ``test_gestor_can_modify_phases``). Si en el futuro se cambia
-        la decoración, este test debe actualizarse."""
+        ``require_project_access("manage")``. Para un project_id
+        inexistente, Editor (sin ``projects:manage``) recibe **404**
+        (Axioma 3 / existence-leak safe). Para un proyecto existente en
+        su sede recibe **403** (ver
+        ``test_editor_blocked_from_put_phases_existing_project``)."""
         resp = client.put(
             f"/api/projects/{FAKE}/phases",
             json=[{"name": "P", "slug": "todo", "color": "#000"}],
             headers=role_headers["editor"],
         )
+        assert resp.status_code == status.HTTP_404_NOT_FOUND, (
+            f"PUT /phases roto: editor recibió {resp.status_code}, "
+            f"se esperaba 404 (Axioma 3) para project_id inexistente."
+        )
+
+    def test_editor_blocked_from_put_phases_existing_project(self, client, role_headers):
+        """Editor recibe 403 en PUT /phases para un proyecto existente en su sede."""
+        payload = {"title": "Proyecto Fases", "description": "Test", "status": "planning", "color": "#3b82f6"}
+        create_resp = client.post("/api/projects", json=payload, headers=role_headers["admin"])
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        project_id = create_resp.json()["id"]
+
+        resp = client.put(
+            f"/api/projects/{project_id}/phases",
+            json=[{"name": "P", "slug": "todo", "color": "#000"}],
+            headers=role_headers["editor"],
+        )
         assert resp.status_code == status.HTTP_403_FORBIDDEN, (
             f"PUT /phases roto: editor recibió {resp.status_code}, "
-            f"se esperaba 403 (projects:manage)."
+            f"se esperaba 403 (projects:manage) para proyecto existente en su sede."
+        )
+
+    def test_miembro_blocked_from_put_phases_existing_project(self, client, role_headers):
+        """Miembro recibe 403 en PUT /phases para un proyecto existente en su sede."""
+        payload = {"title": "Proyecto Fases Miembro", "description": "Test", "status": "planning", "color": "#3b82f6"}
+        create_resp = client.post("/api/projects", json=payload, headers=role_headers["admin"])
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        project_id = create_resp.json()["id"]
+
+        resp = client.put(
+            f"/api/projects/{project_id}/phases",
+            json=[{"name": "P", "slug": "todo", "color": "#000"}],
+            headers=role_headers["miembro"],
+        )
+        assert resp.status_code == status.HTTP_403_FORBIDDEN, (
+            f"PUT /phases roto: miembro recibió {resp.status_code}, "
+            f"se esperaba 403 (projects:manage) para proyecto existente en su sede."
         )
 
 

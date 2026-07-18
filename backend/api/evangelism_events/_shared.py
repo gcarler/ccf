@@ -17,8 +17,14 @@ def _get_user_role(user: models.User) -> str:
     return role
 
 
-def is_event_admin_or_pastor(user: models.User) -> bool:
-    """Check if user has admin or pastor role (normalized comparison)."""
+def is_event_reader_role(user: models.User) -> bool:
+    """Check if user has a role with broad read visibility over events."""
+    role = _get_user_role(user)
+    return role in {"admin", "administrador", "pastor", "coordinador"}
+
+
+def is_event_manager_role(user: models.User) -> bool:
+    """Check if user has a role with broad operational control over events."""
     role = _get_user_role(user)
     return role in {"admin", "administrador", "pastor"}
 
@@ -35,7 +41,7 @@ def _get_persona_for_user(db: Session, user_id):
 
 def is_event_assignee(db: Session, user: models.User, event_id: UUID) -> bool:
     """Check if user is assigned to this event (MC, preacher, offering, etc.)."""
-    if is_event_admin_or_pastor(user):
+    if is_event_manager_role(user):
         return True
     persona = _get_persona_for_user(db, user.id)
     if not persona:
@@ -53,16 +59,16 @@ def is_event_assignee(db: Session, user: models.User, event_id: UUID) -> bool:
 
 
 def require_event_access(db: Session, user: models.User, event_id: UUID) -> None:
-    """Raise 403 if user lacks access to the event (checks sede + role + assignment)."""
+    """Raise 403 if user lacks read access to the event."""
     event_sede = db.query(models.CrmEvent.sede_id).filter(models.CrmEvent.id == event_id).scalar()
     user_sede = require_user_sede_id(db, user)
     if event_sede and str(event_sede) != str(user_sede):
         raise HTTPException(status_code=403, detail="Evento no pertenece a tu sede")
-    if is_event_admin_or_pastor(user):
+    if is_event_reader_role(user):
         return
     if is_event_assignee(db, user, event_id):
         return
     raise HTTPException(
         status_code=403,
-        detail="Permisos insuficientes. Solo admin, pastor o asignados al evento.",
+        detail="Permisos insuficientes. Se requiere acceso de lectura del módulo o asignación al evento.",
     )

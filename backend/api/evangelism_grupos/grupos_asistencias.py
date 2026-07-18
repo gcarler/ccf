@@ -24,7 +24,12 @@ from backend.api.evangelism_shared import (
     utc_now,
 )
 from backend.core.database import get_db
-from backend.core.permissions import get_current_user, require_pastor_or_admin
+from backend.core.permissions import (
+    get_current_user,
+    require_evangelism_edit,
+    require_evangelism_manage,
+    require_evangelism_read,
+)
 from backend.core.tenant import require_user_sede_id
 from backend.models import Asistencia, GrupoEvangelismo, SesionGrupo
 
@@ -311,7 +316,7 @@ def submit_attendance(
     session_id: UUID,
     attendance_data: List[schemas.AsistenciaGrupoCreate],
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_edit),
 ):
     """Submit attendance for a session. Checks automation triggers."""
 
@@ -505,7 +510,7 @@ def submit_attendance(
 def list_pending_follow_ups(
     limit: int = 50,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_read),
 ):
     """Lista todos los seguimientos pendientes (no completados)."""
     from backend.crud.evangelism import get_pendientes_seguimiento
@@ -530,7 +535,7 @@ def _serialize_seguimiento(obj) -> dict:
 def list_seguimientos_for_attendance(
     asistencia_id: UUID,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_read),
 ):
     """Lista los seguimientos de una asistencia."""
     from backend.crud.evangelism import get_seguimientos
@@ -547,7 +552,7 @@ def create_seguimiento(
     asistencia_id: UUID,
     payload: schemas.RegistroSeguimientoCreate,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_edit),
 ):
     """Crea un registro de seguimiento para una asistencia."""
     from backend.crud.evangelism import create_seguimiento
@@ -568,7 +573,7 @@ def update_seguimiento(
     seguimiento_id: UUID,
     payload: schemas.RegistroSeguimientoUpdate,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_pastor_or_admin),
+    _user: models.User = Depends(require_evangelism_edit),
 ):
     """Actualiza un seguimiento (marcar completado, agregar resultado, etc.)."""
     from backend.crud.evangelism import update_seguimiento

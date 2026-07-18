@@ -20,8 +20,8 @@ type MinistryEvent = {
   event_type: string;
   target_audience: 'ALL' | 'ROLE' | 'MANUAL';
   target_role_id?: string | null;
-  target_role_ids?: string[];
-  target_persona_ids?: string[];
+  target_role_ids: string[];
+  target_persona_ids: string[];
   day_of_week?: number;
   start_time?: string;
   end_time?: string;
@@ -78,6 +78,7 @@ const BASE_EVENTS: MinistryEvent[] = [
     target_audience: 'ROLE',
     target_role_id: 'role-jovenes',
     target_role_ids: ['role-jovenes'],
+    target_persona_ids: [],
     start_time: '18:00',
     end_time: '20:00',
     status: 'ACTIVE',

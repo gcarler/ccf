@@ -354,6 +354,31 @@ export interface AutomationRule {
   active: boolean;
 }
 
+export interface CrmAutomationRecord {
+  id: string;
+  name: string;
+  trigger_event: string;
+  action_type: string;
+  action_payload: Record<string, unknown>;
+  is_active: boolean;
+  created_at: string;
+  delay_minutes: number;
+  ui_graph_state?: {
+    position?: { x: number; y: number };
+  } | null;
+}
+
+export interface CrmAutomationEdgeRecord {
+  id: string;
+  source_id: string;
+  target_id: string;
+  condition_type?: string | null;
+  condition_key?: string | null;
+  condition_value?: string | null;
+  source_node_id?: string | null;
+  target_node_id?: string | null;
+}
+
 // ── CrmPersona (from old /crm/types.ts) ───────────────────────────────────
 export interface CrmPersona {
   id: string;

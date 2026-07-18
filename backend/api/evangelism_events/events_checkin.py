@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.api.evangelism_events._shared import require_event_access
 from backend.core.database import get_db
-from backend.core.permissions import require_active_user
+from backend.core.permissions import require_active_user, require_evangelism_edit
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
@@ -32,7 +32,7 @@ def fast_checkin_visitor(
     session_date: str,
     visitor: VisitorCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_edit),
 ):
     require_event_access(db, current_user, event_id)
     event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()

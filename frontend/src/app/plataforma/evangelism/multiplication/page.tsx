@@ -6,6 +6,12 @@ import Skeleton from '@/components/ui/Skeleton';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { useAuth } from '@/context/AuthContext';
 import { DSBadge, DSCard } from '@/design';
+import type {
+  GrupoSummary,
+  MultiplicationCheckItem,
+  MultiplicationHistoryItem,
+  SplitResponse,
+} from '@/app/plataforma/evangelism/types';
 import { apiFetch } from '@/lib/http';
 import {
   GitBranch,
@@ -17,42 +23,6 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-interface MultiplicationCheckItem {
-  grupo_id: string;
-  grupo_nombre: string;
-  lider_nombre: string | null;
-  total_personas: number;
-  excede_umbral: boolean;
-  sugerencia: string;
-}
-
-interface MultiplicationHistoryItem {
-  grupo_id: string;
-  grupo_nombre: string;
-  parent_group_id: string | null;
-  parent_group_nombre: string | null;
-  notes_historial: string | null;
-  created_at: string | null;
-  personas_actuales: number;
-  lider_nombre: string | null;
-}
-
-interface SplitResponse {
-  ok: boolean;
-  mensaje: string;
-  grupo_original: {
-    id: string;
-    nombre: string;
-    total_personas: number;
-  };
-  nuevo_grupo: {
-    id: string;
-    nombre: string;
-    total_personas: number;
-  };
-  personas_transferidas: number;
-}
-
 interface PersonaOption {
   id: string;
   nombre_completo: string;
@@ -62,29 +32,45 @@ interface PersonaOption {
 //   - GET  /evangelism/multiplication/check
 //   - GET  /evangelism/multiplication/history
 //   - POST /evangelism/multiplication/split
-type GrupoSummary = { id: string; nombre: string; total_personas: number };
-function normalizeGroupSummary(g: any): GrupoSummary {
-  const total_personas = g?.total_personas ?? 0;
-  const { total_personas: _total_personas, ...rest } = g || {};
-  return { ...rest, total_personas };
+function normalizeGroupSummary(g: unknown): GrupoSummary {
+  const obj = (g ?? {}) as Record<string, unknown>;
+  const total_personas = Number(obj?.total_personas ?? 0);
+  return { id: String(obj.id ?? ''), nombre: String(obj.nombre ?? ''), total_personas };
 }
-function normalizeCheckItem(raw: any): MultiplicationCheckItem {
-  const total_personas = raw?.total_personas ?? 0;
-  const { total_personas: _total_personas, ...rest } = raw || {};
-  return { ...rest, total_personas };
-}
-function normalizeHistoryItem(raw: any): MultiplicationHistoryItem {
-  const personas_actuales = raw?.personas_actuales ?? 0;
-  const { personas_actuales: _personas_actuales, ...rest } = raw || {};
-  return { ...rest, personas_actuales };
-}
-function normalizeSplitResponse(res: any): SplitResponse {
-  const personas_transferidas = res?.personas_transferidas ?? 0;
-  const { grupo_original, nuevo_grupo, personas_transferidas: _personas_transferidas, ...rest } = res || {};
+function normalizeCheckItem(raw: unknown): MultiplicationCheckItem {
+  const obj = (raw ?? {}) as Record<string, unknown>;
+  const total_personas = Number(obj?.total_personas ?? 0);
   return {
-    ...rest,
-    grupo_original: normalizeGroupSummary(grupo_original),
-    nuevo_grupo: normalizeGroupSummary(nuevo_grupo),
+    grupo_id: String(obj.grupo_id ?? ''),
+    grupo_nombre: String(obj.grupo_nombre ?? ''),
+    lider_nombre: obj.lider_nombre ? String(obj.lider_nombre) : null,
+    total_personas,
+    excede_umbral: Boolean(obj.excede_umbral),
+    sugerencia: String(obj.sugerencia ?? ''),
+  };
+}
+function normalizeHistoryItem(raw: unknown): MultiplicationHistoryItem {
+  const obj = (raw ?? {}) as Record<string, unknown>;
+  const personas_actuales = Number(obj?.personas_actuales ?? 0);
+  return {
+    grupo_id: String(obj.grupo_id ?? ''),
+    grupo_nombre: String(obj.grupo_nombre ?? ''),
+    parent_group_id: obj.parent_group_id ? String(obj.parent_group_id) : null,
+    parent_group_nombre: obj.parent_group_nombre ? String(obj.parent_group_nombre) : null,
+    notes_historial: obj.notes_historial ? String(obj.notes_historial) : null,
+    created_at: obj.created_at ? String(obj.created_at) : null,
+    personas_actuales,
+    lider_nombre: obj.lider_nombre ? String(obj.lider_nombre) : null,
+  };
+}
+function normalizeSplitResponse(res: unknown): SplitResponse {
+  const obj = (res ?? {}) as Record<string, unknown>;
+  const personas_transferidas = Number((obj as any)?.personas_transferidas ?? 0);
+  return {
+    ok: Boolean(obj.ok),
+    mensaje: String(obj.mensaje ?? ''),
+    grupo_original: normalizeGroupSummary((obj as any)?.grupo_original),
+    nuevo_grupo: normalizeGroupSummary((obj as any)?.nuevo_grupo),
     personas_transferidas,
   };
 }

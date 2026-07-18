@@ -24,7 +24,13 @@ from backend.api.evangelism_shared import (
     utc_now,
 )
 from backend.core.database import get_db
-from backend.core.permissions import get_current_user, require_active_user, require_pastor_or_admin
+from backend.core.permissions import (
+    get_current_user,
+    require_active_user,
+    require_evangelism_edit,
+    require_evangelism_manage,
+    require_evangelism_read,
+)
 from backend.core.tenant import require_user_sede_id
 from backend.models import GrupoEvangelismo, SesionGrupo
 
@@ -39,21 +45,7 @@ def _session_read_options(db: Session):
 
 # ── Cell Group CRUD ──
 
-def _slug_role_name(value: str | None) -> str:
-    import unicodedata
-
-    text = unicodedata.normalize("NFD", str(value or "").strip().lower())
-    text = "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
-    cleaned = []
-    previous_dash = False
-    for ch in text:
-        if ch.isalnum():
-            cleaned.append(ch)
-            previous_dash = False
-        elif not previous_dash:
-            cleaned.append("-")
-            previous_dash = True
-    return "".join(cleaned).strip("-")
+from backend.crud._utils import _slugify as _slug_role_name
 
 
 def _strategy_role_catalog(db: Session, strategy_id: UUID | None) -> tuple[set[UUID], set[str]]:
@@ -132,7 +124,7 @@ def _validate_strategy_group_roles(db: Session, strategy_id: UUID | None, body: 
 def list_grupos(
     evangelism_strategy_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     user_sede = require_user_sede_id(db, current_user)
     q = db.query(GrupoEvangelismo).filter(
@@ -172,7 +164,7 @@ def _serialize_grupo(g):
 @static_router.get("/groups/mine", response_model=List[dict])
 def list_my_grupos(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     user_sede = require_user_sede_id(db, current_user)
     if _is_crm_admin_or_pastor(current_user):
@@ -198,7 +190,7 @@ def list_my_grupos(
 @dynamic_router.get("/groups/assignment-summary", response_model=dict)
 def get_groups_assignment_summary(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     user_sede = require_user_sede_id(db, current_user)
     q = (
@@ -534,7 +526,7 @@ def get_grupo(
 async def create_grupo(
     payload: schemas.GrupoEvangelismoCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     body = payload.model_dump(exclude_unset=True)
     _validate_strategy_group_roles(db, payload.evangelism_strategy_id, body)
@@ -636,7 +628,7 @@ def update_grupo(
 def delete_grupo(
     grupo_id: UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Desactiva un grupo de evangelismo (soft-delete)."""
     user_sede = require_user_sede_id(db, current_user)
@@ -660,7 +652,7 @@ def delete_grupo(
 @dynamic_router.get("/groups/seasons")
 def list_campaign_seasons(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     seasons = db.query(models.CampaignSeason).order_by(models.CampaignSeason.start_date.desc()).all()
     return [
@@ -682,7 +674,7 @@ def list_campaign_seasons(
 def create_campaign_season(
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     name = str(payload.get("name", "")).strip()
     if not name:
@@ -719,7 +711,7 @@ def update_campaign_season(
     season_id: UUID,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_manage),
 ):
     season = db.query(models.CampaignSeason).filter(models.CampaignSeason.id == season_id).first()
     if not season:
@@ -739,7 +731,7 @@ def update_campaign_season(
 def get_groups_analytics(
     season_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     from sqlalchemy import func
 
@@ -794,7 +786,7 @@ def get_groups_analytics(
 def get_macro_despliegue(
     season_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     from sqlalchemy import func
 
@@ -944,7 +936,7 @@ def _ensure_group_visitor_link(db: Session, grupo_id: UUID, persona_id: UUID) ->
 def register_groups_visitor(
     visitor: GroupVisitorCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_active_user),
+    current_user: models.User = Depends(require_evangelism_edit),
 ):
     """Register a new guest from a Group session report as a Persona + CRM lead."""
     grupo = db.query(GrupoEvangelismo).filter(
@@ -1058,7 +1050,7 @@ def get_strategy_metrics(
     strategy_id: UUID,
     weeks: int = 12,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_pastor_or_admin),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     """Weekly metrics for a strategy: attendance, absences, first-timers, groups."""
     from datetime import timedelta

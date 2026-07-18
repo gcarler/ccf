@@ -28,6 +28,9 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import Skeleton from '@/components/ui/Skeleton';
+import type { CrmAutomationEdgeRecord, CrmAutomationRecord } from '@/types/crm';
+
+const AUTOMATION_EDGES_API = '/crm/resources/automation-edges';
 
 // ─── Constants ───────────────────────────────────────────
 const TRIGGERS = [
@@ -62,10 +65,12 @@ interface AutomationData {
     name: string;
     trigger_event: string;
     action_type: string;
-    action_payload: any;
+    action_payload: Record<string, unknown>;
     delay_minutes: number;
     is_active: boolean;
-    ui_graph_state?: any;
+    ui_graph_state?: {
+        position?: { x: number; y: number };
+    } | null;
 }
 
 interface EdgeData {
@@ -82,6 +87,11 @@ type CustomNode = Node<{
 
 type CustomEdge = Edge<EdgeData>;
 
+function readPayloadText(payload: Record<string, unknown> | undefined, key: string): string {
+    const value = payload?.[key];
+    return typeof value === 'string' ? value : '';
+}
+
 export default function AutomationBuilderPage() {
     const { token } = useAuth();
     const { addToast } = useToast();
@@ -97,15 +107,15 @@ export default function AutomationBuilderPage() {
     const [selectedEdge, setSelectedEdge] = useState<CustomEdge | null>(null);
 
     // Raw loaded data to track deletions
-    const [originalEdges, setOriginalEdges] = useState<any[]>([]);
+    const [originalEdges, setOriginalEdges] = useState<CrmAutomationEdgeRecord[]>([]);
 
     // Fetch automations and edges
     const loadGraphData = useCallback(async () => {
         if (!token) return;
         setLoading(true);
         try {
-            const automations = await apiFetch<any[]>('/api/crm/resources/automations', { token });
-            const serverEdges = await apiFetch<any[]>('/api/crm/resources/automations/edges', { token });
+            const automations = await apiFetch<CrmAutomationRecord[]>('/crm/resources/automations', { token });
+            const serverEdges = await apiFetch<CrmAutomationEdgeRecord[]>(AUTOMATION_EDGES_API, { token });
 
             setOriginalEdges(serverEdges);
 
@@ -138,7 +148,13 @@ export default function AutomationBuilderPage() {
                 source: e.source_id,
                 target: e.target_id,
                 label: e.condition_type !== 'always' && e.condition_type ? `${e.condition_key} ${e.condition_type}` : 'Siempre',
-                data: e,
+                data: {
+                    condition_type: e.condition_type ?? undefined,
+                    condition_key: e.condition_key ?? undefined,
+                    condition_value: e.condition_value ?? undefined,
+                    source_node_id: e.source_node_id ?? undefined,
+                    target_node_id: e.target_node_id ?? undefined,
+                },
                 markerEnd: {
                     type: MarkerType.ArrowClosed,
                     color: '#3b82f6'
@@ -214,7 +230,7 @@ export default function AutomationBuilderPage() {
                 ui_graph_state: { position: { x: 150, y: 150 } }
             };
 
-            const created = await apiFetch<any>('/api/crm/resources/automations', {
+            const created = await apiFetch<CrmAutomationRecord>('/crm/resources/automations', {
                 method: 'POST',
                 token,
                 body: defaultPayload
@@ -282,7 +298,7 @@ export default function AutomationBuilderPage() {
         if (!confirm('¿Estás seguro de que deseas eliminar esta automatización? Esto eliminará también sus conexiones.')) return;
 
         try {
-            await apiFetch(`/api/crm/resources/automations/${selectedNode.id}`, {
+            await apiFetch(`/crm/resources/automations/${selectedNode.id}`, {
                 method: 'DELETE',
                 token
             });
@@ -337,7 +353,7 @@ export default function AutomationBuilderPage() {
                         position: node.position
                     }
                 };
-                await apiFetch(`/api/crm/resources/automations/${node.id}`, {
+                await apiFetch(`/crm/resources/automations/${node.id}`, {
                     method: 'PATCH',
                     token,
                     body
@@ -350,7 +366,7 @@ export default function AutomationBuilderPage() {
             const deletedEdges = originalEdges.filter(oe => !localEdgeIds.has(oe.id));
 
             for (const de of deletedEdges) {
-                await apiFetch(`/api/crm/resources/automations/edges/${de.id}`, {
+                await apiFetch(`${AUTOMATION_EDGES_API}/${de.id}`, {
                     method: 'DELETE',
                     token
                 });
@@ -368,7 +384,7 @@ export default function AutomationBuilderPage() {
                 };
 
                 if (isNew) {
-                    await apiFetch('/api/crm/resources/automations/edges', {
+                    await apiFetch(AUTOMATION_EDGES_API, {
                         method: 'POST',
                         token,
                         body: edgeBody
@@ -384,11 +400,11 @@ export default function AutomationBuilderPage() {
                     if (hasChanged) {
                         // Check if delete & recreate is needed or patch endpoint is supported.
                         // Let's delete and recreate to be robust.
-                        await apiFetch(`/api/crm/resources/automations/edges/${edge.id}`, {
+                        await apiFetch(`${AUTOMATION_EDGES_API}/${edge.id}`, {
                             method: 'DELETE',
                             token
                         });
-                        await apiFetch('/api/crm/resources/automations/edges', {
+                        await apiFetch(AUTOMATION_EDGES_API, {
                             method: 'POST',
                             token,
                             body: edgeBody
@@ -533,7 +549,7 @@ export default function AutomationBuilderPage() {
                                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Título de Tarea Pastoral</label>
                                         <input
                                             type="text"
-                                            value={selectedNode.data.automation.action_payload?.task_title || ''}
+                                            value={readPayloadText(selectedNode.data.automation.action_payload, 'task_title')}
                                             onChange={e => handleUpdateNodePayload('task_title', e.target.value)}
                                             placeholder="Visitar al nuevo contacto"
                                             className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 outline-none text-xs text-slate-800 dark:text-white font-bold"
@@ -543,7 +559,7 @@ export default function AutomationBuilderPage() {
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Mensaje de Notificación</label>
                                         <textarea
-                                            value={selectedNode.data.automation.action_payload?.message || ''}
+                                            value={readPayloadText(selectedNode.data.automation.action_payload, 'message')}
                                             onChange={e => handleUpdateNodePayload('message', e.target.value)}
                                             placeholder="Hola {nombre}, ¡bienvenido a nuestra comunidad!"
                                             rows={4}
