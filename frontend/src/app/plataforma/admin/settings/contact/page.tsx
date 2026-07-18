@@ -148,12 +148,12 @@ export default function AdminSettingsContactPage() {
         apiFetch("/admin/variables", {
           method: "POST",
           token,
-          query: { key: CONTACTS_KEY, value: JSON.stringify(contacts) },
+          body: { key: CONTACTS_KEY, value: JSON.stringify(contacts) },
         }),
         apiFetch("/admin/variables", {
           method: "POST",
           token,
-          query: { key: SCHEDULE_KEY, value: JSON.stringify(schedule) },
+          body: { key: SCHEDULE_KEY, value: JSON.stringify(schedule) },
         }),
       ]);
       setSaved(true);

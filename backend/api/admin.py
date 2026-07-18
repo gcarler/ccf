@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import logging
+import secrets
+import string
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import text
-from sqlalchemy.orm import Session
+from sqlalchemy import func, text
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm.attributes import flag_modified
 
 from backend import crud, models, schemas
 from backend.core.database import get_db
@@ -16,9 +20,13 @@ from backend.core.permissions import (
     PERMISSION_LEVELS,
     expand_module_permissions,
     get_all_permissions,
+    hash_password,
     require_active_user,
     require_admin,
 )
+from backend.core.tenant import get_user_sede_id
+from backend.models_auth import RolPlataforma, Usuario, UsuarioRolModulo
+from backend.models_crm import Persona
 from backend.models_shared import _utcnow
 
 router = APIRouter()
@@ -27,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 def _serialize_automation(rule: models.AutomationRule) -> schemas.AutomationRuleRead:
     return schemas.AutomationRuleRead(
-        id=rule.id,
+        id=str(rule.id),
         name=rule.name,
         trigger_type=rule.trigger_type,
         action_type=rule.action_type,
@@ -42,8 +50,6 @@ def list_roles(
     db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
 ):
     """Lista todos los roles de plataforma y el conteo de usuarios vinculados."""
-    from backend.models_auth import RolPlataforma, Usuario
-
     roles = db.query(RolPlataforma).all()
     result = []
     for r in roles:
@@ -75,8 +81,6 @@ def create_role(
     current_user: models.User = Depends(require_admin),
 ):
     """Crea un nuevo rol de plataforma."""
-    from backend.models_auth import RolPlataforma
-
     role = RolPlataforma(nombre=payload.name, permisos=payload.permissions)
     db.add(role)
     db.commit()
@@ -92,12 +96,8 @@ def update_role(
     current_user: models.User = Depends(require_admin),
 ):
     """Actualiza los permisos de un rol de plataforma."""
-    import uuid as _uuid
-
-    from backend.models_auth import RolPlataforma
-
     try:
-        rid = _uuid.UUID(str(role_id))
+        rid = uuid.UUID(str(role_id))
     except ValueError:
         raise HTTPException(status_code=400, detail="Role not found")
     role = db.query(RolPlataforma).filter(RolPlataforma.id == rid).first()
@@ -115,12 +115,8 @@ def delete_role(
     current_user: models.User = Depends(require_admin),
 ):
     """Elimina un rol de plataforma (no usado por usuarios activos)."""
-    import uuid as _uuid
-
-    from backend.models_auth import RolPlataforma, Usuario
-
     try:
-        rid = _uuid.UUID(str(role_id))
+        rid = uuid.UUID(str(role_id))
     except ValueError:
         raise HTTPException(status_code=400, detail="Role not found")
     role = db.query(RolPlataforma).filter(RolPlataforma.id == rid).first()
@@ -160,13 +156,8 @@ def get_user_permissions(
     current_user=Depends(require_admin),
 ):
     """Obtiene los permisos actuales de un usuario auth_users."""
-    import uuid as _uuid
-
-    from sqlalchemy.orm import joinedload
-
-    from backend.models_auth import Usuario
     try:
-        uid = _uuid.UUID(str(user_id))
+        uid = uuid.UUID(str(user_id))
         user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == uid).first()
     except ValueError:
         user = None
@@ -208,15 +199,9 @@ def set_user_permissions(
     Payload: {"crm": "read", "projects": "manage", "academy": "study"}
     Niveles: read, edit, manage (y study para academy).
     """
-    import uuid as _uuid
-
-    from sqlalchemy.orm import joinedload
-
-    from backend.models_auth import RolPlataforma, Usuario
-
     # Resolve user from auth_users (UUID-based)
     try:
-        uid = _uuid.UUID(str(user_id))
+        uid = uuid.UUID(str(user_id))
         user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == uid).first()
     except ValueError:
         user = None
@@ -262,8 +247,6 @@ def set_user_permissions(
             resolved_perms["system:config"] = "allow"
 
     # Persist en RolPlataforma personal del usuario (nunca tocar roles compartidos)
-    from sqlalchemy.orm.attributes import flag_modified
-
     personal_nombre = f"PERSONALIZADO_{str(user.id).replace('-', '').upper()}"
     is_personal = current_rol and current_rol.nombre == personal_nombre
 
@@ -361,14 +344,23 @@ def list_variables(
     return {v.key: v.value for v in vars}
 
 
+class SetVariableBody(BaseModel):
+    key: str
+    value: str
+
+
 @router.post("/variables")
 def set_variable(
-    key: str,
-    value: str,
+    payload: SetVariableBody,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    """Define o actualiza una variable de sistema."""
+    """Define o actualiza una variable de sistema.
+
+    Body: {"key": "nombre_variable", "value": "valor"}
+    """
+    key = payload.key
+    value = payload.value
     var = (
         db.query(models.SystemVariable).filter(models.SystemVariable.key == key).first()
     )
@@ -381,6 +373,87 @@ def set_variable(
     return {"status": "success"}
 
 
+# --- ADMIN STATS ---
+
+
+@router.get("/stats")
+def admin_stats(
+    db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
+):
+    """Retorna métricas agregadas para el dashboard de administración."""
+    # Conteo de personas
+    total_personas = db.query(func.count(models.Persona.id)).scalar() or 0
+
+    # Conteo de usuarios activos
+    total_usuarios_activos = (
+        db.query(func.count(Usuario.id))
+        .filter(Usuario.is_active.is_(True))
+        .scalar()
+        or 0
+    )
+
+    # Donaciones del mes actual
+    now = _utcnow()
+    first_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    monthly_donations = (
+        db.query(func.coalesce(func.sum(models.Donation.amount), 0))
+        .filter(
+            models.Donation.created_at >= first_of_month,
+            models.Donation.deleted_at.is_(None),
+        )
+        .scalar()
+        or 0
+    )
+
+    # Diezmos y ofrendas del mes
+    tithes = (
+        db.query(func.coalesce(func.sum(models.Donation.amount), 0))
+        .filter(
+            models.Donation.donation_type == "Diezmo",
+            models.Donation.created_at >= first_of_month,
+            models.Donation.deleted_at.is_(None),
+        )
+        .scalar()
+        or 0
+    )
+    offerings = (
+        db.query(func.coalesce(func.sum(models.Donation.amount), 0))
+        .filter(
+            models.Donation.donation_type == "Ofrenda",
+            models.Donation.created_at >= first_of_month,
+            models.Donation.deleted_at.is_(None),
+        )
+        .scalar()
+        or 0
+    )
+
+    # Donantes únicos del mes
+    monthly_donors = (
+        db.query(func.count(func.distinct(models.Donation.persona_id)))
+        .filter(models.Donation.created_at >= first_of_month)
+        .scalar()
+        or 0
+    )
+
+    # Personas nuevas este mes
+    new_personas = (
+        db.query(func.count(models.Persona.id))
+        .filter(models.Persona.created_at >= first_of_month)
+        .scalar()
+        or 0
+    )
+
+    return {
+        "personas": total_personas,
+        "usuarios_activos": total_usuarios_activos,
+        "donaciones_mes": float(monthly_donations),
+        "donantes_mes": monthly_donors,
+        "personas_nuevas_mes": new_personas,
+        "diezmos_mes": float(tithes),
+        "ofrendas_mes": float(offerings),
+    }
+
+
 # --- MEMBER MANAGEMENT ---
 
 
@@ -388,8 +461,14 @@ def set_variable(
 def list_admin_personas(
     db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)
 ):
-    """Lista todas las personas para administracion."""
-    personas = db.query(models.Persona).order_by(models.Persona.created_at.desc()).all()
+    """Lista personas para administracion, filtradas por sede del admin."""
+    sede_id = get_user_sede_id(db, current_user.id)
+    personas = (
+        db.query(models.Persona)
+        .filter(models.Persona.sede_id == sede_id)
+        .order_by(models.Persona.created_at.desc())
+        .all()
+    )
     return [
         {
             "id": m.id,
@@ -433,9 +512,6 @@ def _assign_auth_user_role(db: Session, user, role_name: str) -> None:
     if not normalized:
         return
 
-    from sqlalchemy import func
-
-    from backend.models_auth import RolPlataforma
     role_aliases = {
         "admin": "ADMINISTRADOR",
         "administrador": "ADMINISTRADOR",
@@ -471,9 +547,6 @@ def list_admin_users(
     db: Session = Depends(get_db), current_user=Depends(require_admin)
 ):
     """Lista usuarios de auth_users para gestión de permisos granulares."""
-    from sqlalchemy.orm import joinedload
-
-    from backend.models_auth import Usuario
     users = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).all()
     return [_serialize_auth_user_row(u) for u in users]
 
@@ -485,14 +558,8 @@ def get_admin_user(
     current_user=Depends(require_admin),
 ):
     """Obtiene un usuario auth por UUID."""
-    import uuid as _uuid
-
-    from sqlalchemy.orm import joinedload
-
-    from backend.models_auth import Usuario
-
     try:
-        uid = _uuid.UUID(str(user_id))
+        uid = uuid.UUID(str(user_id))
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id invalido")
 
@@ -518,12 +585,6 @@ def create_admin_user(
     Crea una Persona mínima vinculada a la sede principal, luego un Usuario
     con las credenciales proporcionadas y rol MIEMBRO por defecto.
     """
-    import uuid as _uuid
-
-    from backend.core.permissions import hash_password
-    from backend.models_auth import RolPlataforma, Usuario
-    from backend.models_crm import Persona
-
     username = str(payload.get("username", "")).strip()
     email = str(payload.get("email", "")).strip()
     password = str(payload.get("password", ""))
@@ -557,7 +618,7 @@ def create_admin_user(
         db.flush()
 
     # Crear Persona mínima (requerido como FK de Usuario)
-    persona_id = _uuid.uuid4()
+    persona_id = uuid.uuid4()
     persona = Persona(
         id=persona_id,
         first_name=first_name or username,
@@ -597,16 +658,8 @@ def update_admin_user(
     current_user=Depends(require_admin),
 ):
     """Actualiza campos básicos de auth_users por UUID."""
-    import uuid as _uuid
-
-    from sqlalchemy.orm import joinedload
-
-    from backend.core.permissions import hash_password
-    from backend.models_auth import Usuario
-    from backend.models_crm import Persona
-
     try:
-        uid = _uuid.UUID(str(user_id))
+        uid = uuid.UUID(str(user_id))
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id invalido")
 
@@ -636,8 +689,6 @@ def update_admin_user(
         if role_id in (None, "", "null"):
             user.rol_plataforma_id = None
         else:
-            import uuid
-
             try:
                 user.rol_plataforma_id = uuid.UUID(str(role_id))
             except ValueError:
@@ -667,12 +718,8 @@ def delete_admin_user(
     Se conserva la cuenta para evitar pérdida de historial y relaciones
     dependientes; la baja real se hace por desactivación.
     """
-    import uuid as _uuid
-
-    from backend.models_auth import Usuario
-
     try:
-        uid = _uuid.UUID(str(user_id))
+        uid = uuid.UUID(str(user_id))
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id invalido")
 
@@ -691,12 +738,8 @@ def change_user_role(
     current_user=Depends(require_admin),
 ):
     """Asigna un rol de plataforma a un usuario auth por UUID."""
-    import uuid as _uuid
-
-    from backend.models_auth import RolPlataforma, Usuario
-
     try:
-        uid = _uuid.UUID(str(user_id))
+        uid = uuid.UUID(str(user_id))
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id invalido")
 
@@ -837,13 +880,12 @@ def award_milestone_bulk(
 ):
     """Asigna un hito a una lista de personas de forma masiva."""
     badge_id = payload["badge_id"]
-    persona_ids = payload.get("persona_ids", payload.get("persona_ids", []))
+    persona_ids = payload.get("persona_ids", [])
 
-    import uuid as _uuid
     awarded_count = 0
     for persona_id in persona_ids:
         try:
-            pid = _uuid.UUID(str(persona_id))
+            pid = uuid.UUID(str(persona_id))
         except (ValueError, AttributeError):
             continue
         persona = db.query(models.Persona).filter(models.Persona.id == pid).first()
@@ -1002,7 +1044,6 @@ def list_auth_role_definitions(
 ):
     """Lista todas las definiciones de roles del sistema auth (RolPlataforma)."""
     try:
-        from backend.models_auth import RolPlataforma
         roles = db.query(RolPlataforma).all()
         return [
             {"id": str(r.id), "nombre": r.nombre, "permisos": r.permisos}
@@ -1020,7 +1061,6 @@ def create_auth_role_definition(
     current_user: models.User = Depends(require_admin),
 ):
     """Crea un nuevo rol auth (RolPlataforma)."""
-    from backend.models_auth import RolPlataforma
     nombre = str(payload.get("nombre", "")).strip()
     if not nombre:
         raise HTTPException(status_code=400, detail="nombre es requerido")
@@ -1043,9 +1083,6 @@ def update_auth_role_definition(
     current_user: models.User = Depends(require_admin),
 ):
     """Actualiza permisos de un rol auth."""
-    import uuid
-
-    from backend.models_auth import RolPlataforma
     try:
         rid = uuid.UUID(role_id)
     except ValueError:
@@ -1069,9 +1106,6 @@ def delete_auth_role_definition(
     current_user: models.User = Depends(require_admin),
 ):
     """Elimina un rol auth (solo si no esta asignado a ningun usuario)."""
-    import uuid
-
-    from backend.models_auth import RolPlataforma, Usuario
     try:
         rid = uuid.UUID(role_id)
     except ValueError:
@@ -1096,7 +1130,6 @@ def list_user_module_roles(
 ):
     """Lista todas las asignaciones de roles modulares."""
     try:
-        from backend.models_auth import RolPlataforma, UsuarioRolModulo
         rows = (
             db.query(UsuarioRolModulo, RolPlataforma)
             .join(RolPlataforma, RolPlataforma.id == UsuarioRolModulo.rol_id)
@@ -1125,9 +1158,6 @@ def assign_user_module_role(
     current_user: models.User = Depends(require_admin),
 ):
     """Asigna un rol modular a un usuario UUID-based."""
-    import uuid
-
-    from backend.models_auth import RolPlataforma, Usuario, UsuarioRolModulo
     user_id_str = str(payload.get("user_id", ""))
     modulo = str(payload.get("modulo", "")).strip().lower()
     rol_id_str = str(payload.get("rol_id", ""))
@@ -1167,10 +1197,6 @@ def remove_user_module_role(
     current_user: models.User = Depends(require_admin),
 ):
     """Elimina una asignacion de rol modular."""
-    import uuid
-    from datetime import datetime, timezone
-
-    from backend.models_auth import UsuarioRolModulo
     try:
         aid = uuid.UUID(assignment_id)
     except ValueError:
@@ -1194,9 +1220,6 @@ def list_users_with_roles(
 
     Util para el panel de administracion de permisos granulares.
     """
-    from backend.models_auth import RolPlataforma, Usuario, UsuarioRolModulo
-    from backend.models_crm import Persona
-
     users = db.query(Usuario).all()
     result = []
     for u in users:
@@ -1237,12 +1260,6 @@ def provision_personas_sin_cuenta(
     - password = aleatoria de 12 caracteres (el admin la distribuye; el usuario puede usar forgot-password)
     - rol = MIEMBRO
     """
-    import secrets
-    import string
-
-    from backend.core.permissions import hash_password
-    from backend.models_auth import RolPlataforma, Usuario
-
     def _generate_password(length: int = 12) -> str:
         alphabet = string.ascii_letters + string.digits + "!@#$%&*"
         while True:
