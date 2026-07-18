@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.orm.attributes import flag_modified
@@ -19,6 +19,7 @@ from backend.core.permissions import (
     MODULE_PERMISSION_MAP,
     PERMISSION_LEVELS,
     expand_module_permissions,
+    get_user_effective_permissions,
     get_all_permissions,
     hash_password,
     require_active_user,
@@ -26,7 +27,7 @@ from backend.core.permissions import (
 )
 from backend.core.audit import record_admin_action
 from backend.core.tenant import get_user_sede_id
-from backend.models_auth import RolPlataforma, Usuario, UsuarioRolModulo
+from backend.models_auth import RolPlataforma, Usuario, UsuarioPermisoOverride, UsuarioRolModulo
 from backend.models_crm import Persona
 from backend.models_shared import _utcnow
 
@@ -70,15 +71,21 @@ class CreateDonationCategoryBody(BaseModel):
     description: str | None = None
 
 class CreateAuthRoleBody(BaseModel):
-    key: str = Field(min_length=1, max_length=50)
-    name: str = Field(min_length=1, max_length=100)
+    key: str | None = Field(default=None, min_length=1, max_length=50)
+    name: str = Field(validation_alias=AliasChoices("name", "nombre"), min_length=1, max_length=100)
     description: str | None = None
-    permissions: list[str] = []
+    permissions: dict[str, Any] | list[str] = Field(
+        default_factory=dict,
+        validation_alias=AliasChoices("permissions", "permisos"),
+    )
 
 class UpdateAuthRoleBody(BaseModel):
-    name: str | None = Field(default=None, max_length=100)
+    name: str | None = Field(default=None, validation_alias=AliasChoices("name", "nombre"), max_length=100)
     description: str | None = None
-    permissions: list[str] | None = None
+    permissions: dict[str, Any] | list[str] | None = Field(
+        default=None,
+        validation_alias=AliasChoices("permissions", "permisos"),
+    )
 
 class AssignModuleRoleBody(BaseModel):
     user_id: str
@@ -226,16 +233,14 @@ def get_user_permissions(
         raise HTTPException(status_code=404, detail="User not found")
 
     rol = user.rol_plataforma
-    permisos = rol.permisos if rol else {}
-    if not isinstance(permisos, dict):
-        permisos = {}
-
-    # Separar permisos base de plataforma vs granulares personales
-    personal_nombre = f"PERSONALIZADO_{str(user.id).replace('-', '').upper()}"
-    is_personal_rol = rol and rol.nombre == personal_nombre
-    # override_permissions = granulares personales; role_permissions = del rol compartido
-    override_perms = permisos if is_personal_rol else {}
-    role_perms = {} if is_personal_rol else permisos
+    role_perms = rol.permisos if rol and isinstance(rol.permisos, dict) else {}
+    direct = db.query(UsuarioPermisoOverride).filter(UsuarioPermisoOverride.user_id == user.id).first()
+    override_perms = direct.permisos if direct and isinstance(direct.permisos, dict) else {}
+    module_rows = (
+        db.query(UsuarioRolModulo)
+        .filter(UsuarioRolModulo.user_id == user.id, UsuarioRolModulo.deleted_at.is_(None))
+        .all()
+    )
 
     return {
         "user_id": str(user.id),
@@ -244,7 +249,10 @@ def get_user_permissions(
         "role": rol.nombre if rol else "LECTOR",
         "role_permissions": role_perms,
         "override_permissions": override_perms,
-        "effective_permissions": permisos,
+        "module_roles": [
+            {"module": row.modulo, "role_id": str(row.rol_id)} for row in module_rows
+        ],
+        "effective_permissions": get_user_effective_permissions(db, user),
     }
 
 
@@ -297,43 +305,24 @@ def set_user_permissions(
         for perm_key in expand_module_permissions(module, level):
             resolved_perms[perm_key] = "allow"
 
-    # profile:manage siempre se preserva
-    resolved_perms["profile:manage"] = "allow"
-
-    # Preservar system:config si el usuario actual lo tenía (evita lockout de admins)
-    current_rol = user.rol_plataforma
-    if current_rol:
-        current_perms = current_rol.permisos or {}
-        if isinstance(current_perms, dict) and current_perms.get("system:config"):
-            resolved_perms["system:config"] = "allow"
-
-    # Persist en RolPlataforma personal del usuario (nunca tocar roles compartidos)
-    personal_nombre = f"PERSONALIZADO_{str(user.id).replace('-', '').upper()}"
-    is_personal = current_rol and current_rol.nombre == personal_nombre
-
-    if is_personal:
-        # Reemplazar completamente — permite quitar permisos
-        current_rol.permisos = resolved_perms
-        flag_modified(current_rol, "permisos")
+    # Grants directos son adicionales y no reemplazan el rol base. La ausencia
+    # de un módulo elimina sólo su grant personal y restaura la herencia.
+    direct = db.query(UsuarioPermisoOverride).filter(UsuarioPermisoOverride.user_id == user.id).first()
+    if direct:
+        direct.permisos = resolved_perms
+        flag_modified(direct, "permisos")
     else:
-        # Buscar si ya existe un rol personal creado antes para este usuario
-        existing_personal = db.query(RolPlataforma).filter(
-            RolPlataforma.nombre == personal_nombre
-        ).first()
-        if existing_personal:
-            existing_personal.permisos = resolved_perms
-            flag_modified(existing_personal, "permisos")
-            user.rol_plataforma_id = existing_personal.id
-        else:
-            # Crear rol personal nuevo sin modificar el rol compartido
-            new_rol = RolPlataforma(nombre=personal_nombre, permisos=resolved_perms)
-            db.add(new_rol)
-            db.flush()
-            user.rol_plataforma_id = new_rol.id
+        db.add(UsuarioPermisoOverride(user_id=user.id, permisos=resolved_perms))
 
     db.commit()
     record_admin_action(db, current_user, "permissions.set", "user", user_id, {"modules": list(resolved_perms.keys())})
-    return {"status": "success", "user_id": user_id, "permissions": resolved_perms}
+    db.refresh(user)
+    return {
+        "status": "success",
+        "user_id": user_id,
+        "override_permissions": resolved_perms,
+        "effective_permissions": get_user_effective_permissions(db, user),
+    }
 
 
 @router.get("/locations", response_model=List[Dict[str, Any]])
@@ -1100,7 +1089,11 @@ def create_auth_role_definition(
     existing = db.query(RolPlataforma).filter(RolPlataforma.nombre == nombre).first()
     if existing:
         raise HTTPException(status_code=409, detail="El rol ya existe")
-    permisos = {p: "allow" for p in body.permissions} if body.permissions else {}
+    permisos = (
+        {p: "allow" for p in body.permissions}
+        if isinstance(body.permissions, list)
+        else {key: value for key, value in body.permissions.items() if value}
+    )
     rol = RolPlataforma(nombre=nombre, permisos=permisos)
     db.add(rol)
     db.commit()
@@ -1124,7 +1117,11 @@ def update_auth_role_definition(
     if not rol:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
     if body.permissions is not None:
-        rol.permisos = {p: "allow" for p in body.permissions}
+        rol.permisos = (
+            {p: "allow" for p in body.permissions}
+            if isinstance(body.permissions, list)
+            else {key: value for key, value in body.permissions.items() if value}
+        )
     if body.name is not None:
         rol.nombre = body.name
     db.commit()
@@ -1167,6 +1164,7 @@ def list_user_module_roles(
         rows = (
             db.query(UsuarioRolModulo, RolPlataforma)
             .join(RolPlataforma, RolPlataforma.id == UsuarioRolModulo.rol_id)
+            .filter(UsuarioRolModulo.deleted_at.is_(None))
             .all()
         )
         return [
@@ -1206,12 +1204,19 @@ def assign_user_module_role(
     rol = db.query(RolPlataforma).filter(RolPlataforma.id == rid).first()
     if not rol:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
+    role_permissions = rol.permisos if isinstance(rol.permisos, dict) else {}
+    if not any(key.startswith(f"{modulo}:") and value for key, value in role_permissions.items()):
+        raise HTTPException(
+            status_code=422,
+            detail="El rol debe incluir al menos un permiso del módulo asignado",
+        )
     existing = db.query(UsuarioRolModulo).filter(
         UsuarioRolModulo.user_id == uid,
         UsuarioRolModulo.modulo == modulo,
     ).first()
     if existing:
         existing.rol_id = rid
+        existing.deleted_at = None
         db.commit()
         db.refresh(existing)
         return {"id": str(existing.id), "user_id": str(existing.user_id), "modulo": existing.modulo, "rol_id": str(existing.rol_id), "updated": True}
@@ -1265,7 +1270,7 @@ def list_users_with_roles(
     modulares_rows = (
         db.query(UsuarioRolModulo, RolPlataforma)
         .join(RolPlataforma, RolPlataforma.id == UsuarioRolModulo.rol_id)
-        .filter(UsuarioRolModulo.user_id.in_(user_ids))
+        .filter(UsuarioRolModulo.user_id.in_(user_ids), UsuarioRolModulo.deleted_at.is_(None))
         .all()
     ) if user_ids else []
     modulares_by_user: dict = {}

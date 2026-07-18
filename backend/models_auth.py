@@ -63,6 +63,12 @@ class Usuario(Base):
     persona = relationship("Persona", foreign_keys=[id], primaryjoin="Usuario.id == Persona.id")
     rol_plataforma = relationship("RolPlataforma", foreign_keys=[rol_plataforma_id])
     roles_modulares = relationship("UsuarioRolModulo", back_populates="usuario", cascade="all, delete-orphan")
+    permiso_override = relationship(
+        "UsuarioPermisoOverride",
+        back_populates="usuario",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
 
 
 # ==========================================
@@ -82,6 +88,31 @@ class UsuarioRolModulo(Base):
 
     usuario = relationship("Usuario", back_populates="roles_modulares")
     rol = relationship("RolPlataforma")
+
+
+class UsuarioPermisoOverride(Base):
+    """Grants directos por persona, separados del rol base compartido.
+
+    El contenido usa la misma forma canónica que ``RolPlataforma.permisos``:
+    ``{"crm:read": "allow"}``.  No representa una identidad adicional ni
+    sustituye ``rol_plataforma_id``.
+    """
+
+    __tablename__ = "auth_user_permission_overrides"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("auth_users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    permisos = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+
+    usuario = relationship("Usuario", back_populates="permiso_override")
 
 
 # ==========================================
