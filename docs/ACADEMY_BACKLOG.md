@@ -129,6 +129,14 @@ Cada ticket DEBE respetar exactamente este esquema. La validación la hace `test
    tickets abiertos sean cero se crea un único commit de cierre; el push se
    realiza después de informar el SHA y la evidencia de las puertas.
 
+   **Gates adicionales obligatorios para Fase 6 (transversales TKT-200..206,
+   ver §4.8):** rate limiting activo en endpoints hot, correlation-id propagado
+   frontend↔backend con logs JSON estructurados, suite E2E Playwright multi-rol
+   verde, caching + N+1 optimization en dashboard_metrics/list_lessons, WCAG AA
+   en progress bars + modales + navegación por teclado, notificaciones async
+   (cert emitido, evaluación calificada, foro respondido), GDPR data export
+   funcional. Ningún ticket transversal puede quedar ⬜ en el commit de cierre.
+
 **Regla de transición:** al cerrar un ticket se cambia primero su prueba de
 regresión a una aserción real, se ejecuta el gate indicado y solo entonces se
 marca ✅. Las pruebas estructurales o `xfail` no certifican comportamiento de
@@ -593,7 +601,11 @@ producto.
   - **gate:** `pytest tests/test_academy_fase_7_transversal.py::test_acad_tkt_206_data_export_returns_complete_profile -q`
   - **notes:** Compliance Colombia Ley 1581/2012. Endpoint retorna JSON con enrollments, submissions, certificates, activity logs, profile del usuario actual. Auth: solo el propio usuario. Rate limit: 1/día. Nota: el borrado (derecho al olvido) es orthogonal y queda como ticket futuro.
 
-  - **gate (todos los ACAD-TKT-200..206):** `pytest tests/test_academy_fase_7_transversal.py -q`
+  > **Nota sobre gates transversales:** los 7 tickets TKT-200..206 son concerns
+  > ortogonales (slowapi / correlation-id / Playwright / LRU cache / axe-core /
+  > Celery / endpoint GDPR). Cada uno tiene su gate individual arriba. NO existe
+  > un pytest unificado que cubra los 7 — cada sprint cierra su ticket
+  > independientemente y actualiza su propio regression gate.
 
 ---
 
