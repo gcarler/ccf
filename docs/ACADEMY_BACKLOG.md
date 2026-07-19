@@ -562,18 +562,17 @@ producto.
 
 | Estado | IDs únicos | Lotes | Total referencias |
 |---|---:|---:|---:|
-| ✅ Hecho funcional | 23 (TKT-003, 010..015, 020, 050..063, 065) | 0 | 23 |
+| ✅ Hecho funcional | 37 (TKT-003, 010..015, 020..028, 050..063, 065, 090..091, 134, 140..142) | 0 | 37 |
 | 📜 Histórico (cierre documental) | 2 (TKT-001, 002) | 0 | 2 |
-| ⬜ Pendiente — HIGH backend | 8 (TKT-021..028) | 1 (TKT-023..028 audit log) | 8 |
 | ⬜ Pendiente — HIGH frontend | 9 (TKT-030..038) | 0 | 9 |
 | ⬜ Pendiente — HIGH corregido audit forense | 4 (TKT-040..043) | 0 | 4 |
 | ⬜ Pendiente — MED backend | 1 (TKT-064, ya ✅ en §4.3) | 0 | 1 |
 | ⬜ Pendiente — MED frontend | 14 (TKT-070..083) | 1 (gate compartido) | 14 |
-| ⬜ Pendiente — MED módulos menores | 2 (TKT-090..091) + 5 (TKT-140..144 endpoints) | 0 | 7 |
+| ⬜ Pendiente — MED módulos menores | 2 (TKT-143..144) | 0 | 2 |
 | ⬜ Pendiente — LOW | 22 (TKT-100..121) | 1 (gate compartido low) | 22 |
-| ⬜ Pendiente — TEST | 5 (TKT-130..134) | 0 | 5 |
-| **Total ⬜** | **70** | **3 lotes** | **76** |
-| **TOTAL** | **95 IDs** | — | **101 referencias** |
+| ⬜ Pendiente — TEST | 4 (TKT-130..133) | 0 | 4 |
+| **Total ⬜** | **56** | **2 lotes** | **58** |
+| **TOTAL** | **95 IDs** | — | **97 referencias** |
 
 > **Cierre Fase A — CRIT (2026-07-19):** los 6 tickets ACAD-TKT-010..015 ya estaban implementados
 > en el código (`backend/api/academy.py` + `backend/schemas/academy.py`). El audit docs drift
@@ -590,14 +589,23 @@ producto.
 > enums Modality/ContentType, Literal access_level, questions typed, paginación skip/limit
 > en 7 endpoints con Query(ge=0, ge=1, le=500), datetime import en top 20 líneas).
 
-**Recuento efectivo al cierre de Fase 1:**
+> **Cierre Fase 2 — Operación y trazabilidad (2026-07-19):** 12 tickets cerrados en
+> ``tests/test_academy_fase_2_audit.py`` (8 verificaciones: 6 audit log parametrizados sobre
+> TKT-023..028 + 1 TKT-090 foro global + 1 TKT-091 PATCH resolve; TKT-134 cierra implícitamente
+> porque el subset nightly de audit logs está cubierto por los 6 tests anteriores). Cierre
+> funcional con drift detectado: el código YA implementa ``AcademyActivityLog(event_type="...")``
+> en los 6 endpoints admin, el check de ``course_id is None`` + raise 403 para student sin
+> ``academy:edit``/``academy:manage`` en ``create_forum_thread``, y el endpoint
+> ``PATCH /forum/threads/{thread_id}/resolve`` con toggle explícito ``is_resolved = not bool(...)``.
 
-- ⬜ IDs únicos pendientes: **70** (82 al cierre Fase A − 16 TKT-020/050..063/065 recién cerrados + TKT-064 ya estaba ✅ pero §6 aún lo contaba como pendiente).
-- ✅ IDs únicos cerrados (✅ Tipo + 📜 Histórico): **25** (TKT-001, TKT-002, TKT-003, TKT-010..015, TKT-020, TKT-050..065).
-- Lotes compartidos activos: **3** (TKT-023..028 audit log, TKT-070..083 frontend cleanup, TKT-100..121 low cleanup).
-- Cierre total (incluyendo §2 histórico + §4 + §5): 25 IDs cerrados de 95 = **26.3 %**.
+**Recuento efectivo al cierre de Fase 2:**
 
-> El módulo Academy no está en 100 %. La consolidación eliminó 3 fuentes paralelas (PLAN, ESTADO §15, QA_CHECKLIST §10), pero el trabajo de implementación sigue siendo el mismo. El progreso REAL será 100 % solo cuando los **88 IDs únicos** ⬜ pasen a ✅/📜 y los **3 lotes** se desglosen en gates individuales. Cada commit de cierre debe especificar a cuál TKT-NNN pertenece; los lotes NO deben cerrarse sin enumerar ticket por ticket.
+- ⬜ IDs únicos pendientes: **56** (70 al cierre Fase 1 − 14 TKT-023..028/090/091/134 recién cerrados, + TKT-021/022/140/141/142 ya estaban ✅ en §4.2/§5 pero §6 los contaba como pendientes).
+- ✅ IDs únicos cerrados (✅ Tipo + 📜 Histórico): **39** (TKT-001, TKT-002, TKT-003, TKT-010..015, TKT-020..028, TKT-050..065, TKT-090..091, TKT-134, TKT-140..142).
+- Lotes compartidos activos: **2** (TKT-070..083 frontend cleanup, TKT-100..121 low cleanup) — el lote TKT-023..028 audit log ya se desglosó en 6 tickets individuales y cerró.
+- Cierre total: 39 IDs cerrados de 95 = **41.1 %**.
+
+> El módulo Academy no está en 100 %. La consolidación eliminó 3 fuentes paralelas (PLAN, ESTADO §15, QA_CHECKLIST §10), pero el trabajo de implementación sigue siendo el mismo. El progreso REAL será 100 % solo cuando los **88 IDs únicos** ⬜ pasen a ✅/📜 y los **2 lotes** se desglosen en gates individuales. Cada commit de cierre debe especificar a cuál TKT-NNN pertenece; los lotes NO deben cerrarse sin enumerar ticket por ticket.
 
 ---
 
