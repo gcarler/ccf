@@ -360,42 +360,11 @@ def test_acad_tkt_003_delete_submission_writes_audit_log():
         )
 
 
-# ── B.2. CRIT pendientes (ACAD-TKT-010..015) ──
-
-
-@pytest.mark.parametrize(
-    "tkt,expected_token",
-    [
-        (10, "_get_scoped_course"),
-        (11, "deleted_at"),
-        (12, "is_published"),
-        (13, "course.is_published"),
-        (14, "create_assessment_admin"),
-        (15, 'extra="forbid"'),
-    ],
-)
-def test_crit_pending_tickets_have_anchor_in_backend(tkt: int, expected_token: str):
-    """Los tickets CRIT pendientes deben tener al menos el ancla textual en backend
-    que indica dónde se va a fixear.
-
-    Cuando el fix se implemente y se cambie ⬜ → ✅, este test sigue siendo
-    válido porque ``expected_token`` se mantiene en el código cerrado.
-    """
-    api_file = REPO_ROOT / "backend" / "api" / "academy.py"
-    schemas = REPO_ROOT / "backend" / "schemas" / "academy.py"
-
-    if tkt in (10, 11, 12, 13, 14):
-        assert api_file.exists(), "backend/api/academy.py debe existir"
-        text = _read(api_file)
-    else:
-        assert schemas.exists(), "backend/schemas/academy.py debe existir"
-        text = _read(schemas)
-
-    if expected_token not in text:
-        pytest.xfail(
-            f"ACAD-TKT-{tkt:03d} ⬜ Pendiente — fix aún no mergeado. "
-            f"Esperado: la cadena {expected_token!r} aparezca en {api_file.name} o {schemas.name}."
-        )
+# ── B.2. CRIT pendientes (ACAD-TKT-020..043) ──
+# ACAD-TKT-010..015 (Fase A CRIT) fueron cerrados en commit 2026-07-19.
+# Los regression gates runtime viven en ``tests/test_academy_fase_a_crit.py``
+# (no acá) — chequean la VALIDACIÓN end-to-end, no el ancla textual que es
+# frágil ante refactors benignos (renames, reorders). Los cubre CI en-suite.
 
 
 # ── B.3. HIGH pendientes (ACAD-TKT-020..043) ──
