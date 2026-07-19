@@ -26,7 +26,7 @@ export default function CertificateView({ data }: CertificateProps) {
     const validationUrl = `${origin}/academy/certificates/${data.certificate_code}`;
     const validationPath = validationUrl.replace(/^https?:\/\/[^/]+/, '');
 
-    // ACAD-HIGH-002: cero dependencia externa (sin api.qrserver.com).
+    // ACAD-HIGH-002: la validación se resuelve con la URL propia de CCF.
     // ACAD-LOW-001: handlers reales para Download y Share.
     const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
 
@@ -50,9 +50,12 @@ export default function CertificateView({ data }: CertificateProps) {
     };
 
     const handleShare = async () => {
-        if (typeof navigator !== 'undefined' && (navigator as any).share) {
+        if (
+            typeof navigator !== 'undefined' &&
+            typeof navigator.share === 'function'
+        ) {
             try {
-                await (navigator as any).share({
+                await navigator.share({
                     title: `Certificado CCF — ${data.enrollment.course.title}`,
                     text: `${data.enrollment.student.username} ${
                         data.certificate_type ? '(' + data.certificate_type + ')' : ''
