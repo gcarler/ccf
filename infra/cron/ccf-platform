@@ -1,0 +1,30 @@
+# CCF Plataforma — crontab
+# ----------------------------------------------------------------------
+# Schedule:
+#   - nightly_regression.sh 02:00 UTC diario (log a /var/log/ccf/nightly.log)
+#
+# Install (as root for this app's user account):
+#   crontab infra/cron/ccf-platform
+#   # or, to edit manually:
+#   crontab -e   # then paste this file's contents minus the comments
+#
+# Uninstall / inspect:
+#   crontab -l                 # list current crontab
+#   crontab -r                 # remove ALL crontab entries (destructive!)
+#
+# Requirements:
+#   1. /var/log/ccf/ must exist and be writable by the cron user:
+#        sudo mkdir -p /var/log/ccf
+#        sudo chown <cron_user>:adm /var/log/ccf
+#        sudo chmod 0755 /var/log/ccf
+#   2. /root/ccf/scripts/nightly_regression.sh must be executable (+x).
+#   3. Python venv at /root/ccf/venv/ is expected by run_ci.sh inside the script.
+#   4. Cron doesn't inherit the user's PATH; ensure scripts use absolute paths.
+#
+# Logs:
+#   stdout+stderr appended to /var/log/ccf/nightly.log; rotate with
+#   logrotate(8) (see infra/logrotate/ccf-platform for a sample policy).
+# ----------------------------------------------------------------------
+
+# m h dom mon dow command
+0 2 * * * /root/ccf/scripts/nightly_regression.sh >> /var/log/ccf/nightly.log 2>&1
