@@ -43,7 +43,6 @@ export default function NewCoursePage() {
         
         try {
             setLoading(true);
-            await new Promise(r => setTimeout(r, 800)); // Delay estético
             await apiFetch('/academy/admin/courses', {
                 method: 'POST',
                 token,

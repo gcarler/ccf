@@ -29,11 +29,14 @@ export default function EnrollmentWizard() {
             return;
         }
 
+        const ctrl = new AbortController();
+
         const fetchCourse = async () => {
             try {
-                const data = await apiFetch(`/academy/courses/${courseId}`, { cache: 'no-store' });
+                const data = await apiFetch(`/academy/courses/${courseId}`, { cache: 'no-store', signal: ctrl.signal });
                 setCourse(data);
-            } catch {
+            } catch (err: any) {
+                if (err?.name === 'AbortError') return;
                 addToast("Curso no encontrado", "error");
                 router.push('/plataforma/academy');
             } finally {
@@ -42,7 +45,7 @@ export default function EnrollmentWizard() {
         };
 
         fetchCourse();
-        // router is stable in Next.js app router
+        return () => ctrl.abort();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated, courseId, addToast]);
 

@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from backend.schemas._common import orm_config
 
@@ -107,11 +107,15 @@ class AssessmentAnswerSubmit(BaseModel):
 
 
 class AssessmentAttemptSubmit(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     submitted_score: Optional[float] = None
     answers: Optional[List[AssessmentAnswerSubmit]] = None
 
 
 class EnrollmentCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     persona_id: UUID
     course_id: UUID
 
@@ -246,8 +250,10 @@ class AcademyStudentProfile(BaseModel):
 
 
 class ForumThreadBase(BaseModel):
-    title: str
-    category: str
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(max_length=200)
+    category: str = Field(max_length=50)
 
 
 class ForumThreadCreate(ForumThreadBase):

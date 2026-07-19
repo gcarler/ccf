@@ -7,8 +7,9 @@ explicit Academy permission.
 
 from __future__ import annotations
 
-from datetime import date
-from typing import Annotated, Any
+from datetime import date, datetime, timedelta, timezone
+from enum import Enum
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
@@ -30,6 +31,20 @@ from backend.schemas import academy as schemas
 
 router = APIRouter(prefix="/academy", tags=["Academy"])
 
+
+class Modality(str, Enum):
+    ONLINE = "online"
+    PRESENTIAL = "presential"
+    HYBRID = "hybrid"
+
+
+class ContentType(str, Enum):
+    VIDEO = "video"
+    TEXT = "text"
+    DOCUMENT = "document"
+    IMAGE = "image"
+
+
 AcademyReader = Annotated[models.User, Depends(require_module_access("academy", "read"))]
 AcademyStudent = Annotated[models.User, Depends(require_module_access("academy", "study"))]
 AcademyEditor = Annotated[models.User, Depends(require_module_access("academy", "edit"))]
@@ -46,43 +61,43 @@ class ProgressUpdate(BaseModel):
 class CoursePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    code: str
-    title: str
+    code: str = Field(max_length=50)
+    title: str = Field(max_length=200)
     description: str | None = None
-    modality: str = "online"
+    modality: Modality = Modality.ONLINE
     is_published: bool = False
     is_self_paced: bool = False
     duration_hours: int = Field(default=0, ge=0)
-    cohort_name: str | None = None
-    certificate_type: str | None = None
-    instructor_name: str | None = None
-    image_url: str | None = None
-    access_level: str = "persona"
+    cohort_name: str | None = Field(default=None, max_length=100)
+    certificate_type: str | None = Field(default=None, max_length=50)
+    instructor_name: str | None = Field(default=None, max_length=200)
+    image_url: str | None = Field(default=None, max_length=255)
+    access_level: Literal["open", "persona", "advanced"] = "persona"
 
 
 class CourseUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    code: str | None = None
-    title: str | None = None
+    code: str | None = Field(default=None, max_length=50)
+    title: str | None = Field(default=None, max_length=200)
     description: str | None = None
-    modality: str | None = None
+    modality: Modality | None = None
     is_published: bool | None = None
     is_self_paced: bool | None = None
     duration_hours: int | None = Field(default=None, ge=0)
-    cohort_name: str | None = None
-    certificate_type: str | None = None
-    instructor_name: str | None = None
-    image_url: str | None = None
-    access_level: str | None = None
+    cohort_name: str | None = Field(default=None, max_length=100)
+    certificate_type: str | None = Field(default=None, max_length=50)
+    instructor_name: str | None = Field(default=None, max_length=200)
+    image_url: str | None = Field(default=None, max_length=255)
+    access_level: Literal["open", "persona", "advanced"] | None = None
 
 
 class LessonPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: str
+    title: str = Field(max_length=200)
     content: str = ""
-    content_type: str = "video"
+    content_type: ContentType = ContentType.VIDEO
     media_url: str | None = None
     order_index: int = 0
     duration_minutes: int = Field(default=0, ge=0)
@@ -92,13 +107,23 @@ class LessonPayload(BaseModel):
 class LessonUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: str | None = None
+    title: str | None = Field(default=None, max_length=200)
     content: str | None = None
-    content_type: str | None = None
+    content_type: ContentType | None = None
     media_url: str | None = None
     order_index: int | None = None
     duration_minutes: int | None = Field(default=None, ge=0)
     is_published: bool | None = None
+
+
+class AssessmentQuestionPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    text: str
+    type: str = "multiple_choice"
+    points: int = Field(default=1, ge=1)
+    options: list[str] = Field(default_factory=list)
+    correct_option: int = Field(default=0, ge=0)
 
 
 class AssessmentPayload(BaseModel):
@@ -106,16 +131,16 @@ class AssessmentPayload(BaseModel):
 
     course_id: UUID
     lesson_id: UUID | None = None
-    title: str
+    title: str = Field(max_length=200)
     description: str | None = None
     passing_score: float = Field(default=70, ge=0, le=100)
-    questions: list[dict[str, Any]] = Field(default_factory=list)
+    questions: list[AssessmentQuestionPayload] = Field(default_factory=list)
 
 
 class AssessmentUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: str | None = None
+    title: str | None = Field(default=None, max_length=200)
     passing_score: float | None = Field(default=None, ge=0, le=100)
 
 
@@ -240,7 +265,13 @@ def get_course(course_id: UUID, current_user: AcademyReader, db: Session = Depen
 
 
 @router.get("/courses/{course_id}/lessons")
-def list_lessons(course_id: UUID, current_user: AcademyReader, db: Session = Depends(get_db)):
+def list_lessons(
+    course_id: UUID,
+    current_user: AcademyReader,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
     course = _get_scoped_course(db, current_user, course_id)
     query = (
         db.query(models.Lesson)
@@ -250,11 +281,17 @@ def list_lessons(course_id: UUID, current_user: AcademyReader, db: Session = Dep
     if not _can_edit_academy(db, current_user):
         query = query.filter(models.Lesson.is_published.is_(True))
     # sede_id applied via parent Course scope (_get_scoped_course filters sede_id)
-    return query.order_by(models.Lesson.order_index).all()
+    return query.order_by(models.Lesson.order_index).offset(skip).limit(limit).all()
 
 
 @router.get("/courses/{course_id}/assessments")
-def list_assessments(course_id: UUID, current_user: AcademyReader, db: Session = Depends(get_db)):
+def list_assessments(
+    course_id: UUID,
+    current_user: AcademyReader,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
     _get_scoped_course(db, current_user, course_id)
     query = db.query(models.Assessment).filter(
         models.Assessment.course_id == course_id, models.Assessment.deleted_at.is_(None)
@@ -262,7 +299,7 @@ def list_assessments(course_id: UUID, current_user: AcademyReader, db: Session =
     if not _can_edit_academy(db, current_user):
         query = query.filter(models.Assessment.is_published.is_(True))
     # sede_id applied via parent Course scope (_get_scoped_course filters sede_id)
-    return query.all()
+    return query.offset(skip).limit(limit).all()
 
 
 @router.get("/assessments/{assessment_id}", response_model=schemas.Assessment)
@@ -275,7 +312,9 @@ def get_assessment(assessment_id: UUID, current_user: AcademyStudent, db: Sessio
     )
     if not assessment:
         raise HTTPException(status_code=404, detail="Evaluación no encontrada")
-    _get_scoped_course(db, current_user, assessment.course_id)
+    course = _get_scoped_course(db, current_user, assessment.course_id)
+    if not course.is_published and not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=404, detail="Evaluación no encontrada")
     return assessment
 
 
@@ -296,6 +335,9 @@ def submit_assessment(
         .first()
     )
     if not assessment:
+        raise HTTPException(status_code=404, detail="Evaluación no encontrada")
+    course = _get_scoped_course(db, current_user, assessment.course_id)
+    if not course.is_published:
         raise HTTPException(status_code=404, detail="Evaluación no encontrada")
     enrollment = (
         db.query(models.Enrollment)
@@ -351,6 +393,14 @@ def submit_assessment(
 
 @router.get("/lessons/{lesson_id}/progress")
 def get_lesson_progress(lesson_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)):
+    lesson = db.query(models.Lesson).filter(
+        models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)
+    ).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lección no encontrada")
+    _get_scoped_course(db, current_user, lesson.course_id)
+    if not lesson.is_published:
+        raise HTTPException(status_code=404, detail="Lección no encontrada")
     progress = (
         db.query(models.LessonProgress)
         .filter(
@@ -375,6 +425,9 @@ def update_lesson_progress(
 ):
     lesson = db.query(models.Lesson).filter(models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)).first()
     if not lesson:
+        raise HTTPException(status_code=404, detail="Lección no encontrada")
+    _get_scoped_course(db, current_user, lesson.course_id)
+    if not lesson.is_published:
         raise HTTPException(status_code=404, detail="Lección no encontrada")
     enrollment = (
         db.query(models.Enrollment)
@@ -474,7 +527,12 @@ def create_enrollment(
 
 
 @router.get("/me/enrollments")
-def my_enrollments(current_user: AcademyStudent, db: Session = Depends(get_db)):
+def my_enrollments(
+    current_user: AcademyStudent,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
     enrollments = (
         db.query(models.Enrollment)
         .options(joinedload(models.Enrollment.course).selectinload(models.Course.lessons))
@@ -486,6 +544,8 @@ def my_enrollments(current_user: AcademyStudent, db: Session = Depends(get_db)):
         # Aislado por boundary de persona_id; las inscripciones son del usuario autenticado
         # y create_enrollment las crea bajo _get_scoped_course, por lo que un leak
         # cross-sede NO es posible (Axioma 3).
+        .offset(skip)
+        .limit(limit)
         .all()
     )
     return [_serialize_enrollment(enrollment) for enrollment in enrollments]
@@ -534,7 +594,12 @@ def check_in(enrollment_id: UUID, current_user: AcademyStudent, db: Session = De
 
 
 @router.get("/me/progress")
-def my_progress(current_user: AcademyStudent, db: Session = Depends(get_db)):
+def my_progress(
+    current_user: AcademyStudent,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
     enrollments = (
         db.query(models.Enrollment)
         .options(joinedload(models.Enrollment.course))
@@ -545,6 +610,8 @@ def my_progress(current_user: AcademyStudent, db: Session = Depends(get_db)):
         # Aislado por boundary de persona_id; cada progreso pertenece al usuario actual.
         # No hace falta defensive JOIN porque un mismo persona_id nunca comparte datos
         # con cursos de otra sede a través de este endpoint (Axioma 3).
+        .offset(skip)
+        .limit(limit)
         .all()
     )
     course_ids = [enrollment.course_id for enrollment in enrollments]
@@ -636,7 +703,12 @@ def my_profile(current_user: AcademyStudent, db: Session = Depends(get_db)):
 
 
 @router.get("/me/certificates")
-def my_certificates(current_user: AcademyStudent, db: Session = Depends(get_db)):
+def my_certificates(
+    current_user: AcademyStudent,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
     user_sede = get_user_sede_id(db, current_user.id)
     query = (
         db.query(models.Certificate, models.Course.title)
@@ -652,7 +724,7 @@ def my_certificates(current_user: AcademyStudent, db: Session = Depends(get_db))
         # (ya joined arriba). Filtramos a través de la relación para mantener
         # el aislamiento por sede sin romper la query.
         query = query.filter(models.Course.sede_id == user_sede)
-    rows = query.all()
+    rows = query.offset(skip).limit(limit).all()
     return [
         {
             "id": certificate.id,
@@ -717,7 +789,18 @@ async def submit_assignment(
     )
     if not lesson:
         raise HTTPException(status_code=404, detail="Lección no encontrada")
+    ALLOWED_TYPES = {
+        "application/pdf", "image/jpeg", "image/png", "image/gif", "image/webp",
+        "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/plain", "text/csv",
+    }
+    if file.content_type and file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=422, detail="Tipo de archivo no permitido")
+    MAX_SIZE = 10 * 1024 * 1024
     contents = await file.read()
+    if len(contents) > MAX_SIZE:
+        raise HTTPException(status_code=422, detail="El archivo excede el límite de 10 MB")
     url = storage_service.save_file_original(
         contents, sanitize_filename(file.filename or "assignment"), subfolder="academy"
     )
@@ -802,15 +885,30 @@ def resolve_forum_thread(
     if thread.course_id:
         _get_scoped_course(db, current_user, thread.course_id)
     thread.is_resolved = not bool(thread.is_resolved)
+    db.add(
+        models.AcademyActivityLog(
+            event_type="forum_resolved",
+            course_id=thread.course_id,
+            persona_id=current_user.id,
+            modality=None,
+            value=0,
+            payload_json={"thread_id": str(thread.id), "is_resolved": thread.is_resolved},
+        )
+    )
     db.commit()
     db.refresh(thread)
     return thread
 
 
 @router.get("/schedule")
-def academy_schedule(current_user: AcademyStudent, db: Session = Depends(get_db)):
+def academy_schedule(
+    current_user: AcademyStudent,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
     # sede_id applied via _course_scope helper (Axioma 3)
-    courses = _course_scope(db, current_user).filter(models.Course.is_published.is_(True)).all()
+    courses = _course_scope(db, current_user).filter(models.Course.is_published.is_(True)).offset(skip).limit(limit).all()
     return [
         {
             "id": course.id,
@@ -826,6 +924,8 @@ def academy_schedule(current_user: AcademyStudent, db: Session = Depends(get_db)
 @router.get("/personas")
 def academy_personas(
     current_user: AcademyManager,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
     role: str | None = None,
     db: Session = Depends(get_db),
 ):
@@ -833,7 +933,7 @@ def academy_personas(
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
         query = query.filter(models.Persona.sede_id == sede_id)
-    personas = query.order_by(models.Persona.first_name, models.Persona.last_name).limit(500).all()
+    personas = query.order_by(models.Persona.first_name, models.Persona.last_name).offset(skip).limit(limit).all()
     return [
         {
             "id": persona.id,
@@ -871,8 +971,6 @@ def dashboard_metrics(current_user: AcademyManager, db: Session = Depends(get_db
     enrollment_trends: list[dict[str, Any]] = []
     if course_ids:
         # Acotamos a últimos 12 meses para no crecer indefinidamente
-        from datetime import datetime, timedelta, timezone
-
         cutoff = datetime.now(timezone.utc) - timedelta(days=365)
         monthly = (
             db.query(
@@ -1018,6 +1116,21 @@ def grade_submission(
         raise HTTPException(status_code=404, detail="Entrega no encontrada")
     submission.grade = payload.grade
     submission.teacher_feedback = payload.feedback
+    db.add(
+        models.AcademyActivityLog(
+            event_type="submission_graded",
+            course_id=None,
+            persona_id=current_user.id,
+            modality=None,
+            value=0,
+            payload_json={
+                "submission_id": str(submission.id),
+                "lesson_id": str(submission.lesson_id),
+                "grade": payload.grade,
+                "feedback": payload.feedback,
+            },
+        )
+    )
     db.commit()
     db.refresh(submission)
     return submission
@@ -1025,8 +1138,6 @@ def grade_submission(
 
 @router.post("/admin/courses", status_code=status.HTTP_201_CREATED)
 def create_course_admin(payload: CoursePayload, current_user: AcademyEditor, db: Session = Depends(get_db)):
-    if payload.access_level not in {"open", "persona", "advanced"}:
-        raise HTTPException(status_code=422, detail="Nivel de acceso inválido")
     course = models.Course(**payload.model_dump(), sede_id=get_user_sede_id(db, current_user.id))
     db.add(course)
     db.commit()
@@ -1043,11 +1154,19 @@ def update_course_admin(
 ):
     course = _get_scoped_course(db, current_user, course_id)
     changes = payload.model_dump(exclude_unset=True)
-    if changes.get("access_level") not in {None, "open", "persona", "advanced"}:
-        raise HTTPException(status_code=422, detail="Nivel de acceso inválido")
     for key, value in changes.items():
         setattr(course, key, value)
     course.updated_at = _utcnow()
+    db.add(
+        models.AcademyActivityLog(
+            event_type="course_updated",
+            course_id=course.id,
+            persona_id=current_user.id,
+            modality=None,
+            value=0,
+            payload_json={"changes": list(changes.keys())},
+        )
+    )
     db.commit()
     db.refresh(course)
     return _serialize_course(course)
@@ -1057,6 +1176,16 @@ def update_course_admin(
 def archive_course_admin(course_id: UUID, current_user: AcademyManager, db: Session = Depends(get_db)):
     course = _get_scoped_course(db, current_user, course_id)
     course.deleted_at = _utcnow()
+    db.add(
+        models.AcademyActivityLog(
+            event_type="course_archived",
+            course_id=course.id,
+            persona_id=current_user.id,
+            modality=None,
+            value=0,
+            payload_json={"course_code": course.code, "course_title": course.title},
+        )
+    )
     db.commit()
 
 
@@ -1143,6 +1272,16 @@ def update_lesson_admin(
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(lesson, key, value)
     lesson.updated_at = _utcnow()
+    db.add(
+        models.AcademyActivityLog(
+            event_type="lesson_updated",
+            course_id=lesson.course_id,
+            persona_id=current_user.id,
+            modality=None,
+            value=0,
+            payload_json={"lesson_id": str(lesson.id), "changes": list(payload.model_dump(exclude_unset=True).keys())},
+        )
+    )
     db.commit()
     db.refresh(lesson)
     return lesson
@@ -1155,6 +1294,16 @@ def archive_lesson_admin(lesson_id: UUID, current_user: AcademyEditor, db: Sessi
         raise HTTPException(status_code=404, detail="Lección no encontrada")
     _get_scoped_course(db, current_user, lesson.course_id)
     lesson.deleted_at = _utcnow()
+    db.add(
+        models.AcademyActivityLog(
+            event_type="lesson_archived",
+            course_id=lesson.course_id,
+            persona_id=current_user.id,
+            modality=None,
+            value=0,
+            payload_json={"lesson_id": str(lesson.id), "lesson_title": lesson.title},
+        )
+    )
     db.commit()
 
 
@@ -1229,6 +1378,14 @@ def create_assessment_admin(
     db: Session = Depends(get_db),
 ):
     _get_scoped_course(db, current_user, payload.course_id)
+    if payload.lesson_id is not None:
+        lesson_check = db.query(models.Lesson).filter(
+            models.Lesson.id == payload.lesson_id,
+            models.Lesson.course_id == payload.course_id,
+            models.Lesson.deleted_at.is_(None),
+        ).first()
+        if not lesson_check:
+            raise HTTPException(status_code=422, detail="La lección no pertenece a este curso")
     assessment = models.Assessment(
         course_id=payload.course_id,
         lesson_id=payload.lesson_id,
@@ -1243,19 +1400,19 @@ def create_assessment_admin(
     for index, item in enumerate(payload.questions):
         question = models.AssessmentQuestion(
             assessment_id=assessment.id,
-            question_text=str(item.get("text", "")),
-            question_type=str(item.get("type", "multiple_choice")),
-            points=int(item.get("points", 1)),
+            question_text=item.text,
+            question_type=item.type,
+            points=item.points,
             order_index=index,
         )
         db.add(question)
         db.flush()
-        for option_index, option_text in enumerate(item.get("options", [])):
+        for option_index, option_text in enumerate(item.options):
             db.add(
                 models.AssessmentOption(
                     question_id=question.id,
-                    option_text=str(option_text),
-                    is_correct=option_index == int(item.get("correct_option", 0)),
+                    option_text=option_text,
+                    is_correct=option_index == item.correct_option,
                 )
             )
     db.commit()

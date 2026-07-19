@@ -65,7 +65,7 @@ export default function AcademyTeachersPage() {
                 ]}
                 rightActions={
                     <button
-                        onClick={() => router.push("/academy/teacher")}
+                        onClick={() => router.push("/plataforma/academy/teacher")}
                         className="rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20"
                     >
                         Panel docente
@@ -102,7 +102,7 @@ export default function AcademyTeachersPage() {
                             <article
                                 key={teacher.id}
                                 className="cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
-                                onClick={() => router.push(`/academy/teacher?teacher=${teacher.id}`)}
+                                onClick={() => router.push(`/plataforma/academy/teacher?teacher=${teacher.id}`)}
                             >
                                 <div className="mb-3 flex items-center gap-3">
                                     <div className="flex size-8 items-center justify-center rounded-lg bg-[hsl(var(--primary))] text-sm font-semibold text-white">

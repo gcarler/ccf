@@ -62,8 +62,6 @@ export default function LessonsPage() {
             ]);
             if (courseData.status === 'fulfilled') setCourse(courseData.value);
             if (lessonsData.status === 'fulfilled') setLessons(lessonsData.value ?? []);
-        } catch {
-            toast.error('Error al cargar lecciones');
         } finally {
             setLoading(false);
         }
@@ -136,7 +134,7 @@ export default function LessonsPage() {
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap, href: '/plataforma/academy' },
-                    { label: course?.title ?? 'Curso', icon: BookOpen, href: `/academy/courses/${courseId}` },
+                    { label: course?.title ?? 'Curso', icon: BookOpen, href: `/plataforma/academy/courses/${courseId}` },
                     { label: 'Lecciones', icon: BookOpen },
                 ]}
                 viewType={viewType}

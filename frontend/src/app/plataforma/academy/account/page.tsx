@@ -9,16 +9,17 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
+import type { EnrollmentRecord } from '@/types/academy';
 
 export default function AcademyAccountPage() {
     const { token, user } = useAuth();
-    const [enrollments, setEnrollments] = useState<any[]>([]);
+    const [enrollments, setEnrollments] = useState<EnrollmentRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!token) return;
         const ctrl = new AbortController();
-        apiFetch<any[]>('/academy/courses', { token, signal: ctrl.signal })
+        apiFetch<EnrollmentRecord[]>('/academy/courses', { token, signal: ctrl.signal })
             .then(data => setEnrollments(Array.isArray(data) ? data.slice(0, 5) : []))
             .catch(() => { setEnrollments([]); toast.error('Error al cargar inscripciones'); })
             .finally(() => setLoading(false));
@@ -145,13 +146,13 @@ export default function AcademyAccountPage() {
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                {enrollments.map((course: any, i) => (
+                                {enrollments.map((course: EnrollmentRecord, i) => (
                                     <div key={i} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all">
                                         <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white text-sm font-semibold shrink-0">
-                                            {course.title?.[0] ?? 'C'}
+                                            {course.course.title?.[0] ?? 'C'}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{course.title ?? `Curso ${i + 1}`}</p>
+                                            <p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{course.course.title ?? `Curso ${i + 1}`}</p>
                                             <div className="w-full bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded-full h-1.5 mt-1.5">
                                                 <div className="bg-[hsl(var(--primary))] h-1.5 rounded-full" style={{ width: `${30 + i * 15}%` }} />
                                             </div>

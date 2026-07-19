@@ -26,16 +26,47 @@ interface Enrollment {
     course: { id: string };
 }
 
+interface AssessmentQuestionOption {
+    id: string;
+    option_text: string;
+}
+
+interface AssessmentQuestion {
+    id: string;
+    question_text: string;
+    question_type: string;
+    options: AssessmentQuestionOption[];
+}
+
+interface AssessmentData {
+    id: string;
+    title: string;
+    course_id: string;
+    min_score: number;
+    questions: AssessmentQuestion[];
+}
+
+interface AssessmentAnswer {
+    question_id: string;
+    selected_option_id?: string;
+    text_response?: string;
+}
+
+interface AssessmentResult {
+    passed: boolean;
+    submitted_score: number;
+}
+
 export default function AssessmentPage() {
     const params = useParams();
     const id = (params?.id as string) ?? '';
     const { token, user } = useAuth();
     const router = useRouter();
-    const [assessment, setAssessment] = useState<any>(null);
+    const [assessment, setAssessment] = useState<AssessmentData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [answers, setAnswers] = useState<any[]>([]);
+    const [answers, setAnswers] = useState<AssessmentAnswer[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [result, setResult] = useState<any>(null);
+    const [result, setResult] = useState<AssessmentResult | null>(null);
     const [currentStep, setCurrentStep] = useState(0);
     const [viewType, setViewType] = useState<ViewType>('grid');
 
@@ -44,7 +75,7 @@ export default function AssessmentPage() {
         const fetchAssessment = async () => {
             if (!token || !id) return;
             try {
-                const data = await apiFetch<any>(`/academy/assessments/${id}`, { token, signal: ctrl.signal });
+                const data = await apiFetch<AssessmentData>(`/academy/assessments/${id}`, { token, signal: ctrl.signal });
                 setAssessment(data);
             } catch (err) {
                 console.error("Error fetching assessment:", err);
@@ -57,7 +88,7 @@ export default function AssessmentPage() {
         return () => ctrl.abort();
     }, [id, token]);
 
-    const handleAnswer = (questionId: string, update: any) => {
+    const handleAnswer = (questionId: string, update: { selected_option_id?: string; text_response?: string }) => {
         setAnswers(prev => {
             const filtered = prev.filter(a => a.question_id !== questionId);
             return [...filtered, { question_id: questionId, ...update }];
@@ -65,7 +96,7 @@ export default function AssessmentPage() {
     };
 
     const handleSubmit = async () => {
-        if (!token || !user?.id) return;
+        if (!token || !user?.id || !assessment) return;
         setIsSubmitting(true);
         try {
             const enrollments = await apiFetch<Enrollment[]>('/academy/me/enrollments', { token });
@@ -76,7 +107,7 @@ export default function AssessmentPage() {
                 return;
             }
 
-            const data = await apiFetch<any>(`/academy/assessments/${id}/submit`, {
+            const data = await apiFetch<AssessmentResult>(`/academy/assessments/${id}/submit`, {
                 method: 'POST',
                 token,
                 body: {

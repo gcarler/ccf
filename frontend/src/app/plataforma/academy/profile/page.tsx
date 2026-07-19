@@ -61,7 +61,7 @@ export default function StudentProfilePage() {
         };
         fetchData();
         return () => ctrl.abort();
-    }, [token, user]);
+    }, [token, user?.id]);
 
     const activeCourses = useMemo(() => profile?.active_courses ?? [], [profile]);
     const totalCertificates = certificates.length || profile?.certificates_count || 0;

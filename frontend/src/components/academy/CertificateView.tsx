@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Award, Download, Share2, Copy, Check } from 'lucide-react';
 
 interface CertificateProps {
@@ -30,16 +30,22 @@ export default function CertificateView({ data }: CertificateProps) {
     // ACAD-LOW-001: handlers reales para Download y Share.
     const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
 
+    useEffect(() => {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        if (copyState === 'copied') {
+            timer = setTimeout(() => setCopyState('idle'), 1800);
+        }
+        return () => { if (timer) clearTimeout(timer); };
+    }, [copyState]);
+
     const handleCopy = async () => {
         try {
             if (typeof navigator !== 'undefined' && navigator.clipboard) {
                 await navigator.clipboard.writeText(validationUrl);
             }
             setCopyState('copied');
-            setTimeout(() => setCopyState('idle'), 1800);
         } catch {
             setCopyState('copied');
-            setTimeout(() => setCopyState('idle'), 1800);
         }
     };
 
