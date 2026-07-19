@@ -12,7 +12,7 @@ from enum import Enum
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
@@ -23,6 +23,7 @@ from backend.core.permissions import (
     get_user_effective_permissions,
     require_module_access,
 )
+from backend.core.rate_limit import academy_limiter
 from backend.core.storage import storage_service
 from backend.core.uploads import sanitize_filename
 from backend.crud.crm import get_user_sede_id
@@ -319,7 +320,9 @@ def get_assessment(assessment_id: UUID, current_user: AcademyStudent, db: Sessio
 
 
 @router.post("/assessments/{assessment_id}/submit")
+@academy_limiter.limit("10/minute")
 def submit_assessment(
+    request: Request,
     assessment_id: UUID,
     payload: schemas.AssessmentAttemptSubmit,
     current_user: AcademyStudent,
@@ -486,7 +489,9 @@ def update_lesson_progress(
 
 @router.post("/enrollments", status_code=status.HTTP_201_CREATED)
 @router.post("/enrollments/", status_code=status.HTTP_201_CREATED, include_in_schema=False)
+@academy_limiter.limit("30/minute")
 def create_enrollment(
+    request: Request,
     payload: schemas.EnrollmentCreate,
     current_user: AcademyStudent,
     db: Session = Depends(get_db),
@@ -847,7 +852,9 @@ def forum_threads(
 
 
 @router.post("/forum/threads", status_code=status.HTTP_201_CREATED)
+@academy_limiter.limit("5/minute")
 def create_forum_thread(
+    request: Request,
     payload: schemas.ForumThreadCreate,
     current_user: AcademyStudent,
     db: Session = Depends(get_db),

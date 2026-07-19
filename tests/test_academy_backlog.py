@@ -387,31 +387,33 @@ def test_acad_tkt_003_delete_submission_writes_audit_log():
     ],
 )
 def test_high_pending_tickets_have_negative_evidence(tkt: int, needle: str, rationale: str):
-    """Para HIGH pendientes: el test es xfail hasta que el fix se implemente.
-
-    Los parámetros describen la cadena que DEBE aparecer/desaparecer cuando
-    el ticket se cierre. Mientras el ticket esté ⬜, este gate queda como
-    instrucción explícita al lector y pytest lo marca como xfail.
-    """
+    """Gates de regresión para los HIGH que ya tienen cierre implementado."""
     import re as _re
 
     cert_view = REPO_ROOT / "frontend" / "src" / "components" / "academy" / "CertificateView.tsx"
+    api_file = REPO_ROOT / "backend" / "api" / "academy.py"
+    academy_layout = REPO_ROOT / "frontend" / "src" / "app" / "plataforma" / "academy" / "layout.tsx"
+    module_configs = REPO_ROOT / "frontend" / "src" / "components" / "workspace" / "moduleConfigs.ts"
 
-    if tkt == 41:
-        # Caso negativo: api.qrserver.com debe desaparecer. Bug abierto,
-        # así que xfail; cuando se cierre el ticket, este test se moverá
-        # al histórico y el assert entrará en vigor permanente.
-        if cert_view.exists() and _re.search(needle, _read(cert_view)):
-            pytest.xfail(
-                "ACAD-TKT-041 ⬜ Pendiente: api.qrserver.com detectado en CertificateView.tsx. "
-                "Cierre: migrar a lib local (qrcode/react-qr-code). Hasta entonces xfail por diseño."
-            )
-        return
-
-    # El resto de tickets pendientes: xfail genérico como instruction marker.
-    pytest.xfail(
-        f"ACAD-TKT-{tkt:03d} ⬜ Pendiente: {rationale}. Ancla esperada: {needle!r}"
-    )
+    if tkt == 20:
+        assert "class AssessmentQuestionPayload" in _read(api_file)
+    elif tkt == 21:
+        text = _read(api_file)
+        assert "MAX_SIZE" in text and "await file.read()" in text
+    elif tkt == 22:
+        text = _read(api_file)
+        assert "ALLOWED_TYPES" in text and "file.content_type not in ALLOWED_TYPES" in text
+    elif tkt == 40:
+        text = _read(academy_layout)
+        assert "ACADEMY_SIDEBAR_SECTIONS" in text and "hasModuleAccess('academy', item.level)" in text
+    elif tkt == 41:
+        assert cert_view.exists()
+        assert not _re.search(needle, _read(cert_view))
+    elif tkt == 43:
+        assert "academy:" not in _read(module_configs)
+        assert "ACADEMY_SIDEBAR_SECTIONS" in _read(academy_layout)
+    else:  # pragma: no cover - el parametrizado superior es el contrato.
+        pytest.fail(f"Ticket HIGH no reconocido: {tkt} ({rationale})")
 
 
 # ── B.4. Sanity checks runtime (base mínima, ya cubierta por test_academy_api.py) ──

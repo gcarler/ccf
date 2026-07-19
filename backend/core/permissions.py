@@ -16,7 +16,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
@@ -596,9 +596,19 @@ def _has_permission(role: str, user_perms: set | dict, required: str) -> bool:
 
 
 def require_permission(permission: str):
-    """Factory: return a FastAPI dependency that checks a specific permission."""
+    """Factory: return a FastAPI dependency that checks a specific permission.
+
+    Side-effect (TKT-200): cuando el guard resuelve exitosamente, popula
+    ``request.state.user_id`` (UUID-string del usuario autenticado) y, si la
+    permission pedida termina en ``:manage``, ``request.state.is_unlimited_user=True``.
+    Estos flags son consumidos por ``backend.core.rate_limit._academy_key_func``
+    para decidir per-user vs per-IP bucketing y bypass de manager/admin.
+    FastAPI siempre inyecta ``Request`` para parámetros con tipo ``Request``,
+    por lo que los side-effects siempre llegan al request en el path normal.
+    """
 
     async def _check(
+        request: Request,
         current_user=Depends(get_current_active_user),
         db: Session = Depends(get_db),
     ):
@@ -609,6 +619,13 @@ def require_permission(permission: str):
         user_perms = get_user_effective_permissions(db, current_user)
 
         if _has_permission(role, user_perms, permission):
+            # TKT-200: side-effect para rate-limit per-user + bypass manager.
+            user_id = getattr(current_user, "id", None)
+            if user_id is not None:
+                request.state.user_id = str(user_id)
+            # Manage permission OR admin role → unlimited bucket bypass.
+            if permission.endswith(":manage") or role in {"admin", "administrador"}:
+                request.state.is_unlimited_user = True
             return current_user
 
         # Role-based allowance for platform roles without explicit granular permissions.

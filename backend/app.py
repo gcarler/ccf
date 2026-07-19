@@ -8,6 +8,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.api import (
@@ -46,6 +48,7 @@ from backend.api import (
 )
 from backend.core.config import get_settings
 from backend.core.logging import observability_middleware
+from backend.core.rate_limit import academy_limiter
 from backend.core.security_headers import mount_security_headers
 from backend.middleware.module_isolation import register_module_isolation
 
@@ -154,6 +157,14 @@ app = FastAPI(
 )
 
 mount_security_headers(app)
+
+# TKT-200: rate-limit/DoS protection via slowapi. El estado del limiter vive
+# en ``app.state.limiter`` (contract de slowapi) y los endpoints decorados
+# consultan el bucket via ``@academy_limiter.limit(...)``. El handler
+# global convierte ``RateLimitExceeded`` en 429 con ``Retry-After`` y los
+# ``X-RateLimit-*`` headers peuplados por slowapi.
+app.state.limiter = academy_limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # TKT-201: observability unificada (request_id + user_id + sede_id + endpoint + latency_ms)
 # Reemplaza el viejo ``request_id_middleware`` + ``quality_assurance_middleware``.

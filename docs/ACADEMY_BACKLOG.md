@@ -553,11 +553,11 @@ producto.
 > hallazgos puntuales.
 
 - **ACAD-TKT-200** [HIGH] — Rate limiting + DoS protection en endpoints hot
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** Gap analysis 2026-07-19 (thinker session)
-  - **files:** `backend/api/academy.py` (middleware global), `backend/main.py` (registro slowapi)
-  - **gate:** `pytest tests/test_academy_fase_7_transversal.py::test_acad_tkt_200_rate_limit_429 -q`
-  - **notes:** ACAD-TKT-021 solo limita tamaño de archivo. Sin rate-limit global, un bot puede saturar `submit_assessment` o `create_forum_thread`. Usar `slowapi` con override por endpoint (10/min submit_assessment, 5/min forum_thread, 30/min enrollment, 60/min read endpoints). Managers exentos.
+  - **files:** `backend/core/rate_limit.py` (academy_limiter con slowapi), `backend/core/permissions.py` (`_check` side-effect a `request.state`), `backend/app.py` (registro `app.state.limiter` + handler RateLimitExceeded), `requirements.txt` (`slowapi==0.1.10`), `backend/api/academy.py` (decoradores en submit_assessment 10/min, create_forum_thread 5/min, create_enrollment 30/min)
+  - **gate:** `pytest tests/test_academy_fase_7_transversal.py -k tkt_200 -q` ✅ (12 tests)
+  - **notes:** ``academy_limiter`` con ``key_func`` per-user + bypass manager via ``request.state.is_unlimited_user`` (poblado por ``require_permission._check`` cuando permission termina en ``:manage`` o rol admin). pytest global bypass via ``PYTEST_CURRENT_TEST``; opt-in tests con ``FORCE_RATE_LIMIT=1``. Headers ``Retry-After`` + ``X-RateLimit-*`` habilitados. Storage ``memory://`` (swap a redis en prod multi-worker sin cambiar call-sites). ACAD-TKT-021 sigue siendo válido para size limit de archivos.
 
 - **ACAD-TKT-201** [HIGH] — Tracing distribuido + logs JSON estructurados con correlation-id
   - **state:** ✅ Hecho 2026-07-19
