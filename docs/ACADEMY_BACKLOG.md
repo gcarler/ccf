@@ -96,11 +96,11 @@ Cada ticket DEBE respetar exactamente este esquema. La validación la hace `test
 | 3 | Experiencia canónica | 030–043, 143–144 | una navegación/shell, rutas compatibles, DTOs tipados, permisos visibles correctos |
 | 4 | Flujos completos por rol | dependencias 1–3 | estudiante, editor y manager completan su recorrido sin pantallas o acciones ficticias |
 | 5 | Fiabilidad y deuda residual | 070–083, 100–121 | sin mocks, delays artificiales, handlers vacíos ni errores async conocidos |
-| 6 | Certificación y publicación | todos | API, lint/typecheck, E2E dos-sedes, build y backlog 100% cerrado |
+| 6 | Certificación y publicación | todos (incluyendo transversales TKT-200..206) | API, lint/typecheck, E2E dos-sedes, rate-limit, tracing, a11y, GDPR export y backlog 100% cerrado |
 
 ### 3.1 Secuencia obligatoria de cierre
 
-1. **Fase 0 — fuente de verdad.** Reconciliar los 89 tickets: el backlog
+1. **Fase 0 — fuente de verdad.** Reconciliar los 108 tickets: el backlog
    debe reflejar el código y cada `xfail` se convierte en una aserción de
    producto o en un ticket explícito. No se abre una pantalla nueva hasta que
    la matriz de cierre sea consistente.
@@ -464,29 +464,29 @@ producto.
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
   - **state:** ⬜ Pendiente
 - **ACAD-TKT-103** [LOW] — Frontend: index-as-key en `account/page.tsx:148` — `PLAN L04`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **gate:** `pytest tests/test_academy_fase_6_to_100.py::test_acad_tkt_103_account_no_index_as_key -q`
+  - **state:** ✅ Hecho 2026-07-19
 - **ACAD-TKT-104** [LOW] — Frontend: index-as-key en `profile/page.tsx:321` — `PLAN L05`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **gate:** `pytest tests/test_academy_fase_6_to_100.py::test_acad_tkt_104_profile_no_index_as_key -q`
+  - **state:** ✅ Hecho 2026-07-19
 - **ACAD-TKT-105** [LOW] — Frontend: `any` types en ~15 archivos del módulo Academy — `PLAN L06`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
   - **state:** ⬜ Pendiente
 - **ACAD-TKT-106** [LOW] — Backend: `academy_personas` hardcodea `role` y `is_active` — `PLAN L07`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **gate:** `pytest tests/test_academy_fase_6_to_100.py::test_acad_tkt_106_academy_personas_filters_role_active -q`
+  - **state:** ✅ Hecho 2026-07-19
 - **ACAD-TKT-107** [LOW] — Backend: `pilot_readiness` endpoint hardcodeado estático — `PLAN L08`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
   - **state:** ⬜ Pendiente
 - **ACAD-TKT-108** [LOW] — Backend: `my_profile` usa `getattr` frágil — `PLAN L09`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **gate:** `pytest tests/test_academy_fase_6_to_100.py::test_acad_tkt_108_my_profile_no_getattr_fragil -q`
+  - **state:** ✅ Hecho 2026-07-19
 - **ACAD-TKT-109** [LOW] — Frontend: import dinámico innecesario en `assessments/new:70` — `PLAN L10`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **gate:** `pytest tests/test_academy_fase_6_to_100.py::test_acad_tkt_109_assessments_new_no_dynamic_import -q`
+  - **state:** ✅ Hecho 2026-07-19
 - **ACAD-TKT-110** [LOW] — Frontend: `eslint-disable` innecesario en `enroll/[id]:46` — `PLAN L11`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **gate:** `pytest tests/test_academy_fase_6_to_100.py::test_acad_tkt_110_enroll_no_eslint_disable -q`
+  - **state:** ✅ Hecho 2026-07-19
 - **ACAD-TKT-111** [LOW] — Frontend: import fuera de orden en `courses/[id]/page.tsx:203` — `PLAN L12`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
   - **state:** ⬜ Pendiente
@@ -497,8 +497,8 @@ producto.
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
   - **state:** ⬜ Pendiente
 - **ACAD-TKT-121** [LOW] — `enrollment_id` redundante en payload `submit_assessment` — `ESTADO LOW-002`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **gate:** `pytest tests/test_academy_fase_6_to_100.py::test_acad_tkt_121_submit_assessment_derives_enrollment_id -q`
+  - **state:** ✅ Hecho 2026-07-19 (drift detectado — código ya derivaba correctamente)
   - **gate (todos los ACAD-TKT-100 a 121):** `pytest tests/test_academy_backlog.py::test_acad_tkt_low_cleanup -q`
 
 ### 4.7. TEST (Suite de regresión — `PLAN P4 ACAD-T01..T60` consolidado)
@@ -529,6 +529,71 @@ producto.
   - **source:** `PLAN P4 F ACAD-T55..T60`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_134_audit_logs -q --nightly`
   - **notes:** ACAD-TKT-023..028 cierran los endpoints faltantes. Marcado `--nightly` por costo de DB.
+
+---
+
+### 4.8. TRANSVERSAL (Resiliencia, Observabilidad, Seguridad profunda, Compliance — *bloqueantes Fase 6*)
+
+> **Gaps identificados en análisis 2026-07-19** que el plan original no cubría.
+> Estos 7 tickets son **prerrequisito para la certificación del módulo** (§3.1 Fase 6):
+> representan dimensiones sistémicas (no drift aislado) que definen un sistema
+> production-ready. Costo total estimado: **~4 sprints** de 1 dev (vs. ~1 sprint
+> para todos los MED/LOW restantes).
+>
+> El plan original cubría remediación de deuda conocida; este apartado cubre
+> **calidad estructural** que el backlog no contemplaba por estar enfocado en
+> hallazgos puntuales.
+
+- **ACAD-TKT-200** [HIGH] — Rate limiting + DoS protection en endpoints hot
+  - **state:** ⬜ Pendiente
+  - **source:** Gap analysis 2026-07-19 (thinker session)
+  - **files:** `backend/api/academy.py` (middleware global), `backend/main.py` (registro slowapi)
+  - **gate:** `pytest tests/test_academy_fase_7_transversal.py::test_acad_tkt_200_rate_limit_429 -q`
+  - **notes:** ACAD-TKT-021 solo limita tamaño de archivo. Sin rate-limit global, un bot puede saturar `submit_assessment` o `create_forum_thread`. Usar `slowapi` con override por endpoint (10/min submit_assessment, 5/min forum_thread, 30/min enrollment, 60/min read endpoints). Managers exentos.
+
+- **ACAD-TKT-201** [HIGH] — Tracing distribuido + logs JSON estructurados con correlation-id
+  - **state:** ⬜ Pendiente
+  - **source:** Gap analysis 2026-07-19
+  - **files:** `backend/api/academy.py` (middleware Correlation-ID), `frontend/src/app/plataforma/academy/AcademyClient.tsx` (X-Request-ID en apiFetch), `backend/core/logging.py` (formatter JSON)
+  - **gate:** `pytest tests/test_academy_fase_7_transversal.py::test_acad_tkt_201_correlation_id_propagates -q`
+  - **notes:** `AcademyActivityLog` es auditoría de negocio en DB. No hay rastro operacional para debuggear incidentes en producción. Cada request debe llevar `X-Request-ID` propagado frontend→backend→log→response. Logs estructurados JSON con `request_id`, `user_id`, `sede_id`, `endpoint`, `latency_ms`.
+
+- **ACAD-TKT-202** [HIGH] — E2E tests Playwright multi-rol (estudiante, editor, manager)
+  - **state:** ⬜ Pendiente
+  - **source:** Gap analysis 2026-07-19
+  - **files:** `frontend/tests/e2e/academy/{student-flow,editor-flow,manager-flow}.spec.ts` (nuevo)
+  - **gate:** `cd frontend && npx playwright test tests/e2e/academy/ --reporter=line`
+  - **notes:** Test suite actual es 100% backend (pytest + TestClient). No valida que la UI esconda correctamente botones de admin a estudiantes, ni que la integración cliente/servidor serialice fechas UUID/ISO correctamente. Mínimo 3 flujos: estudiante (inscribe→aprende→evalúa→certifica), editor (crea→publica→califica→audita), manager (consulta métricas con filtro sede).
+
+- **ACAD-TKT-203** [MED] — Caching + N+1 query optimization en dashboard/list_lessons
+  - **state:** ⬜ Pendiente
+  - **source:** Gap analysis 2026-07-19
+  - **files:** `backend/api/academy.py::dashboard_metrics`, `backend/core/cache.py` (nuevo LRU cache)
+  - **gate:** `pytest tests/test_academy_fase_7_transversal.py::test_acad_tkt_203_dashboard_cached_and_no_n_plus_1 -q`
+  - **notes:** `dashboard_metrics` carga todos los courses del scope antes de LIMIT (N+1). `list_lessons` con `selectinload` anidado puede ser lento con >50 lessons. Cache de catalog público (TTL 5min, key por sede_id) reduce carga DB 80%. Verificar con `EXPLAIN ANALYZE` que los queries críticos usan índices `persona_id`, `course_id`, `sede_id`.
+
+- **ACAD-TKT-204** [MED] — Accesibilidad (WCAG AA en progress bars, modales, keyboard nav)
+  - **state:** ⬜ Pendiente
+  - **source:** Gap analysis 2026-07-19
+  - **files:** `frontend/src/app/plataforma/academy/profile/progress/page.tsx`, todos los modales
+  - **gate:** `cd frontend && npx axe-core tests/e2e/academy/a11y.spec.ts`
+  - **notes:** Plataforma educativa sin a11y excluye estudiantes con discapacidad visual/motriz. Mínimo: `aria-valuenow`+`aria-label` en progress bars, focus trap en modales, navegación por teclado (Tab order lógico), contraste WCAG AA en estados disabled, SR-only text para iconos decorativos.
+
+- **ACAD-TKT-205** [MED] — Notificaciones async (Celery/RQ + email en eventos clave)
+  - **state:** ⬜ Pendiente
+  - **source:** Gap analysis 2026-07-19
+  - **files:** `backend/tasks/academy_notifications.py` (nuevo), `backend/core/email.py` (SendGrid/SES adapter)
+  - **gate:** `pytest tests/test_academy_fase_7_transversal.py::test_acad_tkt_205_certificate_issued_triggers_email -q`
+  - **notes:** Eventos trigger: certificado emitido, evaluación calificada, hilo foro respondido, recordatorio de sesión próxima. Requiere worker async (Celery o RQ) + integración con SendGrid/SES. Out-of-process del request HTTP para no bloquear.
+
+- **ACAD-TKT-206** [MED/LOW] — GDPR/LOPD data export endpoint (`GET /academy/me/data-export`)
+  - **state:** ⬜ Pendiente
+  - **source:** Gap analysis 2026-07-19
+  - **files:** `backend/api/academy.py::data_export_me`, `frontend/src/app/plataforma/academy/account/page.tsx` (botón)
+  - **gate:** `pytest tests/test_academy_fase_7_transversal.py::test_acad_tkt_206_data_export_returns_complete_profile -q`
+  - **notes:** Compliance Colombia Ley 1581/2012. Endpoint retorna JSON con enrollments, submissions, certificates, activity logs, profile del usuario actual. Auth: solo el propio usuario. Rate limit: 1/día. Nota: el borrado (derecho al olvido) es orthogonal y queda como ticket futuro.
+
+  - **gate (todos los ACAD-TKT-200..206):** `pytest tests/test_academy_fase_7_transversal.py -q`
 
 ---
 
@@ -571,15 +636,16 @@ producto.
 
 | Estado | IDs únicos | Lotes | Total referencias |
 |---|---:|---:|---:|
-| ✅ Hecho funcional | 59 (TKT-003, 010..015, 020..028, 030..038, 042..043, 050..063, 065, 070..071, 074..077, 082, 090..091, 100..102, 134, 140..142, 144) | 0 | 59 |
+| ✅ Hecho funcional | 67 (TKT-003, 010..015, 020..028, 030..038, 042..043, 050..063, 065, 070..071, 074..077, 082, 090..091, 100..102, 103, 104, 106, 108, 109, 110, 121, 131, 134, 140..142, 144) | 0 | 67 |
 | 📜 Histórico (cierre documental) | 2 (TKT-001, 002) | 0 | 2 |
 | ⬜ Pendiente — HIGH corregido audit forense | 0 | 0 | 0 |
 | ⬜ Pendiente — MED frontend | 7 (TKT-072..073, 078..083) | 1 (gate compartido) | 7 |
 | ⬜ Pendiente — MED módulos menores | 0 | 0 | 0 |
 | ⬜ Pendiente — LOW | 21 (TKT-103..104, 105..112, 120..121) | 1 (gate compartido low) | 21 |
 | ⬜ Pendiente — TEST | 4 (TKT-130..133) | 0 | 4 |
-| **Total ⬜** | **32** | **2 lotes** | **34** |
-| **TOTAL** | **95 IDs** | — | **97 referencias** |
+| ⬜ Pendiente — TRANSVERSAL *(bloqueantes Fase 6, ver §4.8)* | 7 (TKT-200..206) | 0 | 7 |
+| **Total ⬜** | **39** | **2 lotes** | **41** |
+| **TOTAL** | **108 IDs** *(67 ✅ + 2 📜 + 39 ⬜)* | — | **110 referencias** |
 
 > **Cierre Fase A — CRIT (2026-07-19):** los 6 tickets ACAD-TKT-010..015 ya estaban implementados
 > en el código (`backend/api/academy.py` + `backend/schemas/academy.py`). El audit docs drift
@@ -743,7 +809,56 @@ echo "=== nightly: e2e academy ==="
 
 ---
 
-## 8. Regla anti-drift (CRÍTICA)
+## 8. Technical Debt diferido (out-of-scope para Academy 1.0)
+
+> Frentes identificados en análisis 2026-07-19 que **NO** entran en el alcance
+> del "100% Academy" pero que se documentan aquí para reintroducir cuando
+> cambien las prioridades de producto o el módulo escale.
+
+### 8.1. i18n / l10n completo (extracción de strings, formateo localizado)
+
+- **Severidad:** MED (deuda técnica, no bloqueante)
+- **Costo estimado:** 2d (refactor + cobertura de ~80 strings + locale provider)
+- **Razón de exclusión:** Academy solo opera en Colombia/español por ahora;
+  sobre-ingeniería hasta confirmar multi-país.
+- **Cuándo reintroducirlo:** cuando se abra operación en otro país, o cuando
+  el módulo supere las 50 vistas únicas (umbral arbitrario donde la deuda
+  de i18n se vuelve cara).
+- **Trabajo tentativo:** instalar `next-intl` o `react-i18next`, extraer todos
+  los strings de `frontend/src/components/academy/` + `frontend/src/app/plataforma/academy/`,
+  crear archivos `messages/es-CO.json` y `messages/en-US.json`, agregar locale
+  switcher en perfil.
+
+### 8.2. PWA modo offline (catalog navegable sin conexión, sync diferida)
+
+- **Severidad:** LOW (mejora UX, no funcional)
+- **Costo estimado:** 2w (service worker + IndexedDB schema + sync queue + conflict resolution)
+- **Razón de exclusión:** modelo de uso actual requiere conexión constante
+  (evaluaciones con timestamp server-side, certificados con firma digital,
+  pagos via pasarela). Sin cohorts rurales con mala conectividad validada,
+  el ROI es negativo.
+- **Cuándo reintroducirlo:** cuando se lance un programa "diploma móvil para
+  líderes rurales" con cohorts en zonas 3G/4G débil, o cuando se ofrezca
+  contenido descargable para formación asincrónica larga.
+- **Trabajo tentativo:** convertir `frontend/` en PWA con `next-pwa`, cachear
+  catalog estático (`/academy/courses` sin auth), implementar sync queue
+  para `LessonProgress` diferido, diseñar estrategia de conflict resolution
+  (last-write-wins vs server-authoritative).
+
+### 8.3. Otros frentes a reevaluar en futuras auditorías
+
+- **Blockchain anchoring de certificados** (proof-of-existence para verificación
+  externa sin contactar API CCF) — depende de decisión institucional.
+- **Búsqueda full-text** (Elasticsearch / Meilisearch sobre forum + lessons)
+  — solo si el módulo Academy supera 10k lessons o 50k hilos de foro.
+- **Streaming de video lessons** (HLS/DASH con adaptive bitrate) — solo si
+  se descubre que la latencia actual de `media_url` directo impacta UX.
+- **Mobile app nativa** (React Native o Swift/Kotlin) — solo si métricas de
+  uso web-mobile indican ROI (>60% uso desde móvil).
+
+---
+
+## 9. Regla anti-drift (CRÍTICA)
 
 Cualquier nueva sesión que abra trabajo sobre Academy debe:
 
