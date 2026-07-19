@@ -18,6 +18,7 @@
         "test:e2e:crm:deep": "node scripts/run-managed-playwright.mjs tests/e2e/crm/dashboard.spec.ts tests/e2e/crm/groups-admin.spec.ts tests/e2e/crm/persona-detail.spec.ts tests/e2e/crm/messaging.spec.ts tests/e2e/crm/resources.spec.ts tests/e2e/crm/pipeline-deep.spec.ts",
         "test:e2e:academy": "playwright test tests/e2e/academy/smoke.spec.ts && node scripts/run-managed-playwright.mjs tests/e2e/academy/profile-detail.spec.ts",
         "test:e2e:academy:deep": "node scripts/run-managed-playwright.mjs tests/e2e/academy/profile-detail.spec.ts",
+        "test:e2e:academy:multi-role": "node scripts/run-managed-playwright.mjs --academy-roles tests/e2e/academy/multi-role-flow.spec.ts",
         "test:e2e:projects": "playwright test tests/e2e/projects/smoke.spec.ts && node scripts/run-managed-playwright.mjs --auth tests/e2e/projects/detail.spec.ts",
         "test:e2e:projects:detail": "node scripts/run-managed-playwright.mjs --auth tests/e2e/projects/detail.spec.ts",
         "test:e2e:messaging": "playwright test tests/e2e/messaging/smoke.spec.ts && node scripts/run-managed-playwright.mjs tests/e2e/messaging/direct-messages.spec.ts",
