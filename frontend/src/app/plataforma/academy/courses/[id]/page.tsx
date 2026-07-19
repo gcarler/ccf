@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { 
     GraduationCap, 
@@ -10,8 +11,7 @@ import {
     BookOpen, 
     ArrowLeft,
     FileText,
-    Calendar,
-    ChevronRight
+    Calendar
 } from 'lucide-react';
 import { DSBadge } from '@/design/components/DSBadge';
 import { DSCard } from '@/design/components/DSCard';
@@ -22,7 +22,21 @@ interface CourseStats {
     total_enrolled: number;
     completion_rate: number;
     average_grade: number;
-    active_sessions: number;
+}
+
+interface CourseDetail {
+    id: string;
+    title: string;
+    code: string;
+    modality: string;
+    cohort_name?: string | null;
+    lesson_count: number;
+    is_published: boolean;
+}
+
+interface CourseStudent {
+    progress_percent: number;
+    average_grade: number;
 }
 
 export default function CourseCoordinationPage() {
@@ -31,7 +45,7 @@ export default function CourseCoordinationPage() {
     const router = useRouter();
     const { token, isAuthenticated } = useAuth();
     
-    const [course, setCourse] = useState<any>(null);
+    const [course, setCourse] = useState<CourseDetail | null>(null);
     const [stats, setStats] = useState<CourseStats | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -42,19 +56,22 @@ export default function CourseCoordinationPage() {
         const loadData = async () => {
             try {
                 setLoading(true);
-                const [courseData, statsData] = await Promise.all([
-                    apiFetch<any>(`/academy/courses/${id}`, { token, signal: ctrl.signal }),
-                    Promise.resolve({
-                        total_enrolled: 42,
-                        completion_rate: 85,
-                        average_grade: 92,
-                        active_sessions: 3
-                    })
+                const [courseData, students] = await Promise.all([
+                    apiFetch<CourseDetail>(`/academy/courses/${id}`, { token, signal: ctrl.signal }),
+                    apiFetch<CourseStudent[]>(`/academy/admin/courses/${id}/students`, { token, signal: ctrl.signal }),
                 ]);
+                const totalEnrolled = students.length;
+                const completed = students.filter((student) => student.progress_percent >= 100).length;
+                const graded = students.filter((student) => Number.isFinite(student.average_grade));
                 setCourse(courseData);
-                setStats(statsData);
-            } catch (err) {
-                console.error(err);
+                setStats({
+                    total_enrolled: totalEnrolled,
+                    completion_rate: totalEnrolled ? Math.round((completed / totalEnrolled) * 100) : 0,
+                    average_grade: graded.length
+                        ? Math.round(graded.reduce((sum, student) => sum + student.average_grade, 0) / graded.length)
+                        : 0,
+                });
+            } catch {
                 toast.error('No se pudo cargar la información del programa');
             } finally {
                 setLoading(false);
@@ -81,6 +98,7 @@ export default function CourseCoordinationPage() {
 
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
+            <h1 className="sr-only">{course.title}</h1>
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap },
@@ -103,9 +121,9 @@ export default function CourseCoordinationPage() {
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div className="space-y-2">
                         <DSBadge tone={course.modality === 'formal' ? 'blue' : 'emerald'} label={course.modality === 'formal' ? 'RUTA FORMAL' : 'RUTA NO FORMAL'} />
-                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight leading-none uppercase">
+                        <p aria-hidden="true" className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight leading-none uppercase">
                             {course.title}
-                        </h1>
+                        </p>
                         <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-xs flex items-center gap-2">
                             <span className="text-[hsl(var(--primary))]">{course.code}</span> • {course.cohort_name || 'Sin cohorte activa'}
                         </p>
@@ -116,7 +134,7 @@ export default function CourseCoordinationPage() {
                     <DSMetric label="Inscritos" value={String(stats?.total_enrolled ?? 0)} trend="+5 esta semana" tone="blue" />
                     <DSMetric label="Finalización" value={`${stats?.completion_rate ?? 0}%`} trend="Target 90%" tone="emerald" />
                     <DSMetric label="Promedio" value={String(stats?.average_grade ?? 0)} trend="Sobre 100" tone="amber" />
-                    <DSMetric label="Lecciones" value={String(course.lessons_count ?? 0)} trend="Activas" tone="blue" />
+                    <DSMetric label="Lecciones" value={String(course.lesson_count)} trend="Publicadas" tone="blue" />
                 </section>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -131,10 +149,10 @@ export default function CourseCoordinationPage() {
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Periodo de Inscripción</p>
-                                            <p className="text-[11px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">Abierto hasta 30 Mayo, 2026</p>
+                                            <p className="text-[11px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{course.is_published ? 'Visible para estudiantes' : 'Borrador interno'}</p>
                                         </div>
                                     </div>
-                                    <DSBadge tone="emerald" label="ACTIVO" />
+                                    <DSBadge tone={course.is_published ? 'emerald' : 'amber'} label={course.is_published ? 'PUBLICADO' : 'BORRADOR'} />
                                 </div>
                                 
                                 <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
@@ -146,7 +164,7 @@ export default function CourseCoordinationPage() {
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Malla Curricular</p>
-                                            <p className="text-[11px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">9 de 10 lecciones con contenido</p>
+                                            <p className="text-[11px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{course.lesson_count} lecciones registradas</p>
                                         </div>
                                     </div>
                                     <DSBadge tone="amber" label="REVISIÓN" />
@@ -164,40 +182,8 @@ export default function CourseCoordinationPage() {
                         </DSCard>
                     </div>
 
-                    <div className="space-y-3">
-                        <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Acciones de Control</h3>
-                            <div className="space-y-3">
-                                <button className="w-full flex items-center justify-between p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-[hsl(var(--primary))] hover:text-white transition-all group text-left">
-                                    <span className="text-[10px] font-semibold uppercase tracking-wide">Ver Reporte de Asistencia</span>
-                                    <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-white" />
-                                </button>
-                                <button className="w-full flex items-center justify-between p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-[hsl(var(--primary))] hover:text-white transition-all group text-left">
-                                    <span className="text-[10px] font-semibold uppercase tracking-wide">Auditar Evaluaciones</span>
-                                    <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-white" />
-                                </button>
-                                <button className="w-full flex items-center justify-between p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-[hsl(var(--primary))] hover:text-white transition-all group text-left">
-                                    <span className="text-[10px] font-semibold uppercase tracking-wide">Lista de Espera</span>
-                                    <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-white" />
-                                </button>
-                            </div>
-                        </DSCard>
-
-                        <div className="bg-[hsl(var(--primary))] rounded-md p-4 text-white space-y-4 shadow-xl shadow-[hsl(var(--primary)/0.2)]">
-                            <h4 className="text-sm font-semibold uppercase tracking-tight">Optimus Coach</h4>
-                            <p className="text-[11px] text-blue-100 font-medium leading-relaxed">
-                                Este curso tiene un 15% más de participación que el promedio. Recomiendo abrir una segunda cohorte para el próximo periodo.
-                            </p>
-                            <button className="text-[10px] font-semibold uppercase tracking-wide px-4 py-2 bg-white/20 rounded-md hover:bg-white/30 transition-all">
-                                Ver Análisis IA
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </main>
         </div>
     );
 }
-
-// Minimal apiFetch mock to satisfy types if needed or use real one
-import { apiFetch } from '@/lib/http';

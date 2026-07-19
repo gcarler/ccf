@@ -120,7 +120,15 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
 
     return (
         <RightPanel open={true} onClose={onClose} title={assessment?.title || 'Evaluación'} width={800}>
-            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] font-sans">
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="assessment-drawer-title"
+                className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] font-sans"
+            >
+                <span id="assessment-drawer-title" className="sr-only">
+                    {assessment?.title || 'Evaluación'}
+                </span>
                 {loading ? (
                     <div className="flex-1 flex items-center justify-center">
                         <Loader2 className="w-10 h-10 animate-spin text-[hsl(var(--primary))]" />
@@ -132,9 +140,14 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                         {/* Progress Bar (if not welcome/result) */}
                         {!isWelcome && !isResult && (
                             <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 shrink-0">
-                                <motion.div 
+                                <motion.div
+                                    role="progressbar"
+                                    aria-valuenow={currentStep}
+                                    aria-valuemin={0}
+                                    aria-valuemax={questions.length}
+                                    aria-label="Progreso de la evaluación"
                                     initial={{ width: 0 }} animate={{ width: `${(currentStep / questions.length) * 100}%` }}
-                                    className="h-full bg-[hsl(var(--primary))] shadow-[0_0_10px_rgba(37,99,235,0.5)]" 
+                                    className="h-full bg-[hsl(var(--primary))] shadow-[0_0_10px_rgba(37,99,235,0.5)]"
                                 />
                             </div>
                         )}
@@ -206,15 +219,26 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                             </h3>
                                         </div>
 
-                                        <div className="grid grid-cols-1 gap-4">
-                                            {questions[currentStep - 1].options.map((option) => (
-                                                <button 
+                                        <div
+                                            role="radiogroup"
+                                            aria-labelledby={`assessment-question-${currentStep}`}
+                                            className="grid grid-cols-1 gap-4"
+                                        >
+                                            <span id={`assessment-question-${currentStep}`} className="sr-only">
+                                                {questions[currentStep - 1].question_text}
+                                            </span>
+                                            {questions[currentStep - 1].options.map((option) => {
+                                                const isSelected = answers[questions[currentStep - 1].id] === option.id;
+                                                return (
+                                                <button
                                                     key={option.id}
+                                                    role="radio"
+                                                    aria-checked={isSelected}
                                                     onClick={() => handleSelectOption(questions[currentStep - 1].id, option.id)}
                                                     className={clsx(
                                                         "w-full text-left p-3 rounded-lg border-2 transition-all group flex items-center gap-3",
-                                                        answers[questions[currentStep - 1].id] === option.id 
-                                                            ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-xl shadow-blue-600/20" 
+                                                        isSelected
+                                                            ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-xl shadow-blue-600/20"
                                                             : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:border-blue-500/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 shadow-sm"
                                                     )}
                                                 >
@@ -228,7 +252,8 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                                     </div>
                                                     <span className="text-base font-bold tracking-tight">{option.option_text}</span>
                                                 </button>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </motion.div>
                                 )}
