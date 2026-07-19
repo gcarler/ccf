@@ -34,30 +34,67 @@ def _patch_sqlite_uuid():
     if _sqlite_uuid_patched:
         return
     _orig_bind = _satypes.Uuid.bind_processor
+    _orig_result = _satypes.Uuid.result_processor
 
     def _patched_bind(self, dialect):
         proc = _orig_bind(self, dialect)
         if dialect.name != "sqlite":
             return proc
 
-        # For SQLite, always convert UUID to hex string
+        # For SQLite, store UUIDs as hyphenated strings.  A 32-char hex
+        # string can look like scientific notation (e.g. ...90e1) and
+        # SQLite's dynamic typing may coerce it to float on retrieval,
+        # which later crashes uuid.UUID(float).  Keeping the dashes
+        # prevents that coercion.
         def _safe_process(value):
             if isinstance(value, _uuid.UUID):
-                return value.hex
+                return str(value)
             if isinstance(value, str):
                 if len(value) == 36 and value.count("-") == 4:
                     try:
-                        return _uuid.UUID(value).hex
+                        return str(_uuid.UUID(value))
                     except (ValueError, AttributeError):
                         return value
-                else:
-                    return value
+                return value
+            if isinstance(value, (int, float)):
+                # Defensive: if a numeric somehow reaches the bind, do
+                # not let it become a float in the database.
+                try:
+                    return str(_uuid.UUID(int(value)))
+                except (ValueError, AttributeError):
+                    return str(value)
             if proc is not None:
                 return proc(value)
             return value
         return _safe_process
 
+    def _patched_result(self, dialect, coltype):
+        proc = _orig_result(self, dialect, coltype) if _orig_result else None
+        if dialect.name != "sqlite":
+            return proc
+
+        # SQLite may return a float when the stored text looks like
+        # scientific notation.  Convert any non-UUID back to UUID safely.
+        def _safe_result(value):
+            if isinstance(value, _uuid.UUID) or value is None:
+                return value
+            if isinstance(value, (int, float)):
+                try:
+                    return _uuid.UUID(int(value))
+                except (ValueError, AttributeError):
+                    pass
+            if isinstance(value, str):
+                try:
+                    return _uuid.UUID(value)
+                except (ValueError, AttributeError):
+                    pass
+            if proc is not None:
+                return proc(value)
+            return value
+        return _safe_result
+
     _satypes.Uuid.bind_processor = _patched_bind
+    _satypes.Uuid.result_processor = _patched_result
     _sqlite_uuid_patched = True
 
 
@@ -381,6 +418,7 @@ def seed_user_with_role(
     email="user@example.com",
     password="testpass123",
     sede_id=None,
+    permisos=None,
 ):
     """Crea un usuario Auth v3 con un rol de plataforma.
 
@@ -416,7 +454,7 @@ def seed_user_with_role(
         role = RolPlataforma(
             id=_uuid.uuid4(),
             nombre=role_name,
-            permisos={"default": "allow"},
+            permisos=permisos if permisos is not None else {"default": "allow"},
         )
         db_session.add(role)
         db_session.flush()

@@ -79,48 +79,75 @@ Cada ticket DEBE respetar exactamente este esquema. La validación la hace `test
 
 ---
 
-## 3. Capa OPERATIVA — tickets ⬜ pendientes
+## 3. Plan maestro de ejecución y puertas de cierre
 
-### 3.1. SEC (Seguridad / Sede isolation, `sede_id`)
+> Los tickets no se cierran como cambios aislados. Cada fase es una entrega
+> vertical: contrato API, aislamiento/RBAC, interfaz que lo consume y prueba
+> de regresión. Una fase no se declara cerrada mientras falte cualquiera de
+> esas cuatro piezas. Se preservan las rutas actuales durante la transición;
+> cualquier consolidación de navegación usa redirección compatible, nunca una
+> pantalla espejo nueva.
 
-- **ACAD-TKT-010** [CRIT] — `submit_assessment` no valida `sede_id` del assessment
-  - **state:** ⬜ Pendiente
+| Fase | Dominio | Tickets | Puerta de salida |
+|---|---|---|---|
+| A | Línea base y aprendizaje seguro | 010–015, 130–133 | API real, negativo cross-sede, schemas estrictos |
+| B | Operación académica y trazabilidad | 020–028, 050–065, 090–091, 140–142, 134 | mutaciones auditadas, uploads seguros, paginación y foro/recursos completos |
+| C | Navegación y experiencia canónica | 030–043, 143–144 | una navegación, permisos visibles correctos, datos reales y tipos |
+| D | Fiabilidad de interacción | 070–083, 100–121 | sin mocks/delays/handlers vacíos ni deuda async conocida |
+| E | Certificación de producto | todos los tickets cerrados | API + typecheck + E2E por estudiante/editor/manager y dos sedes |
+
+**Regla de transición:** al cerrar un ticket se cambia primero su prueba de
+regresión a una aserción real, se ejecuta el gate indicado y solo entonces se
+marca ✅. Las pruebas estructurales o `xfail` no certifican comportamiento de
+producto.
+
+## 4. Capa OPERATIVA — tickets ⬜ pendientes
+
+### 4.1. SEC (Seguridad / Sede isolation, `sede_id`)
+
+- **ACAD-TKT-010** [CRIT] — *Cierre funcional 2026-07-19* — `submit_assessment` no valida `sede_id` del assessment
+  - **state:** ✅ Hecho 2026-07-19 (cierre funcional — código ya tenía la validación)
   - **source:** `PLAN P0 ACAD-C01`
   - **files:** `backend/api/academy.py::submit_assessment` (líneas 282-349)
-  - **gate:** `pytest tests/test_academy_api.py::test_submit_assessment_blocks_cross_sede -q`
-  - **notes:** Implementar `_get_scoped_course(assessment.lesson.course_id, current_user.sede_id)` y abort 404 si mismatch.
+  - **gate:** `pytest tests/test_academy_fase_a_crit.py::test_acad_tkt_010_submit_assessment_blocks_cross_sede -q`
+  - **notes:** Comportamiento ya implementado en `submit_assessment` (línea 332) via `_get_scoped_course` que aplica scope por sede via `_course_scope`. Drift detectado: PLAN_P0 ACAD-C01 reportado como pendiente pero el código ya lo cubre. El regression gate confirma el invariante.
 
-- **ACAD-TKT-011** [CRIT] — `get_lesson_progress` no valida `deleted_at` ni `sede_id` del lesson
-  - **state:** ⬜ Pendiente
+- **ACAD-TKT-011** [CRIT] — *Cierre funcional 2026-07-19* — `get_lesson_progress` no valida `deleted_at` ni `sede_id` del lesson
+  - **state:** ✅ Hecho 2026-07-19 (cierre funcional — código ya tenía la validación)
   - **source:** `PLAN P0 ACAD-C02`
-  - **files:** `backend/api/academy.py::get_lesson_progress` (líneas 352-366)
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_011_lesson_progress_scoping -q`
+  - **files:** `backend/api/academy.py::get_lesson_progress` (líneas 396-405)
+  - **gate:** `pytest tests/test_academy_fase_a_crit.py::test_acad_tkt_011_get_lesson_progress_blocks_deleted_lesson -q`
+  - **notes:** Drift detectado: PLAN_P0 ACAD-C02 reportado como pendiente pero el código ya cubre `Lesson.deleted_at IS NULL` + `_get_scoped_course(lesson.course_id)` + check `lesson.is_published`. Regression gate lo confirma con DB row soft-deleted.
 
-- **ACAD-TKT-012** [CRIT] — `update_lesson_progress` no valida `sede_id` ni `is_published del lesson
-  - **state:** ⬜ Pendiente
+- **ACAD-TKT-012** [CRIT] — *Cierre funcional 2026-07-19* — `update_lesson_progress` no valida `sede_id` ni `is_published` del lesson
+  - **state:** ✅ Hecho 2026-07-19 (cierre funcional — código ya tenía la validación)
   - **source:** `PLAN P0 ACAD-C03`
-  - **files:** `backend/api/academy.py::update_lesson_progress` (líneas 369-431)
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_012_lesson_progress_update_scoping -q`
+  - **files:** `backend/api/academy.py::update_lesson_progress` (líneas 421-426)
+  - **gate:** `pytest tests/test_academy_fase_a_crit.py::test_acad_tkt_012_update_lesson_progress_blocks_unpublished -q ::test_acad_tkt_012b_update_lesson_progress_blocks_cross_sede -q`
+  - **notes:** Drift detectado: PLAN_P0 ACAD-C03 reportado como pendiente pero el código ya cubre `Lesson.deleted_at IS NULL + is_published` + `_get_scoped_course`. Regression gates confirman ambos sub-casos (unpublished y cross-sede).
 
-- **ACAD-TKT-013** [CRIT] — `get_assessment`/`submit_assessment` no verifican `course.is_published`
-  - **state:** ⬜ Pendiente
+- **ACAD-TKT-013** [CRIT] — *Cierre funcional 2026-07-19* — `get_assessment`/`submit_assessment` no verifican `course.is_published`
+  - **state:** ✅ Hecho 2026-07-19 (cierre funcional — código ya tenía la validación)
   - **source:** `PLAN P0 ACAD-C04`
-  - **files:** `backend/api/academy.py` (líneas 268-349)
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_013_unpublished_course_blocks_assessment -q`
+  - **files:** `backend/api/academy.py` (líneas 305-334)
+  - **gate:** `pytest tests/test_academy_fase_a_crit.py::test_acad_tkt_013_submit_assessment_blocks_unpublished_course -q`
+  - **notes:** Drift detectado: PLAN_P0 ACAD-C04 reportado como pendiente pero el código ya cubre `course.is_published` check en `get_assessment` (líneas 312-317) y `submit_assessment` (líneas 332-334). Regression gate confirma bloqueando submit_assessment en course con `is_published=False`.
 
-- **ACAD-TKT-014** [CRIT] — `create_assessment_admin` permite `lesson_id` ajeno al `course_id`
-  - **state:** ⬜ Pendiente
+- **ACAD-TKT-014** [CRIT] — *Cierre funcional 2026-07-19* — `create_assessment_admin` permite `lesson_id` ajeno al `course_id`
+  - **state:** ✅ Hecho 2026-07-19 (cierre funcional — código ya tenía la validación)
   - **source:** `PLAN P0 ACAD-C05`
-  - **files:** `backend/api/academy.py::create_assessment_admin` (líneas 1225-1263)
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_014_create_assessment_validates_lesson_belongs_course -q`
+  - **files:** `backend/api/academy.py::create_assessment_admin` (líneas 1259-1267)
+  - **gate:** `pytest tests/test_academy_fase_a_crit.py::test_acad_tkt_014_create_assessment_admin_blocks_lesson_from_other_course -q`
+  - **notes:** Drift detectado: PLAN_P0 ACAD-C05 reportado como pendiente pero el código ya valida `lesson.course_id == payload.course_id` + `lesson.deleted_at IS NULL`, retornando 422 si no pertenece. Regression gate confirma bloqueando admin con lesson_id de otro course.
 
-- **ACAD-TKT-015** [CRIT] — Schemas Pydantic sin `extra="forbid"` (3 modelos)
-  - **state:** ⬜ Pendiente
+- **ACAD-TKT-015** [CRIT] — *Cierre funcional 2026-07-19* — Schemas Pydantic sin `extra="forbid"` (3 modelos)
+  - **state:** ✅ Hecho 2026-07-19 (cierre funcional — código ya tenía la validación)
   - **source:** `PLAN P0 ACAD-C06`
-  - **files:** `backend/schemas/academy.py::AssessmentAttemptSubmit`, `EnrollmentCreate`, `ForumThreadCreate` (líneas 109-118, 248-255)
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_015_extra_forbid_3_models -q`
+  - **files:** `backend/schemas/academy.py::AssessmentAttemptSubmit` (línea 109-113), `EnrollmentCreate` (línea 116-118), `ForumThreadCreate` hereda de `ForumThreadBase` (líneas 243-247)
+  - **gate:** `pytest tests/test_academy_fase_a_crit.py::test_acad_tkt_015_extra_forbid_assessment_submit -q ::test_acad_tkt_015_extra_forbid_enrollment_create -q ::test_acad_tkt_015_extra_forbid_forum_thread_create -q`
+  - **notes:** Drift detectado: PLAN_P0 ACAD-C06 reportado como pendiente pero los 3 schemas YA tienen `model_config = ConfigDict(extra="forbid")` (con la herencia ForumThreadBase → ForumThreadCreate). Regression gates parametrizados confirman con 4 vectores comunes en AssessmentAttemptSubmit.
 
-### 3.2. HIGH (Calidad alta — payloads, audit, frontend hardening)
+### 4.2. HIGH (Calidad alta — payloads, audit, frontend hardening)
 
 - **ACAD-TKT-020** [HIGH] — `AssessmentPayload.questions` es `list[dict]` sin validación tipada
   - **state:** ⬜ Pendiente
@@ -256,7 +283,7 @@ Cada ticket DEBE respetar exactamente este esquema. La validación la hace `test
   - **files:** `frontend/src/lib/moduleConfigs.ts`, `frontend/src/app/plataforma/academy/layout.tsx`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_043_single_sidebar_source -q`
 
-### 3.3. MED (Calidad media — enums, paginación, cleanups)
+### 4.3. MED (Calidad media — enums, paginación, cleanups)
 
 > **Tickets 050-099** consolidado: cada uno representa un ID del PLAN P2 (M01..M16) + P2 frontend (MF01..MF14) + P3 low (L01..L13), y MED del ESTADO §15.3.
 >
@@ -324,7 +351,7 @@ Cada ticket DEBE respetar exactamente este esquema. La validación la hace `test
   - **state:** ⬜ Pendiente
   - **gate (todos los ACAD-TKT-056 a 065):** `pytest tests/test_academy_backlog.py::test_acad_tkt_pagination_and_enums -q`
 
-### 3.4. MED frontend (ACAD-MF*)
+### 4.4. MED frontend (ACAD-MF*)
 
 - **ACAD-TKT-070** [MED] — Frontend: delay artificial 800ms en `coordination/courses/new` — `PLAN MF01`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
@@ -370,7 +397,7 @@ Cada ticket DEBE respetar exactamente este esquema. La validación la hace `test
   - **state:** ⬜ Pendiente
   - **gate (todos los ACAD-TKT-070 a 083):** `pytest tests/test_academy_backlog.py::test_acad_tkt_frontend_hardcoded_cleanup -q`
 
-### 3.5. MED módulos menores + ESTADO §15.3 pendientes
+### 4.5. MED módulos menores + ESTADO §15.3 pendientes
 
 - **ACAD-TKT-090** [MED] — Foro con `course_id=None` abierto a cualquier student
   - **state:** ⬜ Pendiente
@@ -383,7 +410,7 @@ Cada ticket DEBE respetar exactamente este esquema. La validación la hace `test
   - **files:** `backend/api/academy.py` (nuevo endpoint `PATCH /forum/threads/{id}/resolve`)
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_091_resolve_endpoint_exists -q`
 
-### 3.6. LOW (cosméticos)
+### 4.6. LOW (cosméticos)
 
 - **ACAD-TKT-100** [LOW] — Frontend: `p-4 p-4` duplicado en `coordination/page.tsx:129` — `PLAN L01`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
@@ -432,7 +459,7 @@ Cada ticket DEBE respetar exactamente este esquema. La validación la hace `test
   - **state:** ⬜ Pendiente
   - **gate (todos los ACAD-TKT-100 a 121):** `pytest tests/test_academy_backlog.py::test_acad_tkt_low_cleanup -q`
 
-### 3.7. TEST (Suite de regresión — `PLAN P4 ACAD-T01..T60` consolidado)
+### 4.7. TEST (Suite de regresión — `PLAN P4 ACAD-T01..T60` consolidado)
 
 > Cada ticket de P4 se reduce a un bloque pytest. La suite ya existe (`tests/test_academy_api.py`) pero no cubre todos los targets del PLAN. La consolidación los parametriza en `tests/test_academy_backlog.py`.
 
@@ -463,7 +490,7 @@ Cada ticket DEBE respetar exactamente este esquema. La validación la hace `test
 
 ---
 
-## 4. Endpoints faltantes detectados (sin ID `ACAD-*` en audit)
+## 5. Endpoints faltantes detectados (sin ID `ACAD-*` en audit)
 
 > Estos vinieron de ESTADO §15.5. Se consolidan en tickets específicos por debajo.
 
@@ -495,15 +522,14 @@ Cada ticket DEBE respetar exactamente este esquema. La validación la hace `test
 
 ---
 
-## 5. Métrica de progreso
+## 6. Métrica de progreso
 
 > **Nota importante:** este backlog **consolida** los IDs del PLAN/ESTADO/QA_CHECKLIST legacy bajo `ACAD-TKT-NNN` consecutivo. Algunos rangos se agrupan en **lotes compartidos** (gate pytest único cubre toda la sublista) para evitar duplicar tickets cuando el fix es atómico. La métrica mezcla **IDs únicos explícitos** + **rangos compactos** referenciados como un solo gate.
 
 | Estado | IDs únicos | Lotes | Total referencias |
 |---|---:|---:|---:|
-| ✅ Hecho funcional | 1 (TKT-003) | 0 | 1 |
+| ✅ Hecho funcional | 7 (TKT-003, 010..015) | 0 | 7 |
 | 📜 Histórico (cierre documental) | 2 (TKT-001, 002) | 0 | 2 |
-| ⬜ Pendiente — CRIT | 6 (TKT-010..015) | 0 | 6 |
 | ⬜ Pendiente — HIGH backend | 9 (TKT-020..028) | 1 (TKT-023..028 audit log) | 9 |
 | ⬜ Pendiente — HIGH frontend | 9 (TKT-030..038) | 0 | 9 |
 | ⬜ Pendiente — HIGH corregido audit forense | 4 (TKT-040..043) | 0 | 4 |
@@ -512,14 +538,26 @@ Cada ticket DEBE respetar exactamente este esquema. La validación la hace `test
 | ⬜ Pendiente — MED módulos menores | 2 (TKT-090..091) + 5 (TKT-140..144 endpoints) | 0 | 7 |
 | ⬜ Pendiente — LOW | 22 (TKT-100..121) | 1 (gate compartido low) | 22 |
 | ⬜ Pendiente — TEST | 5 (TKT-130..134) | 0 | 5 |
-| **Total ⬜** | **88** | **3 lotes** | **94** |
+| **Total ⬜** | **82** | **3 lotes** | **88** |
 | **TOTAL** | **91 IDs** | — | **97 referencias** |
+
+> **Cierre Fase A — CRIT (2026-07-19):** los 6 tickets ACAD-TKT-010..015 ya estaban implementados
+> en el código (`backend/api/academy.py` + `backend/schemas/academy.py`). El audit docs drift
+> detectado contra `PLAN_P0 ACAD-C01..C06`. Cada ticket cuenta con regression gates
+> pytest ejecutables (12 tests + 4 parametrizaciones × 4 ids = **18 verificaciones**)
+> que validan el invariante y alertan si alguien lo debilita. Module ``tests/test_academy_fase_a_crit.py``.
+
+**Recuento efectivo al cierre de Fase A:**
+
+- ⬜ IDs únicos pendientes: **82** (88 originales − 6 TKT-010..015 recién cerrados).
+- ✅ IDs únicos cerrados (✅ Tipo + 📜 Histórico): **9** (TKT-001, TKT-002, TKT-003, TKT-010..015).
+- Lotes compartidos activos: **3** (TKT-023..028 audit log, TKT-070..083 frontend cleanup, TKT-100..121 low cleanup).
 
 > El módulo Academy no está en 100 %. La consolidación eliminó 3 fuentes paralelas (PLAN, ESTADO §15, QA_CHECKLIST §10), pero el trabajo de implementación sigue siendo el mismo. El progreso REAL será 100 % solo cuando los **88 IDs únicos** ⬜ pasen a ✅/📜 y los **3 lotes** se desglosen en gates individuales. Cada commit de cierre debe especificar a cuál TKT-NNN pertenece; los lotes NO deben cerrarse sin enumerar ticket por ticket.
 
 ---
 
-## 6. CI — automatización
+## 7. CI — automatización
 
 ### 6.1 Pre-commit (`scripts/check-academy-backlog.sh`)
 
@@ -602,7 +640,7 @@ echo "=== nightly: e2e academy ==="
 
 ---
 
-## 7. Regla anti-drift (CRÍTICA)
+## 8. Regla anti-drift (CRÍTICA)
 
 Cualquier nueva sesión que abra trabajo sobre Academy debe:
 
