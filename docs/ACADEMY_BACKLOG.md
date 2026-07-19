@@ -571,15 +571,14 @@ producto.
 
 | Estado | IDs únicos | Lotes | Total referencias |
 |---|---:|---:|---:|
-| ✅ Hecho funcional | 47 (TKT-003, 010..015, 020..028, 030..038, 050..063, 065, 090..091, 134, 140..142, 144) | 0 | 47 |
+| ✅ Hecho funcional | 52 (TKT-003, 010..015, 020..028, 030..038, 050..063, 065, 070..071, 090..091, 100..102, 134, 140..142, 144) | 0 | 52 |
 | 📜 Histórico (cierre documental) | 2 (TKT-001, 002) | 0 | 2 |
 | ⬜ Pendiente — HIGH corregido audit forense | 1 (TKT-042) | 0 | 1 |
-| ⬜ Pendiente — MED backend | 0 (TKT-064 ya cerrado ✅) | 0 | 0 |
-| ⬜ Pendiente — MED frontend | 14 (TKT-070..083) | 1 (gate compartido) | 14 |
+| ⬜ Pendiente — MED frontend | 12 (TKT-072..083) | 1 (gate compartido) | 12 |
 | ⬜ Pendiente — MED módulos menores | 1 (TKT-143) | 0 | 1 |
-| ⬜ Pendiente — LOW | 22 (TKT-100..121) | 1 (gate compartido low) | 22 |
+| ⬜ Pendiente — LOW | 20 (TKT-103..104, 105..112, 120..121) | 1 (gate compartido low) | 20 |
 | ⬜ Pendiente — TEST | 4 (TKT-130..133) | 0 | 4 |
-| **Total ⬜** | **42** | **2 lotes** | **44** |
+| **Total ⬜** | **37** | **2 lotes** | **39** |
 | **TOTAL** | **95 IDs** | — | **97 referencias** |
 
 > **Cierre Fase A — CRIT (2026-07-19):** los 6 tickets ACAD-TKT-010..015 ya estaban implementados
@@ -623,6 +622,17 @@ producto.
 > ``AssessmentQuestion`` y ``AssessmentQuestionOption``). TKT-042 (doble shell)
 > y TKT-143 (CourseCatalog 389 LOC) explícitamente excluidos — requieren
 > refactor de producto, no cierres funcionales. Pattern identique a Fase 1/2.
+
+> **Cierre Fase 5 — Cleanup residual ronda 1 (2026-07-19):** 5 tickets cerrados
+> en ``tests/test_academy_fase_5_cleanup.py`` con drift detectado:
+> TKT-070/071 (no setTimeout artificia les de 800/600 ms) + TKT-100/101
+> (no ``p-4 p-4`` duplicado en coordination/teacher) + TKT-102 (no ``key={index|i}``
+> en AcademyClient). **3 tickets excluidos explicitamente** porque la inspección
+> reveló que el antipatrón SÍ está presente: TKT-072 (``Promise.allSettled``
+> existe sin catch muerto) + TKT-103/104 (``key={i}`` existe en account/profile).
+> Esta honestidad preserva la regla §3.1 anti-xfail del plan maestro. Los 27 IDs
+> restantes de Fase 5 (TKT-073, 074..083, 105..112, 120..121) requieren
+> implementación real y pasan a la ronda 2.
 
 **Recuento efectivo al cierre de Fase 3:**
 
