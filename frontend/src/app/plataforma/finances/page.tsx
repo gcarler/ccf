@@ -26,6 +26,17 @@ import { toast } from 'sonner';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 // ─── Tipo local ───────────────────────────────────────────────────────────────
+interface DashboardCard {
+    title: string;
+    value: string | number;
+    trend?: string;
+    color?: string;
+}
+interface DashboardFinance {
+    cards: DashboardCard[];
+    monthly_comparison?: Record<string, unknown>[];
+    income_by_category?: Record<string, unknown>[];
+}
 interface TxRecord {
     id: number;
     type: 'ingreso' | 'egreso';
@@ -56,7 +67,7 @@ export default function FinancesPage() {
     const [filter, setFilter] = useState<'all' | 'ingreso' | 'egreso'>('all');
     const [search, setSearch] = useState('');
     const [transactions, setTransactions] = useState<TxRecord[]>([]);
-    const [dashboard, setDashboard] = useState<Record<string, any> | null>(null);
+    const [dashboard, setDashboard] = useState<DashboardFinance | null>(null);
     const [loading, setLoading] = useState(true);
 
     const FINANCE_SECTIONS = useMemo(() => ([
@@ -74,7 +85,7 @@ export default function FinancesPage() {
         if (!token) { setLoading(false); return; }
         Promise.all([
             apiFetch<TxRecord[]>('/finance/transactions?limit=50', { token, cache: 'no-store', signal: ctrl.signal }),
-            apiFetch<Record<string, any>>('/dashboard/finance', { token, cache: 'no-store', signal: ctrl.signal }),
+            apiFetch<DashboardFinance>('/dashboard/finance', { token, cache: 'no-store', signal: ctrl.signal }),
         ]).then(([txs, dbData]) => {
             if (Array.isArray(txs)) setTransactions(txs);
             if (dbData) setDashboard(dbData);
@@ -127,7 +138,7 @@ export default function FinancesPage() {
 
                     {/* 📊 Financial Metrics */}
                     <section className="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10">
-                        {dashboard?.cards.map((card: any, idx: number) => (
+                        {dashboard?.cards.map((card, idx) => (
                             <DSMetric 
                                 key={idx}
                                 label={card.title} 
