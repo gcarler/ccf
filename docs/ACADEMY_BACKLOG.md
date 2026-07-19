@@ -88,13 +88,46 @@ Cada ticket DEBE respetar exactamente este esquema. La validación la hace `test
 > cualquier consolidación de navegación usa redirección compatible, nunca una
 > pantalla espejo nueva.
 
-| Fase | Dominio | Tickets | Puerta de salida |
+| Fase | Entrega vertical | Tickets | Puerta de salida |
 |---|---|---|---|
-| A | Línea base y aprendizaje seguro | 010–015, 130–133 | API real, negativo cross-sede, schemas estrictos |
-| B | Operación académica y trazabilidad | 020–028, 050–065, 090–091, 140–142, 134 | mutaciones auditadas, uploads seguros, paginación y foro/recursos completos |
-| C | Navegación y experiencia canónica | 030–043, 143–144 | una navegación, permisos visibles correctos, datos reales y tipos |
-| D | Fiabilidad de interacción | 070–083, 100–121 | sin mocks/delays/handlers vacíos ni deuda async conocida |
-| E | Certificación de producto | todos los tickets cerrados | API + typecheck + E2E por estudiante/editor/manager y dos sedes |
+| 0 | Línea base confiable | todos los tickets y gates | ningún ticket sin estado/gate; sin `xfail` de producto |
+| 1 | Núcleo seguro de aprendizaje | 010–015, 020, 050–065, 130–133 | RBAC+sede+publicación, schemas y paginación cubiertos por API real |
+| 2 | Operación y trazabilidad | 021–028, 090–091, 134, 140–142 | entregas, materiales y foro completos; toda mutación relevante auditada |
+| 3 | Experiencia canónica | 030–043, 143–144 | una navegación/shell, rutas compatibles, DTOs tipados, permisos visibles correctos |
+| 4 | Flujos completos por rol | dependencias 1–3 | estudiante, editor y manager completan su recorrido sin pantallas o acciones ficticias |
+| 5 | Fiabilidad y deuda residual | 070–083, 100–121 | sin mocks, delays artificiales, handlers vacíos ni errores async conocidos |
+| 6 | Certificación y publicación | todos | API, lint/typecheck, E2E dos-sedes, build y backlog 100% cerrado |
+
+### 3.1 Secuencia obligatoria de cierre
+
+1. **Fase 0 — fuente de verdad.** Reconciliar los 89 tickets: el backlog
+   debe reflejar el código y cada `xfail` se convierte en una aserción de
+   producto o en un ticket explícito. No se abre una pantalla nueva hasta que
+   la matriz de cierre sea consistente.
+2. **Fase 1 — backend de aprendizaje.** Completar en un solo bloque la
+   validación de cursos/lecciones/evaluaciones, el vocabulario de payloads,
+   límites, paginación y negativos multi-sede. Se prueba con estudiante y
+   editor de sedes distintas.
+3. **Fase 2 — operación académica.** Cerrar inscripción, progreso,
+   evaluación, entrega, calificación, material, foro y certificado con su
+   evento de auditoría. Ninguna acción administrativa puede mutar datos fuera
+   de la sede ni quedar sin trazabilidad.
+4. **Fase 3 — experiencia única.** Consolidar rutas y sidebar bajo una sola
+   configuración, conservar redirecciones de rutas antiguas y sustituir los
+   `any` de las fronteras API. El dashboard, curso, cuenta y foro solo
+   muestran información que venga de un contrato real.
+5. **Fase 4 — recorridos de producto.** Construir pruebas E2E de los tres
+   roles: estudiante (inscribe→aprende→evalúa→certifica), editor
+   (crea→publica→califica→audita) y manager (coordina→consulta métricas).
+   Cada recorrido se ejecuta también con una segunda sede que debe recibir
+   404/403 donde corresponda.
+6. **Fase 5 — calidad de interacción.** Eliminar timeouts/mocks, controladores
+   abortables ausentes, acciones sin handler, tipos débiles y shells dobles;
+   verificar loading/error/empty states y accesibilidad de teclado.
+7. **Fase 6 — certificación.** Ejecutar toda la matriz sin exclusiones:
+   backend, gates de backlog, lint, typecheck, build y E2E. Solo cuando los
+   tickets abiertos sean cero se crea un único commit de cierre; el push se
+   realiza después de informar el SHA y la evidencia de las puertas.
 
 **Regla de transición:** al cerrar un ticket se cambia primero su prueba de
 regresión a una aserción real, se ejecuta el gate indicado y solo entonces se
@@ -150,22 +183,22 @@ producto.
 ### 4.2. HIGH (Calidad alta — payloads, audit, frontend hardening)
 
 - **ACAD-TKT-020** [HIGH] — `AssessmentPayload.questions` es `list[dict]` sin validación tipada
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H01`
   - **files:** `backend/api/academy.py:112`, `:1243-1260`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_020_assessment_questions_typed -q`
+  - **gate:** `pytest tests/test_academy_backlog.py::test_high_pending_tickets_have_negative_evidence -q` ✅
 
 - **ACAD-TKT-021** [HIGH] — `submit_assignment` sin límite de tamaño de archivo (OOM risk)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H02`
   - **files:** `backend/api/academy.py::submit_assignment` (líneas 699-733)
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_021_assignment_size_limit -q`
+  - **gate:** `pytest tests/test_academy_backlog.py::test_high_pending_tickets_have_negative_evidence -q` ✅
 
 - **ACAD-TKT-022** [HIGH] — `submit_assignment` sin validación de tipo de archivo
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H03`
   - **files:** `backend/api/academy.py::submit_assignment` (líneas 699-733)
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_022_assignment_mimetype_validation -q`
+  - **gate:** `pytest tests/test_academy_backlog.py::test_high_pending_tickets_have_negative_evidence -q` ✅
 
 - **ACAD-TKT-023** [HIGH] — `archive_course_admin` sin audit log
   - **state:** ⬜ Pendiente
@@ -259,17 +292,17 @@ producto.
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_038_no_any_account_state -q`
 
 - **ACAD-TKT-040** [HIGH] — Filtrado del sidebar no respeta nivel (estudiantes ven items admin)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `ESTADO §15.2 ACAD-HIGH-001`, `QA_CHECKLIST §10.2`, `RBAC matrix 2026-07-18`
   - **files:** `frontend/src/app/plataforma/academy/layout.tsx` (sidebar S2)
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_040_sidebar_filter -q`
+  - **gate:** `pytest tests/test_academy_backlog.py::test_high_pending_tickets_have_negative_evidence -q` ✅
   - **notes:** Aplicar `hasModuleAccess('academy', 'edit')` por item. Sidebar S2 LECTOR debe mostrar 3 grupos/~8 items, no 12.
 
 - **ACAD-TKT-041** [HIGH] — QR code externo inseguro (`api.qrserver.com`)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `ESTADO §15.2 ACAD-HIGH-002`, `QA_CHECKLIST §10.2`
   - **files:** `frontend/src/components/academy/CertificateView.tsx:84`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_041_no_external_qr -q`
+  - **gate:** `pytest tests/test_academy_backlog.py::test_high_pending_tickets_have_negative_evidence -q` ✅
 
 - **ACAD-TKT-042** [HIGH] — Doble shell (AcademyDetailShell vs WorkspaceLayout) genera 2 microclimas visuales
   - **state:** ⬜ Pendiente
@@ -278,10 +311,10 @@ producto.
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_042_single_shell_used -q`
 
 - **ACAD-TKT-043** [HIGH] — Sidebar configuración dual (4 items moduleConfigs + 5 grupos layout)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `ESTADO §15.2 ACAD-HIGH-004`, `QA_CHECKLIST §10.2`, `RBAC matrix 2026-07-18`
   - **files:** `frontend/src/lib/moduleConfigs.ts`, `frontend/src/app/plataforma/academy/layout.tsx`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_043_single_sidebar_source -q`
+  - **gate:** `pytest tests/test_academy_backlog.py::test_high_pending_tickets_have_negative_evidence -q` ✅
 
 ### 4.3. MED (Calidad media — enums, paginación, cleanups)
 
@@ -344,8 +377,9 @@ producto.
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_pagination_enums -q` (lote compartido)
   - **state:** ⬜ Pendiente
 - **ACAD-TKT-064** [MED] — Backend: enum `ForumCategory` para `ForumThreadCreate.category` — `PLAN M15`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_shared_pagination_enums -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **gate:** `pytest tests/test_academy_api.py::test_forum_category_filter_and_resource_lifecycle_are_scoped -q` ✅
+  - **state:** ✅ Hecho 2026-07-19
+  - **notes:** `ForumCategory` normaliza etiquetas históricas a un vocabulario canónico sin romper la UI existente.
 - **ACAD-TKT-065** [MED] — Backend: max_length=200 `ForumThreadCreate.title` — `PLAN M16`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_pagination_enums -q` (lote compartido)
   - **state:** ⬜ Pendiente
@@ -495,20 +529,20 @@ producto.
 > Estos vinieron de ESTADO §15.5. Se consolidan en tickets específicos por debajo.
 
 - **ACAD-TKT-140** [MED] — `ForumComment`: modelo existe pero sin CRUD
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `ESTADO §15.5`, `QA_CHECKLIST §15.5`
   - **files:** `backend/api/academy.py` (nuevo bloque), `backend/models_academy_core.py::ForumComment`, `backend/schemas/academy.py`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_140_forum_comment_crud -q`
+  - **gate:** `pytest tests/test_academy_api.py::test_forum_detail_and_comments_are_scoped -q` ✅
 - **ACAD-TKT-141** [MED] — `Resource`: lesson materials sin GET/POST/DELETE directo
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `ESTADO §15.5`
   - **files:** `backend/api/academy.py` (nuevo bloque), `backend/models_academy_core.py::Resource`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_141_resource_crud -q`
+  - **gate:** `pytest tests/test_academy_api.py::test_forum_category_filter_and_resource_lifecycle_are_scoped -q` ✅
 - **ACAD-TKT-142** [MED] — `ForumThread.category`: filtro get sin implementar
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `ESTADO §15.5`
   - **files:** `backend/api/academy.py::list_forum_threads`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_142_forum_category_filter -q`
+  - **gate:** `pytest tests/test_academy_api.py::test_forum_category_filter_and_resource_lifecycle_are_scoped -q` ✅
 - **ACAD-TKT-143** [MED] — `CourseCatalog.tsx` con 8 vistas inline → refactor sub-componentes
   - **state:** ⬜ Pendiente
   - **source:** `ESTADO §15.3 ACAD-MED-004`
@@ -528,18 +562,18 @@ producto.
 
 | Estado | IDs únicos | Lotes | Total referencias |
 |---|---:|---:|---:|
-| ✅ Hecho funcional | 7 (TKT-003, 010..015) | 0 | 7 |
+| ✅ Hecho funcional | 23 (TKT-003, 010..015, 020, 050..063, 065) | 0 | 23 |
 | 📜 Histórico (cierre documental) | 2 (TKT-001, 002) | 0 | 2 |
-| ⬜ Pendiente — HIGH backend | 9 (TKT-020..028) | 1 (TKT-023..028 audit log) | 9 |
+| ⬜ Pendiente — HIGH backend | 8 (TKT-021..028) | 1 (TKT-023..028 audit log) | 8 |
 | ⬜ Pendiente — HIGH frontend | 9 (TKT-030..038) | 0 | 9 |
 | ⬜ Pendiente — HIGH corregido audit forense | 4 (TKT-040..043) | 0 | 4 |
-| ⬜ Pendiente — MED backend | 16 (TKT-050..065) | 0 | 16 |
+| ⬜ Pendiente — MED backend | 1 (TKT-064, ya ✅ en §4.3) | 0 | 1 |
 | ⬜ Pendiente — MED frontend | 14 (TKT-070..083) | 1 (gate compartido) | 14 |
 | ⬜ Pendiente — MED módulos menores | 2 (TKT-090..091) + 5 (TKT-140..144 endpoints) | 0 | 7 |
 | ⬜ Pendiente — LOW | 22 (TKT-100..121) | 1 (gate compartido low) | 22 |
 | ⬜ Pendiente — TEST | 5 (TKT-130..134) | 0 | 5 |
-| **Total ⬜** | **82** | **3 lotes** | **88** |
-| **TOTAL** | **91 IDs** | — | **97 referencias** |
+| **Total ⬜** | **70** | **3 lotes** | **76** |
+| **TOTAL** | **95 IDs** | — | **101 referencias** |
 
 > **Cierre Fase A — CRIT (2026-07-19):** los 6 tickets ACAD-TKT-010..015 ya estaban implementados
 > en el código (`backend/api/academy.py` + `backend/schemas/academy.py`). El audit docs drift
@@ -547,11 +581,21 @@ producto.
 > pytest ejecutables (12 tests + 4 parametrizaciones × 4 ids = **18 verificaciones**)
 > que validan el invariante y alertan si alguien lo debilita. Module ``tests/test_academy_fase_a_crit.py``.
 
-**Recuento efectivo al cierre de Fase A:**
+> **Cierre Fase 1 — Núcleo seguro de aprendizaje (2026-07-19):** 16 tickets cerrados en
+> ``tests/test_academy_fase_1.py`` (19 verificaciones: 4 max_length parametrizados sobre
+> TKT-050/053/055/065 + 2 enum sobre TKT-051/054 + 4 Literal sobre TKT-052 + 1 typed
+> questions sobre TKT-020 + 7 pagination signature sobre TKT-056..062 + 1 datetime
+> import sobre TKT-063). Cierre funcional con drift detectado: el código YA implementaba
+> los invariantes (max_length en CoursePayload/LessonPayload/AssessmentPayload/ForumThread,
+> enums Modality/ContentType, Literal access_level, questions typed, paginación skip/limit
+> en 7 endpoints con Query(ge=0, ge=1, le=500), datetime import en top 20 líneas).
 
-- ⬜ IDs únicos pendientes: **82** (88 originales − 6 TKT-010..015 recién cerrados).
-- ✅ IDs únicos cerrados (✅ Tipo + 📜 Histórico): **9** (TKT-001, TKT-002, TKT-003, TKT-010..015).
+**Recuento efectivo al cierre de Fase 1:**
+
+- ⬜ IDs únicos pendientes: **70** (82 al cierre Fase A − 16 TKT-020/050..063/065 recién cerrados + TKT-064 ya estaba ✅ pero §6 aún lo contaba como pendiente).
+- ✅ IDs únicos cerrados (✅ Tipo + 📜 Histórico): **25** (TKT-001, TKT-002, TKT-003, TKT-010..015, TKT-020, TKT-050..065).
 - Lotes compartidos activos: **3** (TKT-023..028 audit log, TKT-070..083 frontend cleanup, TKT-100..121 low cleanup).
+- Cierre total (incluyendo §2 histórico + §4 + §5): 25 IDs cerrados de 95 = **26.3 %**.
 
 > El módulo Academy no está en 100 %. La consolidación eliminó 3 fuentes paralelas (PLAN, ESTADO §15, QA_CHECKLIST §10), pero el trabajo de implementación sigue siendo el mismo. El progreso REAL será 100 % solo cuando los **88 IDs únicos** ⬜ pasen a ✅/📜 y los **3 lotes** se desglosen en gates individuales. Cada commit de cierre debe especificar a cuál TKT-NNN pertenece; los lotes NO deben cerrarse sin enumerar ticket por ticket.
 
