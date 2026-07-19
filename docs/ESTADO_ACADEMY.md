@@ -284,9 +284,12 @@ grep -nE "PARCIAL-|PEND-|ACAD-" /root/ccf/docs/ESTADO_ACADEMY.md
 
 **Alcance.** Lectura completa de `backend/api/academy.py` (700 línea), `models_academy_core.py`, `schemas/academy.py`, `crud/academy.py`, `frontend/src/app/plataforma/academy/**` (layout, page, AcademyClient, loading, error), `frontend/src/components/academy/*`, `CourseCatalog.tsx`, `MyEnrollments.tsx` y `moduleConfigs.ts`. Fecha de cierre de la sesión: **2026-07-18**.
 
-### 15.1. Hallazgos CRÍTICOS (`CRIT`)
+<details>
+<summary>📜 <b>§15.1-§15.6 — Tablas de auditoría forense 2026-07-18</b> (clic para expandir rastro histórico; fuente vigente en <a href="./ACADEMY_BACKLOG.md"><code>docs/ACADEMY_BACKLOG.md</code></a> §2 capa histórica + §4.1-§4.6 capa operativa)</summary>
 
 > **Contexto:** esta sección contiene **registros históricos** de la auditoría forense del 2026-07-18. El estado actual (cerrado/pendiente) de cada hallazgo se refleja en la tabla consolidada §15.6 más abajo. Los textos descriptivos a continuación se conservan tal cual para preservar la trazabilidad forense — **no reflejan el código vigente**. Para conocer el código real que satisface hoy estos invariantes, consultar §15.6 + `docs/ACADEMY_API_CONTRACTS.md`.
+
+### 15.1. Hallazgos CRÍTICOS (`CRIT`)
 
 | ID | Severidad | Hallazgo | Archivo |
 |---|---|---|---|
@@ -347,15 +350,11 @@ grep -nE "PARCIAL-|PEND-|ACAD-" /root/ccf/docs/ESTADO_ACADEMY.md
 | `ACAD-LOW-001` | Pendiente | Implementar `onClick` o quitar botones |
 | `ACAD-LOW-002` | Pendiente | Aceptar `enrollment_id` opcional y normalizar |
 
+</details>
+
 ---
 
 ## 16. Fases operativas derivadas (referencia)
 
-Detalle de los fixes priorizados en `docs/PLAN_ACADEMY_CALIDAD.md` (versión 2026-07-18):
-
-- **Fase A — críticos**: cerrar `ACAD-CRIT-001` y `ACAD-CRIT-002` antes de cualquier otra tarea.
-- **Fase B — altos**: `ACAD-HIGH-001..004` con cambios pequeños pero coordinados (filtros + lib externa + shells + sidebar).
-- **Fase C — medios**: ampliar cobertura de endpoints faltantes y refactor de catálogo.
-- **Fase D — bajos**: completar UX cosmético.
-- **Fase E — re-validación**: smoke completo (`scripts/test_academy_quality.py` + frontend e2e dedicado).
+> **Plegado 2026-07-19:** las fases operativas vigentes (Fase A críticos, Fase B altos, Fase C medios, Fase D bajos, Fase E re-validación) viven en [`docs/ACADEMY_BACKLOG.md`](./ACADEMY_BACKLOG.md) §4 (Capa OPERATIVA — tickets ⬜ pendientes). Este §16 se conserva como índice navegacional al snapshot del 2026-07-18, sin duplicar contenido.
 

@@ -44,6 +44,9 @@
 
 ## P0 — Seguridad / Integridad de datos (CRITICAL)
 
+<details>
+<summary>📜 <b>P0 — CRITICAL (ACAD-C01..06 → ACAD-TKT-010..015)</b> (clic para expandir rastro histórico; fuente vigente en <a href="./ACADEMY_BACKLOG.md"><code>docs/ACADEMY_BACKLOG.md</code></a> §4.1 SEC)</summary>
+
 | ID | Tarea | Archivos | Estado |
 |---|---|---|---|
 | ACAD-C01 | `submit_assessment` no valida sede del assessment — agregar `_get_scoped_course` | `backend/api/academy.py:282-349` | ⬜ |
@@ -53,9 +56,14 @@
 | ACAD-C05 | `create_assessment_admin` no valida que `lesson_id` pertenezca a `course_id` | `backend/api/academy.py:1225-1263` | ⬜ |
 | ACAD-C06 | Schemas de payload (`AssessmentAttemptSubmit`, `EnrollmentCreate`, `ForumThreadCreate`) sin `extra="forbid"` | `backend/schemas/academy.py:109-118,248-255` | ⬜ |
 
+</details>
+
 ---
 
 ## P1 — Seguridad / Calidad HIGH
+
+<details>
+<summary>📜 <b>P1 — HIGH (ACAD-H01..18 + Detalle H10 → ACAD-TKT-020..043)</b> (clic para expandir rastro histórico; fuente vigente en <a href="./ACADEMY_BACKLOG.md"><code>docs/ACADEMY_BACKLOG.md</code></a> §4.2 HIGH)</summary>
 
 | ID | Tarea | Archivos | Estado |
 |---|---|---|---|
@@ -93,9 +101,14 @@
 | `teacher/page.tsx` | 239 | `/academy/courses/${id}/manage` | `/plataforma/academy/courses/${id}/manage` |
 | `courses/[id]/lessons/page.tsx` | 139 | `/academy/courses/${id}` | `/plataforma/academy/courses/${id}` |
 
+</details>
+
 ---
 
 ## P2 — Calidad de código MEDIUM
+
+<details>
+<summary>📜 <b>P2 — MEDIUM Backend (ACAD-M01..16 → ACAD-TKT-050..065) en <a href="./ACADEMY_BACKLOG.md"><code>ACADEMY_BACKLOG.md</code></a> §4.3 + Frontend (ACAD-MF01..14 → ACAD-TKT-070..083) en §4.4</b> (clic para expandir rastro histórico)</summary>
 
 ### Backend
 
@@ -137,9 +150,14 @@
 | ACAD-MF13 | `AcademyClient.tsx` AI insight hardcodeado | `frontend/.../AcademyClient.tsx:172-174` | ⬜ |
 | ACAD-MF14 | `assessments/[id]` timer hardcodeado "45:00" | `frontend/.../assessments/[id]/page.tsx:169` | ⬜ |
 
+</details>
+
 ---
 
 ## P3 — LOW (cleanup)
+
+<details>
+<summary>📜 <b>P3 — LOW (ACAD-L01..13 → ACAD-TKT-100..112)</b> (clic para expandir rastro histórico; fuente vigente en <a href="./ACADEMY_BACKLOG.md"><code>docs/ACADEMY_BACKLOG.md</code></a> §4.6 LOW)</summary>
 
 | ID | Tarea | Archivos | Estado |
 |---|---|---|---|
@@ -157,9 +175,14 @@
 | ACAD-L12 | Import fuera de orden en `courses/[id]/page.tsx` | `frontend/.../courses/[id]/page.tsx:203` | ⬜ |
 | ACAD-L13 | `console.error`/`console.warn` en ~17 archivos (mover a logger centralizado o eliminar) | Varios | ⬜ |
 
+</details>
+
 ---
 
 ## P4 — Tests
+
+<details>
+<summary>📜 <b>P4 — Tests (ACAD-T01..T60 → ACAD-TKT-130..134)</b> (clic para expandir rastro histórico; fuente vigente en <a href="./ACADEMY_BACKLOG.md"><code>docs/ACADEMY_BACKLOG.md</code></a> §4.7 TEST)</summary>
 
 ### A. Tests que necesitan actualización
 
@@ -253,9 +276,16 @@
 
 **Total tests nuevos: ~58** (existentes: 12 → target: ~70)
 
+</details>
+
 ---
 
-## Resumen por severidad
+## Resumen por severidad + Orden de ejecución sugerido
+
+<details>
+<summary>📜 <b>Resumen ejecutivo + Orden de ejecución sugerido</b> (clic para expandir rastro histórico; números vigentes en <a href="./ACADEMY_BACKLOG.md"><code>docs/ACADEMY_BACKLOG.md</code></a> §6 Métrica de progreso)</summary>
+
+### Resumen por severidad
 
 | Severidad | Backend | Frontend | Tests | Total |
 |---|---|---|---|---|
@@ -268,7 +298,7 @@
 
 ---
 
-## Orden de ejecución sugerido
+### Orden de ejecución sugerido
 
 1. **P0** (6 items) — Seguridad primero
 2. **P1 backend** (9 items) — Calidad backend HIGH
@@ -277,3 +307,5 @@
 5. **P2 frontend** (14 items) — Delays, cleanup, hardcoded, types
 6. **P3** (18 items) — Cleanup LOW
 7. **P4** (58 tests) — Cobertura completa
+
+</details>
