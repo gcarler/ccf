@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from backend.schemas._common import orm_config
 
@@ -206,8 +207,18 @@ class Resource(BaseModel):
     lesson_id: UUID
     title: str
     file_url: str
-    resource_type: str
+    resource_type: Optional[str] = None
     model_config = orm_config
+
+
+class ResourceCreate(BaseModel):
+    """Material enlazado a una lección; el archivo ya debe estar gestionado por storage."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(min_length=1, max_length=200)
+    file_url: str = Field(min_length=1, max_length=500)
+    resource_type: str | None = Field(default=None, max_length=50)
 
 
 class AssignmentSubmission(BaseModel):
@@ -249,11 +260,42 @@ class AcademyStudentProfile(BaseModel):
     recent_certificates: list[Certificate] = Field(default_factory=list)
 
 
+class ForumCategory(str, Enum):
+    GENERAL = "general"
+    ANNOUNCEMENT = "announcement"
+    QUESTION = "question"
+    DISCUSSION = "discussion"
+    RESOURCE = "resource"
+    THEOLOGY = "theology"
+    LEADERSHIP = "leadership"
+    ACADEMIC = "academic"
+    MISSIONS = "missions"
+    TESTIMONIES = "testimonies"
+
+
 class ForumThreadBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     title: str = Field(max_length=200)
-    category: str = Field(max_length=50)
+    category: ForumCategory = ForumCategory.GENERAL
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def normalize_category(cls, value: object) -> object:
+        """Acepta etiquetas históricas de UI, pero persiste el vocabulario canónico."""
+        if not isinstance(value, str):
+            return value
+        normalized = value.strip().lower()
+        aliases = {
+            "teologia": "theology",
+            "teología": "theology",
+            "liderazgo": "leadership",
+            "academico": "academic",
+            "académico": "academic",
+            "misiones": "missions",
+            "testimonios": "testimonies",
+        }
+        return aliases.get(normalized, normalized)
 
 
 class ForumThreadCreate(ForumThreadBase):
