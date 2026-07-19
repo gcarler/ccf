@@ -16,11 +16,25 @@ AlertTriangle,
 import { useRouter } from 'next/navigation';
 import { useCallback,useEffect,useState } from 'react';
 import { toast } from 'sonner';
+import type { DashboardMetrics } from '@/types/academy';
+
+interface DashboardCard {
+    title: string;
+    value: string;
+    trend: string;
+    color: string;
+}
+
+interface AcademyDashboard extends Omit<DashboardMetrics, 'cards'> {
+    cards?: DashboardCard[];
+    enrollment_trends?: { label: string; value: number }[];
+    top_courses?: { title: string; count: number }[];
+}
 
 export default function AcademyClient() {
     const { token } = useAuth();
     const router = useRouter();
-    const [dashboard, setDashboard] = useState<any>(null);
+    const [dashboard, setDashboard] = useState<AcademyDashboard | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -118,13 +132,13 @@ export default function AcademyClient() {
             <main className="flex-1 overflow-y-auto p-4 lg:p-3 space-y-3">
                 {/* Metricas Principales */}
                 <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {dashboard?.cards.map((card: any, idx: number) => (
+                    {dashboard?.cards?.map((card, idx) => (
                         <DSMetric 
                             key={idx}
                             label={card.title} 
                             value={card.value} 
                             trend={card.trend} 
-                            tone={card.color} 
+                            tone={card.color as 'blue' | 'emerald' | 'amber'} 
                         />
                     ))}
                 </section>
@@ -151,7 +165,7 @@ export default function AcademyClient() {
                         <DSCard>
                             <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Cursos Top Performance</h3>
                             <div className="space-y-4">
-                                {dashboard?.top_courses.map((course: any, idx: number) => (
+                                {dashboard?.top_courses?.map((course, idx) => (
                                     <div key={idx} className="flex items-center justify-between group">
                                         <div className="flex items-center gap-3">
                                             <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />

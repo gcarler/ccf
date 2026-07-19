@@ -55,7 +55,6 @@ export default function StudentProgressPage() {
         const loadData = async () => {
             try {
                 setLoading(true);
-                await new Promise(r => setTimeout(r, 600));
                 const data = await apiFetch<CourseProgress[]>('/academy/me/progress', { token, signal: ctrl.signal });
                 const arr = Array.isArray(data) ? data : [];
                 setProgress(arr);
@@ -279,7 +278,7 @@ export default function StudentProgressPage() {
                                                     </p>
                                                 </div>
                                                 <button 
-                                                    onClick={() => router.push(`/academy/course/${course.id}`)}
+                                                    onClick={() => router.push(`/plataforma/academy/courses/${course.id}`)}
                                                     className="size-7 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-black/10"
                                                 >
                                                     <ArrowRight size={24} strokeWidth={3} />

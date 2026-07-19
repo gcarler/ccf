@@ -17,7 +17,6 @@ import {
     Award
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
@@ -30,7 +29,6 @@ export default function ForumThreadDetail() {
     const id = params?.id ?? '';
     const router = useRouter();
     const { token } = useAuth();
-    const { addToast } = useToast();
     const [thread, setThread] = useState<any>(null);
     const [replies, setReplies] = useState<any[]>([]);
     const [inputText, setInputText] = useState('');
@@ -87,7 +85,7 @@ export default function ForumThreadDetail() {
                 body: { content: text },
             });
             setReplies((prev) => [...prev, created]);
-            addToast('Respuesta publicada', 'success');
+            toast.success('Respuesta publicada');
         } catch {
             setInputText(text);
             toast.error('Error al publicar la respuesta');
@@ -285,7 +283,7 @@ export default function ForumThreadDetail() {
                     <input
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSendReply()}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
                         placeholder="Añade tu comentario al debate..."
                         className="flex-1 bg-transparent border-none outline-none py-1.5 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))]"
                     />

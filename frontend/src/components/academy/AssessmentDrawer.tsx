@@ -53,17 +53,20 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
     const [result, setResult] = useState<{ passed: boolean, score: number } | null>(null);
 
     useEffect(() => {
+        const ctrl = new AbortController();
         const fetchAssessment = async () => {
             try {
-                const data = await apiFetch<Assessment>(`/academy/assessments/${assessmentId}`, { token });
+                const data = await apiFetch<Assessment>(`/academy/assessments/${assessmentId}`, { token, signal: ctrl.signal });
                 setAssessment(data);
-            } catch (err) {
+            } catch (err: any) {
+                if (err?.name === 'AbortError') return;
                 console.error("Error fetching assessment", err);
             } finally {
                 setLoading(false);
             }
         };
         fetchAssessment();
+        return () => ctrl.abort();
     }, [assessmentId, token]);
 
     const handleSelectOption = (questionId: string, optionId: string) => {

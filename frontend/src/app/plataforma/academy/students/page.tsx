@@ -105,7 +105,7 @@ export default function AcademyStudentsPage() {
                         {viewType === 'list' ? (
                             <div className="space-y-1">
                                 {filtered.map(s => (
-                                    <div key={s.id} onClick={() => router.push(`/academy/profile?student=${s.id}`)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 cursor-pointer transition-all">
+                                    <div key={s.id} onClick={() => router.push(`/plataforma/academy/profile?student=${s.id}`)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 cursor-pointer transition-all">
                                         <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-xs">
                                             {(s.full_name || s.name || 'E')[0]}
                                         </div>
@@ -124,7 +124,7 @@ export default function AcademyStudentsPage() {
                         ) : viewType === 'grid' ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3">
                                 {filtered.map(s => (
-                                    <div key={s.id} onClick={() => router.push(`/academy/profile?student=${s.id}`)} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md cursor-pointer transition-all">
+                                    <div key={s.id} onClick={() => router.push(`/plataforma/academy/profile?student=${s.id}`)} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md cursor-pointer transition-all">
                                         <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{s.full_name || s.name || "Estudiante"}</h3>
                                         <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{s.email || 'Sin correo'}</p>
                                         <div className="flex items-center justify-between mt-3">
@@ -153,7 +153,7 @@ export default function AcademyStudentsPage() {
                                     <tr
                                         key={student.id}
                                         className="cursor-pointer border-b border-[hsl(var(--border))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/5 dark:hover:bg-white/[0.03]"
-                                        onClick={() => router.push(`/academy/profile?student=${student.id}`)}
+                                        onClick={() => router.push(`/plataforma/academy/profile?student=${student.id}`)}
                                     >
                                         <td className="px-4 py-1.5 font-bold text-[hsl(var(--text-primary))] dark:text-white">{student.full_name || student.name || "Estudiante"}</td>
                                         <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{student.email || "Sin correo"}</td>

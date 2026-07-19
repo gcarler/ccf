@@ -179,7 +179,7 @@ export default function CourseViewPage() {
                 </div>
             )
         });
-    }, [activeLesson, completionRate, course, pushSidebarPanel, router]);
+    }, [activeLesson, course, pushSidebarPanel, router]);
 
     if (loading) {
         return (
@@ -355,7 +355,7 @@ export default function CourseViewPage() {
                                         <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Documento PDF Adjunto</h3>
                                         <p className="text-[hsl(var(--text-secondary))] text-sm mt-2">Lee el documento para completar esta lección.</p>
                                     </div>
-                                    <a href={activeLesson.media_url || "#"} target="_blank" rel="noreferrer" className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md font-bold uppercase tracking-wide text-xs hover:bg-[hsl(var(--primary))] transition-colors">
+                                    <a href={activeLesson.media_url || "#"} target="_blank" rel="noopener noreferrer" className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md font-bold uppercase tracking-wide text-xs hover:bg-[hsl(var(--primary))] transition-colors">
                                         Abrir Documento
                                     </a>
                                 </div>

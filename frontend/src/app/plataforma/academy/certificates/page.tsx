@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { Award, Download, Share2, School, Bell } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -58,6 +58,8 @@ export default function StudentCertificates() {
 
     const totalLoading = loading || loadingEnrollments;
 
+    const shareTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const handleShare = useCallback((certificate: CertificateRecord) => {
         try {
             setSharingId(certificate.id);
@@ -69,7 +71,8 @@ export default function StudentCertificates() {
                 toast.message('Comparte este enlace', { description: url });
             }
         } finally {
-            setTimeout(() => setSharingId(null), 1000);
+            if (shareTimerRef.current) clearTimeout(shareTimerRef.current);
+            shareTimerRef.current = setTimeout(() => setSharingId(null), 1000);
         }
     }, []);
 

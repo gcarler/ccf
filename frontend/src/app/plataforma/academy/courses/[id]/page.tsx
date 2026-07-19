@@ -90,7 +90,7 @@ export default function CourseCoordinationPage() {
                 rightActions={
                     <div className="flex items-center gap-3">
                         <button 
-                            onClick={() => router.push(`/academy/courses/${id}/manage`)}
+                            onClick={() => router.push(`/plataforma/academy/courses/${id}/manage`)}
                             className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"
                         >
                             Gestionar Cohorte
