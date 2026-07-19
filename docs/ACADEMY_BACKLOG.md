@@ -571,14 +571,14 @@ producto.
 
 | Estado | IDs únicos | Lotes | Total referencias |
 |---|---:|---:|---:|
-| ✅ Hecho funcional | 52 (TKT-003, 010..015, 020..028, 030..038, 050..063, 065, 070..071, 090..091, 100..102, 134, 140..142, 144) | 0 | 52 |
+| ✅ Hecho funcional | 57 (TKT-003, 010..015, 020..028, 030..038, 050..063, 065, 070..071, 074..077, 082, 090..091, 100..102, 134, 140..142, 144) | 0 | 57 |
 | 📜 Histórico (cierre documental) | 2 (TKT-001, 002) | 0 | 2 |
 | ⬜ Pendiente — HIGH corregido audit forense | 1 (TKT-042) | 0 | 1 |
-| ⬜ Pendiente — MED frontend | 12 (TKT-072..083) | 1 (gate compartido) | 12 |
+| ⬜ Pendiente — MED frontend | 7 (TKT-072..073, 078..083) | 1 (gate compartido) | 7 |
 | ⬜ Pendiente — MED módulos menores | 1 (TKT-143) | 0 | 1 |
-| ⬜ Pendiente — LOW | 20 (TKT-103..104, 105..112, 120..121) | 1 (gate compartido low) | 20 |
+| ⬜ Pendiente — LOW | 21 (TKT-103..104, 105..112, 120..121) | 1 (gate compartido low) | 21 |
 | ⬜ Pendiente — TEST | 4 (TKT-130..133) | 0 | 4 |
-| **Total ⬜** | **37** | **2 lotes** | **39** |
+| **Total ⬜** | **34** | **2 lotes** | **36** |
 | **TOTAL** | **95 IDs** | — | **97 referencias** |
 
 > **Cierre Fase A — CRIT (2026-07-19):** los 6 tickets ACAD-TKT-010..015 ya estaban implementados
@@ -633,6 +633,21 @@ producto.
 > Esta honestidad preserva la regla §3.1 anti-xfail del plan maestro. Los 27 IDs
 > restantes de Fase 5 (TKT-073, 074..083, 105..112, 120..121) requieren
 > implementación real y pasan a la ronda 2.
+
+> **Cierre Fase 5 — Cleanup residual ronda 2 (2026-07-19):** 5 tickets cerrados
+> en ``tests/test_academy_fase_5_cleanup_r2.py`` (6 verificaciones parametrizadas):
+> TKT-074/075 (setTimeout tiene clearTimeout asociado en el archivo, acepta
+> useEffect+return como useCallback+finally+useRef) + TKT-076/077 (``target="_blank"``
+> con ``rel="noopener noreferrer"`` en el mismo tag, regex usa ``[^>]{0,400}?`` para
+> evitar atravesar cierre de tag) + TKT-082 (AcademyClient no tiene AI insight
+> hardcoded; el "AI" resulta ser render de ``dashboard.top_courses``) + TKT-105 subset
+> (CertificateView.tsx sin ``(navigator as any)`` tras fix real). **1 fix real aplicado**:
+> CertificateView.tsx líneas 53,55 — ``(navigator as any).share`` →
+> ``typeof navigator.share === 'function'`` (feature-detection tipado). Tickets
+> diferidos a ronda 3: TKT-080 (precios $200/$50/$250 requieren endpoint
+> backend), TKT-105 exhaustivo (barrido total any→typed), TKT-112 (logger
+> central para console.error/warn), TKT-106-108 (backend getattr/role hardcodea),
+> TKT-073, 078, 079, 081, 083, 109-111, 120, 121 (cleanup estructural profundo).
 
 **Recuento efectivo al cierre de Fase 3:**
 
