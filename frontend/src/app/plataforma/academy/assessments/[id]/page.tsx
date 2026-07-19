@@ -196,8 +196,13 @@ export default function AssessmentPage() {
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table']}
                 rightActions={
-                    <div className="flex items-center gap-3 px-3 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full text-[11px] font-bold text-[hsl(var(--text-secondary))]">
-                        <Clock size={14} /> 45:00
+                    <div
+                        role="timer"
+                        aria-live="off"
+                        aria-label="Tiempo restante de la evaluación"
+                        className="flex items-center gap-3 px-3 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full text-[11px] font-bold text-[hsl(var(--text-secondary))]"
+                    >
+                        <Clock size={14} aria-hidden="true" /> 45:00
                     </div>
                 }
             />
@@ -282,6 +287,11 @@ export default function AssessmentPage() {
                         </div>
                         <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                             <motion.div
+                                role="progressbar"
+                                aria-valuenow={currentStep + 1}
+                                aria-valuemin={0}
+                                aria-valuemax={assessment.questions.length}
+                                aria-label="Progreso de la evaluación"
                                 className="h-full bg-[hsl(var(--primary))]"
                                 initial={{ width: 0 }}
                                 animate={{ width: `${((currentStep + 1) / assessment.questions.length) * 100}%` }}
@@ -300,30 +310,44 @@ export default function AssessmentPage() {
                                 className="space-y-4"
                             >
                                 {currentQuestion.question_type !== 'text' ? (
-                                    currentQuestion.options.map((option: AssessmentQuestionOption) => (
-                                        <button
-                                            key={option.id}
-                                            onClick={() => handleAnswer(currentQuestion.id, { selected_option_id: option.id })}
-                                            className={clsx(
-                                                "w-full p-3 text-left rounded-lg border-2 transition-all group relative overflow-hidden",
-                                                answers.find(a => a.selected_option_id === option.id)
-                                                    ? "border-blue-600 bg-[hsl(var(--primary))] text-white shadow-xl shadow-blue-500/20"
-                                                    : "border-[hsl(var(--border))] dark:border-white/5 hover:border-blue-200 dark:hover:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5"
-                                            )}
-                                        >
+                                    <div
+                                        role="radiogroup"
+                                        aria-labelledby={`question-${currentQuestion.id}`}
+                                        className="space-y-4"
+                                    >
+                                        <span id={`question-${currentQuestion.id}`} className="sr-only">
+                                            {currentQuestion.question_text}
+                                        </span>
+                                        {currentQuestion.options.map((option: AssessmentQuestionOption) => {
+                                            const isSelected = !!answers.find(a => a.selected_option_id === option.id);
+                                            return (
+                                                <button
+                                                    key={option.id}
+                                                    role="radio"
+                                                    aria-checked={isSelected}
+                                                    onClick={() => handleAnswer(currentQuestion.id, { selected_option_id: option.id })}
+                                                    className={clsx(
+                                                        "w-full p-3 text-left rounded-lg border-2 transition-all group relative overflow-hidden",
+                                                        isSelected
+                                                            ? "border-blue-600 bg-[hsl(var(--primary))] text-white shadow-xl shadow-blue-500/20"
+                                                            : "border-[hsl(var(--border))] dark:border-white/5 hover:border-blue-200 dark:hover:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5"
+                                                    )}
+                                                >
                                             <div className="flex items-center gap-4 relative z-10">
                                                 <div className={clsx(
                                                     "size-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
-                                                    answers.find(a => a.selected_option_id === option.id)
+                                                    isSelected
                                                         ? "border-white bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))]"
                                                         : "border-[hsl(var(--border))] dark:border-white/10"
                                                 )}>
-                                                    {answers.find(a => a.selected_option_id === option.id) && <CheckCircle2 size={16} />}
+                                                    {isSelected && <CheckCircle2 size={16} aria-hidden="true" />}
                                                 </div>
                                                 <span className="text-base font-bold">{option.option_text}</span>
                                             </div>
                                         </button>
-                                    ))
+                                            );
+                                        })}
+                                    </div>
                                 ) : (
                                     <textarea
                                         value={answers.find(a => a.question_id === currentQuestion.id)?.text_response || ''}

@@ -71,7 +71,8 @@ export default function StudentProfilePage() {
     if (loading) {
         return (
             <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/50 dark:bg-[#0a0f16] overflow-hidden font-display">
-                <WorkspaceToolbar 
+                <h1 className="sr-only">Mi Perfil Académico Pastoral</h1>
+                <WorkspaceToolbar
                     breadcrumbs={[
                         { label: 'Academia', icon: GraduationCap },
                         { label: 'Mi Perfil Pastoral', icon: ShieldCheck }
@@ -94,17 +95,21 @@ export default function StudentProfilePage() {
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/50 dark:bg-[#0a0f16] overflow-hidden font-display">
-            <WorkspaceToolbar 
+            <h1 className="sr-only">Mi Perfil Académico Pastoral</h1>
+            <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Academia', icon: GraduationCap },
+                    { label: 'Academia', icon: GraduationCap, href: '/plataforma/academy' },
                     { label: 'Mi Perfil Pastoral', icon: ShieldCheck }
                 ]}
                 viewType={viewType}
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table']}
                 rightActions={
-                    <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-[hsl(var(--surface-1))] rounded-md text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all border border-[hsl(var(--border))] dark:border-white/10 shadow-sm active:scale-95">
-                        <Edit3 size={14} /> Editar Perfil
+                    <button
+                        aria-label="Editar perfil pastoral"
+                        className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-[hsl(var(--surface-1))] rounded-md text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all border border-[hsl(var(--border))] dark:border-white/10 shadow-sm active:scale-95"
+                    >
+                        <Edit3 size={14} aria-hidden="true" /> Editar Perfil
                     </button>
                 }
             />
@@ -203,7 +208,14 @@ export default function StudentProfilePage() {
                                          <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase">Progreso total: {profile?.total_progress ?? 0}%</span>
                                      </div>
                                      <div className="h-3 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden shadow-inner p-0.5">
-                                         <motion.div initial={{ width: 0 }} animate={{ width: `${profile?.total_progress ?? 0}%` }} className="h-full bg-gradient-to-r from-blue-600 to-sky-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.4)]" />
+                                         <motion.div
+                                             role="progressbar"
+                                             aria-valuenow={profile?.total_progress ?? 0}
+                                             aria-valuemin={0}
+                                             aria-valuemax={100}
+                                             aria-label="Progreso total del programa pastoral"
+                                             initial={{ width: 0 }} animate={{ width: `${profile?.total_progress ?? 0}%` }} className="h-full bg-gradient-to-r from-blue-600 to-sky-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"
+                                         />
                                      </div>
                                  </div>
                             </div>
@@ -318,10 +330,12 @@ export default function StudentProfilePage() {
                                      </div>
                                  ) : (
                                      certificates.map((cert, i) => (
-                                         <div key={cert.id ?? `cert-${i}`} className="group p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-md hover:border-blue-500/30 transition-all shadow-sm hover:shadow-xl flex flex-col justify-between h-[200px]">
-                                             <div className="flex justify-between items-start">
-                                                 <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center group-hover:scale-110 transition-transform"><Award size={24} /></div>
-                                                 <button className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 transition-colors"><Download size={18} /></button>
+                                         <div key={cert.id ?? `cert-${i}`} className="group p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-md hover:border-blue-500/30 transition-all shadow-sm hover:shadow-xl flex flex-col justify-between h-[200px]">                                         <div className="flex justify-between items-start">
+                                                 <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center group-hover:scale-110 transition-transform"><Award size={24} aria-hidden="true" /></div>
+                                                  <button
+                                                      aria-label={`Descargar certificado del curso ${cert.course_title ?? ''}`.trim()}
+                                                      className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 transition-colors"
+                                                  ><Download size={18} aria-hidden="true" /></button>
                                              </div>
                                              <div>
                                                  <h4 className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-none mb-2 line-clamp-2">{cert.course_title || cert.certificate_type || 'Certificado'}</h4>

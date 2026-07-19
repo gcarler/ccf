@@ -186,7 +186,7 @@ export default function ForumThreadDetail() {
                                     <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-[9px] font-semibold uppercase tracking-wide">{thread.category}</span>
                                     <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{thread.created_at}</span>
                                 </div>
-                                <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors"><MoreVertical size={20} /></button>
+                                <button aria-label="Más opciones del debate" className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors"><MoreVertical size={20} aria-hidden="true" /></button>
                             </div>
 
                             <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-tight">{thread.title}</h1>
@@ -265,7 +265,8 @@ export default function ForumThreadDetail() {
                                             </div>
                                             <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed">{reply.text}</p>
                                             <div className="flex items-center gap-4 pt-4">
-                                                <button className="flex items-center gap-1.5 font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors uppercase"><ThumbsUp size={14} /> {reply.upvotes}</button>
+                                                <button aria-label={`Votar a favor (${reply.upvotes} votos)`} className="flex items-center gap-1.5 font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors uppercase"><ThumbsUp size={14} aria-hidden="true" /> {reply.upvotes}</button>
+                                                <button aria-label={`Votar en contra`} className="p-2 text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-all"><ThumbsDown size={16} aria-hidden="true" /></button>
                                                 <button className="font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors uppercase">Responder</button>
                                             </div>
                                         </div>
@@ -285,13 +286,15 @@ export default function ForumThreadDetail() {
                         onChange={(e) => setInputText(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
                         placeholder="Añade tu comentario al debate..."
+                        aria-label="Escribe tu respuesta al debate"
                         className="flex-1 bg-transparent border-none outline-none py-1.5 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))]"
                     />
                     <button
                         onClick={handleSendReply}
+                        aria-label="Publicar respuesta"
                         className="size-9 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] rounded-full flex items-center justify-center text-white shadow-xl shadow-blue-500/20 active:scale-90 transition-all"
                     >
-                        <Send size={20} fill="currentColor" />
+                        <Send size={20} fill="currentColor" aria-hidden="true" />
                     </button>
                 </div>
             </footer>
