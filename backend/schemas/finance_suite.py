@@ -18,13 +18,6 @@ forbid_config: ConfigDict = ConfigDict(extra='forbid')
 # SHARED
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class PaginatedResponse(BaseModel):
-    items: List[Any]
-    total: int
-    skip: int = 0
-    limit: int = 20
-
-
 # ═══════════════════════════════════════════════════════════════════════════════
 # 0. FUND (models_crm.Fund)
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -64,8 +57,8 @@ class RegisterDonationPayload(BaseModel):
 
 class BankAccountCreate(BaseModel):
     model_config = forbid_config
-    bank_name: str
-    account_number: str
+    bank_name: str = Field(max_length=200)
+    account_number: str = Field(max_length=50)
     account_type: str = "checking"
     currency: str = "COP"
 
@@ -257,7 +250,7 @@ class SalesOrderItemCreate(BaseModel):
 
 class SalesOrderCreate(BaseModel):
     model_config = forbid_config
-    customer_name: str
+    customer_name: str = Field(max_length=200)
     customer_email: Optional[str] = None
     customer_tax_id: Optional[str] = None
     order_date: date
@@ -300,7 +293,7 @@ class InvoiceItemCreate(BaseModel):
 class InvoiceCreate(BaseModel):
     model_config = forbid_config
     sales_order_id: Optional[UUID] = None
-    customer_name: str
+    customer_name: str = Field(max_length=200)
     customer_email: Optional[str] = None
     customer_tax_id: Optional[str] = None
     issue_date: date
@@ -452,9 +445,9 @@ class DocumentTagOut(BaseModel):
 
 class DocumentCreate(BaseModel):
     model_config = forbid_config
-    title: str
+    title: str = Field(max_length=200)
     description: Optional[str] = None
-    file_url: str
+    file_url: str = Field(max_length=2048)
     file_name: str
     file_size: int = 0
     mime_type: str
@@ -505,9 +498,9 @@ class SignSignerCreate(BaseModel):
 
 class SignRequestCreate(BaseModel):
     model_config = forbid_config
-    title: str
+    title: str = Field(max_length=200)
     description: Optional[str] = None
-    document_url: str
+    document_url: str = Field(max_length=2048)
     expiry_date: Optional[datetime] = None
     country_code: str = "CO"
     legal_framework: str = "eidas"
@@ -547,3 +540,16 @@ class SignAction(BaseModel):
     action: str  # sign, decline, remind
     ip_address: Optional[str] = None
     metadata_json: Optional[Dict[str, Any]] = None
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 6. MERCADOPAGO
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class CreatePreferenceRequest(BaseModel):
+    model_config = forbid_config
+    amount: float = Field(gt=0)
+    title: str = Field(default="Donación", max_length=200)
+    description: Optional[str] = None
+    donor_name: Optional[str] = None
+    email: Optional[str] = None

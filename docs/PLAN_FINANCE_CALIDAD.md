@@ -122,11 +122,11 @@
 
 | Severidad | Count | Estado |
 |-----------|-------|--------|
-| CRITICAL | 11 | 🔴 Pendiente |
-| HIGH | 18 | 🟠 Pendiente |
-| MEDIUM | 28 | 🟡 Pendiente |
+| CRITICAL | 11 | ✅ Completado |
+| HIGH | 18 | ✅ Completado |
+| MEDIUM | 28 | ✅ Completado |
 | LOW | 28 | 🔵 Pendiente |
-| **TOTAL** | **85** | **0% completado** |
+| **TOTAL** | **85** | **67% completado** |
 
 ## Hallazgo Estrella
 

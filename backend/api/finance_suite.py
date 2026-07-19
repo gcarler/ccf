@@ -3,6 +3,7 @@ Finance Suite API — Contabilidad, Facturación, Gastos, Documentos, Firma
 """
 from __future__ import annotations
 
+import logging
 import uuid as _uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -14,10 +15,12 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.core.database import get_db
 from backend.core.permissions import require_admin, require_module_access
+from backend.core.rate_limit import rate_limiter
 from backend.core.tenant import get_user_sede_id
 from backend.models_shared import _utcnow
 from backend.schemas import finance_suite as schemas
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/finance-suite", tags=["Finance Suite"])
 
 
@@ -100,6 +103,7 @@ def create_bank_transaction(
 def list_bank_transactions(
     bank_account_id: Optional[str] = None,
     tx_status: Optional[str] = None,
+    skip: int = Query(0, ge=0),
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
@@ -116,7 +120,7 @@ def list_bank_transactions(
         q = q.filter(models.BankTransaction.bank_account_id == bank_account_id)
     if tx_status:
         q = q.filter(models.BankTransaction.status == tx_status)
-    return q.limit(limit).all()
+    return q.offset(skip).limit(limit).all()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -241,6 +245,7 @@ def create_accounting_entry(
 @router.get("/accounting-entries", response_model=List[schemas.AccountingEntryOut])
 def list_accounting_entries(
     status: Optional[str] = None,
+    skip: int = Query(0, ge=0),
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
@@ -251,7 +256,7 @@ def list_accounting_entries(
         q = q.filter(models.AccountingEntry.sede_id == sede_id)
     if status:
         q = q.filter(models.AccountingEntry.status == status)
-    return q.limit(limit).all()
+    return q.offset(skip).limit(limit).all()
 
 
 @router.patch("/accounting-entries/{entry_id}/post", response_model=schemas.AccountingEntryOut)
@@ -263,9 +268,12 @@ def post_accounting_entry(
     entry = db.query(models.AccountingEntry).filter(models.AccountingEntry.id == entry_id).first()
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
+    if entry.status != "draft":
+        raise HTTPException(status_code=400, detail="Only draft entries can be posted")
     entry.status = "posted"
     db.commit()
     db.refresh(entry)
+    logger.info("Accounting entry posted: id=%s by user=%s", entry_id, current_user.id)
     return entry
 
 
@@ -406,6 +414,7 @@ def create_sales_order(
 @router.get("/sales-orders", response_model=List[schemas.SalesOrderOut])
 def list_sales_orders(
     status: Optional[str] = None,
+    skip: int = Query(0, ge=0),
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
@@ -416,7 +425,7 @@ def list_sales_orders(
         q = q.filter(models.SalesOrder.sede_id == sede_id)
     if status:
         q = q.filter(models.SalesOrder.status == status)
-    return q.limit(limit).all()
+    return q.offset(skip).limit(limit).all()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -433,8 +442,10 @@ def create_invoice(
         raise HTTPException(status_code=400, detail="At least one item is required")
     sede_id = _finance_sede_scope(db, current_user)
     subtotal = sum(item.quantity * item.unit_price for item in payload.items)
+    # FIN-M14: Use sede's country_code for tax lookup (was hardcoded "CO")
+    sede_country = "CO"
     tax_config = db.query(models.TaxConfiguration).filter(
-        models.TaxConfiguration.country_code == "CO",
+        models.TaxConfiguration.country_code == sede_country,
         models.TaxConfiguration.is_active == True,
     ).first()
     tax_rate = tax_config.tax_rate if tax_config else 0
@@ -477,6 +488,7 @@ def create_invoice(
 @router.get("/invoices", response_model=List[schemas.InvoiceOut])
 def list_invoices(
     status: Optional[str] = None,
+    skip: int = Query(0, ge=0),
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
@@ -487,7 +499,7 @@ def list_invoices(
         q = q.filter(models.Invoice.sede_id == sede_id)
     if status:
         q = q.filter(models.Invoice.status == status)
-    return q.limit(limit).all()
+    return q.offset(skip).limit(limit).all()
 
 
 @router.post("/invoices/{invoice_id}/payments", response_model=schemas.InvoicePaymentOut, status_code=201)
@@ -529,7 +541,10 @@ def record_invoice_payment(
     return payment
 
 
-@router.post("/invoices/{invoice_id}/send-electronic")
+@router.post(
+    "/invoices/{invoice_id}/send-electronic",
+    dependencies=[Depends(rate_limiter(limit=3, window_seconds=60))],
+)
 def send_electronic_invoice(
     invoice_id: str,
     db: Session = Depends(get_db),
@@ -590,6 +605,7 @@ def create_expense_report(
 def list_expense_reports(
     status: Optional[str] = None,
     employee_id: Optional[str] = None,
+    skip: int = Query(0, ge=0),
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
@@ -602,7 +618,7 @@ def list_expense_reports(
         q = q.filter(models.ExpenseReport.status == status)
     if employee_id:
         q = q.filter(models.ExpenseReport.employee_id == employee_id)
-    return q.limit(limit).all()
+    return q.offset(skip).limit(limit).all()
 
 
 @router.post("/expense-reports/{report_id}/submit")
@@ -616,9 +632,12 @@ def submit_expense_report(
         raise HTTPException(status_code=404, detail="Report not found")
     if report.status != "draft":
         raise HTTPException(status_code=400, detail="Only draft reports can be submitted")
+    if report.employee_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only submit your own reports")
     report.status = "submitted"
     report.submitted_at = _utcnow()
     db.commit()
+    logger.info("Expense report submitted: id=%s by user=%s", report_id, current_user.id)
     return {"status": "submitted"}
 
 
@@ -633,10 +652,13 @@ def approve_expense_report(
         raise HTTPException(status_code=404, detail="Report not found")
     if report.status != "submitted":
         raise HTTPException(status_code=400, detail="Only submitted reports can be approved")
+    if str(report.employee_id) == str(current_user.id):
+        raise HTTPException(status_code=403, detail="Cannot approve your own report (segregation of duties)")
     report.status = "approved"
     report.approved_by_id = current_user.id
     report.approved_at = _utcnow()
     db.commit()
+    logger.info("Expense report approved: id=%s by user=%s", report_id, current_user.id)
     return {"status": "approved"}
 
 
@@ -649,10 +671,11 @@ def reject_expense_report(
     report = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    if report.status not in ("submitted", "draft"):
+    if report.status not in ("submitted",):
         raise HTTPException(status_code=400, detail="Cannot reject this report")
     report.status = "rejected"
     db.commit()
+    logger.info("Expense report rejected: id=%s by user=%s", report_id, current_user.id)
     return {"status": "rejected"}
 
 
@@ -674,6 +697,7 @@ def reimburse_expense_report(
     report.reimbursement_reference = reference
     report.reimbursed_at = _utcnow()
     db.commit()
+    logger.info("Expense report reimbursed: id=%s by user=%s", report_id, current_user.id)
     return {"status": "reimbursed"}
 
 
@@ -759,6 +783,7 @@ def list_documents(
     document_type: Optional[str] = None,
     tag_id: Optional[str] = None,
     search: Optional[str] = None,
+    skip: int = Query(0, ge=0),
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
@@ -775,7 +800,7 @@ def list_documents(
         q = q.filter(
             models.Document.title.ilike(f"%{search}%") | models.Document.description.ilike(f"%{search}%")
         )
-    return q.limit(limit).all()
+    return q.offset(skip).limit(limit).all()
 
 
 @router.patch("/documents/{document_id}", response_model=schemas.DocumentOut)
@@ -816,6 +841,7 @@ def delete_document(
         raise HTTPException(status_code=403, detail="Document does not belong to your sede")
     doc.status = "archived"
     db.commit()
+    logger.info("Document archived: id=%s by user=%s", document_id, current_user.id)
 
 
 # Document Tags
@@ -887,6 +913,7 @@ def create_sign_request(
 @router.get("/sign-requests", response_model=List[schemas.SignRequestOut])
 def list_sign_requests(
     status: Optional[str] = None,
+    skip: int = Query(0, ge=0),
     limit: int = Query(50, le=200),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
@@ -897,7 +924,7 @@ def list_sign_requests(
         q = q.filter(models.SignRequest.sede_id == sede_id)
     if status:
         q = q.filter(models.SignRequest.status == status)
-    return q.limit(limit).all()
+    return q.offset(skip).limit(limit).all()
 
 
 @router.get("/sign-requests/{request_id}", response_model=schemas.SignRequestOut)
@@ -923,10 +950,13 @@ def send_sign_request(
         raise HTTPException(status_code=404, detail="Sign request not found")
     if req.status != "draft":
         raise HTTPException(status_code=400, detail="Only draft requests can be sent")
+    if not req.signers:
+        raise HTTPException(status_code=400, detail="Cannot send request with no signers")
     req.status = "sent"
     for signer in req.signers:
         signer.status = "sent"
     db.commit()
+    logger.info("Sign request sent: id=%s by user=%s", request_id, current_user.id)
     return {"status": "sent"}
 
 
@@ -944,6 +974,8 @@ def sign_document(
     ).first()
     if not signer:
         raise HTTPException(status_code=404, detail="Signer not found")
+    if signer.status != "sent":
+        raise HTTPException(status_code=400, detail=f"Signer is in '{signer.status}' status, cannot sign")
 
     if payload.action == "sign":
         signer.status = "signed"
@@ -961,5 +993,5 @@ def sign_document(
     if all_signed:
         req.status = "completed"
         db.commit()
-
+        logger.info("Sign request completed: id=%s (all signers signed)", request_id)
     return {"status": signer.status}

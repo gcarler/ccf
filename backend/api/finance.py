@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import logging
+import time
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -8,11 +12,17 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.core.database import get_db
 from backend.core.permissions import require_admin, require_module_access
+from backend.core.rate_limit import rate_limiter
 from backend.core.tenant import get_user_sede_id
 from backend.models_shared import _utcnow
 from backend.schemas.finance_suite import FundCreate, FundUpdate, RegisterDonationPayload
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/finance", tags=["Finance"])
+
+# FIN-M24: Simple TTL cache for expensive queries
+_impact_cache: dict = {"data": None, "ts": 0.0}
+IMPACT_CACHE_TTL = 120  # seconds
 
 
 @router.get("/summary")
@@ -114,6 +124,7 @@ def get_ministerial_funds(
 
 @router.get("/transactions")
 def get_transactions(
+    skip: int = Query(0, ge=0),
     limit: int = Query(50, le=200),
     tipo: Optional[str] = None,
     db: Session = Depends(get_db),
@@ -132,7 +143,7 @@ def get_transactions(
     # FIN-H02: Implementar filtro por tipo (antes era código muerto)
     if tipo:
         q = q.filter(models.Donation.donation_type == tipo)
-    rows = q.limit(limit).all()
+    rows = q.offset(skip).limit(limit).all()
 
     result = []
     for d in rows:
@@ -150,7 +161,11 @@ def get_transactions(
     return result
 
 
-@router.post("/donations")
+@router.post(
+    "/donations",
+    status_code=201,
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))],
+)
 def register_donation(
     payload: RegisterDonationPayload,
     db: Session = Depends(get_db),
@@ -282,6 +297,7 @@ def delete_fund(
         raise HTTPException(status_code=403, detail="Fund not in your sede")
     fund.deleted_at = _utcnow()
     db.commit()
+    logger.info("Fund deleted: fund_id=%s by user=%s sede=%s", fund_id, current_user.id, sede_id)
 
 
 @router.get("/impact")
@@ -291,6 +307,10 @@ def get_mission_impact(
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
     """Impacto social calculado en tiempo real."""
+    now_ts = time.monotonic()
+    if _impact_cache["data"] and (now_ts - _impact_cache["ts"]) < IMPACT_CACHE_TTL:
+        return _impact_cache["data"]
+
     total_personas = db.query(func.count(models.Persona.id)).scalar() or 0
     total_families = db.query(func.count(models.Family.id)).scalar() or 0
     total_donations = db.query(func.sum(models.Donation.amount)).scalar() or 0
@@ -316,10 +336,13 @@ def get_mission_impact(
             {"label": "Ofrendas Generales", "pct": 100, "desc": "Donaciones recibidas."}
         ]
 
-    return {
+    result = {
         "total_miembros": total_personas,
         "total_familias": total_families,
         "total_donaciones_cop": round(total_donations),
         "total_matriculas": total_enrollments,
         "distribucion": distribucion,
     }
+    _impact_cache["data"] = result
+    _impact_cache["ts"] = time.monotonic()
+    return result
