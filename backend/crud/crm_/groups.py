@@ -1,6 +1,7 @@
 """Grupos evangelismo CRUD."""
 import uuid
 from typing import Optional
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -44,14 +45,14 @@ def _group_participant_role_values(item):
     return role or "participante", custom_role_id
 
 
-def get_grupos(db: Session, skip: int = 0, limit: int = 100, sede_id: str | None = None):
+def get_grupos(db: Session, skip: int = 0, limit: int = 100, sede_id: UUID | None = None):
     query = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.deleted_at.is_(None))
     if sede_id:
         query = query.filter(models.GrupoEvangelismo.sede_id == sede_id)
     return query.offset(skip).limit(limit).all()
 
 
-def create_grupo(db: Session, payload: schemas.GrupoEvangelismoCreate, sede_id: str | None = None):
+def create_grupo(db: Session, payload: schemas.GrupoEvangelismoCreate, sede_id: UUID | None = None):
     data = payload.model_dump(exclude={"base_attendee_ids", "base_attendees_with_roles"})
     # Map evangelism_strategy_id -> estrategia_id.
     if data.get("evangelism_strategy_id") and not data.get("estrategia_id"):
