@@ -390,3 +390,21 @@ def test_grade_submission_blocks_cross_sede(client, db_session):
     )
     db_session.refresh(submission_b)
     assert submission_b.grade == 88.0, f"Grade persistido incorrectamente; esperado 88.0, obtuve {submission_b.grade}"
+
+
+def test_forum_detail_and_comments_are_scoped(client, db_session):
+    import uuid as _uuid
+
+    admin_a, persona_a, sede_a = seed_admin(db_session, email="forum-a@example.com", password="testpass123")
+    admin_b, _, _ = seed_admin(db_session, email="forum-b@example.com", password="testpass123")
+    course = models.Course(code=f"FORUM-{_uuid.uuid4().hex[:6]}", title="Foro", modality="online", sede_id=sede_a.id)
+    db_session.add(course); db_session.flush()
+    thread = models.ForumThread(course_id=course.id, author_persona_id=persona_a.id, title="Tema", content="Inicio")
+    db_session.add(thread); db_session.commit()
+    headers_a = auth_headers(client, email=admin_a.email, password="testpass123")
+    headers_b = auth_headers(client, email=admin_b.email, password="testpass123")
+    assert client.get(f"/api/academy/forum/threads/{thread.id}", headers=headers_a).status_code == 200
+    created = client.post(f"/api/academy/forum/threads/{thread.id}/comments", headers=headers_a, json={"content": "Respuesta"})
+    assert created.status_code == 201, created.text
+    assert len(client.get(f"/api/academy/forum/threads/{thread.id}/comments", headers=headers_a).json()) == 1
+    assert client.get(f"/api/academy/forum/threads/{thread.id}", headers=headers_b).status_code == 404
