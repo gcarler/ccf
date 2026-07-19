@@ -154,9 +154,16 @@ Una tarea de Academy queda cerrada cuando:
 
 Estos casos son obligatorios mientras los IDs `ACAD-*` de `docs/ESTADO_ACADEMY.md §15` estén en estado Pendiente.
 
-### 10.1. CRÍTICOS
+### 10.1. CRÍTICOS (cierre documental 2026-07-19)
 
-#### Caso ACAD-CRIT-001 — Mismatch UUID
+> **Estado:** ambos casos críticos resueltos en código. Las verificaciones
+> que siguen sirven como **regression gates** que se ejecutan en cada
+> commit que toque `CourseCatalog.tsx`, `MyEnrollments.tsx`,
+> `frontend/src/types/academy.ts`, `frontend/src/app/plataforma/academy/AcademyClient.tsx`
+> o `backend/api/academy.py::dashboard_metrics`. Si cualquiera falla, abrir
+> un nuevo ticket `ACAD-*` y bloquear merge.
+
+#### Caso ACAD-CRIT-001 — Mismatch UUID ✅ Cierre documental 2026-07-19
 
 **Setup.** Usuario autenticado (cualquier rol con `academy:read`) en `/plataforma/academy/courses`.
 
@@ -165,27 +172,29 @@ Estos casos son obligatorios mientras los IDs `ACAD-*` de `docs/ESTADO_ACADEMY.m
 2. Verificar que el cliente **no** declare `id: number` en `CourseCatalog.tsx`.
 3. Cross-check: si el usuario tiene una inscripción previa (`enrolledCourseIds`), el botón debe mostrar "Continuar Curso", no "Inscribirme Ahora".
 
-**Verificación automática:**
+**Verificación automática (regression gate):**
 ```bash
 grep -n "id: number" frontend/src/components/CourseCatalog.tsx   # debe estar vacio
 grep -n "id: number" frontend/src/components/MyEnrollments.tsx   # debe estar vacio
 ```
 
-#### Caso ACAD-CRIT-002 — Dashboard endpoint
+#### Caso ACAD-CRIT-002 — Dashboard endpoint ✅ Cierre documental 2026-07-19
 
-**Setup.** Manager en `/plataforma/academy`.
+**Setup (Manager).** Manager con `academy:manage` en `/plataforma/academy`.
 
 **Pasos:**
 1. Abrir DevTools → Network.
-2. Verificar que el fetch principal va a `/dashboard/academy` (NO `/academy/dashboard/metrics`).
+2. Verificar que el fetch principal va a `/academy/dashboard/metrics` (con fallback a `/dashboard/academy` solo para roles sin `academy:manage` que caigan 403/404).
 3. Inspeccionar payload: debe contener `cards`, `enrollment_trends`, `top_courses`.
-4. Si backend solo retorna `cards`, documentar el gap y elegir fix (extender backend o reducir cliente).
+4. Verificar que el backend implementa `enrollment_trends` (ChartDataPoint: `{label, value}`) y `top_courses` (`[{title, count}, ...]`) consumibles por `DSChart type="area"` y el bloque "Cursos Top Performance".
 
-**Comando de inspección backend:**
+**Comando de inspección backend (regression gate):**
 ```bash
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/academy/dashboard/metrics | jq 'keys'
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/dashboard/academy | jq 'keys'
 ```
+
+Resultado esperado: ambos endpoints exponen las claves `cards`, `enrollment_trends`, `top_courses`.
 
 ### 10.2. ALTOS
 
