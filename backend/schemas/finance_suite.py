@@ -26,7 +26,7 @@ class PaginatedResponse(BaseModel):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 0. FUND (legacy — models_crm.Fund)
+# 0. FUND (models_crm.Fund)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class FundCreate(BaseModel):

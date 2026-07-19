@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.core.database import get_db
 from backend.core.permissions import require_admin, require_module_access
-from backend.core.tenant import get_user_sede_id, require_user_sede_id
+from backend.core.tenant import get_user_sede_id
 from backend.models_shared import _utcnow
 from backend.schemas import finance_suite as schemas
 
