@@ -837,7 +837,7 @@ def delete_document(
     doc = db.query(models.Document).filter(models.Document.id == document_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
-    if sede_id and doc.sede_id != sede_id:
+    if sede_id and doc.sede_id and str(doc.sede_id) != sede_id:
         raise HTTPException(status_code=403, detail="Document does not belong to your sede")
     doc.status = "archived"
     db.commit()
