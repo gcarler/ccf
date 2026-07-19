@@ -47,7 +47,6 @@ export default function EnrollmentWizard() {
 
         fetchCourse();
         return () => ctrl.abort();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated, courseId, addToast]);
 
     const handleEnrollment = async () => {

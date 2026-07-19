@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DSCard } from '@/design/components/DSCard';
+import { apiFetch } from '@/lib/http';
 import clsx from 'clsx';
 
 interface Question {
@@ -67,7 +68,7 @@ export default function NewAssessmentPage() {
         }
 
         try {
-            await (await import('@/lib/http')).apiFetch('/academy/admin/assessments', {
+            await apiFetch('/academy/admin/assessments', {
                 method: 'POST',
                 token,
                 body: {

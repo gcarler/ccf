@@ -223,7 +223,7 @@ export default function StudentProfilePage() {
                                         { icon: ShieldCheck, color: 'from-emerald-400 to-teal-600', locked: false, title: 'Fidelidad' },
                                         { icon: Target, color: 'from-[hsl(var(--surface-3))] to-[hsl(var(--bg-muted))]', locked: true, title: 'Misiones' },
                                     ].map((badge, i) => (
-                                        <div key={i} className="flex flex-col items-center gap-3">
+                                        <div key={badge.title} className="flex flex-col items-center gap-3">
                                             <div className={clsx(
                                                 "aspect-square w-full rounded-lg flex items-center justify-center relative badge-3d group cursor-crosshair",
                                                 badge.locked ? "bg-[hsl(var(--surface-2))] dark:bg-white/5 opacity-50 grayscale" : `bg-gradient-to-br ${badge.color} inner-glow`
@@ -265,9 +265,8 @@ export default function StudentProfilePage() {
                                     { label: 'Aspirante', done: true },
                                     { label: 'Discípulo', done: true, active: true },
                                     { label: 'Líder', done: false },
-                                    { label: 'Pastor', done: false },
-                                ].map((step, i) => (
-                                    <div key={i} className="relative z-10 flex flex-col items-center gap-4 group cursor-pointer">
+                                    { label: 'Pastor', done: false },                                    ].map((step, i) => (
+                                    <div key={step.label} className="relative z-10 flex flex-col items-center gap-4 group cursor-pointer">
                                         <div className={clsx(
                                             "size-9 rounded-lg flex items-center justify-center transition-all border-4 border-white dark:border-[#0a0f16]",
                                             step.done ? "bg-[hsl(var(--primary))] text-white shadow-xl shadow-blue-500/20" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] group-hover:bg-blue-100",
@@ -319,7 +318,7 @@ export default function StudentProfilePage() {
                                      </div>
                                  ) : (
                                      certificates.map((cert, i) => (
-                                         <div key={i} className="group p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-md hover:border-blue-500/30 transition-all shadow-sm hover:shadow-xl flex flex-col justify-between h-[200px]">
+                                         <div key={cert.id ?? `cert-${i}`} className="group p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-md hover:border-blue-500/30 transition-all shadow-sm hover:shadow-xl flex flex-col justify-between h-[200px]">
                                              <div className="flex justify-between items-start">
                                                  <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center group-hover:scale-110 transition-transform"><Award size={24} /></div>
                                                  <button className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 transition-colors"><Download size={18} /></button>

@@ -3,34 +3,36 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Mail, Phone, MapPin, BookOpen, Award,
+    Mail, BookOpen, Award,
     Edit2, Camera, Calendar, ShieldCheck, GraduationCap, Star
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
-import type { EnrollmentRecord } from '@/types/academy';
+import type { AcademyStudentProfile, EnrollmentRecord } from '@/types/academy';
 
 export default function AcademyAccountPage() {
     const { token, user } = useAuth();
-    const [enrollments, setEnrollments] = useState<EnrollmentRecord[]>([]);
+    const [profile, setProfile] = useState<AcademyStudentProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!token) return;
         const ctrl = new AbortController();
-        apiFetch<EnrollmentRecord[]>('/academy/courses', { token, signal: ctrl.signal })
-            .then(data => setEnrollments(Array.isArray(data) ? data.slice(0, 5) : []))
-            .catch(() => { setEnrollments([]); toast.error('Error al cargar inscripciones'); })
+        apiFetch<AcademyStudentProfile>('/academy/me/profile', { token, signal: ctrl.signal })
+            .then(setProfile)
+            .catch(() => { setProfile(null); toast.error('Error al cargar el perfil académico'); })
             .finally(() => setLoading(false));
         return () => ctrl.abort();
     }, [token]);
 
+    const enrollments = profile?.active_courses ?? [];
+    const averageGrade = enrollments.filter((item) => item.final_grade != null);
     const stats = [
-        { icon: BookOpen, label: 'Cursos Activos', value: enrollments.length, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
-        { icon: Award, label: 'Certificados', value: 2, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
-        { icon: Star, label: 'Promedio', value: '9.4', color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-500/10' },
-        { icon: Calendar, label: 'Dias Activo', value: 47, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
+        { icon: BookOpen, label: 'Cursos Activos', value: profile?.enrollments_count ?? 0, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+        { icon: Award, label: 'Certificados', value: profile?.certificates_count ?? 0, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
+        { icon: Star, label: 'Progreso', value: `${Math.round(profile?.total_progress ?? 0)}%`, color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-500/10' },
+        { icon: Calendar, label: 'Promedio', value: averageGrade.length ? `${Math.round(averageGrade.reduce((sum, item) => sum + (item.final_grade ?? 0), 0) / averageGrade.length)}%` : '—', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
     ];
 
     return (
@@ -43,7 +45,7 @@ export default function AcademyAccountPage() {
                     <div className="flex items-end gap-4">
                         <div className="relative">
                             <div className="size-10 rounded-lg bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center text-white text-xl font-bold shadow-2xl">
-                                {(user as any)?.name?.[0] ?? 'E'}
+                                {(profile?.username ?? user?.username ?? 'E')[0]?.toUpperCase()}
                             </div>
                             <button className="absolute -bottom-2 -right-2 size-8 rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] flex items-center justify-center shadow-lg hover:scale-110 transition-all">
                                 <Camera size={14} />
@@ -59,10 +61,10 @@ export default function AcademyAccountPage() {
                                 </span>
                             </div>
                             <h1 className="text-lg font-bold text-white tracking-tight">
-                                {(user as any)?.name ?? 'Estudiante CCF'}
+                                {profile?.username ?? user?.username ?? 'Estudiante CCF'}
                             </h1>
                             <p className="text-blue-200 text-sm font-medium">
-                                {(user as any)?.email ?? 'usuario@ccf.com'}
+                                {user?.email ?? '—'}
                             </p>
                         </div>
                         <div className="ml-auto pb-1">
@@ -104,10 +106,8 @@ export default function AcademyAccountPage() {
                     >
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Informacion Personal</p>
                         {[
-                            { icon: Mail, label: 'Email', value: (user as any)?.email ?? '—' },
-                            { icon: Phone, label: 'Telefono', value: '+57 300 000 0000' },
-                            { icon: MapPin, label: 'Ciudad', value: 'Mocoa, Putumayo' },
-                            { icon: ShieldCheck, label: 'Rol', value: 'Persona Activo' },
+                            { icon: Mail, label: 'Email', value: user?.email ?? '—' },
+                            { icon: ShieldCheck, label: 'Rol de plataforma', value: user?.role ?? '—' },
                         ].map(row => (
                             <div key={row.label} className="flex items-start gap-3">
                                 <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] shrink-0">
@@ -135,7 +135,7 @@ export default function AcademyAccountPage() {
                         {loading ? (
                             <div className="space-y-3">
                                 {[1, 2, 3].map(i => (
-                                    <div key={i} className="h-8 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />
+                                    <div key={`skel-${i}`} className="h-8 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />
                                 ))}
                             </div>
                         ) : enrollments.length === 0 ? (
@@ -146,18 +146,18 @@ export default function AcademyAccountPage() {
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                {enrollments.map((course: EnrollmentRecord, i) => (
-                                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all">
+                                {enrollments.map((course: EnrollmentRecord) => (
+                                    <div key={course.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all">
                                         <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white text-sm font-semibold shrink-0">
                                             {course.course.title?.[0] ?? 'C'}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{course.course.title ?? `Curso ${i + 1}`}</p>
+                                            <p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{course.course.title}</p>
                                             <div className="w-full bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded-full h-1.5 mt-1.5">
-                                                <div className="bg-[hsl(var(--primary))] h-1.5 rounded-full" style={{ width: `${30 + i * 15}%` }} />
+                                                <div className="bg-[hsl(var(--primary))] h-1.5 rounded-full" style={{ width: `${course.progress_percent}%` }} />
                                             </div>
                                         </div>
-                                        <span className="font-semibold text-[hsl(var(--text-secondary))]">{30 + i * 15}%</span>
+                                        <span className="font-semibold text-[hsl(var(--text-secondary))]">{Math.round(course.progress_percent)}%</span>
                                     </div>
                                 ))}
                             </div>

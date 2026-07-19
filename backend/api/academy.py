@@ -693,7 +693,7 @@ def my_profile(current_user: AcademyStudent, db: Session = Depends(get_db)):
     )
     return {
         "persona_id": current_user.id,
-        "username": getattr(current_user, "username", None) or getattr(current_user, "email", ""),
+        "username": current_user.username or current_user.email or "",
         "total_progress": round(average, 2),
         "enrollments_count": len(enrollments),
         "certificates_count": len(certificates),
@@ -819,6 +819,8 @@ async def submit_assignment(
 @router.get("/forum/threads")
 def forum_threads(
     current_user: AcademyStudent,
+    category: schemas.ForumCategory | None = None,
+    skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
@@ -839,7 +841,9 @@ def forum_threads(
         # Superadmin sin sede: ve cursos no borrados + huerfanos.
         course_scope = models.Course.deleted_at.is_(None)
     query = query.filter(or_(models.ForumThread.course_id.is_(None), course_scope))
-    return query.order_by(models.ForumThread.created_at.desc()).limit(limit).all()
+    if category is not None:
+        query = query.filter(models.ForumThread.category == category.value)
+    return query.order_by(models.ForumThread.created_at.desc()).offset(skip).limit(limit).all()
 
 
 @router.post("/forum/threads", status_code=status.HTTP_201_CREATED)
@@ -960,6 +964,93 @@ def create_forum_comment(
     return comment
 
 
+def _get_scoped_lesson(
+    db: Session,
+    current_user: models.User,
+    lesson_id: UUID,
+    *,
+    require_published: bool,
+) -> models.Lesson:
+    """Resuelve una lección por la frontera Course→sede, nunca por UUID aislado."""
+    lesson = db.query(models.Lesson).filter(
+        models.Lesson.id == lesson_id,
+        models.Lesson.deleted_at.is_(None),
+    ).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lección no encontrada")
+    _get_scoped_course(db, current_user, lesson.course_id)
+    if require_published and not lesson.is_published and not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=404, detail="Lección no encontrada")
+    return lesson
+
+
+@router.get("/lessons/{lesson_id}/resources", response_model=list[schemas.Resource])
+def list_lesson_resources(
+    lesson_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    lesson = _get_scoped_lesson(db, current_user, lesson_id, require_published=True)
+    return (
+        db.query(models.Resource)
+        .filter(models.Resource.lesson_id == lesson.id, models.Resource.deleted_at.is_(None))
+        .order_by(models.Resource.created_at.asc())
+        .all()
+    )
+
+
+@router.post("/admin/lessons/{lesson_id}/resources", response_model=schemas.Resource, status_code=status.HTTP_201_CREATED)
+def create_lesson_resource(
+    lesson_id: UUID,
+    payload: schemas.ResourceCreate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    lesson = _get_scoped_lesson(db, current_user, lesson_id, require_published=False)
+    resource = models.Resource(lesson_id=lesson.id, **payload.model_dump())
+    db.add(resource)
+    db.add(
+        models.AcademyActivityLog(
+            event_type="lesson_resource_created",
+            course_id=lesson.course_id,
+            persona_id=current_user.id,
+            modality=None,
+            value=0,
+            payload_json={"resource_id": str(resource.id), "lesson_id": str(lesson.id)},
+        )
+    )
+    db.commit()
+    db.refresh(resource)
+    return resource
+
+
+@router.delete("/admin/resources/{resource_id}", status_code=status.HTTP_204_NO_CONTENT)
+def archive_lesson_resource(
+    resource_id: UUID,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    resource = db.query(models.Resource).filter(
+        models.Resource.id == resource_id,
+        models.Resource.deleted_at.is_(None),
+    ).first()
+    if not resource:
+        raise HTTPException(status_code=404, detail="Recurso no encontrado")
+    lesson = _get_scoped_lesson(db, current_user, resource.lesson_id, require_published=False)
+    resource.deleted_at = _utcnow()
+    db.add(
+        models.AcademyActivityLog(
+            event_type="lesson_resource_archived",
+            course_id=lesson.course_id,
+            persona_id=current_user.id,
+            modality=None,
+            value=0,
+            payload_json={"resource_id": str(resource.id), "lesson_id": str(lesson.id)},
+        )
+    )
+    db.commit()
+
+
 @router.get("/schedule")
 def academy_schedule(
     current_user: AcademyStudent,
@@ -993,6 +1084,29 @@ def academy_personas(
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
         query = query.filter(models.Persona.sede_id == sede_id)
+    if role:
+        # ACAD-LOW-007: filtrar por nombre de rol canónico (member / staff / admin / etc.)
+        # El modelo Persona no persiste role directo; se resuelve en runtime vía
+        # ``UsuarioRolPlataforma`` para mantener una sola fuente de verdad.
+        from backend.models_auth import RolPlataforma, UsuarioRolModulo
+
+        persona_ids_with_role = {
+            row[0]
+            for row in (
+                db.query(UsuarioRolModulo.user_id)
+                .join(RolPlataforma, RolPlataforma.id == UsuarioRolModulo.rol_id)
+                .filter(
+                    RolPlataforma.nombre == role,
+                    UsuarioRolModulo.deleted_at.is_(None),
+                )
+                .all()
+            )
+        }
+        if persona_ids_with_role:
+            query = query.filter(models.Persona.id.in_(persona_ids_with_role))
+        else:
+            # Si el rol no existe, no devolvemos personas (evita leak accidental).
+            query = query.filter(False)
     personas = query.order_by(models.Persona.first_name, models.Persona.last_name).offset(skip).limit(limit).all()
     return [
         {
