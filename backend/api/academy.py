@@ -900,6 +900,66 @@ def resolve_forum_thread(
     return thread
 
 
+def _get_scoped_forum_thread(db: Session, current_user: models.User, thread_id: UUID):
+    thread = db.query(models.ForumThread).filter(models.ForumThread.id == thread_id).first()
+    if not thread:
+        raise HTTPException(status_code=404, detail="Hilo no encontrado")
+    if thread.course_id:
+        _get_scoped_course(db, current_user, thread.course_id)
+    return thread
+
+
+@router.get("/forum/threads/{thread_id}")
+def get_forum_thread(
+    thread_id: UUID,
+    current_user: AcademyStudent,
+    db: Session = Depends(get_db),
+):
+    return _get_scoped_forum_thread(db, current_user, thread_id)
+
+
+@router.get("/forum/threads/{thread_id}/comments", response_model=list[schemas.ForumCommentRead])
+def list_forum_comments(
+    thread_id: UUID,
+    current_user: AcademyStudent,
+    db: Session = Depends(get_db),
+):
+    _get_scoped_forum_thread(db, current_user, thread_id)
+    return (
+        db.query(models.ForumComment)
+        .filter(models.ForumComment.thread_id == thread_id)
+        .order_by(models.ForumComment.created_at.asc())
+        .all()
+    )
+
+
+@router.post("/forum/threads/{thread_id}/comments", response_model=schemas.ForumCommentRead, status_code=status.HTTP_201_CREATED)
+def create_forum_comment(
+    thread_id: UUID,
+    payload: schemas.ForumCommentCreate,
+    current_user: AcademyStudent,
+    db: Session = Depends(get_db),
+):
+    _get_scoped_forum_thread(db, current_user, thread_id)
+    if payload.parent_id:
+        parent = db.query(models.ForumComment).filter(
+            models.ForumComment.id == payload.parent_id,
+            models.ForumComment.thread_id == thread_id,
+        ).first()
+        if not parent:
+            raise HTTPException(status_code=404, detail="Comentario padre no encontrado")
+    comment = models.ForumComment(
+        thread_id=thread_id,
+        parent_id=payload.parent_id,
+        author_persona_id=current_user.id,
+        content=payload.content.strip(),
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return comment
+
+
 @router.get("/schedule")
 def academy_schedule(
     current_user: AcademyStudent,
