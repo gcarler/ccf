@@ -8,7 +8,8 @@ import { BookOpen, Upload, CreditCard, Wallet, Landmark, Lock, CheckCircle2, Loa
 import { useToast } from '@/context/ToastContext';
 
 import { motion, AnimatePresence } from "framer-motion";
-import AcademyDetailShell from '@/components/academy/AcademyDetailShell';
+import { AcademyDetailContainer } from '@/components/academy/AcademyDetailShell';
+import WorkspaceLayout from '@/components/WorkspaceLayout';
 
 export default function EnrollmentWizard() {
     const { token, isAuthenticated, user } = useAuth();
@@ -67,23 +68,24 @@ export default function EnrollmentWizard() {
 
     if (loading) {
         return (
-            <AcademyDetailShell title="Procesando curso" description="Preparando requisitos de inscripción" variant="blue">
-                <div className="flex items-center justify-center py-1.5">
-                    <Loader2 className="animate-spin text-[hsl(var(--primary))] w-10 h-10" />
-                </div>
-            </AcademyDetailShell>
+            <WorkspaceLayout depth={2} breadcrumbs={[{ label: 'Academia' }, { label: 'Procesando curso…' }]} onBack={() => router.push('/plataforma/academy')}>
+                <AcademyDetailContainer variant="blue" contentClassName="px-4 py-1.5">
+                    <div className="flex items-center justify-center py-1.5">
+                        <Loader2 className="animate-spin text-[hsl(var(--primary))] w-10 h-10" />
+                    </div>
+                </AcademyDetailContainer>
+            </WorkspaceLayout>
         );
     }
 
     if (!course) return null;
 
     return (
-        <AcademyDetailShell
-            title={`Inscripción · ${course.title}`}
-            description="Completa requisitos, realiza pago y confirma tu nivel de formación"
-            variant="blue"
-            contentClassName="max-w-xl mx-auto"
+        <WorkspaceLayout
+            breadcrumbs={[{ label: 'Academia' }, { label: `Inscripción · ${course.title}` }]}
+            onBack={() => router.push('/plataforma/academy')}
         >
+            <AcademyDetailContainer variant="blue" contentClassName="max-w-xl mx-auto">
             <div className="px-4 mt-4 mb-4">
                 <div className="flex items-center justify-between gap-4 p-2 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))]">
                     {[1, 2, 3].map((s) => (
@@ -280,6 +282,7 @@ export default function EnrollmentWizard() {
                         )}
                     </div>
                 )}
-        </AcademyDetailShell>
+            </AcademyDetailContainer>
+        </WorkspaceLayout>
     );
 }

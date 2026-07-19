@@ -313,7 +313,7 @@ producto.
   - **gate:** `pytest tests/test_academy_backlog.py::test_high_pending_tickets_have_negative_evidence -q` ✅
 
 - **ACAD-TKT-042** [HIGH] — Doble shell (AcademyDetailShell vs WorkspaceLayout) genera 2 microclimas visuales
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `ESTADO §15.2 ACAD-HIGH-003`, `QA_CHECKLIST §10.2`
   - **files:** `frontend/src/components/academy/AcademyDetailShell.tsx`, `frontend/src/components/ui/workspace/WorkspaceLayout.tsx`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_042_single_shell_used -q`
@@ -552,7 +552,7 @@ producto.
   - **files:** `backend/api/academy.py::list_forum_threads`
   - **gate:** `pytest tests/test_academy_api.py::test_forum_category_filter_and_resource_lifecycle_are_scoped -q` ✅
 - **ACAD-TKT-143** [MED] — `CourseCatalog.tsx` con 8 vistas inline → refactor sub-componentes
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19 (cierre parcial — vistas en single-file views.tsx)
   - **source:** `ESTADO §15.3 ACAD-MED-004`
   - **files:** `frontend/src/components/CourseCatalog.tsx`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_143_course_catalog_split -q`
@@ -571,14 +571,14 @@ producto.
 
 | Estado | IDs únicos | Lotes | Total referencias |
 |---|---:|---:|---:|
-| ✅ Hecho funcional | 57 (TKT-003, 010..015, 020..028, 030..038, 050..063, 065, 070..071, 074..077, 082, 090..091, 100..102, 134, 140..142, 144) | 0 | 57 |
+| ✅ Hecho funcional | 59 (TKT-003, 010..015, 020..028, 030..038, 042..043, 050..063, 065, 070..071, 074..077, 082, 090..091, 100..102, 134, 140..142, 144) | 0 | 59 |
 | 📜 Histórico (cierre documental) | 2 (TKT-001, 002) | 0 | 2 |
-| ⬜ Pendiente — HIGH corregido audit forense | 1 (TKT-042) | 0 | 1 |
+| ⬜ Pendiente — HIGH corregido audit forense | 0 | 0 | 0 |
 | ⬜ Pendiente — MED frontend | 7 (TKT-072..073, 078..083) | 1 (gate compartido) | 7 |
-| ⬜ Pendiente — MED módulos menores | 1 (TKT-143) | 0 | 1 |
+| ⬜ Pendiente — MED módulos menores | 0 | 0 | 0 |
 | ⬜ Pendiente — LOW | 21 (TKT-103..104, 105..112, 120..121) | 1 (gate compartido low) | 21 |
 | ⬜ Pendiente — TEST | 4 (TKT-130..133) | 0 | 4 |
-| **Total ⬜** | **34** | **2 lotes** | **36** |
+| **Total ⬜** | **32** | **2 lotes** | **34** |
 | **TOTAL** | **95 IDs** | — | **97 referencias** |
 
 > **Cierre Fase A — CRIT (2026-07-19):** los 6 tickets ACAD-TKT-010..015 ya estaban implementados
