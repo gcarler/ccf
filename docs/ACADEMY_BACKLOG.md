@@ -542,6 +542,8 @@ producto.
 
 ### 4.8. TRANSVERSAL (Resiliencia, Observabilidad, Seguridad profunda, Compliance — *bloqueantes Fase 6*)
 
+> **Estado Fase 7 (2026-07-19):** **3 / 7 transversales cerrados** ✅ — TKT-200 (rate limiting + DoS), TKT-201 (tracing distribuido + correlation-id) y TKT-203 (caching + N+1 optimization en `dashboard_metrics` y `list_lessons`). Pendientes para certificación Fase 6: **TKT-202** (E2E Playwright multi-rol), **TKT-204** (accesibilidad WCAG AA), **TKT-205** (notificaciones async Celery/RQ) y **TKT-206** (endpoint GDPR/LOPD export). Cada transversal cerrado cuenta con regression gate pytest dedicado en `tests/test_academy_fase_7_transversal.py` (ver `pytest -k tkt_200`, `tkt_201`, `tkt_203`).
+
 > **Gaps identificados en análisis 2026-07-19** que el plan original no cubría.
 > Estos 7 tickets son **prerrequisito para la certificación del módulo** (§3.1 Fase 6):
 > representan dimensiones sistémicas (no drift aislado) que definen un sistema
@@ -648,16 +650,16 @@ producto.
 
 | Estado | IDs únicos | Lotes | Total referencias |
 |---|---:|---:|---:|
-| ✅ Hecho funcional | 67 (TKT-003, 010..015, 020..028, 030..038, 042..043, 050..063, 065, 070..071, 074..077, 082, 090..091, 100..102, 103, 104, 106, 108, 109, 110, 121, 131, 134, 140..142, 144) | 0 | 67 |
+| ✅ Hecho funcional | 70 (TKT-003, 010..015, 020..028, 030..038, 042..043, 050..063, 065, 070..071, 074..077, 082, 090..091, 100..102, 103, 104, 106, 108, 109, 110, 121, 131, 134, 140..142, 144, 200, 201, 203) | 0 | 70 |
 | 📜 Histórico (cierre documental) | 2 (TKT-001, 002) | 0 | 2 |
 | ⬜ Pendiente — HIGH corregido audit forense | 0 | 0 | 0 |
 | ⬜ Pendiente — MED frontend | 7 (TKT-072..073, 078..083) | 1 (gate compartido) | 7 |
 | ⬜ Pendiente — MED módulos menores | 0 | 0 | 0 |
 | ⬜ Pendiente — LOW | 21 (TKT-103..104, 105..112, 120..121) | 1 (gate compartido low) | 21 |
 | ⬜ Pendiente — TEST | 4 (TKT-130..133) | 0 | 4 |
-| ⬜ Pendiente — TRANSVERSAL *(bloqueantes Fase 6, ver §4.8)* | 7 (TKT-200..206) | 0 | 7 |
-| **Total ⬜** | **39** | **2 lotes** | **41** |
-| **TOTAL** | **108 IDs** *(67 ✅ + 2 📜 + 39 ⬜)* | — | **110 referencias** |
+| ⬜ Pendiente — TRANSVERSAL *(bloqueantes Fase 6, ver §4.8)* | 4 (TKT-202, 204, 205, 206) | 0 | 4 |
+| **Total ⬜** | **36** | **2 lotes** | **38** |
+| **TOTAL** | **108 IDs** *(70 ✅ + 2 📜 + 36 ⬜)* | — | **110 referencias** |
 
 > **Cierre Fase A — CRIT (2026-07-19):** los 6 tickets ACAD-TKT-010..015 ya estaban implementados
 > en el código (`backend/api/academy.py` + `backend/schemas/academy.py`). El audit docs drift
