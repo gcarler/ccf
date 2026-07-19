@@ -6,10 +6,15 @@ import path from 'node:path';
 const args = [...process.argv.slice(2)];
 const authFlagIndex = args.indexOf('--auth');
 const authEnabled = authFlagIndex >= 0;
+const academyRolesFlagIndex = args.indexOf('--academy-roles');
+const academyRolesEnabled = academyRolesFlagIndex >= 0;
 const hasWorkersFlag = args.includes('--workers');
 
 if (authEnabled) {
   args.splice(authFlagIndex, 1);
+}
+if (academyRolesEnabled) {
+  args.splice(academyRolesFlagIndex, 1);
 }
 
 async function resolveManagedPort() {
@@ -70,7 +75,7 @@ if ((buildResult.status ?? 1) !== 0) {
   process.exit(buildResult.status ?? 1);
 }
 
-if (authEnabled) {
+if (authEnabled || academyRolesEnabled) {
   env.E2E_AUTH_ENABLED = process.env.E2E_AUTH_ENABLED || '1';
   env.E2E_API_URL = process.env.E2E_API_URL || apiBaseUrl;
   env.E2E_EMAIL = process.env.E2E_EMAIL || 'e2e.admin@ccf.local';
@@ -79,6 +84,22 @@ if (authEnabled) {
   if (!hasWorkersFlag) {
     args.unshift('1');
     args.unshift('--workers');
+  }
+}
+
+if (academyRolesEnabled) {
+  // TKT-202: seed 4 distinct role users (Lector/Estudiante/Editor/Admin)
+  // so the multi-role Academy suite can log in as each persona.
+  env.ACADEMY_SEED_PASSWORD =
+    process.env.ACADEMY_SEED_PASSWORD || 'E2E-Academy-2026!';
+  const academySeed = spawnSync(
+    'node',
+    ['tests/e2e/academy/seed-academy-roles.mjs'],
+    { stdio: 'inherit', env },
+  );
+  if (academySeed.error) throw academySeed.error;
+  if ((academySeed.status ?? 1) !== 0) {
+    process.exit(academySeed.status ?? 1);
   }
 }
 
