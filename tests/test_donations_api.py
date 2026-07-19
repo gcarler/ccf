@@ -15,9 +15,6 @@ def _seed_sede(db_session):
     db_session.commit()
     db_session.refresh(sede)
     return sede
-    assert resp.status_code == 200
-    token = resp.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
 
 
 def test_create_donation(client, db_session):
