@@ -275,6 +275,8 @@ grep -nE "PARCIAL-|PEND-|ACAD-" /root/ccf/docs/ESTADO_ACADEMY.md
 
 ### 15.1. Hallazgos CRÍTICOS (`CRIT`)
 
+> **Contexto:** esta sección contiene **registros históricos** de la auditoría forense del 2026-07-18. El estado actual (cerrado/pendiente) de cada hallazgo se refleja en la tabla consolidada §15.6 más abajo. Los textos descriptivos a continuación se conservan tal cual para preservar la trazabilidad forense — **no reflejan el código vigente**. Para conocer el código real que satisface hoy estos invariantes, consultar §15.6 + `docs/ACADEMY_API_CONTRACTS.md`.
+
 | ID | Severidad | Hallazgo | Archivo |
 |---|---|---|---|
 | `ACAD-CRIT-001` | 🔴 | **Mismatch UUID vs `id:number`** en `CourseCatalog.tsx`. La interfaz `Course` declara `id: number` y `enrolledCourseIds?: number[]`, pero el backend retorna UUID string. `enrolledCourseIds.includes(course.id)` siempre devolverá `false` y el botón mostrará "Inscribirme Ahora" para cursos ya inscritos. | `frontend/src/components/CourseCatalog.tsx` |
@@ -320,8 +322,8 @@ grep -nE "PARCIAL-|PEND-|ACAD-" /root/ccf/docs/ESTADO_ACADEMY.md
 
 | ID | Estado | Notas |
 |---|---|---|
-| `ACAD-CRIT-001` | Pendiente | Bloque catalog UI; requiere decisión coordinada entre frontend y tipos compartidos |
-| `ACAD-CRIT-002` | Pendiente | Tocar `/academy/dashboard/metrics` para añadir `enrollment_trends` y `top_courses`, o ajustar el cliente |
+| `ACAD-CRIT-001` | ✅ **Hecho 2026-07-19 (cierre documental — sin cambios de runtime)** | Resuelto en código: `frontend/src/components/CourseCatalog.tsx` ya usa `id: string` y `enrolledCourseIds?: string[]`; `frontend/src/types/academy.ts::CourseSummary.id = string`. `enrolledCourseIds.includes(course.id)` opera sobre `string === string`. Doc §15.1 se conserva como registro histórico del hallazgo. |
+| `ACAD-CRIT-002` | ✅ **Hecho 2026-07-19 (cierre documental — sin cambios de runtime)** | Resuelto en código: `backend/api/academy.py:870-931` (`dashboard_metrics`) ya retorna `cards`, `enrollment_trends` y `top_courses` (etiqueta inline `// ACAD-CRIT-002:`). `frontend/src/app/plataforma/academy/AcademyClient.tsx:38` consume `/academy/dashboard/metrics` y usa fallback a `/dashboard/academy` para roles sin `academy:manage`. La `DSChart`/`DSCard` navegan con optional chaining `dashboard?.enrollment_trends`, así que el fallback degradado no rompe. Doc §15.1 se conserva como registro histórico. |
 | `ACAD-HIGH-001` | Pendiente | Filtro `hasModuleAccess('academy', 'edit')` por item S2 |
 | `ACAD-HIGH-002` | Pendiente | Local QR (`qrcode` lib en backend → base64 o `react-qr-code` en frontend) |
 | `ACAD-HIGH-003` | Pendiente | Decidir si `AcademyDetailShell` se mantiene o se consolida con `WorkspaceLayout` |
