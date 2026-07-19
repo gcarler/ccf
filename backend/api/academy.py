@@ -7,7 +7,7 @@ explicit Academy permission.
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date
 from enum import Enum
 from typing import Annotated, Any, Literal
 from uuid import UUID
@@ -18,6 +18,12 @@ from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
 
 from backend import models
+
+# TKT-203: helpers de cache LRU + N+1 consolidation para dashboard_metrics y list_lessons
+from backend.api.academy_cache import (
+    _fetch_dashboard_metrics_cached,
+    _fetch_list_lessons_cached,
+)
 from backend.core.database import get_db
 from backend.core.permissions import (
     get_user_effective_permissions,
@@ -273,16 +279,18 @@ def list_lessons(
     limit: int = Query(default=100, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    course = _get_scoped_course(db, current_user, course_id)
-    query = (
-        db.query(models.Lesson)
-        .options(selectinload(models.Lesson.resources))
-        .filter(models.Lesson.course_id == course.id, models.Lesson.deleted_at.is_(None))
+    """Lista lecciones de un curso (TKT-203: cache TTL 5min, key por curso+viewer+paginación)."""
+    # Garantiza scope/sede via Course antes de delegar al helper cacheado.
+    _get_scoped_course(db, current_user, course_id)
+    is_editor = _can_edit_academy(db, current_user)
+    return _fetch_list_lessons_cached(
+        str(course_id),
+        "editor" if is_editor else "student",
+        skip,
+        limit,
+        db,
+        is_editor,
     )
-    if not _can_edit_academy(db, current_user):
-        query = query.filter(models.Lesson.is_published.is_(True))
-    # sede_id applied via parent Course scope (_get_scoped_course filters sede_id)
-    return query.order_by(models.Lesson.order_index).offset(skip).limit(limit).all()
 
 
 @router.get("/courses/{course_id}/assessments")
@@ -1129,86 +1137,21 @@ def academy_personas(
 
 
 @router.get("/dashboard/metrics")
-def dashboard_metrics(current_user: AcademyManager, db: Session = Depends(get_db)):
-    courses = _course_scope(db, current_user)
-    # sede_id applied via _course_scope helper (Axioma 3)
-    course_ids = [row[0] for row in courses.with_entities(models.Course.id).all()]
-    enrollments = (
-        db.query(models.Enrollment).filter(
-            models.Enrollment.course_id.in_(course_ids), models.Enrollment.deleted_at.is_(None)
-        )
-        if course_ids
-        else db.query(models.Enrollment).filter(False)
-    )
-    total = enrollments.count()
-    completed = enrollments.filter(models.Enrollment.status == "completed").count()
-    certificates = (
-        db.query(models.Certificate).join(models.Enrollment).filter(models.Enrollment.course_id.in_(course_ids)).count()
-        if course_ids
-        else 0
-    )
-    completion_rate = round((completed / total) * 100, 2) if total else 0
-    # ACAD-CRIT-002: enrollment_trends (nuevas matrículas por mes) + top_courses (N cursos con m\u00e1s matr\u00edculas)
-    enrollment_trends: list[dict[str, Any]] = []
-    if course_ids:
-        # Acotamos a últimos 12 meses para no crecer indefinidamente
-        cutoff = datetime.now(timezone.utc) - timedelta(days=365)
-        monthly = (
-            db.query(
-                func.date_trunc("month", models.Enrollment.created_at).label("month"),
-                func.count(models.Enrollment.id).label("count"),
-            )
-            .filter(
-                models.Enrollment.course_id.in_(course_ids),
-                models.Enrollment.deleted_at.is_(None),
-                models.Enrollment.created_at >= cutoff,
-            )
-            .group_by("month")
-            .order_by("month")
-            .all()  # sede_id scoped via _course_scope(course_ids)
-        )
-        for month_value, count_value in monthly:
-            enrollment_trends.append(
-                {
-                    "label": month_value.strftime("%Y-%m"),
-                    "value": int(count_value or 0),
-                }
-            )
-    top_courses: list[dict[str, Any]] = []
-    if course_ids:
-        top_rows = (
-            db.query(
-                models.Course.title,
-                func.count(models.Enrollment.id).label("count"),
-            )
-            .join(models.Enrollment, models.Enrollment.course_id == models.Course.id)
-            .filter(
-                models.Course.id.in_(course_ids),
-                models.Enrollment.deleted_at.is_(None),
-            )
-            .group_by(models.Course.title)
-            .order_by(func.count(models.Enrollment.id).desc())
-            .limit(5)
-            .all()  # sede_id scoped via _course_scope(course_ids)
-        )
-        for title, count_value in top_rows:
-            top_courses.append({"title": title, "count": int(count_value or 0)})
-    return {
-        "active_students": total,
-        "completion_rate": completion_rate,
-        "certificates_issued": certificates,
-        "total_courses": len(course_ids),
-        "total_enrollments": total,
-        "completed_enrollments": completed,
-        "cards": [
-            {"title": "Cursos", "value": str(len(course_ids)), "trend": "", "color": "blue"},
-            {"title": "Estudiantes", "value": str(total), "trend": "", "color": "green"},
-            {"title": "Finalización", "value": f"{completion_rate}%", "trend": "", "color": "amber"},
-        ],
-        # Nuevos campos — alimentación del AcademyClient.tsx (ACAD-CRIT-002)
-        "enrollment_trends": enrollment_trends,
-        "top_courses": top_courses,
-    }
+def dashboard_metrics(
+    current_user: AcademyManager,
+    db: Session = Depends(get_db),
+):
+    """Indicadores agregados del módulo Academy.
+
+    TKT-203: el cuerpo real está delegado en ``_fetch_dashboard_metrics_cached``
+    (módulo ``backend/api/academy_cache``) con TTL 5min y ``key_fn`` por
+    ``sede_id``. La ``Session`` SQLAlchemy (no serializable) queda excluida
+    de la cache key gracias al ``key_fn`` explícito, evitando que su ``repr``
+    contamine el hash.
+    """
+    sede_id = get_user_sede_id(db, current_user.id)
+    sede_id_str = str(sede_id) if sede_id else "_global_"
+    return _fetch_dashboard_metrics_cached(sede_id_str, db)
 
 
 @router.get("/dashboard/pilot-readiness")

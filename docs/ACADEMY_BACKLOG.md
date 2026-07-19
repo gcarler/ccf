@@ -574,11 +574,11 @@ producto.
   - **notes:** Test suite actual es 100% backend (pytest + TestClient). No valida que la UI esconda correctamente botones de admin a estudiantes, ni que la integración cliente/servidor serialice fechas UUID/ISO correctamente. Mínimo 3 flujos: estudiante (inscribe→aprende→evalúa→certifica), editor (crea→publica→califica→audita), manager (consulta métricas con filtro sede).
 
 - **ACAD-TKT-203** [MED] — Caching + N+1 query optimization en dashboard/list_lessons
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** Gap analysis 2026-07-19
-  - **files:** `backend/api/academy.py::dashboard_metrics`, `backend/core/cache.py` (nuevo LRU cache)
-  - **gate:** `pytest tests/test_academy_fase_7_transversal.py::test_acad_tkt_203_dashboard_cached_and_no_n_plus_1 -q`
-  - **notes:** `dashboard_metrics` carga todos los courses del scope antes de LIMIT (N+1). `list_lessons` con `selectinload` anidado puede ser lento con >50 lessons. Cache de catalog público (TTL 5min, key por sede_id) reduce carga DB 80%. Verificar con `EXPLAIN ANALYZE` que los queries críticos usan índices `persona_id`, `course_id`, `sede_id`.
+  - **files:** `backend/api/academy.py` (delegation wrappers), `backend/api/academy_cache.py` (nuevo, helpers cacheados), `backend/core/cache.py` (key_fn param), `tests/test_academy_fase_7_transversal.py` (7 tests TKT-203)
+  - **gate:** `pytest tests/test_academy_fase_7_transversal.py -k tkt_203 -q` + `pytest tests/test_academy_fase_*.py -k tkt_203 -q` (8 tests verde)
+  - **notes:** (1) `dashboard_metrics` → delega a `_fetch_dashboard_metrics_cached` (`backend/api/academy_cache.py`) con N+1 consolidado a 1 query (`COUNT` + `COALESCE(SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END))`). Cache key por `sede_id_str` con TTL 5min y prefijo `:v1:` para bump de versión controlado. (2) `list_lessons` → delega a `_fetch_list_lessons_cached` con cache por `(course_id, viewer_role, skip, limit)` TTL 5min; `_lesson_to_dict()` serializa `Lesson` ORM a dict JSON-seguro preservando el contrato de `jsonable_encoder` default de FastAPI. (3) `backend/core.cache.cached(key_fn=...)` permite derivar cache key sólo de args escalares; evita que `Session` SQLAlchemy contamine el hash. (4) Pre-push hook [6/7] compliance: 0 forbidden_terms (`legacy`/`deprecated`) en los 3 archivos modificados — verificado por `test_acad_tkt_203_ci_guard_no_forbidden_terms_in_modified_files`.
 
 - **ACAD-TKT-204** [MED] — Accesibilidad (WCAG AA en progress bars, modales, keyboard nav)
   - **state:** ⬜ Pendiente

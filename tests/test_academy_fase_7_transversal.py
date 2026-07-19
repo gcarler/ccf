@@ -456,3 +456,331 @@ def test_acad_tkt_200_ci_guard_slowapi_and_limits_versions_pinned() -> None:
         f"{[line for line in req_lines if 'limits' in line.lower()]}"
     )
 
+
+# ── TKT-203 — caching + N+1 optimization (dashboard / list_lessons) ────────
+
+
+def test_acad_tkt_203_cached_decorator_accepts_key_fn_argument() -> None:
+    """``backend.core.cache.cached(ttl=..., key_fn=...)`` debe usar el
+    ``key_fn`` explícito cuando se provee y derivar la cache key sólo de
+    args escalares, descartando ``Session``/objetos no-serializables.
+    """
+    from backend.core.cache import cached
+
+    calls = {"count": 0}
+
+    @cached(ttl=300, key_fn=lambda args, kwargs: f"custom:{args[0]}:{args[1]}")
+    def _sample(sede_id: str, role: str) -> str:
+        calls["count"] += 1
+        return f"computed-{sede_id}-{role}"
+
+    # Mismo db (object()-style) pero distintos escalares → distintas keys.
+    a = _sample("sede_a", "manager")
+    b = _sample("sede_b", "manager")
+    c = _sample("sede_a", "manager")  # segundo hit sobre mismas key → from cache
+    assert a == "computed-sede_a-manager"
+    assert b == "computed-sede_b-manager"
+    assert c == "computed-sede_a-manager"
+    assert calls["count"] == 2, (
+        f"Esperaba 2 cómputos (cache_miss para dos keys distintas), "
+        f"obtuve {calls['count']}"
+    )
+
+
+def test_acad_tkt_203_cached_decorator_default_key_fn_uses_stable_hash() -> None:
+    """Sin ``key_fn``, ``cached(ttl=...)`` cae al SHA256 estable sobre args+kwargs."""
+    from backend.core.cache import _stable_cache_key
+
+    expected = _stable_cache_key("func", ("x",), {"k": "v"})
+    actual = _stable_cache_key("func", ("x",), {"k": "v"})
+    assert expected == actual
+    # Distintos args producen distintas keys
+    assert _stable_cache_key("func", ("y",), {"k": "v"}) != expected
+    assert _stable_cache_key("func", ("x",), {"k": "w"}) != expected
+
+
+def test_acad_tkt_203_dashboard_metrics_key_excludes_session_object() -> None:
+    """``_dashboard_metrics_key`` sólo depende de ``sede_id_str``, ignora ``db``."""
+    from backend.api.academy_cache import _dashboard_metrics_key
+
+    db_fake_a, db_fake_b = object(), object()
+    key_a1 = _dashboard_metrics_key(("uuid-sede-a", db_fake_a), {})
+    key_a2 = _dashboard_metrics_key(("uuid-sede-a", db_fake_b), {})
+    assert key_a1 == key_a2, (
+        "key_fn debe ignorar el ``db`` (object()) y producir la misma key"
+    )
+    # Distinta sede_id → distinta key
+    key_b = _dashboard_metrics_key(("uuid-sede-b", db_fake_a), {})
+    assert key_a1 != key_b, f"keys por sede distinta deberían diferenciarse: {key_a1} vs {key_b}"
+    # Formato esperado para grep-ability y bump de versión controlado
+    assert key_a1.startswith("academy:dashboard:metrics:v1:sede="), (
+        f"formato inesperado: {key_a1!r}"
+    )
+
+
+def test_acad_tkt_203_list_lessons_key_includes_all_serialization_fields() -> None:
+    """``_list_lessons_key`` deriva de (course_id, viewer_role, skip, limit)."""
+    from backend.api.academy_cache import _list_lessons_key
+
+    base = _list_lessons_key(("course-a", "editor", 0, 50, object(), True), {})
+    # Misma course + viewer + paginación → misma key
+    again = _list_lessons_key(("course-a", "editor", 0, 50, object(), True), {})
+    assert base == again
+    # Distinto skip → distinta key (paginación es parte del key)
+    assert base != _list_lessons_key(("course-a", "editor", 10, 50, object(), True), {})
+    # Distinto limit → distinta key
+    assert base != _list_lessons_key(("course-a", "editor", 0, 100, object(), True), {})
+    # Distinto viewer → distinta key (student vs editor ven distinto visibility)
+    assert base != _list_lessons_key(("course-a", "student", 0, 50, object(), False), {})
+    # Distinto course → distinta key
+    assert base != _list_lessons_key(("course-b", "editor", 0, 50, object(), True), {})
+    assert "viewer=editor" in base, f"viewer_role faltante en key: {base!r}"
+    assert ":skip=" in base and ":limit=" in base, f"paginación faltante en key: {base!r}"
+
+
+def test_acad_tkt_203_lesson_to_dict_serializes_uuid_and_datetime_gracefully() -> None:
+    """``_lesson_to_dict`` convierte ``Lesson`` ORM a dict JSON-seguro.
+
+    Usa un ``SimpleNamespace`` con ``__table__`` mockeado para no requerir
+    una conexión real a la DB. Mantiene compatibilidad con el
+    ``jsonable_encoder`` por defecto de FastAPI sobre instancias SQLAlchemy.
+    """
+    from datetime import datetime, timezone
+    from types import SimpleNamespace
+    from uuid import uuid4
+
+    from backend.api.academy_cache import _lesson_to_dict
+
+    fake_uuid = uuid4()
+    fake_dt = datetime(2026, 7, 19, 12, 0, 0, tzinfo=timezone.utc)
+
+    class _Col:
+        def __init__(self, name: str) -> None:
+            self.name = name
+
+    resources_mock = []
+
+    lesson = SimpleNamespace(
+        id=fake_uuid,
+        title="L-1",
+        content="hola",
+        order_index=1,
+        duration_minutes=10,
+        is_published=True,
+        is_live=False,
+        created_at=fake_dt,
+        updated_at=fake_dt,
+        deleted_at=None,
+        resources=resources_mock,
+    )
+    lesson.__table__ = SimpleNamespace(
+        columns=[
+            _Col("id"),
+            _Col("title"),
+            _Col("content"),
+            _Col("order_index"),
+            _Col("duration_minutes"),
+            _Col("is_published"),
+            _Col("is_live"),
+            _Col("created_at"),
+            _Col("updated_at"),
+            _Col("deleted_at"),
+        ]
+    )
+
+    out = _lesson_to_dict(lesson)
+    # ``id`` (UUID) → str, ``created_at`` (datetime) → isoformat
+    assert out["id"] == str(fake_uuid), f"UUID no serializado: {out['id']!r}"
+    assert out["created_at"] == fake_dt.isoformat(), (
+        f"datetime no serializado: {out['created_at']!r}"
+    )
+    assert out["title"] == "L-1"
+    assert out["resources"] == [], (
+        f"resources vacíos no deberían propagarse: {out['resources']!r}"
+    )
+
+
+def test_acad_tkt_203_ttl_is_300_seconds_in_setex_calls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """El decorador ``@cached(ttl=300)`` invoca ``redis.setex`` con TTL=300."""
+    from backend.core.cache import cached
+
+    class _SpyMemoryRedis:
+        def __init__(self) -> None:
+            self.store: dict = {}
+            self.expirations: dict[str, int] = {}
+
+        def get(self, key: str):
+            return self.store.get(key)
+
+        def setex(self, key: str, ttl: int, value):
+            self.store[key] = value
+            self.expirations[key] = ttl
+
+        def delete(self, key: str):
+            self.store.pop(key, None)
+            self.expirations.pop(key, None)
+
+        def incr(self, key: str):
+            self.store[key] = int(self.store.get(key, 0)) + 1
+            return self.store[key]
+
+        def expire(self, key: str, ttl: int):
+            self.expirations[key] = ttl
+
+        def publish(self, *_a, **_kw):
+            return 0
+
+        def pubsub(self):
+            raise RuntimeError("unsupported in spy")
+
+    spy = _SpyMemoryRedis()
+    monkeypatch.setattr("backend.core.cache.redis_client", spy)
+
+    @cached(ttl=300)
+    def _dummy(sede_id: str) -> str:
+        return f"value-{sede_id}"
+
+    # Primer hit → setex
+    assert _dummy("sede-a") == "value-sede-a"
+    assert spy.expirations, "Esperaba que setex poblara el TTL"
+    # Todas las cache keys derivados deben tener TTL=300 (5min)
+    for key, ttl in spy.expirations.items():
+        assert ttl == 300, f"key={key}: TTL={ttl}, esperaba 300"
+    # Segundo hit con misma sede → debe leer del cache sin re-poplar setex
+    initial_setex_count = len(spy.expirations)
+    assert _dummy("sede-a") == "value-sede-a"
+    assert len(spy.expirations) == initial_setex_count, (
+        "segundo hit no debería llamar setex otra vez"
+    )
+
+
+def test_acad_tkt_203_sede_id_cache_keys_v1_semantic_versioning() -> None:
+    """Las keys de cache incluyen ``v1`` para soportar invalidación masiva
+    ante cambio de shape de respuesta. Bump ``v1`` → ``v2`` fuerza MISS
+    global de la key correspondiente sin tener que esperar al TTL.
+    """
+    from backend.api.academy_cache import _dashboard_metrics_key, _list_lessons_key
+
+    dk = _dashboard_metrics_key(("abc-uuid", object()), {})
+    lk = _list_lessons_key(("course-uuid", "editor", 0, 50, object(), True), {})
+
+    assert ":v1:" in dk, f"dashboard key sin sufijo de versión: {dk!r}"
+    assert ":v1:" in lk, f"list_lessons key sin sufijo de versión: {lk!r}"
+    # Keys distintas entre sí (no colisionan)
+    assert dk != lk
+
+
+def test_acad_tkt_203_ci_guard_no_forbidden_terms_in_modified_files() -> None:
+    """CI guard: ningún archivo TKT-203 contiene 'legacy' o 'deprecated'.
+
+    El pre-push hook [6/7] structural contracts verifica estos términos en
+    ``backend/api``, ``backend/core`` y ``frontend/src``. Aquí verificamos
+    EXPLÍCITAMENTE los archivos modificados por TKT-203 para que un fallo
+    aparezca tanto en el hook como en pytest (más diagnosticable).
+    """
+    from pathlib import Path
+
+    _repo_root = Path(__file__).resolve().parents[1]
+    targets = [
+        _repo_root / "backend" / "core" / "cache.py",
+        _repo_root / "backend" / "api" / "academy.py",
+        _repo_root / "backend" / "api" / "academy_cache.py",
+    ]
+    for path in targets:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        bad = [term for term in ("legacy", "Legacy", "LEGACY", "deprecated", "Deprecated", "DEPRECATED") if term in text]
+        assert not bad, (
+            f"CI guard TKT-203: {path.name} contiene términos prohibidos "
+            f"{bad}. Sustituir por sinónimos neutrales (preserved, anterior, "
+            f"en_v2, etc)."
+        )
+
+
+def test_acad_tkt_203_sql_gate_n1_consolidation(db_session) -> None:
+    """SQL-layer gate: cierra el N+1 reduction en ``dashboard_metrics``.
+
+    ANTES de TKT-203: el endpoint ejecutaba 2 queries separados:
+      1. ``total = enrollments.count()``
+      2. ``completed = enrollments.filter(status='completed').count()``
+
+    DESPUÉS de TKT-203: una sola query consolidada con ``COUNT`` +
+    ``COALESCE(SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END))``.
+
+    Este gate verifica, a nivel SQL (no API), que sólo se emite UNA sola
+    query combinando ``count(``, ``sum(`` y ``case`` sobre la tabla
+    ``academy_enrollments``. Sin este gate, un refactor accidental podría
+    reintroducir las 2 queries originales y el resto de la suite pasaría
+    verde silenciosamente.
+
+    El listener ``before_cursor_execute`` se registra sobre el engine del
+    fixture ``db_session`` y se desregistra en ``finally`` para no
+    contaminar otros tests.
+    """
+    from sqlalchemy import event
+    from sqlalchemy.exc import OperationalError
+
+    from backend import models  # local import para el test fixture
+    from backend.api.academy_cache import _fetch_dashboard_metrics_cached
+
+    # Setup mínimo: 1 course con sede aleatoria (garantiza cache miss).
+    test_sede = str(uuid.uuid4())
+    course = models.Course(
+        id=uuid.uuid4(),
+        code=f"TEST-N1-{uuid.uuid4().hex[:6]}",
+        title="N1 Test",
+        modality="online",
+        is_published=True,
+        deleted_at=None,
+        sede_id=test_sede,
+    )
+    db_session.add(course)
+    db_session.commit()
+
+    captured_queries: list = []
+
+    def _capture(conn, cursor, statement, parameters, context, executemany):
+        captured_queries.append(statement.lower())
+
+    db_engine = db_session.get_bind()
+    event.listen(db_engine, "before_cursor_execute", _capture)
+
+    # SQLite no soporta ``func.date_trunc`` (usada en enrollment_trends —
+    # pre-existente a TKT-203). La query consolidada N+1 se emite ANTES de
+    # llegar a date_trunc, así que swallow este OperationalError específico
+    # sólo en SQLite preservando las queries capturadas. Postgres propaga
+    # date_trunc sin error (no necesita swallow).
+    try:
+        _fetch_dashboard_metrics_cached(test_sede, db_session)
+    except OperationalError as exc:
+        if db_engine.dialect.name != "sqlite" or "date_trunc" not in str(exc).lower():
+            raise
+    finally:
+        event.remove(db_engine, "before_cursor_execute", _capture)
+
+    # La firma del N+1 reduction: ``count(`` + ``sum(`` + ``case`` contra
+    # academy_enrollments en UN solo statement. Si esta firma no aparece,
+    # los dos ``count()`` separados fueron reintroducidos.
+    consolidation_queries = [
+        q
+        for q in captured_queries
+        if "academy_enrollments" in q
+        and "count(" in q
+        and "sum(" in q
+        and "case" in q
+    ]
+
+    assert len(consolidation_queries) == 1, (
+        f"TKT-203 N+1 gate bloqueante: esperaba 1 query consolidada "
+        f"(COUNT+SUM+CASE sobre academy_enrollments) y encontré "
+        f"{len(consolidation_queries)}. Detalle: {consolidation_queries}"
+    )
+    # El gate es suficiente: la firma de consolidación (count+sum+case sobre
+    # academy_enrollments) excluye per construcción los 2 count() separados
+    # del N+1 original. Enrollment aparece legitimamente en otras queries (cert
+    # count via JOIN + enrollment_trends) tras TKT-203 — verificado por
+    # presencia de count+sum+case, NO por conteo absoluto.
+

@@ -110,15 +110,30 @@ def _stable_cache_key(func_name: str, args: tuple, kwargs: dict) -> str:
     return f"cache:{func_name}:{digest}"
 
 
-def cached(ttl: int = 300):
-    """Decorador simple para cachear resultados en Redis/Memoria."""
+def cached(ttl: int = 300, key_fn=None):
+    """Decorador para cachear resultados en Redis/Memoria.
+
+    Args:
+        ttl: Segundos hasta la expiración del cache.
+        key_fn: Callable opcional ``(args, kwargs) -> str`` que construye la
+            cache key de forma explícita. Si se omite, se hashea ``args`` +
+            ``kwargs`` con ``_stable_cache_key``. Útil cuando la firma incluye
+            objetos no-serializables (ej. ``Session`` SQLAlchemy) y se quiere
+            derivar la key sólo de argumentos escalares.
+
+    TKT-203: la inyección de ``key_fn`` permite cachear funciones que reciben
+    ``db: Session`` u objetos ORM sin contaminar la key con su ``__str__``.
+    """
 
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             redis = get_redis()
 
-            key = _stable_cache_key(func.__name__, args, kwargs)
+            if key_fn is not None:
+                key = key_fn(args, kwargs)
+            else:
+                key = _stable_cache_key(func.__name__, args, kwargs)
 
             # Intentar obtener del cache
             cached_val = redis.get(key)
@@ -131,13 +146,11 @@ def cached(ttl: int = 300):
             # Ejecutar funcion real
             result = func(*args, **kwargs)
 
-            # Guardar en cache
+            # Guardar en cache. El ``default=str`` cubre datetime/UUID sueltos
+            # que pudieran sobrevivir en el resultado.
             try:
-                serializable_result = result
-                if hasattr(result, "model_dump"):
-                    serializable_result = result.model_dump()
-
-                redis.setex(key, ttl, json.dumps(serializable_result))
+                serializable_result = result.model_dump() if hasattr(result, "model_dump") else result
+                redis.setex(key, ttl, json.dumps(serializable_result, default=str))
             except (TypeError, ValueError, ConnectionError):
                 pass
 
