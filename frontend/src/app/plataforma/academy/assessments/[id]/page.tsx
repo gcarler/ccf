@@ -205,7 +205,7 @@ export default function AssessmentPage() {
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4">
                 {viewType === 'list' && (
  <div className="w-full space-y-4">
-                        {assessment.questions.map((question: any, index: number) => (
+                        {assessment.questions.map((question: AssessmentQuestion, index: number) => (
                             <button
                                 key={question.id}
                                 onClick={() => setCurrentStep(index)}
@@ -247,7 +247,7 @@ export default function AssessmentPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {assessment.questions.map((question: any, index: number) => (
+                                {assessment.questions.map((question: AssessmentQuestion, index: number) => (
                                     <tr key={question.id} className="border-t border-[hsl(var(--border))] dark:border-white/5">
                                         <td className="px-4 py-1.5 font-bold text-[hsl(var(--text-secondary))]">{index + 1}</td>
                                         <td className="px-4 py-1.5 font-bold text-[hsl(var(--text-primary))] dark:text-white">{question.question_text}</td>
@@ -300,7 +300,7 @@ export default function AssessmentPage() {
                                 className="space-y-4"
                             >
                                 {currentQuestion.question_type !== 'text' ? (
-                                    currentQuestion.options.map((option: any) => (
+                                    currentQuestion.options.map((option: AssessmentQuestionOption) => (
                                         <button
                                             key={option.id}
                                             onClick={() => handleAnswer(currentQuestion.id, { selected_option_id: option.id })}

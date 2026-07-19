@@ -237,59 +237,67 @@ producto.
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_028_resolve_forum_writes_audit_log -q`
 
 - **ACAD-TKT-030** [HIGH] — Frontend: router paths `/academy/...` rotos en 7 archivos (10 paths)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H10`
   - **files:** `frontend/src/app/plataforma/academy/{coordination,courses/[id],profile/progress,curriculum,students,teachers,teacher,courses/[id]/lessons}/page.tsx`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_030_no_bare_academy_paths -q --roof 0`
-  - **notes:** 7 archivos × 10 paths concretos — ver tabla de mapeo en el closure commit cuando se cierre.
+  - **gate:** `pytest tests/test_academy_fase_3_frontend.py::test_acad_tkt_030_no_bare_academy_paths -q` ✅
+  - **notes:** Drift detectado. No se encontraron ``router.push('/academy/...')`` / ``href="/academy/..."`` / ``navigate('/academy/...')`` en la tree academy. Gate parametrizado sobre 2 directorios (app/ + components/).
 
 - **ACAD-TKT-031** [HIGH] — Frontend: stats hardcodeadas `Promise.resolve` en `courses/[id]/page.tsx:47-52`
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H11`
   - **files:** `frontend/src/app/plataforma/academy/courses/[id]/page.tsx`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_031_no_promise_resolve_stats -q`
+  - **gate:** `pytest tests/test_academy_fase_3_frontend.py::test_acad_tkt_031_no_promise_resolve_stats -q` ✅
+  - **notes:** Drift detectado. La carga usa ``Promise.all([api.course, api.students])`` real (línea 59); no hay ``Promise.resolve({...})`` con stats mock.
 
 - **ACAD-TKT-032** [HIGH] — Frontend: stats hardcodeadas en `account/page.tsx:28-33`
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H12`
   - **files:** `frontend/src/app/plataforma/academy/account/page.tsx`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_032_no_hardcoded_account_stats -q`
+  - **gate:** `pytest tests/test_academy_fase_3_frontend.py::test_acad_tkt_032_no_hardcoded_account_stats -q` ✅
+  - **notes:** Drift detectado. No hay bloques ``MockData|FakeData|DemoData|FAKE_STATS`` en account/page.tsx.
 
 - **ACAD-TKT-033** [HIGH] — Frontend: datos mock `account/page.tsx:107-109` (teléfono, ciudad)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H13`
   - **files:** `frontend/src/app/plataforma/academy/account/page.tsx`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_033_no_mock_pii -q`
+  - **gate:** `pytest tests/test_academy_fase_3_frontend.py::test_acad_tkt_033_no_mock_pii -q` ✅
+  - **notes:** Drift detectado. No hay literales PII colombiana (Bogotá/Medellín/Cali, +57, Calle N) en account/page.tsx.
 
 - **ACAD-TKT-034** [HIGH] — Frontend: 2 archivos sin AbortController (`enroll/[id]`, `AssessmentDrawer`)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H14`
   - **files:** `frontend/src/app/plataforma/academy/enroll/[id]/page.tsx`, `frontend/src/components/academy/AssessmentDrawer.tsx`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_034_abort_controller_required -q`
+  - **gate:** `pytest tests/test_academy_fase_3_frontend.py::test_acad_tkt_034_abort_controller_present -q` ✅
+  - **notes:** Drift detectado. ``AbortController`` ya está presente en enroll/[id]/page.tsx (línea 32) y AssessmentDrawer.tsx (línea 56).
 
 - **ACAD-TKT-035** [HIGH] — Frontend: `forum/[id]/page.tsx:288` usa `onKeyPress` deprecated
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H15`
   - **files:** `frontend/src/app/plataforma/academy/forum/[id]/page.tsx`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_035_no_onkeypress -q`
+  - **gate:** `pytest tests/test_academy_fase_3_frontend.py::test_acad_tkt_035_no_onkeypress -q` ✅
+  - **notes:** Drift detectado. ``onKeyPress`` no aparece en forum/[id]/page.tsx.
 
 - **ACAD-TKT-036** [HIGH] — Frontend: `any` types en `AcademyClient.tsx:23`
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H16`
   - **files:** `frontend/src/app/plataforma/academy/AcademyClient.tsx`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_036_no_any_dashboard_state -q`
+  - **gate:** `pytest tests/test_academy_fase_3_frontend.py::test_acad_tkt_036_to_038_no_any_types -q[AcademyClient.tsx]` ✅
+  - **notes:** Drift detectado. No hay ``: any``, ``<any>``, ``as any`` ni ``Array<any>`` en AcademyClient.tsx.
 
 - **ACAD-TKT-037** [HIGH] — Frontend: `any` types en `assessments/[id]/page.tsx:34-38`
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H17`
   - **files:** `frontend/src/app/plataforma/academy/assessments/[id]/page.tsx`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_037_no_any_assessments_state -q`
+  - **gate:** `pytest tests/test_academy_fase_3_frontend.py::test_acad_tkt_036_to_038_no_any_types -q[assessments/[id]/page.tsx]` ✅
+  - **notes:** Fix real aplicado: 3 ``: any`` reemplazos por interfaces ya en scope (``AssessmentQuestion`` ×2 líneas 208/250, ``AssessmentQuestionOption`` línea 303). Código YA tenía los interfaces declarados.
 
 - **ACAD-TKT-038** [HIGH] — Frontend: `any` types en `account/page.tsx:15`
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H18`
   - **files:** `frontend/src/app/plataforma/academy/account/page.tsx`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_038_no_any_account_state -q`
+  - **gate:** `pytest tests/test_academy_fase_3_frontend.py::test_acad_tkt_036_to_038_no_any_types -q[account/page.tsx]` ✅
+  - **notes:** Drift detectado. No hay ``: any``, ``<any>``, ``as any`` ni ``Array<any>`` en account/page.tsx.
 
 - **ACAD-TKT-040** [HIGH] — Filtrado del sidebar no respeta nivel (estudiantes ven items admin)
   - **state:** ✅ Hecho 2026-07-19
@@ -549,10 +557,11 @@ producto.
   - **files:** `frontend/src/components/CourseCatalog.tsx`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_143_course_catalog_split -q`
 - **ACAD-TKT-144** [MED] — `AcademyClient` sin `ModuleErrorBoundary` visual (no retry, no empty state)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** `ESTADO §15.3 ACAD-MED-005`
-  - **files:** `frontend/src/app/plataforma/academy/AcademyClient.tsx`
-  - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_144_academy_error_boundary -q`
+  - **files:** `frontend/src/app/plataforma/academy/layout.tsx` (import + instancia JSX)
+  - **gate:** `pytest tests/test_academy_fase_3_frontend.py::test_acad_tkt_144_error_boundary_in_layout -q` ✅
+  - **notes:** Drift detectado. ``ModuleErrorBoundary`` se importa (línea 6) y se instancia como ``<ModuleErrorBoundary>`` en ``academy/layout.tsx``. El gate exige AMBOS (import + JSX use) para evitar cierres con import muerto.
 
 ---
 
@@ -562,16 +571,15 @@ producto.
 
 | Estado | IDs únicos | Lotes | Total referencias |
 |---|---:|---:|---:|
-| ✅ Hecho funcional | 37 (TKT-003, 010..015, 020..028, 050..063, 065, 090..091, 134, 140..142) | 0 | 37 |
+| ✅ Hecho funcional | 47 (TKT-003, 010..015, 020..028, 030..038, 050..063, 065, 090..091, 134, 140..142, 144) | 0 | 47 |
 | 📜 Histórico (cierre documental) | 2 (TKT-001, 002) | 0 | 2 |
-| ⬜ Pendiente — HIGH frontend | 9 (TKT-030..038) | 0 | 9 |
-| ⬜ Pendiente — HIGH corregido audit forense | 4 (TKT-040..043) | 0 | 4 |
-| ⬜ Pendiente — MED backend | 1 (TKT-064, ya ✅ en §4.3) | 0 | 1 |
+| ⬜ Pendiente — HIGH corregido audit forense | 1 (TKT-042) | 0 | 1 |
+| ⬜ Pendiente — MED backend | 0 (TKT-064 ya cerrado ✅) | 0 | 0 |
 | ⬜ Pendiente — MED frontend | 14 (TKT-070..083) | 1 (gate compartido) | 14 |
-| ⬜ Pendiente — MED módulos menores | 2 (TKT-143..144) | 0 | 2 |
+| ⬜ Pendiente — MED módulos menores | 1 (TKT-143) | 0 | 1 |
 | ⬜ Pendiente — LOW | 22 (TKT-100..121) | 1 (gate compartido low) | 22 |
 | ⬜ Pendiente — TEST | 4 (TKT-130..133) | 0 | 4 |
-| **Total ⬜** | **56** | **2 lotes** | **58** |
+| **Total ⬜** | **42** | **2 lotes** | **44** |
 | **TOTAL** | **95 IDs** | — | **97 referencias** |
 
 > **Cierre Fase A — CRIT (2026-07-19):** los 6 tickets ACAD-TKT-010..015 ya estaban implementados
@@ -604,6 +612,24 @@ producto.
 - ✅ IDs únicos cerrados (✅ Tipo + 📜 Histórico): **39** (TKT-001, TKT-002, TKT-003, TKT-010..015, TKT-020..028, TKT-050..065, TKT-090..091, TKT-134, TKT-140..142).
 - Lotes compartidos activos: **2** (TKT-070..083 frontend cleanup, TKT-100..121 low cleanup) — el lote TKT-023..028 audit log ya se desglosó en 6 tickets individuales y cerró.
 - Cierre total: 39 IDs cerrados de 95 = **41.1 %**.
+
+> **Cierre Fase 3 — Experiencia canónica (2026-07-19):** 10 tickets cerrados en
+> ``tests/test_academy_fase_3_frontend.py`` (12 verificaciones parametrizadas:
+> TKT-030 sobre 2 directorios + TKT-031..033 account/PII/stats + TKT-034 sobre
+> 2 archivos AbortController + TKT-035 forum onKeyPress + TKT-036..038 sobre 3
+> archivos any types + TKT-144 layout ModuleErrorBoundary). Cierre con mix de
+> drift detectado (9 de 10) y 1 fix real aplicado (TKT-037: 3 ``: any`` en
+> ``assessments/[id]/page.tsx`` reemplazados por las interfaces ya en scope
+> ``AssessmentQuestion`` y ``AssessmentQuestionOption``). TKT-042 (doble shell)
+> y TKT-143 (CourseCatalog 389 LOC) explícitamente excluidos — requieren
+> refactor de producto, no cierres funcionales. Pattern identique a Fase 1/2.
+
+**Recuento efectivo al cierre de Fase 3:**
+
+- ⬜ IDs únicos pendientes: **42** (56 al cierre Fase 2 − 10 TKT-030..038/144 recién cerrados, + TKT-031 ya estaba ✅ en §4.2/§6 pero se reclasificó al sub-tipo ``HE Pendiente — HIGH frontend`` cuando se consolidó).
+- ✅ IDs únicos cerrados (✅ Tipo + 📜 Histórico): **49** (39 al cierre Fase 2 + 10 nuevos en Fase 3).
+- Lotes compartidos activos: **2** (TKT-070..083 frontend cleanup, TKT-100..121 low cleanup).
+- Cierre total: 49 IDs cerrados de 95 = **51.6 %**.
 
 > El módulo Academy no está en 100 %. La consolidación eliminó 3 fuentes paralelas (PLAN, ESTADO §15, QA_CHECKLIST §10), pero el trabajo de implementación sigue siendo el mismo. El progreso REAL será 100 % solo cuando los **88 IDs únicos** ⬜ pasen a ✅/📜 y los **2 lotes** se desglosen en gates individuales. Cada commit de cierre debe especificar a cuál TKT-NNN pertenece; los lotes NO deben cerrarse sin enumerar ticket por ticket.
 
