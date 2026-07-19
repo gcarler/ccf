@@ -2,6 +2,11 @@
 
 **Creado:** 2026-07-19
 **Objetivo:** Cerrar TODOS los items pendientes del módulo Academy para dejarlo al 100%
+
+> **Ampliación de auditoría 2026-07-19:** el plan incorpora
+> `ACAD-AUD-001..006` de
+> `docs/AUDITORIA_ACADEMY_COMPLETITUD_2026-07-19.md`. No se certifica Academy
+> hasta cerrar primero el contrato Foro/UI y la matriz de API/RBAC por sede.
 **Audiencia:** desarrolladores backend, frontend, revisores de calidad
 
 ---
