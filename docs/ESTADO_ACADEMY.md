@@ -269,7 +269,18 @@ grep -nE "PARCIAL-|PEND-|ACAD-" /root/ccf/docs/ESTADO_ACADEMY.md
 
 ---
 
-## 15. Auditoría forense 2026-07-18 (nuevos hallazgos)
+## 15. Auditoría forense 2026-07-18 (nuevos hallazgos) — ⚠️ DEPRECATED 2026-07-19
+
+> **🚨 DEPRECADO — 2026-07-19:** este bloque fue consolidado en
+> [`docs/ACADEMY_BACKLOG.md`](./ACADEMY_BACKLOG.md). Los hallazgos de
+> §15.1-§15.6 (`ACAD-CRIT-001`, `ACAD-HIGH-001..`, `ACAD-MED-001..`, etc.)
+> sobrevivieron como rastro histórico para auditoría forense, pero
+> **NO se mantienen ni actualizan aquí**.
+>
+> Cada hallazgo `ACAD-*` de §15 ahora tiene su equivalente `ACAD-TKT-NNN`
+> con `gate:` ejecutable y estado actual rastreable en
+> `docs/ACADEMY_BACKLOG.md`. La regla anti-drift (§7 del backlog)
+> prohíbe abrir nuevos tickets en este archivo.
 
 **Alcance.** Lectura completa de `backend/api/academy.py` (700 línea), `models_academy_core.py`, `schemas/academy.py`, `crud/academy.py`, `frontend/src/app/plataforma/academy/**` (layout, page, AcademyClient, loading, error), `frontend/src/components/academy/*`, `CourseCatalog.tsx`, `MyEnrollments.tsx` y `moduleConfigs.ts`. Fecha de cierre de la sesión: **2026-07-18**.
 

@@ -46,3 +46,19 @@ repos:
         types: [python]
         pass_filenames: false
         always_run: true
+
+      - id: academy-backlog-check
+        name: Validate docs/ACADEMY_BACKLOG.md as single source of truth
+        entry: bash scripts/check_academy_backlog.sh
+        language: system
+        files: ^(docs/ACADEMY_BACKLOG\.md|docs/PLAN_ACADEMY_CALIDAD\.md|docs/ESTADO_ACADEMY\.md|docs/ACADEMY_QA_CHECKLIST\.md)$
+        pass_filenames: false
+        always_run: false
+
+      - id: academy-backlog-tests
+        name: Run ACADEMY_BACKLOG structural tests
+        entry: pytest tests/test_academy_backlog.py -q --no-cov
+        language: system
+        files: ^(docs/ACADEMY_BACKLOG\.md|tests/test_academy_backlog\.py)$
+        pass_filenames: false
+        always_run: true
