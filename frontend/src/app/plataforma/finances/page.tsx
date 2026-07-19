@@ -22,6 +22,7 @@ Search,
 Zap
 } from 'lucide-react';
 import React,{ useEffect,useMemo,useState } from 'react';
+import { toast } from 'sonner';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 // ─── Tipo local ───────────────────────────────────────────────────────────────
@@ -55,7 +56,7 @@ export default function FinancesPage() {
     const [filter, setFilter] = useState<'all' | 'ingreso' | 'egreso'>('all');
     const [search, setSearch] = useState('');
     const [transactions, setTransactions] = useState<TxRecord[]>([]);
-    const [dashboard, setDashboard] = useState<any>(null);
+    const [dashboard, setDashboard] = useState<Record<string, any> | null>(null);
     const [loading, setLoading] = useState(true);
 
     const FINANCE_SECTIONS = useMemo(() => ([
@@ -69,14 +70,17 @@ export default function FinancesPage() {
     ]), []);
 
     useEffect(() => {
+        const ctrl = new AbortController();
         if (!token) { setLoading(false); return; }
         Promise.all([
-            apiFetch<TxRecord[]>('/finance/transactions?limit=50', { token, cache: 'no-store' }),
-            apiFetch<any>('/dashboard/finance', { token, cache: 'no-store' }),
+            apiFetch<TxRecord[]>('/finance/transactions?limit=50', { token, cache: 'no-store', signal: ctrl.signal }),
+            apiFetch<Record<string, any>>('/dashboard/finance', { token, cache: 'no-store', signal: ctrl.signal }),
         ]).then(([txs, dbData]) => {
             if (Array.isArray(txs)) setTransactions(txs);
             if (dbData) setDashboard(dbData);
-        }).catch(console.error).finally(() => setLoading(false));
+        }).catch(e => { if (e.name !== 'AbortError') { console.error(e); toast.error('Error al cargar datos'); } })
+        .finally(() => setLoading(false));
+        return () => ctrl.abort();
     }, [token]);
 
     const filtered = useMemo(() => transactions.filter(t => {

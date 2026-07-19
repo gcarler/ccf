@@ -3,6 +3,7 @@ Finance Suite API — Contabilidad, Facturación, Gastos, Documentos, Firma
 """
 from __future__ import annotations
 
+import uuid as _uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -13,6 +14,7 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.core.database import get_db
 from backend.core.permissions import require_admin, require_module_access
+from backend.core.tenant import get_user_sede_id, require_user_sede_id
 from backend.models_shared import _utcnow
 from backend.schemas import finance_suite as schemas
 
@@ -20,10 +22,14 @@ router = APIRouter(prefix="/finance-suite", tags=["Finance Suite"])
 
 
 def _generate_number(prefix: str, db: Session) -> str:
-    """Generate a sequential reference number."""
     today = datetime.now(timezone.utc)
     count = db.query(func.count(models.AccountingEntry.id)).scalar() or 0
-    return f"{prefix}-{today.year}{today.month:02d}-{count + 1:05d}"
+    return f"{prefix}-{today.year}{today.month:02d}-{count + 1:05d}-{_uuid.uuid4().hex[:4]}"
+
+
+def _finance_sede_scope(db: Session, user: models.User) -> str | None:
+    """Resolve the user's sede_id for multi-tenant scoping."""
+    return get_user_sede_id(db, user.id)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -36,7 +42,8 @@ def create_bank_account(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
-    account = models.BankAccount(**payload.model_dump())
+    sede_id = _finance_sede_scope(db, current_user)
+    account = models.BankAccount(**payload.model_dump(), sede_id=sede_id)
     db.add(account)
     db.commit()
     db.refresh(account)
@@ -48,7 +55,11 @@ def list_bank_accounts(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
-    return db.query(models.BankAccount).filter(models.BankAccount.is_active == True).all()
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.BankAccount).filter(models.BankAccount.is_active == True)
+    if sede_id:
+        q = q.filter(models.BankAccount.sede_id == sede_id)
+    return q.all()
 
 
 @router.patch("/bank-accounts/{account_id}", response_model=schemas.BankAccountOut)
@@ -93,7 +104,14 @@ def list_bank_transactions(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
-    q = db.query(models.BankTransaction).order_by(models.BankTransaction.transaction_date.desc())
+    sede_id = _finance_sede_scope(db, current_user)
+    q = (
+        db.query(models.BankTransaction)
+        .join(models.BankAccount, models.BankTransaction.bank_account_id == models.BankAccount.id)
+        .order_by(models.BankTransaction.transaction_date.desc())
+    )
+    if sede_id:
+        q = q.filter(models.BankAccount.sede_id == sede_id)
     if bank_account_id:
         q = q.filter(models.BankTransaction.bank_account_id == bank_account_id)
     if tx_status:
@@ -124,7 +142,14 @@ def list_reconciliations(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
-    q = db.query(models.BankReconciliation).order_by(models.BankReconciliation.period_start.desc())
+    sede_id = _finance_sede_scope(db, current_user)
+    q = (
+        db.query(models.BankReconciliation)
+        .join(models.BankAccount, models.BankReconciliation.bank_account_id == models.BankAccount.id)
+        .order_by(models.BankReconciliation.period_start.desc())
+    )
+    if sede_id:
+        q = q.filter(models.BankAccount.sede_id == sede_id)
     if bank_account_id:
         q = q.filter(models.BankReconciliation.bank_account_id == bank_account_id)
     return q.all()
@@ -140,7 +165,8 @@ def create_chart_account(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
-    acc = models.ChartOfAccount(**payload.model_dump())
+    sede_id = _finance_sede_scope(db, current_user)
+    acc = models.ChartOfAccount(**payload.model_dump(), sede_id=sede_id)
     db.add(acc)
     db.commit()
     db.refresh(acc)
@@ -152,7 +178,11 @@ def list_chart_accounts(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
-    return db.query(models.ChartOfAccount).filter(models.ChartOfAccount.is_active == True).order_by(models.ChartOfAccount.code).all()
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.ChartOfAccount).filter(models.ChartOfAccount.is_active == True)
+    if sede_id:
+        q = q.filter(models.ChartOfAccount.sede_id == sede_id)
+    return q.order_by(models.ChartOfAccount.code).all()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -165,11 +195,22 @@ def create_accounting_entry(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
+    if not payload.lines or len(payload.lines) < 2:
+        raise HTTPException(status_code=400, detail="At least 2 lines are required")
+
+    for line in payload.lines:
+        if line.debit > 0 and line.credit > 0:
+            raise HTTPException(status_code=400, detail="A line cannot have both debit and credit greater than 0")
+        account = db.query(models.ChartOfAccount).filter(models.ChartOfAccount.id == line.account_id).first()
+        if not account:
+            raise HTTPException(status_code=400, detail=f"Account {line.account_id} not found in chart of accounts")
+
     total_debit = sum(line.debit for line in payload.lines)
     total_credit = sum(line.credit for line in payload.lines)
     if total_debit != total_credit:
         raise HTTPException(status_code=400, detail="Total debit must equal total credit")
 
+    sede_id = _finance_sede_scope(db, current_user)
     entry = models.AccountingEntry(
         entry_date=payload.entry_date,
         reference=payload.reference,
@@ -178,6 +219,7 @@ def create_accounting_entry(
         total_credit=total_credit,
         status="draft",
         created_by_id=current_user.id,
+        sede_id=sede_id,
     )
     db.add(entry)
     db.flush()
@@ -203,7 +245,10 @@ def list_accounting_entries(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
     q = db.query(models.AccountingEntry).order_by(models.AccountingEntry.entry_date.desc())
+    if sede_id:
+        q = q.filter(models.AccountingEntry.sede_id == sede_id)
     if status:
         q = q.filter(models.AccountingEntry.status == status)
     return q.limit(limit).all()
@@ -234,16 +279,18 @@ def generate_financial_statement(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
-    # Build data from accounting entries
-    entries = (
+    sede_id = _finance_sede_scope(db, current_user)
+    entries_q = (
         db.query(models.AccountingEntry)
         .filter(
             models.AccountingEntry.entry_date >= payload.period_start,
             models.AccountingEntry.entry_date <= payload.period_end,
             models.AccountingEntry.status == "posted",
         )
-        .all()
     )
+    if sede_id:
+        entries_q = entries_q.filter(models.AccountingEntry.sede_id == sede_id)
+    entries = entries_q.all()
 
     data: Dict[str, Any] = {"entries_count": len(entries), "lines": []}
     for entry in entries:
@@ -259,6 +306,7 @@ def generate_financial_statement(
         **payload.model_dump(),
         data_json=data,
         generated_by_id=current_user.id,
+        sede_id=sede_id,
     )
     db.add(stmt)
     db.commit()
@@ -271,7 +319,11 @@ def list_financial_statements(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
-    return db.query(models.FinancialStatement).order_by(models.FinancialStatement.created_at.desc()).all()
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.FinancialStatement).order_by(models.FinancialStatement.created_at.desc())
+    if sede_id:
+        q = q.filter(models.FinancialStatement.sede_id == sede_id)
+    return q.all()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -284,7 +336,8 @@ def create_tax_config(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    config = models.TaxConfiguration(**payload.model_dump())
+    sede_id = _finance_sede_scope(db, current_user)
+    config = models.TaxConfiguration(**payload.model_dump(), sede_id=sede_id)
     db.add(config)
     db.commit()
     db.refresh(config)
@@ -297,7 +350,10 @@ def list_tax_configurations(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
     q = db.query(models.TaxConfiguration).filter(models.TaxConfiguration.is_active == True)
+    if sede_id:
+        q = q.filter(models.TaxConfiguration.sede_id == sede_id)
     if country_code:
         q = q.filter(models.TaxConfiguration.country_code == country_code)
     return q.all()
@@ -313,6 +369,9 @@ def create_sales_order(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
+    if not payload.items:
+        raise HTTPException(status_code=400, detail="At least one item is required")
+    sede_id = _finance_sede_scope(db, current_user)
     total = sum(item.quantity * item.unit_price for item in payload.items)
     order_num = _generate_number("SO", db)
     order = models.SalesOrder(
@@ -325,6 +384,7 @@ def create_sales_order(
         order_date=payload.order_date,
         notes=payload.notes,
         created_by_id=current_user.id,
+        sede_id=sede_id,
     )
     db.add(order)
     db.flush()
@@ -350,7 +410,10 @@ def list_sales_orders(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
     q = db.query(models.SalesOrder).order_by(models.SalesOrder.order_date.desc())
+    if sede_id:
+        q = q.filter(models.SalesOrder.sede_id == sede_id)
     if status:
         q = q.filter(models.SalesOrder.status == status)
     return q.limit(limit).all()
@@ -366,8 +429,10 @@ def create_invoice(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
+    if not payload.items:
+        raise HTTPException(status_code=400, detail="At least one item is required")
+    sede_id = _finance_sede_scope(db, current_user)
     subtotal = sum(item.quantity * item.unit_price for item in payload.items)
-    # Simple tax calc: look up active tax config for CO default
     tax_config = db.query(models.TaxConfiguration).filter(
         models.TaxConfiguration.country_code == "CO",
         models.TaxConfiguration.is_active == True,
@@ -390,6 +455,7 @@ def create_invoice(
         due_date=payload.due_date,
         notes=payload.notes,
         created_by_id=current_user.id,
+        sede_id=sede_id,
     )
     db.add(invoice)
     db.flush()
@@ -415,7 +481,10 @@ def list_invoices(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
     q = db.query(models.Invoice).order_by(models.Invoice.issue_date.desc())
+    if sede_id:
+        q = q.filter(models.Invoice.sede_id == sede_id)
     if status:
         q = q.filter(models.Invoice.status == status)
     return q.limit(limit).all()
@@ -443,7 +512,6 @@ def record_invoice_payment(
     )
     db.add(payment)
 
-    # Update invoice status if fully paid
     total_paid = (
         db.query(func.sum(models.InvoicePayment.amount))
         .filter(models.InvoicePayment.invoice_id == invoice.id)
@@ -471,11 +539,7 @@ def send_electronic_invoice(
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
-    # Placeholder for electronic invoicing integration
-    invoice.electronic_status = "sent"
-    invoice.electronic_id = f"E-{invoice.invoice_number}"
-    db.commit()
-    return {"status": "sent", "electronic_id": invoice.electronic_id}
+    raise HTTPException(status_code=501, detail="Electronic invoicing integration not implemented")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -488,6 +552,9 @@ def create_expense_report(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
+    if not payload.items:
+        raise HTTPException(status_code=400, detail="At least one item is required")
+    sede_id = _finance_sede_scope(db, current_user)
     total = sum(item.amount for item in payload.items)
     report_num = _generate_number("EXP", db)
     report = models.ExpenseReport(
@@ -497,6 +564,7 @@ def create_expense_report(
         total_amount=total,
         currency=payload.currency,
         status="draft",
+        sede_id=sede_id,
     )
     db.add(report)
     db.flush()
@@ -526,7 +594,10 @@ def list_expense_reports(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
     q = db.query(models.ExpenseReport).order_by(models.ExpenseReport.created_at.desc())
+    if sede_id:
+        q = q.filter(models.ExpenseReport.sede_id == sede_id)
     if status:
         q = q.filter(models.ExpenseReport.status == status)
     if employee_id:
@@ -658,6 +729,7 @@ def create_document(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
     doc = models.Document(
         title=payload.title,
         description=payload.description,
@@ -667,6 +739,7 @@ def create_document(
         mime_type=payload.mime_type,
         document_type=payload.document_type,
         uploaded_by_id=current_user.id,
+        sede_id=sede_id,
     )
     db.add(doc)
     db.flush()
@@ -690,7 +763,10 @@ def list_documents(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
     q = db.query(models.Document).filter(models.Document.status == "active").order_by(models.Document.created_at.desc())
+    if sede_id:
+        q = q.filter(models.Document.sede_id == sede_id)
     if document_type:
         q = q.filter(models.Document.document_type == document_type)
     if tag_id:
@@ -732,9 +808,12 @@ def delete_document(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "manage")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
     doc = db.query(models.Document).filter(models.Document.id == document_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
+    if sede_id and doc.sede_id != sede_id:
+        raise HTTPException(status_code=403, detail="Document does not belong to your sede")
     doc.status = "archived"
     db.commit()
 
@@ -746,7 +825,8 @@ def create_document_tag(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
-    tag = models.DocumentTag(**payload.model_dump())
+    sede_id = _finance_sede_scope(db, current_user)
+    tag = models.DocumentTag(**payload.model_dump(), sede_id=sede_id)
     db.add(tag)
     db.commit()
     db.refresh(tag)
@@ -758,7 +838,11 @@ def list_document_tags(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
-    return db.query(models.DocumentTag).order_by(models.DocumentTag.name).all()
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.DocumentTag)
+    if sede_id:
+        q = q.filter(models.DocumentTag.sede_id == sede_id)
+    return q.order_by(models.DocumentTag.name).all()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -771,6 +855,7 @@ def create_sign_request(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
     req = models.SignRequest(
         title=payload.title,
         description=payload.description,
@@ -779,6 +864,7 @@ def create_sign_request(
         country_code=payload.country_code,
         legal_framework=payload.legal_framework,
         created_by_id=current_user.id,
+        sede_id=sede_id,
     )
     db.add(req)
     db.flush()
@@ -805,7 +891,10 @@ def list_sign_requests(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
     q = db.query(models.SignRequest).order_by(models.SignRequest.created_at.desc())
+    if sede_id:
+        q = q.filter(models.SignRequest.sede_id == sede_id)
     if status:
         q = q.filter(models.SignRequest.status == status)
     return q.limit(limit).all()
@@ -867,7 +956,6 @@ def sign_document(
 
     db.commit()
 
-    # Check if all signers have signed
     req = db.query(models.SignRequest).filter(models.SignRequest.id == request_id).first()
     all_signed = all(s.status == "signed" for s in req.signers)
     if all_signed:

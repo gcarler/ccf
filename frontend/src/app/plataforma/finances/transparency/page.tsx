@@ -7,14 +7,12 @@ import {
 } from 'lucide-react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { apiFetch } from '@/lib/http';
+import { toast } from 'sonner';
 
 interface ImpactData {
     total_personas: number;
     total_familias: number;
     total_donaciones_cop: number;
-    biblias_entregadas: number;
-    misiones_rurales: number;
-    raciones_comida: number;
     distribucion: { label: string; pct: number; desc: string }[];
 }
 
@@ -27,20 +25,22 @@ export default function TransparencyPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        apiFetch<ImpactData>('/finance/impact', { cache: 'no-store' })
+        const ctrl = new AbortController();
+        apiFetch<ImpactData>('/finance/impact', { cache: 'no-store', signal: ctrl.signal })
             .then(d => setData(d))
-            .catch(console.error)
+            .catch(e => { if (e.name !== 'AbortError') { console.error(e); toast.error('Error al cargar datos'); } })
             .finally(() => setLoading(false));
+        return () => ctrl.abort();
     }, []);
 
     const stats = data ? [
-        { label: 'Biblias Entregadas',  value: data.biblias_entregadas.toLocaleString('es-CO'), icon: Zap,    color: 'text-[hsl(var(--primary))]' },
-        { label: 'Raciones de Comida',  value: data.raciones_comida.toLocaleString('es-CO') + '+', icon: Heart, color: 'text-rose-500' },
-        { label: 'Misiones Rurales',    value: String(data.misiones_rurales), icon: Globe, color: 'text-[hsl(var(--primary))]' },
+        { label: 'Personas Beneficiadas', value: data.total_personas.toLocaleString('es-CO'), icon: Users, color: 'text-[hsl(var(--primary))]' },
+        { label: 'Familias Beneficiadas', value: data.total_familias.toLocaleString('es-CO'), icon: Home, color: 'text-rose-500' },
+        { label: 'Total Donaciones', value: fmt(data.total_donaciones_cop), icon: Heart, color: 'text-emerald-500' },
     ] : [
-        { label: 'Biblias Entregadas', value: '—', icon: Zap,   color: 'text-[hsl(var(--primary))]' },
-        { label: 'Raciones de Comida', value: '—', icon: Heart, color: 'text-rose-500' },
-        { label: 'Misiones Rurales',   value: '—', icon: Globe, color: 'text-[hsl(var(--primary))]' },
+        { label: 'Personas Beneficiadas', value: '—', icon: Users, color: 'text-[hsl(var(--primary))]' },
+        { label: 'Familias Beneficiadas', value: '—', icon: Home, color: 'text-rose-500' },
+        { label: 'Total Donaciones', value: '—', icon: Heart, color: 'text-emerald-500' },
     ];
 
     const sidebarSections = [
@@ -156,4 +156,3 @@ export default function TransparencyPage() {
         </WorkspaceLayout>
     );
 }
-

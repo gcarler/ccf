@@ -880,6 +880,7 @@ class PersonaMinistryAssignment(Base):
 class Fund(Base):
     __tablename__ = "funds"
     fund_id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     name = Column(String(120), nullable=False, unique=True)
     description = Column(Text, nullable=True)
     is_public = Column(Boolean, default=False)

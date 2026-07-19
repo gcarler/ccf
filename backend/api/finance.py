@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -10,6 +10,7 @@ from backend.core.database import get_db
 from backend.core.permissions import require_admin, require_module_access
 from backend.core.tenant import get_user_sede_id
 from backend.models_shared import _utcnow
+from backend.schemas.finance_suite import FundCreate, FundUpdate, RegisterDonationPayload
 
 router = APIRouter(prefix="/finance", tags=["Finance"])
 
@@ -35,11 +36,14 @@ def get_finance_summary(
         or 0
     )
 
-    # Gastos estimados como 66% de ingresos (hasta que haya una tabla de expenses real)
+    # FIN-H01: Gastos estimados como 66% de ingresos (TODO: reemplazar con tabla real de expenses)
     total_expense = round(float(total_income) * 0.66)
 
-    # Balance: fondos activos + ingresos del mes
-    total_funds = db.query(func.sum(models.Fund.current_balance)).scalar() or 0
+    # Balance: fondos activos de la sede + ingresos del mes
+    fund_q = db.query(func.sum(models.Fund.current_balance))
+    if sede_id:
+        fund_q = fund_q.filter(models.Fund.sede_id == sede_id)
+    total_funds = fund_q.scalar() or 0
     balance = round(float(total_funds) + float(total_income) * 0.34)
 
     return {
@@ -99,6 +103,7 @@ def get_ministerial_funds(
         "ingresos_mes": round(total_ingresos),
         "egresos_mes": round(float(total_ingresos) * 0.66),
         "balance": round(float(total_ingresos) * 0.34),
+        # FIN-H15: Reserva = 10% del total histórico (política financiera CCF)
         "reserva": round(float(total_all_time) * 0.10),
         "total_historico": round(total_all_time),
         "por_tipo": [
@@ -124,6 +129,9 @@ def get_transactions(
         )
         .order_by(models.Donation.created_at.desc())
     )
+    # FIN-H02: Implementar filtro por tipo (antes era código muerto)
+    if tipo:
+        q = q.filter(models.Donation.donation_type == tipo)
     rows = q.limit(limit).all()
 
     result = []
@@ -144,21 +152,26 @@ def get_transactions(
 
 @router.post("/donations")
 def register_donation(
-    fund_id: str,
-    amount: float,
-    donation_type: str = "Ofrenda",
-    donor_name: Optional[str] = None,
-    persona_id: Optional[str] = None,
+    payload: RegisterDonationPayload,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
     """Registra una nueva donacion. Solo para admin."""
+    # FIN-C05: Validar que fund exista y pertenezca a la sede del usuario
+    fund = db.query(models.Fund).filter(models.Fund.fund_id == payload.fund_id).first()
+    if not fund:
+        raise HTTPException(status_code=404, detail="Fund not found")
+    sede_id = get_user_sede_id(db, current_user.id)
+    if sede_id and fund.sede_id and str(fund.sede_id) != sede_id:
+        raise HTTPException(status_code=403, detail="Fund not in your sede")
+
     donation = models.Donation(
-        persona_id=persona_id,
-        amount=amount,
-        donation_type=donation_type,
-        donor_name=donor_name or current_user.username,
-        fund_id=fund_id,
+        persona_id=str(payload.persona_id) if payload.persona_id else None,
+        amount=payload.amount,
+        donation_type=payload.donation_type,
+        donor_name=payload.donor_name or current_user.username,
+        fund_id=str(payload.fund_id),
+        sede_id=sede_id,
     )
     db.add(donation)
     db.commit()
@@ -177,10 +190,16 @@ def list_funds(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
-    funds = db.query(models.Fund).order_by(models.Fund.fund_id).all()
+    # FIN-C02: Filtrar fondos por sede
+    sede_id = get_user_sede_id(db, current_user.id)
+    q = db.query(models.Fund).order_by(models.Fund.fund_id)
+    if sede_id:
+        q = q.filter(models.Fund.sede_id == sede_id)
+    funds = q.all()
     return [
         {
-            "id": f.fund_id,
+            # FIN-H10: Renombrar "id" → "fund_id" para consistencia con el modelo
+            "fund_id": f.fund_id,
             "name": f.name,
             "description": f.description,
             "is_public": f.is_public,
@@ -194,22 +213,25 @@ def list_funds(
 
 @router.post("/admin/funds", status_code=201)
 def create_fund(
-    payload: dict,
+    payload: FundCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
+    # FIN-C03: Pydantic payload en vez de dict
+    sede_id = get_user_sede_id(db, current_user.id)
     fund = models.Fund(
-        name=payload["name"],
-        description=payload.get("description"),
-        is_public=payload.get("is_public", False),
-        target_amount=payload.get("target_amount"),
+        sede_id=sede_id,
+        name=payload.name,
+        description=payload.description,
+        is_public=payload.is_public,
+        target_amount=payload.target_amount,
         current_balance=0.0,
     )
     db.add(fund)
     db.commit()
     db.refresh(fund)
     return {
-        "id": fund.fund_id,
+        "fund_id": fund.fund_id,
         "name": fund.name,
         "description": fund.description,
         "is_public": fund.is_public,
@@ -221,22 +243,23 @@ def create_fund(
 @router.patch("/admin/funds/{fund_id}")
 def update_fund(
     fund_id: str,
-    payload: dict,
+    payload: FundUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
+    # FIN-C04: Pydantic payload en vez de dict + setattr peligroso
     fund = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
     if not fund:
-        from fastapi import HTTPException
-
         raise HTTPException(status_code=404, detail="Fund not found")
-    for k, v in payload.items():
-        if hasattr(fund, k):
-            setattr(fund, k, v)
+    sede_id = get_user_sede_id(db, current_user.id)
+    if sede_id and fund.sede_id and str(fund.sede_id) != sede_id:
+        raise HTTPException(status_code=403, detail="Fund not in your sede")
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(fund, k, v)
     db.commit()
     db.refresh(fund)
     return {
-        "id": fund.fund_id,
+        "fund_id": fund.fund_id,
         "name": fund.name,
         "description": fund.description,
         "is_public": fund.is_public,
@@ -253,16 +276,21 @@ def delete_fund(
 ):
     fund = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
     if not fund:
-        from fastapi import HTTPException
-
         raise HTTPException(status_code=404, detail="Fund not found")
+    sede_id = get_user_sede_id(db, current_user.id)
+    if sede_id and fund.sede_id and str(fund.sede_id) != sede_id:
+        raise HTTPException(status_code=403, detail="Fund not in your sede")
     fund.deleted_at = _utcnow()
     db.commit()
 
 
 @router.get("/impact")
-def get_mission_impact(db: Session = Depends(get_db)):
-    """Impacto social calculado en tiempo real. Público."""
+def get_mission_impact(
+    db: Session = Depends(get_db),
+    # FIN-C10: Agregar auth — antes era endpoint público
+    current_user: models.User = Depends(require_module_access("finance", "read")),
+):
+    """Impacto social calculado en tiempo real."""
     total_personas = db.query(func.count(models.Persona.id)).scalar() or 0
     total_families = db.query(func.count(models.Family.id)).scalar() or 0
     total_donations = db.query(func.sum(models.Donation.amount)).scalar() or 0

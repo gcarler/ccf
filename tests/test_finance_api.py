@@ -59,10 +59,6 @@ def test_finance_transactions(client, db_session):
     assert len(data) >= 1
 
 
-@pytest.mark.xfail(
-    reason="Endpoint passes persona_id str to UUID column causing hex error",
-    strict=False,
-)
 def test_finance_register_donation(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
     headers = _auth_headers(client)
@@ -71,6 +67,7 @@ def test_finance_register_donation(client, db_session):
         name="Fondo Misiones",
         description="Fondo para misiones",
         current_balance=0.0,
+        sede_id=sede.id,
     )
     db_session.add(fund)
     db_session.commit()
@@ -78,8 +75,8 @@ def test_finance_register_donation(client, db_session):
 
     resp = client.post(
         "/api/finance/donations",
-        params={
-            "fund_id": fund.fund_id,
+        json={
+            "fund_id": str(fund.fund_id),
             "amount": 50000,
             "donation_type": "Diezmo",
             "donor_name": "Juan Diaz",
@@ -109,13 +106,13 @@ def test_finance_admin_funds_crud(client, db_session):
         headers=headers,
     )
     assert resp.status_code == 201
-    fund_id = resp.json()["id"]
+    fund_id = resp.json()["fund_id"]
 
     # List
     resp2 = client.get("/api/finance/admin/funds", headers=headers)
     assert resp2.status_code == 200
     funds = resp2.json()
-    assert any(f["id"] == fund_id for f in funds)
+    assert any(f["fund_id"] == fund_id for f in funds)
 
     # Update
     resp3 = client.patch(
@@ -133,8 +130,10 @@ def test_finance_admin_funds_crud(client, db_session):
     assert resp4.status_code == 204
 
 
-def test_finance_impact_public(client, db_session):
-    resp = client.get("/api/finance/impact")
+def test_finance_impact(client, db_session):
+    _seed_admin(db_session)
+    headers = _auth_headers(client)
+    resp = client.get("/api/finance/impact", headers=headers)
     assert resp.status_code == 200
     data = resp.json()
     assert "total_miembros" in data

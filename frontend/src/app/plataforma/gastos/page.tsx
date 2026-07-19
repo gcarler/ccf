@@ -20,6 +20,30 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
 import clsx from "clsx";
+import { toast } from "sonner";
+
+interface ExpenseItem {
+  expense_date: string;
+  category: string;
+  description: string;
+  amount: number;
+  vendor: string;
+}
+
+interface ExpenseReportItem {
+  id: string;
+  description: string;
+  amount: number;
+}
+
+interface ExpenseReport {
+  id: string;
+  report_number: string;
+  description: string;
+  total_amount: number;
+  status: string;
+  items: ExpenseReportItem[];
+}
 
 const SECTIONS = [
   {
@@ -41,23 +65,22 @@ function fmtCOP(n: number) {
 export default function GastosPage() {
   const { token } = useAuth();
   const router = useRouter();
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<ExpenseReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ description: "", items: [{ expense_date: "", category: "", description: "", amount: 0, vendor: "" }] });
+  const [form, setForm] = useState({ description: "", items: [{ expense_date: "", category: "", description: "", amount: 0, vendor: "" }] as ExpenseItem[] });
 
-  const fetchData = async () => {
+  useEffect(() => {
+    const ctrl = new AbortController();
     if (!token) { setLoading(false); return; }
     setLoading(true);
-    try {
-      const r = await apiFetch<any[]>("/finance-suite/expense-reports?limit=50", { token, cache: "no-store" });
-      if (Array.isArray(r)) setReports(r);
-    } catch (e) { console.error(e); }
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchData(); }, [token]);
+    apiFetch<ExpenseReport[]>("/finance-suite/expense-reports?limit=50", { token, cache: "no-store", signal: ctrl.signal })
+      .then(r => { if (Array.isArray(r)) setReports(r); })
+      .catch(e => { if (e.name !== 'AbortError') { console.error(e); toast.error('Error al cargar datos'); } })
+      .finally(() => setLoading(false));
+    return () => ctrl.abort();
+  }, [token]);
 
   const filtered = reports.filter((r) => r.report_number?.toLowerCase().includes(search.toLowerCase()) || r.description?.toLowerCase().includes(search.toLowerCase()));
 
@@ -71,16 +94,28 @@ export default function GastosPage() {
       await apiFetch("/finance-suite/expense-reports", { token, method: "POST", body: payload });
       setShowCreate(false);
       setForm({ description: "", items: [{ expense_date: "", category: "", description: "", amount: 0, vendor: "" }] });
+      toast.success("Reporte creado");
       fetchData();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); toast.error("Error al crear reporte"); }
   };
 
   const handleAction = async (id: string, action: string) => {
     if (!token) return;
     try {
       await apiFetch(`/finance-suite/expense-reports/${id}/${action}`, { token, method: "POST" });
+      toast.success("Acción realizada");
       fetchData();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); toast.error("Error al realizar acción"); }
+  };
+
+  const fetchData = async () => {
+    if (!token) { setLoading(false); return; }
+    setLoading(true);
+    try {
+      const r = await apiFetch<ExpenseReport[]>("/finance-suite/expense-reports?limit=50", { token, cache: "no-store" });
+      if (Array.isArray(r)) setReports(r);
+    } catch (e) { console.error(e); toast.error("Error al cargar datos"); }
+    setLoading(false);
   };
 
   const statusConfig: Record<string, { label: string; color: string }> = {
@@ -122,10 +157,10 @@ export default function GastosPage() {
               <div className="space-y-2">
                 {form.items.map((item, idx) => (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-2">
-                    <input type="date" value={item.expense_date} onChange={(e) => { const items = [...form.items]; items[idx].expense_date = e.target.value; setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                    <input type="text" placeholder="Categoría" value={item.category} onChange={(e) => { const items = [...form.items]; items[idx].category = e.target.value; setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                    <input type="text" placeholder="Descripción" value={item.description} onChange={(e) => { const items = [...form.items]; items[idx].description = e.target.value; setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                    <input type="number" placeholder="Monto" value={item.amount} onChange={(e) => { const items = [...form.items]; items[idx].amount = Number(e.target.value); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                    <input type="date" value={item.expense_date} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, expense_date: e.target.value } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                    <input type="text" placeholder="Categoría" value={item.category} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, category: e.target.value } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                    <input type="text" placeholder="Descripción" value={item.description} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, description: e.target.value } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                    <input type="number" min={0} placeholder="Monto" value={item.amount} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, amount: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
                     <button onClick={() => setForm({ ...form, items: form.items.filter((_, i) => i !== idx) })} className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"><Trash2 size={14} /></button>
                   </div>
                 ))}
@@ -172,7 +207,7 @@ export default function GastosPage() {
                     </div>
                     {report.items?.length > 0 && (
                       <div className="mt-2 pt-2 border-t border-[hsl(var(--border))] dark:border-white/5 space-y-1">
-                        {report.items.map((item: any) => (
+                        {report.items.map((item: ExpenseReportItem) => (
                           <div key={item.id} className="flex items-center justify-between text-[11px]">
                             <span className="text-[hsl(var(--text-secondary))]">{item.description}</span>
                             <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white">{fmtCOP(Number(item.amount))}</span>
