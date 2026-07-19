@@ -18,7 +18,7 @@ import React, { ReactNode } from "react";
  *   WorkspaceLayout).
  * - Export default ahora es ``AcademyDetailContainer`` semánticamente — el
  *   nombre ``AcademyDetailShell`` se conserva como alias para no romper
- *   consumers legacy.
+ *   consumers existentes.
  */
 type Variant = "sky" | "emerald" | "amber" | "blue";
 
