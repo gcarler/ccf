@@ -167,6 +167,9 @@ Una tarea de Academy queda cerrada cuando:
 
 Estos casos son obligatorios mientras los IDs `ACAD-*` de `docs/ESTADO_ACADEMY.md §15` estén en estado Pendiente.
 
+<details>
+<summary>📜 <b>§10.1-§10.5 — Casos de QA adicionales auditoría 2026-07-18</b> (clic para expandir rastro histórico; fuente vigente en <a href="./ACADEMY_BACKLOG.md"><code>docs/ACADEMY_BACKLOG.md</code></a> §2 capa histórica + §4 capa operativa)</summary>
+
 ### 10.1. CRÍTICOS (cierre documental 2026-07-19)
 
 > **Estado:** ambos casos críticos resueltos en código. Las verificaciones
@@ -301,6 +304,8 @@ Para que su QA de Academy cierre Fase 0 (auditoría 2026-07-18):
 - [ ] Network en `/plataforma/academy` contiene al menos 1 fetch a `/dashboard/academy` (o `/academy/dashboard/metrics` si se elige ese fix).
 - [ ] Sidebar S2 como LECTOR debería mostrar 3 grupos y ~8 items, no 12.
 - [ ] Build de frontend no muestra warning de TypeScript sobre `id: number` vs `id: string`.
+
+</details>
 
 ---
 
