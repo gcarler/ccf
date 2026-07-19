@@ -77,6 +77,73 @@ class TestConfigCoverage:
             with pytest.raises(ValueError):
                 get_settings()
 
+    def test_config_missing_encryption_key_in_staging_raises(self):
+        """Covers line 109 — ENCRYPTION_KEY required in staging."""
+        with patch.dict(os.environ, {
+            "ENV": "staging", "SECRET_KEY": "strong-key-123!",
+            "ENCRYPTION_KEY": "", "DATABASE_URL": "postgresql://localhost/db",
+        }):
+            from backend.core.config import get_settings
+            get_settings.cache_clear()
+            with pytest.raises(ValueError):
+                get_settings()
+
+    def test_config_missing_smtp_in_nonlocal_warns(self):
+        """Covers lines 124-125 — SMTP warning in non-local."""
+        import logging as _logging
+        with patch.object(_logging.Logger, "warning") as mock_warn:
+            with patch.dict(os.environ, {
+                "ENV": "qa", "SECRET_KEY": "strong-key-123!",
+                "ENCRYPTION_KEY": "enc-key-here",
+                "DATABASE_URL": "postgresql://localhost/db",
+                "SMTP_HOST": "",
+            }):
+                from backend.core.config import get_settings
+                get_settings.cache_clear()
+                get_settings()
+            assert mock_warn.called
+
+
+class TestLoggingCoverage:
+    """Covers core/logging.py lines 28, 30."""
+
+    def test_json_formatter_with_request_id(self):
+        from backend.core.logging import JSONFormatter, request_id_ctx
+        import logging
+        token = request_id_ctx.set("test-request-id")
+        try:
+            record = logging.LogRecord(
+                name="test", level=logging.INFO,
+                pathname=__file__, lineno=42, msg="test message",
+                args=None, exc_info=None,
+            )
+            formatter = JSONFormatter()
+            output = formatter.format(record)
+            import json
+            data = json.loads(output)
+            assert data["request_id"] == "test-request-id"
+        finally:
+            request_id_ctx.reset(token)
+
+    def test_json_formatter_with_exception(self):
+        from backend.core.logging import JSONFormatter
+        import logging
+        import sys
+        try:
+            raise ValueError("test error")
+        except ValueError:
+            record = logging.LogRecord(
+                name="test", level=logging.ERROR,
+                pathname=__file__, lineno=42, msg="error occurred",
+                args=None, exc_info=sys.exc_info(),
+            )
+            formatter = JSONFormatter()
+            output = formatter.format(record)
+            import json
+            data = json.loads(output)
+            assert "exception" in data
+            assert "test error" in data["exception"]
+
 
 class TestAuditCoverage:
     def test_audit_logs_filters(self, client, db_session):
