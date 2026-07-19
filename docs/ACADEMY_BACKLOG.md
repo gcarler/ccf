@@ -560,7 +560,7 @@ producto.
   - **notes:** ACAD-TKT-021 solo limita tamaño de archivo. Sin rate-limit global, un bot puede saturar `submit_assessment` o `create_forum_thread`. Usar `slowapi` con override por endpoint (10/min submit_assessment, 5/min forum_thread, 30/min enrollment, 60/min read endpoints). Managers exentos.
 
 - **ACAD-TKT-201** [HIGH] — Tracing distribuido + logs JSON estructurados con correlation-id
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-07-19
   - **source:** Gap analysis 2026-07-19
   - **files:** `backend/api/academy.py` (middleware Correlation-ID), `frontend/src/app/plataforma/academy/AcademyClient.tsx` (X-Request-ID en apiFetch), `backend/core/logging.py` (formatter JSON)
   - **gate:** `pytest tests/test_academy_fase_7_transversal.py::test_acad_tkt_201_correlation_id_propagates -q`
