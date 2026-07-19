@@ -271,6 +271,23 @@ class ForumThread(BaseModel):
     model_config = orm_config
 
 
+class ForumCommentCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    content: str = Field(min_length=1, max_length=10000)
+    parent_id: UUID | None = None
+
+
+class ForumCommentRead(BaseModel):
+    id: UUID
+    thread_id: UUID
+    parent_id: UUID | None = None
+    author_persona_id: UUID
+    content: str
+    created_at: datetime
+    model_config = orm_config
+
+
 class ChatMessage(BaseModel):
     id: UUID
     sender_id: str
