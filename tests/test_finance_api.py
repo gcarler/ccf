@@ -82,7 +82,7 @@ def test_finance_register_donation(client, db_session):
         },
         headers=headers,
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     data = resp.json()
     assert data["amount"] == 50000
     assert data["type"] == "Diezmo"

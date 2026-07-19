@@ -4,10 +4,9 @@ import json
 import logging
 from datetime import datetime
 from datetime import timezone as dt_timezone
-from typing import List, Optional
+from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -16,6 +15,7 @@ from backend.core.database import get_db
 from backend.core.permissions import require_admin, require_module_access
 from backend.core.rate_limit import rate_limiter
 from backend.core.tenant import get_user_sede_id
+from backend.schemas.finance_suite import CreatePreferenceRequest
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ def create_donation(
 @router.get("", response_model=List[schemas.Donation])
 def list_donations(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = Query(100, le=200),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin),
 ):
@@ -129,15 +129,10 @@ def download_certificate(
 # ─── MercadoPago Integration ────────────────────────────────────────────────
 
 
-class CreatePreferenceRequest(BaseModel):
-    amount: float
-    title: str = "Donación"
-    description: Optional[str] = None
-    donor_name: Optional[str] = None
-    email: Optional[str] = None
-
-
-@router.post("/mercadopago/create-preference")
+@router.post(
+    "/mercadopago/create-preference",
+    dependencies=[Depends(rate_limiter(limit=5, window_seconds=60))],
+)
 def mercadopago_create_preference(
     payload: CreatePreferenceRequest,
     request: Request,
