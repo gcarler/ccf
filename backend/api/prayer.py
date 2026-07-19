@@ -24,11 +24,13 @@ def read_prayer_requests(
     current_user: "models.User" = Depends(require_active_user),
 ):
     """Solo devuelve pedidos publicos (is_public=True). Los privados van al CRM."""
+    sede_id = get_user_sede_id(db, current_user.id)
     return (
         db.query(models.PrayerRequest)
         .filter(models.PrayerRequest.is_public)
+        .filter(models.PrayerRequest.sede_id == sede_id)
         .order_by(models.PrayerRequest.created_at.desc())
         .offset(skip)
         .limit(limit)
-        .filter(models.PrayerRequest.sede_id == get_user_sede_id(db, current_user.id)).all()
+        .all()
     )
