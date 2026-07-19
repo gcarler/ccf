@@ -146,6 +146,78 @@ ensure_started() {
   exit 1
 }
 
+# Monitor de PM2: si ccf-backend-staging y/o ccf-frontend-staging están siendo
+# gestionados por PM2, delegamos a `pm2 restart` para evitar colisión EADDRINUSE
+# (fuente histórica de 1277 restarts en ccf-frontend-staging).
+pm2_is_managing() {
+  local app="$1"
+  command -v pm2 >/dev/null 2>&1 || return 1
+  pm2 jlist 2>/dev/null \
+    | python3 -c "import sys,json; d=json.load(sys.stdin); sys.exit(0 if any(p.get('name')=='$app' and p.get('pm_id') is not None for p in d) else 1)" 2>/dev/null
+}
+
+DELEGATED_TO_PM2=0
+
+delegate_to_pm2() {
+  local backend_pm2=0
+  local frontend_pm2=0
+  local seaweed_pm2=0
+  pm2_is_managing "ccf-backend-staging"  && backend_pm2=1
+  pm2_is_managing "ccf-frontend-staging" && frontend_pm2=1
+  pm2_is_managing "seaweedfs"            && seaweed_pm2=1
+
+  if [[ $backend_pm2 -eq 0 && $frontend_pm2 -eq 0 && $seaweed_pm2 -eq 0 ]]; then
+    return 0  # PM2 no toca estos; seguimos con el flujo detached original
+  fi
+
+  echo "PM2 está gestionando procesos ccf-*-staging / seaweedfs."
+  echo "Delegando a PM2 para evitar colisión de puertos (fuente de EADDRINUSE históricos)."
+
+  if [[ $backend_pm2 -eq 1 ]]; then
+    echo "→ pm2 restart ccf-backend-staging"
+    pm2 restart ccf-backend-staging --update-env >/dev/null 2>&1 || {
+      echo "ERROR: pm2 restart ccf-backend-staging falló" >&2
+      exit 1
+    }
+  fi
+  if [[ $frontend_pm2 -eq 1 ]]; then
+    echo "→ pm2 restart ccf-frontend-staging"
+    pm2 restart ccf-frontend-staging --update-env >/dev/null 2>&1 || {
+      echo "ERROR: pm2 restart ccf-frontend-staging falló" >&2
+      exit 1
+    }
+  fi
+  if [[ $seaweed_pm2 -eq 1 ]]; then
+    echo "→ pm2 restart seaweedfs"
+    pm2 restart seaweedfs --update-env >/dev/null 2>&1 || {
+      echo "ERROR: pm2 restart seaweedfs falló" >&2
+      exit 1
+    }
+  fi
+
+  # Smoke mínimo: puerto escuchando en el host esperado.
+  # SeaweedFS tarda ~45s en levantar todos los sub-servers; le damos hasta 60s.
+  local seaweed_port=8333
+  local waited=0
+  local max_wait=60
+  while [[ $waited -lt $max_wait ]]; do
+    if { [[ $backend_pm2 -eq 0 ]]  || is_port_listening "$BACKEND_PORT";  } && \
+       { [[ $frontend_pm2 -eq 0 ]] || is_port_listening "$FRONTEND_PORT"; } && \
+       { [[ $seaweed_pm2 -eq 0 ]]  || is_port_listening "$seaweed_port";  }; then
+      echo "CCF running under PM2:"
+      [[ $backend_pm2 -eq 1 ]]  && echo "- Backend:  http://localhost:$BACKEND_PORT (pm2)"
+      [[ $frontend_pm2 -eq 1 ]] && echo "- Frontend: http://localhost:$FRONTEND_PORT (pm2)"
+      [[ $seaweed_pm2 -eq 1 ]]  && echo "- SeaweedFS S3: http://localhost:$seaweed_port (pm2)"
+      exit 0
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+  echo "ERROR: puertos no respondieron tras delegar a PM2 (${waited}s)" >&2
+  pm2 status
+  exit 1
+}
+
 start_backend() {
   if [[ -f "$BACKEND_PID_FILE" ]]; then
     local pid
@@ -206,6 +278,11 @@ start_frontend() {
   ensure_started "Frontend" "$(cat "$FRONTEND_PID_FILE")" "$FRONTEND_LOG" "$FRONTEND_PORT"
   echo "Frontend started on http://localhost:$FRONTEND_PORT"
 }
+
+# Si PM2 está gestionando los procesos staging, delegar a PM2 y salir.
+# Si PM2 no está gestionándolos, seguir con el flujo detached original
+# (no puede haber colisión EADDRINUSE porque PM2 no tiene procesos en :3000/:8000).
+delegate_to_pm2
 
 start_backend
 start_frontend
