@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
@@ -46,7 +45,7 @@ from backend.api import (
     youtube,
 )
 from backend.core.config import get_settings
-from backend.core.logging import request_id_middleware
+from backend.core.logging import observability_middleware
 from backend.core.security_headers import mount_security_headers
 from backend.middleware.module_isolation import register_module_isolation
 
@@ -156,21 +155,12 @@ app = FastAPI(
 
 mount_security_headers(app)
 
-# Request ID tracking — every request gets a unique ID
-app.middleware("http")(request_id_middleware)
+# TKT-201: observability unificada (request_id + user_id + sede_id + endpoint + latency_ms)
+# Reemplaza el viejo ``request_id_middleware`` + ``quality_assurance_middleware``.
+app.middleware("http")(observability_middleware)
 
 # Module isolation — if a module fails, it doesn't take down the whole server
 register_module_isolation(app)
-
-
-@app.middleware("http")
-async def quality_assurance_middleware(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    # X-Process-Time exposed only in local/dev for debugging
-    if settings.environment.lower() in {"local", "development", "dev"}:
-        response.headers["X-Process-Time"] = str(time.time() - start_time)
-    return response
 
 
 @app.exception_handler(StarletteHTTPException)

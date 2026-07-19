@@ -87,7 +87,21 @@ function buildUrl(path: string, query?: Record<string, QueryValue>) {
 }
 
 function buildHeaders(base?: HeadersInit) {
-  return new Headers({ Accept: "application/json", ...(base || {}) });
+  const headers = new Headers({ Accept: "application/json", ...(base || {}) });
+  // TKT-201: inyectar X-Request-ID por request para correlación frontend↔backend.
+  // crypto.randomUUID() está disponible en todos los navegadores modernos y
+  // en Node 19+ / Next.js 14+. Fallback a Math.random-based UUID para SSR
+  // edge-cases muy antiguos.
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    headers.set("X-Request-ID", crypto.randomUUID());
+  } else {
+    // Fallback determinístico (no criptográficamente seguro, sólo para tracing)
+    headers.set(
+      "X-Request-ID",
+      `${Date.now().toString(16)}-${Math.random().toString(16).slice(2, 10)}`,
+    );
+  }
+  return headers;
 }
 
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}, _isRetry = false): Promise<T> {
