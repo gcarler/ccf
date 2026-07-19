@@ -18,6 +18,32 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
 import clsx from "clsx";
+import { toast } from "sonner";
+
+interface InvoiceItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+}
+
+interface Invoice {
+  id: string;
+  invoice_number: string;
+  customer_name: string;
+  total: number;
+  status: string;
+  issue_date: string;
+  electronic_status: string;
+}
+
+interface SalesOrder {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  total_amount: number;
+  status: string;
+  order_date: string;
+}
 
 const SECTIONS = [
   {
@@ -40,30 +66,29 @@ export default function FacturacionPage() {
   const { token } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<"orders" | "invoices">("invoices");
-  const [orders, setOrders] = useState<any[]>([]);
-  const [invoices, setInvoices] = useState<any[]>([]);
+  const [orders, setOrders] = useState<SalesOrder[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [showPayment, setShowPayment] = useState<string | null>(null);
-  const [form, setForm] = useState({ customer_name: "", customer_email: "", customer_tax_id: "", issue_date: "", due_date: "", items: [{ description: "", quantity: 1, unit_price: 0 }] });
+  const [form, setForm] = useState({ customer_name: "", customer_email: "", customer_tax_id: "", issue_date: "", due_date: "", items: [{ description: "", quantity: 1, unit_price: 0 }] as InvoiceItem[] });
   const [paymentForm, setPaymentForm] = useState({ amount: 0, payment_date: "", payment_method: "transfer", reference: "" });
 
-  const fetchData = async () => {
+  useEffect(() => {
+    const ctrl = new AbortController();
     if (!token) { setLoading(false); return; }
     setLoading(true);
-    try {
-      const [o, i] = await Promise.all([
-        apiFetch<any[]>("/finance-suite/sales-orders?limit=50", { token, cache: "no-store" }),
-        apiFetch<any[]>("/finance-suite/invoices?limit=50", { token, cache: "no-store" }),
-      ]);
+    Promise.all([
+      apiFetch<SalesOrder[]>("/finance-suite/sales-orders?limit=50", { token, cache: "no-store", signal: ctrl.signal }),
+      apiFetch<Invoice[]>("/finance-suite/invoices?limit=50", { token, cache: "no-store", signal: ctrl.signal }),
+    ]).then(([o, i]) => {
       if (Array.isArray(o)) setOrders(o);
       if (Array.isArray(i)) setInvoices(i);
-    } catch (e) { console.error(e); }
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchData(); }, [token]);
+    }).catch(e => { if (e.name !== 'AbortError') { console.error(e); toast.error('Error al cargar datos'); } })
+    .finally(() => setLoading(false));
+    return () => ctrl.abort();
+  }, [token]);
 
   const filtered = tab === "invoices"
     ? invoices.filter((i) => i.invoice_number?.toLowerCase().includes(search.toLowerCase()) || i.customer_name?.toLowerCase().includes(search.toLowerCase()))
@@ -83,8 +108,9 @@ export default function FacturacionPage() {
       await apiFetch("/finance-suite/invoices", { token, method: "POST", body: payload });
       setShowCreate(false);
       setForm({ customer_name: "", customer_email: "", customer_tax_id: "", issue_date: "", due_date: "", items: [{ description: "", quantity: 1, unit_price: 0 }] });
+      toast.success("Factura creada");
       fetchData();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); toast.error("Error al crear factura"); }
   };
 
   const handlePayment = async (invoiceId: string) => {
@@ -95,16 +121,32 @@ export default function FacturacionPage() {
       });
       setShowPayment(null);
       setPaymentForm({ amount: 0, payment_date: "", payment_method: "transfer", reference: "" });
+      toast.success("Pago registrado");
       fetchData();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); toast.error("Error al registrar pago"); }
   };
 
   const handleSendElectronic = async (id: string) => {
     if (!token) return;
     try {
       await apiFetch(`/finance-suite/invoices/${id}/send-electronic`, { token, method: "POST" });
+      toast.success("Factura enviada");
       fetchData();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); toast.error("Error al enviar factura electrónica"); }
+  };
+
+  const fetchData = async () => {
+    if (!token) { setLoading(false); return; }
+    setLoading(true);
+    try {
+      const [o, i] = await Promise.all([
+        apiFetch<SalesOrder[]>("/finance-suite/sales-orders?limit=50", { token, cache: "no-store" }),
+        apiFetch<Invoice[]>("/finance-suite/invoices?limit=50", { token, cache: "no-store" }),
+      ]);
+      if (Array.isArray(o)) setOrders(o);
+      if (Array.isArray(i)) setInvoices(i);
+    } catch (e) { console.error(e); toast.error("Error al cargar datos"); }
+    setLoading(false);
   };
 
   return (
@@ -155,9 +197,9 @@ export default function FacturacionPage() {
               <div className="space-y-2">
                 {form.items.map((item, idx) => (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                    <input type="text" placeholder="Descripción" value={item.description} onChange={(e) => { const items = [...form.items]; items[idx].description = e.target.value; setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                    <input type="number" placeholder="Cantidad" value={item.quantity} onChange={(e) => { const items = [...form.items]; items[idx].quantity = Number(e.target.value); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                    <input type="number" placeholder="Precio unitario" value={item.unit_price} onChange={(e) => { const items = [...form.items]; items[idx].unit_price = Number(e.target.value); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                    <input type="text" placeholder="Descripción" value={item.description} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, description: e.target.value } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                    <input type="number" min={0} placeholder="Cantidad" value={item.quantity} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, quantity: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                    <input type="number" min={0} placeholder="Precio unitario" value={item.unit_price} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, unit_price: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
                     <button onClick={() => setForm({ ...form, items: form.items.filter((_, i) => i !== idx) })} className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"><Trash2 size={14} /></button>
                   </div>
                 ))}
@@ -185,14 +227,14 @@ export default function FacturacionPage() {
             ) : (
               filtered.map((item) => {
                 const isInvoice = tab === "invoices";
-                const number = isInvoice ? item.invoice_number : item.order_number;
-                const total = isInvoice ? item.total : item.total_amount;
+                const number = isInvoice ? (item as Invoice).invoice_number : (item as SalesOrder).order_number;
+                const total = isInvoice ? (item as Invoice).total : (item as SalesOrder).total_amount;
                 const itemStatus = item.status;
                 return (
                   <div key={item.id} className="px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 grid grid-cols-12 gap-2 items-center hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] transition-colors">
                     <div className="col-span-3">
                       <p className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-white">{number}</p>
-                      <p className="text-[10px] text-[hsl(var(--text-secondary))]">{isInvoice ? item.issue_date : item.order_date}</p>
+                      <p className="text-[10px] text-[hsl(var(--text-secondary))]">{isInvoice ? (item as Invoice).issue_date : (item as SalesOrder).order_date}</p>
                     </div>
                     <div className="col-span-3 text-[12px] text-[hsl(var(--text-secondary))] truncate">{item.customer_name}</div>
                     <div className="col-span-2 text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-white">{fmtCOP(Number(total))}</div>
@@ -207,7 +249,7 @@ export default function FacturacionPage() {
                       {isInvoice && itemStatus !== "paid" && (
                         <button onClick={() => setShowPayment(item.id)} className="p-1.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-100" title="Registrar pago"><DollarSign size={12} /></button>
                       )}
-                      {isInvoice && item.electronic_status === "not_sent" && (
+                      {isInvoice && (item as Invoice).electronic_status === "not_sent" && (
                         <button onClick={() => handleSendElectronic(item.id)} className="p-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100" title="Enviar electrónica"><Send size={12} /></button>
                       )}
                     </div>

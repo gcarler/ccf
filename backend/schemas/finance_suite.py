@@ -8,9 +8,10 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 orm_config: ConfigDict = ConfigDict(from_attributes=True)
+forbid_config: ConfigDict = ConfigDict(extra='forbid')
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -25,10 +26,44 @@ class PaginatedResponse(BaseModel):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# 0. FUND (legacy — models_crm.Fund)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class FundCreate(BaseModel):
+    model_config = forbid_config
+    name: str
+    description: Optional[str] = None
+    is_public: bool = False
+    target_amount: Optional[Decimal] = None
+
+
+class FundUpdate(BaseModel):
+    model_config = forbid_config
+    name: Optional[str] = None
+    description: Optional[str] = None
+    is_public: Optional[bool] = None
+    target_amount: Optional[Decimal] = None
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 0b. DONATION PAYLOAD (for finance.py register_donation)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class RegisterDonationPayload(BaseModel):
+    model_config = forbid_config
+    fund_id: UUID
+    amount: float
+    donation_type: str = "Ofrenda"
+    donor_name: Optional[str] = None
+    persona_id: Optional[UUID] = None
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # 1. CONTABILIDAD
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class BankAccountCreate(BaseModel):
+    model_config = forbid_config
     bank_name: str
     account_number: str
     account_type: str = "checking"
@@ -36,6 +71,7 @@ class BankAccountCreate(BaseModel):
 
 
 class BankAccountUpdate(BaseModel):
+    model_config = forbid_config
     bank_name: Optional[str] = None
     account_number: Optional[str] = None
     account_type: Optional[str] = None
@@ -56,6 +92,7 @@ class BankAccountOut(BaseModel):
 
 
 class BankTransactionCreate(BaseModel):
+    model_config = forbid_config
     bank_account_id: UUID
     transaction_date: date
     description: str
@@ -82,6 +119,7 @@ class BankTransactionOut(BaseModel):
 
 
 class BankReconciliationCreate(BaseModel):
+    model_config = forbid_config
     bank_account_id: UUID
     period_start: date
     period_end: date
@@ -106,6 +144,7 @@ class BankReconciliationOut(BaseModel):
 
 
 class ChartOfAccountCreate(BaseModel):
+    model_config = forbid_config
     code: str
     name: str
     account_type: str
@@ -124,6 +163,7 @@ class ChartOfAccountOut(BaseModel):
 
 
 class AccountingEntryLineCreate(BaseModel):
+    model_config = forbid_config
     account_id: UUID
     debit: Decimal = Decimal("0")
     credit: Decimal = Decimal("0")
@@ -131,6 +171,7 @@ class AccountingEntryLineCreate(BaseModel):
 
 
 class AccountingEntryCreate(BaseModel):
+    model_config = forbid_config
     entry_date: date
     reference: Optional[str] = None
     description: str
@@ -160,6 +201,7 @@ class AccountingEntryOut(BaseModel):
 
 
 class FinancialStatementCreate(BaseModel):
+    model_config = forbid_config
     statement_type: str
     period_start: date
     period_end: date
@@ -178,6 +220,7 @@ class FinancialStatementOut(BaseModel):
 
 
 class TaxConfigurationCreate(BaseModel):
+    model_config = forbid_config
     country_code: str
     tax_name: str
     tax_rate: Decimal
@@ -206,12 +249,14 @@ class TaxConfigurationOut(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class SalesOrderItemCreate(BaseModel):
+    model_config = forbid_config
     description: str
     quantity: Decimal = Decimal("1")
     unit_price: Decimal
 
 
 class SalesOrderCreate(BaseModel):
+    model_config = forbid_config
     customer_name: str
     customer_email: Optional[str] = None
     customer_tax_id: Optional[str] = None
@@ -246,12 +291,14 @@ class SalesOrderOut(BaseModel):
 
 
 class InvoiceItemCreate(BaseModel):
+    model_config = forbid_config
     description: str
     quantity: Decimal = Decimal("1")
     unit_price: Decimal
 
 
 class InvoiceCreate(BaseModel):
+    model_config = forbid_config
     sales_order_id: Optional[UUID] = None
     customer_name: str
     customer_email: Optional[str] = None
@@ -272,6 +319,7 @@ class InvoiceItemOut(BaseModel):
 
 
 class InvoicePaymentCreate(BaseModel):
+    model_config = forbid_config
     amount: Decimal
     payment_date: date
     payment_method: str = "transfer"
@@ -315,6 +363,7 @@ class InvoiceOut(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class ExpenseItemCreate(BaseModel):
+    model_config = forbid_config
     expense_date: date
     category: str
     description: str
@@ -325,6 +374,7 @@ class ExpenseItemCreate(BaseModel):
 
 
 class ExpenseReportCreate(BaseModel):
+    model_config = forbid_config
     description: Optional[str] = None
     currency: str = "COP"
     items: List[ExpenseItemCreate]
@@ -345,6 +395,7 @@ class ExpenseItemOut(BaseModel):
 
 
 class ExpenseReceiptCreate(BaseModel):
+    model_config = forbid_config
     expense_item_id: UUID
     image_url: str
     thumbnail_url: Optional[str] = None
@@ -357,7 +408,7 @@ class ExpenseReceiptOut(BaseModel):
     image_url: str
     thumbnail_url: Optional[str]
     ocr_text: Optional[str]
-    ocr_confidence: Optional[float]
+    ocr_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     ai_metadata_json: Optional[Dict[str, Any]]
     created_at: datetime
 
@@ -385,6 +436,7 @@ class ExpenseReportOut(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class DocumentTagCreate(BaseModel):
+    model_config = forbid_config
     name: str
     color: str = "#6B7280"
 
@@ -399,6 +451,7 @@ class DocumentTagOut(BaseModel):
 
 
 class DocumentCreate(BaseModel):
+    model_config = forbid_config
     title: str
     description: Optional[str] = None
     file_url: str
@@ -410,6 +463,7 @@ class DocumentCreate(BaseModel):
 
 
 class DocumentUpdate(BaseModel):
+    model_config = forbid_config
     title: Optional[str] = None
     description: Optional[str] = None
     document_type: Optional[str] = None
@@ -441,6 +495,7 @@ class DocumentOut(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class SignSignerCreate(BaseModel):
+    model_config = forbid_config
     email: str
     full_name: str
     role: str = "signer"
@@ -449,6 +504,7 @@ class SignSignerCreate(BaseModel):
 
 
 class SignRequestCreate(BaseModel):
+    model_config = forbid_config
     title: str
     description: Optional[str] = None
     document_url: str
@@ -487,6 +543,7 @@ class SignRequestOut(BaseModel):
 
 
 class SignAction(BaseModel):
+    model_config = forbid_config
     action: str  # sign, decline, remind
     ip_address: Optional[str] = None
     metadata_json: Optional[Dict[str, Any]] = None

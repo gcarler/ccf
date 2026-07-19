@@ -35,10 +35,6 @@ def test_create_donation(client, db_session):
     assert data["donation_type"] == "Diezmo"
 
 
-@pytest.mark.xfail(
-    reason="schemas.Donation expects persona_id as string but model returns UUID object",
-    strict=False,
-)
 def test_list_donations(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
     headers = _auth_headers(client)
@@ -48,6 +44,7 @@ def test_list_donations(client, db_session):
         donation_type="Ofrenda",
         donor_name="Ana Lopez",
         persona_id=persona.id,
+        sede_id=sede.id,
     )
     db_session.add(donation)
     db_session.commit()
@@ -68,6 +65,7 @@ def test_donations_total(client, db_session):
         donation_type="Diezmo",
         donor_name="Luis Martinez",
         persona_id=persona.id,
+        sede_id=sede.id,
     )
     db_session.add(donation)
     db_session.commit()
@@ -78,9 +76,6 @@ def test_donations_total(client, db_session):
     assert "total" in data
 
 
-@pytest.mark.xfail(
-    reason="Donation model has no sede_id column; endpoint crashes", strict=False
-)
 def test_donations_summary(client, db_session):
     _seed_admin(db_session)
     headers = _auth_headers(client)
@@ -99,6 +94,7 @@ def test_donation_certificate(client, db_session):
         donation_type="Misiones",
         donor_name="Maria Gomez",
         persona_id=persona.id,
+        sede_id=sede.id,
     )
     db_session.add(donation)
     db_session.commit()
