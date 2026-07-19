@@ -181,12 +181,36 @@ contrato estricto:
 El Gate 10 de `tests/test_arquitectura_100pct.py` introspecciona firmas,
 columnas y archivos para impedir que reaparezcan esos bypasses.
 
+## Estado de Cobertura de Tests (2026-07-19)
+
+| Métrica | Valor |
+|---|---|
+| Tests totales | ~4,630 |
+| Archivos de test | 166 |
+| Cobertura global backend | ~39% (target 40% en pytest.ini) |
+| Módulos con suite de tests dedicados | Admin (53), Wiki (30), Chat (32), Finance (6), Vida Espiritual (10), Support (7), Donations (7), Agents (2), Enterprise CMS (52), Graph (5), Services (50+) |
+| Módulos al 100% de cobertura | ~35+ archivos en backend/ (api/wiki, api/prayer, api/governance, api/workspace, core/config, core/logging, core/audit, core/context, core/security_headers, crud/audit, crud/crm, 14 modelos, 12+ schemas) |
+| Smoke scripts canónicos | 13 scripts en scripts/ (admin, chat, wiki, spiritual_life, auth_v3, kernel, workspace, finance, fase3, crm, academy, cms, evangelism, messaging, agenda, projects, platform) |
+
+## Auditoría Forense — Estado
+
+Completadas las 3 fases del plan de auditoría forense definido en `docs/PLAN_ARQUITECTURA_MODULAR_CCF.md`:
+
+| Fase | Módulos | Estado |
+|---|---|---|
+| Certificados (pre-auditados) | CRM, Academy, CMS, Messaging, Agenda, Evangelismo, Proyectos, Plataforma | 8 módulos |
+| Fase 1 | Admin, Chat, Vida Espiritual | 3 módulos — ✅ remediados |
+| Fase 2 | Auth v3, Kernel, Workspace, Wiki, Finance | 5 módulos — ✅ remediados |
+| Fase 3 | Support, Community, Dashboard, Donations, System, Agents, Prayer, Graph, Analytics, Enterprise CMS, Governance, Tables, Youtube | 14 módulos — ✅ auditados |
+| **Total** | **30/33 módulos** cubiertos con ESTADO + auditoría | |
+
 ## Documentos Relacionados
 
 - `REGLAS.md` — Kernel de Personas, Auth v3, Axioma 3.
 - `docs/ESTANDARES_DESARROLLO.md` — estandares tecnicos.
 - `docs/AGENTES_OPERATIVOS_CCF.md` — guia operativa para agentes.
 - `docs/CIERRE_ARQUITECTURA_CCF.md` — acta formal del 100 % v3.0.1.
+- `docs/MATRIZ_COBERTURA_MODULAR_CCF.md` — matriz actualizada con todas las fases.
 
 ## Riesgos residuales
 

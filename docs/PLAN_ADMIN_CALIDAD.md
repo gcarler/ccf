@@ -1,6 +1,6 @@
 # Plan de Calidad — Módulo Administración
 
-**Actualizado:** 2026-07-18
+**Actualizado:** 2026-07-19
 **Audiencia:** desarrolladores backend, frontend, revisores de calidad
 
 ---
