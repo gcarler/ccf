@@ -1,6 +1,23 @@
-# Plan de Calidad — Módulo Academy (100%)
+# Plan de Calidad — Módulo Academy (100%) — ⚠️ DEPRECATED 2026-07-19
 
-**Creado:** 2026-07-19
+> **🚨 DEPRECADO — 2026-07-19:** este documento fue consolidado en
+> [`docs/ACADEMY_BACKLOG.md`](./ACADEMY_BACKLOG.md). Los 130 items listados
+> aquí sobrevivieron como rastro histórico para auditoría, pero **NO se
+> mantienen ni actualizan aquí**. Cualquier nuevo ticket del módulo
+> Academy se registra con `ACAD-TKT-NNN` en `docs/ACADEMY_BACKLOG.md`.
+>
+> Si estás abriendo trabajo sobre Academy: lee primero
+> `docs/ACADEMY_BACKLOG.md` y respeta la regla anti-drift del §7.
+>
+> Mapeo original → unificado:
+> - `PLAN P0 ACAD-C01..06` → `ACAD-TKT-010..015`
+> - `PLAN P1 ACAD-H01..18` → `ACAD-TKT-020..043`
+> - `PLAN P2 ACAD-M01..16` → `ACAD-TKT-050..065`
+> - `PLAN P2 ACAD-MF01..14` → `ACAD-TKT-070..083`
+> - `PLAN P3 ACAD-L01..13` → `ACAD-TKT-100..112`
+> - `PLAN P4 ACAD-T01..60` → `ACAD-TKT-130..134`
+
+**Creado (HISTÓRICO):** 2026-07-19
 **Objetivo:** Cerrar TODOS los items pendientes del módulo Academy para dejarlo al 100%
 
 > **Ampliación de auditoría 2026-07-19:** el plan incorpora

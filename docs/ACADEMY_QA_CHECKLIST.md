@@ -1,4 +1,17 @@
-# QA Checklist — Academy CCF
+# QA Checklist — Academy CCF — ⚠️ DEPRECATED 2026-07-19
+
+> **🚨 DEPRECADO — 2026-07-19:** este documento fue consolidado en
+> [`docs/ACADEMY_BACKLOG.md`](./ACADEMY_BACKLOG.md). Los casos listados
+> en §10 (incluyendo `ACAD-CRIT-001`, `ACAD-HIGH-001`, etc.) sobrevivieron
+> como rastro histórico para auditoría, pero **NO se mantienen ni
+> actualizan aquí**.
+>
+> Cada caso `ACAD-*` de §10 ahora tiene su equivalente `ACAD-TKT-NNN` con
+> `gate:` ejecutable en `docs/ACADEMY_BACKLOG.md`. Si vas a abrir trabajo
+> nuevo sobre Academy, esa es la fuente única.
+>
+> Este doc sigue siendo el **smoke canónico de prefijo** (§1-§9) — esa
+> parte no se deprecó, sigue vigente como guía operativa.
 
 > **Objetivo:** validar Academy como módulo aislado antes de cerrar una tarea, commit o despliegue.
 
