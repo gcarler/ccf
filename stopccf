@@ -8,6 +8,81 @@ FRONTEND_PID_FILE="$RUN_DIR/frontend.pid"
 BACKEND_PORT="${BACKEND_PORT:-8000}"
 FRONTEND_PORT="${FRONTEND_PORT:-3000}"
 
+# Monitor de PM2: si ccf-backend-staging y/o ccf-frontend-staging están siendo
+# gestionados por PM2, delegamos a `pm2 stop` para no dejar PM2 en estado
+# inconsistente (su PID file apuntaría a un proceso que matamos por fuera).
+pm2_is_managing() {
+  local app="$1"
+  command -v pm2 >/dev/null 2>&1 || return 1
+  pm2 jlist 2>/dev/null \
+    | python3 -c "import sys,json; d=json.load(sys.stdin); sys.exit(0 if any(p.get('name')=='$app' and p.get('pm_id') is not None for p in d) else 1)" 2>/dev/null
+}
+
+delegate_stop_to_pm2() {
+  local backend_pm2=0
+  local frontend_pm2=0
+  local seaweed_pm2=0
+  pm2_is_managing "ccf-backend-staging"  && backend_pm2=1
+  pm2_is_managing "ccf-frontend-staging" && frontend_pm2=1
+  pm2_is_managing "seaweedfs"            && seaweed_pm2=1
+
+  if [[ $backend_pm2 -eq 0 && $frontend_pm2 -eq 0 && $seaweed_pm2 -eq 0 ]]; then
+    return 0  # PM2 no toca estos; seguimos con el flujo PID file original
+  fi
+
+  local seaweed_port=8333
+  echo "PM2 está gestionando procesos ccf-*-staging / seaweedfs. Delegando stop a PM2."
+  if [[ $seaweed_pm2 -eq 1 ]]; then
+    echo "→ pm2 stop seaweedfs"
+    pm2 stop seaweedfs >/dev/null 2>&1 || echo "WARN: pm2 stop seaweedfs falló" >&2
+  fi
+  if [[ $backend_pm2 -eq 1 ]]; then
+    echo "→ pm2 stop ccf-backend-staging"
+    pm2 stop ccf-backend-staging >/dev/null 2>&1 || echo "WARN: pm2 stop ccf-backend-staging falló" >&2
+  fi
+  if [[ $frontend_pm2 -eq 1 ]]; then
+    echo "→ pm2 stop ccf-frontend-staging"
+    pm2 stop ccf-frontend-staging >/dev/null 2>&1 || echo "WARN: pm2 stop ccf-frontend-staging falló" >&2
+  fi
+
+  # Verificar que los puertos queden libres (PM2 debería haber matado a los procesos).
+  local waited=0
+  while [[ $waited -lt 15 ]]; do
+    local still_backend=0
+    local still_frontend=0
+    local still_seaweed=0
+    [[ $backend_pm2 -eq 1 ]]  && is_port_listening "$BACKEND_PORT"  && still_backend=1
+    [[ $frontend_pm2 -eq 1 ]] && is_port_listening "$FRONTEND_PORT" && still_frontend=1
+    [[ $seaweed_pm2 -eq 1 ]]  && is_port_listening "$seaweed_port"  && still_seaweed=1
+    if [[ $still_backend -eq 0 && $still_frontend -eq 0 && $still_seaweed -eq 0 ]]; then
+      echo "CCF stopped under PM2."
+      exit 0
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+
+  # Si los puertos siguen ocupados después de pm2 stop, forzar limpieza por puerto
+  # (cubre el caso de proceso zombi que PM2 no mató, fuente histórica de EADDRINUSE).
+  echo "WARN: puertos aún ocupados tras pm2 stop, forzando limpieza por puerto." >&2
+  if [[ $seaweed_pm2 -eq 1 ]]  && is_port_listening "$seaweed_port";  then stop_from_port "seaweedfs" "$seaweed_port";  fi
+  if [[ $backend_pm2 -eq 1 ]]  && is_port_listening "$BACKEND_PORT";  then stop_from_port "backend"  "$BACKEND_PORT";  fi
+  if [[ $frontend_pm2 -eq 1 ]] && is_port_listening "$FRONTEND_PORT"; then stop_from_port "frontend" "$FRONTEND_PORT"; fi
+  exit 0
+}
+
+# Helpers de puertos
+is_port_listening() {
+  local port="$1"
+  if command -v lsof >/dev/null 2>&1; then
+    timeout 3 lsof -iTCP:"$port" -sTCP:LISTEN -P -n >/dev/null 2>&1 && return 0
+  fi
+  if command -v ss >/dev/null 2>&1; then
+    ss -ltn "sport = :$port" | grep -q LISTEN && return 0
+  fi
+  timeout 1 bash -c ":</dev/tcp/127.0.0.1/$port" >/dev/null 2>&1
+}
+
 pids_listening_on_port() {
   local port="$1"
 
@@ -87,6 +162,10 @@ stop_from_pid_file() {
 
   rm -f "$pid_file"
 }
+
+# Si PM2 está gestionando los procesos staging, delegar stop a PM2 y salir.
+# Si PM2 no está gestionándolos, seguir con el flujo PID file original.
+delegate_stop_to_pm2
 
 stop_from_pid_file "backend" "$BACKEND_PID_FILE" "$BACKEND_PORT"
 stop_from_pid_file "frontend" "$FRONTEND_PID_FILE" "$FRONTEND_PORT"
