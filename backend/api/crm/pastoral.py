@@ -10,19 +10,6 @@ from sqlalchemy import String, cast, func, or_
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
-from backend.schemas.crm.base import (
-    CasoCreate,
-    CounselingTicketUpdate,
-    CrmSettingsUpdate,
-    GrupoUpdate,
-    MessagingSend,
-    PrayerRequestCreate,
-    PrayerRequestUpdate,
-    RoleCreate,
-    RoleUpdate,
-    VolunteerCreate,
-    VolunteerUpdate,
-)
 from backend.api.crm._shared import (
     _case_created_column,
     _case_stage,
@@ -50,6 +37,19 @@ from backend.core.permissions import normalize_role, require_module_access
 from backend.core.tenant import get_user_sede_id
 from backend.crud.crm_.shared import resolve_persona_id_for_user
 from backend.models_crm_pipeline import CanalOrigenEnum, EstadoCasoEnum, TipoInteraccionEnum
+from backend.schemas.crm.base import (
+    CasoCreate,
+    CounselingTicketUpdate,
+    CrmSettingsUpdate,
+    GrupoUpdate,
+    MessagingSend,
+    PrayerRequestCreate,
+    PrayerRequestUpdate,
+    RoleCreate,
+    RoleUpdate,
+    VolunteerCreate,
+    VolunteerUpdate,
+)
 from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
 from backend.services.messaging import (
     MessagingGateway,
