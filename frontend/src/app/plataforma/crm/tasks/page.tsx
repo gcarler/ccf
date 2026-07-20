@@ -72,7 +72,7 @@ export default function CrmTasksPage() {
         priority: 'medium', status: 'pending', due_date: '', persona_id: ''
     });
 
-    const fetchTasks = useCallback(async () => {
+    const fetchTasks = useCallback(async (signal?: AbortSignal) => {
         if (!token) {
             setLoading(false);
             return;
@@ -80,9 +80,10 @@ export default function CrmTasksPage() {
         setLoading(true);
         setTasksError(null);
         try {
-            const data = await apiFetch<ConsolidationTask[]>('/crm/tasks', { token, cache: 'no-store' });
+            const data = await apiFetch<ConsolidationTask[]>('/crm/tasks', { token, cache: 'no-store', signal });
             setTasks(Array.isArray(data) ? data : []);
-        } catch (err) {
+        } catch (err: any) {
+            if (err?.name === 'AbortError') return;
             setTasks([]);
             const message = extractErrorMessage(err, 'Error al cargar tareas');
             setTasksError(message);
@@ -93,7 +94,9 @@ export default function CrmTasksPage() {
     }, [token, addToast]);
 
     useEffect(() => {
-        fetchTasks();
+        const controller = new AbortController();
+        fetchTasks(controller.signal);
+        return () => controller.abort();
     }, [fetchTasks]);
 
 
@@ -184,7 +187,7 @@ export default function CrmTasksPage() {
                         </p>
                     </div>
                     <button
-                        onClick={fetchTasks}
+                        onClick={() => fetchTasks()}
                         className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
                     >
                         Reintentar

@@ -83,7 +83,7 @@ export default function ConsolidationPipelinePage() {
         first_name: '', last_name: '', phone: '', source: 'Visitante', notes: '', stage: 'new'
     });
 
-    const fetchPipeline = useCallback(async () => {
+    const fetchPipeline = useCallback(async (signal?: AbortSignal) => {
         if (!token) {
             setLoading(false);
             return;
@@ -91,14 +91,15 @@ export default function ConsolidationPipelinePage() {
         setLoading(true);
         setLeadsError(null);
         try {
-            const data = await apiFetch<any>('/crm/casos', { token, cache: 'no-store' });
+            const data = await apiFetch<any>('/crm/casos', { token, cache: 'no-store', signal });
             const items = Array.isArray(data)
                 ? data
                 : Array.isArray(data?.cases)
                     ? data.cases
                     : [];
             setLeads(items);
-        } catch (err) {
+        } catch (err: any) {
+            if (err?.name === 'AbortError') return;
             setLeads([]);
             const message = extractErrorMessage(err, 'No se pudo cargar el pipeline');
             setLeadsError(message);
@@ -108,23 +109,33 @@ export default function ConsolidationPipelinePage() {
         }
     }, [token, addToast]);
 
-    useEffect(() => { fetchPipeline(); }, [fetchPipeline]);
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchPipeline(controller.signal);
+        return () => controller.abort();
+    }, [fetchPipeline]);
 
-    const fetchPipelineStages = useCallback(async () => {
+    const fetchPipelineStages = useCallback(async (signal?: AbortSignal) => {
         if (!token) {
             setPipelineStages([]);
             return;
         }
         try {
-            const data = await apiFetch<any[]>('/crm/pipeline/kanban/stages', { token, cache: 'no-store' });
+            const data = await apiFetch<any[]>('/crm/pipeline/kanban/stages', { token, cache: 'no-store', signal });
             setPipelineStages(Array.isArray(data) ? data : []);
-        } catch (err) {
-            console.error(extractErrorMessage(err, "No se pudieron cargar las etapas del pipeline"));
+        } catch (err: any) {
+            if (err?.name !== 'AbortError') {
+                console.error(extractErrorMessage(err, "No se pudieron cargar las etapas del pipeline"));
+            }
             setPipelineStages([]);
         }
     }, [token]);
 
-    useEffect(() => { fetchPipelineStages(); }, [fetchPipelineStages]);
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchPipelineStages(controller.signal);
+        return () => controller.abort();
+    }, [fetchPipelineStages]);
 
     const resolveStageId = useCallback((stageValue: string) => {
         const backendStages = [...pipelineStages].sort((a, b) => (a?.order_index ?? 0) - (b?.order_index ?? 0));
@@ -419,7 +430,7 @@ export default function ConsolidationPipelinePage() {
                         </p>
                     </div>
                     <button
-                        onClick={fetchPipeline}
+                        onClick={() => fetchPipeline()}
                         className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
                     >
                         Reintentar

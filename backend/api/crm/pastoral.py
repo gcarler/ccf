@@ -506,6 +506,8 @@ def delete_caso_crm(
 def list_caso_tasks(
     case_id: str,
     status_filter: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
@@ -521,21 +523,25 @@ def list_caso_tasks(
     if status_filter:
         q = q.filter(models.TareaCRM.estado == status_filter)
 
-    tasks = q.order_by(models.TareaCRM.created_at.desc()).all()
-    return [
-        {
-            "id": t.id,
-            "case_id": t.caso_id,
-            "assignment_id": None,
-            "title": t.titulo,
-            "description": t.descripcion,
-            "status": "completed" if t.completada else "pending",
-            "due_date": t.fecha_vencimiento.isoformat(),
-            "completed_at": t.fecha_completada.isoformat() if t.fecha_completada else None,
-            "created_at": t.created_at.isoformat() if t.created_at else None,
-        }
-        for t in tasks
-    ]
+    total = q.count()
+    tasks = q.order_by(models.TareaCRM.created_at.desc()).offset(skip).limit(limit).all()
+    return {
+        "items": [
+            {
+                "id": t.id,
+                "case_id": t.caso_id,
+                "assignment_id": None,
+                "title": t.titulo,
+                "description": t.descripcion,
+                "status": "completed" if t.completada else "pending",
+                "due_date": t.fecha_vencimiento.isoformat(),
+                "completed_at": t.fecha_completada.isoformat() if t.fecha_completada else None,
+                "created_at": t.created_at.isoformat() if t.created_at else None,
+            }
+            for t in tasks
+        ],
+        "total": total,
+    }
 
 
 @router.patch("/casos/{case_id}/tasks/{task_id}", response_model=dict)
@@ -592,6 +598,8 @@ def update_caso_task(
 @router.get("/casos/{case_id}/interactions", response_model=List[dict])
 def list_caso_interactions(
     case_id: str,
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
@@ -600,26 +608,31 @@ def list_caso_interactions(
     _get_case_or_404(db, case_id, user_sede)
     case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
 
+    q = db.query(models.InteraccionCRM).filter(models.InteraccionCRM.caso_id == case_uuid)
+    total = q.count()
     interactions = (
-        db.query(models.InteraccionCRM)
-        .filter(models.InteraccionCRM.caso_id == case_uuid)
-        .order_by(models.InteraccionCRM.fecha_interaccion.desc())
+        q.order_by(models.InteraccionCRM.fecha_interaccion.desc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
-    return [
-        {
-            "id": i.id,
-            "case_id": str(i.caso_id),
-            "performed_by_id": str(i.realizado_por_id),
-            "interaction_type": i.tipo.value if hasattr(i.tipo, "value") else str(i.tipo),
-            "interaction_date": i.fecha_interaccion.isoformat() if i.fecha_interaccion else None,
-            "result": i.tipo.value if hasattr(i.tipo, "value") else str(i.tipo),
-            "notes": i.resumen,
-            "next_action_date": None,
-            "created_at": i.fecha_interaccion.isoformat() if i.fecha_interaccion else None,
-        }
-        for i in interactions
-    ]
+    return {
+        "items": [
+            {
+                "id": i.id,
+                "case_id": str(i.caso_id),
+                "performed_by_id": str(i.realizado_por_id),
+                "interaction_type": i.tipo.value if hasattr(i.tipo, "value") else str(i.tipo),
+                "interaction_date": i.fecha_interaccion.isoformat() if i.fecha_interaccion else None,
+                "result": i.tipo.value if hasattr(i.tipo, "value") else str(i.tipo),
+                "notes": i.resumen,
+                "next_action_date": None,
+                "created_at": i.fecha_interaccion.isoformat() if i.fecha_interaccion else None,
+            }
+            for i in interactions
+        ],
+        "total": total,
+    }
 
 
 @router.post("/messaging/send", response_model=dict)
@@ -729,17 +742,23 @@ async def send_crm_message(
 
 @router.get("/messaging/history", response_model=List[dict])
 def list_messaging_history(
+    skip: int = 0,
+    limit: int = 50,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     q = db.query(models.CommunicationLog).join(models.Persona, models.CommunicationLog.persona_id == models.Persona.id)
     q = _scope_by_user_sede_via_persona(db, current_user, q)
-    logs = q.order_by(models.CommunicationLog.created_at.desc()).all()
+    total = q.count()
+    logs = q.order_by(models.CommunicationLog.created_at.desc()).offset(skip).limit(limit).all()
     grouped: "collections.OrderedDict[str, list[models.CommunicationLog]]" = collections.OrderedDict()
     for log in logs:
         key = log.external_id or f"log-{log.id}"
         grouped.setdefault(key, []).append(log)
-    return [_serialize_message_group(items) for items in grouped.values()]
+    return {
+        "items": [_serialize_message_group(items) for items in grouped.values()],
+        "total": total,
+    }
 
 
 @router.get("/messaging/history/{log_id}", response_model=dict)
@@ -776,6 +795,8 @@ def get_messaging_history_item(
 @router.get("/tasks", response_model=List[dict])
 def list_crm_tasks(
     assignee_persona_id: Optional[uuid.UUID] = None,
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
@@ -787,8 +808,12 @@ def list_crm_tasks(
     if assignee_persona_id:
         _get_scoped_persona(db, current_user, assignee_persona_id)
         q = q.filter(models.TareaCRM.assignee_id == assignee_persona_id)
-    tasks = q.order_by(models.TareaCRM.created_at.desc()).all()
-    return [_serialize_task(t) for t in tasks]
+    total = q.count()
+    tasks = q.order_by(models.TareaCRM.created_at.desc()).offset(skip).limit(limit).all()
+    return {
+        "items": [_serialize_task(t) for t in tasks],
+        "total": total,
+    }
 
 
 @router.post("/tasks/", response_model=dict)
@@ -877,22 +902,29 @@ def create_crm_task(
 
 @router.get("/tasks/mine", response_model=List[dict])
 def list_my_crm_tasks(
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     my_persona_id = resolve_persona_id_for_user(db, current_user.id)
     if not my_persona_id:
-        return []
+        return {"items": [], "total": 0}
+    q = db.query(models.TareaCRM).filter(
+        models.TareaCRM.assignee_id == my_persona_id,
+        models.TareaCRM.deleted_at.is_(None),
+    )
+    total = q.count()
     tasks = (
-        db.query(models.TareaCRM)
-        .filter(
-            models.TareaCRM.assignee_id == my_persona_id,
-            models.TareaCRM.deleted_at.is_(None),
-        )
-        .order_by(models.TareaCRM.created_at.desc())
+        q.order_by(models.TareaCRM.created_at.desc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
-    return [_serialize_task(task) for task in tasks]
+    return {
+        "items": [_serialize_task(task) for task in tasks],
+        "total": total,
+    }
 
 
 @router.get("/tasks/{task_id}", response_model=dict)
@@ -1245,6 +1277,8 @@ def get_grupo_detail(
 
 @router.get("/grupos", response_model=List[dict])
 def list_grupos(
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
@@ -1252,20 +1286,24 @@ def list_grupos(
     q = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.deleted_at.is_(None))
     if user_sede:
         q = q.filter(models.GrupoEvangelismo.sede_id == user_sede)
-    grupos = q.order_by(models.GrupoEvangelismo.nombre.asc()).all()
-    return [
-        {
-            "id": g.id,
-            "code": g.codigo,
-            "name": g.nombre,
-            "zone": g.ubicacion,
-            "address": g.direccion,
-            "leader_name": None,
-            "capacity": g.capacidad,
-            "status": "active" if g.activo else "inactive",
-        }
-        for g in grupos
-    ]
+    total = q.count()
+    grupos = q.order_by(models.GrupoEvangelismo.nombre.asc()).offset(skip).limit(limit).all()
+    return {
+        "items": [
+            {
+                "id": g.id,
+                "code": g.codigo,
+                "name": g.nombre,
+                "zone": g.ubicacion,
+                "address": g.direccion,
+                "leader_name": None,
+                "capacity": g.capacidad,
+                "status": "active" if g.activo else "inactive",
+            }
+            for g in grupos
+        ],
+        "total": total,
+    }
 
 
 @router.put("/grupos/{grupo_id}", response_model=dict)
@@ -1373,25 +1411,40 @@ def get_prayer_request_detail(
 @router.get("/counseling/", response_model=List[dict])
 def list_counseling_tickets(
     status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
-    tickets = crud.get_counseling_tickets(db, status=status, sede_id=user_sede)
-    return [
-        {
-            "id": t.id,
-            "persona_id": t.persona_id,
-            "persona_name": _persona_full_name(t.persona) if t.persona else "",
-            "topic": t.subject,
-            "summary": t.subject,
-            "notes": t.notes,
-            "status": t.status,
-            "priority_level": t.priority_level or "medium",
-            "created_at": t.created_at.isoformat() if t.created_at else None,
-        }
-        for t in tickets
-    ]
+    count_q = db.query(func.count()).select_from(models.CounselingTicket).filter(
+        models.CounselingTicket.deleted_at.is_(None)
+    )
+    if user_sede:
+        count_q = count_q.join(models.Persona, models.CounselingTicket.persona_id == models.Persona.id).filter(
+            models.Persona.sede_id == user_sede
+        )
+    if status:
+        count_q = count_q.filter(models.CounselingTicket.status == status)
+    total = count_q.scalar()
+    tickets = crud.get_counseling_tickets(db, status=status, sede_id=user_sede, skip=skip, limit=limit)
+    return {
+        "items": [
+            {
+                "id": t.id,
+                "persona_id": t.persona_id,
+                "persona_name": _persona_full_name(t.persona) if t.persona else "",
+                "topic": t.subject,
+                "summary": t.subject,
+                "notes": t.notes,
+                "status": t.status,
+                "priority_level": t.priority_level or "medium",
+                "created_at": t.created_at.isoformat() if t.created_at else None,
+            }
+            for t in tickets
+        ],
+        "total": total,
+    }
 
 
 def _resolve_pastor_identity(
@@ -1569,6 +1622,8 @@ def save_crm_settings(
 
 @router.get("/roles", response_model=List[dict])
 def list_crm_roles(
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
@@ -1578,16 +1633,21 @@ def list_crm_roles(
         q = q.filter(
             or_(models.RoleDefinition.sede_id == user_sede, models.RoleDefinition.sede_id.is_(None))
         )
-    rows = q.order_by(models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc()).all()
-    return [
-        {
-            "id": row.id,
-            "name": row.name,
-            "color": row.color,
-            "is_leadership": row.is_leadership,
-        }
-        for row in rows
-    ]
+    total = q.count()
+    rows = q.order_by(models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc()).offset(skip).limit(limit).all()
+    return {
+        "items": [
+            {
+                "id": row.id,
+                "name": row.name,
+                "color": row.color,
+                "is_leadership": row.is_leadership,
+                "sede_id": row.sede_id,
+            }
+            for row in rows
+        ],
+        "total": total,
+    }
 
 
 @router.post("/roles", response_model=dict, status_code=201)
@@ -1604,10 +1664,12 @@ def create_crm_role(
     exists = db.query(models.RoleDefinition).filter(models.RoleDefinition.name == name).first()
     if exists:
         raise HTTPException(status_code=400, detail="El rol ya existe")
+    user_sede = get_user_sede_id(db, current_user.id)
     row = models.RoleDefinition(
         name=name,
         color=color,
         is_leadership=bool(data.get("is_leadership")),
+        sede_id=data.get("sede_id") or (uuid.UUID(str(user_sede)) if user_sede else None),
     )
     db.add(row)
     db.commit()
@@ -1617,6 +1679,7 @@ def create_crm_role(
         "name": row.name,
         "color": row.color,
         "is_leadership": row.is_leadership,
+        "sede_id": row.sede_id,
     }
 
 
@@ -1655,6 +1718,8 @@ def update_crm_role(
         row.color = str(data.get("color") or "").strip()
     if "is_leadership" in data:
         row.is_leadership = bool(data.get("is_leadership"))
+    if "sede_id" in data:
+        row.sede_id = data.get("sede_id")
 
     db.commit()
     db.refresh(row)
@@ -1663,6 +1728,7 @@ def update_crm_role(
         "name": row.name,
         "color": row.color,
         "is_leadership": row.is_leadership,
+        "sede_id": row.sede_id,
     }
 
 
@@ -1837,30 +1903,36 @@ def create_public_prayer_request(
 @router.get("/prayer-requests", response_model=List[dict])
 def list_prayer_requests(
     source: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Lista pedidos de oracion con scope Axioma 3 (PrayerRequest.sede_id)."""
     user_sede = get_user_sede_id(db, current_user.id)
-    q = db.query(models.PrayerRequest).order_by(models.PrayerRequest.created_at.desc())
+    q = db.query(models.PrayerRequest)
     if user_sede:
         q = q.filter(models.PrayerRequest.sede_id == user_sede)
     if source:
         q = q.filter(models.PrayerRequest.source == source)
-    prayers = q.all()
-    return [
-        {
-            "id": p.id,
-            "requester_name": p.requester_name,
-            "request_text": p.request_text,
-            "category": p.category,
-            "status": p.status,
-            "source": p.source,
-            "is_public": p.is_public,
-            "created_at": p.created_at.isoformat() if p.created_at else None,
-        }
-        for p in prayers
-    ]
+    total = q.count()
+    prayers = q.order_by(models.PrayerRequest.created_at.desc()).offset(skip).limit(limit).all()
+    return {
+        "items": [
+            {
+                "id": p.id,
+                "requester_name": p.requester_name,
+                "request_text": p.request_text,
+                "category": p.category,
+                "status": p.status,
+                "source": p.source,
+                "is_public": p.is_public,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+            }
+            for p in prayers
+        ],
+        "total": total,
+    }
 
 
 @router.post("/prayer-requests", response_model=dict, status_code=201)
@@ -1989,6 +2061,8 @@ def create_volunteer(
 
 @router.get("/volunteers", response_model=List[dict])
 def list_volunteers(
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
@@ -1997,9 +2071,10 @@ def list_volunteers(
 
     personas_q = persona_query(db)
     personas_q = _scope_by_user_sede_via_persona(db, current_user, personas_q)
-    personas = personas_q.all()
+    total = personas_q.count()
+    personas = personas_q.offset(skip).limit(limit).all()
     if not personas:
-        return []
+        return {"items": [], "total": total}
 
     persona_ids = [p.id for p in personas]
     all_shifts = db.query(models.VolunteerShift).filter(models.VolunteerShift.persona_id.in_(persona_ids)).all()
@@ -2021,7 +2096,10 @@ def list_volunteers(
                 "ministry_count": len({s.team_name for s in shifts if s.team_name}),
             }
         )
-    return result
+    return {
+        "items": result,
+        "total": total,
+    }
 
 
 @router.get("/volunteers/{persona_id}", response_model=dict)

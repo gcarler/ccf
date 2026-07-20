@@ -84,13 +84,14 @@ Notas operativas:
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from jose import jwt as _jwt
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.crm._shared import _get_scoped_persona
 from backend.core.database import get_db
-from backend.core.permissions import require_module_access, require_staff_or_admin
+from backend.core.permissions import ALGORITHM, SECRET_KEY, require_module_access, require_staff_or_admin
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_for_user
 from backend.mesh_websockets import manager
 from backend.services.messaging import CommunicationOutcome
@@ -113,6 +114,19 @@ router = APIRouter()
 
 @router.websocket("/messaging/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=4001, reason="Missing authentication token")
+        return
+    try:
+        payload_data = _jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        subject = str(payload_data.get("sub") or "")
+        if not subject:
+            await websocket.close(code=4001, reason="Invalid token")
+            return
+    except Exception:
+        await websocket.close(code=4001, reason="Invalid token")
+        return
     rooms_param = websocket.query_params.get("rooms")
     rooms = rooms_param.split(",") if rooms_param else None
     await manager.connect(client_id, websocket, rooms=rooms)
