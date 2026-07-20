@@ -94,10 +94,12 @@ class CrmEventBase(BaseModel):
 
 
 class CrmEventCreate(CrmEventBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class CrmEventUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: Optional[str] = None
     description: Optional[str] = None
     event_type: Optional[EventType] = None
@@ -131,7 +133,7 @@ class EventAttendanceBase(BaseModel):
 
 
 class EventAttendanceCreate(EventAttendanceBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class EventAttendance(EventAttendanceBase):
@@ -148,10 +150,15 @@ class CounselingTicketBase(BaseModel):
 
 
 class CounselingTicketCreate(CounselingTicketBase):
+    model_config = ConfigDict(extra="forbid")
+
     pastor_id: Optional[UUID] = None
+    priority_level: Optional[str] = None
 
 
 class CounselingTicketUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     subject: Optional[str] = None
     notes: Optional[str] = None
     status: Optional[str] = None
@@ -191,10 +198,12 @@ class PrayerRequestBase(BaseModel):
 
 
 class PrayerRequestCreate(PrayerRequestBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class PrayerRequestUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     request_text: Optional[str] = None
     category: Optional[str] = None
     status: Optional[str] = None
@@ -204,6 +213,8 @@ class PrayerRequestUpdate(BaseModel):
 
 class PrayerRequestPublicCreate(BaseModel):
     """Schema for public web prayer requests — minimal fields, no auth."""
+
+    model_config = ConfigDict(extra="forbid")
 
     requester_name: str
     request_text: str
@@ -229,10 +240,12 @@ class DonationBase(BaseModel):
 
 
 class DonationCreate(DonationBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class DonationUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     amount: Optional[float] = None
     donation_type: Optional[str] = None
     status: Optional[str] = None
@@ -274,6 +287,7 @@ class CrmTaskBase(BaseModel):
     description: Optional[str] = None
     persona_id: Optional[UUID] = None
     assignee_id: Optional[UUID] = None
+    category: Optional[str] = None
     due_date: Optional[datetime] = None
     status: CrmTaskStatus = CrmTaskStatus.pending
     priority: CrmTaskPriority = CrmTaskPriority.medium
@@ -281,7 +295,7 @@ class CrmTaskBase(BaseModel):
 
 
 class CrmTaskCreate(CrmTaskBase):
-    pass
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
 
 class CrmTaskUpdate(BaseModel):
@@ -298,7 +312,7 @@ class CrmTaskUpdate(BaseModel):
     audit log.
     """
 
-    model_config = ConfigDict(use_enum_values=True)
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     title: Optional[str] = None
     description: Optional[str] = None
@@ -339,10 +353,12 @@ class VolunteerShiftBase(BaseModel):
 
 
 class VolunteerShiftCreate(VolunteerShiftBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class VolunteerShiftUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     persona_id: Optional[UUID] = None
     shift_start: Optional[datetime] = None
     shift_end: Optional[datetime] = None
@@ -371,6 +387,8 @@ class PersonaMeshMetric(BaseModel):
 
 
 class PersonaMentorshipCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     mentor_persona_id: UUID
     notes: Optional[str] = None
 
@@ -586,6 +604,8 @@ class Persona(BaseModel):
 
 
 class PersonaCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     first_name: str = Field(..., min_length=2, max_length=100)
     last_name: str = Field(..., min_length=2, max_length=100)
     email: Optional[str] = None
@@ -640,6 +660,8 @@ class PersonaCreate(BaseModel):
 
 
 class PersonaUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     email: Optional[str] = None
@@ -696,6 +718,8 @@ class PersonaUpdate(BaseModel):
 class PersonaSelfProfileUpdate(BaseModel):
     """Campos permitidos para que la persona edite su propio perfil."""
 
+    model_config = ConfigDict(extra="forbid")
+
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     second_name: Optional[str] = None
@@ -719,10 +743,12 @@ class PositionBase(BaseModel):
 
 
 class PositionCreate(PositionBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class PositionUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: Optional[str] = None
     description: Optional[str] = None
     category: Optional[str] = None
@@ -765,10 +791,12 @@ class PersonaMinistryAssignmentBase(BaseModel):
 
 
 class PersonaMinistryAssignmentCreate(PersonaMinistryAssignmentBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class PersonaMinistryAssignmentUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     role: Optional[str] = None
     end_date: Optional[datetime] = None
     is_active: Optional[bool] = None
@@ -790,10 +818,12 @@ class PersonaPositionBase(BaseModel):
 
 
 class PersonaPositionCreate(PersonaPositionBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class PersonaPositionUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     position_id: Optional[UUID] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
@@ -814,10 +844,12 @@ class FormationLevelBase(BaseModel):
 
 
 class FormationLevelCreate(FormationLevelBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class FormationLevelUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: Optional[str] = None
     order_index: Optional[int] = None
     description: Optional[str] = None
@@ -842,10 +874,12 @@ class PersonaFormationBase(BaseModel):
 
 
 class PersonaFormationCreate(PersonaFormationBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class PersonaFormationUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     formation_level_id: Optional[UUID] = None
     role_in_level: Optional[str] = None
     cohort: Optional[str] = None
@@ -923,10 +957,12 @@ class PersonaEvangelismBase(BaseModel):
 
 
 class PersonaEvangelismCreate(PersonaEvangelismBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class PersonaEvangelismUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     evangelism_strategy_id: Optional[UUID] = None  # UUID string
     role: Optional[str] = None
     start_date: Optional[datetime] = None
@@ -952,10 +988,12 @@ class TeachingAssignmentBase(BaseModel):
 
 
 class TeachingAssignmentCreate(TeachingAssignmentBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class TeachingAssignmentUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     formation_level_id: Optional[UUID] = None
     subject: Optional[str] = None
     group_name: Optional[str] = None
@@ -971,6 +1009,8 @@ class TeachingAssignment(TeachingAssignmentBase):
 
 
 class CaseUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     stage: Optional[str] = None
     status: Optional[str] = None
     source: Optional[str] = None
@@ -983,6 +1023,8 @@ class CaseUpdate(BaseModel):
 
 
 class CaseInteractionCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     interaction_type: str
     interaction_date: Optional[datetime] = None
     result: Optional[str] = None
@@ -991,6 +1033,8 @@ class CaseInteractionCreate(BaseModel):
 
 
 class CaseTaskCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     title: str
     description: Optional[str] = None
     due_date: Optional[datetime] = None
@@ -999,6 +1043,8 @@ class CaseTaskCreate(BaseModel):
 
 
 class CaseTaskUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     title: Optional[str] = None
     description: Optional[str] = None
     due_date: Optional[datetime] = None
@@ -1093,6 +1139,8 @@ class CaseCall(BaseModel):
 
 
 class CasoCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     persona_id: UUID
     stage: str = "new"
     source: Optional[str] = None
@@ -1101,6 +1149,8 @@ class CasoCreate(BaseModel):
 
 
 class MessagingSend(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     template_id: UUID
     recipient_ids: list[UUID] = Field(default_factory=list)
     recipient_role: Optional[str] = None
@@ -1108,6 +1158,8 @@ class MessagingSend(BaseModel):
 
 
 class GrupoUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: Optional[str] = None
     description: Optional[str] = None
     leader_persona_id: Optional[UUID] = None
@@ -1123,18 +1175,26 @@ class CrmSettingsUpdate(BaseModel):
 
 
 class RoleCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str = Field(..., min_length=1, max_length=100)
     color: str = Field(default="blue", max_length=50)
     is_leadership: bool = False
+    sede_id: Optional[UUID] = None
 
 
 class RoleUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: Optional[str] = Field(default=None, min_length=1, max_length=100)
     color: Optional[str] = Field(default=None, max_length=50)
     is_leadership: Optional[bool] = None
+    sede_id: Optional[UUID] = None
 
 
 class VolunteerCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str = Field(..., min_length=1, max_length=200)
     persona_id: Optional[UUID] = None
     role_name: str = Field(..., min_length=1, max_length=100)
@@ -1147,6 +1207,8 @@ class VolunteerCreate(BaseModel):
 
 
 class VolunteerUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     role_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
     team_name: Optional[str] = None
     status: Optional[str] = None

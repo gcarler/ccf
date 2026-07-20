@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from backend.schemas._common import orm_config
 
@@ -172,10 +172,12 @@ class EstrategiaEvangelismoBase(BaseModel):
 
 
 class EstrategiaEvangelismoCreate(EstrategiaEvangelismoBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class EstrategiaEvangelismoUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: Optional[str] = None
     description: Optional[str] = None
     clase_raiz: Optional[str] = None  # string, no enum — el frontend envía minúsculas
@@ -215,6 +217,8 @@ class RolPersonalizadoEstrategiaBase(BaseModel):
 
 
 class RolPersonalizadoEstrategiaCreate(RolPersonalizadoEstrategiaBase):
+    model_config = ConfigDict(extra="forbid")
+
     # El handler asigna estrategia_id desde path-param; no requiere del body.
     estrategia_id: Optional[UUID] = None
 
@@ -237,11 +241,15 @@ class ParticipanteGrupoBase(BaseModel):
 
 
 class ParticipanteGrupoCreate(ParticipanteGrupoBase):
+    model_config = ConfigDict(extra="forbid")
+
     grupo_id: UUID
     persona_id: UUID
 
 
 class ParticipanteGrupoUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     role: Optional[str] = None
     rol_personalizado_id: Optional[UUID] = None
     activo: Optional[bool] = None
@@ -269,6 +277,8 @@ class AsistenciaSesionBase(BaseModel):
 
 
 class AsistenciaSesionCreate(AsistenciaSesionBase):
+    model_config = ConfigDict(extra="forbid")
+
     sesion_id: UUID
     persona_id: UUID
 
@@ -280,6 +290,8 @@ class AsistenciaSesionCreate(AsistenciaSesionBase):
 
 
 class AsistenciaSesionUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     estado: Optional[EstadoAsistenciaEnum] = None
     es_primera_vez: Optional[bool] = None
     requiere_seguimiento: Optional[bool] = None
@@ -310,6 +322,8 @@ class RegistroSeguimientoBase(BaseModel):
     estado_completado: bool = True
 
 class RegistroSeguimientoCreate(RegistroSeguimientoBase):
+    model_config = ConfigDict(extra="forbid")
+
     # El handler asigna asistencia_id desde path-param; no requiere del body.
     asistencia_id: Optional[UUID] = None
     responsable_id: Optional[UUID] = None
@@ -321,6 +335,8 @@ class RegistroSeguimientoCreate(RegistroSeguimientoBase):
 
 
 class RegistroSeguimientoUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     observaciones: Optional[str] = None
     estado_completado: Optional[bool] = None
     fecha_seguimiento: Optional[datetime] = None
@@ -372,10 +388,12 @@ class MotivoExcusaBase(BaseModel):
 
 
 class MotivoExcusaCreate(MotivoExcusaBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class MotivoExcusaUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     descripcion: Optional[str] = None
     activo: Optional[bool] = None
 
@@ -399,6 +417,8 @@ class AsistenciaBulkItem(BaseModel):
 
 
 class AsistenciaBulkCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     sesion_id: UUID
     registros: List[AsistenciaBulkItem]
 
@@ -421,6 +441,8 @@ class AsistenciaBulkCreate(BaseModel):
 # ──────────────────────────────────────────────
 
 class GrupoEvangelismoCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     code: Optional[str] = None
     name: Optional[str] = None
     zone: Optional[str] = None
@@ -449,6 +471,8 @@ class ParticipanteGrupoConRol(BaseModel):
 
 
 class GrupoEvangelismoUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     code: Optional[str] = None
     name: Optional[str] = None
     zone: Optional[str] = None
@@ -466,6 +490,8 @@ class GrupoEvangelismoUpdate(BaseModel):
 
 
 class SesionGrupoCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     grupo_id: Optional[UUID] = None
     create_for_all_groups: bool = False
     season_id: Optional[UUID] = None
@@ -482,6 +508,8 @@ class SesionGrupoCreate(BaseModel):
 
 
 class SesionGrupoUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     session_date: Optional[datetime] = None
     topic: Optional[str] = None
     offering_amount: Optional[float] = None
@@ -495,6 +523,8 @@ class SesionGrupoUpdate(BaseModel):
 
 
 class AsistenciaGrupoCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     persona_id: UUID
     # R1 fix (residual audit): ``status`` ahora se valida contra
     # ``StatusAsistenciaCanonico`` (estricto) pero el ``field_validator``

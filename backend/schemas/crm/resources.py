@@ -5,17 +5,21 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 # ── CategoriaRecurso ──────────────────────────────────────────────────────────
 
 class CategoriaRecursoCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     nombre: str
     descripcion: Optional[str] = None
     color_ui_hex: str = "#6B7280"
 
 
 class CategoriaRecursoUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     nombre: Optional[str] = None
     descripcion: Optional[str] = None
     color_ui_hex: Optional[str] = None
@@ -71,6 +75,8 @@ class RecursoAdjuntoOut(BaseModel):
 # ── PlantillaMensaje ──────────────────────────────────────────────────────────
 
 class PlantillaMensajeCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     categoria_id: UUID
     titulo: str
     canal: str  # WHATSAPP | EMAIL | SMS
@@ -82,6 +88,8 @@ class PlantillaMensajeCreate(BaseModel):
 
 
 class PlantillaMensajeUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     categoria_id: Optional[UUID] = None
     titulo: Optional[str] = None
     canal: Optional[str] = None
@@ -137,6 +145,8 @@ class PlantillaMensajeOut(BaseModel):
 # ── Envío / Bitácora ──────────────────────────────────────────────────────────
 
 class EnviarPlantillaPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     destinatario_id: str
     caso_id: Optional[str] = None
     variables: Dict[str, str] = {}
@@ -179,6 +189,8 @@ class BitacoraEnvioOut(BaseModel):
 # ── Campañas ──────────────────────────────────────────────────────────────────
 
 class CampaignFromPlantillaPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     campaign_name: str
     target_segments: List[str]
     variables_por_persona: Dict[str, Dict[str, str]] = {}
@@ -199,6 +211,8 @@ class CampaignResultOut(BaseModel):
 # ── Banco de recursos del sistema ─────────────────────────────────────────────
 
 class ApplySystemTemplatePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     template_id: str
 
 

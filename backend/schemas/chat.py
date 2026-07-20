@@ -4,12 +4,14 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from backend.schemas._common import orm_config
 
 
 class ConversationCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     participant_ids: List[UUID]
 
     def deduplicate_participants(self) -> "ConversationCreate":
@@ -35,6 +37,8 @@ class ConversationRead(BaseModel):
 
 
 class DirectMessageCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     content: str
 
     def model_post_init(self, __context) -> None:

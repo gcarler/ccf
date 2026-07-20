@@ -60,7 +60,7 @@ export default function CounselingPage() {
         });
     }, [sessions, searchTerm, filterStatus]);
 
-    const fetchSessions = useCallback(async () => {
+    const fetchSessions = useCallback(async (signal?: AbortSignal) => {
         if (!token) {
             setSessions([]);
             setLoading(false);
@@ -69,9 +69,10 @@ export default function CounselingPage() {
         setLoading(true);
         setSessionsError(null);
         try {
-            const sessionsData = await apiFetch<CounselingSession[]>('/crm/counseling/', { token, cache: 'no-store' });
+            const sessionsData = await apiFetch<CounselingSession[]>('/crm/counseling/', { token, cache: 'no-store', signal });
             setSessions(Array.isArray(sessionsData) ? sessionsData : []);
-        } catch (err) {
+        } catch (err: any) {
+            if (err?.name === 'AbortError') return;
             setSessions([]);
             const message = extractErrorMessage(err, 'Error al cargar la sesion de consejeria');
             setSessionsError(message);
@@ -82,7 +83,9 @@ export default function CounselingPage() {
     }, [token, addToast]);
 
     useEffect(() => {
-        fetchSessions();
+        const controller = new AbortController();
+        fetchSessions(controller.signal);
+        return () => controller.abort();
     }, [fetchSessions]);
 
 
@@ -178,7 +181,7 @@ export default function CounselingPage() {
                     <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">No se pudo cargar la consejería</p>
                     <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">{sessionsError}</p>
                 </div>
-                <button onClick={fetchSessions} className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all">
+                <button onClick={() => fetchSessions()} className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all">
                     Reintentar
                 </button>
             </div>

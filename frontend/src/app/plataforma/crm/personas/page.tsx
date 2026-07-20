@@ -109,7 +109,7 @@ export default function PersonasPage() {
         [idTypeFilter, sexFilter, groupFilter, participationFilter, roleFilter]
     );
 
-    const loadPersonas = useCallback(async () => {
+    const loadPersonas = useCallback(async (signal?: AbortSignal) => {
         if (!token) {
             setLoading(false);
             return;
@@ -135,9 +135,11 @@ export default function PersonasPage() {
             const personasData = await apiFetch<PersonasPageResponse>(`/crm/personas/page?${params.toString()}`, {
                 token,
                 cache: 'no-store',
+                signal,
             });
             setPersonasPage(personasData);
-        } catch (err) {
+        } catch (err: any) {
+            if (err?.name === 'AbortError') return;
             setPersonasPage(null);
 
             const message = extractErrorMessage(err, 'No se pudo cargar la lista de personas');
@@ -149,18 +151,22 @@ export default function PersonasPage() {
     }, [token, page, pageSize, query, roleFilter, idTypeFilter, sexFilter, groupFilter, participationFilter]);
 
     useEffect(() => {
-        loadPersonas();
+        const controller = new AbortController();
+        loadPersonas(controller.signal);
+        return () => controller.abort();
     }, [loadPersonas]);
 
     useEffect(() => {
         if (!token) return;
-        apiFetch<any[]>('/crm/roles', { token, cache: 'no-store' })
+        const controller = new AbortController();
+        apiFetch<any[]>('/crm/roles', { token, cache: 'no-store', signal: controller.signal })
             .then(setRoles)
-            .catch(() => setRoles([]));
+            .catch((err) => { if (err?.name !== 'AbortError') setRoles([]); });
 
-        apiFetch<Department[]>('/crm/colombian-departments', { token, cache: 'no-store' })
+        apiFetch<Department[]>('/crm/colombian-departments', { token, cache: 'no-store', signal: controller.signal })
             .then(setDepartments)
-            .catch(() => setDepartments([]));
+            .catch((err) => { if (err?.name !== 'AbortError') setDepartments([]); });
+        return () => controller.abort();
     }, [token]);
 
     useEffect(() => {
@@ -172,11 +178,13 @@ export default function PersonasPage() {
             setCities([]);
             return;
         }
+        const controller = new AbortController();
         setLoadingCities(true);
-        apiFetch<City[]>(`/crm/colombian-departments/${newPersona.colombian_department_id}/cities`, { token })
+        apiFetch<City[]>(`/crm/colombian-departments/${newPersona.colombian_department_id}/cities`, { token, signal: controller.signal })
             .then(setCities)
-            .catch(() => setCities([]))
+            .catch((err) => { if (err?.name !== 'AbortError') setCities([]); })
             .finally(() => setLoadingCities(false));
+        return () => controller.abort();
     }, [token, newPersona.colombian_department_id]);
 
     const getRoleColor = (roleName: string) => {

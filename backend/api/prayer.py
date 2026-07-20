@@ -13,9 +13,17 @@ router = APIRouter()
 
 @router.post("", response_model=schemas.PrayerRequest)
 def create_prayer_request(
-    request: schemas.PrayerRequestCreate, db: Session = Depends(get_db)
+    request: schemas.PrayerRequestCreate,
+    db: Session = Depends(get_db),
+    current_user: "models.User" = Depends(require_active_user),
 ):
-    return crud.create_prayer_request(db, payload=request)
+    sede_id = get_user_sede_id(db, current_user.id)
+    row = crud.create_prayer_request(db, payload=request)
+    if sede_id and not row.sede_id:
+        row.sede_id = sede_id
+        db.commit()
+        db.refresh(row)
+    return row
 
 
 @router.get("", response_model=List[schemas.PrayerRequest])

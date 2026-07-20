@@ -3,12 +3,14 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from backend.schemas._common import orm_config
 
 
 class PipelineCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str = Field(min_length=1, max_length=100)
     pipeline_type: str
     description: str | None = None
@@ -30,6 +32,8 @@ class PipelineResponse(BaseModel):
 
 
 class PipelineStageCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     pipeline_id: UUID | None = None
     name: str = Field(min_length=1, max_length=100)
     order_index: int = Field(ge=0)

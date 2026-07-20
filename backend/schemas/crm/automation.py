@@ -4,10 +4,12 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class CrmAutomationCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str
     trigger_event: str
     action_type: str
@@ -18,6 +20,8 @@ class CrmAutomationCreate(BaseModel):
 
 
 class CrmAutomationUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: Optional[str] = None
     trigger_event: Optional[str] = None
     action_type: Optional[str] = None
@@ -54,6 +58,8 @@ class CrmAutomationOut(BaseModel):
 
 
 class CrmAutomationEdgeCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     source_id: UUID
     target_id: UUID
     condition_type: Optional[str] = None
@@ -64,6 +70,8 @@ class CrmAutomationEdgeCreate(BaseModel):
 
 
 class CrmAutomationEdgeUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     source_id: Optional[UUID] = None
     target_id: Optional[UUID] = None
     condition_type: Optional[str] = None
@@ -98,6 +106,8 @@ class CrmAutomationEdgeOut(BaseModel):
 
 
 class AutomationTriggerPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     trigger_event: str
     context: Dict[str, Any] = {}
 
