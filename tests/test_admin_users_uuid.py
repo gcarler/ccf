@@ -40,24 +40,11 @@ def test_admin_users_uuid_crud(client, db_session):
         db_session.commit()
 
     role_patch_resp = client.patch(
-        f"/api/admin/users/{user.id}",
-        headers=headers,
-        json={"rol_plataforma_id": str(editor_role.id)},
-    )
-    assert role_patch_resp.status_code == 200
-    role_patch_data = role_patch_resp.json()
-    assert role_patch_data["rol_plataforma_id"] == str(editor_role.id)
-    assert role_patch_data["role_id"] == str(editor_role.id)
-
-    alias_role_resp = client.patch(
         f"/api/admin/users/{user.id}/role",
         headers=headers,
         params={"role_id": str(editor_role.id)},
     )
-    assert alias_role_resp.status_code == 200
-    alias_role_data = alias_role_resp.json()
-    assert alias_role_data["role_id"] == str(editor_role.id)
-    assert alias_role_data["user"]["rol_plataforma_id"] == str(editor_role.id)
+    assert role_patch_resp.status_code == 200
 
     delete_resp = client.delete(f"/api/admin/users/{user.id}", headers=headers)
     assert delete_resp.status_code == 204

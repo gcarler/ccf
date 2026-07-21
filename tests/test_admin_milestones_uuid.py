@@ -26,7 +26,7 @@ def test_admin_milestones_uuid_award_uses_auth_users(client, db_session):
     resp = client.post(
         "/api/admin/milestones/award",
         headers=headers,
-        json={"badge_id": str(badge.id), "persona_ids": [str(target_persona.id)]},
+        json={"badge_id": str(badge.id), "persona_id": str(target_persona.id)},
     )
     assert resp.status_code == 200
     assert resp.json()["awarded"] == 1

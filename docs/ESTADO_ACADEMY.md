@@ -1,5 +1,10 @@
 # Estado del Modulo de Academy — CCF
 
+> **🚨 DEPRECADO para backlog — 2026-07-19:** los hallazgos, estados de
+> cierre y tickets Academy se gestionan únicamente en
+> [`docs/ACADEMY_BACKLOG.md`](./ACADEMY_BACKLOG.md). Este documento conserva
+> contexto operativo e histórico; no se usa para abrir ni cerrar trabajo.
+
 > **TL;DR (una linea):** Academy es el módulo formativo de CCF sobre `/api/academy` y `/plataforma/academy`: cursos, lecciones, evaluaciones, matrículas, progreso, certificados, foro, agenda académica y operaciones administrativas por rol.
 
 **Proposito.** Handover canónico para que cualquier sesión nueva pueda trabajar Academy como unidad propia, sin mezclarlo con CRM, CMS o auth más allá de los contratos compartidos reales.
@@ -16,7 +21,7 @@
 ## 1. Leer primero (cualquier agente)
 
 ```bash
-cat /root/ccf/docs/ESTADO_ACADEMY.md
+cat /root/ccf/docs/ACADEMY_BACKLOG.md
 cat /root/ccf/docs/ACADEMY_API_CONTRACTS.md
 cat /root/ccf/docs/ACADEMY_RBAC_MATRIX.md
 cat /root/ccf/docs/ACADEMY_QA_CHECKLIST.md
@@ -357,4 +362,3 @@ grep -nE "PARCIAL-|PEND-|ACAD-" /root/ccf/docs/ESTADO_ACADEMY.md
 ## 16. Fases operativas derivadas (referencia)
 
 > **Plegado 2026-07-19:** las fases operativas vigentes (Fase A críticos, Fase B altos, Fase C medios, Fase D bajos, Fase E re-validación) viven en [`docs/ACADEMY_BACKLOG.md`](./ACADEMY_BACKLOG.md) §4 (Capa OPERATIVA — tickets ⬜ pendientes). Este §16 se conserva como índice navegacional al snapshot del 2026-07-18, sin duplicar contenido.
-

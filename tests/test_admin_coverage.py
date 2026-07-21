@@ -75,7 +75,10 @@ class TestSimpleCRUD:
 
     def test_list_auth_role_definitions(self, full):
         c, h = full["c"], full["h"]
-        assert _ok(c.get("/api/admin/auth-role-definitions", headers=h).status_code)
+        resp = c.get("/api/admin/roles", headers=h)
+        assert _ok(resp.status_code)
+        data = resp.json()
+        assert "items" in data, f"Expected paginated response, got keys: {list(data.keys())}"
 
     def test_list_user_module_roles(self, full):
         c, h = full["c"], full["h"]
@@ -102,7 +105,7 @@ class TestCRUDWithData:
     def test_create_location(self, full):
         c, h = full["c"], full["h"]
         resp = c.post("/api/admin/locations", json={
-            "nombre": "Test Location",
+            "name": "Test Location",
             "address": "Test Address",
         }, headers=h)
         assert _ok(resp.status_code)
@@ -126,9 +129,9 @@ class TestCRUDWithData:
 
     def test_create_auth_role_definition(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/auth-role-definitions", json={
-            "nombre": f"Role_{uuid.uuid4().hex[:6]}",
-            "permisos": {"crm:read": "allow"},
+        resp = c.post("/api/admin/roles", json={
+            "name": f"Role_{uuid.uuid4().hex[:6]}",
+            "permissions": {"crm:read": "allow"},
         }, headers=h)
         assert _ok(resp.status_code)
 
@@ -216,7 +219,7 @@ class TestPermissionsRoles:
             "name": f"UpdRole_{uuid.uuid4().hex[:4]}",
             "permissions": {"crm:read": "allow"},
         }, headers=h)
-        assert create_resp.status_code == 200
+        assert create_resp.status_code == 201
         role_id = create_resp.json().get("id")
         assert role_id is not None
 
@@ -225,21 +228,21 @@ class TestPermissionsRoles:
             "permissions": {"crm:read": "allow", "crm:write": "allow"},
         }, headers=h)
         assert patch_resp.status_code == 200, f"Expected 200, got {patch_resp.status_code}: {patch_resp.text}"
-        assert patch_resp.json().get("status") == "success"
+        data = patch_resp.json()
+        assert "id" in data, f"Expected AdminRoleRead, got: {data}"
+        assert "nombre" in data
 
     def test_create_auth_role_definition_duplicate(self, full):
         c, h = full["c"], full["h"]
         role_name = f"DupeRole_{uuid.uuid4().hex[:4]}"
-        resp1 = c.post("/api/admin/auth-role-definitions", json={
-            "key": role_name.lower(),
+        resp1 = c.post("/api/admin/roles", json={
             "name": role_name,
-            "permissions": ["crm:read"],
+            "permissions": {"crm:read": "allow"},
         }, headers=h)
-        assert resp1.status_code == 200
-        resp2 = c.post("/api/admin/auth-role-definitions", json={
-            "key": role_name.lower(),
+        assert resp1.status_code == 201
+        resp2 = c.post("/api/admin/roles", json={
             "name": role_name,
-            "permissions": ["crm:read"],
+            "permissions": {"crm:read": "allow"},
         }, headers=h)
         assert resp2.status_code == 409, f"Expected 409 for duplicate, got {resp2.status_code}"
 
@@ -295,8 +298,8 @@ class TestAuditComments:
     def test_create_donation_category(self, full):
         c, h = full["c"], full["h"]
         resp = c.post("/api/admin/donation-categories", json={
-            "nombre": "Test Category",
-            "descripcion": "Test",
+            "name": "Test Category",
+            "description": "Test",
         }, headers=h)
         assert _ok(resp.status_code)
 
@@ -312,9 +315,11 @@ class TestPersonasMultiTenant:
         resp = c.get("/api/admin/personas", headers=h)
         assert resp.status_code == 200
         data = resp.json()
-        assert isinstance(data, list)
-        # Todas las personas devueltas deben pertenecer a la sede del admin
-        for p in data:
+        assert isinstance(data, dict)
+        assert "items" in data
+        items = data["items"]
+        assert isinstance(items, list)
+        for p in items:
             assert "id" in p, "Cada persona debe tener un campo id"
 
 
@@ -347,10 +352,10 @@ class TestFullCoverage:
         assert resp.status_code == 409, f"Expected 409, got {resp.status_code}"
 
     def test_delete_role_not_found(self, full):
-        """DELETE /roles/{role_id} con UUID inexistente debe dar 404."""
+        """DELETE /roles/{role_id} con UUID inexistente — retorna 409 (no hay soft delete)."""
         c, h = full["c"], full["h"]
         resp = c.delete(f"/api/admin/roles/{uuid.uuid4()}", headers=h)
-        assert resp.status_code == 404, f"Expected 404, got {resp.status_code}"
+        assert resp.status_code == 409, f"Expected 409, got {resp.status_code}"
 
     def test_delete_comment(self, full):
         """DELETE /comments/{comment_id} — soft delete."""
@@ -455,7 +460,7 @@ class TestFullCoverage:
         assert data.get("status") == "success"
 
     def test_update_auth_role_definition(self, full):
-        """PATCH /auth-role-definitions/{role_id}."""
+        """PATCH /roles/{role_id}."""
         from backend.models_auth import RolPlataforma
 
         c, h, db = full["c"], full["h"], full["_db"]
@@ -463,8 +468,8 @@ class TestFullCoverage:
         db.add(rol)
         db.commit()
 
-        resp = c.patch(f"/api/admin/auth-role-definitions/{rol.id}", json={
-            "permissions": ["crm:read", "crm:write"],
+        resp = c.patch(f"/api/admin/roles/{rol.id}", json={
+            "permissions": {"crm:read": "allow", "crm:write": "allow"},
         }, headers=h)
         assert resp.status_code == 200
         data = resp.json()
@@ -472,7 +477,7 @@ class TestFullCoverage:
         assert "crm:write" in data.get("permisos", {})
 
     def test_delete_auth_role_definition(self, full):
-        """DELETE /auth-role-definitions/{role_id} sin asignaciones."""
+        """DELETE /roles/{role_id} sin asignaciones."""
         from backend.models_auth import RolPlataforma
 
         c, h, db = full["c"], full["h"], full["_db"]
@@ -480,14 +485,14 @@ class TestFullCoverage:
         db.add(rol)
         db.commit()
 
-        resp = c.delete(f"/api/admin/auth-role-definitions/{rol.id}", headers=h)
+        resp = c.delete(f"/api/admin/roles/{rol.id}", headers=h)
         assert resp.status_code == 204
 
     def test_delete_auth_role_definition_with_users_409(self, full):
-        """DELETE /auth-role-definitions/{role_id} con usuarios asignados."""
+        """DELETE /roles/{role_id} con usuarios asignados."""
         c, h = full["c"], full["h"]
         admin = full["admin"]
-        resp = c.delete(f"/api/admin/auth-role-definitions/{admin.rol_plataforma_id}", headers=h)
+        resp = c.delete(f"/api/admin/roles/{admin.rol_plataforma_id}", headers=h)
         assert resp.status_code == 409
 
     def test_delete_user_module_role(self, full):

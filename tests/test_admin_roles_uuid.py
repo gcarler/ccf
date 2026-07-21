@@ -10,13 +10,15 @@ def test_admin_roles_uuid_crud(client, db_session):
         headers=headers,
         json={"name": "ROL_UUID", "permissions": {"crm:read": "allow"}},
     )
-    assert create_resp.status_code == 200
+    assert create_resp.status_code == 201
     created = create_resp.json()
-    assert created["name"] == "ROL_UUID"
+    assert created["nombre"] == "ROL_UUID"
 
     list_resp = client.get("/api/admin/roles", headers=headers)
     assert list_resp.status_code == 200
-    assert any(item["name"] == "ROL_UUID" for item in list_resp.json())
+    data = list_resp.json()
+    items = data.get("items", data) if isinstance(data, dict) else data
+    assert any(item["nombre"] == "ROL_UUID" for item in items)
 
     role_id = created["id"]
     patch_resp = client.patch(

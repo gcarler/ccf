@@ -388,3 +388,37 @@ from backend.schemas.projects import (  # noqa: F401
                                      TaskSupplyUpdate,
 )
 from backend.schemas.wiki import WikiPageCreate, WikiPageRead, WikiPageUpdate, WikiPageVersionRead  # noqa: F401
+
+# ── Admin ────────────────────────────────────────────────────────────────────
+from backend.schemas.admin import (  # noqa: F401
+    AdminCommentRead,
+    AdminDonationCategoryCreate,
+    AdminDonationCategoryRead,
+    AdminDonationCategoryUpdate,
+    AdminLocationCreate,
+    AdminLocationRead,
+    AdminLocationUpdate,
+    AdminMilestoneAward,
+    AdminMilestoneRead,
+    AdminModuleRoleAssign,
+    AdminModuleRoleRead,
+    AdminPersonaRead,
+    AdminPermissionModule,
+    AdminProvisionResult,
+    AdminRoleCreate,
+    AdminRoleRead,
+    AdminRoleUpdate,
+    AdminSocialCreate,
+    AdminSocialRead,
+    AdminSocialUpdate,
+    AdminStatsRead,
+    AdminUserCreate,
+    AdminUserPermissionSet,
+    AdminUserPermissionsRead,
+    AdminUserRead,
+    AdminUserUpdate,
+    AdminUserWithRolesRead,
+    AdminVariableCreate,
+    AdminVariableRead,
+    AdminVariableUpdate,
+)

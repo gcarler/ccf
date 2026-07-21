@@ -39,6 +39,8 @@ class AutomationRuleRead(BaseModel):
 
 
 class AutomationRuleCreate(BaseModel):
+    model_config = {"extra": "forbid"}
+
     name: str
     trigger_type: str
     action_type: Optional[str] = None
@@ -47,6 +49,8 @@ class AutomationRuleCreate(BaseModel):
 
 
 class AutomationRuleUpdate(BaseModel):
+    model_config = {"extra": "forbid"}
+
     name: Optional[str] = None
     trigger_type: Optional[str] = None
     action_type: Optional[str] = None
