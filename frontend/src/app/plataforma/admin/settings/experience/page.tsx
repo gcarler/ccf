@@ -42,27 +42,35 @@ export default function WorkspaceExperienceManager() {
     const { addToast } = useToast();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
-    const [config, setConfig] = useState<any>(null);
+    interface WorkspaceConfig {
+    features_enabled?: Record<string, boolean>;
+    feature_rules?: Record<string, unknown>;
+    health?: Record<string, string>;
+}
+    const [config, setConfig] = useState<WorkspaceConfig | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('grid');
 
     useEffect(() => {
+        const controller = new AbortController();
         const fetchConfig = async () => {
             if (!token) return;
             try {
-                const data = await apiFetch('/workspace/config', { token });
+                const data = await apiFetch<WorkspaceConfig>('/workspace/config', { token, signal: controller.signal });
                 setConfig(data);
             } catch (err) {
+                if (controller.signal.aborted) return;
                 console.error(err);
             } finally {
                 setLoading(false);
             }
         };
         fetchConfig();
+        return () => controller.abort();
     }, [token]);
 
     const toggleFeature = (id: string) => {
-        setConfig((prev: any) => ({
+        setConfig((prev) => ({
             ...prev,
             features_enabled: {
                 ...prev.features_enabled,

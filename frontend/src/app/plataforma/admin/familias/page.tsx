@@ -45,11 +45,11 @@ export default function FamiliasPage() {
     const [saving, setSaving] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
-    const load = useCallback(async () => {
+    const load = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         try {
             setLoading(true);
-            const data = await apiFetch<Family[]>('/crm/families', { token, cache: 'no-store' });
+            const data = await apiFetch<Family[]>('/crm/families', { token, cache: 'no-store', signal });
             setFamilies(Array.isArray(data) ? data : []);
         } catch {
             setFamilies([]);
@@ -58,7 +58,11 @@ export default function FamiliasPage() {
         }
     }, [token]);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        const controller = new AbortController();
+        load(controller.signal);
+        return () => controller.abort();
+    }, [load]);
 
     const openCreate = () => {
         setEditing(null);

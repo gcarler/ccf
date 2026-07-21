@@ -135,10 +135,10 @@ export default function AccessManagementPage() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
     const [activeTab, setActiveTab] = useState<'roles' | 'users'>('roles');
-    const [roles, setRoles] = useState<any[]>([]);
-    const [users, setUsers] = useState<any[]>([]);
+    const [roles, setRoles] = useState<Array<{ id: string; name: string }>>([]);
+    const [users, setUsers] = useState<Array<{ id: string; username: string; email: string }>>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedEntity, setSelectedEntity] = useState<any>(null);
+    const [selectedEntity, setSelectedEntity] = useState<{ id: string; name: string } | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isSaving, setIsAssigning] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('table');
@@ -152,13 +152,13 @@ export default function AccessManagementPage() {
         setLoading(true);
         try {
             const [rolesData, usersData] = await Promise.all([
-                apiFetch<{ items: any[]; total: number }>('/admin/roles', { token, cache: 'no-store', signal }),
-                apiFetch<{ items: any[]; total: number }>('/admin/users', { token, cache: 'no-store', signal })
+                apiFetch<{ items: Array<{ id: string; name: string; permissions?: Record<string, string> }>; total: number }>('/admin/roles', { token, cache: 'no-store', signal }),
+                apiFetch<{ items: Array<{ id: string; username: string; email: string }>; total: number }>('/admin/users', { token, cache: 'no-store', signal })
             ]);
             if (signal?.aborted) return;
             const rolesItems = rolesData?.items ?? [];
             const usersItems = usersData?.items ?? [];
-            const mappedRoles = rolesItems.map((r: any) => ({
+            const mappedRoles = rolesItems.map((r: { id: string; name: string; permissions?: Record<string, string> }) => ({
                 id: r.id,
                 name: r.nombre,
                 permissions: r.permisos || {},
@@ -166,7 +166,7 @@ export default function AccessManagementPage() {
             }));
             setRoles(mappedRoles);
             setUsers(usersItems);
-        } catch (err: any) { 
+        } catch (err: unknown) { 
             if (err?.name === 'AbortError') return;
             console.error(err);
             addToast("Error al cargar configuraciones de acceso", "error");
@@ -182,13 +182,13 @@ export default function AccessManagementPage() {
         return () => controller.abort();
     }, [isAuthenticated, fetchData]);
 
-    const handleOpenEntity = async (entity: any) => {
+    const handleOpenEntity = async (entity: { id: string; name: string }) => {
         setSelectedEntity(entity);
 
         if (activeTab === 'users' && token) {
             try {
                 // Load user permissions from kernel and auth_user_module_roles
-                const permData = await apiFetch<any>(`/admin/users/${entity.id}/permissions`, { token });
+                const permData = await apiFetch<Record<string, string>>(`/admin/users/${entity.id}/permissions`, { token });
                 const overrides = permData?.override_permissions
                     || permData?.effective_permissions
                     || {};
@@ -210,8 +210,8 @@ export default function AccessManagementPage() {
         try {
             if (activeTab === 'roles') {
                 const flatPerms = flattenModuleMap(localPermissions);
-                // Save to auth-role-definitions (RolPlataforma) — supports both dict and flat list
-                const permDict: Record<string, any> = {};
+                // Save permissions to the role — supports both dict and flat list
+                const permDict: Record<string, string> = {};
                 if (Array.isArray(flatPerms)) {
                     for (const p of flatPerms) {
                         permDict[p] = 'allow';
@@ -346,7 +346,7 @@ export default function AccessManagementPage() {
                 return;
             }
             setIsAssigning(true);
-            apiFetch<{ items: any[]; total: number }>('/admin/users', {
+            apiFetch<{ items: Array<{ id: string; username: string; email: string }>; total: number }>('/admin/users', {
                 method: 'POST',
                 token,
                 body: { username: username.trim(), email: email.trim(), password, role: 'estudiante' },

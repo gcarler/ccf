@@ -29,11 +29,13 @@ export default function WebVitalsAnalyticsPage() {
       setLoading(false);
       return;
     }
-    const load = async () => {
+    const controller = new AbortController();
+    const load = async (signal?: AbortSignal) => {
       try {
         const data = await apiFetch<{ records?: VitalRecord[]; summary?: Summary }>("/analytics/web-vitals", {
           query: { limit: "500" },
           cache: "no-store",
+          signal:
         });
         setRecords(Array.isArray(data.records) ? data.records : []);
         setSummary((data.summary || {}) as Summary);
@@ -43,7 +45,8 @@ export default function WebVitalsAnalyticsPage() {
         setLoading(false);
       }
     };
-    load();
+    load(controller.signal);
+    return () => controller.abort();
   }, [isFeatureEnabled]);
 
   const recent = useMemo(() => records.slice().reverse().slice(0, 20), [records]);

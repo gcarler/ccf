@@ -40,11 +40,11 @@ export default function MinisteriosPage() {
     const [saving, setSaving] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
-    const load = useCallback(async () => {
+    const load = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         try {
             setLoading(true);
-            const data = await apiFetch<Ministry[]>('/admin/ministerios', { token, cache: 'no-store' });
+            const data = await apiFetch<Ministry[]>('/admin/ministerios', { token, cache: 'no-store', signal });
             setMinistries(Array.isArray(data) ? data : []);
         } catch {
             setMinistries([]);
@@ -53,7 +53,11 @@ export default function MinisteriosPage() {
         }
     }, [token]);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        const controller = new AbortController();
+        load(controller.signal);
+        return () => controller.abort();
+    }, [load]);
 
     const openCreate = () => {
         setEditing(null);

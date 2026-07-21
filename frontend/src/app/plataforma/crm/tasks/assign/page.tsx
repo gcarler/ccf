@@ -55,7 +55,7 @@ export default function TaskAssignment() {
     const [taskDescription, setTaskDescription] = useState('');
     const [isAssigning, setIsAssigning] = useState(false);
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (signal?: AbortSignal) => {
         if (!token) {
             setLoading(false);
             setError("Debes iniciar sesión para asignar tareas.");
@@ -65,8 +65,8 @@ export default function TaskAssignment() {
         try {
             setError(null);
             const [usersData, personasData] = await Promise.all([
-                apiFetch<{ items: any[]; total: number }>('/admin/users', { token }),
-                apiFetch<any[]>('/crm/personas', { token })
+                apiFetch<{ items: Leader[]; total: number }>('/admin/users', { token, signal }),
+                apiFetch<Persona[]>('/crm/personas', { token, signal })
             ]);
             
             // Filtrar solo líderes/admin/staff para asignar
@@ -84,7 +84,10 @@ export default function TaskAssignment() {
     }, [token, addToast]);
 
     useEffect(() => {
-        if (!authLoading && isAuthenticated) fetchData();
+        if (!isAuthenticated || authLoading) return;
+        const controller = new AbortController();
+        fetchData(controller.signal);
+        return () => controller.abort();
     }, [authLoading, fetchData, isAuthenticated, reloadKey]);
 
     const filteredPersonas = useMemo(() => {

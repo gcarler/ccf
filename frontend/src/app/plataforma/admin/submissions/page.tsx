@@ -37,11 +37,12 @@ export default function SubmissionsPage() {
     const [grade, setGrade] = useState<number>(0);
     const [feedback, setFeedback] = useState<string>('');
 
-    const fetchSubmissions = useCallback(async () => {
+    const fetchSubmissions = useCallback(async (signal?: AbortSignal) => {
         try {
             const response = await apiFetch<Submission[]>('/academy/admin/submissions?limit=100', {
                 token,
-                cache: 'no-store'
+                cache: 'no-store',
+                signal:
             });
             setSubmissions(Array.isArray(response) ? response : []);
         } catch (error) {
@@ -52,7 +53,10 @@ export default function SubmissionsPage() {
     }, [token, addToast]);
 
     useEffect(() => {
-        if (token) fetchSubmissions();
+        if (!token) return;
+        const controller = new AbortController();
+        fetchSubmissions(controller.signal);
+        return () => controller.abort();
     }, [token, fetchSubmissions]);
 
     const handleGrade = async (id: number) => {

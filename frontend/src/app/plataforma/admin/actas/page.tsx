@@ -44,13 +44,15 @@ export default function ActaManagementPage() {
     const [viewType, setViewType] = useState<ViewType>('grid');
 
     useEffect(() => {
+        const controller = new AbortController();
         const fetchFormalCourses = async () => {
             if (!token) return;
             try {
                 const response = await apiFetch<Course[]>('/academy/courses/', {
                     token,
                     query: { modality: 'formal' },
-                    cache: 'no-store'
+                    cache: 'no-store',
+                    signal: controller.signal
                 });
                 setCourses(Array.isArray(response) ? response : []);
             } catch (error) {
@@ -60,6 +62,7 @@ export default function ActaManagementPage() {
             }
         };
         fetchFormalCourses();
+        return () => controller.abort();
     }, [token]);
 
     useEffect(() => {
@@ -89,7 +92,7 @@ export default function ActaManagementPage() {
             });
             addToast('Acta cerrada y procesada con éxito', 'success');
             setLastActa(data as FormalActa);
-        } catch (error: any) {
+        } catch (error: unknown) {
             addToast(error?.detail?.message || 'Error operativo', 'error');
         } finally {
             setClosing(false);

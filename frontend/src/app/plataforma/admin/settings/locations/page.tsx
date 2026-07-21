@@ -38,11 +38,11 @@ export default function LocationManagement() {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [newLoc, setNewLoc] = useState({ nombre: '', address: '', pastor: '', type: 'Sede' });
 
-    const fetchLocations = useCallback(async () => {
+    const fetchLocations = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<{ items: any[]; total: number }>('/admin/locations', { token, cache: 'no-store' });
+            const data = await apiFetch<{ items: Location[]; total: number }>('/admin/locations', { token, cache: 'no-store', signal });
             setLocations(data?.items ?? []);
         } catch (err) {
             console.error(err);
@@ -53,7 +53,10 @@ export default function LocationManagement() {
     }, [token, addToast]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchLocations();
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchLocations(controller.signal);
+        return () => controller.abort();
     }, [isAuthenticated, fetchLocations]);
 
     const handleCreate = async (e: React.FormEvent) => {

@@ -8,6 +8,16 @@ import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import Skeleton from "@/components/ui/Skeleton";
+
+interface PersonaSummary {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+    church_role?: string;
+    nombre_completo?: string;
+}
 import { motion } from "framer-motion";
 
 export default function AdminPersonasPage() {
@@ -15,24 +25,27 @@ export default function AdminPersonasPage() {
     const { addToast } = useToast();
     const router = useRouter();
 
-    const [personas, setPersonas] = useState<any[]>([]);
+    const [personas, setPersonas] = useState<PersonaSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
 
     useEffect(() => {
         if (!token) return;
-        const load = async () => {
+        const controller = new AbortController();
+        const load = async (signal?: AbortSignal) => {
             setLoading(true);
             try {
-                const data = await apiFetch<{ items: any[]; total: number }>("/admin/personas", { token, cache: "no-store" });
+                const data = await apiFetch<{ items: PersonaSummary[]; total: number }>("/admin/personas", { token, cache: "no-store", signal });
                 setPersonas(data?.items ?? []);
             } catch {
+                if (signal?.aborted) return;
                 addToast("Error al cargar personas", "error");
             } finally {
                 setLoading(false);
             }
         };
-        load();
+        load(controller.signal);
+        return () => controller.abort();
     }, [token, addToast]);
 
     const filtered = useMemo(() => {

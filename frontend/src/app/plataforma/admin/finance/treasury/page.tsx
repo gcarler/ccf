@@ -5,23 +5,50 @@ import {
     DollarSign, TrendingUp, Calendar, PieChart, Filter
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
+import { useAuth } from '@/context/AuthContext';
 import { StatCard } from '@/components/StatCard';
 
+interface TreasuryTransaction {
+    id: number | string;
+    amount: number;
+    description?: string;
+    date?: string;
+    status?: string;
+    fund_id?: number;
+}
+
+interface Fund {
+    id: number;
+    name: string;
+    current_balance?: number;
+}
+
 export default function AdminTreasuryPage() {
-    const [transactions, setTransactions] = useState<any[]>([]);
-    const [funds, setFunds] = useState<any[]>([]);
+    const { token } = useAuth();
+    const [transactions, setTransactions] = useState<TreasuryTransaction[]>([]);
+    const [funds, setFunds] = useState<Fund[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        Promise.all([
-            apiFetch<any[]>('/finance/transactions'),
-            apiFetch<any[]>('/finance/funds')
-        ]).then(([txs, fnds]) => {
-            setTransactions(txs);
-            setFunds(fnds);
-        }).catch(console.error)
-        .finally(() => setLoading(false));
-    }, []);
+        const controller = new AbortController();
+        const load = async (signal?: AbortSignal) => {
+            try {
+                const [txs, fnds] = await Promise.all([
+                    apiFetch<TreasuryTransaction[]>('/finance/transactions', { token, signal }),
+                    apiFetch<Fund[]>('/finance/funds', { token, signal })
+                ]);
+                setTransactions(txs);
+                setFunds(fnds);
+            } catch (err) {
+                if (signal?.aborted) return;
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        load(controller.signal);
+        return () => controller.abort();
+    }, [token]);
 
     const totalBalance = funds.reduce((acc, f) => acc + (f.current_balance || 0), 0);
 

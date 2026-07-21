@@ -50,11 +50,11 @@ export default function SocialMediaSettings() {
     const [isSaving, setIsSaving] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('grid');
 
-    const fetchSocials = useCallback(async () => {
+    const fetchSocials = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<{ items: SocialChannel[]; total: number }>('/admin/socials', { token, cache: 'no-store' });
+            const data = await apiFetch<{ items: SocialChannel[]; total: number }>('/admin/socials', { token, cache: 'no-store', signal });
             setSocials(data?.items ?? []);
         } catch (err) {
             console.error(err);
@@ -65,7 +65,10 @@ export default function SocialMediaSettings() {
     }, [token, addToast]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchSocials();
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchSocials(controller.signal);
+        return () => controller.abort();
     }, [isAuthenticated, fetchSocials]);
 
     const handleSave = async () => {

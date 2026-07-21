@@ -94,7 +94,7 @@ export default function IdentityManagementPage() {
         try {
             const data = await apiFetch<{ items: UserSummary[]; total: number }>('/admin/users', { token, signal });
             setUsers(data?.items ?? []);
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err?.name === 'AbortError') return;
             addToast('Error al cargar usuarios', 'error');
         } finally {
@@ -118,7 +118,7 @@ export default function IdentityManagementPage() {
             setMinistries((data.ministries || []).map((m: any) => m.ministry));
             setPrimaryMinistry((data.ministries || []).find((m: any) => m.is_primary)?.ministry || '');
             setPlatformRole(data.platform_roles?.[0]?.role || 'MIEMBRO');
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err?.name === 'AbortError') return;
             addToast('Error al cargar perfil kernel', 'error');
         } finally {
@@ -179,7 +179,7 @@ export default function IdentityManagementPage() {
             addToast('Perfil de identidad actualizado', 'success');
             setIsDrawerOpen(false);
             fetchUsers();
-        } catch (e: any) {
+        } catch (e: unknown) {
             addToast('Error al guardar: ' + (e.message || 'Intente de nuevo'), 'error');
         } finally {
             setSaving(false);
@@ -204,7 +204,7 @@ export default function IdentityManagementPage() {
             setNewPassword('');
             setNewRole('MIEMBRO');
             fetchUsers();
-        } catch (e: any) {
+        } catch (e: unknown) {
             addToast('Error al crear: ' + (e.message || 'Intente de nuevo'), 'error');
         } finally {
             setSaving(false);
@@ -233,7 +233,7 @@ export default function IdentityManagementPage() {
             addToast('Contraseña actualizada', 'success');
             setShowResetModal(false);
             setResetPassword('');
-        } catch (e: any) {
+        } catch (e: unknown) {
             addToast('Error: ' + (e.message || 'Intente de nuevo'), 'error');
         } finally {
             setSaving(false);

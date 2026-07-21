@@ -8,23 +8,38 @@ import {
     Zap
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
+import { useAuth } from '@/context/AuthContext';
+
+interface Talent {
+    id: number;
+    nombre_completo?: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    skills?: Array<{ name: string }>;
+}
 
 export default function TalentSearchPage() {
-    const [talents, setTalents] = useState<any[]>([]);
+    const { token } = useAuth();
+    const [talents, setTalents] = useState<Talent[]>([]);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
+        const controller = new AbortController();
         const delayDebounceFn = setTimeout(() => {
             setLoading(true);
-            apiFetch<any[]>(`/crm/talents?q=${encodeURIComponent(search)}`)
+            apiFetch<Talent[]>(`/crm/talents?q=${encodeURIComponent(search)}`, { token, signal: controller.signal })
                 .then(setTalents)
-                .catch(console.error)
+                .catch((err) => { if (err?.name !== 'AbortError') console.error(err); })
                 .finally(() => setLoading(false));
         }, 500);
 
-        return () => clearTimeout(delayDebounceFn);
-    }, [search]);
+        return () => {
+            clearTimeout(delayDebounceFn);
+            controller.abort();
+        };
+    }, [search, token]);
 
     return (
         <div className="p-4 space-y-3 animate-in fade-in duration-700">
@@ -69,7 +84,7 @@ export default function TalentSearchPage() {
                                     <h4 className="font-bold text-white uppercase">{talent.nombre_completo || `${talent.first_name ?? ''} ${talent.last_name ?? ''}`.trim()}</h4>
                                     <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide">{talent.email}</div>
                                     <div className="flex flex-wrap gap-1 mt-2">
-                                        {talent.skills?.map((s: any, idx: number) => (
+                                        {talent.skills?.map((s: { name: string }, idx: number) => (
                                             <span key={idx} className="text-[8px] bg-white/5 text-white/60 px-2 py-0.5 rounded-full border border-white/5 uppercase">
                                                 {s.name}
                                             </span>

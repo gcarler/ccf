@@ -26,14 +26,32 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
+
+interface AgentInsight {
+    id: number;
+    title: string;
+    insight_type?: string;
+    payload?: string;
+    is_acknowledged?: boolean;
+    created_at?: string;
+}
+
+interface AgentTask {
+    id: number;
+    title: string;
+    description?: string;
+    priority?: string;
+    status?: string;
+}
+
 export default function IntelligenceConsole() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
     const router = useRouter();
-    const [insights, setInsights] = useState<any[]>([]);
-    const [tasks, setTasks] = useState<any[]>([]);
+    const [insights, setInsights] = useState<AgentInsight[]>([]);
+    const [tasks, setTasks] = useState<AgentTask[]>([]);
     const [query, setQuery] = useState('');
-    const [aiResponse, setAiResponse] = useState<any>(null);
+    const [aiResponse, setAiResponse] = useState<AgentInsight | null>(null);
     const [isAsking, setIsAsking] = useState(false);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -44,14 +62,14 @@ export default function IntelligenceConsole() {
     const [newTaskPriority, setNewTaskPriority] = useState('medium');
     const [creatingTask, setCreatingTask] = useState(false);
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         setLoadError(null);
         try {
             const [insightsData, tasksData] = await Promise.all([
-                apiFetch('/agents/insights', { token }),
-                apiFetch('/agents/tasks', { token })
+                apiFetch<AgentInsight[]>('/agents/insights', { token, signal }),
+                apiFetch<AgentTask[]>('/agents/tasks', { token, signal })
             ]);
             setInsights(Array.isArray(insightsData) ? insightsData : []);
             setTasks(Array.isArray(tasksData) ? tasksData : []);
@@ -65,7 +83,12 @@ export default function IntelligenceConsole() {
         }
     }, [token]);
 
-    useEffect(() => { if (isAuthenticated) fetchData(); }, [isAuthenticated, fetchData]);
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchData(controller.signal);
+        return () => controller.abort();
+    }, [isAuthenticated, fetchData]);
 
     const handleAskOptimus = async () => {
         if (!query.trim() || !token) return;

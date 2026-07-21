@@ -33,18 +33,29 @@ const iconMap: Record<string, any> = {
 };
 const MILESTONE_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
+
+interface Milestone {
+    id: string | number;
+    title: string;
+    description?: string;
+    icon?: string;
+    target_date?: string;
+    status?: string;
+    progress?: number;
+}
+
 export default function SpiritualMilestones() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
-    const [milestones, setMilestones] = useState<any[]>([]);
+    const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewType, setViewType] = useState<ViewType>('grid');
 
-    const fetchMilestones = useCallback(async () => {
+    const fetchMilestones = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<{ items: any[]; total: number }>('/admin/milestones', { token, cache: 'no-store' });
+            const data = await apiFetch<{ items: Milestone[]; total: number }>('/admin/milestones', { token, cache: 'no-store', signal });
             setMilestones(data?.items ?? []);
         } catch (err) {
             console.error(err);
@@ -55,7 +66,10 @@ export default function SpiritualMilestones() {
     }, [token, addToast]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchMilestones();
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchMilestones(controller.signal);
+        return () => controller.abort();
     }, [isAuthenticated, fetchMilestones]);
 
     if (!isAuthenticated) return null;

@@ -27,19 +27,29 @@ import UniversalWikiView from '@/components/ui/UniversalWikiView';
 
 const MAINTENANCE_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
+
+interface MaintenanceTask {
+    id: string | number;
+    item?: string;
+    task?: string;
+    date?: string;
+    priority?: string;
+    status?: string;
+}
+
 export default function AdminMaintenancePage() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
-    const [tasks, setTasks] = useState<any[]>([]);
+    const [tasks, setTasks] = useState<MaintenanceTask[]>([]);
     const [loading, setLoading] = useState(true);
     const [stats] = useState({ operative: 85, healthy: 105, review: 12, out: 7 });
     const [viewType, setViewType] = useState<ViewType>('grid');
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/assets/maintenance-tasks', { token, cache: 'no-store' });
+            const data = await apiFetch<MaintenanceTask[]>('/assets/maintenance-tasks', { token, cache: 'no-store', signal });
             setTasks(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error(err);
@@ -50,7 +60,10 @@ export default function AdminMaintenancePage() {
     }, [token, addToast]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchData();
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchData(controller.signal);
+        return () => controller.abort();
     }, [isAuthenticated, fetchData]);
 
     if (!isAuthenticated) return null;

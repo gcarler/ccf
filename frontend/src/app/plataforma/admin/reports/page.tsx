@@ -34,16 +34,18 @@ export default function AdvancedBIReports() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<ReportTab>('academic');
     useEffect(() => {
+        const controller = new AbortController();
         const fetchAnalytics = async () => {
             if (!token) return;
             try {
                 // Simulamos carga de datos complejos de BI
-                await apiFetch('/analytics/events/summary', { token });
+                await apiFetch('/analytics/events/summary', { token, signal: controller.signal });
             } catch (e) {
                 console.error('BI Analytics fetch failed', e);
             }
         };
         fetchAnalytics();
+        return () => controller.abort();
     }, [token, activeTab]);
 
     if (!isAuthenticated) return null;

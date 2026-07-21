@@ -20,12 +20,28 @@ import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
+interface AdminUserDetail {
+    id: string;
+    username: string;
+    email: string;
+    role: string;
+    is_active: boolean;
+    xp?: number;
+    rol_plataforma_id?: string | null;
+}
+
+interface RoleItem {
+    id: string;
+    name: string;
+    permissions?: Record<string, string>;
+}
+
 export default function UserDetailPage() {
     const params = useParams();
     const id = params?.id as string;
     const { token, user: currentUser } = useAuth();
     
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<AdminUserDetail | null>(null);
     const [loading, setLoading] = useState(true);
     
     // Drawer state
@@ -38,17 +54,18 @@ export default function UserDetailPage() {
     const [isEditingEmail, setIsEditingEmail] = useState(false);
     
     // Roles
-    const [roles, setRoles] = useState<any[]>([]);
+    const [roles, setRoles] = useState<RoleItem[]>([]);
     const [editRoleId, setEditRoleId] = useState<string | null>(null);
     const [isEditingRole, setIsEditingRole] = useState(false);
 
     useEffect(() => {
-        if (token && id) {
-            const loadUser = async () => {
+        if (!token || !id) return;
+        const controller = new AbortController();
+        const loadUser = async (signal?: AbortSignal) => {
                 try {
                     const [userData, rolesData] = await Promise.all([
-                        apiFetch<any>(`/admin/users/${id}`, { token }),
-                        apiFetch<{ items: any[]; total: number }>('/admin/roles', { token })
+                        apiFetch<AdminUserDetail>(`/admin/users/${id}`, { token, signal }),
+                        apiFetch<{ items: RoleItem[]; total: number }>('/admin/roles', { token, signal })
                     ]);
                     setUser(userData);
                     setEditEmail(userData.email);
@@ -61,22 +78,22 @@ export default function UserDetailPage() {
                 }
             };
 
-            loadUser();
-        }
+        loadUser(controller.signal);
+        return () => controller.abort();
     }, [id, token]);
 
     const toggleStatus = async () => {
         try {
             setIsSubmitting(true);
-            const updated = await apiFetch<any>(`/admin/users/${id}`, {
+            const updated = await apiFetch<AdminUserDetail>(`/admin/users/${id}`, {
                 method: 'PATCH',
                 token,
                 body: { is_active: !user.is_active }
             });
             setUser(updated);
             toast.success(`Cuenta ${updated.is_active ? 'activada' : 'suspendida'} correctamente`);
-        } catch (err: any) {
-            toast.error(err.message || 'Error al cambiar estado');
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Error al cambiar estado');
         } finally {
             setIsSubmitting(false);
         }
@@ -90,7 +107,7 @@ export default function UserDetailPage() {
         }
         try {
             setIsSubmitting(true);
-            await apiFetch<any>(`/admin/users/${id}`, {
+            await apiFetch<AdminUserDetail>(`/admin/users/${id}`, {
                 method: 'PATCH',
                 token,
                 body: { password: newPassword }
@@ -98,7 +115,7 @@ export default function UserDetailPage() {
             toast.success('Contraseña actualizada exitosamente');
             setPasswordModalOpen(false);
             setNewPassword('');
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast.error(err.message || 'Error al actualizar contraseña');
         } finally {
             setIsSubmitting(false);
@@ -108,7 +125,7 @@ export default function UserDetailPage() {
     const saveRole = async () => {
         try {
             setIsSubmitting(true);
-            const updated = await apiFetch<any>(`/admin/users/${id}`, {
+            const updated = await apiFetch<AdminUserDetail>(`/admin/users/${id}`, {
                 method: 'PATCH',
                 token,
                 body: { rol_plataforma_id: editRoleId }
@@ -116,7 +133,7 @@ export default function UserDetailPage() {
             setUser(updated);
             toast.success('Rol actualizado');
             setIsEditingRole(false);
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast.error(err.message || 'Error al actualizar rol');
         } finally {
             setIsSubmitting(false);
@@ -130,7 +147,7 @@ export default function UserDetailPage() {
         }
         try {
             setIsSubmitting(true);
-            const updated = await apiFetch<any>(`/admin/users/${id}`, {
+            const updated = await apiFetch<AdminUserDetail>(`/admin/users/${id}`, {
                 method: 'PATCH',
                 token,
                 body: { email: editEmail }
@@ -138,7 +155,7 @@ export default function UserDetailPage() {
             setUser(updated);
             toast.success('Correo actualizado');
             setIsEditingEmail(false);
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast.error(err.message || 'Error al actualizar correo');
         } finally {
             setIsSubmitting(false);

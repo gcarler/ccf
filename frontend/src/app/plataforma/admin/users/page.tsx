@@ -17,25 +17,35 @@ import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
 import { useRouter } from 'next/navigation';
 
+interface AdminUser {
+    id: string;
+    username: string;
+    email: string;
+    role: string;
+    is_active: boolean;
+    xp?: number;
+    rol_plataforma_id?: string | null;
+}
+
 export default function AdminUsersPage() {
     const { token } = useAuth();
     const router = useRouter();
     const { addToast } = useToast();
-    const [users, setUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<AdminUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [provisioning, setProvisioning] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedUser, setSelectedUser] = useState<any | null>(null);
+    const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const fetchUsers = async (signal?: AbortSignal) => {
         setLoading(true);
         try {
-            const data = await apiFetch<{ items: any[]; total: number }>('/admin/users', { token, signal });
+            const data = await apiFetch<{ items: AdminUser[]; total: number }>('/admin/users', { token, signal });
             setUsers(data?.items ?? []);
-        } catch (err: any) {
-            if (err?.name === 'AbortError') return;
+        } catch (err: unknown) {
+            if (err instanceof Error && err.name === 'AbortError') return;
             addToast("Error al cargar lista de usuarios", "error");
         } finally {
             setLoading(false);
@@ -51,7 +61,7 @@ export default function AdminUsersPage() {
     const handleBulkProvision = async () => {
         setProvisioning(true);
         try {
-            const result = await apiFetch<any>('/admin/provision-accounts', {
+            const result = await apiFetch<{ message: string }>('/admin/provision-accounts', {
                 method: 'POST',
                 token,
             });
@@ -64,9 +74,9 @@ export default function AdminUsersPage() {
         }
     };
 
-    const handleUpdateUser = async (userId: string, payload: any) => {
+    const handleUpdateUser = async (userId: string, payload: Record<string, unknown>) => {
         try {
-            const updated = await apiFetch(`/admin/users/${userId}`, {
+            const updated = await apiFetch<AdminUser>(`/admin/users/${userId}`, {
                 method: 'PATCH',
                 token,
                 body: payload

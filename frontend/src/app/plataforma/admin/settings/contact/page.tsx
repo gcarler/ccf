@@ -77,11 +77,11 @@ export default function AdminSettingsContactPage() {
   const [deleteConfirmScheduleIdx, setDeleteConfirmScheduleIdx] = useState<number | null>(null);
   const [openTypeMenu, setOpenTypeMenu] = useState<string | null>(null);
 
-  const fetchConfig = useCallback(async () => {
+  const fetchConfig = useCallback(async (signal?: AbortSignal) => {
     if (!token) return;
     setLoading(true);
     try {
-      const data = await apiFetch<Record<string, string>>("/admin/variables", { token });
+      const data = await apiFetch<Record<string, string>>("/admin/variables", { token, signal });
       if (data[CONTACTS_KEY]) {
         try {
           const parsed = JSON.parse(data[CONTACTS_KEY]);
@@ -102,7 +102,10 @@ export default function AdminSettingsContactPage() {
   }, [token, addToast]);
 
   useEffect(() => {
-    if (isAuthenticated) fetchConfig();
+    if (!isAuthenticated) return;
+    const controller = new AbortController();
+    fetchConfig(controller.signal);
+    return () => controller.abort();
   }, [isAuthenticated, fetchConfig]);
 
   const startEditing = () => {

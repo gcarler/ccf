@@ -7,30 +7,43 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { ArrowLeft, Heart, LayoutDashboard, ReceiptText } from "lucide-react";
 
+interface DonationTransaction {
+    id: number | string;
+    amount: number;
+    description?: string;
+    donor?: string;
+    date?: string;
+    status?: string;
+    type?: string;
+}
+
 export default function DonationDetailPage() {
     const router = useRouter();
     const params = useParams();
     const { token } = useAuth();
     const donationId = String(params?.id ?? "");
-    const [donation, setDonation] = useState<any | null>(null);
+    const [donation, setDonation] = useState<DonationTransaction | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!token || !donationId) return;
-        const load = async () => {
+        const controller = new AbortController();
+        const load = async (signal?: AbortSignal) => {
             try {
                 setLoading(true);
-                const list = await apiFetch<any[]>("/finance/transactions", { token, cache: "no-store" });
-                const found = Array.isArray(list) ? list.find((item) => String(item.id) === donationId) : null;
+                const list = await apiFetch<DonationTransaction[]>("/finance/transactions", { token, cache: "no-store", signal });
+                const found = Array.isArray(list) ? list.find((item: DonationTransaction) => String(item.id) === donationId) : null;
                 setDonation(found ?? null);
             } catch (error) {
+                if (signal?.aborted) return;
                 console.error("Error loading donation detail", error);
                 setDonation(null);
             } finally {
                 setLoading(false);
             }
         };
-        load();
+        load(controller.signal);
+        return () => controller.abort();
     }, [donationId, token]);
 
     const amount = useMemo(() => Number(donation?.amount ?? 0), [donation?.amount]);

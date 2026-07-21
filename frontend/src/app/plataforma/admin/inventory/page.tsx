@@ -29,20 +29,31 @@ import { toast } from 'sonner';
 
 const INVENTORY_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
+
+interface InventoryAsset {
+    id: number;
+    name?: string;
+    description?: string;
+    status?: string;
+    category?: string;
+    location?: string;
+    assigned_to?: string;
+}
+
 export default function AdminInventoryPage() {
     const { token } = useAuth();
-    const [assets, setAssets] = useState<any[]>([]);
+    const [assets, setAssets] = useState<InventoryAsset[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewType, setViewType] = useState<ViewType>('table');
-    const [selectedAsset, setSelectedAsset] = useState<any>(null);
+    const [selectedAsset, setSelectedAsset] = useState<InventoryAsset | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/assets/', { token, cache: 'no-store' });
+            const data = await apiFetch<InventoryAsset[]>('/assets/', { token, cache: 'no-store', signal });
             setAssets(Array.isArray(data) ? data : []);
         } catch (e) { 
             console.error(e);
@@ -52,9 +63,13 @@ export default function AdminInventoryPage() {
         }
     }, [token]);
 
-    useEffect(() => { fetchData(); }, [fetchData]);
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchData(controller.signal);
+        return () => controller.abort();
+    }, [fetchData]);
 
-    const handleOpenAsset = (asset: any) => {
+    const handleOpenAsset = (asset: InventoryAsset) => {
         setSelectedAsset(asset);
         setIsDrawerOpen(true);
     };
