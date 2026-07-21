@@ -152,19 +152,20 @@ export default function AccessManagementPage() {
         setLoading(true);
         try {
             const [rolesData, usersData] = await Promise.all([
-                apiFetch<any[]>('/admin/auth-role-definitions', { token, cache: 'no-store', signal }),
-                apiFetch<any[]>('/admin/users', { token, cache: 'no-store', signal })
+                apiFetch<{ items: any[]; total: number }>('/admin/roles', { token, cache: 'no-store', signal }),
+                apiFetch<{ items: any[]; total: number }>('/admin/users', { token, cache: 'no-store', signal })
             ]);
             if (signal?.aborted) return;
-            // Map auth roles to the format expected by the UI
-            const mappedRoles = (Array.isArray(rolesData) ? rolesData : []).map((r: any) => ({
+            const rolesItems = rolesData?.items ?? [];
+            const usersItems = usersData?.items ?? [];
+            const mappedRoles = rolesItems.map((r: any) => ({
                 id: r.id,
                 name: r.nombre,
                 permissions: r.permisos || {},
-                users_count: 0,
+                users_count: r.users_count ?? 0,
             }));
             setRoles(mappedRoles);
-            setUsers(Array.isArray(usersData) ? usersData : []);
+            setUsers(usersItems);
         } catch (err: any) { 
             if (err?.name === 'AbortError') return;
             console.error(err);
@@ -218,7 +219,7 @@ export default function AccessManagementPage() {
                 } else {
                     Object.assign(permDict, flatPerms);
                 }
-                await apiFetch(`/admin/auth-role-definitions/${selectedEntity.id}`, {
+                await apiFetch(`/admin/roles/${selectedEntity.id}`, {
                     method: 'PATCH',
                     token,
                     body: { permisos: permDict },
@@ -325,7 +326,7 @@ export default function AccessManagementPage() {
             const name = prompt('Nombre del nuevo rol de plataforma:');
             if (!name?.trim()) return;
             setIsAssigning(true);
-            apiFetch('/admin/auth-role-definitions', {
+            apiFetch('/admin/roles', {
                 method: 'POST',
                 token,
                 body: { nombre: name.trim(), permisos: {} },
@@ -345,7 +346,7 @@ export default function AccessManagementPage() {
                 return;
             }
             setIsAssigning(true);
-            apiFetch('/admin/users', {
+            apiFetch<{ items: any[]; total: number }>('/admin/users', {
                 method: 'POST',
                 token,
                 body: { username: username.trim(), email: email.trim(), password, role: 'estudiante' },

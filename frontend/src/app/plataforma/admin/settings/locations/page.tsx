@@ -42,8 +42,8 @@ export default function LocationManagement() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/admin/locations', { token, cache: 'no-store' });
-            setLocations(Array.isArray(data) ? data : []);
+            const data = await apiFetch<{ items: any[]; total: number }>('/admin/locations', { token, cache: 'no-store' });
+            setLocations(data?.items ?? []);
         } catch (err) {
             console.error(err);
             addToast("Error al cargar sedes", "error");

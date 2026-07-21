@@ -37,7 +37,7 @@ function AvatarInitial({ name, size = "md" }: { name: string; size?: "sm" | "md"
     const initials = safeName;
     const colors = [
         "from-blue-500 to-blue-700",
-        "from-violet-500 to-violet-700",
+        "from-cyan-500 to-cyan-700",
         "from-emerald-500 to-emerald-700",
         "from-rose-500 to-rose-700",
         "from-amber-500 to-amber-700",

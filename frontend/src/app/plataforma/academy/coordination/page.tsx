@@ -283,13 +283,13 @@ export default function CoordinationConsole() {
                                                     <td className="px-4 py-2 text-right">
                                                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
                                                             <button
-                                                                onClick={() => router.push(`/academy/courses/${course.id}/lessons`)}
+                                                                onClick={() => router.push(`/plataforma/academy/courses/${course.id}/lessons`)}
                                                                 className="px-4 py-2 rounded-md text-[9px] font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all"
                                                             >
                                                                 Lecciones
                                                             </button>
                                                             <button
-                                                                onClick={() => router.push(`/academy/courses/${course.id}/edit`)}
+                                                                onClick={() => router.push(`/plataforma/academy/courses/${course.id}/edit`)}
                                                                 className="px-4 py-2 rounded-md text-[9px] font-semibold uppercase tracking-wide border-2 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 transition-all active:scale-95"
                                                             >
                                                                 Config

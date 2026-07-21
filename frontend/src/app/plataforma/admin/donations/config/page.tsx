@@ -92,9 +92,9 @@ export default function DonationConfig() {
 
         try {
 
-            const data = await apiFetch<Category[]>('/admin/donation-categories', { token, cache: 'no-store', signal });
+            const data = await apiFetch<{ items: Category[]; total: number }>('/admin/donation-categories', { token, cache: 'no-store', signal });
 
-            setCategories(Array.isArray(data) ? data : []);
+            setCategories(data?.items ?? []);
 
         } catch (err: any) {
 

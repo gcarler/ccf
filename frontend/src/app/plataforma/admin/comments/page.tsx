@@ -48,8 +48,8 @@ export default function CommentModeration() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<Comment[]>('/admin/comments', { token, cache: 'no-store' });
-            setComments(Array.isArray(data) ? data : []);
+            const data = await apiFetch<{ items: Comment[]; total: number }>('/admin/comments', { token, cache: 'no-store' });
+            setComments(data?.items ?? []);
         } catch (err) {
             console.error(err);
             addToast("Error al sincronizar moderación", "error");

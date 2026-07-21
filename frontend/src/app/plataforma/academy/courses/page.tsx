@@ -3,8 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-// /academy/courses redirects to /academy (el listado de cursos esta en la pagina principal)
-// La ruta correcta para un curso individual es /academy/course/[id]
+// /plataforma/academy/courses redirige al catálogo principal.
+// La ruta de aprendizaje individual es /plataforma/academy/course/[id].
 export default function AcademyCoursesPage() {
     const router = useRouter();
 

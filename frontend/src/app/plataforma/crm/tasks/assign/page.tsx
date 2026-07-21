@@ -65,12 +65,13 @@ export default function TaskAssignment() {
         try {
             setError(null);
             const [usersData, personasData] = await Promise.all([
-                apiFetch<any[]>('/admin/users', { token }),
+                apiFetch<{ items: any[]; total: number }>('/admin/users', { token }),
                 apiFetch<any[]>('/crm/personas', { token })
             ]);
             
             // Filtrar solo líderes/admin/staff para asignar
-            setLeaders(usersData.filter(u => ['admin', 'pastor', 'coordinador', 'docente'].includes(u.role)));
+            const usersItems = usersData?.items ?? [];
+            setLeaders(usersItems.filter(u => ['admin', 'pastor', 'coordinador', 'docente'].includes(u.role)));
             setPersonas(Array.isArray(personasData) ? personasData : []);
         } catch (err) {
             setLeaders([]);

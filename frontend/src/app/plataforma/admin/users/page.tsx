@@ -32,8 +32,8 @@ export default function AdminUsersPage() {
     const fetchUsers = async (signal?: AbortSignal) => {
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/admin/users', { token, signal });
-            setUsers(Array.isArray(data) ? data : []);
+            const data = await apiFetch<{ items: any[]; total: number }>('/admin/users', { token, signal });
+            setUsers(data?.items ?? []);
         } catch (err: any) {
             if (err?.name === 'AbortError') return;
             addToast("Error al cargar lista de usuarios", "error");

@@ -86,7 +86,7 @@ export default function StudentCurriculum() {
                         {filtered.map((enrollment) => (
                             <article 
                                 key={enrollment.id} 
-                                onClick={() => router.push(`/academy/course/${enrollment.course.id}`)}
+                                onClick={() => router.push(`/plataforma/academy/course/${enrollment.course.id}`)}
                                 className="bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/10 flex items-center gap-4 group cursor-pointer hover:shadow-lg transition-all"
                             >
                                 <div className="text-[hsl(var(--text-secondary))] group-hover:text-primary transition-colors p-2">

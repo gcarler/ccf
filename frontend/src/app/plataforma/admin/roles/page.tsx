@@ -34,14 +34,14 @@ export default function RolesPage() {
         setLoading(true);
         try {
             const [rolesRes, permsRes] = await Promise.all([
-                apiFetch<any[]>('/admin/auth-role-definitions', { token, signal }),
+                apiFetch<{ items: Role[]; total: number }>('/admin/roles', { token, signal }),
                 apiFetch<Record<string, string>>('/admin/permissions', { token, signal })
             ]);
-            // Map auth roles to the expected format
-            const mapped = (Array.isArray(rolesRes) ? rolesRes : []).map((r: any) => ({
+            const items = rolesRes?.items ?? [];
+            const mapped = items.map((r: Role) => ({
                 id: r.id,
-                name: r.nombre,
-                permissions: r.permisos ? Object.keys(r.permisos) : [],
+                name: r.name,
+                permissions: r.permissions ? Object.keys(r.permissions) : [],
             }));
             setRoles(mapped);
             setPermissionsMap(permsRes || {});
@@ -85,19 +85,18 @@ export default function RolesPage() {
         }
         try {
             if (editingRole.id) {
-                // Convert array of perm keys to permisos dict
                 const permDict: Record<string, string> = {};
                 for (const p of (editingRole.permissions || [])) {
                     permDict[p] = 'allow';
                 }
-                await apiFetch(`/admin/auth-role-definitions/${editingRole.id}`, {
+                await apiFetch(`/admin/roles/${editingRole.id}`, {
                     method: 'PATCH',
                     token,
                     body: { permisos: permDict }
                 });
                 addToast("Rol actualizado", "success");
             } else {
-                await apiFetch('/admin/auth-role-definitions', {
+                await apiFetch('/admin/roles', {
                     method: 'POST',
                     token,
                     body: { nombre: editingRole.name, permisos: {} }
@@ -120,7 +119,7 @@ export default function RolesPage() {
             confirmLabel: 'Eliminar rol',
             onConfirm: async () => {
                 try {
-                    await apiFetch(`/admin/auth-role-definitions/${id}`, {
+                    await apiFetch(`/admin/roles/${id}`, {
                         method: 'DELETE',
                         token
                     });

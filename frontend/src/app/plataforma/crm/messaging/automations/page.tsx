@@ -68,8 +68,8 @@ export default function AutomationsPage() {
         setLoading(true);
         try {
             setError(null);
-            const data = await apiFetch<AutomationRule[]>('/admin/automations', { token });
-            setRules(Array.isArray(data) ? data : []);
+            const data = await apiFetch<{ items: AutomationRule[]; total: number }>('/admin/automations', { token });
+            setRules(data?.items ?? []);
         } catch (err) {
             setRules([]);
             setError('No se pudieron cargar las automatizaciones');

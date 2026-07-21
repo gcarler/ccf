@@ -7,32 +7,36 @@ import { DSCard } from '@/design/components/DSCard';
 import { DSChart } from '@/design/components/DSChart';
 import { DSMetric } from '@/design/components/DSMetric';
 import { apiFetch } from '@/lib/http';
-import {
-GraduationCap,
-Sparkles,
-TrendingUp,
-AlertTriangle,
-} from 'lucide-react';
+import { GraduationCap, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback,useEffect,useState } from 'react';
 import { toast } from 'sonner';
 import type { DashboardMetrics } from '@/types/academy';
 
-interface DashboardCard {
-    title: string;
-    value: string;
-    trend: string;
-    color: string;
-}
+type DashboardCard = NonNullable<DashboardMetrics['cards']>[number] & { color?: 'blue' | 'emerald' | 'amber' };
+type AcademyDashboard = Omit<DashboardMetrics, 'cards'> & { cards: DashboardCard[] };
 
-interface AcademyDashboard extends Omit<DashboardMetrics, 'cards'> {
-    cards?: DashboardCard[];
-    enrollment_trends?: { label: string; value: number }[];
-    top_courses?: { title: string; count: number }[];
+function dashboardFromProfile(profile: { enrollments_count: number; certificates_count: number; total_progress: number }): AcademyDashboard {
+    return {
+        total_courses: profile.enrollments_count,
+        formal_courses: 0,
+        non_formal_courses: 0,
+        total_enrollments: profile.enrollments_count,
+        completed_enrollments: 0,
+        approved_formal_enrollments: 0,
+        approved_non_formal_enrollments: 0,
+        cards: [
+            { title: 'Mis cursos', value: String(profile.enrollments_count), trend: '', tone: 'blue', color: 'blue' },
+            { title: 'Mi progreso', value: `${Math.round(profile.total_progress)}%`, trend: '', tone: 'emerald', color: 'emerald' },
+            { title: 'Certificados', value: String(profile.certificates_count), trend: '', tone: 'amber', color: 'amber' },
+        ],
+        enrollment_trends: [],
+        top_courses: [],
+    };
 }
 
 export default function AcademyClient() {
-    const { token } = useAuth();
+    const { token, hasModuleAccess } = useAuth();
     const router = useRouter();
     const [dashboard, setDashboard] = useState<AcademyDashboard | null>(null);
     const [loading, setLoading] = useState(true);
@@ -47,33 +51,22 @@ export default function AcademyClient() {
         setLoading(true);
         setError(null);
         try {
-            const data = await apiFetch<any>('/academy/dashboard/metrics', { token });
-            setDashboard(data);
-        } catch (err: any) {
-            const status = err?.status ?? err?.response?.status;
-            if (status === 403 || status === 404) {
-                // Fallback operativo: estudiantes no son Manager pero tienen derecho a un resumen.
-                try {
-                    const fallback = await apiFetch<any>('/dashboard/academy', { token });
-                    setDashboard(fallback);
-                    return;
-                } catch (fallbackErr: any) {
-                    const message =
-                        fallbackErr?.detail || fallbackErr?.message ||
-                        'Error al cargar métricas de la Academia';
-                    setError(message);
-                    toast.error(message);
-                    return;
-                }
+            if (hasModuleAccess('academy', 'manage')) {
+                const data = await apiFetch<AcademyDashboard>('/academy/dashboard/metrics', { token });
+                setDashboard({ ...data, cards: data.cards ?? [] });
+            } else {
+                const profile = await apiFetch<{ enrollments_count: number; certificates_count: number; total_progress: number }>('/academy/me/profile', { token });
+                setDashboard(dashboardFromProfile(profile));
             }
-            const message =
-                err?.detail || err?.message || 'Error al cargar métricas de la Academia';
+        } catch (err: unknown) {
+            const candidate = err as { detail?: string; message?: string };
+            const message = candidate.detail || candidate.message || 'Error al cargar métricas de la Academia';
             setError(message);
             toast.error(message);
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, [hasModuleAccess, token]);
 
     useEffect(() => {
         loadData();
@@ -132,13 +125,13 @@ export default function AcademyClient() {
             <main className="flex-1 overflow-y-auto p-4 lg:p-3 space-y-3">
                 {/* Metricas Principales */}
                 <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {dashboard?.cards?.map((card, idx) => (
-                        <DSMetric 
-                            key={idx}
-                            label={card.title} 
-                            value={card.value} 
-                            trend={card.trend} 
-                            tone={card.color as 'blue' | 'emerald' | 'amber'} 
+                    {dashboard.cards.map((card) => (
+                        <DSMetric
+                            key={card.title}
+                            label={card.title}
+                            value={card.value}
+                            trend={card.trend}
+                            tone={card.color ?? card.tone as 'blue' | 'emerald' | 'amber'}
                         />
                     ))}
                 </section>
@@ -156,7 +149,11 @@ export default function AcademyClient() {
                                     <TrendingUp size={20} />
                                 </div>
                             </div>
-                            <DSChart type="area" data={dashboard?.enrollment_trends} color="#3b82f6" height={250} />
+                            {dashboard.enrollment_trends?.length ? (
+                                <DSChart type="area" data={dashboard.enrollment_trends} color="#3b82f6" height={250} />
+                            ) : (
+                                <p className="py-12 text-center text-sm text-[hsl(var(--text-secondary))]">Aún no hay historial de inscripciones.</p>
+                            )}
                         </DSCard>
                     </div>
 
@@ -165,8 +162,8 @@ export default function AcademyClient() {
                         <DSCard>
                             <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Cursos Top Performance</h3>
                             <div className="space-y-4">
-                                {dashboard?.top_courses?.map((course, idx) => (
-                                    <div key={idx} className="flex items-center justify-between group">
+                                {dashboard.top_courses?.map((course) => (
+                                    <div key={course.title} className="flex items-center justify-between group">
                                         <div className="flex items-center gap-3">
                                             <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />
                                             <span className="text-xs font-bold text-[hsl(var(--text-secondary))] group-hover:text-white transition-colors">{course.title}</span>
@@ -175,18 +172,8 @@ export default function AcademyClient() {
                                     </div>
                                 ))}
                             </div>
+                            {!dashboard.top_courses?.length && <p className="text-sm text-[hsl(var(--text-secondary))]">Sin cursos con inscripciones todavía.</p>}
                         </DSCard>
-
-                        {/* Optimus Coach Card */}
-                        <div className="p-3 bg-gradient-to-br from-blue-600 to-sky-700 rounded-2xl text-white space-y-4 shadow-2xl shadow-blue-500/20 border border-white/10 relative overflow-hidden">
-                            <div className="absolute -right-4 -top-4 size-10 bg-white/10 rounded-full blur-3xl" />
-                            <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide relative z-10">
-                                <Sparkles size={14} className="animate-pulse" /> Optimus Intelligence
-                            </div>
-                            <p className="text-sm font-bold leading-relaxed opacity-95 italic relative z-10">
-                                &quot;Detectamos un aumento del 15% en el compromiso tras el nuevo módulo de Teología. 5 participantes están listos para certificación.&quot;
-                            </p>
-                        </div>
                     </div>
                 </div>
             </main>

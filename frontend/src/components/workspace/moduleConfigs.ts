@@ -9,7 +9,6 @@ import {
   FileText,
   FolderTree,
   Globe,
-  GraduationCap,
   Heart,
   Home,
   ImageIcon,
@@ -314,40 +313,6 @@ export const MODULE_CONFIGS: Record<string, ModuleConfig> = {
             label: 'Monitoreo',
             href: '/plataforma/evangelism/groups/groups?mode=monitor',
             icon: Activity,
-          },
-        ],
-      },
-    ],
-  },
-  academy: {
-    title: 'Academia',
-    sections: [
-      {
-        title: 'Formación',
-        items: [
-          {
-            id: 'aca-dashboard',
-            label: 'Resumen',
-            href: '/plataforma/academy',
-            icon: LayoutDashboard,
-          },
-          {
-            id: 'aca-courses',
-            label: 'Gestión Cursos',
-            href: '/plataforma/academy/courses',
-            icon: BookOpen,
-          },
-          {
-            id: 'aca-students',
-            label: 'Estudiantes',
-            href: '/plataforma/academy/students',
-            icon: Users,
-          },
-          {
-            id: 'aca-teachers',
-            label: 'Facilitadores',
-            href: '/plataforma/academy/teachers',
-            icon: GraduationCap,
           },
         ],
       },

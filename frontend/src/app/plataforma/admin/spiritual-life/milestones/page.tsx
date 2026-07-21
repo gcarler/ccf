@@ -44,8 +44,8 @@ export default function SpiritualMilestones() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/admin/milestones', { token, cache: 'no-store' });
-            setMilestones(Array.isArray(data) ? data : []);
+            const data = await apiFetch<{ items: any[]; total: number }>('/admin/milestones', { token, cache: 'no-store' });
+            setMilestones(data?.items ?? []);
         } catch (err) {
             console.error(err);
             addToast("Error al sincronizar hitos", "error");

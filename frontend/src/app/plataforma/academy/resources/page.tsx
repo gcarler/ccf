@@ -41,7 +41,7 @@ export default function ResourcesLibrary() {
                 courseTitle: enrollment.course.title,
                 snippet: cleanSnippet(lesson.content),
                 duration: lesson.duration_minutes ? `${lesson.duration_minutes} min` : enrollment.course.modality,
-                href: `/academy/course/${enrollment.course.id}`,
+                href: `/plataforma/academy/course/${enrollment.course.id}`,
             }));
         });
     }, [enrollments, lessonsByCourse]);
@@ -184,4 +184,3 @@ function ResourceRow({ resource, isFavorite, onToggleFavorite }: { resource: Res
         </article>
     );
 }
-
