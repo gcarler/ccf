@@ -79,6 +79,13 @@ def _person_nodes(db: Session, limit: int, sede_id: Optional[UUID] = None) -> Li
 
 
 def _asset_nodes(db: Session, limit: int, sede_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
+    # Graceful degradation: si AssetItem no está registrado en ``models``,
+    # esta sección se omite silenciosamente (mismo patrón que el bloque
+    # edges de mantenimiento más abajo, en este mismo archivo). Evita
+    # que el resolver ``asset`` reviente con AttributeError cuando el
+    # módulo de inventario no está desplegado en el entorno actual.
+    if not _has_model("AssetItem"):
+        return []
     q = db.query(models.AssetItem)
     if sede_id is not None:
         q = q.filter(models.AssetItem.sede_id == sede_id)
