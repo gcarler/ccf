@@ -48,11 +48,11 @@ export default function UserDetailPage() {
                 try {
                     const [userData, rolesData] = await Promise.all([
                         apiFetch<any>(`/admin/users/${id}`, { token }),
-                        apiFetch<any[]>('/admin/roles', { token })
+                        apiFetch<{ items: any[]; total: number }>('/admin/roles', { token })
                     ]);
                     setUser(userData);
                     setEditEmail(userData.email);
-                    setRoles(rolesData || []);
+                    setRoles(rolesData?.items ?? []);
                     setEditRoleId(userData.rol_plataforma_id || null);
                 } catch (err) {
                     toast.error('Error al cargar perfil de usuario');

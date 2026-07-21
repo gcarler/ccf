@@ -54,8 +54,8 @@ export default function SocialMediaSettings() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<SocialChannel[]>('/admin/socials', { token, cache: 'no-store' });
-            setSocials(Array.isArray(data) ? data : []);
+            const data = await apiFetch<{ items: SocialChannel[]; total: number }>('/admin/socials', { token, cache: 'no-store' });
+            setSocials(data?.items ?? []);
         } catch (err) {
             console.error(err);
             addToast("Error al sincronizar redes sociales", "error");

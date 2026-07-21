@@ -46,10 +46,11 @@ export function useNotifications(limit = 50) {
 
     const markRead = useCallback(async (id: number) => {
         if (!token) return;
-        const current = notifications.find((item) => item.id === id);
-        if (!current || current.read) return;
-
-        setNotifications((items) => items.map((item) => item.id === id ? { ...item, read: true } : item));
+        setNotifications((items) => {
+            const current = items.find((item) => item.id === id);
+            if (!current || current.read) return items;
+            return items.map((item) => item.id === id ? { ...item, read: true } : item);
+        });
         try {
             await apiFetch(`/messaging/notifications/${id}`, {
                 method: 'PATCH',
@@ -60,11 +61,10 @@ export function useNotifications(limit = 50) {
             setNotifications((items) => items.map((item) => item.id === id ? { ...item, read: false } : item));
             setError('No se pudo marcar la notificacion como leida.');
         }
-    }, [notifications, token]);
+    }, [token]);
 
     const markAllRead = useCallback(async () => {
         if (!token) return;
-        const previous = notifications;
         setNotifications((items) => items.map((item) => ({ ...item, read: true })));
         try {
             await apiFetch('/messaging/notifications/mark-all-read', {
@@ -73,10 +73,10 @@ export function useNotifications(limit = 50) {
             });
         } catch (err) {
             console.error(err);
-            setNotifications(previous);
+            setNotifications((items) => items.map((item) => ({ ...item, read: false })));
             setError('No se pudieron marcar todas las notificaciones.');
         }
-    }, [notifications, token]);
+    }, [token]);
 
     return {
         notifications,

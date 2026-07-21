@@ -92,8 +92,8 @@ export default function IdentityManagementPage() {
     const fetchUsers = useCallback(async ({ signal }: { signal?: AbortSignal } = {}) => {
         setLoading(true);
         try {
-            const data = await apiFetch<UserSummary[]>('/admin/users', { token, signal });
-            setUsers(Array.isArray(data) ? data : []);
+            const data = await apiFetch<{ items: UserSummary[]; total: number }>('/admin/users', { token, signal });
+            setUsers(data?.items ?? []);
         } catch (err: any) {
             if (err?.name === 'AbortError') return;
             addToast('Error al cargar usuarios', 'error');

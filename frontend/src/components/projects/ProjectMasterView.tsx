@@ -368,7 +368,6 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
             <div className="space-y-2">
                 {tasks.slice(0, 4).map((t) => {
                     const match = t.title.match(/^(\[[^\]]+\]\s*)(.*)$/);
-                    const prefix = match ? match[1] : '';
                     const cleanTitle = match ? match[2] : t.title;
                     return (
                         <div

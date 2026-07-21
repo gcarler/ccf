@@ -12,7 +12,7 @@ import TaskTableView from '@/components/projects/TaskTableView';
 import ProjectListView from '@/components/projects/ProjectListView';
 import ProjectCalendarView from '@/components/projects/ProjectCalendarView';
 import ProjectGanttView from '@/components/projects/ProjectGanttView';
-import ProjectWhiteboard from '@/components/projects/ProjectWhiteboard';
+
 import ProjectWikiEditor from '@/components/projects/ProjectWikiEditor';
 import ProjectChatPanel from '@/components/projects/ProjectChatPanel';
 import { ProjectKanbanBoard } from '@/components/projects/ProjectKanbanBoard';
@@ -45,11 +45,11 @@ interface ProjectViewsContentProps {
 export function ProjectViewsContent({
     viewType,
     onOpenTask,
-    onTaskUpdated,
-    onActivityCreated,
-    onDeleteTask,
+    onTaskUpdated: _onTaskUpdated,
+    onActivityCreated: _onActivityCreated,
+    onDeleteTask: _onDeleteTask,
     setShowTaskModal,
-    setWhiteboardOpen,
+    setWhiteboardOpen: _setWhiteboardOpen,
 }: ProjectViewsContentProps) {
     const { project, tasks, phases, activities, createTask, reloadProject, updateTask } = useProjectUpdate();
 

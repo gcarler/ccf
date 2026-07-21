@@ -61,6 +61,9 @@ export interface MetricCard {
 }
 
 export interface DashboardMetrics {
+  active_students?: number;
+  completion_rate?: number;
+  certificates_issued?: number;
   total_courses: number;
   formal_courses: number;
   non_formal_courses: number;
@@ -69,6 +72,8 @@ export interface DashboardMetrics {
   approved_formal_enrollments: number;
   approved_non_formal_enrollments: number;
   cards?: MetricCard[];
+  enrollment_trends?: { label: string; value: number }[];
+  top_courses?: { title: string; count: number }[];
 }
 
 export interface PilotChecklistItem {

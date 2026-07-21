@@ -24,8 +24,8 @@ export default function AdminPersonasPage() {
         const load = async () => {
             setLoading(true);
             try {
-                const data = await apiFetch<any[]>("/admin/personas", { token, cache: "no-store" });
-                setPersonas(Array.isArray(data) ? data : []);
+                const data = await apiFetch<{ items: any[]; total: number }>("/admin/personas", { token, cache: "no-store" });
+                setPersonas(data?.items ?? []);
             } catch {
                 addToast("Error al cargar personas", "error");
             } finally {
