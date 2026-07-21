@@ -35,7 +35,8 @@ def test_admin_automation_crud_roundtrip(client: TestClient, db_session):
 
     list_response = client.get("/api/admin/automations", headers=headers)
     assert list_response.status_code == 200
-    listed = list_response.json()
+    listed_data = list_response.json()
+    listed = listed_data.get("items", listed_data) if isinstance(listed_data, dict) else listed_data
     assert any(item["name"] == "Reminder rule" for item in listed)
 
     rule_id = created["id"]

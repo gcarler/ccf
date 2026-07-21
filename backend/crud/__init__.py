@@ -10,6 +10,7 @@ This package re-exports only symbols consumed via ``from backend import crud``
 
 # ── Sub-modules accessed directly (kernel, agenda, pipeline, test aliases) ──
 from backend.crud import (
+    admin,  # noqa: F401
     agenda,  # noqa: F401
 
     kernel,  # noqa: F401
@@ -25,6 +26,51 @@ from backend.crud.agents import (
     list_agent_insights,
     list_agent_tasks,
     update_agent_task,
+)
+
+# ── Admin ────────────────────────────────────────────────────────────────────
+from backend.crud.admin import (  # noqa: F401
+    assign_user_module_role,
+    award_milestone,
+    change_user_role,
+    create_admin_donation_category,
+    create_admin_location,
+    create_admin_role,
+    create_admin_social,
+    create_admin_user,
+    deactivate_admin_user,
+    delete_admin_comment,
+    delete_admin_donation_category,
+    delete_admin_location,
+    delete_admin_role,
+    delete_admin_social,
+    delete_admin_variable,
+    get_admin_role,
+    get_admin_role_user_counts,
+    get_admin_stats,
+    get_admin_user,
+    get_user_permissions,
+    list_admin_automations,
+    list_admin_donation_categories,
+    list_admin_locations,
+    list_admin_milestones,
+    list_admin_personas,
+    list_admin_roles,
+    list_admin_socials,
+    list_admin_users,
+    list_admin_variables,
+    list_all_comments,
+    list_user_module_roles,
+    list_users_with_roles,
+    provision_personas_sin_cuenta,
+    remove_user_module_role,
+    set_admin_variable,
+    set_user_permissions,
+    update_admin_donation_category,
+    update_admin_location,
+    update_admin_role,
+    update_admin_social,
+    update_admin_user,
 )
 
 # ── Audit ──────────────────────────────────────────────────────────────────

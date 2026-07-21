@@ -14,7 +14,8 @@ def test_admin_personas_lists_entire_person_registry(client, db_session):
     resp = client.get("/api/admin/personas", headers=headers)
     assert resp.status_code == 200
     data = resp.json()
-    ids = {item["id"] for item in data}
+    items = data.get("items", data) if isinstance(data, dict) else data
+    ids = {item["id"] for item in items}
 
     assert str(admin.id) in ids
     assert str(user.id) in ids

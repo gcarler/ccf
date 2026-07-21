@@ -4,16 +4,33 @@ from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from backend.schemas._common import orm_config
 
 
+MILESTONE_TYPES = [
+    "Decision_Fe",
+    "Bautismo_Aguas",
+    "Bautismo_Espiritu",
+    "Persona_Oficial",
+    "Liderazgo",
+]
+
+
 class MilestoneCreate(BaseModel):
     persona_id: UUID
-    type: str
+    type: str = Field(..., pattern=r"^(Decision_Fe|Bautismo_Aguas|Bautismo_Espiritu|Persona_Oficial|Liderazgo)$")
     event_date: date
     minister_id: Optional[UUID] = None
+    notes: Optional[str] = None
+
+
+class MilestoneUpdate(BaseModel):
+    type: Optional[str] = Field(None, pattern=r"^(Decision_Fe|Bautismo_Aguas|Bautismo_Espiritu|Persona_Oficial|Liderazgo)$")
+    event_date: Optional[date] = None
+    minister_id: Optional[UUID] = None
+    notes: Optional[str] = None
 
 
 class Milestone(BaseModel):
@@ -22,6 +39,7 @@ class Milestone(BaseModel):
     type: str
     event_date: date
     minister_id: Optional[UUID] = None
+    notes: Optional[str] = None
     created_at: datetime
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
