@@ -63,21 +63,21 @@ export default function DonationsManagementPage() {
     const [fPersonaId, setFPersonaId] = useState("");
     const [fFundId, setFFundId] = useState("1");
 
-    const loadDonations = async () => {
+    const loadDonations = async (signal?: AbortSignal) => {
         if (!token) return;
         try {
-            const data = await apiFetch<any[]>("/finance/transactions", { token });
-            const list = Array.isArray(data) ? data.map((d: any) => ({ ...d, donor: d.description || d.donor })) : [];
+            const data = await apiFetch<Donation[]>("/finance/transactions", { token, signal });
+            const list = Array.isArray(data) ? data.map((d: Donation) => ({ ...d, donor: d.description || d.donor })) : [];
             setDonations(list);
             const now = new Date();
-            const thisMonth = list.filter((d: any) => {
+            const thisMonth = list.filter((d: Donation) => {
                 const dd = new Date(d.date);
                 return dd.getMonth() === now.getMonth() && dd.getFullYear() === now.getFullYear();
             });
-            const monthlyTotal = thisMonth.reduce((s: number, d: any) => s + (d.amount || 0), 0);
-            const uniqueDonors = new Set(list.map((d: any) => d.donor)).size;
-            const avg = list.length > 0 ? list.reduce((s: number, d: any) => s + (d.amount || 0), 0) / list.length : 0;
-            const pending = list.filter((d: any) => d.status === "pending" || d.status === "pendiente").length;
+            const monthlyTotal = thisMonth.reduce((s: number, d: Donation) => s + (d.amount || 0), 0);
+            const uniqueDonors = new Set(list.map((d: Donation) => d.donor)).size;
+            const avg = list.length > 0 ? list.reduce((s: number, d: Donation) => s + (d.amount || 0), 0) / list.length : 0;
+            const pending = list.filter((d: Donation) => d.status === "pending" || d.status === "pendiente").length;
             setMetrics({ monthlyTotal, donorCount: uniqueDonors, avgDonation: avg, pendingCount: pending });
         } catch {
             toast.error("Error al cargar donaciones");

@@ -58,7 +58,7 @@ export default function AutomationsPage() {
     const [form, setForm] = useState(EMPTY_FORM);
     const [reloadKey, setReloadKey] = useState(0);
 
-    const fetchRules = useCallback(async () => {
+    const fetchRules = useCallback(async (signal?: AbortSignal) => {
         if (!token) {
             setLoading(false);
             setRules([]);
@@ -68,7 +68,7 @@ export default function AutomationsPage() {
         setLoading(true);
         try {
             setError(null);
-            const data = await apiFetch<{ items: AutomationRule[]; total: number }>('/admin/automations', { token });
+            const data = await apiFetch<{ items: AutomationRule[]; total: number }>('/admin/automations', { token, signal });
             setRules(data?.items ?? []);
         } catch (err) {
             setRules([]);
@@ -80,7 +80,10 @@ export default function AutomationsPage() {
     }, [token, addToast]);
 
     useEffect(() => {
-        if (!authLoading) fetchRules();
+        if (authLoading) return;
+        const controller = new AbortController();
+        fetchRules(controller.signal);
+        return () => controller.abort();
     }, [authLoading, fetchRules, reloadKey]);
 
     const openCreate = () => {

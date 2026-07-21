@@ -34,7 +34,7 @@ export default function SecurityAuditPage() {
                 signal,
             });
             setLogs(Array.isArray(data?.events) ? data.events : []);
-        } catch (error: any) {
+        } catch (error: unknown) {
             if (error?.name === 'AbortError') return;
             console.error(error);
         } finally {

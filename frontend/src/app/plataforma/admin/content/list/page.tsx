@@ -29,22 +29,33 @@ import clsx from 'clsx';
 
 const CONTENT_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
+
+interface CourseContent {
+    id: number;
+    title?: string;
+    name?: string;
+    is_published?: boolean;
+    modality?: string;
+    updated_at?: string;
+    created_at?: string;
+}
+
 export default function AdminContentList() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'courses' | 'sermons' | 'resources'>('courses');
-    const [items, setItems] = useState<any[]>([]);
+    const [items, setItems] = useState<CourseContent[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [viewType, setViewType] = useState<ViewType>('list');
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
             if (activeTab === 'courses') {
-                const data = await apiFetch<any[]>('/academy/courses/?published_only=false', { token, cache: 'no-store' });
+                const data = await apiFetch<CourseContent[]>('/academy/courses/?published_only=false', { token, cache: 'no-store', signal });
                 setItems(Array.isArray(data) ? data : []);
             } else {
                 // Mock for sermons/resources until endpoints are ready
@@ -59,7 +70,10 @@ export default function AdminContentList() {
     }, [token, activeTab, addToast]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchData();
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchData(controller.signal);
+        return () => controller.abort();
     }, [isAuthenticated, fetchData]);
 
     const filteredItems = items.filter(item => 

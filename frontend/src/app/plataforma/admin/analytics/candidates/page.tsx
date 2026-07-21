@@ -23,6 +23,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 interface Candidate {
+interface CandidateRaw {
+    id: number;
+    username: string;
+    email: string;
+    progress?: number;
+    xp?: number;
+}
+
+
     id: number;
     username: string;
     email: string;
@@ -39,11 +48,11 @@ export default function CandidatesDashboard() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
 
-    const fetchCandidates = useCallback(async () => {
+    const fetchCandidates = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<any[]>('/academy/analytics/candidates', { token, cache: 'no-store' });
+            const data = await apiFetch<CandidateRaw[]>('/academy/analytics/candidates', { token, cache: 'no-store', signal });
             // Transform backend data to frontend model
             const mapped = data.map(u => ({
                 id: u.id,
@@ -64,7 +73,10 @@ export default function CandidatesDashboard() {
     }, [token, addToast]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchCandidates();
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchCandidates(controller.signal);
+        return () => controller.abort();
     }, [isAuthenticated, fetchCandidates]);
 
     const filteredCandidates = useMemo(() => {

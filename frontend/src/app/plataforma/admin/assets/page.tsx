@@ -29,11 +29,11 @@ export default function AssetLibrary() {
     const [uploading, setUploading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
 
-    const fetchAssets = useCallback(async () => {
+    const fetchAssets = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<{ items: any[]; total: number }>("/cms/media", { token, cache: "no-store" });
+            const data = await apiFetch<{ items: Asset[]; total: number }>("/cms/media", { token, cache: "no-store", signal });
             setAssets((data?.items || []).map(normalizeAsset));
         } catch {
             setAssets([]);
@@ -44,7 +44,10 @@ export default function AssetLibrary() {
     }, [addToast, token]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchAssets();
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchAssets(controller.signal);
+        return () => controller.abort();
     }, [fetchAssets, isAuthenticated]);
 
     const uploadFiles = async (files: FileList | null) => {

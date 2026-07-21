@@ -63,12 +63,12 @@ export default function AdminDashboard() {
     const [academy, setAcademy] = useState<AcademyMetrics | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         try {
             const [statsData, academyData] = await Promise.all([
-                apiFetch<AdminDashboardResponse>('/dashboard/admin', { token }),
-                apiFetch<AcademyMetrics>('/academy/dashboard/metrics', { token })
+                apiFetch<AdminDashboardResponse>('/dashboard/admin', { token, signal }),
+                apiFetch<AcademyMetrics>('/academy/dashboard/metrics', { token, signal })
             ]);
 
             const usersCard = statsData.cards.find((card) => card.title === 'Usuarios');
@@ -84,7 +84,12 @@ export default function AdminDashboard() {
         finally { setLoading(false); }
     }, [token]);
 
-    useEffect(() => { if (isAuthenticated) fetchData(); }, [isAuthenticated, fetchData]);
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchData(controller.signal);
+        return () => controller.abort();
+    }, [isAuthenticated, fetchData]);
 
     if (!isAuthenticated) return null;
 

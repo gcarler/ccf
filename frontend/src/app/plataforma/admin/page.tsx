@@ -28,31 +28,67 @@ TrendingUp,Users,
 Zap
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect,useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+interface AdminTestimonial {
+  id: number;
+  title?: string;
+  content?: string;
+  is_approved?: boolean;
+  author?: string;
+  created_at?: string;
+}
+
+interface AgentTask {
+  id: string | number;
+  title: string;
+  description?: string;
+  priority?: string;
+  status?: string;
+  is_special?: boolean;
+  payload?: string;
+}
+
+interface AgentInsight {
+  id: string | number;
+  title: string;
+  insight_type?: string;
+  payload?: string;
+}
+
+interface AdminStats {
+  donaciones_mes?: number;
+  diezmos_mes?: number;
+  ofrendas_mes?: number;
+  personas?: number;
+  personas_nuevas_mes?: number;
+  usuarios_activos?: number;
+}
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { token } = useAuth();
   const { addToast } = useToast();
   const [viewType, setViewType] = useState<ViewType>('grid');
-  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [selectedTask, setSelectedTask] = useState<AgentTask | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [testimonials, setTestimonials] = useState<any[]>([]);
-  const [agentTasks, setAgentTasks] = useState<any[]>([]);
-  const [agentInsights, setAgentInsights] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>(null);
+  const [testimonials, setTestimonials] = useState<AdminTestimonial[]>([]);
+  const [agentTasks, setAgentTasks] = useState<AgentTask[]>([]);
+  const [agentInsights, setAgentInsights] = useState<AgentInsight[]>([]);
+  const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const controller = new AbortController();
+    const fetchData = async (signal?: AbortSignal) => {
       if (!token) return;
       setLoading(true);
       try {
         const [testRes, taskRes, insightRes, statsRes] = await Promise.allSettled([
-          apiFetch<any[]>("/admin/testimonials", { token, cache: 'no-store' }),
-          apiFetch<any[]>("/agents/tasks", { token, cache: 'no-store' }),
-          apiFetch<any[]>("/agents/insights", { token, cache: 'no-store' }),
-          apiFetch<any>("/admin/stats", { token, cache: 'no-store' }),
+          apiFetch<AdminTestimonial[]>("/admin/testimonials", { token, cache: 'no-store', signal }),
+          apiFetch<AgentTask[]>("/agents/tasks", { token, cache: 'no-store', signal }),
+          apiFetch<AgentInsight[]>("/agents/insights", { token, cache: 'no-store', signal }),
+          apiFetch<AdminStats>("/admin/stats", { token, cache: 'no-store', signal }),
         ]);
 
         setTestimonials(testRes.status === 'fulfilled' && Array.isArray(testRes.value) ? testRes.value : []);
@@ -65,10 +101,11 @@ export default function AdminDashboardPage() {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchData(controller.signal);
+    return () => controller.abort();
   }, [token]);
 
-  const handleOpenTask = (task: any) => {
+  const handleOpenTask = (task: AgentTask) => {
     setSelectedTask(task);
     setIsDrawerOpen(true);
   };
@@ -169,7 +206,7 @@ export default function AdminDashboardPage() {
                         </motion.div>
 
                         <motion.div variants={itemVariants} className="space-y-2">
-                            {agentTasks.map((task: any, idx: number) => (
+                            {agentTasks.map((task: AgentTask, idx: number) => (
                                 <AdminTaskRow key={task.id} task={task} onOpen={handleOpenTask} index={idx} />
                             ))}
                             {pendingTestimonials > 0 && (
@@ -205,7 +242,7 @@ export default function AdminDashboardPage() {
 
                                 <div className="space-y-2">
                                     {agentInsights.length > 0 ? (
-                                        agentInsights.slice(0, 3).map((insight: any) => (
+                                        agentInsights.slice(0, 3).map((insight: AgentInsight) => (
                                             <div key={insight.id} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5 space-y-1 group/insight cursor-pointer hover:border-sky-500/30 hover:shadow-sm transition-all">
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-none group-hover/insight:text-sky-600 transition-colors truncate">{insight.title}</p>

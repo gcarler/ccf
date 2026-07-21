@@ -33,27 +33,95 @@ import TextPromptDrawer from '@/components/ui/TextPromptDrawer';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 
+interface SystemConfig {
+    features_enabled?: Record<string, boolean>;
+    feature_rules?: Record<string, unknown>;
+    health?: Record<string, string>;
+}
+
+interface AuditEvent {
+    id: string;
+    action: string;
+    feature_id?: string;
+    actor?: string;
+    timestamp?: string;
+    diff?: { changes?: Array<{ key: string; old: unknown; new: unknown }> };
+}
+
+interface AuditSummary {
+    total?: number;
+    top_actors?: Array<{ actor: string; count: number }>;
+    top_features?: Array<{ feature_id: string; count: number }>;
+}
+
+interface AuditAnomalies {
+    actor_spikes?: Array<{ actor: string; count: number }>;
+    action_spikes?: Array<{ action: string; count: number }>;
+}
+
+interface Incident {
+    id: string;
+    title?: string;
+    severity?: string;
+    status?: string;
+    created_at?: string;
+    mtta_minutes?: number;
+    mttr_minutes?: number;
+    history?: Array<{ status: string; timestamp: string; note?: string }>;
+}
+
+interface IncidentsSummary {
+    total?: number;
+    open?: number;
+    resolved?: number;
+}
+
+interface ComplianceHistory {
+    id: string;
+    score?: number;
+    timestamp?: string;
+}
+
+interface CompliancePolicy {
+    suppressions?: Array<{ kind: string; value: string; hours: number; note: string }>;
+}
+
+interface IncidentNotification {
+    id: string;
+    channel?: string;
+    status?: string;
+    timestamp?: string;
+}
+
+interface IncidentStats {
+    total?: number;
+    open?: number;
+    resolved?: number;
+    mtta_avg?: number;
+    mttr_avg?: number;
+}
+
 export default function SystemSettings() {
     const { token, isAuthenticated } = useAuth();
     const router = useRouter();
     const { addToast } = useToast();
-    const [config, setConfig] = useState<any>(null);
-    const [auditEvents, setAuditEvents] = useState<any[]>([]);
-    const [auditSummary, setAuditSummary] = useState<any>(null);
-    const [auditAnomalies, setAuditAnomalies] = useState<any>(null);
-    const [incidents, setIncidents] = useState<any[]>([]);
-    const [incidentsSummary, setIncidentsSummary] = useState<any>(null);
+    const [config, setConfig] = useState<SystemConfig | null>(null);
+    const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+    const [auditSummary, setAuditSummary] = useState<AuditSummary | null>(null);
+    const [auditAnomalies, setAuditAnomalies] = useState<AuditAnomalies | null>(null);
+    const [incidents, setIncidents] = useState<Incident[]>([]);
+    const [incidentsSummary, setIncidentsSummary] = useState<IncidentsSummary | null>(null);
     const [slaTargets, setSlaTargets] = useState<{ mtta: number; mttr: number }>({ mtta: 60, mttr: 240 });
-    const [incidentTrends, setIncidentTrends] = useState<any[]>([]);
-    const [incidentNotifications, setIncidentNotifications] = useState<any[]>([]);
+    const [incidentTrends, setIncidentTrends] = useState<Array<{ date: string; count: number }>>([]);
+    const [incidentNotifications, setIncidentNotifications] = useState<IncidentNotification[]>([]);
     const [incidentStatsWindow, setIncidentStatsWindow] = useState<'weekly' | 'monthly'>('weekly');
-    const [incidentStats, setIncidentStats] = useState<any>(null);
-    const [complianceHistory, setComplianceHistory] = useState<any[]>([]);
+    const [incidentStats, setIncidentStats] = useState<IncidentStats | null>(null);
+    const [complianceHistory, setComplianceHistory] = useState<ComplianceHistory[]>([]);
     const [compareSnapshotIds, setCompareSnapshotIds] = useState<{ from: string; to: string }>({ from: '', to: '' });
-    const [compareResult, setCompareResult] = useState<any>(null);
+    const [compareResult, setCompareResult] = useState<Record<string, unknown> | null>(null);
     const [historyRetentionDays, setHistoryRetentionDays] = useState<number>(90);
-    const [complianceWeeklySummary, setComplianceWeeklySummary] = useState<any[]>([]);
-    const [compliancePolicy, setCompliancePolicy] = useState<any>(null);
+    const [complianceWeeklySummary, setComplianceWeeklySummary] = useState<Array<{ date: string; score: number }>>([]);
+    const [compliancePolicy, setCompliancePolicy] = useState<CompliancePolicy | null>(null);
     const [suppressionDraft, setSuppressionDraft] = useState<{ kind: string; value: string; hours: number; note: string }>({
         kind: 'severity',
         value: 'high',
@@ -86,7 +154,7 @@ export default function SystemSettings() {
                 },
                 health: { status: 'stable', latency: '42ms', uptime: '99.99%', memory: '45%' }
             });
-            const audit = await apiFetch<{ events?: any[] }>('/workspace/flags/audit', {
+            const audit = await apiFetch<{ events?: AuditEvent[] }>('/workspace/flags/audit', {
                 token,
                 query: {
                     limit: 12,
@@ -98,7 +166,7 @@ export default function SystemSettings() {
                 signal,
             });
             setAuditEvents(Array.isArray(audit?.events) ? audit.events : []);
-            const summary = await apiFetch<{ summary?: any }>('/workspace/flags/audit/summary', {
+            const summary = await apiFetch<{ summary?: AuditSummary }>('/workspace/flags/audit/summary', {
                 token,
                 query: {
                     limit: 1000,
@@ -110,7 +178,7 @@ export default function SystemSettings() {
                 signal,
             });
             setAuditSummary(summary?.summary || null);
-            const anomalies = await apiFetch<{ anomalies?: any }>('/workspace/flags/audit/anomalies', {
+            const anomalies = await apiFetch<{ anomalies?: AuditAnomalies }>('/workspace/flags/audit/anomalies', {
                 token,
                 query: {
                     lookback_hours: 24,
@@ -124,42 +192,42 @@ export default function SystemSettings() {
                 signal,
             });
             setAuditAnomalies(anomalies?.anomalies || null);
-            const incidentsResult = await apiFetch<{ incidents?: any[] }>('/workspace/flags/incidents', {
+            const incidentsResult = await apiFetch<{ incidents?: Incident[] }>('/workspace/flags/incidents', {
                 token,
                 query: { limit: 20, mtta_target_minutes: slaTargets.mtta, mttr_target_minutes: slaTargets.mttr },
                 cache: 'no-store',
                 signal,
             });
             setIncidents(Array.isArray(incidentsResult?.incidents) ? incidentsResult.incidents : []);
-            const incidentsSummaryResult = await apiFetch<{ summary?: any }>('/workspace/flags/incidents/summary', {
+            const incidentsSummaryResult = await apiFetch<{ summary?: IncidentsSummary }>('/workspace/flags/incidents/summary', {
                 token,
                 query: { mtta_target_minutes: slaTargets.mtta, mttr_target_minutes: slaTargets.mttr },
                 cache: 'no-store',
                 signal,
             });
             setIncidentsSummary(incidentsSummaryResult?.summary || null);
-            const trendsResult = await apiFetch<{ rows?: any[] }>('/workspace/flags/incidents/trends', {
+            const trendsResult = await apiFetch<{ rows?: Array<{ date: string; count: number }> }>('/workspace/flags/incidents/trends', {
                 token,
                 query: { days: 14 },
                 cache: 'no-store',
                 signal,
             });
             setIncidentTrends(Array.isArray(trendsResult?.rows) ? trendsResult.rows : []);
-            const notificationsResult = await apiFetch<{ notifications?: any[] }>('/workspace/flags/incidents/notifications', {
+            const notificationsResult = await apiFetch<{ notifications?: IncidentNotification[] }>('/workspace/flags/incidents/notifications', {
                 token,
                 query: { limit: 20 },
                 cache: 'no-store',
                 signal,
             });
             setIncidentNotifications(Array.isArray(notificationsResult?.notifications) ? notificationsResult.notifications : []);
-            const statsResult = await apiFetch<any>('/workspace/flags/incidents/stats', {
+            const statsResult = await apiFetch<IncidentStats>('/workspace/flags/incidents/stats', {
                 token,
                 query: { window: incidentStatsWindow },
                 cache: 'no-store',
                 signal,
             });
             setIncidentStats(statsResult || null);
-            const historyResult = await apiFetch<{ history?: any[] }>('/workspace/flags/compliance/history', {
+            const historyResult = await apiFetch<{ history?: ComplianceHistory[] }>('/workspace/flags/compliance/history', {
                 token,
                 query: { limit: 12 },
                 cache: 'no-store',
@@ -175,14 +243,14 @@ export default function SystemSettings() {
                     to: prev.to || String(newest),
                 }));
             }
-            const weeklySummaryResult = await apiFetch<{ rows?: any[] }>('/workspace/flags/compliance/history/weekly-summary', {
+            const weeklySummaryResult = await apiFetch<{ rows?: Array<{ date: string; score: number }> }>('/workspace/flags/compliance/history/weekly-summary', {
                 token,
                 query: { weeks: 8 },
                 cache: 'no-store',
                 signal,
             });
             setComplianceWeeklySummary(Array.isArray(weeklySummaryResult?.rows) ? weeklySummaryResult.rows : []);
-            const compliancePolicyResult = await apiFetch<{ policy?: any; resolved?: any }>('/workspace/flags/compliance/policy', {
+            const compliancePolicyResult = await apiFetch<{ policy?: CompliancePolicy; resolved?: CompliancePolicy }>('/workspace/flags/compliance/policy', {
                 token,
                 cache: 'no-store',
                 signal,
@@ -191,7 +259,7 @@ export default function SystemSettings() {
                 policy: compliancePolicyResult?.policy || null,
                 resolved: compliancePolicyResult?.resolved || null,
             });
-        } catch (e: any) {
+        } catch (e: unknown) {
             if (e?.name === 'AbortError') return;
             console.error("Config fetch failed", e);
             addToast('Error al cargar la configuración del sistema', 'error');
@@ -482,7 +550,7 @@ export default function SystemSettings() {
 
         setActionLoading('compare-compliance');
         try {
-            const result = await apiFetch<any>('/workspace/flags/compliance/compare', {
+            const result = await apiFetch<Record<string, unknown>>('/workspace/flags/compliance/compare', {
                 token,
                 query: {
                     from_snapshot_id: compareSnapshotIds.from,
@@ -519,7 +587,7 @@ export default function SystemSettings() {
         }
     };
 
-    const updateCompliancePolicy = async (patch: any) => {
+    const updateCompliancePolicy = async (patch: Record<string, unknown>) => {
         if (!token) return;
         setActionLoading('update-policy');
         try {

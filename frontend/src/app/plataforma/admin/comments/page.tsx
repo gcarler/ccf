@@ -44,11 +44,11 @@ export default function CommentModeration() {
     const [searchQuery, setSearchQuery] = useState('');
     const [viewType, setViewType] = useState<ViewType>('list');
 
-    const fetchComments = useCallback(async () => {
+    const fetchComments = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<{ items: Comment[]; total: number }>('/admin/comments', { token, cache: 'no-store' });
+            const data = await apiFetch<{ items: Comment[]; total: number }>('/admin/comments', { token, cache: 'no-store', signal });
             setComments(data?.items ?? []);
         } catch (err) {
             console.error(err);
@@ -59,7 +59,10 @@ export default function CommentModeration() {
     }, [token, addToast]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchComments();
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchComments(controller.signal);
+        return () => controller.abort();
     }, [isAuthenticated, fetchComments]);
 
     const handleDelete = async (id: number) => {

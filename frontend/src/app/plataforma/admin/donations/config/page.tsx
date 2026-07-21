@@ -96,7 +96,7 @@ export default function DonationConfig() {
 
             setCategories(data?.items ?? []);
 
-        } catch (err: any) {
+        } catch (err: unknown) {
 
             if (err?.name === 'AbortError') return;
 

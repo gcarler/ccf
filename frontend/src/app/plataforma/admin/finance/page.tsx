@@ -25,16 +25,32 @@ import type { ViewType } from '@/components/ViewSwitcher';
 
 const FINANCE_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
+interface FinanceTransaction {
+    id: number | string;
+    amount: number;
+    description?: string;
+    date?: string;
+    status?: string;
+    type?: string;
+    fund_id?: number;
+}
+
+interface FinanceSummary {
+    total_income?: number;
+    total_expenses?: number;
+    balance?: number;
+}
+
 export default function FinanceAdminPage() {
     const { token } = useAuth();
     const { addToast } = useToast();
     const [activeTab, setActiveTab] = useState<'summary' | 'transactions' | 'audit'>('summary');
     const [viewType, setViewType] = useState<ViewType>('grid');
-    const [transactions, setTransactions] = useState<any[]>([]);
-    const [summary, setSummary] = useState<any>(null);
+    const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
+    const [summary, setSummary] = useState<FinanceSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [selectedTx, setSelectedTx] = useState<any>(null);
+    const [selectedTx, setSelectedTx] = useState<FinanceTransaction | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const fetchData = useCallback(async (signal?: AbortSignal) => {
@@ -42,12 +58,12 @@ export default function FinanceAdminPage() {
         setLoading(true);
         try {
             const [txData, summaryData] = await Promise.all([
-                apiFetch<any[]>('/finance/transactions', { token, cache: 'no-store', signal }),
-                apiFetch<any>('/finance/summary', { token, cache: 'no-store', signal })
+                apiFetch<FinanceTransaction[]>('/finance/transactions', { token, cache: 'no-store', signal }),
+                apiFetch<FinanceSummary>('/finance/summary', { token, cache: 'no-store', signal })
             ]);
             setTransactions(Array.isArray(txData) ? txData : []);
             setSummary(summaryData);
-        } catch (e: any) { if (e?.name === 'AbortError') return; console.error(e); addToast('Error al cargar datos financieros', 'error'); }
+        } catch (e: unknown) { if (e?.name === 'AbortError') return; console.error(e); addToast('Error al cargar datos financieros', 'error'); }
         finally { setLoading(false); }
     }, [token]);
 
@@ -57,7 +73,7 @@ export default function FinanceAdminPage() {
         return () => controller.abort();
     }, [fetchData]);
 
-    const handleOpenTx = (tx: any) => {
+    const handleOpenTx = (tx: FinanceTransaction) => {
         setSelectedTx(tx);
         setIsDrawerOpen(true);
     };

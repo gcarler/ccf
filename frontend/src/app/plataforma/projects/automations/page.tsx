@@ -85,11 +85,14 @@ export default function AutomationsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading) fetchRules();
+    if (authLoading) return;
+    const controller = new AbortController();
+    fetchRules(controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, token]);
 
-  const fetchRules = async () => {
+  const fetchRules = async (signal?: AbortSignal) => {
     if (!token) {
       setLoading(false);
       setRules([]);

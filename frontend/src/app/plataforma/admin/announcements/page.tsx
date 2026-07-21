@@ -73,11 +73,11 @@ export default function AnnouncementsAdmin() {
     const [loading, setLoading] = useState(true);
     const [viewType, setViewType] = useState<ViewType>('grid');
 
-    const fetchAnnouncements = useCallback(async () => {
+    const fetchAnnouncements = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<RawAnnouncement[]>('/admin/announcements', { token, cache: 'no-store' });
+            const data = await apiFetch<RawAnnouncement[]>('/admin/announcements', { token, cache: 'no-store', signal });
             setAnnouncements(Array.isArray(data) ? data.map(normalizeAnnouncement) : []);
         } catch (err) {
             console.error(err);
@@ -88,7 +88,10 @@ export default function AnnouncementsAdmin() {
     }, [token, addToast]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchAnnouncements();
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchAnnouncements(controller.signal);
+        return () => controller.abort();
     }, [isAuthenticated, fetchAnnouncements]);
 
     const handleStatusChange = async (ann: Announcement, status: Announcement['status']) => {

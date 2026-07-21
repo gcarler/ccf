@@ -31,22 +31,25 @@ export default function PastorRadarPage() {
     const [error, setError] = useState<string | null>(null);
     const { token, isAuthenticated } = useAuth();
 
-    const fetchRadar = useCallback(async () => {
+    const fetchRadar = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
             // Sincronizado con el endpoint real del backend CRM
-            const res = await apiFetch<RadarData>('/crm/radar', { token });
+            const res = await apiFetch<RadarData>('/crm/radar', { token, signal });
             setData(res);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Error al cargar radar');
         } finally {
             setLoading(false);
         }
     }, [token]);
 
     useEffect(() => {
-        if (isAuthenticated) fetchRadar();
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchRadar(controller.signal);
+        return () => controller.abort();
     }, [isAuthenticated, fetchRadar]);
 
     if (!isAuthenticated) return null;

@@ -34,6 +34,7 @@ export default function AuditDetailPage() {
             return;
         }
 
+        const controller = new AbortController();
         const loadLog = async () => {
             try {
                 setLoading(true);
@@ -41,6 +42,7 @@ export default function AuditDetailPage() {
                     token,
                     query: { limit: 1000 },
                     cache: 'no-store',
+                    signal: controller.signal,
                 });
                 const rows = Array.isArray(data?.events) ? data.events : [];
                 const match = rows.find((event) => getWorkspaceAuditEventKey(event) === id) || null;
@@ -53,6 +55,7 @@ export default function AuditDetailPage() {
         };
 
         loadLog();
+        return () => controller.abort();
     }, [id, token]);
 
     if (loading) {

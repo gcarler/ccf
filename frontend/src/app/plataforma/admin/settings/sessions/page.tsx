@@ -25,9 +25,9 @@ export default function AdminSettingsSessionsPage() {
     const [revoking, setRevokeing] = useState<string | null>(null);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
-    const fetchSessions = useCallback(async () => {
+    const fetchSessions = useCallback(async (signal?: AbortSignal) => {
         try {
-            const data = await apiFetch<Session[]>('/v3/auth/sessions', { token });
+            const data = await apiFetch<Session[]>('/v3/auth/sessions', { token, signal });
             // Mark the most recently active session as current
             if (data.length > 0) {
                 const sorted = [...data].sort((a, b) => {
@@ -47,7 +47,11 @@ export default function AdminSettingsSessionsPage() {
         }
     }, [token]);
 
-    useEffect(() => { fetchSessions(); }, [fetchSessions]);
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchSessions(controller.signal);
+        return () => controller.abort();
+    }, [fetchSessions]);
 
     const handleRevoke = async (sessionId: string) => {
         setRevokeing(sessionId);

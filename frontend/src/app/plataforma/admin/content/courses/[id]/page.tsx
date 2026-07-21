@@ -18,23 +18,41 @@ import { DSCard } from '@/design/components/DSCard';
 import { DSBadge } from '@/design/components/DSBadge';
 import { toast } from 'sonner';
 
+
+interface CourseDetail {
+    id: string | number;
+    title?: string;
+    description?: string;
+    modality?: string;
+    is_published?: boolean;
+}
+
+interface LessonItem {
+    id: string | number;
+    title?: string;
+    content?: string;
+    order_index?: number;
+    duration_minutes?: number;
+}
+
 export default function AdminCourseContentPage() {
     const params = useParams();
     const id = (params?.id as string) || '';
     const { token } = useAuth();
     
-    const [course, setCourse] = useState<any>(null);
-    const [lessons, setLessons] = useState<any[]>([]);
+    const [course, setCourse] = useState<CourseDetail | null>(null);
+    const [lessons, setLessons] = useState<LessonItem[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!token || !id) return;
-        const loadData = async () => {
+        const controller = new AbortController();
+        const loadData = async (signal?: AbortSignal) => {
             try {
                 setLoading(true);
                 const [courseData, lessonsData] = await Promise.all([
-                    apiFetch<any>(`/academy/courses/${id}`, { token }),
-                    apiFetch<any[]>(`/academy/courses/${id}/lessons`, { token }).catch(() => [])
+                    apiFetch<CourseDetail>(`/academy/courses/${id}`, { token, signal }),
+                    apiFetch<LessonItem[]>(`/academy/courses/${id}/lessons`, { token, signal }).catch(() => [])
                 ]);
                 setCourse(courseData);
                 setLessons(Array.isArray(lessonsData) ? lessonsData : []);
@@ -44,7 +62,8 @@ export default function AdminCourseContentPage() {
                 setLoading(false);
             }
         };
-        loadData();
+        loadData(controller.signal);
+        return () => controller.abort();
     }, [id, token]);
 
     if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Preparando Editor de Contenidos...</div>;
