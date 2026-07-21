@@ -40,3 +40,5 @@ opentelemetry-sdk
 opentelemetry-exporter-otlp-proto-grpc
 opentelemetry-instrumentation-fastapi
 opentelemetry-instrumentation-sqlalchemy
+slowapi==0.1.10
+limits==5.8.0

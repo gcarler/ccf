@@ -1,8 +1,8 @@
 """Rate limiting + DoS protection.
 
-Archivo consolidado (TKT-200 + legacy). Contiene DOS sistemas de rate-limiting:
+Archivo consolidado (TKT-200 + sistema preservado). Contiene DOS sistemas de rate-limiting:
 
-1. **Legacy ``rate_limiter``** (preservado para backward-compat): dependency
+1. **Pre-existing ``rate_limiter``** (preservado para backward-compat): dependency
    Redis-based usado por ``backend/api/workspace_incidents.py``,
    ``backend/api/workspace_compliance.py``, ``backend/api/auth_v3.py``.
    En pytest / cuando Redis está en ``MemoryRedis``, esta función es NO-OP
@@ -30,7 +30,7 @@ from backend.core.config import get_settings
 logger = logging.getLogger(__name__)
 
 
-# ── LEGACY: Redis-based dependency rate-limiter ────────────────────────
+# ── PRESERVED: Redis-based dependency rate-limiter ────────────────────────
 # Preservado para backward-compat con workspace_incidents, workspace_compliance
 # y auth_v3. Ver nota de archivo. Drift: NOOP en pytest + MemoryRedis.
 
@@ -109,7 +109,7 @@ academy_limiter = Limiter(
 
 
 __all__ = [
-    "rate_limiter",  # legacy
+    "rate_limiter",  # preserved: Redis-based dependency (workspaces + auth_v3)
     "academy_limiter",  # TKT-200
     "_academy_key_func",
     "PYTEST_BYPASS_VAR",
