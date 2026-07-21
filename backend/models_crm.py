@@ -196,6 +196,7 @@ class PrayerRequest(Base):
     source = Column(String(50), default="crm", index=True)  # web, crm, evangelism
     status = Column(String(50), default="pending", index=True)  # pending, praying, answered
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
 
 class Ministry(Base):

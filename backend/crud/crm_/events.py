@@ -12,7 +12,7 @@ def _active_events_query(db: Session):
     return db.query(models.CrmEvent).filter(models.CrmEvent.deleted_at.is_(None))
 
 
-def get_crm_events(db: Session, sede_id: str | None = None, skip: int = 0, limit: int = 100) -> List[models.CrmEvent]:
+def get_crm_events(db: Session, sede_id: UUID | None = None, skip: int = 0, limit: int = 100) -> List[models.CrmEvent]:
     q = _active_events_query(db)
     if sede_id:
         q = q.filter(models.CrmEvent.sede_id == sede_id)

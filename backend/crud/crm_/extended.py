@@ -484,7 +484,7 @@ def get_crm_automations(
     db: Session,
     only_active: bool = True,
     trigger_event: str | None = None,
-    sede_id: str | None = None,
+    sede_id: UUID | None = None,
 ) -> List[models.CrmAutomation]:
     q = db.query(models.CrmAutomation)
     if only_active:
@@ -510,7 +510,7 @@ def get_crm_automation(
 
 
 def create_crm_automation(
-    db: Session, payload: CrmAutomationCreate, sede_id: str | None = None
+    db: Session, payload: CrmAutomationCreate, sede_id: UUID | None = None
 ) -> models.CrmAutomation:
     data = payload.model_dump()
     if sede_id:

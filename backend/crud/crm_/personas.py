@@ -135,7 +135,7 @@ def _build_persona_search_query(
     min_age: int | None = None,
     max_age: int | None = None,
     family_id: UUID | None = None,
-    sede_id: str | None = None,
+    sede_id: UUID | None = None,
 ):
     query = persona_query(db).options(
         selectinload(models.Persona.family),
@@ -196,7 +196,7 @@ def search_personas(
     min_age: int | None = None,
     max_age: int | None = None,
     family_id: UUID | None = None,
-    sede_id: str | None = None,
+    sede_id: UUID | None = None,
     skip: int = 0,
     limit: int = 1000,
     sort_by: str | None = None,
@@ -238,7 +238,7 @@ def search_personas_page(
     min_age: int | None = None,
     max_age: int | None = None,
     family_id: UUID | None = None,
-    sede_id: str | None = None,
+    sede_id: UUID | None = None,
     skip: int = 0,
     limit: int = 50,
     sort_by: str | None = None,
@@ -609,6 +609,16 @@ def _volunteer_commitment_map(db: Session, persona_ids: List[UUID]) -> dict[UUID
         return {}
 
     cutoff = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=90)
+
+    def _as_aware_utc(value):
+        # SQLite no persiste tzinfo en DateTime(timezone=True), aún cuando el
+        # modelo lo declara. SQLAlchemy devuelve naive datetimes al recuperar,
+        # lo que rompe la comparación contra un cutoff timezone-aware.
+        # Normalizamos defensively: si llega naive, asumimos UTC (axioma CCF).
+        if value is None or value.tzinfo is not None:
+            return value
+        return value.replace(tzinfo=dt.timezone.utc)
+
     shifts = (
         db.query(models.VolunteerShift)
         .filter(
@@ -626,12 +636,15 @@ def _volunteer_commitment_map(db: Session, persona_ids: List[UUID]) -> dict[UUID
         recent = [
             shift
             for shift in items
-            if (shift.shift_start and shift.shift_start >= cutoff) or (shift.shift_end and shift.shift_end >= cutoff)
+            if (_as_aware_utc(shift.shift_start) and _as_aware_utc(shift.shift_start) >= cutoff)
+            or (_as_aware_utc(shift.shift_end) and _as_aware_utc(shift.shift_end) >= cutoff)
         ]
         recent_hours = 0.0
         for shift in recent:
-            if shift.shift_start and shift.shift_end:
-                recent_hours += max((shift.shift_end - shift.shift_start).total_seconds() / 3600, 0)
+            start = _as_aware_utc(shift.shift_start)
+            end = _as_aware_utc(shift.shift_end)
+            if start and end:
+                recent_hours += max((end - start).total_seconds() / 3600, 0)
         unique_teams = {str(shift.team_name).strip().lower() for shift in recent if shift.team_name}
         score = min(100.0, (len(recent) * 20.0) + min(recent_hours * 2.0, 40.0) + (len(unique_teams) * 10.0))
         commitment_map[persona_id] = round(score, 1)

@@ -9,9 +9,11 @@ from backend.crud._utils import _utcnow
 
 
 def get_prayer_requests(
-    db: Session, status: str | None = None, skip: int = 0, limit: int = 100
+    db: Session, status: str | None = None, sede_id: UUID | None = None, skip: int = 0, limit: int = 100
 ) -> List[models.PrayerRequest]:
-    query = db.query(models.PrayerRequest)
+    query = db.query(models.PrayerRequest).filter(models.PrayerRequest.deleted_at.is_(None))
+    if sede_id:
+        query = query.filter(models.PrayerRequest.sede_id == sede_id)
     if status:
         query = query.filter(models.PrayerRequest.status == status)
     return query.order_by(models.PrayerRequest.created_at.desc()).offset(skip).limit(limit).all()
