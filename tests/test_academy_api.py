@@ -408,3 +408,72 @@ def test_forum_detail_and_comments_are_scoped(client, db_session):
     assert created.status_code == 201, created.text
     assert len(client.get(f"/api/academy/forum/threads/{thread.id}/comments", headers=headers_a).json()) == 1
     assert client.get(f"/api/academy/forum/threads/{thread.id}", headers=headers_b).status_code == 404
+
+
+def test_forum_category_filter_and_resource_lifecycle_are_scoped(client, db_session):
+    """La operación del aula se gobierna por Course→sede, incluso para materiales."""
+    import uuid as _uuid
+
+    editor, persona, sede = seed_admin(db_session, email="resources.editor@example.com", password="testpass123")
+    course = models.Course(
+        code=f"RES-{_uuid.uuid4().hex[:6]}",
+        title="Curso con recursos",
+        modality="online",
+        sede_id=sede.id,
+        is_published=True,
+    )
+    db_session.add(course)
+    db_session.flush()
+    lesson = models.Lesson(
+        course_id=course.id,
+        title="Materiales",
+        content="x",
+        order_index=1,
+        is_published=True,
+    )
+    db_session.add(lesson)
+    db_session.flush()
+    db_session.add_all([
+        models.ForumThread(
+            course_id=course.id,
+            author_persona_id=persona.id,
+            title="Pregunta",
+            category="question",
+            content="¿Cómo?",
+        ),
+        models.ForumThread(
+            course_id=course.id,
+            author_persona_id=persona.id,
+            title="Aviso",
+            category="announcement",
+            content="Atención",
+        ),
+    ])
+    db_session.commit()
+    headers = auth_headers(client, email=editor.email, password="testpass123")
+
+    filtered = client.get("/api/academy/forum/threads?category=question", headers=headers)
+    assert filtered.status_code == 200, filtered.text
+    assert [item["title"] for item in filtered.json()] == ["Pregunta"]
+
+    created = client.post(
+        f"/api/academy/admin/lessons/{lesson.id}/resources",
+        headers=headers,
+        json={"title": "Guía", "file_url": "academy/materials/guide.pdf", "resource_type": "document"},
+    )
+    assert created.status_code == 201, created.text
+    resource_id = created.json()["id"]
+    listed = client.get(f"/api/academy/lessons/{lesson.id}/resources", headers=headers)
+    assert listed.status_code == 200, listed.text
+    assert [item["id"] for item in listed.json()] == [resource_id]
+
+    archived = client.delete(f"/api/academy/admin/resources/{resource_id}", headers=headers)
+    assert archived.status_code == 204, archived.text
+    assert client.get(f"/api/academy/lessons/{lesson.id}/resources", headers=headers).json() == []
+    events = {
+        event.event_type
+        for event in db_session.query(models.AcademyActivityLog)
+        .filter(models.AcademyActivityLog.course_id == course.id)
+        .all()
+    }
+    assert {"lesson_resource_created", "lesson_resource_archived"} <= events
