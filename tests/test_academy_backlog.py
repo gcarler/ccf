@@ -323,15 +323,25 @@ def test_acad_tkt_002_dashboard_shape():
     Verifica por ESTÁTICA del código que el endpoint ``dashboard_metrics``
     expone los 3 campos que el frontend consume (sin tener que levantar
     el server ni DB).
+
+    Nota: TKT-203 (commit fef40314) movió la implementación del endpoint desde
+    ``backend/api/academy.py`` al helper ``_fetch_dashboard_metrics_cached``
+    en ``backend/api/academy_cache.py``. El shape completo (enrollment_trends,
+    top_courses, cards) sigue existiendo — solo mudó de archivo. El gate
+    inspecciona ambos para no romperse por una refactorización legítima.
     """
     api_file = REPO_ROOT / "backend" / "api" / "academy.py"
-    if not api_file.exists():
-        pytest.skip("backend/api/academy.py no presente")
-    text = _read(api_file)
+    cache_file = REPO_ROOT / "backend" / "api" / "academy_cache.py"
+    if not api_file.exists() and not cache_file.exists():
+        pytest.skip("ni academy.py ni academy_cache.py presentes")
+    text = _read(api_file) if api_file.exists() else ""
+    if cache_file.exists():
+        text += "\n" + _read(cache_file)
     for expected in ("enrollment_trends", "top_courses", "cards"):
         assert expected in text, (
-            f"❌ ACAD-TKT-002 REGRESIÓN: el endpoint dashboard_metrics de academy.py "
-            f"debe retornar '{expected}'. Si lo borraste, reintroducilo."
+            f"❌ ACAD-TKT-002 REGRESIÓN: el endpoint dashboard_metrics "
+            f"(academy.py + academy_cache.py) debe retornar '{expected}'. "
+            f"Si lo borraste, reintroducilo para preservar el contrato del frontend."
         )
 
 
