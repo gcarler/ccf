@@ -27,8 +27,8 @@ from backend import models
 from backend.api.evangelism_shared import (
     ATTENDED_STATES,
     FIRST_TIME_STATES,
-    normalize_attendance_status,
     get_visible_strategy,
+    normalize_attendance_status,
     session_read_only_options,
 )
 from backend.core.database import get_db

@@ -8,7 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend import crud
 from backend.api.evangelism_shared import get_visible_strategy
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_manage

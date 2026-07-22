@@ -35,6 +35,40 @@ from backend.schemas.academy import (
                                      PilotReadiness,
                                      Resource,
 )
+
+# ── Admin ────────────────────────────────────────────────────────────────────
+from backend.schemas.admin import (  # noqa: F401
+                                     AdminCommentRead,
+                                     AdminDonationCategoryCreate,
+                                     AdminDonationCategoryRead,
+                                     AdminDonationCategoryUpdate,
+                                     AdminLocationCreate,
+                                     AdminLocationRead,
+                                     AdminLocationUpdate,
+                                     AdminMilestoneAward,
+                                     AdminMilestoneRead,
+                                     AdminModuleRoleAssign,
+                                     AdminModuleRoleRead,
+                                     AdminPermissionModule,
+                                     AdminPersonaRead,
+                                     AdminProvisionResult,
+                                     AdminRoleCreate,
+                                     AdminRoleRead,
+                                     AdminRoleUpdate,
+                                     AdminSocialCreate,
+                                     AdminSocialRead,
+                                     AdminSocialUpdate,
+                                     AdminStatsRead,
+                                     AdminUserCreate,
+                                     AdminUserPermissionSet,
+                                     AdminUserPermissionsRead,
+                                     AdminUserRead,
+                                     AdminUserUpdate,
+                                     AdminUserWithRolesRead,
+                                     AdminVariableCreate,
+                                     AdminVariableRead,
+                                     AdminVariableUpdate,
+)
 from backend.schemas.agenda import AgendaEvent, AgendaEventCreate
 
 # ── Agents ───────────────────────────────────────────────────────────────────
@@ -161,6 +195,7 @@ from backend.schemas.crm.base import (
                                      CaseTaskCreate,
                                      CaseTaskUpdate,
                                      CaseUpdate,
+                                     CasoCreate,
                                      ColombianCity,
                                      ColombianDepartment,
                                      CounselingTicket,
@@ -171,6 +206,7 @@ from backend.schemas.crm.base import (
                                      CrmEventBase,
                                      CrmEventCreate,
                                      CrmEventUpdate,
+                                     CrmSettingsUpdate,
                                      CrmTask,
                                      CrmTaskBase,
                                      CrmTaskCreate,
@@ -197,6 +233,8 @@ from backend.schemas.crm.base import (
                                      GroupSessionAttendance,
                                      GroupSessionAttendanceItem,
                                      GroupSessionReportUpdate,
+                                     GrupoUpdate,
+                                     MessagingSend,
                                      Persona,
                                      PersonaCreate,
                                      PersonaEvangelism,
@@ -233,16 +271,19 @@ from backend.schemas.crm.base import (
                                      PrayerRequestCreate,
                                      PrayerRequestPublicCreate,
                                      PrayerRequestUpdate,
+                                     RoleCreate,
+                                     RoleUpdate,
                                      TeachingAssignment,
                                      TeachingAssignmentBase,
                                      TeachingAssignmentCreate,
                                      TeachingAssignmentUpdate,
+                                     VolunteerCreate,
                                      VolunteerShift,
                                      VolunteerShiftBase,
                                      VolunteerShiftCreate,
-                                      VolunteerShiftUpdate,
+                                     VolunteerShiftUpdate,
+                                     VolunteerUpdate,
 )
-from backend.schemas.crm.base import CasoCreate, MessagingSend, GrupoUpdate, CrmSettingsUpdate, RoleCreate, RoleUpdate, VolunteerCreate, VolunteerUpdate
 
 # ── CRM Resources (Biblioteca de Recursos) ───────────────────────────
 from backend.schemas.crm.resources import (  # noqa: F401
@@ -388,37 +429,3 @@ from backend.schemas.projects import (  # noqa: F401
                                      TaskSupplyUpdate,
 )
 from backend.schemas.wiki import WikiPageCreate, WikiPageRead, WikiPageUpdate, WikiPageVersionRead  # noqa: F401
-
-# ── Admin ────────────────────────────────────────────────────────────────────
-from backend.schemas.admin import (  # noqa: F401
-    AdminCommentRead,
-    AdminDonationCategoryCreate,
-    AdminDonationCategoryRead,
-    AdminDonationCategoryUpdate,
-    AdminLocationCreate,
-    AdminLocationRead,
-    AdminLocationUpdate,
-    AdminMilestoneAward,
-    AdminMilestoneRead,
-    AdminModuleRoleAssign,
-    AdminModuleRoleRead,
-    AdminPersonaRead,
-    AdminPermissionModule,
-    AdminProvisionResult,
-    AdminRoleCreate,
-    AdminRoleRead,
-    AdminRoleUpdate,
-    AdminSocialCreate,
-    AdminSocialRead,
-    AdminSocialUpdate,
-    AdminStatsRead,
-    AdminUserCreate,
-    AdminUserPermissionSet,
-    AdminUserPermissionsRead,
-    AdminUserRead,
-    AdminUserUpdate,
-    AdminUserWithRolesRead,
-    AdminVariableCreate,
-    AdminVariableRead,
-    AdminVariableUpdate,
-)

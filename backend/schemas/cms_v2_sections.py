@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, field_validator
 
+from backend.core.sanitize_html import sanitize_props_html
+
 
 class ButtonItem(BaseModel):
     label: str = "Click"
@@ -393,17 +395,22 @@ SECTION_PROPS_SCHEMAS: Dict[str, type[BaseModel]] = {
 
 
 def validate_section_props(section_type: str, props: Dict[str, Any]) -> Dict[str, Any]:
-    """Validate props against the schema for a given section type.
-    
-    Returns the validated props dict, or raises ValueError with details.
+    """Validate and sanitise props against the schema for a given section type.
+
+    Besides Pydantic validation, every string field that contains or looks
+    like HTML is run through the whitelist-based sanitiser to mitigate
+    stored XSS in public rendering.
+
+    Returns the validated/sanitised props dict, or raises ValueError with details.
     Falls through gracefully for section types without schemas (existing 19).
     """
     schema_cls = SECTION_PROPS_SCHEMAS.get(section_type)
     if schema_cls is None:
-        return props  # No schema defined, pass through
-    
+        return sanitize_props_html(props) if props else props
+
     try:
-        validated = schema_cls.model_validate(props)
+        cleaned = sanitize_props_html(props)
+        validated = schema_cls.model_validate(cleaned)
         return validated.model_dump(exclude_unset=True)
     except Exception as e:
         raise ValueError(f"Invalid props for section type '{section_type}': {e}")

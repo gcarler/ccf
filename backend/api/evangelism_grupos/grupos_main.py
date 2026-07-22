@@ -15,9 +15,9 @@ from backend import crud, models, schemas
 from backend.api.evangelism_shared import (
     FIRST_TIME_STATES,
     _can_manage_grupo,
-    get_visible_group,
     _get_persona_for_user,
     _is_crm_admin_or_pastor,
+    get_visible_group,
     is_absent_status,
     session_estado_habilitacion,
     session_read_only_options,
@@ -27,7 +27,6 @@ from backend.api.evangelism_shared import (
 from backend.core.database import get_db
 from backend.core.permissions import (
     get_current_user,
-    require_active_user,
     require_evangelism_edit,
     require_evangelism_manage,
     require_evangelism_read,
@@ -295,7 +294,7 @@ def get_grupo(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    from backend.models_evangelism import Asistencia, GrupoEvangelismo, SesionGrupo
+    from backend.models_evangelism import Asistencia, SesionGrupo
 
     house = get_visible_group(db, grupo_id, require_user_sede_id(db, current_user))
     if not house:

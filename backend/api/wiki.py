@@ -6,19 +6,19 @@ previous version for history.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import re
+from datetime import datetime, timezone
 from typing import List, Optional
-from uuid import UUID, uuid5, NAMESPACE_URL
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from backend import models
 from backend.core.database import get_db
-from backend.core.permissions import require_module_access, get_current_active_user
-from backend.crud.crm import get_user_sede_id
+from backend.core.permissions import get_current_active_user, require_module_access
 from backend.crud import wiki as crud_wiki
+from backend.crud.crm import get_user_sede_id
 from backend.schemas.wiki import WikiPageCreate, WikiPageRead, WikiPageUpdate, WikiPageVersionRead
 
 router = APIRouter(prefix="/wiki", tags=["wiki"])

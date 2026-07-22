@@ -23,8 +23,6 @@ from backend.api.evangelism_shared import (
 )
 from backend.core.database import get_db
 from backend.core.permissions import (
-    get_current_user,
-    require_evangelism_edit,
     require_evangelism_manage,
     require_evangelism_read,
 )
