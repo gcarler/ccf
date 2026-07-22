@@ -46,7 +46,6 @@ const SIDEBAR_SECTIONS = [
     {
         title: 'Operaciones',
         items: [
-            { id: 'assets', label: 'Inventario de Activos', href: '/plataforma/admin/inventory', icon: CheckSquare },
             { id: 'actas', label: 'Actas', href: '/plataforma/admin/actas', icon: CheckSquare },
             { id: 'submissions', label: 'Calificaciones', href: '/plataforma/admin/submissions', icon: FileText },
         ]
