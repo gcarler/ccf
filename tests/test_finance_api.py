@@ -56,6 +56,20 @@ def test_finance_transactions(client, db_session):
     assert isinstance(data, list)
     assert len(data) >= 1
 
+    # Drift #7: el frontend admin/finance/treasury consume tx.person, tx.donation_id
+    # y tx.transaction_date. Validar que el backend los emite.
+    row = next(r for r in data if r["id"] == str(donation.id))
+    assert "donation_id" in row
+    assert row["donation_id"] == str(donation.id)
+    assert "transaction_date" in row
+    assert "person" in row
+    assert row["person"] is not None
+    assert row["person"]["nombre_completo"] == f"{persona.first_name} {persona.last_name}"
+    assert row["person"]["first_name"] == persona.first_name
+    # persona_id debe viajar como string (UUID), no como entero
+    assert row["persona_id"] is not None
+    assert isinstance(str(row["persona_id"]), str)
+
 
 def test_finance_register_donation(client, db_session):
     admin, persona, sede = _seed_admin(db_session)

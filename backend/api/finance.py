@@ -7,7 +7,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from backend import models
 from backend.core.database import get_db
@@ -134,6 +134,7 @@ def get_transactions(
     sede_id = get_user_sede_id(db, current_user.id)
     q = (
         db.query(models.Donation)
+        .options(joinedload(models.Donation.persona))
         .filter(
             models.Donation.sede_id == sede_id,
             models.Donation.deleted_at.is_(None),
@@ -147,15 +148,40 @@ def get_transactions(
 
     result = []
     for d in rows:
+        # Drift #7: el frontend admin/finance/treasury consume tx.person,
+        # tx.donation_id y tx.transaction_date. El contrato previo (id, type,
+        # category, description, amount, date, persona_id) caía a fallbacks y
+        # 'Entrada General' en todas las filas, con fecha de la columna created_at.
+        # transaction_date real = Donation.donation_date; si no existe, created_at.
+        person_obj = None
+        if d.persona is not None:
+            person_obj = {
+                "nombre_completo": f"{d.persona.first_name} {d.persona.last_name}".strip(),
+                "first_name": d.persona.first_name,
+                "email": d.persona.email,
+                "persona_id": str(d.persona.id),
+            }
         result.append(
             {
                 "id": d.id,
+                "donation_id": d.id,
                 "type": "ingreso",
                 "category": d.donation_type or "Ofrenda",
                 "description": d.donor_name or f"Donación #{d.id}",
                 "amount": d.amount,
+                "currency": d.currency,
                 "date": d.created_at.isoformat() if d.created_at else None,
+                "transaction_date": (
+                    d.donation_date.isoformat()
+                    if d.donation_date is not None
+                    else (d.created_at.isoformat() if d.created_at else None)
+                ),
                 "persona_id": d.persona_id,
+                "person": person_obj,
+                "status": d.status,
+                "reference_code": d.reference_code,
+                "payment_method": d.payment_method,
+                "fund_id": d.fund_id,
             }
         )
     return result
