@@ -30,18 +30,29 @@ import clsx from 'clsx';
 interface AgentInsight {
     id: number;
     title: string;
+    description?: string;
     insight_type?: string;
-    payload?: string;
-    is_acknowledged?: boolean;
+    payload?: string | null;
+    metadata?: Record<string, any> | null;
+    acknowledged: boolean;
+    acknowledged_at?: string;
     created_at?: string;
 }
 
 interface AgentTask {
     id: number;
-    title: string;
+    title?: string;
     description?: string;
     priority?: string;
     status?: string;
+    created_at?: string;
+    updated_at?: string;
+    completed_at?: string;
+}
+
+interface OptimusAnswer {
+    answer: string;
+    sources?: string[];
 }
 
 export default function IntelligenceConsole() {
@@ -51,7 +62,7 @@ export default function IntelligenceConsole() {
     const [insights, setInsights] = useState<AgentInsight[]>([]);
     const [tasks, setTasks] = useState<AgentTask[]>([]);
     const [query, setQuery] = useState('');
-    const [aiResponse, setAiResponse] = useState<AgentInsight | null>(null);
+    const [aiResponse, setAiResponse] = useState<OptimusAnswer | null>(null);
     const [isAsking, setIsAsking] = useState(false);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -94,7 +105,7 @@ export default function IntelligenceConsole() {
         if (!query.trim() || !token) return;
         setIsAsking(true);
         try {
-            const res = await apiFetch('/agents/ask', {
+            const res = await apiFetch<OptimusAnswer>('/agents/ask', {
                 method: 'POST',
                 token,
                 body: { query }
@@ -155,7 +166,7 @@ export default function IntelligenceConsole() {
         if (!token || !newTaskTitle.trim()) return;
         setCreatingTask(true);
         try {
-            const created = await apiFetch('/agents/tasks', {
+            const created = await apiFetch<AgentTask>('/agents/tasks', {
                 method: 'POST',
                 token,
                 body: {

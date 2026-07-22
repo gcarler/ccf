@@ -37,11 +37,15 @@ const MILESTONE_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban',
 interface Milestone {
     id: string | number;
     title: string;
+    name: string;
     description?: string;
     icon?: string;
+    xp?: number;
+    count?: number;
     target_date?: string;
     status?: string;
     progress?: number;
+    created_at?: string;
 }
 
 export default function SpiritualMilestones() {
@@ -103,7 +107,7 @@ export default function SpiritualMilestones() {
     const renderList = () => (
         <div className="space-y-4">
             {milestones.map((m) => {
-                const Icon = iconMap[m.icon?.toLowerCase()] || Award;
+                const Icon = iconMap[m.icon?.toLowerCase() ?? ''] || Award;
                 return (
                     <div key={m.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
@@ -239,7 +243,7 @@ export default function SpiritualMilestones() {
                                 {/* Milestone Summary Cards */}
                                 <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                     {milestones.map((m, i) => {
-                                        const Icon = iconMap[m.icon?.toLowerCase()] || Award;
+                                        const Icon = iconMap[m.icon?.toLowerCase() ?? ''] || Award;
                                         return (
                                             <motion.div 
                                                 key={m.id}

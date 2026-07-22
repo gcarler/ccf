@@ -95,7 +95,7 @@ export default function IdentityManagementPage() {
             const data = await apiFetch<{ items: UserSummary[]; total: number }>('/admin/users', { token, signal });
             setUsers(data?.items ?? []);
         } catch (err: unknown) {
-            if (err?.name === 'AbortError') return;
+            if ((err as { name?: string })?.name === 'AbortError') return;
             addToast('Error al cargar usuarios', 'error');
         } finally {
             setLoading(false);
@@ -119,7 +119,7 @@ export default function IdentityManagementPage() {
             setPrimaryMinistry((data.ministries || []).find((m: any) => m.is_primary)?.ministry || '');
             setPlatformRole(data.platform_roles?.[0]?.role || 'MIEMBRO');
         } catch (err: unknown) {
-            if (err?.name === 'AbortError') return;
+            if ((err as { name?: string })?.name === 'AbortError') return;
             addToast('Error al cargar perfil kernel', 'error');
         } finally {
             setProfileLoading(false);
@@ -180,7 +180,7 @@ export default function IdentityManagementPage() {
             setIsDrawerOpen(false);
             fetchUsers();
         } catch (e: unknown) {
-            addToast('Error al guardar: ' + (e.message || 'Intente de nuevo'), 'error');
+            addToast('Error al guardar: ' + ((e as { message?: string })?.message || 'Intente de nuevo'), 'error');
         } finally {
             setSaving(false);
         }
@@ -205,7 +205,7 @@ export default function IdentityManagementPage() {
             setNewRole('MIEMBRO');
             fetchUsers();
         } catch (e: unknown) {
-            addToast('Error al crear: ' + (e.message || 'Intente de nuevo'), 'error');
+            addToast('Error al crear: ' + ((e as { message?: string })?.message || 'Intente de nuevo'), 'error');
         } finally {
             setSaving(false);
         }
@@ -234,7 +234,7 @@ export default function IdentityManagementPage() {
             setShowResetModal(false);
             setResetPassword('');
         } catch (e: unknown) {
-            addToast('Error: ' + (e.message || 'Intente de nuevo'), 'error');
+            addToast('Error: ' + ((e as { message?: string })?.message || 'Intente de nuevo'), 'error');
         } finally {
             setSaving(false);
         }
