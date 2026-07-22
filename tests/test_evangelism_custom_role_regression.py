@@ -402,7 +402,7 @@ class TestHappyPathSigueFuncionando:
         g = f["grupo"]
         resp = f["c"].put(
             f"/api/evangelism/grupos/{g.id}",
-            json={"nombre": "g1_regresion_renombrado"},
+            json={"name": "g1_regresion_renombrado"},
             headers=f["h"],
         )
         assert resp.status_code == 200, resp.text
