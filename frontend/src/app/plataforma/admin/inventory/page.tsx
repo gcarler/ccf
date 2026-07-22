@@ -32,12 +32,17 @@ const INVENTORY_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban',
 
 interface InventoryAsset {
     id: number;
-    name?: string;
+    name: string;
     description?: string;
     status?: string;
+    current_status?: string;
     category?: string;
     location?: string;
     assigned_to?: string;
+    brand?: string;
+    serial_number?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export default function AdminInventoryPage() {
