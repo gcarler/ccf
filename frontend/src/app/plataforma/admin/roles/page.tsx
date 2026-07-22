@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
@@ -14,6 +14,15 @@ interface Role {
     id: string;
     name: string;
     permissions: string[];
+}
+
+// Raw shape emitted by backend AdminRoleRead (schemas/admin.py:51-57).
+// Key/value names are in Spanish; we normalize to the local Role form below.
+interface AdminRoleRaw {
+    id: string;
+    nombre: string;
+    permisos: Record<string, unknown> | string[] | null;
+    users_count?: number;
 }
 
 export default function RolesPage() {
@@ -30,18 +39,18 @@ export default function RolesPage() {
         permissions: []
     });
 
-    const fetchData = async (signal?: AbortSignal) => {
+    const fetchData = useCallback(async (signal?: AbortSignal) => {
         setLoading(true);
         try {
             const [rolesRes, permsRes] = await Promise.all([
-                apiFetch<{ items: Role[]; total: number }>('/admin/roles', { token, signal }),
+                apiFetch<{ items: AdminRoleRaw[]; total: number }>('/admin/roles', { token, signal }),
                 apiFetch<Record<string, string>>('/admin/permissions', { token, signal })
             ]);
             const items = rolesRes?.items ?? [];
-            const mapped = items.map((r: Role) => ({
+            const mapped = items.map((r: AdminRoleRaw) => ({
                 id: r.id,
-                name: r.name,
-                permissions: r.permissions ? Object.keys(r.permissions) : [],
+                name: r.nombre,
+                permissions: r.permisos ? Object.keys(r.permisos) : [],
             }));
             setRoles(mapped);
             setPermissionsMap(permsRes || {});
@@ -51,13 +60,13 @@ export default function RolesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token, addToast]);
 
     useEffect(() => {
         const controller = new AbortController();
         fetchData(controller.signal);
         return () => controller.abort();
-    }, [token]);
+    }, [fetchData]);
 
     const openCreateDrawer = () => {
         setEditingRole({ name: '', permissions: [] });

@@ -44,7 +44,6 @@ interface ChartDataPoint {
 interface DashboardFinance {
     cards: DashboardCard[];
     income_by_category?: ChartDataPoint[];
-    monthly_comparison?: ChartDataPoint[];
     monthly_series?: ChartDataPoint[];
     pending_pledges_total?: number;
     latest_donations?: Array<Record<string, unknown>>;
@@ -167,7 +166,7 @@ export default function FinancesPage() {
                         <div className="lg:col-span-2">
                             <DSCard>
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Comparativa Mensual de Ingresos</h3>
-                                <DSChart type="area" data={dashboard?.monthly_comparison} color="#10b981" height={220} />
+                                <DSChart type="area" data={dashboard?.monthly_series} color="#10b981" height={220} />
                             </DSCard>
                         </div>
                         <div>
