@@ -2,7 +2,7 @@
 
 > **Objetivo:** documentar el control de acceso real del módulo de evangelismo según el código vigente.
 >
-> **Fecha de verificación:** 2026-07-18
+> **Fecha de verificación:** 2026-07-21
 > **Fuente de verdad:** código backend en `backend/api/evangelism*` y `backend/core/permissions.py`
 
 ## 1. Resumen ejecutivo
@@ -247,3 +247,26 @@ de tenant.
 - `PEND-RBAC-EVANGELISM-001`: cerrada
 - Esta versión reemplaza la lectura histórica previa del `2026-07-16`
 - A partir del `2026-07-17`, la fuente documental correcta para permisos del módulo debe partir de `evangelism:*` y luego detallar excepciones contextuales
+- **2026-07-21 (cierre Fase 1 — wrapper legacy)**: el paquete `backend/api/_evangelism_helpers/` se eliminó por completo. Era código muerto sin importadores externos desde la migración del `2026-07-17`. Su wrapper `require_pastor_or_admin_with_sede` era la única conexión residual de evangelism al guard `require_pastor_or_admin` historico (que delega en `crm:manage`). Funciones equivalentes viven en `backend/crud/evangelism.py:_actor_sede_or_none_evangelismo` (con validación UUID robusta + persona + sede). Tras el cierre: `grep require_pastor_or_admin backend/api/evangelism* backend/api/evangelism_*= 0 hits`. Commit `339539e9`.
+
+## 10. Verificación post-cierre (2026-07-21)
+
+Comando de verificación RBAC radical:
+
+```bash
+cd /root/ccf
+# Debe retornar 0 hits en módulo evangelism:
+rg -n 'require_pastor_or_admin' backend/api/evangelism.py backend/api/evangelism_*.py backend/api/evangelism_*/ 2>/dev/null
+# Debe retornar solo módulos CRM legítimos (analytics.py, crm/pipelines.py) y la definición en permissions.py:
+rg -n 'require_pastor_or_admin' backend/ 2>/dev/null
+# Smoke + suite amplia:
+./venv/bin/python scripts/test_evangelism_quality.py
+./venv/bin/python -m pytest -q -o addopts='' tests/test_evangelism_module_coverage.py
+```
+
+Resultado de esta verificación ejecutada el `2026-07-21`:
+
+- `rg require_pastor_or_admin backend/api/evangelism*` → **0 hits** ✅
+- `rg require_pastor_or_admin backend/` → **solo** `backend/core/permissions.py` (definición), `backend/api/analytics.py` (CRM) y `backend/api/crm/pipelines.py` (CRM) → ✅ ese guard es legítimo en CRM, lo que documenta el docstring L693-698 de `permissions.py`
+- Smoke canónico → 2/2 suites verdes (19 passed + 1 xfailed) ✅
+- Suite amplia → 226/226 passed en 155s ✅ (antes 219; +7 tests de `test_evangelism_custom_role_regression.py` cubriendo el bug RBAC original)

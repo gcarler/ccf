@@ -2,7 +2,7 @@
 
 > **Objetivo:** mantener evangelismo como módulo aislado, con validación repetible y backlog realista.
 >
-> **Actualizado:** 2026-07-17
+> **Actualizado:** 2026-07-21
 > **Complementa:** `docs/ESTADO_EVANGELISMO.md`
 
 ## 1. Estado operativo actual
@@ -66,39 +66,29 @@ Criterio de salida:
 
 ## 4. Fase 1 — QA runtime de permisos
 
-**ID:** `PARCIAL-RUNTIME-AUTH-001`
+**ID:** `PARCIAL-RUNTIME-AUTH-001` → cerrada el 2026-07-21
 
-Problema vigente:
+Estado vigente:
 
-- el backend ya migró en gran parte a `evangelism:read/edit/manage`
-- todavía existen rutas contextuales y flujos con `require_active_user`
-- el riesgo ahora es el drift UI/rol/guard real, no la ausencia de taxonomía
+- el backend migro toda la superficie administrativa a `evangelism:read/edit/manage`
+- las rutas contextuales (`mine`, asistencia por grupo) usan `get_current_user` + ownership/liderazgo, lo cual es intencional
+- el wrapper legacy `require_pastor_or_admin_with_sede` (unico rastro `crm:manage`-coincidence en evangelism) fue eliminado el 2026-07-21 al borrar el paquete muerto `backend/api/_evangelism_helpers/`
+- la UI alineo su fetch Por Rol con el guard real (ver `EVANGELISMO_RBAC_MATRIX.md` seccion 10)
 
-Orden:
+Cierre formal (2026-07-21):
 
-1. Verificar `docs/EVANGELISMO_RBAC_MATRIX.md`
-2. Probar al menos:
-   - `/plataforma/evangelism`
-   - `/plataforma/evangelism/groups`
-   - `/plataforma/evangelism/events`
-   - `/plataforma/evangelism/rankings`
-   - `/plataforma/evangelism/multiplication`
-   - `/plataforma/evangelism/scanner`
-3. Validar por rol:
-   - ADMIN
-   - GESTOR o rol granular equivalente
-   - COORDINADOR
-   - un rol restringido real
-4. Si aparece drift:
-   - corregir frontend si hace fetch de más
-   - corregir backend si el guard es el que quedó mal
-5. Actualizar docs si cambia la lectura por rol
+1. Verificado `docs/EVANGELISMO_RBAC_MATRIX.md` — matriz actualizada a fecha 2026-07-21
+2. Smoke + suite amplia verde (smoke 2/2, suite 226/226) — evidencia fresca
+3. Grep confirmado: 0 hits de `require_pastor_or_admin` en `backend/api/evangelism*`
+4. Documentado cierre del wrapper legacy en seccion 10 de la matriz RBAC
+5. Bug secundario corregido: tests usaban campo obsoleto `nombre` en PUT/POST `/grupos` cuando el schema exige `name`
 
-Criterio de salida:
+Criterio de salida alcanzado:
 
 - ningún `401/403` estructural inesperado
 - toda restricción queda explicada por el guard real
 - la UI no dispara requests prohibidas para ese rol/superficie
+- modulo evangelism 100% libre del guard historico `crm:manage`-coincidence
 
 ## 5. Fase 2 — Descomposición de estrategia
 
@@ -171,12 +161,16 @@ Criterio de salida:
 
 ### Activo
 
-- `PARCIAL-RUNTIME-AUTH-001`
-- `PARCIAL-STRATEGY-PAGE-001`
-- `PEND-STRATEGY-DECOMPOSE-001`
+- (vacío tras cierre de Fase 1 — Fase 2/3/4 son disciplina operativa, no deuda pendiente)
+
+### Disciplina operativa continua (no reactivar como backlog)
+
+- `PARCIAL-STRATEGY-PAGE-001` (Fase 2 — descomposición): mantener el monolito `strategies/[id]/page.tsx` como orquestador; si vuelve a crecer, extraer hooks/paneles. La lectura por rol queda alineada al guard real (ver RBAC_MATRIX seccion 3).
+- `PEND-STRATEGY-DECOMPOSE-001` (Fase 2 — descomposición): vigilancia de pobreza estructural adicional en la page; extraer si fetches/mutaciones vuelven a concentrarse.
 
 ### Cerrado y no reabrir salvo nueva evidencia
 
+- `PARCIAL-RUNTIME-AUTH-001` — cerrado el 2026-07-21 (Fase 1 RBAC radical + wrapper legacy eliminado)
 - `PEND-PERSONAS-SEARCH-001`
 - `PEND-RBAC-EVANGELISM-001`
 - `PARCIAL-EVENTS-001`
