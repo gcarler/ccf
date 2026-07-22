@@ -32,11 +32,27 @@ interface AgentInsight {
     title: string;
     description?: string;
     insight_type?: string;
-    payload?: string | null;
+    payload?: Record<string, unknown> | string | null;
     metadata?: Record<string, any> | null;
     acknowledged: boolean;
     acknowledged_at?: string;
     created_at?: string;
+}
+
+/**
+ * Serializa el payload de un AgentInsight a string renderizable.
+ * El backend lo persiste como JSON dict (columna insight_payload JSON)
+ * pero el frontend lo mostraba como ReactNode — crash runtime si dict
+ * no nulo. Aceptamos dict | string | null.
+ */
+function renderPayload(payload: AgentInsight['payload']): string {
+    if (payload == null) return '';
+    if (typeof payload === 'string') return payload;
+    try {
+        return JSON.stringify(payload);
+    } catch {
+        return String(payload);
+    }
 }
 
 interface AgentTask {
@@ -290,7 +306,7 @@ export default function IntelligenceConsole() {
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white mb-1 uppercase tracking-tight">{insight.title}</h4>
-                                            <p className="text-[12px] font-medium text-[hsl(var(--text-secondary))] leading-tight">{insight.payload}</p>
+                                            <p className="text-[12px] font-medium text-[hsl(var(--text-secondary))] leading-tight">{renderPayload(insight.payload)}</p>
                                         </div>
                                         {!insight.acknowledged ? (
                                             <button
