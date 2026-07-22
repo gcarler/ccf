@@ -22,7 +22,6 @@ import { ColumnDef } from '@tanstack/react-table';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
-interface Candidate {
 interface CandidateRaw {
     id: number;
     username: string;
@@ -31,7 +30,7 @@ interface CandidateRaw {
     xp?: number;
 }
 
-
+interface Candidate {
     id: number;
     username: string;
     email: string;
@@ -60,8 +59,8 @@ export default function CandidatesDashboard() {
                 email: u.email,
                 progress: u.progress || 0,
                 xp: u.xp || 0,
-                status: u.progress >= 100 ? 'ready' : 'near',
-                target_level: u.progress >= 100 ? 'Discípulo' : 'Prospecto'
+                status: (u.progress || 0) >= 100 ? 'ready' : 'near',
+                target_level: (u.progress || 0) >= 100 ? 'Discípulo' : 'Prospecto'
             }));
             setCandidates(mapped);
         } catch (err) {
