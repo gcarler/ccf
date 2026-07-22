@@ -46,7 +46,7 @@ export default function RolesPage() {
             setRoles(mapped);
             setPermissionsMap(permsRes || {});
         } catch (err: unknown) {
-            if (err?.name === 'AbortError') return;
+            if (err instanceof DOMException && err.name === 'AbortError') return;
             addToast("Error al cargar roles", "error");
         } finally {
             setLoading(false);
@@ -106,7 +106,7 @@ export default function RolesPage() {
             setIsDrawerOpen(false);
             fetchData();
         } catch (e: unknown) {
-            addToast(e.message || "Error al guardar", "error");
+            addToast(e instanceof Error ? e.message : "Error al guardar", "error");
         }
     };
 
@@ -126,7 +126,7 @@ export default function RolesPage() {
                     addToast("Rol eliminado", "success");
                     fetchData();
                 } catch (e: unknown) {
-                    addToast(e.message || "Error al eliminar", "error");
+                    addToast(e instanceof Error ? e.message : "Error al eliminar", "error");
                 }
             },
         });

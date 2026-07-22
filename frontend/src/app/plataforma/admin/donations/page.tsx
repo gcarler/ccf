@@ -41,6 +41,11 @@ type Donation = {
     status: string;
     persona_id?: number;
     donor_name?: string;
+    description?: string;
+    category?: string;
+    currency?: string;
+    created_at?: string;
+    updated_at?: string;
 };
 
 type DrawerMode = "create" | "edit" | null;

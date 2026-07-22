@@ -28,6 +28,11 @@ interface AdminUserDetail {
     is_active: boolean;
     xp?: number;
     rol_plataforma_id?: string | null;
+    role_id?: string | null;
+    role_name?: string | null;
+    sede_id?: string | null;
+    is_email_verified?: boolean;
+    permissions?: Record<string, unknown>;
 }
 
 interface RoleItem {
@@ -83,6 +88,7 @@ export default function UserDetailPage() {
     }, [id, token]);
 
     const toggleStatus = async () => {
+        if (!user) return;
         try {
             setIsSubmitting(true);
             const updated = await apiFetch<AdminUserDetail>(`/admin/users/${id}`, {
@@ -116,7 +122,7 @@ export default function UserDetailPage() {
             setPasswordModalOpen(false);
             setNewPassword('');
         } catch (err: unknown) {
-            toast.error(err.message || 'Error al actualizar contraseña');
+            toast.error(err instanceof Error ? err.message : 'Error al actualizar contraseña');
         } finally {
             setIsSubmitting(false);
         }
@@ -134,14 +140,14 @@ export default function UserDetailPage() {
             toast.success('Rol actualizado');
             setIsEditingRole(false);
         } catch (err: unknown) {
-            toast.error(err.message || 'Error al actualizar rol');
+            toast.error(err instanceof Error ? err.message : 'Error al actualizar rol');
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const saveEmail = async () => {
-        if (!editEmail || editEmail === user.email) {
+        if (!user || !editEmail || editEmail === user.email) {
             setIsEditingEmail(false);
             return;
         }
@@ -156,7 +162,7 @@ export default function UserDetailPage() {
             toast.success('Correo actualizado');
             setIsEditingEmail(false);
         } catch (err: unknown) {
-            toast.error(err.message || 'Error al actualizar correo');
+            toast.error(err instanceof Error ? err.message : 'Error al actualizar correo');
         } finally {
             setIsSubmitting(false);
         }

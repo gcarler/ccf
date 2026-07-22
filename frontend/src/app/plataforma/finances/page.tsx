@@ -28,14 +28,27 @@ import { toast } from 'sonner';
 // ─── Tipo local ───────────────────────────────────────────────────────────────
 interface DashboardCard {
     title: string;
-    value: string | number;
+    value: string;
     trend?: string;
-    color?: string;
+    tone?: 'blue' | 'emerald' | 'amber';
+    color?: 'blue' | 'emerald' | 'amber';
+    icon?: string;
+    subtitle?: string;
+}
+interface ChartDataPoint {
+    label: string;
+    value: number;
+    secondary_value?: number;
+    metadata?: Record<string, unknown>;
 }
 interface DashboardFinance {
     cards: DashboardCard[];
-    monthly_comparison?: Record<string, unknown>[];
-    income_by_category?: Record<string, unknown>[];
+    income_by_category?: ChartDataPoint[];
+    monthly_comparison?: ChartDataPoint[];
+    monthly_series?: ChartDataPoint[];
+    pending_pledges_total?: number;
+    latest_donations?: Array<Record<string, unknown>>;
+    last_updated?: string;
 }
 interface TxRecord {
     id: number;

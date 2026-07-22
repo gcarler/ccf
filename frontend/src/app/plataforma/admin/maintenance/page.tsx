@@ -110,7 +110,7 @@ export default function AdminMaintenancePage() {
                             <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{row.task}</p>
                         </div>
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{new Date(row.date).toLocaleDateString('es-ES')}</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{new Date(row.date || Date.now()).toLocaleDateString('es-ES')}</span>
                 </div>
             ))}
         </div>
@@ -132,7 +132,7 @@ export default function AdminMaintenancePage() {
                         <tr key={row.id || index} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
                             <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{row.item}</td>
                             <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{row.task}</td>
-                            <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{new Date(row.date).toLocaleDateString('es-ES')}</td>
+                            <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{new Date(row.date || Date.now()).toLocaleDateString('es-ES')}</td>
                             <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", row.priority === 'Alta' ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600")}>{row.priority}</span></td>
                         </tr>
                     ))}
@@ -280,7 +280,7 @@ export default function AdminMaintenancePage() {
                                             <div className="flex items-center gap-3">
                                                 <div className="text-right">
                                                     <div className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-2 justify-end mb-1">
-                                                        <Clock size={12} className="text-[hsl(var(--text-secondary))]" /> {new Date(row.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
+                                                        <Clock size={12} className="text-[hsl(var(--text-secondary))]" /> {new Date(row.date || Date.now()).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
                                                     </div>
                                                     <div className={clsx("text-[9px] font-semibold uppercase tracking-wide", row.priority === 'Alta' ? 'text-rose-500' : 'text-[hsl(var(--text-secondary))]')}>Prioridad {row.priority}</div>
                                                 </div>
