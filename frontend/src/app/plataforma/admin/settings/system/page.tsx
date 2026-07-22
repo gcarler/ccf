@@ -33,9 +33,17 @@ import TextPromptDrawer from '@/components/ui/TextPromptDrawer';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 
+interface FeatureRule {
+    roles_allow?: string[];
+    roles_deny?: string[];
+    users_allow?: string[];
+    users_deny?: string[];
+    rollout_percent?: number;
+}
+
 interface SystemConfig {
     features_enabled?: Record<string, boolean>;
-    feature_rules?: Record<string, unknown>;
+    feature_rules?: Record<string, FeatureRule>;
     health?: Record<string, string>;
 }
 
@@ -44,46 +52,129 @@ interface AuditEvent {
     action: string;
     feature_id?: string;
     actor?: string;
+    updated_by?: string;
     timestamp?: string;
-    diff?: { changes?: Array<{ key: string; old: unknown; new: unknown }> };
+    diff?: {
+        count?: number;
+        changes?: Array<{ key: string; before: unknown; after: unknown }>;
+        summary?: string;
+    };
 }
 
 interface AuditSummary {
-    total?: number;
+    total_events?: number;
+    by_action?: Record<string, number>;
     top_actors?: Array<{ actor: string; count: number }>;
-    top_features?: Array<{ feature_id: string; count: number }>;
+    top_features?: Array<{ feature: string; count: number }>;
 }
 
 interface AuditAnomalies {
-    actor_spikes?: Array<{ actor: string; count: number }>;
-    action_spikes?: Array<{ action: string; count: number }>;
+    has_anomaly?: boolean;
+    lookback_hours?: number;
+    recent_events?: number;
+    actor_spikes?: Array<{ actor: string; count: number; threshold?: number }>;
+    action_spikes?: Array<{ action: string; count: number; threshold?: number }>;
 }
 
 interface Incident {
     id: string;
     title?: string;
+    kind?: string;
+    key?: string;
+    count?: number;
+    threshold?: number;
     severity?: string;
     status?: string;
     created_at?: string;
+    updated_at?: string;
+    closed_at?: string;
+    ack_at?: string;
+    silenced_until?: string | null;
+    note?: string;
     mtta_minutes?: number;
     mttr_minutes?: number;
     history?: Array<{ status: string; timestamp: string; note?: string }>;
 }
 
 interface IncidentsSummary {
+    counts?: Record<string, number>;
+    severity_counts?: Record<string, number>;
     total?: number;
-    open?: number;
-    resolved?: number;
+    mtta_minutes?: number | null;
+    mttr_minutes?: number | null;
+    open_age_p95_minutes?: number | null;
+    targets?: { mtta_minutes: number; mttr_minutes: number };
+    breaches?: { mtta: boolean; mttr: boolean };
 }
 
 interface ComplianceHistory {
     id: string;
+    snapshot_id?: string;
+    recorded_at?: string;
     score?: number;
     timestamp?: string;
+    schema_version?: string;
+    requested_by?: string;
+    signature?: Record<string, unknown>;
+    summary?: {
+        features_enabled?: number;
+        audit_events?: number;
+        incidents?: number;
+        has_anomaly?: boolean;
+        critical_incidents?: number;
+    };
+    drift_from_previous?: {
+        from_snapshot_id?: string;
+        to_snapshot_id?: string;
+        severity?: string;
+        raw_severity?: string;
+        risk_score?: number;
+        has_drift?: boolean;
+        reasons?: Array<string>;
+        mitigations?: Array<string>;
+        critical_disabled?: number;
+        critical_feature_changes?: number;
+        suppressed?: Record<string, unknown>;
+    };
 }
 
-interface CompliancePolicy {
-    suppressions?: Array<{ kind: string; value: string; hours: number; note: string }>;
+interface CompliancePolicyDocument {
+    active_environment?: string;
+    environments?: Record<string, unknown>;
+    critical_feature_flags?: Array<string>;
+    suppressions?: Array<{
+        id: string;
+        kind: string;
+        value: string;
+        note: string;
+        created_by?: string;
+        created_at?: string;
+        expires_at?: string;
+    }>;
+}
+
+interface CompliancePolicyResolved {
+    environment?: string;
+    incident_spike_delta?: number;
+    mtta_regression_pct?: number;
+    mttr_regression_pct?: number;
+    critical_feature_change_count_high?: number;
+    critical_feature_disabled_force?: boolean;
+    critical_feature_flags?: Array<string>;
+    suppressions?: Array<{
+        id: string;
+        kind: string;
+        value: string;
+        note: string;
+        created_by?: string;
+        created_at?: string;
+        expires_at?: string;
+    }>;
+}
+
+interface CompliancePolicyState {
+    policy?: CompliancePolicyDocument | null;
+    resolved?: CompliancePolicyResolved | null;
 }
 
 interface IncidentNotification {
@@ -91,6 +182,39 @@ interface IncidentNotification {
     channel?: string;
     status?: string;
     timestamp?: string;
+    type?: string;
+    incident_id?: string;
+    incident_key?: string;
+    severity?: string;
+    previous_severity?: string;
+    reason?: string;
+    risk_score?: number | null;
+    from_snapshot_id?: string;
+    to_snapshot_id?: string;
+    reasons?: Array<string>;
+    critical_disabled?: number;
+    critical_feature_changes?: number;
+    suppressed?: Record<string, unknown>;
+}
+
+interface IncidentStatsPeriod {
+    created?: number;
+    acknowledged?: number;
+    closed?: number;
+    active_end?: number;
+    closure_rate?: number | null;
+    mtta_minutes?: number | null;
+    mttr_minutes?: number | null;
+    severity_counts?: Record<string, number>;
+}
+
+interface IncidentStatsDeltas {
+    created_pct?: number | null;
+    closed_pct?: number | null;
+    closure_rate_pct?: number | null;
+    mtta_pct?: number | null;
+    mttr_pct?: number | null;
+    active_end_pct?: number | null;
 }
 
 interface IncidentStats {
@@ -99,6 +223,45 @@ interface IncidentStats {
     resolved?: number;
     mtta_avg?: number;
     mttr_avg?: number;
+    window?: string;
+    days?: number;
+    current?: IncidentStatsPeriod;
+    previous?: IncidentStatsPeriod;
+    deltas?: IncidentStatsDeltas;
+    trends?: Array<{ date: string; created: number; closed: number; acknowledged: number; mtta_avg_minutes: number | null; mttr_avg_minutes: number | null }>;
+}
+
+interface ComplianceDriftResult {
+    has_drift?: boolean;
+    effective_has_drift?: boolean;
+    severity?: string;
+    effective_severity?: string;
+    risk_score?: number;
+    reasons?: Array<string>;
+    mitigations?: Array<string>;
+    critical_feature_changes?: Array<Record<string, unknown>>;
+    critical_disabled?: Array<Record<string, unknown>>;
+    non_critical_feature_changes?: Array<Record<string, unknown>>;
+    metric_alerts?: Array<string>;
+    suppressions_active?: Array<Record<string, unknown>>;
+    suppressed?: Record<string, unknown>;
+    active?: { feature_changes?: Array<Record<string, unknown>>; metric_alerts?: Array<string> };
+    policy?: CompliancePolicyResolved;
+}
+
+interface ComplianceCompareDiff {
+    metrics?: Record<string, { before: unknown; after: unknown; delta: number | null }>;
+    feature_changes?: Array<{ feature: string; before: unknown; after: unknown }>;
+    feature_changes_count?: number;
+    drift?: ComplianceDriftResult;
+}
+
+interface ComplianceCompareResult {
+    status?: string;
+    from?: { snapshot_id?: string; recorded_at?: string };
+    to?: { snapshot_id?: string; recorded_at?: string };
+    diff?: ComplianceCompareDiff;
+    verification?: Record<string, unknown>;
 }
 
 export default function SystemSettings() {
@@ -112,16 +275,16 @@ export default function SystemSettings() {
     const [incidents, setIncidents] = useState<Incident[]>([]);
     const [incidentsSummary, setIncidentsSummary] = useState<IncidentsSummary | null>(null);
     const [slaTargets, setSlaTargets] = useState<{ mtta: number; mttr: number }>({ mtta: 60, mttr: 240 });
-    const [incidentTrends, setIncidentTrends] = useState<Array<{ date: string; count: number }>>([]);
+    const [incidentTrends, setIncidentTrends] = useState<Array<{ date: string; created: number; closed: number; acknowledged: number; mtta_avg_minutes: number | null; mttr_avg_minutes: number | null }>>([]);
     const [incidentNotifications, setIncidentNotifications] = useState<IncidentNotification[]>([]);
     const [incidentStatsWindow, setIncidentStatsWindow] = useState<'weekly' | 'monthly'>('weekly');
     const [incidentStats, setIncidentStats] = useState<IncidentStats | null>(null);
     const [complianceHistory, setComplianceHistory] = useState<ComplianceHistory[]>([]);
     const [compareSnapshotIds, setCompareSnapshotIds] = useState<{ from: string; to: string }>({ from: '', to: '' });
-    const [compareResult, setCompareResult] = useState<Record<string, unknown> | null>(null);
+    const [compareResult, setCompareResult] = useState<ComplianceCompareResult | null>(null);
     const [historyRetentionDays, setHistoryRetentionDays] = useState<number>(90);
-    const [complianceWeeklySummary, setComplianceWeeklySummary] = useState<Array<{ date: string; score: number }>>([]);
-    const [compliancePolicy, setCompliancePolicy] = useState<CompliancePolicy | null>(null);
+    const [complianceWeeklySummary, setComplianceWeeklySummary] = useState<Array<{ week: string; snapshots: number; anomaly_snapshots: number; critical_incident_peaks: number; high_drift_alerts: number; critical_drift_alerts: number; max_risk_score: number }>>([]);
+    const [compliancePolicy, setCompliancePolicy] = useState<CompliancePolicyState | null>(null);
     const [suppressionDraft, setSuppressionDraft] = useState<{ kind: string; value: string; hours: number; note: string }>({
         kind: 'severity',
         value: 'high',
@@ -206,7 +369,7 @@ export default function SystemSettings() {
                 signal,
             });
             setIncidentsSummary(incidentsSummaryResult?.summary || null);
-            const trendsResult = await apiFetch<{ rows?: Array<{ date: string; count: number }> }>('/workspace/flags/incidents/trends', {
+            const trendsResult = await apiFetch<{ rows?: Array<{ date: string; created: number; closed: number; acknowledged: number; mtta_avg_minutes: number | null; mttr_avg_minutes: number | null }> }>('/workspace/flags/incidents/trends', {
                 token,
                 query: { days: 14 },
                 cache: 'no-store',
@@ -243,24 +406,24 @@ export default function SystemSettings() {
                     to: prev.to || String(newest),
                 }));
             }
-            const weeklySummaryResult = await apiFetch<{ rows?: Array<{ date: string; score: number }> }>('/workspace/flags/compliance/history/weekly-summary', {
+            const weeklySummaryResult = await apiFetch<{ rows?: Array<{ week: string; snapshots: number; anomaly_snapshots: number; critical_incident_peaks: number; high_drift_alerts: number; critical_drift_alerts: number; max_risk_score: number }> }>('/workspace/flags/compliance/history/weekly-summary', {
                 token,
                 query: { weeks: 8 },
                 cache: 'no-store',
                 signal,
             });
             setComplianceWeeklySummary(Array.isArray(weeklySummaryResult?.rows) ? weeklySummaryResult.rows : []);
-            const compliancePolicyResult = await apiFetch<{ policy?: CompliancePolicy; resolved?: CompliancePolicy }>('/workspace/flags/compliance/policy', {
+            const compliancePolicyResult = await apiFetch<{ policy?: CompliancePolicyDocument; resolved?: CompliancePolicyResolved }>('/workspace/flags/compliance/policy', {
                 token,
                 cache: 'no-store',
                 signal,
             });
             setCompliancePolicy({
-                policy: compliancePolicyResult?.policy || null,
-                resolved: compliancePolicyResult?.resolved || null,
+                policy: (compliancePolicyResult?.policy as CompliancePolicyDocument | undefined) || null,
+                resolved: (compliancePolicyResult?.resolved as CompliancePolicyResolved | undefined) || null,
             });
         } catch (e: unknown) {
-            if (e?.name === 'AbortError') return;
+            if (e instanceof Error && e.name === 'AbortError') return;
             console.error("Config fetch failed", e);
             addToast('Error al cargar la configuración del sistema', 'error');
         } finally {
@@ -911,7 +1074,7 @@ export default function SystemSettings() {
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Picos por Actor (24h)</p>
                                 {(auditAnomalies?.actor_spikes || []).length > 0 ? (
                                     <div className="space-y-2">
-                                        {auditAnomalies.actor_spikes.map((item: any) => (
+                                        {auditAnomalies?.actor_spikes?.map((item: any) => (
                                             <div key={`${item.actor}-${item.count}`} className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.actor}</span>
                                                 <span className="font-semibold text-rose-600">{item.count}</span>
@@ -926,7 +1089,7 @@ export default function SystemSettings() {
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Picos por Acción (24h)</p>
                                 {(auditAnomalies?.action_spikes || []).length > 0 ? (
                                     <div className="space-y-2">
-                                        {auditAnomalies.action_spikes.map((item: any) => (
+                                        {auditAnomalies?.action_spikes?.map((item: any) => (
                                             <div key={`${item.action}-${item.count}`} className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.action}</span>
                                                 <span className="font-semibold text-rose-600">{item.count}</span>
@@ -952,7 +1115,7 @@ export default function SystemSettings() {
                                         {event?.diff?.count ? (
                                             <div className="mt-2 space-y-1">
                                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{event.diff.summary}</p>
-                                                {event.diff.changes.slice(0, 3).map((change: any) => (
+                                                {event.diff.changes?.slice(0, 3).map((change: any) => (
                                                     <p key={`${change.key}-${String(change.before)}-${String(change.after)}`} className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                                         {change.key}: {String(change.before)} {'->'} {String(change.after)}
                                                     </p>

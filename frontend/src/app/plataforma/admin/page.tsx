@@ -187,7 +187,7 @@ export default function AdminDashboardPage() {
                         </div>
                     </div>
                     <KpiCard title="Personas" value={(stats?.personas || 0).toLocaleString()} trend={stats?.personas_nuevas_mes ? `+${stats.personas_nuevas_mes} nuevas` : 'Sin cambios'} icon={Users} color="text-[hsl(var(--primary))]" />
-                    <KpiCard title="Asistencia" value={stats?.usuarios_activos ? `${Math.round(stats.usuarios_activos / Math.max(stats.personas, 1) * 100)}%` : '—'} trend={stats?.usuarios_activos ? `${stats.usuarios_activos} activos` : 'Sin datos'} icon={Calendar} color="text-emerald-500" />
+                    <KpiCard title="Asistencia" value={stats?.usuarios_activos ? `${Math.round(stats.usuarios_activos / Math.max(stats.personas ?? 1, 1) * 100)}%` : '—'} trend={stats?.usuarios_activos ? `${stats.usuarios_activos} activos` : 'Sin datos'} icon={Calendar} color="text-emerald-500" />
                 </motion.section>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">

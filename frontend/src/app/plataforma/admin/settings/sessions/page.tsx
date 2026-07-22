@@ -143,7 +143,7 @@ export default function AdminSettingsSessionsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={fetchSessions}
+                            onClick={() => fetchSessions()}
                             className="p-2 rounded-lg bg-white/5 border border-white/10 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10 transition-colors"
                             title="Actualizar"
                         >
