@@ -131,14 +131,27 @@ function flattenModuleMap(moduleMap: Record<string, string>): Record<string, str
     return flat;
 }
 
+interface AccessRow {
+    id: string;
+    name?: string;
+    username?: string;
+    email?: string;
+    role?: string;
+    users_count?: number;
+    permissions?: Record<string, string>;
+    is_active?: boolean;
+    created_at?: string;
+    updated_at?: string;
+}
+
 export default function AccessManagementPage() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
     const [activeTab, setActiveTab] = useState<'roles' | 'users'>('roles');
-    const [roles, setRoles] = useState<Array<{ id: string; name: string }>>([]);
-    const [users, setUsers] = useState<Array<{ id: string; username: string; email: string }>>([]);
+    const [roles, setRoles] = useState<AccessRow[]>([]);
+    const [users, setUsers] = useState<AccessRow[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedEntity, setSelectedEntity] = useState<{ id: string; name: string } | null>(null);
+    const [selectedEntity, setSelectedEntity] = useState<AccessRow | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isSaving, setIsAssigning] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('table');
@@ -158,20 +171,20 @@ export default function AccessManagementPage() {
             if (signal?.aborted) return;
             const rolesItems = rolesData?.items ?? [];
             const usersItems = usersData?.items ?? [];
-            const mappedRoles = rolesItems.map((r: { id: string; name: string; permissions?: Record<string, string> }) => ({
+            const mappedRoles = rolesItems.map((r: { id: string; name: string; permissions?: Record<string, string>; users_count?: number }) => ({
                 id: r.id,
-                name: r.nombre,
-                permissions: r.permisos || {},
+                name: r.name,
+                permissions: r.permissions || {},
                 users_count: r.users_count ?? 0,
             }));
             setRoles(mappedRoles);
             setUsers(usersItems);
-        } catch (err: unknown) { 
-            if (err?.name === 'AbortError') return;
+        } catch (err: unknown) {
+            if (err instanceof Error && err.name === 'AbortError') return;
             console.error(err);
             addToast("Error al cargar configuraciones de acceso", "error");
-        } finally { 
-            if (!signal?.aborted) setLoading(false); 
+        } finally {
+            if (!signal?.aborted) setLoading(false);
         }
     }, [token, addToast]);
 
@@ -182,7 +195,7 @@ export default function AccessManagementPage() {
         return () => controller.abort();
     }, [isAuthenticated, fetchData]);
 
-    const handleOpenEntity = async (entity: { id: string; name: string }) => {
+    const handleOpenEntity = async (entity: AccessRow) => {
         setSelectedEntity(entity);
 
         if (activeTab === 'users' && token) {

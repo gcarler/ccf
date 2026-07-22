@@ -23,6 +23,7 @@ interface CourseDetail {
     id: string | number;
     title?: string;
     description?: string;
+    code?: string;
     modality?: string;
     is_published?: boolean;
 }
@@ -33,6 +34,7 @@ interface LessonItem {
     content?: string;
     order_index?: number;
     duration_minutes?: number;
+    modality?: string;
 }
 
 export default function AdminCourseContentPage() {

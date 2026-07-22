@@ -97,13 +97,9 @@ export default function DonationConfig() {
             setCategories(data?.items ?? []);
 
         } catch (err: unknown) {
-
-            if (err?.name === 'AbortError') return;
-
+            if (err instanceof Error && err.name === 'AbortError') return;
             console.error(err);
-
             addToast("Error al sincronizar categorías contables", "error");
-
         } finally {
 
             setLoading(false);

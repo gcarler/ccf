@@ -132,7 +132,7 @@ export default function PastorRadarPage() {
                 <div className="p-4 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 rounded-lg text-rose-600 text-center space-y-4">
                     <Zap size={40} className="mx-auto" />
                     <p className="font-semibold uppercase tracking-wide">Error de Sincronización: {error}</p>
-                    <button onClick={fetchRadar} className="px-4 py-3 bg-rose-600 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-xl">Reintentar</button>
+                    <button onClick={() => fetchRadar()} className="px-4 py-3 bg-rose-600 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-xl">Reintentar</button>
                 </div>
             ) : (
                 <>
