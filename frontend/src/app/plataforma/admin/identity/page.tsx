@@ -49,12 +49,20 @@ interface UserSummary {
 }
 
 interface KernelProfile {
-    activity_status: string;
-    church_role: string | null;
-    church_role_history: Array<{ role: string; changed_at: string; reason: string }>;
-    ministries: Array<{ ministry: string; is_primary: boolean }>;
-    platform_roles: Array<{ role: string; assigned_at: string }>;
-    effective_permissions: Record<string, string>;
+    persona_id: string;
+    nombre_completo: string;
+    email: string;
+    estado_vital: string;
+    dimension_a_ministerios: Array<{ id: string; ministry: string; is_primary: boolean; recognized_at?: string; recognized_by_persona_id?: string | null; notes?: string }>;
+    dimension_b_rol_iglesia: { id: string; church_role: string; assigned_at?: string; assigned_by_persona_id?: string | null; notes?: string } | null;
+    dimension_c_roles_plataforma: Array<{ id: string; role: string; permissions?: Record<string, unknown>; assigned_at?: string; expires_at?: string | null; notes?: string }>;
+    permisos_efectivos: Record<string, string>;
+}
+
+interface ChurchRoleHistoryEntry {
+    role: string;
+    changed_at: string;
+    reason: string;
 }
 
 export default function IdentityManagementPage() {
@@ -65,6 +73,7 @@ export default function IdentityManagementPage() {
     const [search, setSearch] = useState('');
     const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null);
     const [profile, setProfile] = useState<KernelProfile | null>(null);
+    const [churchRoleHistory, setChurchRoleHistory] = useState<ChurchRoleHistoryEntry[]>([]);
     const [profileLoading, setProfileLoading] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -113,11 +122,20 @@ export default function IdentityManagementPage() {
         try {
             const data = await apiFetch<KernelProfile>(`/kernel/profile/${user.id}`, { token, signal });
             setProfile(data);
-            setActivityStatus(data.activity_status || 'ACTIVO');
-            setChurchRole(data.church_role || '');
-            setMinistries((data.ministries || []).map((m: any) => m.ministry));
-            setPrimaryMinistry((data.ministries || []).find((m: any) => m.is_primary)?.ministry || '');
-            setPlatformRole(data.platform_roles?.[0]?.role || 'MIEMBRO');
+            setActivityStatus(data.estado_vital || 'ACTIVO');
+            setChurchRole(data.dimension_b_rol_iglesia?.church_role || '');
+            setMinistries((data.dimension_a_ministerios || []).map((m) => m.ministry));
+            setPrimaryMinistry((data.dimension_a_ministerios || []).find((m) => m.is_primary)?.ministry || '');
+            setPlatformRole(data.dimension_c_roles_plataforma?.[0]?.role || 'MIEMBRO');
+
+            // Secondary fetch: church role history (separate endpoint, adapt shape for JSX)
+            try {
+                const history = await apiFetch<Array<{ id: string; from_role: string | null; to_role: string; reason?: string; changed_by?: string | null; changed_at: string }>>(`/kernel/church-role/${user.id}/history`, { token, signal });
+                setChurchRoleHistory(Array.isArray(history) ? history.map((h) => ({ role: h.to_role, changed_at: h.changed_at, reason: h.reason || '' })) : []);
+            } catch (err: unknown) {
+                if ((err as { name?: string })?.name === 'AbortError') return;
+                setChurchRoleHistory([]);
+            }
         } catch (err: unknown) {
             if ((err as { name?: string })?.name === 'AbortError') return;
             addToast('Error al cargar perfil kernel', 'error');
@@ -143,7 +161,7 @@ export default function IdentityManagementPage() {
             });
 
             // Update church role
-            if (churchRole && churchRole !== profile?.church_role) {
+            if (churchRole && churchRole !== profile?.dimension_b_rol_iglesia?.church_role) {
                 await apiFetch(`/kernel/church-role/${selectedUser.id}`, {
                     method: 'PUT', token,
                     body: { church_role: churchRole, reason: churchRoleReason || 'Cambio manual desde admin' },
@@ -151,7 +169,7 @@ export default function IdentityManagementPage() {
             }
 
             // Update ministries
-            const currentMinistries = (profile?.ministries || []).map((m: any) => m.ministry);
+            const currentMinistries = (profile?.dimension_a_ministerios || []).map((m) => m.ministry);
             const toAdd = ministries.filter(m => !currentMinistries.includes(m));
             const toRemove = currentMinistries.filter(m => !ministries.includes(m));
 
@@ -168,7 +186,7 @@ export default function IdentityManagementPage() {
                 await apiFetch(`/kernel/ministries/${selectedUser.id}/${primaryMinistry}/primary`, { method: 'PUT', token });
             }
 
-            const currentRole = profile?.platform_roles?.[0]?.role;
+            const currentRole = profile?.dimension_c_roles_plataforma?.[0]?.role;
             if (platformRole !== currentRole) {
                 await apiFetch(`/admin/users/${selectedUser.id}`, {
                     method: 'PATCH', token,
@@ -430,7 +448,7 @@ export default function IdentityManagementPage() {
                                     </button>
                                 ))}
                             </div>
-                            {churchRole && churchRole !== profile?.church_role && (
+                            {churchRole && churchRole !== profile?.dimension_b_rol_iglesia?.church_role && (
                                 <input
                                     value={churchRoleReason}
                                     onChange={e => setChurchRoleReason(e.target.value)}
@@ -438,10 +456,10 @@ export default function IdentityManagementPage() {
                                     className="mt-2 w-full px-3 py-2 text-xs bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-blue-500"
                                 />
                             )}
-                            {profile?.church_role_history && profile.church_role_history.length > 0 && (
+                            {churchRoleHistory && churchRoleHistory.length > 0 && (
                                 <div className="mt-3 space-y-1">
                                     <p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase">Historial:</p>
-                                    {profile.church_role_history.slice(0, 3).map((h, i) => (
+                                    {churchRoleHistory.slice(0, 3).map((h, i) => (
                                         <div key={i} className="flex items-center gap-2 text-[10px] text-[hsl(var(--text-secondary))]">
                                             <Clock size={10} />
                                             <span>{h.role}</span>
@@ -531,13 +549,13 @@ export default function IdentityManagementPage() {
                         </section>
 
                         {/* Permisos Efectivos */}
-                        {profile?.effective_permissions && Object.keys(profile.effective_permissions).length > 0 && (
+                        {profile?.permisos_efectivos && Object.keys(profile.permisos_efectivos).length > 0 && (
                             <section>
                                 <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2 mb-3">
                                     <Shield size={14} className="text-[hsl(var(--primary))]" /> Permisos Efectivos
                                 </h4>
                                 <div className="flex flex-wrap gap-1">
-                                    {Object.entries(profile.effective_permissions).map(([key, val]) => (
+                                    {Object.entries(profile.permisos_efectivos).map(([key, val]) => (
                                         <span key={key} className="px-2 py-0.5 bg-blue-50 dark:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded text-[9px] font-semibold uppercase">
                                             {key}: {val}
                                         </span>
