@@ -93,7 +93,8 @@ export default function ActaManagementPage() {
             addToast('Acta cerrada y procesada con éxito', 'success');
             setLastActa(data as FormalActa);
         } catch (error: unknown) {
-            addToast(error?.detail?.message || 'Error operativo', 'error');
+            const message = (error as { detail?: { message?: string } })?.detail?.message || 'Error operativo';
+            addToast(message, 'error');
         } finally {
             setClosing(false);
         }

@@ -34,8 +34,11 @@ interface CourseContent {
     id: number;
     title?: string;
     name?: string;
+    code?: string;
     is_published?: boolean;
     modality?: string;
+    duration_hours?: number;
+    certificate_type?: string;
     updated_at?: string;
     created_at?: string;
 }

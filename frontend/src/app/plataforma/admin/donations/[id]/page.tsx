@@ -15,6 +15,10 @@ interface DonationTransaction {
     date?: string;
     status?: string;
     type?: string;
+    reference_code?: string;
+    method?: string;
+    payment_method?: string;
+    notes?: string;
 }
 
 export default function DonationDetailPage() {
