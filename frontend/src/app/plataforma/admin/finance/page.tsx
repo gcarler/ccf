@@ -33,11 +33,18 @@ interface FinanceTransaction {
     status?: string;
     type?: string;
     fund_id?: number;
+    category?: string;
+    currency?: string;
+    persona_id?: string | number | null;
+    created_at?: string;
+    updated_at?: string;
 }
 
 interface FinanceSummary {
     total_income?: number;
     total_expenses?: number;
+    total_expense?: number;
+    funds_total?: number;
     balance?: number;
 }
 
@@ -63,7 +70,7 @@ export default function FinanceAdminPage() {
             ]);
             setTransactions(Array.isArray(txData) ? txData : []);
             setSummary(summaryData);
-        } catch (e: unknown) { if (e?.name === 'AbortError') return; console.error(e); addToast('Error al cargar datos financieros', 'error'); }
+        } catch (e: unknown) { if (e instanceof DOMException && e.name === 'AbortError') return; console.error(e); addToast('Error al cargar datos financieros', 'error'); }
         finally { setLoading(false); }
     }, [token]);
 
@@ -121,14 +128,14 @@ export default function FinanceAdminPage() {
     })), [filteredTransactions]);
     const calendarEvents = useMemo(() => filteredTransactions.map((tx) => ({
         id: tx.id,
-        title: tx.description,
+        title: tx.description || '',
         date: (tx.date || tx.created_at || new Date().toISOString()).slice(0, 10),
         color: tx.type === 'income' ? 'emerald' as const : 'rose' as const,
         location: tx.category,
     })), [filteredTransactions]);
     const ganttItems = useMemo(() => filteredTransactions.map((tx) => ({
         id: tx.id,
-        title: tx.description,
+        title: tx.description || '',
         subtitle: tx.category || tx.type,
         start_date: (tx.date || tx.created_at || new Date().toISOString()).slice(0, 10),
         end_date: (tx.updated_at || tx.date || tx.created_at || new Date().toISOString()).slice(0, 10),
@@ -399,7 +406,7 @@ export default function FinanceAdminPage() {
                         <DrawerStat label="Tipo" value={selectedTx?.type} icon={History} />
                         <DrawerStat label="Categoría" value={selectedTx?.category} icon={Settings} />
                         <DrawerStat label="Monto" value={`$${selectedTx?.amount?.toLocaleString()}`} icon={DollarSign} />
-                        <DrawerStat label="Fecha" value={selectedTx ? new Date(selectedTx.date).toLocaleDateString() : ''} icon={Calendar} />
+                        <DrawerStat label="Fecha" value={selectedTx ? new Date(selectedTx.date || selectedTx.created_at || Date.now()).toLocaleDateString() : ''} icon={Calendar} />
                     </section>
 
                     <section className="space-y-4 pt-6 border-t border-[hsl(var(--border))] dark:border-white/5">

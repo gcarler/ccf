@@ -8,6 +8,11 @@ import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { StatCard } from '@/components/StatCard';
 
+interface TreasuryPerson {
+    nombre_completo?: string;
+    first_name?: string;
+}
+
 interface TreasuryTransaction {
     id: number | string;
     amount: number;
@@ -15,12 +20,26 @@ interface TreasuryTransaction {
     date?: string;
     status?: string;
     fund_id?: number;
+    type?: string;
+    category?: string;
+    currency?: string;
+    persona_id?: string | number | null;
+    created_at?: string;
+    updated_at?: string;
+    person?: TreasuryPerson | null;
+    donation_id?: string | number | null;
+    transaction_date?: string | null;
 }
 
 interface Fund {
-    id: number;
+    id: number | string;
     name: string;
     current_balance?: number;
+    description?: string;
+    is_public?: boolean;
+    target_amount?: number;
+    fund_id?: string | number;
+    created_at?: string;
 }
 
 export default function AdminTreasuryPage() {
@@ -95,7 +114,7 @@ export default function AdminTreasuryPage() {
                                         </td>
                                         <td className="px-3 py-2">
                                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <Calendar size={14} /> {new Date(tx.transaction_date).toLocaleDateString()}
+                                                <Calendar size={14} /> {new Date(tx.transaction_date || tx.date || tx.created_at || Date.now()).toLocaleDateString()}
                                             </div>
                                         </td>
                                         <td className="px-3 py-2 text-right font-black italic tracking-tighter text-emerald-500">
@@ -122,7 +141,7 @@ export default function AdminTreasuryPage() {
                             <div key={i} className="space-y-2">
                                 <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
                                     <span className="text-white/60">{fund.name}</span>
-                                    <span className="text-white">${fund.current_balance.toLocaleString()}</span>
+                                    <span className="text-white">${(fund.current_balance || 0).toLocaleString()}</span>
                                 </div>
                                 <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full bg-amber-500" style={{ width: '100%' }} />
