@@ -129,9 +129,11 @@ Validar al menos:
 | Rol | Esperado |
 |---|---|
 | ADMIN | acceso completo en superficies del modulo |
-| GESTOR | validar por guard real; no todo flujo pastoral/admin necesariamente equivale a `evangelism:manage` |
-| EDITOR | puede quedar fuera de superficies con `require_pastor_or_admin` aunque tenga `evangelism:edit` |
+| GESTOR | validar por guard real; con `evangelism:manage` accede a superficies canonica del modulo, no todo flujo pastoral/admin necesariamente equivale a un nivel concreto |
+| EDITOR | con `evangelism:edit` accede a lectura y operacion en superficies canonicas; queda fuera de superficies que requieren `evangelism:manage` (creacion/eliminacion/estrategia) |
 | MIEMBRO | no debe acceder a acciones administrativas y solo puede entrar en superficies auth/contextuales si el flujo real lo habilita |
+
+> Tras la migracion RBAC radical (cerrada el 2026-07-17 + wrapper legacy eliminado el 2026-07-21), `require_pastor_or_admin` no gobierna ninguna superficie de evangelismo. Toda la matriz opera con la taxonomia `evangelism:read/edit/manage` mas el bypass por rol (`pastor` = total, `coordinador` = read/edit) definido en `permissions.py`. No hay superficie evangelism donde `EDITOR` con `evangelism:edit` quede fuera por tener el nombre historico del guard equivocado.
 
 Si el comportamiento real difiere, actualizar `EVANGELISMO_API_CONTRACTS.md`, `EVANGELISMO_RBAC_MATRIX.md` o corregir permisos.
 
