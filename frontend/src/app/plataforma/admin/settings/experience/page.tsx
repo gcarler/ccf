@@ -71,10 +71,10 @@ export default function WorkspaceExperienceManager() {
 
     const toggleFeature = (id: string) => {
         setConfig((prev) => ({
-            ...prev,
+            ...(prev ?? {}),
             features_enabled: {
-                ...prev.features_enabled,
-                [id]: !prev.features_enabled[id]
+                ...(prev?.features_enabled ?? {}),
+                [id]: !prev?.features_enabled?.[id]
             }
         }));
     };
