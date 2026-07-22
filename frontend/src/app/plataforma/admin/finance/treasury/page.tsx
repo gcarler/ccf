@@ -32,13 +32,12 @@ interface TreasuryTransaction {
 }
 
 interface Fund {
-    id: number | string;
+    fund_id: string | number;
     name: string;
     current_balance?: number;
     description?: string;
     is_public?: boolean;
     target_amount?: number;
-    fund_id?: string | number;
     created_at?: string;
 }
 
@@ -54,7 +53,7 @@ export default function AdminTreasuryPage() {
             try {
                 const [txs, fnds] = await Promise.all([
                     apiFetch<TreasuryTransaction[]>('/finance/transactions', { token, signal }),
-                    apiFetch<Fund[]>('/finance/funds', { token, signal })
+                    apiFetch<Fund[]>('/finance/admin/funds', { token, signal })
                 ]);
                 setTransactions(txs);
                 setFunds(fnds);
