@@ -414,7 +414,7 @@ def get_event_analytics(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    event = require_event_access(db, current_user, event_id)
+    require_event_access(db, current_user, event_id)
 
     attendances = db.query(models.EventAttendance).filter(models.EventAttendance.event_id == event_id).all()
     sessions_by_month = collections.defaultdict(set)
