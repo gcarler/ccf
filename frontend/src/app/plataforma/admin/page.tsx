@@ -28,7 +28,7 @@ TrendingUp,Users,
 Zap
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface AdminTestimonial {
   id: number;

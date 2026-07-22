@@ -68,7 +68,7 @@ export default function EvangelismShell({
     onMore,
     sidebarGroups,
 }: EvangelismShellProps) {
-    const { user, loading, token, hasModuleAccess } = useAuth();
+    const { loading, token, hasModuleAccess } = useAuth();
     const canReadEvangelism = hasModuleAccess('evangelism', 'read');
     const [strategies, setStrategies] = useState<StrategyItem[]>([]);
 

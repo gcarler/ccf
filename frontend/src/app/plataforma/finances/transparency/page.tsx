@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-    ShieldCheck, Globe, Heart, Zap, Target, BarChart3, ArrowRight, Loader2, Users, Home,
+    ShieldCheck, Heart, Target, BarChart3, ArrowRight, Loader2, Users, Home,
     TrendingUp, TrendingDown, HeartHandshake
 } from 'lucide-react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
