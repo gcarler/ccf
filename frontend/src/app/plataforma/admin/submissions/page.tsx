@@ -42,7 +42,7 @@ export default function SubmissionsPage() {
             const response = await apiFetch<Submission[]>('/academy/admin/submissions?limit=100', {
                 token,
                 cache: 'no-store',
-                signal:
+                signal,
             });
             setSubmissions(Array.isArray(response) ? response : []);
         } catch (error) {
