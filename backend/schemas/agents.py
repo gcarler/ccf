@@ -144,7 +144,18 @@ class AgentTaskUpdate(BaseModel):
 
 
 class AgentTask(BaseModel):
+    # NOTE: el ORM AgentTask mapea el JSON como `task_data = Column("metadata", ...)`:
+    # con from_attributes=True, pydantic buscaría `task.metadata` y fallaría.
+    # No exponemos `metadata`/`task_data` en el response porque ninguna vista
+    # admin lo consume (el frontend sólo lee title/status/priority/description).
     id: UUID
+    title: str
+    description: str = ""
+    priority: str = "medium"
+    status: str = "pending"
+    source: Optional[str] = None
+    assigned_to: Optional[str] = None
+    agent_type: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
