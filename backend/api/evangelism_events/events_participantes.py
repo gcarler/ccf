@@ -19,7 +19,6 @@ from backend.api.evangelism_shared import (
 )
 from backend.core.database import get_db
 from backend.core.permissions import (
-    require_active_user,
     require_evangelism_edit,
     require_evangelism_manage,
     require_evangelism_read,

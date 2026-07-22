@@ -935,7 +935,7 @@ def get_conversation_messages(
     before_id: Optional[UUID] = None,
     before_created_at: Optional[datetime] = None,
 ) -> list[models.ChatMessage]:
-    from sqlalchemy import or_, and_
+    from sqlalchemy import and_, or_
 
     q = db.query(models.ChatMessage).filter(
         models.ChatMessage.room_id == f"dm_{conversation_id}",
@@ -1091,7 +1091,7 @@ def get_unread_counts_batch(
         since_map[cid] = last_read if last_read else fallback
 
     # Single query: count unread messages per conversation
-    from sqlalchemy import func, case
+    from sqlalchemy import case, func
 
     room_conditions = case(
         *[(models.ChatMessage.room_id == f"dm_{cid}", since_map[cid]) for cid in conversation_ids],

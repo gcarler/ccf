@@ -31,6 +31,47 @@ def resolve_persona_id_for_user(db: Session, user_id: uuid.UUID | str | None):
     return persona_id
 
 
+def _commit_or_conflict(
+    db: Session,
+    *,
+    rollback: bool = True,
+) -> bool:
+    """Commit helper for create functions. Returns True on success.
+
+    When ``rollback=True`` (default), a **unique-key** ``IntegrityError``
+    is swallowed, the transaction is rolled back and the function returns
+    ``False``. Callers can then translate the conflict into a 409.
+
+    Other ``IntegrityError`` subclasses (NOT NULL, FK violations, check
+    constraints) are re-raised so they surface as real 500/validation errors
+    instead of being silently converted into 409s.
+    """
+    try:
+        db.commit()
+        return True
+    except IntegrityError as exc:
+        if not rollback:
+            raise
+        # Only swallow unique-key violations (Postgres 23505 / SQLite
+        # "UNIQUE constraint failed"). Everything else is a genuine bug
+        # that should not be masked as a conflict.
+        is_unique_violation = False
+        orig = getattr(exc, "orig", None)
+        if orig is not None:
+            pgcode = getattr(orig, "pgcode", None)
+            if pgcode == "23505":
+                is_unique_violation = True
+            # SQLite exposes unique violations via IntegrityError message
+            if not is_unique_violation and "UNIQUE constraint failed" in str(orig):
+                is_unique_violation = True
+        if not is_unique_violation:
+            db.rollback()
+            raise
+        _logger.debug("Swallowed concurrent create unique-key conflict: %s", exc)
+        db.rollback()
+        return False
+
+
 # ── Axioma 3 — Multi-Tenant defense-in-depth helpers (CMS CRUD) ──────────
 
 
@@ -421,7 +462,12 @@ def get_cms_site_by_key(db: Session, site_key: str):
     return db.query(models.CmsSite).options(lazyload("*")).filter(models.CmsSite.site_key == site_key).first()
 
 
-def create_cms_site(db: Session, payload: schemas.CmsSiteCreate):
+def create_cms_site(
+    db: Session,
+    payload: schemas.CmsSiteCreate,
+    *,
+    commit_with_conflict_check: bool = False,
+):
     row = models.CmsSite(
         site_key=payload.site_key.strip().lower(),
         name=payload.name.strip(),
@@ -430,7 +476,10 @@ def create_cms_site(db: Session, payload: schemas.CmsSiteCreate):
         sede_id=payload.sede_id,
     )
     db.add(row)
-    db.commit()
+    if commit_with_conflict_check and not _commit_or_conflict(db):
+        return None
+    elif not commit_with_conflict_check:
+        db.commit()
     db.refresh(row)
     return row
 
@@ -587,7 +636,13 @@ def get_cms_menu(db: Session, site_id: uuid.UUID, menu_key: str):
     )
 
 
-def create_cms_menu(db: Session, site_id: uuid.UUID, payload: schemas.CmsMenuCreate):
+def create_cms_menu(
+    db: Session,
+    site_id: uuid.UUID,
+    payload: schemas.CmsMenuCreate,
+    *,
+    commit_with_conflict_check: bool = False,
+):
     row = models.CmsMenu(
         site_id=site_id,
         menu_key=payload.menu_key.strip().lower(),
@@ -595,7 +650,10 @@ def create_cms_menu(db: Session, site_id: uuid.UUID, payload: schemas.CmsMenuCre
         is_active=payload.is_active,
     )
     db.add(row)
-    db.commit()
+    if commit_with_conflict_check and not _commit_or_conflict(db):
+        return None
+    elif not commit_with_conflict_check:
+        db.commit()
     db.refresh(row)
     return row
 
@@ -629,7 +687,13 @@ def list_cms_menu_items(db: Session, menu_id: uuid.UUID):
     )
 
 
-def create_cms_menu_item(db: Session, menu_id: uuid.UUID, payload: schemas.CmsMenuItemCreate):
+def create_cms_menu_item(
+    db: Session,
+    menu_id: uuid.UUID,
+    payload: schemas.CmsMenuItemCreate,
+    *,
+    commit_with_conflict_check: bool = False,
+):
     row = models.CmsMenuItem(
         menu_id=menu_id,
         parent_id=payload.parent_id,
@@ -642,7 +706,10 @@ def create_cms_menu_item(db: Session, menu_id: uuid.UUID, payload: schemas.CmsMe
         meta_json=payload.meta_json or {},
     )
     db.add(row)
-    db.commit()
+    if commit_with_conflict_check and not _commit_or_conflict(db):
+        return None
+    elif not commit_with_conflict_check:
+        db.commit()
     db.refresh(row)
     return row
 
@@ -734,7 +801,12 @@ def get_cms_page(db: Session, site_id: uuid.UUID, slug: str):
 
 
 def create_cms_page(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsPageCreate, user_id: uuid.UUID | None
+    db: Session,
+    site_id: uuid.UUID,
+    payload: schemas.CmsPageCreate,
+    user_id: uuid.UUID | None,
+    *,
+    commit_with_conflict_check: bool = False,
 ):
     row = models.CmsPage(
         site_id=site_id,
@@ -746,7 +818,10 @@ def create_cms_page(
         updated_by_persona_id=resolve_persona_id_for_user(db, user_id),
     )
     db.add(row)
-    db.commit()
+    if commit_with_conflict_check and not _commit_or_conflict(db):
+        return None
+    elif not commit_with_conflict_check:
+        db.commit()
     db.refresh(row)
     return row
 
@@ -814,7 +889,13 @@ def list_cms_sections(
     return items, total
 
 
-def create_cms_section(db: Session, page_id: uuid.UUID, payload: schemas.CmsSectionCreate):
+def create_cms_section(
+    db: Session,
+    page_id: uuid.UUID,
+    payload: schemas.CmsSectionCreate,
+    *,
+    commit_with_conflict_check: bool = False,
+):
     row = models.CmsSection(
         page_id=page_id,
         section_key=(payload.section_key or uuid.uuid4().hex),
@@ -826,7 +907,10 @@ def create_cms_section(db: Session, page_id: uuid.UUID, payload: schemas.CmsSect
         is_global=getattr(payload, "is_global", False) or False,
     )
     db.add(row)
-    db.commit()
+    if commit_with_conflict_check and not _commit_or_conflict(db):
+        return None
+    elif not commit_with_conflict_check:
+        db.commit()
     db.refresh(row)
     return row
 
@@ -844,12 +928,17 @@ def get_cms_section(db: Session, page_id: uuid.UUID, section_id: uuid.UUID):
 def update_cms_section(
     db: Session, row: models.CmsSection, payload: schemas.CmsSectionUpdate
 ):
+    from backend.schemas.cms_v2_sections import validate_section_props
+
     data = payload.model_dump(exclude_unset=True)
     for field in ["type", "sort_order", "is_visible", "status", "is_global", "global_key"]:
         if field in data and data[field] is not None:
             setattr(row, field, data[field])
     if "props_json" in data and data["props_json"] is not None:
-        row.props_json = data["props_json"]
+        # Defense-in-depth: re-sanitise props_json on every update, even if
+        # the caller already validated it. This protects direct CRUD callers.
+        section_type = data.get("type") or row.type
+        row.props_json = validate_section_props(section_type, data["props_json"])
     db.commit()
     db.refresh(row)
     return row

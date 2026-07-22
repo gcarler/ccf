@@ -12,6 +12,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, lazyload
 
 from backend import crud, models, schemas
@@ -47,6 +48,21 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
 PUBLIC_CMS_RATE_LIMIT = 240
+
+
+def _commit_or_raise_conflict(db: Session, detail: str = "resource already exists") -> None:
+    """Commit helper that converts concurrent unique-key violations into 409.
+
+    Without this, two simultaneous requests can pass the existence check and
+    then raise an unhandled ``IntegrityError`` (500). Wrapping the commit
+    lets us return a controlled ``409 Conflict`` instead.
+    """
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        logger.debug("Concurrent create conflict: %s", exc)
+        raise HTTPException(status_code=409, detail=detail)
 
 # ── Section Types (platform-wide catalog admin endpoints) ─────────────────
 #
@@ -120,7 +136,7 @@ def create_section_type(
         is_active=payload.is_active,
     )
     db.add(row)
-    db.commit()
+    _commit_or_raise_conflict(db, detail="section type already exists")
     db.refresh(row)
     return row
 
@@ -276,22 +292,6 @@ def _get_site_or_404(db: Session, site_key: str) -> models.CmsSite:
     return row
 
 
-def _get_scoped_site_or_404(
-    db: Session,
-    site_key: str,
-    current_user: models.User,
-) -> models.CmsSite:
-    """Axioma 3 — retrieve site + enforce sede scope in one call.
-
-    Combines ``_get_site_or_404`` with ``_assert_site_sede_scope`` so that
-    every admin endpoint that operates on a site enforces multi-tenant
-    isolation without requiring the caller to remember both calls.
-    """
-    site = _get_site_or_404(db, site_key)
-    _assert_site_sede_scope(site, _actor_sede_from_user(db, current_user))
-    return site
-
-
 def _actor_sede_from_user(db: Session, current_user: models.User) -> uuid.UUID | None:
     """Resolve la sede del actor autenticado desde su persona.
 
@@ -307,20 +307,55 @@ def _actor_sede_from_user(db: Session, current_user: models.User) -> uuid.UUID |
     return persona.sede_id
 
 
+def _is_global_admin(current_user: models.User) -> bool:
+    """Return True if the user has a platform-wide admin role.
+
+    A user without a sede is *not* automatically a global admin.
+    Only explicit admin/platform-admin roles bypass tenant scope.
+    """
+    role = normalize_role(getattr(current_user, "role", ""))
+    if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+        role = normalize_role(current_user.rol_plataforma.nombre)
+    return role in {"admin", "administrador", "super administrador"}
+
+
 def _assert_site_sede_scope(
     site: models.CmsSite,
     actor_sede: uuid.UUID | None,
+    current_user: models.User,
 ) -> None:
-    """Axioma 3 — Multi-Tenant: validar que el site pertenece a la sede
-    del actor. Si ``actor_sede`` es ``None`` (superadmin sin sede) se
-    considera acceso global y no se rechaza. Cualquier otro actor sólo
-    puede interactuar con sites de su propia sede o sites sin sede
-    asignada (sitios previos a la migración).
+    """Axioma 3 — Multi-Tenant: validar que el site pertenece a la sede del actor.
+
+    Reglas:
+      - Superadministradores globales (detectados por rol, no por ausencia
+        de sede) pueden acceder a cualquier site.
+      - Un actor con sede solo puede interactuar con sites de su propia sede
+        o sites sin sede asignada (legacy/migración).
+      - Un actor sin sede que NO sea admin global recibe 404 para evitar
+        escalación de privilegios por inconsistencia de datos.
     """
-    if actor_sede is None:
+    if _is_global_admin(current_user):
         return
+    if actor_sede is None:
+        raise HTTPException(status_code=404, detail="site not found")
     if site.sede_id is not None and site.sede_id != actor_sede:
         raise HTTPException(status_code=404, detail="site not found")
+
+
+def _get_scoped_site_or_404(
+    db: Session,
+    site_key: str,
+    current_user: models.User,
+) -> models.CmsSite:
+    """Axioma 3 — retrieve site + enforce sede scope in one call.
+
+    Combines ``_get_site_or_404`` with ``_assert_site_sede_scope`` so that
+    every admin endpoint that operates on a site enforces multi-tenant
+    isolation without requiring the caller to remember both calls.
+    """
+    site = _get_site_or_404(db, site_key)
+    _assert_site_sede_scope(site, _actor_sede_from_user(db, current_user), current_user)
+    return site
 
 
 def _get_public_site_or_404(db: Session, site_key: str) -> models.CmsSite:
@@ -447,7 +482,10 @@ def create_site(
             payload.sede_id = actor_sede
         elif payload.sede_id is None:
             payload.sede_id = actor_sede
-    return crud.create_cms_site(db, payload)
+    row = crud.create_cms_site(db, payload, commit_with_conflict_check=True)
+    if row is None:
+        raise HTTPException(status_code=409, detail="site_key already exists")
+    return row
 
 
 @router.get("/sites/{site_key}", response_model=schemas.CmsSiteRead)
@@ -610,7 +648,10 @@ def create_menu(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     if crud.get_cms_menu(db, site.id, payload.menu_key.strip().lower()):
         raise HTTPException(status_code=409, detail="menu_key already exists")
-    return crud.create_cms_menu(db, site.id, payload)
+    row = crud.create_cms_menu(db, site.id, payload, commit_with_conflict_check=True)
+    if row is None:
+        raise HTTPException(status_code=409, detail="menu_key already exists")
+    return row
 
 
 @router.get("/sites/{site_key}/menus/{menu_key}", response_model=schemas.CmsMenuRead)
@@ -682,7 +723,10 @@ def create_menu_item(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     menu = _get_menu_or_404(db, site.id, menu_key)
-    return crud.create_cms_menu_item(db, menu.id, payload)
+    row = crud.create_cms_menu_item(db, menu.id, payload, commit_with_conflict_check=True)
+    if row is None:
+        raise HTTPException(status_code=409, detail="menu item conflict")
+    return row
 
 
 @router.patch(
@@ -774,7 +818,10 @@ def create_page(
         raise HTTPException(status_code=422, detail="slug is required")
     if crud.get_cms_page(db, site.id, payload.slug):
         raise HTTPException(status_code=409, detail="slug already exists")
-    return crud.create_cms_page(db, site.id, payload, current_user.id)
+    row = crud.create_cms_page(db, site.id, payload, current_user.id, commit_with_conflict_check=True)
+    if row is None:
+        raise HTTPException(status_code=409, detail="slug already exists")
+    return row
 
 
 @router.get("/sites/{site_key}/pages/{slug}", response_model=schemas.CmsPageRead)
@@ -888,7 +935,10 @@ def create_section(
         raise HTTPException(status_code=422, detail="unsupported section status")
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
-    return crud.create_cms_section(db, page.id, payload)
+    row = crud.create_cms_section(db, page.id, payload, commit_with_conflict_check=True)
+    if row is None:
+        raise HTTPException(status_code=409, detail="section conflict")
+    return row
 
 
 @router.patch(

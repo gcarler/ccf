@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from backend.schemas._common import orm_config
 
-
 MILESTONE_TYPES = [
     "Decision_Fe",
     "Bautismo_Aguas",

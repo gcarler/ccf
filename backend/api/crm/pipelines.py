@@ -222,7 +222,7 @@ def reorder_casos(
         models.CasoCRM.atomic_sort_reorder(db, payload_dict, sede_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Error interno al reordenar casos")
 
     return {"status": "success"}

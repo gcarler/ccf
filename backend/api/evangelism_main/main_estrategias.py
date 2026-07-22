@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone as _tz
+from datetime import datetime
+from datetime import timezone as _tz
 from typing import List, Optional
 from uuid import UUID
 
@@ -150,7 +151,6 @@ def create_strategy(
     current_user: models.User = Depends(require_evangelism_manage),
 ):
     try:
-        from backend.models import Sede as _Sede
         from backend.models_evangelism import CategoriaEstrategia
         # Asignar sede_id desde el usuario autenticado
         sede_id = crud.get_user_sede_id(db, current_user.id)

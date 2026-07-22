@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import JSON, cast, String
 from sqlalchemy.orm import Session
 
 from backend import models

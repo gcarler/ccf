@@ -16,8 +16,6 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.evangelism_events._shared import (
-    _get_persona_for_user,
-    _get_user_role,
     require_event_access,
 )
 from backend.api.evangelism_shared import (
@@ -28,8 +26,6 @@ from backend.api.evangelism_shared import (
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import (
-    require_active_user,
-    require_evangelism_edit,
     require_evangelism_manage,
     require_evangelism_read,
 )
