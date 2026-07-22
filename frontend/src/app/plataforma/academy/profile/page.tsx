@@ -234,7 +234,7 @@ export default function StudentProfilePage() {
                                         { icon: Zap, color: 'from-sky-400 to-sky-600', locked: false, title: 'Poder' },
                                         { icon: ShieldCheck, color: 'from-emerald-400 to-teal-600', locked: false, title: 'Fidelidad' },
                                         { icon: Target, color: 'from-[hsl(var(--surface-3))] to-[hsl(var(--bg-muted))]', locked: true, title: 'Misiones' },
-                                    ].map((badge, i) => (
+                                    ].map((badge) => (
                                         <div key={badge.title} className="flex flex-col items-center gap-3">
                                             <div className={clsx(
                                                 "aspect-square w-full rounded-lg flex items-center justify-center relative badge-3d group cursor-crosshair",

@@ -104,6 +104,8 @@ export default function AutomationsPage() {
       setError(null);
       const data = await apiFetch<{ items: AutomationRule[]; total: number }>("/admin/automations", {
         token,
+        cache: "no-store",
+        signal,
       });
       setRules(data?.items ?? []);
     } catch (err) {
