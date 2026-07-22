@@ -20,11 +20,6 @@ from sqlalchemy.orm import relationship
 from backend.core.database import Base
 from backend.models_shared import _utcnow
 
-
-def _utcnow():
-    return datetime.now(timezone.utc)
-
-
 # ──────────────────────────────────────────────
 # ENUMS DEL KERNEL
 # ──────────────────────────────────────────────

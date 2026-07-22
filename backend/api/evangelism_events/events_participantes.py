@@ -314,7 +314,7 @@ def sync_event_assignments(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_manage),
 ):
-    event = require_event_access(db, current_user, event_id)
+    require_event_access(db, current_user, event_id)
 
     db.query(models.EventAssignment).filter(
         models.EventAssignment.event_id == event_id,
