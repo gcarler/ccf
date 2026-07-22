@@ -1087,7 +1087,7 @@ class TestGruposEndpoints:
 
     def test_create_grupo_minimo(self, full):
         resp = full["c"].post("/api/evangelism/grupos", json={
-            "nombre": "Grupo Nuevo", "lugar": "Centro",
+            "name": "Grupo Nuevo", "zone": "Centro",
         }, headers=full["h"])
         assert resp.status_code == 200, resp.text
 
@@ -1095,7 +1095,7 @@ class TestGruposEndpoints:
         g = full["grupos"][0]
         resp = full["c"].put(
             f"/api/evangelism/grupos/{g.id}",
-            json={"nombre": "Grupo Renombrado"},
+            json={"name": "Grupo Renombrado"},
             headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
@@ -1103,7 +1103,7 @@ class TestGruposEndpoints:
     def test_update_grupo_404(self, full):
         resp = full["c"].put(
             f"/api/evangelism/grupos/{uuid.uuid4()}",
-            json={"nombre": "X"},
+            json={"name": "X"},
             headers=full["h"],
         )
         assert resp.status_code == 404
@@ -1114,7 +1114,7 @@ class TestGruposEndpoints:
         db_session.commit()
         resp = full["c"].put(
             f"/api/evangelism/grupos/{g.id}",
-            json={"nombre": "Grupo Inactivo"},
+            json={"name": "Grupo Inactivo"},
             headers=full["h"],
         )
         assert resp.status_code == 404

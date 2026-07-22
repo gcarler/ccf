@@ -40,9 +40,9 @@ from backend.schemas.evangelism import (
 # ============================================================
 # Patrón idéntico al canon backend/crud/cms.py. Red de seguridad
 # contra callers no-API (workers, scripts/seed_*, pytest) y TOCTOU
-# entre fetch y commit. La API-layer (cuando exista el paquete
-# backend/api/_evangelism_helpers/_shared.py) hará el primer
-# filtro; el CRUD re-valida pre-commit.
+# entre fetch y commit. La API-layer hace el primer filtro vía
+# require_user_sede_id + crud_*_with_sede helpers propios de
+# cada router; el CRUD re-valida pre-commit aquí.
 
 
 def _actor_sede_or_none_evangelismo(
