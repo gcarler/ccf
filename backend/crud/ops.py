@@ -53,7 +53,7 @@ class SystemVariableUpdate(BaseModel):
 
 
 def get_church_locations(db: Session, only_active: bool = False):
-    query = db.query(models.ChurchLocation)
+    query = db.query(models.ChurchLocation).filter(models.ChurchLocation.deleted_at.is_(None))
     if only_active:
         query = query.filter(models.ChurchLocation.is_active)
     return query.order_by(models.ChurchLocation.name).all()
@@ -62,7 +62,10 @@ def get_church_locations(db: Session, only_active: bool = False):
 def get_church_location(db: Session, location_id: UUID):
     return (
         db.query(models.ChurchLocation)
-        .filter(models.ChurchLocation.id == location_id)
+        .filter(
+            models.ChurchLocation.id == location_id,
+            models.ChurchLocation.deleted_at.is_(None),
+        )
         .first()
     )
 
@@ -80,7 +83,10 @@ def update_church_location(
 ):
     row = (
         db.query(models.ChurchLocation)
-        .filter(models.ChurchLocation.id == location_id)
+        .filter(
+            models.ChurchLocation.id == location_id,
+            models.ChurchLocation.deleted_at.is_(None),
+        )
         .first()
     )
     if not row:
@@ -109,7 +115,7 @@ def delete_church_location(db: Session, location_id: UUID) -> bool:
 
 
 def get_social_channels(db: Session, only_visible: bool = False):
-    query = db.query(models.SocialChannel)
+    query = db.query(models.SocialChannel).filter(models.SocialChannel.deleted_at.is_(None))
     if only_visible:
         query = query.filter(models.SocialChannel.is_visible)
     return query.all()
@@ -118,7 +124,10 @@ def get_social_channels(db: Session, only_visible: bool = False):
 def get_social_channel(db: Session, channel_id: UUID):
     return (
         db.query(models.SocialChannel)
-        .filter(models.SocialChannel.id == channel_id)
+        .filter(
+            models.SocialChannel.id == channel_id,
+            models.SocialChannel.deleted_at.is_(None),
+        )
         .first()
     )
 
@@ -134,7 +143,10 @@ def create_social_channel(db: Session, payload: SocialChannelCreate):
 def update_social_channel(db: Session, channel_id: UUID, payload: SocialChannelUpdate):
     row = (
         db.query(models.SocialChannel)
-        .filter(models.SocialChannel.id == channel_id)
+        .filter(
+            models.SocialChannel.id == channel_id,
+            models.SocialChannel.deleted_at.is_(None),
+        )
         .first()
     )
     if not row:
@@ -163,12 +175,17 @@ def delete_social_channel(db: Session, channel_id: UUID) -> bool:
 
 
 def get_system_variables(db: Session):
-    return db.query(models.SystemVariable).all()
+    return db.query(models.SystemVariable).filter(models.SystemVariable.deleted_at.is_(None)).all()
 
 
 def get_system_variable(db: Session, key: str):
     return (
-        db.query(models.SystemVariable).filter(models.SystemVariable.key == key).first()
+        db.query(models.SystemVariable)
+        .filter(
+            models.SystemVariable.key == key,
+            models.SystemVariable.deleted_at.is_(None),
+        )
+        .first()
     )
 
 
@@ -189,7 +206,12 @@ def create_system_variable(db: Session, payload: SystemVariableCreate):
 
 def update_system_variable(db: Session, key: str, payload: SystemVariableUpdate):
     row = (
-        db.query(models.SystemVariable).filter(models.SystemVariable.key == key).first()
+        db.query(models.SystemVariable)
+        .filter(
+            models.SystemVariable.key == key,
+            models.SystemVariable.deleted_at.is_(None),
+        )
+        .first()
     )
     if not row:
         return None
@@ -203,6 +225,7 @@ def update_system_variable(db: Session, key: str, payload: SystemVariableUpdate)
 def upsert_system_variable(
     db: Session, key: str, value: str, description: str | None = None
 ):
+    # get_system_variable already filters deleted rows.
     row = get_system_variable(db, key)
     if row:
         row.value = value
@@ -218,10 +241,18 @@ def upsert_system_variable(
 
 def delete_system_variable(db: Session, key: str) -> bool:
     row = (
-        db.query(models.SystemVariable).filter(models.SystemVariable.key == key).first()
+        db.query(models.SystemVariable)
+        .filter(
+            models.SystemVariable.key == key,
+            models.SystemVariable.deleted_at.is_(None),
+        )
+        .first()
     )
     if not row:
         return False
+    # Free the unique key so a new variable with the same key can be created.
+    suffix = f" [deleted:{row.id}]"
+    row.key = f"{row.key[: 100 - len(suffix)]}{suffix}"
     row.deleted_at = _utcnow()
     db.commit()
     return True

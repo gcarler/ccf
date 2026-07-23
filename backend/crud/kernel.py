@@ -267,7 +267,10 @@ def get_platform_role_definitions(db: Session) -> List[dict]:
             "role": role.nombre,
             "permissions": role.permisos or {},
         }
-        for role in db.query(RolPlataforma).order_by(RolPlataforma.nombre).all()
+        for role in db.query(RolPlataforma)
+        .filter(RolPlataforma.deleted_at.is_(None))
+        .order_by(RolPlataforma.nombre)
+        .all()
     ]
 
 

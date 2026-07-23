@@ -591,6 +591,7 @@ class DonationCategory(Base):
     description = Column(String(255))
     color_code = Column(String(50), default="blue")
     is_active = Column(Boolean, default=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class VolunteerShift(Base):

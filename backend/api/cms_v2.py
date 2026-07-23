@@ -1667,7 +1667,10 @@ def _get_system_var(db, site_key: str, var_key: str, default: str = "") -> str:
         cached_time, cached_val = _system_var_cache[cache_key]
         if now - cached_time < _SYSTEM_VAR_TTL:
             return cached_val
-    row = db.query(models.SystemVariable).filter(models.SystemVariable.key == f"{site_key}_{var_key}").first()
+    row = db.query(models.SystemVariable).filter(
+        models.SystemVariable.key == f"{site_key}_{var_key}",
+        models.SystemVariable.deleted_at.is_(None),
+    ).first()
     val = row.value if row and row.value else default
     _system_var_cache[cache_key] = (now, val)
     return val

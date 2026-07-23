@@ -13,6 +13,7 @@ class ChurchLocation(Base):
     is_active = Column(Boolean, default=True)
     location_type = Column(String(50), default="Central")
     created_at = Column(DateTime(timezone=True), default=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class SocialChannel(Base):
@@ -21,6 +22,7 @@ class SocialChannel(Base):
     platform = Column(String(50), nullable=False)
     url = Column(String(255), nullable=False)
     is_visible = Column(Boolean, default=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class SystemVariable(Base):
@@ -29,3 +31,4 @@ class SystemVariable(Base):
     key = Column(String(100), unique=True, nullable=False)
     value = Column(Text)
     description = Column(String(255))
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
