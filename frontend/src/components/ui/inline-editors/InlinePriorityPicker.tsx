@@ -7,10 +7,10 @@ import { Check, ChevronDown } from "lucide-react";
 import { PRIORITY_LABELS, type TaskPriority } from "@/lib/projects/constants";
 
 const PRIORITY_OPTIONS: { value: TaskPriority; label: string; color: string; fill: string }[] = [
-  { value: "low", label: PRIORITY_LABELS.low, color: "text-[hsl(var(--text-secondary))]", fill: "#94a3b8" },
-  { value: "medium", label: PRIORITY_LABELS.medium, color: "text-[hsl(var(--primary))]", fill: "#3b82f6" },
-  { value: "high", label: PRIORITY_LABELS.high, color: "text-orange-500", fill: "#f97316" },
-  { value: "urgent", label: PRIORITY_LABELS.urgent, color: "text-rose-500", fill: "#ef4444" },
+  { value: "low", label: PRIORITY_LABELS.low, color: "text-[hsl(var(--text-secondary))]", fill: "hsl(var(--text-secondary))" },
+  { value: "medium", label: PRIORITY_LABELS.medium, color: "text-[hsl(var(--primary))]", fill: "hsl(var(--primary))" },
+  { value: "high", label: PRIORITY_LABELS.high, color: "text-[hsl(var(--warning))]", fill: "hsl(var(--warning))" },
+  { value: "urgent", label: PRIORITY_LABELS.urgent, color: "text-[hsl(var(--danger))]", fill: "hsl(var(--danger))" },
 ];
 
 const FlagIcon = ({ fill, size = 14 }: { fill: string; size?: number }) => (

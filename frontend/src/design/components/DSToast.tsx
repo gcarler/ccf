@@ -25,27 +25,27 @@ const typeConfig: Record<ToastType, {
 }> = {
     success: {
         icon: CheckCircle,
-        bgColor: 'bg-emerald-500/10',
-        borderColor: 'border-emerald-500/30',
-        iconColor: 'text-emerald-500',
+        bgColor: 'bg-[hsl(var(--success-muted))]',
+        borderColor: 'border-[hsl(var(--success))]/30',
+        iconColor: 'text-[hsl(var(--success))]',
     },
     error: {
         icon: AlertCircle,
-        bgColor: 'bg-[hsl(var(--danger))]/10',
+        bgColor: 'bg-[hsl(var(--danger-muted))]',
         borderColor: 'border-[hsl(var(--danger))]/30',
         iconColor: 'text-[hsl(var(--danger))]',
     },
     warning: {
         icon: AlertTriangle,
-        bgColor: 'bg-amber-500/10',
-        borderColor: 'border-amber-500/30',
-        iconColor: 'text-amber-500',
+        bgColor: 'bg-[hsl(var(--warning-muted))]',
+        borderColor: 'border-[hsl(var(--warning))]/30',
+        iconColor: 'text-[hsl(var(--warning))]',
     },
     info: {
         icon: Info,
-        bgColor: 'bg-blue-500/10',
-        borderColor: 'border-blue-500/30',
-        iconColor: 'text-blue-500',
+        bgColor: 'bg-[hsl(var(--info-muted))]',
+        borderColor: 'border-[hsl(var(--info))]/30',
+        iconColor: 'text-[hsl(var(--info))]',
     },
 };
 

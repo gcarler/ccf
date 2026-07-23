@@ -13,27 +13,8 @@ const meta: Meta<typeof UniversalCreationDrawer> = {
   parameters: {
     layout: 'fullscreen',
   },
-  // We'll need to mock the context and API calls for storybook
-  decorators: [
-    (Story) => {
-      // Mock the auth and creation contexts
-      const OriginalUseAuth = typeof window !== 'undefined' ? window.useAuth : undefined;
-      const OriginalUseCreation = typeof window !== 'undefined' ? window.useCreation : undefined;
-      
-      // Set up mocks
-      if (typeof window !== 'undefined') {
-        window.useAuth = () => ({ token: 'fake-token-for-storybook' });
-        window.useCreation = () => ({
-          setCreationType: () => {},
-          setCreationData: () => {},
-          creationType: 'task',
-          creationData: {},
-        });
-      }
-      
-      return <Story />;
-    }
-  ]
+  // Note: This component requires AuthContext and CreationContext which aren't available in Storybook.
+  // This story is for documentation/reference purposes; interactive use requires the full app context.
 };
 
 export default meta;

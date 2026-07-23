@@ -67,7 +67,7 @@ export default function StatusPicker({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.95 }}
                         transition={{ duration: 0.1 }}
-                        className="absolute left-0 top-full mt-1 w-40 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] rounded-lg shadow-xl border border-[hsl(var(--border))] dark:border-white/10 z-[100] overflow-hidden"
+                        className="absolute left-0 top-full mt-1 w-40 bg-[hsl(var(--bg-primary))] rounded-lg shadow-xl border border-[hsl(var(--border))] z-[100] overflow-hidden"
                     >
                         <div className="p-1">
                             {options.map((option) => (

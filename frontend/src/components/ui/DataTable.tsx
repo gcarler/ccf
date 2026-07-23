@@ -30,7 +30,7 @@ export function DataTable({ data, columns, onRowClick }: DataTableProps) {
     });
 
     return (
-        <div className="flex-1 min-w-0 overflow-auto bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
+        <div className="flex-1 min-w-0 overflow-auto bg-[hsl(var(--bg-primary))]">
             <table className="w-full text-left border-collapse min-w-[620px] md:min-w-[800px]">
                 <thead className="sticky top-0 bg-[hsl(var(--surface-1))] dark:bg-black/20 z-10 shadow-sm">
                     {table.getHeaderGroups().map((headerGroup) => (

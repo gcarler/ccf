@@ -30,7 +30,7 @@ export function DSTooltip({
                         sideOffset={sideOffset}
                         className={clsx(
                             'z-[10000] select-none px-2.5 py-1.5',
-                            'bg-[hsl(var(--bg-muted))] dark:bg-[#1a1b1e]',
+                            'bg-[hsl(var(--bg-muted))]',
                             'text-[9px] font-semibold uppercase tracking-wide',
                             'text-white',
                             'border border-white/10',

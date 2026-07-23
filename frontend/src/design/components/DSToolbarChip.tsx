@@ -38,7 +38,7 @@ export function DSToolbarChip({ label, active, variant = 'soft', size = 'md', ic
             style={{
                 borderRadius: radii.md,
                 backgroundColor: active ? colors.primary[600] : undefined,
-                color: tone === 'dark' ? '#fff' : undefined,
+                color: tone === 'dark' ? 'hsl(var(--text-primary))' : undefined,
                 transitionDuration: motion.duration.base,
             }}
             {...props}

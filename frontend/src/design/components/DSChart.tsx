@@ -22,10 +22,10 @@ interface DSChartProps {
 }
 
 const CHART_COLORS = {
-    grid: 'rgba(255,255,255,0.05)',
-    tick: colors.slate[500],
-    tooltipBg: colors.slate[900],
-    tooltipText: '#fff',
+    grid: 'hsl(var(--border))',
+    tick: 'hsl(var(--text-secondary))',
+    tooltipBg: 'hsl(var(--bg-primary))',
+    tooltipText: 'hsl(var(--text-primary))',
 };
 
 function useContainerSize() {

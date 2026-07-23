@@ -8,9 +8,9 @@ type Tone = 'slate' | 'blue' | 'emerald' | 'amber';
 
 const toneStyles: Record<Tone, string> = {
     slate: 'bg-[hsl(var(--bg-muted))]/70 text-[hsl(var(--text-secondary))]',
-    blue: 'bg-blue-500/15 text-[hsl(var(--primary))]',
-    emerald: 'bg-emerald-500/15 text-emerald-400',
-    amber: 'bg-amber-500/15 text-amber-400',
+    blue: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]',
+    emerald: 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success-text))]',
+    amber: 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))]',
 };
 
 interface DSBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {

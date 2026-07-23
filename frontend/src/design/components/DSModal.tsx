@@ -71,7 +71,7 @@ export function DSModal({
             <div
                 ref={modalRef}
                 className={clsx(
-                    'relative w-full mx-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e]',
+                    'relative w-full mx-4 bg-[hsl(var(--bg-primary))]',
                     'border border-[hsl(var(--border))] dark:border-white/10',
                     'shadow-2xl',
                     sizeClasses[size]
