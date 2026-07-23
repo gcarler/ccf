@@ -87,14 +87,30 @@ class TestRolesCRUD:
         assert resp.status_code == 404
 
     def test_delete_role(self, full):
-        c, h = full["c"], full["h"]
+        c, h, db = full["c"], full["h"], full["_db"]
+        name = f"DelRole_{uuid.uuid4().hex[:6]}"
         create_resp = c.post("/api/admin/roles", json={
-            "name": f"DelRole_{uuid.uuid4().hex[:6]}",
+            "name": name,
             "permissions": {},
         }, headers=h)
         role_id = create_resp.json()["id"]
         resp = c.delete(f"/api/admin/roles/{role_id}", headers=h)
         assert resp.status_code == 204
+
+        # Soft-delete: row still exists in DB but is excluded from list/get.
+        from backend.models_auth import RolPlataforma
+        role = db.query(RolPlataforma).filter(RolPlataforma.id == role_id).first()
+        assert role is not None
+        assert role.deleted_at is not None
+        list_resp = c.get("/api/admin/roles", headers=h)
+        assert all(r["id"] != str(role_id) for r in list_resp.json()["items"])
+
+        # Re-creating a previously deleted role with the same name should succeed.
+        recreate_resp = c.post("/api/admin/roles", json={
+            "name": name,
+            "permissions": {},
+        }, headers=h)
+        assert recreate_resp.status_code == 201
 
     def test_delete_role_not_found(self, full):
         c, h = full["c"], full["h"]
@@ -321,13 +337,18 @@ class TestLocations:
         assert resp.status_code == 404
 
     def test_delete_location(self, full):
-        c, h = full["c"], full["h"]
+        c, h, db = full["c"], full["h"], full["_db"]
         create_resp = c.post("/api/admin/locations", json={
             "name": f"DelLoc_{uuid.uuid4().hex[:6]}",
         }, headers=h)
         loc_id = create_resp.json()["id"]
         resp = c.delete(f"/api/admin/locations/{loc_id}", headers=h)
         assert resp.status_code == 204
+
+        from backend.models_ops import ChurchLocation
+        loc = db.query(ChurchLocation).filter(ChurchLocation.id == loc_id).first()
+        assert loc is not None
+        assert loc.deleted_at is not None
 
     def test_delete_location_not_found(self, full):
         c, h = full["c"], full["h"]
@@ -374,7 +395,7 @@ class TestSocials:
         assert resp.status_code == 404
 
     def test_delete_social(self, full):
-        c, h = full["c"], full["h"]
+        c, h, db = full["c"], full["h"], full["_db"]
         create_resp = c.post("/api/admin/socials", json={
             "platform": "Twitter",
             "url": f"https://twitter.com/{uuid.uuid4().hex[:6]}",
@@ -382,6 +403,11 @@ class TestSocials:
         soc_id = create_resp.json()["id"]
         resp = c.delete(f"/api/admin/socials/{soc_id}", headers=h)
         assert resp.status_code == 204
+
+        from backend.models_ops import SocialChannel
+        ch = db.query(SocialChannel).filter(SocialChannel.id == soc_id).first()
+        assert ch is not None
+        assert ch.deleted_at is not None
 
     def test_delete_social_not_found(self, full):
         c, h = full["c"], full["h"]
@@ -409,11 +435,27 @@ class TestVariables:
         assert resp.status_code == 200
 
     def test_delete_variable(self, full):
-        c, h = full["c"], full["h"]
+        c, h, db = full["c"], full["h"], full["_db"]
         key = f"delvar_{uuid.uuid4().hex[:6]}"
         c.post("/api/admin/variables", json={"key": key, "value": "x"}, headers=h)
+
+        from backend.models_ops import SystemVariable
+        var_id = (
+            db.query(SystemVariable.id)
+            .filter(SystemVariable.key == key)
+            .scalar()
+        )
+
         resp = c.delete(f"/api/admin/variables/{key}", headers=h)
         assert resp.status_code == 204
+
+        var = db.query(SystemVariable).filter(SystemVariable.id == var_id).first()
+        assert var is not None
+        assert var.deleted_at is not None
+
+        # Re-creating a previously deleted variable with the same key should succeed.
+        recreate_resp = c.post("/api/admin/variables", json={"key": key, "value": "y"}, headers=h)
+        assert recreate_resp.status_code == 200
 
     def test_delete_variable_not_found(self, full):
         c, h = full["c"], full["h"]
@@ -546,13 +588,18 @@ class TestDonationCategories:
         assert resp.status_code == 404
 
     def test_delete_donation_category(self, full):
-        c, h = full["c"], full["h"]
+        c, h, db = full["c"], full["h"], full["_db"]
         create_resp = c.post("/api/admin/donation-categories", json={
             "name": f"DelCat_{uuid.uuid4().hex[:6]}",
         }, headers=h)
         cat_id = create_resp.json()["id"]
         resp = c.delete(f"/api/admin/donation-categories/{cat_id}", headers=h)
         assert resp.status_code == 204
+
+        from backend.models_crm import DonationCategory
+        cat = db.query(DonationCategory).filter(DonationCategory.id == cat_id).first()
+        assert cat is not None
+        assert cat.deleted_at is not None
 
     def test_delete_donation_category_not_found(self, full):
         c, h = full["c"], full["h"]

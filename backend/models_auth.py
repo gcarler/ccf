@@ -24,6 +24,7 @@ class RolPlataforma(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     nombre = Column(String(100), nullable=False, unique=True)
     permisos = Column(JSON, nullable=False, default=dict)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class NivelGamificado(Base):

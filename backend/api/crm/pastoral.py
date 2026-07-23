@@ -1580,7 +1580,10 @@ _CRM_SETTINGS_KEY = "crm_settings"
 def _get_crm_settings_raw(db: Session) -> dict:
     import json
 
-    row = db.query(models.SystemVariable).filter(models.SystemVariable.key == _CRM_SETTINGS_KEY).first()
+    row = db.query(models.SystemVariable).filter(
+        models.SystemVariable.key == _CRM_SETTINGS_KEY,
+        models.SystemVariable.deleted_at.is_(None),
+    ).first()
     if not row or not row.value:
         return {}
     try:
@@ -1606,7 +1609,10 @@ def save_crm_settings(
     import json
 
     data = payload.model_dump(exclude_unset=True)
-    row = db.query(models.SystemVariable).filter(models.SystemVariable.key == _CRM_SETTINGS_KEY).first()
+    row = db.query(models.SystemVariable).filter(
+        models.SystemVariable.key == _CRM_SETTINGS_KEY,
+        models.SystemVariable.deleted_at.is_(None),
+    ).first()
     if row:
         row.value = json.dumps(data, ensure_ascii=False)
     else:

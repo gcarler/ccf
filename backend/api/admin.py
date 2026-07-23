@@ -72,13 +72,15 @@ def create_role(
     nombre = payload.name.strip() if payload.name else ""
     if not nombre:
         raise HTTPException(status_code=400, detail="nombre es requerido")
-    from sqlalchemy import func as _func
     existing_name = (
-        db.query(_func.count(models.RolPlataforma.id))
-        .filter(models.RolPlataforma.nombre == nombre)
-        .scalar()
+        db.query(models.RolPlataforma)
+        .filter(
+            models.RolPlataforma.nombre == nombre,
+            models.RolPlataforma.deleted_at.is_(None),
+        )
+        .count()
     )
-    if existing_name and existing_name > 0:
+    if existing_name > 0:
         raise HTTPException(status_code=409, detail="El rol ya existe")
     try:
         rol = admin_crud.create_admin_role(db, nombre, payload.permissions)

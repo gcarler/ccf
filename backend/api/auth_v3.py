@@ -213,7 +213,10 @@ def _resolve_user(db: Session, email: str) -> Usuario | None:
 
 
 def _resolve_persona_default_role(db: Session) -> RolPlataforma:
-    role = db.query(RolPlataforma).filter(RolPlataforma.nombre == "MIEMBRO").first()
+    role = db.query(RolPlataforma).filter(
+        RolPlataforma.nombre == "MIEMBRO",
+        RolPlataforma.deleted_at.is_(None),
+    ).first()
     if role:
         return role
 
