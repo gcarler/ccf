@@ -516,3 +516,140 @@ class TestImagesResizeArchivedDefenseInDepth:
             f"/api/cms/v2/images/{fake_id}/resize?width=800"
         )
         assert resp.status_code == 404
+
+
+# (E) delete_cms_media — path traversal hardening on permanent delete
+#
+# Regression: H-05 (errorescms.md).  Before the fix, a malicious admin
+# with ``cms:edit`` could store a media item whose ``url`` pointed
+# outside ``/root/ccf/uploads`` (e.g. ``../../etc/passwd``) and then
+# trigger ``DELETE /cms/v2/media/{id}?permanent=true`` to delete an
+# arbitrary local file.  The endpoint must normalise the resolved path
+# and reject anything outside the uploads root with a 400 before any
+# ``os.remove`` runs.
+
+class TestDeleteCmsMediaPathTraversalHardening:
+
+    def test_permanent_delete_blocks_traversal_url(self, client, db_session):
+        """CRITICO path traversal: un media item con url que resuelve a
+        fuera de /root/ccf/uploads debe rejectar permanent-delete con
+        400, sin invocar os.remove.  Lanza un archivo sandbox en el
+        target y verifica que sobrevive intacto post-request."""
+        import os
+        import tempfile
+
+        (admin_a, persona_a, sede_a), _ = _seed_two_sedes(db_session)
+
+        # Sandbox жертven file OUTSIDE uploads root.
+        sandbox_dir = tempfile.mkdtemp(prefix="ccf_traversal_h05_")
+        target_name = "secret_target.txt"
+        target_path = os.path.join(sandbox_dir, target_name)
+        sentinel = b"H05-PATH-TRAVERSAL-SENTINEL"
+        with open(target_path, "wb") as f:
+            f.write(sentinel)
+
+        # Craft a media item whose ``url`` resolves to outside uploads
+        # root when naively join+normpath'd.  The relative path walks up
+        # from uploads back out into the sandbox dir.
+        uploads_root = "/root/ccf/uploads"
+        rel = os.path.relpath(sandbox_dir, uploads_root)
+        crafted_url = f"uploads/{rel}/{target_name}"
+
+        m = _make_cms_media(
+            db_session,
+            persona_a,
+            sede_a,
+            url=crafted_url,
+            filename=target_name,
+            alt_text="traversal-poison",
+        )
+        db_session.commit()
+
+        headers = _auth_headers(client, "cmsUploadA@example.com")
+        resp = client.delete(
+            f"/api/cms/media/{m.id}?permanent=true",
+            headers=headers,
+        )
+        assert resp.status_code == 400, (
+            f"Path traversal permitido: permanent delete resolvio fuera "
+            f"de uploads root y NO fue bloqueado: {resp.status_code} {resp.text}"
+        )
+
+        # The sentinel file must still exist and be byte-identical.
+        assert os.path.exists(target_path), (
+            "REGRESSION: el archivo sandbox fue eliminado por la "
+            "respuesta no-bloqueada del path traversal"
+        )
+        with open(target_path, "rb") as f:
+            assert f.read() == sentinel, (
+                "REGRESSION: el archivo sandbox fue modificado por la "
+                "respuesta no-bloqueada del path traversal"
+            )
+
+        os.remove(target_path)
+        os.rmdir(sandbox_dir)
+
+    def test_permanent_delete_legit_path_succeeds(self, client, db_session):
+        """Sanity: un media item con url legitimo dentro de uploads
+        root sigue permanente-deleable.  Sin falsos positivos."""
+        import os
+
+        from backend.core.config import get_settings
+
+        settings = get_settings()
+        uploads = settings.uploads_dir
+        os.makedirs(uploads, exist_ok=True)
+        legit_name = "h05_legit_delete_me.png"
+        legit_path = os.path.join(uploads, legit_name)
+        with open(legit_path, "wb") as f:
+            f.write(b"\x89PNG\r\n\x1a\nlegit-content")
+
+        (admin_a, persona_a, sede_a), _ = _seed_two_sedes(db_session)
+        m = _make_cms_media(
+            db_session,
+            persona_a,
+            sede_a,
+            url=f"/uploads/{legit_name}",
+            filename=legit_name,
+            alt_text="legit-h05",
+        )
+        db_session.commit()
+
+        headers = _auth_headers(client, "cmsUploadA@example.com")
+        resp = client.delete(
+            f"/api/cms/media/{m.id}?permanent=true",
+            headers=headers,
+        )
+        assert resp.status_code == 204, (
+            f"False-positive: legit permanent delete bloqueado: "
+            f"{resp.status_code} {resp.text}"
+        )
+        assert not os.path.exists(legit_path), (
+            "El physical file legitimo NO fue removido por permanent delete"
+        )
+
+    def test_soft_delete_does_not_touch_filesystem(self, client, db_session):
+        """Regression: permanent=False (default) solo archives el row;
+        nunca invoca la rama ``os.remove``, asi que ni si quiera valida
+        el path.  Un media con url traversal debe soft-delete exitosamente
+        porque el path traversal hardening solo aplica a permanent=True."""
+        (admin_a, persona_a, sede_a), _ = _seed_two_sedes(db_session)
+        m = _make_cms_media(
+            db_session,
+            persona_a,
+            sede_a,
+            url="uploads/../../../etc/passwd",
+            filename="poisoned.png",
+            alt_text="traversal-but-soft-delete",
+        )
+        db_session.commit()
+
+        headers = _auth_headers(client, "cmsUploadA@example.com")
+        resp = client.delete(
+            f"/api/cms/media/{m.id}",
+            headers=headers,  # permanent defaults to False
+        )
+        assert resp.status_code == 204, (
+            f"Soft delete fallo pese a no tocar filesystem: "
+            f"{resp.status_code} {resp.text}"
+        )

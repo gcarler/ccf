@@ -395,14 +395,24 @@ def delete_cms_media(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Delete media item. If permanent=true, deletes the file AND DB record.
-    Otherwise soft-deletes (archives)."""
+    Otherwise soft-deletes (archives).
+
+    Path traversal hardening (H-05): the resolved local path is normalised
+    and restricted to the ``uploads`` root before any ``os.remove``. A
+    malicious admin with ``cms:edit`` could otherwise store a crafted
+    ``url`` (``../../etc/passwd``) and trigger an out-of-root delete via
+    ``permanent=true``. Mirrors the guard already used by the optimize
+    endpoint below.
+    """
     row = _get_scoped_cms_media(db, current_user, item_id)
     if permanent:
         # Delete physical file first, then hard-delete DB row.
         if row.url:
-            file_path = row.url.lstrip("/")
-            full_path = os.path.join("/root/ccf", file_path)
-            if os.path.exists(full_path):
+            rel_path = row.url.lstrip("/").replace("uploads/", "", 1)
+            full_path = os.path.normpath(os.path.join("/root/ccf/uploads", rel_path))
+            if not full_path.startswith("/root/ccf/uploads"):
+                raise HTTPException(status_code=400, detail="Invalid file path")
+            if os.path.exists(full_path) and os.path.isfile(full_path):
                 os.remove(full_path)
     crud.delete_cms_media_item(
         db,
