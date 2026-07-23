@@ -27,7 +27,7 @@ const PAGES_FIXTURE = [
       canonical_url: 'https://faro.ccf.local/bienvenida',
     },
     published_version_id: 'version-1',
-    publish_at: '2026-07-18T14:00:00Z',
+    publish_at: '2026-07-25T14:00:00Z',
     expires_at: null,
     created_at: '2026-07-01T12:00:00Z',
     updated_at: '2026-07-12T09:00:00Z',
