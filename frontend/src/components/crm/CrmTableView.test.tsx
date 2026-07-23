@@ -20,7 +20,7 @@ const personas = [
     nombre_completo: 'Carlos López',
     email: 'carlos@example.com',
     phone: '3007654321',
-    church_role: 'miembro',
+    church_role: 'persona',
     spiritual_status: 'visita',
   },
 ];

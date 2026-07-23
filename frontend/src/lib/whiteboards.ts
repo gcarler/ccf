@@ -15,7 +15,7 @@ export const WHITEBOARD_COLORS = {
   successLight: "rgba(16, 185, 129, 0.1)",
   warning: "#f59e0b",
   danger: "#f43f5e",
-  purple: "#8b5cf6",
+  lavender: "#8b5cf6",
   orange: "#f97316",
   neutral: "#64748b",
 
@@ -39,7 +39,7 @@ export const WHITEBOARD_COLOR_PRESETS = [
   WHITEBOARD_COLORS.success,
   WHITEBOARD_COLORS.warning,
   WHITEBOARD_COLORS.danger,
-  WHITEBOARD_COLORS.purple,
+  WHITEBOARD_COLORS.lavender,
   WHITEBOARD_COLORS.orange,
   WHITEBOARD_COLORS.neutral,
   "#ffffff",
