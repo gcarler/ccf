@@ -1,6 +1,6 @@
 /**
- * @deprecated Prefer CSS custom properties (e.g. `hsl(var(--primary))`) or the
- * Tailwind theme (e.g. `bg-primary`, `text-primary`) instead of these JS
+ * @note Obsolete: prefer CSS custom properties (e.g. `hsl(var(--primary))`) or
+ * the Tailwind theme (e.g. `bg-primary`, `text-primary`) instead of these JS
  * objects. Keeping them temporarily for backwards compatibility until all
  * consumers migrate.
  */
@@ -81,7 +81,7 @@ export const colors = {
 };
 
 // Compact border radii (4-8px max for most elements)
-/** @deprecated Prefer Tailwind border-radius utilities or CSS `--radius-*` tokens. */
+/** @note Obsolete: prefer Tailwind border-radius utilities or CSS `--radius-*` tokens. */
 export const radii = {
     sm: '0.25rem',     // 4px - badges, chips
     md: '0.375rem',    // 6px - buttons, inputs
@@ -91,7 +91,7 @@ export const radii = {
 };
 
 // Subtle shadows for compact UI
-/** @deprecated Prefer Tailwind shadow utilities or CSS `--shadow-*` tokens. */
+/** @note Obsolete: prefer Tailwind shadow utilities or CSS `--shadow-*` tokens. */
 export const shadows = {
     soft: '0 1px 3px rgba(15, 23, 42, 0.08)',
     card: '0 1px 2px rgba(15, 23, 42, 0.06)',
@@ -100,7 +100,7 @@ export const shadows = {
 };
 
 // Compact typography with weight hierarchy
-/** @deprecated Prefer Tailwind typography utilities or CSS `--font-*` / `--text-*` tokens. */
+/** @note Obsolete: prefer Tailwind typography utilities or CSS `--font-*` / `--text-*` tokens. */
 export const typography = {
     family: 'var(--font-manrope, "Manrope", system-ui, -apple-system, sans-serif)',
     sizes: {
@@ -121,7 +121,7 @@ export const typography = {
 };
 
 // Compact spacing scale
-/** @deprecated Prefer Tailwind spacing utilities. */
+/** @note Obsolete: prefer Tailwind spacing utilities. */
 export const spacing = {
     xs: '0.25rem',   // 4px - tight gaps
     sm: '0.375rem',  // 6px - item gaps
@@ -130,7 +130,7 @@ export const spacing = {
     xl: '1rem',      // 16px - page padding
 };
 
-/** @deprecated Prefer Tailwind transition / animation utilities. */
+/** @note Obsolete: prefer Tailwind transition / animation utilities. */
 export const motion = {
     duration: {
         quick: '100ms',
@@ -143,7 +143,7 @@ export const motion = {
     },
 };
 
-/** @deprecated Prefer CSS surface tokens or Tailwind color utilities. */
+/** @note Obsolete: prefer CSS surface tokens or Tailwind color utilities. */
 export const surfaces = {
     glass: 'rgba(255,255,255,0.08)',
     panel: '#111216',
