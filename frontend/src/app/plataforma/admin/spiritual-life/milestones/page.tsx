@@ -17,8 +17,6 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
-import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
-import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
@@ -31,7 +29,11 @@ const iconMap: Record<string, any> = {
     'sparkles': Sparkles,
     'heart': Heart
 };
-const MILESTONE_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
+// Drift #3: una insignia (Medalla) es un catálogo, no un evento fechado.
+// Las vistas calendar/gantt inventaban fechas con `Date.now()+index*86400000`
+// que no corresponden a ningún dato real. Se eliminan ambas vistas; el
+// catálogo se sigue sirviendo con grid/list/table/board/kanban/wiki.
+const MILESTONE_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'wiki'];
 
 
 interface Milestone {
@@ -82,27 +84,6 @@ export default function SpiritualMilestones() {
         { id: 'high', label: 'Alto alcance', rows: milestones.filter((m) => (m.count || 0) >= 100) },
         { id: 'growth', label: 'En crecimiento', rows: milestones.filter((m) => (m.count || 0) < 100) },
     ];
-
-    const calendarEvents = milestones.map((m, index) => ({
-        id: m.id,
-        title: m.name,
-        date: (m.created_at || new Date(Date.now() + index * 86400000).toISOString()).split('T')[0],
-        color: (m.count || 0) >= 100 ? 'emerald' as const : 'blue' as const,
-        location: `${m.count || 0} personas`,
-    }));
-
-    const ganttItems = milestones.map((m, index) => {
-        const date = m.created_at || new Date(Date.now() + index * 86400000).toISOString();
-        return {
-            id: m.id,
-            title: m.name,
-            subtitle: `${m.xp || 0} XP · ${m.count || 0} personas`,
-            start_date: date,
-            end_date: date,
-            color: (m.count || 0) >= 100 ? 'emerald' as const : 'blue' as const,
-            progress: Math.min(100, Math.max(20, Number(m.count || 0))),
-        };
-    });
 
     const renderList = () => (
         <div className="space-y-4">
@@ -232,10 +213,6 @@ export default function SpiritualMilestones() {
                             renderTable()
                         ) : viewType === 'board' || viewType === 'kanban' ? (
                             renderBoard()
-                        ) : viewType === 'calendar' ? (
-                            <UniversalCalendarView events={calendarEvents} title="Calendario de hitos" />
-                        ) : viewType === 'gantt' ? (
-                            <UniversalGanttView items={ganttItems} moduleName="Hitos de fe" />
                         ) : viewType === 'wiki' ? (
                             <UniversalWikiView moduleName="Hitos de fe" storageKey="wiki_admin_milestones" />
                         ) : (
