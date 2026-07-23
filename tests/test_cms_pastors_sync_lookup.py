@@ -23,9 +23,6 @@ from __future__ import annotations
 
 import uuid
 
-import pytest
-
-
 # ── Helpers ────────────────────────────────────────────────────────────
 
 
@@ -283,3 +280,62 @@ class TestFixScriptIsomorphism:
         assert from_script is not None
         assert from_script.id == leader.id
         assert from_sync is not None  # sanity: sync returns SOMEONE
+
+
+# ── C-04 regression: build_pastors_section_props fully sede-scoped ────────
+
+
+class TestPastorsSectionSedeScope:
+    """C-04 fix regression: ``build_pastors_section_props`` must only
+    return pastoral leaders of the site's sede, never a cross-sede dump.
+    """
+
+    def test_build_with_sede_id_filters_pastors_to_that_sede(self, db_session):
+        from backend.crud.cms_pastors_sync import build_pastors_section_props
+
+        sede_a = uuid.uuid4()
+        sede_b = uuid.uuid4()
+        _make_persona(
+            db_session, "Pastor", "A", sede_id=sede_a, is_pastoral_leader=True
+        )
+        _make_persona(
+            db_session, "Pastor", "B", sede_id=sede_b, is_pastoral_leader=True
+        )
+
+        result = build_pastors_section_props(db_session, sede_id=sede_a)
+        pastors = result["pastors"]
+        assert len(pastors) == 1
+        assert "Pastor A" == pastors[0]["name"]
+
+    def test_build_with_none_sede_returns_empty(self, db_session):
+        # Orphan site (no sede_id) operated by an admin must NOT leak
+        # every pastor of every sede — returns an empty team instead.
+        from backend.crud.cms_pastors_sync import build_pastors_section_props
+
+        _make_persona(
+            db_session,
+            "Pastor",
+            "Leaked",
+            sede_id=uuid.uuid4(),
+            is_pastoral_leader=True,
+        )
+
+        result = build_pastors_section_props(db_session, sede_id=None)
+        assert result == {"pastors": []}
+
+    def test_build_excludes_non_leader_pastors_of_same_sede(self, db_session):
+        from backend.crud.cms_pastors_sync import build_pastors_section_props
+
+        sede = uuid.uuid4()
+        _make_persona(
+            db_session, "Leader", "X", sede_id=sede, is_pastoral_leader=True
+        )
+        _make_persona(
+            db_session, "Member", "Y", sede_id=sede, is_pastoral_leader=False
+        )
+
+        result = build_pastors_section_props(db_session, sede_id=sede)
+        pastors = result["pastors"]
+        assert len(pastors) == 1
+        assert pastors[0]["name"] == "Leader X"
+
