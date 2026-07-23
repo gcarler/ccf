@@ -164,6 +164,7 @@ from backend.schemas.cms import (
                                      CmsSectionTypeRead,
                                      CmsSectionTypeUpdate,
                                      CmsSectionUpdate,
+                                     CmsSeoSnapshotRead,
                                      CmsSiteCreate,
                                      CmsSiteRead,
                                      CmsSiteUpdate,

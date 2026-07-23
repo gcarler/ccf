@@ -786,3 +786,27 @@ class CmsReadinessResponse(BaseModel):
     metrics: List[CmsReadinessMetric] = Field(default_factory=list)
     issues: List[CmsReadinessIssue] = Field(default_factory=list)
     capabilities: List[CmsReadinessCapability] = Field(default_factory=list)
+
+
+# ── F-07 (errorescms.md): historico de snapshots SEO por site ────────
+# El CRUD ``capture_daily_seo_snapshots`` ya persiste ``CmsSeoSnapshot``
+# filas por dia; antes solo existia un aggregator ``get_seo_trend`` que
+# agrupaba series en un dict (no un listado paginado de rows crudos).
+# Este schema expone el row ORM con todos los campos por site para que el
+# frontend pueda renderizar tablas de historico y comparar dias.
+
+
+
+class CmsSeoSnapshotRead(BaseModel):
+    id: UUID
+    site_id: UUID
+    sede_id: Optional[UUID] = None
+    captured_date: datetime  # Date field, serialized as ISO date
+    captured_at: datetime
+    average_score: int
+    total_pages: int
+    pages_with_errors: int
+    critical_issues: int
+    by_severity_json: Dict[str, Any] = Field(default_factory=dict)
+
+    model_config = orm_config
