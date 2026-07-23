@@ -24,7 +24,7 @@ export const Default: Story = {
     isOpen: true,
     onClose: () => console.log('Close'),
     title: 'Detalles de Persona',
-    subtitle: 'Información completa del miembro',
+    subtitle: 'Información completa de la persona',
     children: (
       <div className="space-y-3 p-1">
         <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5">
