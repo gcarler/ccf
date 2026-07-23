@@ -179,6 +179,13 @@ class CmsPage(Base):
     # compatible con el workflow API existente.
     publish_at = Column(DateTime(timezone=True), nullable=True, index=True)
     expires_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    # M-03 (errorescms.md): ``deleted_at`` alinea el soft-delete de pages
+    # con el de sections (H-04). Las queries que filtran pages por
+    # ``status != "archived"`` ya capturan las archivadas; ``deleted_at``
+    # es una capa semántica adicional para queries futuras que quieran
+    # filtrar solo por ``deleted_at.is_(None)`` (patrón ya usado por
+    # sections en cms_v2.py:1181,1196,1205).
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)

@@ -937,7 +937,13 @@ def clone_cms_page(
 
 
 def delete_cms_page(db: Session, row: models.CmsPage) -> bool:
+    # M-03 (errorescms.md): alinea pages con sections (H-04): ademas de
+    # ``status="archived"``, fija ``deleted_at`` para que las queries que
+    # filtren por ``deleted_at.is_(None)`` (patron sections) tambien
+    # capturen las paginas archivadas.  Las queries existentes que filtran
+    # por ``status != "archived"`` no se ven afectadas.
     row.status = "archived"
+    row.deleted_at = _utcnow()
     db.commit()
     return True
 
