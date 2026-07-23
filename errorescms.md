@@ -532,19 +532,20 @@ respalda.
 ### MEDIOS / BAJOS / FUNCIONALIDADES
 
 M-01..M-14, I-01..I-17, F-01..F-10 quedan pendientes (excepto
-F-06 cerrado esta sesión), prioritizadas por: M-01..M-02
+F-06 y F-09 cerrados), prioritizadas por: M-01..M-02
 (validaciones Pydantic que evitan 500), M-04..M-05 (`use_alter`,
 indices), y el resto como deuda técnica incremental.
 
 | ID | Estado | Cierre / Justificación | Commit |
 |---|---|---|---|
 | F-06 | ✅ CERRADO | `crud/cms.py::_assert_parent_category_same_site` valida que `CmsCategory.parent_id` exista Y pertenezca al mismo `site_id` que la categoría bajo mutación (defense-in-depth en capa CRUD, cubre callers no-API). `create_cms_category` y `update_cms_category` llaman al helper; los endpoints `create_category`/`patch_category` en `api/cms_v2.py` traducen `ValueError` -> `HTTP 422`. 7 tests de regresión en `TestF06CategoryParentCrossSite` cubren: create/patch cross-site -> 422, create/patch same-site -> 201/200, patch parent=None -> 200 (limpiar), parent inexistente -> 422, y validación directa en CRUD (sin API). | `82d9ffdd` |
+| F-09 | ✅ CERRADO | `crud/cms.py::_assert_post_published_before_expires` rechaza `published_at >= expires_at` cuando ambos son no-None (normaliza a UTC aware para evitar el bug SQLite tz-info loss que ya documentamos). `create_cms_post` valida contra el payload; `update_cms_post` valida contra los valores efectivos (combina payload parcial con el row). Los endpoints `create_post`/`patch_post` en `api/cms_v2.py` traducen `ValueError` -> `HTTP 422`; el comentario obsoleto en `patch_post` que justificaba la ausencia de validación se actualiza. 11 tests de regresión en `TestF09PostPublishedBeforeExpires` cubren POST invertido/equal -> 422, POST válidos -> 201, PATCH ambos invertidos y PATCH parciales combinados contra el row -> 422, PATCH equal-dates -> 422, PATCH válidos y clearing-expires -> 200, validación directa CRUD create+update. | `afdafa89` |
 
 ### Resumen de cierre al 2026-07-23
 
 - Críticos: 6/6 cerrados (4 fix, 2 falso positivo)
 - Altos: 2/11 cerrados (H-05, H-11)
-- Funcionalidades: 1/10 cerradas (F-06)
+- Funcionalidades: 2/10 cerradas (F-06, F-09)
 - Medios/Info: pendientes (T1.4, T1.5 en progreso)
 
 ---
