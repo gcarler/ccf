@@ -3,7 +3,7 @@
 ## Suites
 - `smoke.spec.ts`: rutas publicas (`/login`, `/faro`), siempre ejecutables.
 - `authenticated.spec.ts`: rutas con sesion (`/academy`, `/projects`, `/crm`).
-- `projects/smoke.spec.ts`: smoke dedicado de Projects (`/plataforma/projects/list`, `/plataforma/projects/tasks`, `/plataforma/projects/inbox`) con bloqueo de consola/API/assets.
+- `projects/smoke.spec.ts`: smoke dedicado de Projects (`/plataforma/projects?view=list#projects-list`, `/plataforma/projects/tasks`, `/plataforma/projects/inbox`) con bloqueo de consola/API/assets.
 - `projects/detail.spec.ts`: smoke profundo seeded de Projects detail (`/plataforma/projects/[id]` dashboard/list/calendar) reutilizando `seed-projects-demo`; requiere runtime Next vivo.
 - `crm/smoke.spec.ts`: smoke dedicado de CRM (`/plataforma/crm`, `/plataforma/crm/personas`, `/plataforma/crm/pipeline`) con bloqueo de consola/API/assets.
 - `crm/persona-detail.spec.ts`: cobertura profunda mockeada del detalle `/plataforma/crm/personas/[id]`; valida MESH insight, tabs de historial/contribuciones y mentoría; requiere runtime Next vivo.
