@@ -514,7 +514,10 @@ def list_cms_themes(db: Session, site_id: uuid.UUID):
 
 
 def create_cms_theme(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsThemeCreate, created_by: int | None
+    db: Session,
+    site_id: uuid.UUID,
+    payload: schemas.CmsThemeCreate,
+    created_by: uuid.UUID | str | None,
 ):
     version = (
         db.query(func.max(models.CmsTheme.version))
