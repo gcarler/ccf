@@ -894,6 +894,48 @@ def delete_page(
     crud.delete_cms_page(db, row)
 
 
+@router.post(
+    "/sites/{site_key}/pages/{slug}/clone",
+    response_model=schemas.CmsPageRead,
+    status_code=201,
+)
+def clone_page(
+    site_key: str,
+    slug: str,
+    payload: schemas.CmsPageClone,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
+):
+    """Clone a page with all its active sections (F-02).
+
+    La página clonada arranca como ``draft`` sin schedule.  El slug
+    destino debe ser único en el site.
+    """
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
+    source = _get_page_or_404(db, site.id, slug)
+    new_slug = _slugify(payload.new_slug)
+    if not new_slug:
+        raise HTTPException(status_code=422, detail="new_slug is required")
+    if new_slug == source.slug:
+        raise HTTPException(
+            status_code=422,
+            detail="new_slug must differ from source slug",
+        )
+    if crud.get_cms_page(db, site.id, new_slug):
+        raise HTTPException(status_code=409, detail="slug already exists")
+    cloned = crud.clone_cms_page(
+        db,
+        source,
+        new_slug,
+        current_user.id,
+        new_title=payload.new_title,
+    )
+    if cloned is None:
+        raise HTTPException(status_code=409, detail="slug already exists")
+    return cloned
+
+
 @router.get(
     "/sites/{site_key}/pages/{slug}/sections",
     response_model=PaginatedResponse[schemas.CmsSectionRead],
