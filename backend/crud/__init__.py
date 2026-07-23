@@ -83,6 +83,7 @@ from backend.crud.cms import (
     archive_cms_site,
     archive_cms_theme,
     capture_daily_seo_snapshots,
+    cleanup_old_publish_logs,
     clone_cms_page,
     create_announcement,
     create_cms_category,
