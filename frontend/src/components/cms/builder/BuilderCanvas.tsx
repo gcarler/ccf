@@ -135,7 +135,7 @@ export default function BuilderCanvas({
                   setDraggedSectionId(null);
                 }}
                 onDragEnd={() => setDraggedSectionId(null)}
-                className={`rounded-md border p-3 cursor-grab active:cursor-grabbing ${section.status === "archived" ? "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5" : section.id === activeSectionId ? "border-primary/40 bg-primary/5" : "border-[hsl(var(--border))] dark:border-white/10"}`}
+                className={`rounded-md border p-3 cursor-grab active:cursor-grabbing ${section.status === "archived" ? "opacity-70 border-[hsl(var(--warning)/25%)] bg-warning-soft/40 dark:bg-[hsl(var(--warning))]/5" : section.id === activeSectionId ? "border-primary/40 bg-primary/5" : "border-[hsl(var(--border))] dark:border-white/10"}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <button onClick={() => setActiveSectionId(section.id)} className="text-left">
@@ -169,14 +169,14 @@ export default function BuilderCanvas({
                       )}
                       {heatmapType === "scroll" && (
                         <div className="absolute inset-0 flex flex-col justify-between text-[8px] font-bold text-white/90">
-                          <div className="w-full h-[25%] bg-gradient-to-b from-emerald-500/20 to-transparent border-t border-emerald-500/40 p-1">100% de usuarios visualizan esta zona (Above the fold)</div>
+                          <div className="w-full h-[25%] bg-gradient-to-b to-[hsl(var(--success)/20%)] to-transparent border-t border-[hsl(var(--success)/100%)]/40 p-1">100% de usuarios visualizan esta zona (Above the fold)</div>
                           <div className="w-full h-[25%] bg-gradient-to-b from-yellow-500/20 to-transparent border-t border-yellow-500/40 p-1">78% de usuarios se desplazan hasta aquí</div>
                           <div className="w-full h-[25%] bg-gradient-to-b from-orange-500/20 to-transparent border-t border-orange-500/40 p-1">45% de usuarios continúan leyendo</div>
                           <div className="w-full h-[25%] bg-gradient-to-b from-red-500/20 to-red-500/5 border-t border-red-500/40 p-1">22% de usuarios llegan al final</div>
                         </div>
                       )}
                       {heatmapType === "attention" && (
-                        <div className="absolute inset-0 bg-blue-500/[0.02]">
+                        <div className="absolute inset-0 bg-[hsl(var(--info))]/[0.02]">
                           <div className="absolute top-[30%] left-[20%] w-32 h-32 rounded-full bg-[radial-gradient(circle,rgba(239,68,68,0.45)_0%,rgba(245,158,11,0.25)_40%,rgba(59,130,246,0.1)_70%,transparent_100%)] blur-[4px]" />
                           <div className="absolute top-[60%] left-[60%] w-44 h-44 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.4)_0%,rgba(16,185,129,0.2)_50%,transparent_100%)] blur-[6px]" />
                         </div>

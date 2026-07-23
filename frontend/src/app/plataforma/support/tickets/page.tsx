@@ -32,11 +32,11 @@ interface SupportTicket {
 const STATUS_ORDER = ['open', 'pending', 'in_progress', 'resolved', 'closed'];
 
 const STATUS_CONFIG: Record<string, { icon: any; label: string; color: string; bg: string }> = {
-    open: { icon: AlertCircle, label: 'Abierto', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
+    open: { icon: AlertCircle, label: 'Abierto', color: 'text-warning-text', bg: 'bg-warning-soft dark:bg-[hsl(var(--warning))]/10' },
     pending: { icon: Clock, label: 'Pendiente', color: 'text-[hsl(var(--text-secondary))]', bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5' },
-    in_progress: { icon: Clock, label: 'En Proceso', color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
-    resolved: { icon: CheckCircle, label: 'Resuelto', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-    closed: { icon: CheckCircle, label: 'Cerrado', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
+    in_progress: { icon: Clock, label: 'En Proceso', color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
+    resolved: { icon: CheckCircle, label: 'Resuelto', color: 'text-success-text', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/10' },
+    closed: { icon: CheckCircle, label: 'Cerrado', color: 'text-success-text', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/10' },
 };
 
 export default function SupportTicketsPage() {
@@ -140,7 +140,7 @@ export default function SupportTicketsPage() {
                 </div>
                 <button
                     onClick={() => setShowNew(true)}
-                    className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary))] shadow-lg shadow-blue-500/20 transition-all"
+                    className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/20%)] transition-all"
                 >
                     <Plus size={14} /> Nuevo Ticket
                 </button>
@@ -154,7 +154,7 @@ export default function SupportTicketsPage() {
                         className={clsx(
                             'px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all',
                             filter === status
-                                ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]'
+                                ? 'bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]'
                                 : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]',
                         )}
                     >
@@ -233,7 +233,7 @@ export default function SupportTicketsPage() {
                             form="support-ticket-form"
                             type="submit"
                             disabled={submitting}
-                            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all disabled:cursor-wait disabled:opacity-60"
+                            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all disabled:cursor-wait disabled:opacity-60"
                         >
                             {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
                             Enviar Ticket

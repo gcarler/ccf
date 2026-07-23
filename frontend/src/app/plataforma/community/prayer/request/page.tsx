@@ -163,19 +163,19 @@ export default function PrayerRequestForm() {
                         </label>
                     </div>
 
-                    <div className={`flex items-center justify-between p-4 rounded-md transition-all border ${isConfidential ? 'bg-rose-500/5 border-rose-500/20 shadow-lg' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]'}`}>
+                    <div className={`flex items-center justify-between p-4 rounded-md transition-all border ${isConfidential ? 'bg-[hsl(var(--danger))]/5 border-[hsl(var(--danger)/100%)]/20 shadow-lg' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]'}`}>
                         <div className="flex items-start gap-4">
-                            <div className={`p-3 rounded-lg shrink-0 transition-colors ${isConfidential ? 'bg-rose-500 text-white shadow-lg' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'}`}>
+                            <div className={`p-3 rounded-lg shrink-0 transition-colors ${isConfidential ? 'bg-[hsl(var(--danger))] text-white shadow-lg' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'}`}>
                                 <Lock size={20} strokeWidth={2.5} />
                             </div>
                             <div className="flex flex-col pt-1">
-                                <span className={`font-black text-sm uppercase tracking-tight transition-colors ${isConfidential ? 'text-rose-500' : 'text-[hsl(var(--text-primary))]'}`}>Confidencial</span>
+                                <span className={`font-black text-sm uppercase tracking-tight transition-colors ${isConfidential ? 'text-[hsl(var(--danger))]' : 'text-[hsl(var(--text-primary))]'}`}>Confidencial</span>
                                 <span className="text-[hsl(var(--text-secondary))] text-[11px] font-medium mt-1">Solo los pastores podrán ver esta petición.</span>
                             </div>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer shrink-0">
                             <input type="checkbox" className="sr-only peer" checked={isConfidential} onChange={() => setIsConfidential(!isConfidential)} />
-                            <div className="w-12 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-[hsl(var(--bg-primary))] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-rose-500 border border-[hsl(var(--border))]"></div>
+                            <div className="w-12 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-[hsl(var(--bg-primary))] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[hsl(var(--danger))] border border-[hsl(var(--border))]"></div>
                         </label>
                     </div>
                 </section>

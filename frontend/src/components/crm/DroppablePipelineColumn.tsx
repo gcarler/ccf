@@ -52,7 +52,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
         <div
             className={clsx(
                 "flex-shrink-0 w-80 flex flex-col h-full rounded-md transition-all duration-500 ease-in-out",
-                isOver ? "bg-blue-500/10 scale-[1.02] shadow-2xl" : "bg-transparent"
+                isOver ? "bg-[hsl(var(--info))]/10 scale-[1.02] shadow-2xl" : "bg-transparent"
             )}
         >
             {/* Column Header */}
@@ -75,7 +75,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                     {allowEditing && (
                         <button
                             onClick={onNewLead}
-                            className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:shadow-lg transition-all"
+                            className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--info)/100%)]/30 hover:shadow-lg transition-all"
                             aria-label="Agregar"
                         >
                             <UserPlus size={12} />
@@ -92,7 +92,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                 ref={setNodeRef}
                 className={clsx(
                     "flex-1 flex flex-col p-3 rounded-md transition-all duration-300",
-                    isOver ? "bg-white/40 dark:bg-white/5 backdrop-blur-md ring-2 ring-blue-500/20" : "bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]"
+                    isOver ? "bg-white/40 dark:bg-white/5 backdrop-blur-md ring-2 ring-[hsl(var(--primary))]/20" : "bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]"
                 )}
             >
                 <motion.div 
@@ -128,7 +128,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                         <div className={clsx(
                             "flex flex-col items-center justify-center gap-3 py-1.5 px-4 rounded-lg border-2 border-dashed transition-all duration-500",
                             isOver 
-                                ? "border-blue-500/50 bg-blue-500/5 scale-[0.98]" 
+                                ? "border-[hsl(var(--info)/100%)]/50 bg-[hsl(var(--info))]/5 scale-[0.98]" 
                                 : "border-[hsl(var(--border))] dark:border-white/5"
                         )}>
                             <div className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-sm border border-[hsl(var(--border))] dark:border-white/5">
@@ -155,9 +155,9 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                 {allowEditing && (
                     <button
                         onClick={onNewLead}
-                        className="w-full mt-auto py-1.5 rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
+                        className="w-full mt-auto py-1.5 rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--info)/100%)]/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
                     >
-                        <div className="size-5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                        <div className="size-5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center group-hover:bg-info-soft transition-colors">
                             <UserPlus size={10} />
                         </div>
                         AGREGAR PROSPECTO

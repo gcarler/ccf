@@ -84,7 +84,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
         id: 'canales',
         title: 'Flujo de canales',
         description: 'Notificaciones, anuncios y bandejas que requieren respuesta hoy.',
-        accent: 'text-sky-500',
+        accent: 'text-[hsl(var(--info))]',
         items: [
             {
                 id: 'notif-rollup',
@@ -125,7 +125,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
         id: 'cuidado',
         title: 'Cuidado pastoral',
         description: 'Seguimiento de oraciones, testimonios y acompañamientos clave.',
-        accent: 'text-rose-500',
+        accent: 'text-[hsl(var(--danger))]',
         items: [
             {
                 id: 'prayer-wall',
@@ -155,7 +155,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
         id: 'grupos',
         title: 'Grupos & eventos',
         description: 'Coordinación de grupos pequeños, descubrimiento y calendario.',
-        accent: 'text-amber-500',
+        accent: 'text-[hsl(var(--warning))]',
         items: [
             {
                 id: 'grupos-lideres',
@@ -196,7 +196,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
         id: 'generosidad',
         title: 'Impacto & generosidad',
         description: 'Campañas de ofrendas, ayudas y reportes de impacto.',
-        accent: 'text-emerald-500',
+        accent: 'text-[hsl(var(--success))]',
         items: [
             {
                 id: 'ofrendas',
@@ -244,35 +244,35 @@ const featureCards = [
         description: 'Mensajes oficiales del equipo pastoral y de comunicaciones.',
         icon: Megaphone,
         href: '/plataforma/community/announcements',
-        tone: 'from-amber-200/40 to-amber-50/30'
+        tone: 'to-[hsl(var(--warning)/40%)] to-[hsl(var(--warning)/30%)]'
     },
     {
         title: 'Mensajes',
         description: 'Chats privados y grupos para coordinar iniciativas.',
         icon: MessageSquare,
         href: '/plataforma/community/messages',
-        tone: 'from-emerald-200/40 to-emerald-50/30'
+        tone: 'to-[hsl(var(--success)/40%)] to-[hsl(var(--success)/30%)]'
     },
     {
         title: 'Eventos',
         description: 'Calendario vivo con reuniones, ensayos y experiencias.',
         icon: Calendar,
         href: '/plataforma/community/events',
-        tone: 'from-blue-200/40 to-blue-50/30'
+        tone: 'to-[hsl(var(--info)/40%)] to-[hsl(var(--info)/30%)]'
     },
     {
         title: 'Ofrendas & generosidad',
         description: 'Facilita ofrendas especiales y campañas solidarias.',
         icon: HeartHandshake,
         href: '/plataforma/community/give',
-        tone: 'from-rose-200/40 to-rose-50/30'
+        tone: 'to-[hsl(var(--danger)/40%)] to-[hsl(var(--danger)/30%)]'
     },
     {
         title: 'Muro de oración',
         description: 'Comparte peticiones y celebra respuestas en comunidad.',
         icon: Heart,
         href: '/plataforma/community/prayer',
-        tone: 'from-sky-200/40 to-sky-50/30'
+        tone: 'to-[hsl(var(--info)/40%)] to-[hsl(var(--info)/30%)]'
     },
     {
         title: 'Testimonios',
@@ -293,13 +293,13 @@ const featureCards = [
         description: 'Explora nuevos ministerios, serving teams y oportunidades.',
         icon: Search,
         href: '/plataforma/community/discover',
-        tone: 'from-sky-200/40 to-sky-50/30'
+        tone: 'to-[hsl(var(--info)/40%)] to-[hsl(var(--info)/30%)]'
     }
 ];
 
 const priorityTone: Record<'Alta' | 'Media' | 'Baja', string> = {
-    Alta: 'bg-rose-100 text-rose-600 border-rose-200',
-    Media: 'bg-amber-100 text-amber-600 border-amber-200',
+    Alta: 'bg-[hsl(var(--danger-muted))] text-danger-text border-[hsl(var(--danger)/25%)]',
+    Media: 'bg-[hsl(var(--warning-muted))] text-warning-text border-[hsl(var(--warning)/25%)]',
     Baja: 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]'
 };
 
@@ -317,12 +317,12 @@ const mapApiCardToBoardItem = (card: CommunityApiCard): BoardItem => ({
     link: card.link || `/community/${card.column_id}`
 });
 
-const palette = ['bg-primary/10 text-primary', 'bg-emerald-100 text-emerald-600', 'bg-amber-100 text-amber-600'];
+const palette = ['bg-primary/10 text-primary', 'bg-[hsl(var(--success-muted))] text-success-text', 'bg-[hsl(var(--warning-muted))] text-warning-text'];
 const columnAccentDot: Record<ColumnId, string> = {
     canales: 'bg-[hsl(var(--primary))]',
-    cuidado: 'bg-rose-400',
-    grupos: 'bg-amber-400',
-    generosidad: 'bg-emerald-400'
+    cuidado: 'bg-[hsl(var(--danger))]',
+    grupos: 'bg-[hsl(var(--warning))]',
+    generosidad: 'bg-[hsl(var(--success))]'
 };
 const listColumnHeaders = ['Nombre', 'Persona asignada', 'Fecha límite', 'Prioridad', 'Estado', 'Comentarios'];
 const listGridClass = 'grid grid-cols-[32px_minmax(0,2.4fr)_1.4fr_1.1fr_0.9fr_1fr_0.9fr] items-center gap-4';
@@ -957,7 +957,7 @@ export default function CommunityHubPage() {
 
                 <div className="flex flex-wrap items-center gap-4 text-[11px] font-semibold text-[hsl(var(--text-secondary))]">
                     <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                        <span className="size-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span className="size-2 rounded-full bg-[hsl(var(--success))] animate-pulse"></span>
                         En vivo - sincronizado hace 5 min
                     </span>
                     <span className="inline-flex items-center gap-2">
@@ -1240,7 +1240,7 @@ export default function CommunityHubPage() {
                     role="status"
                     aria-live="polite"
                     className={`fixed bottom-6 right-6 z-20 rounded-lg px-3 py-1.5 text-sm font-medium text-white shadow-lg ${
-                        toast.type === 'success' ? 'bg-emerald-500' : 'bg-[hsl(var(--surface-2))]'
+                        toast.type === 'success' ? 'bg-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-2))]'
                     }`}
                 >
                     {toast.message}

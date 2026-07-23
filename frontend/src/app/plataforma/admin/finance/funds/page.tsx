@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 
-const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-blue-500 transition-all";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)] transition-all";
 const LABEL = "block text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
 
 type Fund = {
@@ -143,7 +143,7 @@ export default function FundsPage() {
                 ]}
                 rightActions={
                     <button onClick={openCreate}
-                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                         <Plus size={14} /> Nuevo Fondo
                     </button>
                 }
@@ -179,7 +179,7 @@ export default function FundsPage() {
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin fondos registrados</p>
                         <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">Crea el primer fondo ministerial</p>
                         <button onClick={openCreate}
-                            className="mt-5 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all">
+                            className="mt-5 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all">
                             Crear Fondo
                         </button>
                     </div>
@@ -187,7 +187,7 @@ export default function FundsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {funds.map((f) => (
                             <motion.div key={f.id} layout
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm group hover:shadow-md hover:border-blue-200 dark:hover:border-blue-500/20 transition-all">
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm group hover:shadow-md hover:border-[hsl(var(--info)/25%)] dark:hover:border-[hsl(var(--info)/100%)]/20 transition-all">
                                 <div className="flex items-start justify-between gap-3 mb-3">
                                     <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0">
                                         <Wallet size={18} />
@@ -299,7 +299,7 @@ export default function FundsPage() {
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
                                     <Save size={14} /> {saving ? "Guardando..." : "Guardar"}
                                 </button>
                             </div>

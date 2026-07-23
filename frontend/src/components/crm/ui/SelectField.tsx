@@ -17,7 +17,7 @@ export default function SelectField({ label, value, onChange, options, placehold
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white"
+        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 dark:border-white/10 dark:bg-black/20 dark:text-white"
       >
         <option value="">{placeholder ?? 'Seleccionar...'}</option>
         {options.map(o => <option key={o} value={o}>{o}</option>)}

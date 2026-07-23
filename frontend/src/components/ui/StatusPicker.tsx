@@ -10,7 +10,7 @@ export interface StatusOption {
     value: string;
     color: string; // Tailwind color class like 'bg-[hsl(var(--primary))]'
     text: string;  // Tailwind text class like 'text-[hsl(var(--primary))]'
-    bg: string;    // Tailwind light bg class like 'bg-blue-50'
+    bg: string;    // Semantic soft bg class like 'bg-info-soft'
 }
 
 interface StatusPickerProps {

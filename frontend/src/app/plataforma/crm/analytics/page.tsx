@@ -138,7 +138,7 @@ export default function CrmAnalyticsPage() {
                     <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
                         <Download size={13} /> Exportar PDF
                     </button>
-                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
                         <Share2 size={13} /> Compartir
                     </button>
                 </div>
@@ -419,7 +419,7 @@ function SummaryTile({
 }) {
     return (
         <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
-            <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10">
+            <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10">
                 <Icon size={16} />
             </div>
             <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
@@ -453,8 +453,8 @@ function Badge({
         <span
             className={clsx(
                 'inline-flex rounded-full px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide',
-                tone === 'positive' && 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300',
-                tone === 'warning' && 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
+                tone === 'positive' && 'bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text',
+                tone === 'warning' && 'bg-warning-soft text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text',
                 tone === 'neutral' && 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]',
             )}
         >
@@ -475,7 +475,7 @@ function StatusBanner({
             className={clsx(
                 'rounded-lg border px-4 py-1.5 text-sm font-medium',
                 tone === 'neutral' && 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]',
-                tone === 'warning' && 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200',
+                tone === 'warning' && 'border-[hsl(var(--warning)/25%)] bg-warning-soft text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]',
             )}
         >
             {children}

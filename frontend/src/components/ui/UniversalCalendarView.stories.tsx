@@ -10,7 +10,9 @@ const sampleEvents: CalendarEvent[] = [
   { id: 5, title: 'Evento especial', date: new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0], time: '15:00', color: 'rose', type: 'once' },
 ];
 
+
 const meta: Meta<typeof UniversalCalendarView> = {
+  tags: ['autodocs'],
   title: 'UI/UniversalCalendarView',
   component: UniversalCalendarView,
   parameters: {

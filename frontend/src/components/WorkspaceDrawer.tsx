@@ -74,7 +74,7 @@ export default function WorkspaceDrawer({
                             className="absolute left-0 top-0 h-full w-1.5 cursor-col-resize group/resize z-10 select-none"
                             title="Arrastra para ajustar el ancho"
                         >
-                            <div className="h-full w-full hover:bg-blue-400/30 dark:hover:bg-blue-500/20 transition-colors" />
+                            <div className="h-full w-full hover:bg-[hsl(var(--info))]/30 dark:hover:bg-[hsl(var(--info))]/20 transition-colors" />
                         </div>
 
                         {/* Drawer Header */}
@@ -100,7 +100,7 @@ export default function WorkspaceDrawer({
                             </div>
 
                             <div className="flex shrink-0 items-center gap-1">
-                                <button className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:opacity-80 transition-all border border-sky-100 dark:border-sky-900/50">
+                                <button className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-info-text dark:text-[hsl(var(--info))] rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:opacity-80 transition-all border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/50%)]">
                                     <Sparkles size={14} /> Resumir
                                 </button>
                                 <div className="hidden sm:block h-5 w-[1px] bg-[hsl(var(--border))] dark:bg-white/10 mx-2" />

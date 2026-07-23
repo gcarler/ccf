@@ -161,7 +161,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
           {[1, 2, 3].map((i) => (
             <div key={i} className={`flex ${i % 2 === 0 ? "justify-end" : "justify-start"}`}>
               <div className={`rounded-2xl px-4 py-3 w-3/4 animate-pulse ${
-                i % 2 === 0 ? "bg-blue-200/50 dark:bg-blue-800/30" : "bg-[hsl(var(--surface-2))] dark:bg-white/5"
+                i % 2 === 0 ? "bg-[hsl(var(--info-muted))]/50 dark:bg-[hsl(var(--info))]/30" : "bg-[hsl(var(--surface-2))] dark:bg-white/5"
               }`}>
                 <div className="h-3 rounded bg-current opacity-20 mb-2 w-1/3" />
                 <div className="h-3 rounded bg-current opacity-20 w-2/3" />
@@ -176,7 +176,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
   return (
     <div className="relative flex flex-col flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
       {error && (
-        <div className="mx-4 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+        <div className="mx-4 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
           <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
         </div>
       )}
@@ -230,7 +230,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
                     <div className="flex items-center justify-end gap-1.5 mt-1">
                       <span
                         className={`text-[10px] ${
-                          isOwn ? "text-blue-200" : "text-[hsl(var(--text-secondary))]"
+                          isOwn ? "text-[hsl(var(--info))]" : "text-[hsl(var(--text-secondary))]"
                         }`}
                       >
                         {formatMessageTime(msg.created_at)}
@@ -261,7 +261,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Escribe un mensaje..."
-              className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-sm focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400 dark:text-white transition-all pr-10"
+              className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--info)/30%)] focus:border-[hsl(var(--info)/40%)] dark:text-white transition-all pr-10"
             />
             {input.trim() && (
               <button

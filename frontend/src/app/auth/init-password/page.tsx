@@ -58,7 +58,7 @@ function InitPasswordContent() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-[hsl(var(--border))] dark:border-white/10 rounded-2xl shadow-xl p-8 max-w-md text-center"
                 >
-                    <CheckCircle2 className="mx-auto mb-4 text-emerald-500" size={48} />
+                    <CheckCircle2 className="mx-auto mb-4 text-[hsl(var(--success))]" size={48} />
                     <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¡Contraseña Configurada!</h2>
                     <p className="text-[hsl(var(--text-secondary))] text-sm">Redirigiendo al inicio de sesión...</p>
                 </motion.div>
@@ -74,9 +74,9 @@ function InitPasswordContent() {
                 className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-[hsl(var(--border))] dark:border-white/10 rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
             >
                 {/* Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-sky-600 px-6 py-5">
+                <div className="bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))] px-6 py-5">
                     <h1 className="text-lg font-bold text-white">Configurar Contraseña</h1>
-                    <p className="text-blue-100 text-[12px] mt-1">CCF Plataforma</p>
+                    <p className="text-[hsl(var(--info))] text-[12px] mt-1">CCF Plataforma</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -128,7 +128,7 @@ function InitPasswordContent() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 text-white text-[13px] font-bold rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="w-full py-2.5 bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))] hover:from-[hsl(var(--info))] hover:to-[hsl(var(--info))] text-white text-[13px] font-bold rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {loading ? <Loader2 className="animate-spin" size={16} /> : null}
                         {loading ? 'Configurando...' : 'Configurar Contraseña'}

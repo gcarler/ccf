@@ -156,7 +156,7 @@ function AssetCard({ asset, mode, onDelete }: { asset: Asset; mode: "grid" | "li
     const date = asset.createdAt ? new Date(asset.createdAt).toLocaleDateString("es-CO") : "Sin fecha";
     if (mode === "list") {
         return (
-            <div className="flex items-center justify-between rounded-lg border border-transparent p-3 transition-all hover:border-blue-500/20 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-blue-600/5">
+            <div className="flex items-center justify-between rounded-lg border border-transparent p-3 transition-all hover:border-[hsl(var(--info)/100%)]/20 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--info))]/5">
                 <div className="flex items-center gap-3">
                     <div className="flex size-7 items-center justify-center rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] shadow-sm dark:bg-white/10"><Icon size={24} /></div>
                     <div>
@@ -166,13 +166,13 @@ function AssetCard({ asset, mode, onDelete }: { asset: Asset; mode: "grid" | "li
                 </div>
                 <div className="flex gap-2">
                     <a href={asset.url} download className="rounded-md bg-[hsl(var(--bg-primary))] p-2.5 text-[hsl(var(--text-secondary))] shadow-sm hover:text-[hsl(var(--primary))] dark:bg-white/10"><Download size={18} /></a>
-                    <button onClick={onDelete} className="rounded-md bg-[hsl(var(--bg-primary))] p-2.5 text-[hsl(var(--text-secondary))] shadow-sm hover:text-rose-600 dark:bg-white/10"><Trash2 size={18} /></button>
+                    <button onClick={onDelete} className="rounded-md bg-[hsl(var(--bg-primary))] p-2.5 text-[hsl(var(--text-secondary))] shadow-sm hover:text-danger-text dark:bg-white/10"><Trash2 size={18} /></button>
                 </div>
             </div>
         );
     }
     return (
-        <div className="group relative flex flex-col items-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-blue-500/30 hover:shadow-xl dark:border-white/5 dark:bg-white/5">
+        <div className="group relative flex flex-col items-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 text-center shadow-sm transition-all hover:-translate-y-1 hover:border-[hsl(var(--info)/100%)]/30 hover:shadow-xl dark:border-white/5 dark:bg-white/5">
             <div className="mb-3 flex aspect-square w-full items-center justify-center rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] shadow-inner transition-all group-hover:text-[hsl(var(--primary))] dark:bg-white/5">
                 <Icon size={64} strokeWidth={1} />
             </div>
@@ -180,7 +180,7 @@ function AssetCard({ asset, mode, onDelete }: { asset: Asset; mode: "grid" | "li
             <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{formatBytes(asset.sizeBytes)} | {date}</p>
             <div className="absolute right-4 top-4 flex flex-col gap-2 opacity-0 transition-all group-hover:opacity-100">
                 <a href={asset.url} download className="rounded-lg bg-[hsl(var(--bg-primary))] p-3 text-[hsl(var(--text-secondary))] shadow-xl hover:text-[hsl(var(--primary))] dark:bg-[hsl(var(--surface-2))]"><Download size={18} /></a>
-                <button onClick={onDelete} className="rounded-lg bg-[hsl(var(--bg-primary))] p-3 text-[hsl(var(--text-secondary))] shadow-xl hover:text-rose-600 dark:bg-[hsl(var(--surface-2))]"><Trash2 size={18} /></button>
+                <button onClick={onDelete} className="rounded-lg bg-[hsl(var(--bg-primary))] p-3 text-[hsl(var(--text-secondary))] shadow-xl hover:text-danger-text dark:bg-[hsl(var(--surface-2))]"><Trash2 size={18} /></button>
             </div>
         </div>
     );
@@ -188,9 +188,9 @@ function AssetCard({ asset, mode, onDelete }: { asset: Asset; mode: "grid" | "li
 
 function StorageStat({ label, count, size, icon: Icon, color }: any) {
     const colors: Record<string, string> = {
-        blue: "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/20",
-        cyan: "bg-cyan-50 text-cyan-600 dark:bg-cyan-900/20",
-        emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20",
+        blue: "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20",
+        cyan: "bg-[hsl(var(--domain-cyan)/10%)] text-[hsl(var(--domain-cyan)/90%)] dark:bg-[hsl(var(--domain-cyan)/20%)]",
+        emerald: "bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/20",
         slate: "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:bg-[hsl(var(--bg-muted))]/20",
     };
     return (

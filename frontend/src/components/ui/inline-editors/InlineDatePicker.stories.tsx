@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import { InlineDatePicker } from './InlineDatePicker';
 
 const meta: Meta<typeof InlineDatePicker> = {
+  tags: ['autodocs'],
   title: 'UI/Inline DatePicker',
   component: InlineDatePicker,
   parameters: {

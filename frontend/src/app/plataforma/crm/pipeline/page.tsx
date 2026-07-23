@@ -225,7 +225,7 @@ export default function ConsolidationPipelinePage() {
                 const initials = `${initial1}${initial2}`.toUpperCase();
                 return (
                     <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-500/20 shrink-0">
+                        <div className="size-9 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-[hsl(var(--info)/20%)] shrink-0">
                             {initials}
                         </div>
                         <div>
@@ -280,7 +280,7 @@ export default function ConsolidationPipelinePage() {
                 <button
                     onClick={(e) => { e.stopPropagation(); handleLeadSelect(row.original); }}
                     aria-label="Ver prospecto"
-                    className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all"
+                    className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/40 transition-all"
                 >
                     <ArrowRight size={14} />
                 </button>
@@ -420,18 +420,18 @@ export default function ConsolidationPipelinePage() {
             ) : undefined}
         >
             {leadsError && (
-                <div className="mx-4 mt-4 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div className="mx-4 mt-4 rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <div className="min-w-0">
-                        <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
                             No se pudo cargar el pipeline
                         </p>
-                        <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                        <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
                             {leadsError}
                         </p>
                     </div>
                     <button
                         onClick={() => fetchPipeline()}
-                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                     >
                         Reintentar
                     </button>
@@ -473,10 +473,10 @@ export default function ConsolidationPipelinePage() {
                                                     role="button"
                                                     tabIndex={0}
                                                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLeadSelect(lead); } }}
-                                                    className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer group"
+                                                    className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-3 mb-3">
-                                                        <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-blue-500/20">
+                                                        <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-[hsl(var(--info)/20%)]">
                                                             {lead.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? ''}{lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? ''}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
@@ -511,7 +511,7 @@ export default function ConsolidationPipelinePage() {
                                                 {payload.items.map((lead: any) => {
                                                     const stageValue = lead.stage ?? 'new';
                                                     return (
-                                                        <button key={lead.id} onClick={() => setSelectedLead(lead)} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                                        <button key={lead.id} onClick={() => setSelectedLead(lead)} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all">
                                                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
                                                             <p className="text-[10px] text-[hsl(var(--text-secondary))]">{STAGE_LABEL[stageValue] ?? stageValue}</p>
                                                         </button>
@@ -553,9 +553,9 @@ export default function ConsolidationPipelinePage() {
                                             </h2>
                                             <p className="text-[hsl(var(--text-secondary))] font-medium text-sm mt-1">Playbooks pastorales y acuerdos de nivel de servicio (SLA)</p>
                                         </div>
-                                        <div className="px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-700/30 flex items-center gap-2">
+                                        <div className="px-3 py-2 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)] flex items-center gap-2">
                                             <Sparkles size={16} className="text-[hsl(var(--primary))]" />
-                                            <span className="text-[10px] font-bold text-[hsl(var(--primary))] dark:text-blue-300 uppercase tracking-wide">Guía de Consolidación IA</span>
+                                            <span className="text-[10px] font-bold text-[hsl(var(--primary))] dark:text-info-text uppercase tracking-wide">Guía de Consolidación IA</span>
                                         </div>
                                     </div>
 
@@ -564,8 +564,8 @@ export default function ConsolidationPipelinePage() {
                                         <div className="lg:col-span-2 space-y-3">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {[
-                                                    { title: 'Primer Encuentro', icon: Users, desc: 'Contactar en menos de 24h. Usar tono cálido y empático.', color: 'text-[hsl(var(--primary))] bg-blue-50' },
-                                                    { title: 'Cierre de Etapa', icon: Target, desc: 'Validar disposición al bautismo o participación activa.', color: 'text-emerald-500 bg-emerald-50' }
+                                                    { title: 'Primer Encuentro', icon: Users, desc: 'Contactar en menos de 24h. Usar tono cálido y empático.', color: 'text-[hsl(var(--primary))] bg-info-soft' },
+                                                    { title: 'Cierre de Etapa', icon: Target, desc: 'Validar disposición al bautismo o participación activa.', color: 'text-[hsl(var(--success))] bg-success-soft' }
                                                 ].map((card, i) => (
                                                     <div key={i} className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 shadow-sm hover:shadow-xl transition-all group">
                                                         <div className={clsx("size-8 rounded-md flex items-center justify-center mb-4 transition-transform group-hover:scale-110", card.color.split(' ')[1])}>
@@ -578,7 +578,7 @@ export default function ConsolidationPipelinePage() {
                                             </div>
 
                                             {/* Notes Area with Premium Styling */}
-                                            <div className="p-1 rounded-md bg-gradient-to-br from-blue-500/10 via-transparent to-sky-500/10">
+                                            <div className="p-1 rounded-md bg-gradient-to-br to-[hsl(var(--info)/10%)] via-transparent to-[hsl(var(--info)/10%)]">
                                                 <div className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-white/20 shadow-2xl space-y-4">
                                                     <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide block pl-1">Notas Dinámicas de Proceso</label>
                                                     <textarea
@@ -625,7 +625,7 @@ export default function ConsolidationPipelinePage() {
                                                         Arrastra para mover etapas
                                                     </div>
                                                     <div className="flex items-center gap-3 text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-                                                        <div className="size-2 rounded-full bg-amber-500" />
+                                                        <div className="size-2 rounded-full bg-[hsl(var(--warning))]" />
                                                         Click para ver detalles
                                                     </div>
                                                 </div>
@@ -666,7 +666,7 @@ export default function ConsolidationPipelinePage() {
                             form="new-lead-form"
                             type="submit"
                             disabled={isSavingLead}
-                            className="px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/25 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60"
+                            className="px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/25%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60"
                         >
                             {isSavingLead ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
                             Registrar Prospecto
@@ -752,12 +752,12 @@ export default function ConsolidationPipelinePage() {
 
                     {/* Preview chip */}
                     {(newLeadForm.first_name || newLeadForm.last_name) && (
-                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-700/30 flex items-center gap-3">
+                        <div className="p-4 bg-info-soft dark:bg-[hsl(var(--info))]/20 rounded-lg border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)] flex items-center gap-3">
                             <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow">
                                 {newLeadForm.first_name?.[0] ?? ''}{newLeadForm.last_name?.[0] ?? ''}
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-blue-800 dark:text-blue-300">{`${newLeadForm.first_name ?? ''} ${newLeadForm.last_name ?? ''}`.trim()}</p>
+                                <p className="text-sm font-bold text-info-text dark:text-info-text">{`${newLeadForm.first_name ?? ''} ${newLeadForm.last_name ?? ''}`.trim()}</p>
                                 <p className="text-[9px] text-[hsl(var(--primary))] uppercase tracking-wide font-bold">Vista previa del prospecto</p>
                             </div>
                         </div>

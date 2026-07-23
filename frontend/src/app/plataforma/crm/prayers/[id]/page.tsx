@@ -6,8 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import CrmShell from "@/components/crm/CrmShell";
 import { Heart, Calendar, User, LayoutDashboard, HandHelping, Sparkles } from "lucide-react";
-import { DSCard } from "@/design/components/DSCard";
-import { DSBadge } from "@/design/components/DSBadge";
+import { DSCard } from '@/design';
+import { DSBadge } from '@/design';
 import { toast } from "sonner";
 
 type PrayerDetail = {
@@ -116,7 +116,7 @@ export default function PrayerDetailPage() {
                             <Calendar size={18} className="text-[hsl(var(--primary))]" /> Recibida el {prayer.created_at ? new Date(prayer.created_at).toLocaleDateString() : "Sin fecha"}
                         </p>
                     </div>
-                    <button className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/30 hover:scale-105 transition-all flex items-center gap-2">
+                    <button className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/30%)] hover:scale-105 transition-all flex items-center gap-2">
                         <HandHelping size={16} /> Marcar como Respondida
                     </button>
                 </header>

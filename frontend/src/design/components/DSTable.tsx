@@ -11,7 +11,6 @@ import {
 } from '@tanstack/react-table';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import clsx from 'clsx';
-import { typography } from '../tokens';
 
 interface DSTableProps<T> {
     data: T[];
@@ -20,6 +19,9 @@ interface DSTableProps<T> {
     onRowClick?: (row: T) => void;
     emptyMessage?: string;
     compact?: boolean;
+    stickyHeader?: boolean;
+    cursorPointer?: boolean;
+    className?: string;
 }
 
 export function DSTable<T>({
@@ -29,6 +31,9 @@ export function DSTable<T>({
     onRowClick,
     emptyMessage = 'Sin datos',
     compact = false,
+    stickyHeader,
+    cursorPointer,
+    className,
 }: DSTableProps<T>) {
     const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -42,14 +47,13 @@ export function DSTable<T>({
     });
 
     return (
-        <div className="w-full overflow-auto">
+        <div className={clsx('w-full overflow-auto', className)}>
             <table
-                className="w-full text-left border-collapse"
-                style={{ fontFamily: typography.family }}
+                className="w-full text-left border-collapse font-sans"
             >
                 <thead>
                     {table.getHeaderGroups().map((headerGroup) => (
-                        <tr key={headerGroup.id}>
+                        <tr key={headerGroup.id} className={clsx(stickyHeader && 'sticky top-0 z-10 shadow-sm')}>
                             {headerGroup.headers.map((header) => {
                                 const canSort = header.column.getCanSort();
                                 const isSorted = header.column.getIsSorted();
@@ -107,7 +111,7 @@ export function DSTable<T>({
                                     'border-b border-[hsl(var(--border))] dark:border-white/5 last:border-0',
                                     'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
                                     'transition-colors',
-                                    onRowClick && 'cursor-pointer'
+                                    (onRowClick || cursorPointer) && 'cursor-pointer'
                                 )}
                             >
                                 {row.getVisibleCells().map((cell) => (

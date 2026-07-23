@@ -70,13 +70,13 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                         <div className="flex gap-2 text-[11px] font-semibold uppercase tracking-wide">
                             <button 
                                 onClick={() => setType('event')}
-                                className={`flex-1 py-1.5 rounded-lg border transition-colors ${type === 'event' ? 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))] border-blue-100 dark:border-blue-500/20' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 border-transparent'}`}
+                                className={`flex-1 py-1.5 rounded-lg border transition-colors ${type === 'event' ? 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))] border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 border-transparent'}`}
                             >
                                 Evento
                             </button>
                             <button 
                                 onClick={() => setType('task')}
-                                className={`flex-1 py-1.5 rounded-lg border transition-colors ${type === 'task' ? 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))] border-blue-100 dark:border-blue-500/20' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 border-transparent'}`}
+                                className={`flex-1 py-1.5 rounded-lg border transition-colors ${type === 'task' ? 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))] border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 border-transparent'}`}
                             >
                                 Tarea
                             </button>
@@ -132,7 +132,7 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                         <button 
                             onClick={handleSave}
                             disabled={!title.trim() || isSaving}
-                            className="flex items-center gap-2 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white shadow-md shadow-blue-500/20 rounded-md transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                            className="flex items-center gap-2 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white shadow-md shadow-[hsl(var(--info)/20%)] rounded-md transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                         >
                             {isSaving && <Loader2 size={12} className="animate-spin" />}
                             Guardar

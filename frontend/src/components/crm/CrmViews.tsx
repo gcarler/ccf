@@ -59,11 +59,11 @@ function PersonaCard({ persona, index, onClick }: { persona: Persona, index: num
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.02 }}
             onClick={onClick}
-            className="group p-4 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 hover:border-blue-500/50 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden"
+            className="group p-4 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--info)/100%)]/50 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden"
         >
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-4">
-                    <div className="size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--surface-2))] dark:from-white/10 dark:to-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:from-blue-600 group-hover:to-blue-700 group-hover:text-white transition-all shadow-sm">
+                    <div className="size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--surface-2))] dark:from-white/10 dark:to-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:from-[hsl(var(--info))] group-hover:to-[hsl(var(--info))] group-hover:text-white transition-all shadow-sm">
                         <span className="text-base font-bold">{persona.nombre_completo?.charAt(0) ?? ''}</span>
                     </div>
                     <div>
@@ -75,7 +75,7 @@ function PersonaCard({ persona, index, onClick }: { persona: Persona, index: num
                         </span>
                     </div>
                 </div>
-                <div className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+                <div className="flex items-center gap-1 px-3 py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/20 rounded-md">
                     <Heart size={12} className="text-[hsl(var(--primary))]" fill="currentColor" />
                     <span className="text-[10px] font-bold text-[hsl(var(--primary))]">{Math.round((persona.spiritual_health || 0.8) * 100)}%</span>
                 </div>
@@ -94,8 +94,8 @@ function PersonaCard({ persona, index, onClick }: { persona: Persona, index: num
 
             <div className="pt-4 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
                 <div className="flex -space-x-2">
-                    <div className="size-6 rounded-full bg-emerald-100 border-2 border-white dark:border-[#1e1f21] flex items-center justify-center text-emerald-600"><Star size={10} fill="currentColor" /></div>
-                    <div className="size-6 rounded-full bg-blue-100 border-2 border-white dark:border-[#1e1f21] flex items-center justify-center text-[hsl(var(--primary))]"><GraduationCap size={10} /></div>
+                    <div className="size-6 rounded-full bg-[hsl(var(--success-muted))] border-2 border-white dark:border-[#1e1f21] flex items-center justify-center text-success-text"><Star size={10} fill="currentColor" /></div>
+                    <div className="size-6 rounded-full bg-[hsl(var(--info-muted))] border-2 border-white dark:border-[#1e1f21] flex items-center justify-center text-[hsl(var(--primary))]"><GraduationCap size={10} /></div>
                 </div>
                 <span className="text-[9px] font-bold uppercase text-[hsl(var(--text-secondary))]">Ver Perfil <ChevronRight size={10} className="inline ml-1" /></span>
             </div>
@@ -131,7 +131,7 @@ export function CrmTableView({ personas, onSelect, isList = false }: TableProps)
                     const initials = data?.nombre_completo?.charAt(0) ?? '';
                     return (
                         <div className="flex items-center gap-3 h-full">
-                            <div className="size-8 rounded-md bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/20 text-[hsl(var(--primary))] flex items-center justify-center font-bold text-sm flex-shrink-0">
+                            <div className="size-8 rounded-md bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] dark:from-[hsl(var(--info)/40%)] dark:to-[hsl(var(--info)/20%)] text-[hsl(var(--primary))] flex items-center justify-center font-bold text-sm flex-shrink-0">
                                 {initials}
                             </div>
                             <div>
@@ -155,7 +155,7 @@ export function CrmTableView({ personas, onSelect, isList = false }: TableProps)
                 field: 'church_role', headerName: 'Rol', width: 140,
                 cellRenderer: ({ value }: any) => {
                     const isLeader = String(value ?? '').toLowerCase().includes('líder') || String(value ?? '').toLowerCase().includes('lider');
-                    return <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isLeader ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/30'}`}>{value || 'Persona'}</span>;
+                    return <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isLeader ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30'}`}>{value || 'Persona'}</span>;
                 },
             },
         ];
@@ -239,7 +239,7 @@ export function CrmKanbanView({ personas, onSelect }: CrmViewProps) {
                             <div
                                 key={m.id}
                                 onClick={() => onSelect?.(m)}
-                                className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-sm hover:shadow-md hover:border-blue-500/50 cursor-pointer transition-all group"
+                                className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-sm hover:shadow-md hover:border-[hsl(var(--info)/100%)]/50 cursor-pointer transition-all group"
                             >
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-colors">
@@ -255,7 +255,7 @@ export function CrmKanbanView({ personas, onSelect }: CrmViewProps) {
                                     <span className="text-[10px] font-bold uppercase text-[hsl(var(--text-secondary))] tracking-wider">
                                         {m.church_role || 'Persona'}
                                     </span>
-                                    <div className="flex gap-1 text-[10px] font-bold text-emerald-600">
+                                    <div className="flex gap-1 text-[10px] font-bold text-success-text">
                                         <Heart size={12} fill="currentColor" /> {Math.round((m.spiritual_health || 0.8) * 100)}%
                                     </div>
                                 </div>
@@ -307,7 +307,7 @@ export function CrmCalendarView({ personas, onSelect }: CrmViewProps) {
                                     <div
                                         key={m.id}
                                         onClick={() => onSelect?.(m)}
-                                        className="text-[10px] font-bold px-2 py-1 bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/30 rounded truncate cursor-pointer hover:bg-blue-100"
+                                        className="text-[10px] font-bold px-2 py-1 bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 rounded truncate cursor-pointer hover:bg-[hsl(var(--info-muted))]"
                                     >
                                         {m.nombre_completo}
                                     </div>

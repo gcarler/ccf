@@ -6,9 +6,9 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import CrmShell from "@/components/crm/CrmShell";
 import { MessageSquare, Send, Clock, LayoutDashboard, Mail } from "lucide-react";
-import { DSCard } from "@/design/components/DSCard";
-import { DSBadge } from "@/design/components/DSBadge";
-import { DSMetric } from "@/design/components/DSMetric";
+import { DSCard } from '@/design';
+import { DSBadge } from '@/design';
+import { DSMetric } from '@/design';
 import { toast } from "sonner";
 
 type MessagingHistoryDetail = {
@@ -137,7 +137,7 @@ export default function MessagingDetailPage() {
                             </span>
                             <span className="flex items-center gap-2">
                                 {channel === "whatsapp" ? (
-                                    <MessageSquare size={18} className="text-emerald-500" />
+                                    <MessageSquare size={18} className="text-[hsl(var(--success))]" />
                                 ) : (
                                     <Mail size={18} className="text-[hsl(var(--primary))]" />
                                 )}
@@ -176,10 +176,10 @@ export default function MessagingDetailPage() {
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between text-xs font-bold">
                                     <span className="text-[hsl(var(--text-secondary))]">Completado</span>
-                                    <span className="text-emerald-500">{deliveryRate}%</span>
+                                    <span className="text-[hsl(var(--success))]">{deliveryRate}%</span>
                                 </div>
                                 <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${deliveryRate}%` }} />
+                                    <div className="h-full bg-[hsl(var(--success))] rounded-full" style={{ width: `${deliveryRate}%` }} />
                                 </div>
                             </div>
                         </DSCard>

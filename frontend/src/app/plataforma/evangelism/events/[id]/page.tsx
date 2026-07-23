@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ApiError, apiFetch } from "@/lib/http";
 import EvangelismShell from "@/components/evangelism/EvangelismShell";
 import { MapPin, ArrowLeft } from "lucide-react";
-import { DSCard } from "@/design/components/DSCard";
+import { DSCard } from '@/design';
 import clsx from "clsx";
 
 const SessionTab = dynamic(() => import("./tabs/SessionTab"), { ssr: false });
@@ -132,7 +132,7 @@ export default function EventDetailPage() {
                 <span
                   className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${
                     activeTab === 'session'
-                      ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300"
+                      ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text"
                       : "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                   }`}
                 >
@@ -169,7 +169,7 @@ export default function EventDetailPage() {
               <div className="space-y-3">
                 <DSCard>
                   <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Acciones</h3>
-                  <button onClick={() => router.push('/plataforma/evangelism/events')} className="w-full py-1.5 bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] rounded-md font-bold flex items-center justify-center gap-2">
+                  <button onClick={() => router.push('/plataforma/evangelism/events')} className="w-full py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] rounded-md font-bold flex items-center justify-center gap-2">
                     <ArrowLeft size={16}/> Volver a Eventos
                   </button>
                 </DSCard>

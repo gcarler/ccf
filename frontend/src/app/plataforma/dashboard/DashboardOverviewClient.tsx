@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { MODULE_CONFIG } from '@/components/DashboardShell';
-import { DSCard } from '@/design/components/DSCard';
+import { DSCard } from '@/design';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import {
@@ -41,7 +41,7 @@ export default function DashboardOverviewClient() {
         <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] dark:bg-transparent overflow-y-auto p-4 font-sans">
             <div className="mb-6">
                 <div className="flex items-center gap-3 mb-1">
-                    <div className="size-10 rounded-xl bg-blue-50 dark:bg-[hsl(var(--primary))]/10 flex items-center justify-center">
+                    <div className="size-10 rounded-xl bg-info-soft dark:bg-[hsl(var(--primary))]/10 flex items-center justify-center">
                         <LayoutDashboard size={20} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" />
                     </div>
                     <div>

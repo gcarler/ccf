@@ -92,7 +92,7 @@ export default function RedirectsPage() {
               <tr key={r.id} className="hover:bg-[hsl(var(--surface-1))]/50">
                 <td className="px-4 py-3 font-mono text-xs">{r.from_path}</td>
                 <td className="px-4 py-3 font-mono text-xs text-[hsl(var(--primary))]">{r.to_path}</td>
-                <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${r.status_code === 301 ? "bg-green-100 text-[hsl(var(--secondary))]" : "bg-amber-100 text-amber-700"}`}>{r.status_code}</span></td>
+                <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${r.status_code === 301 ? "bg-green-100 text-[hsl(var(--secondary))]" : "bg-[hsl(var(--warning-muted))] text-warning-text"}`}>{r.status_code}</span></td>
                 <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))]">{r.hit_count}</td>
                 <td className="px-4 py-3">
                   <button onClick={() => setPendingDelete(r)} className="p-1 rounded hover:bg-red-50"><Trash2 size={12} className="text-[hsl(var(--destructive))]" /></button>

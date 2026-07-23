@@ -36,11 +36,11 @@ function AvatarInitial({ name, size = "md" }: { name: string; size?: "sm" | "md"
     const safeName = (name || "U").slice(0, 2).toUpperCase();
     const initials = safeName;
     const colors = [
-        "from-blue-500 to-blue-700",
-        "from-cyan-500 to-cyan-700",
-        "from-emerald-500 to-emerald-700",
-        "from-rose-500 to-rose-700",
-        "from-amber-500 to-amber-700",
+        "from-[hsl(var(--info))] to-[hsl(var(--info))]",
+        "from-[hsl(var(--domain-cyan))] to-[hsl(var(--domain-cyan))]",
+        "from-[hsl(var(--success))] to-[hsl(var(--success))]",
+        "from-[hsl(var(--danger))] to-[hsl(var(--danger))]",
+        "from-[hsl(var(--warning))] to-[hsl(var(--warning))]",
     ];
     const color = colors[name.charCodeAt(0) % colors.length];
     return (
@@ -262,7 +262,7 @@ export default function MessagesPage() {
                         <span className="hidden xs:inline">Mensajes</span>
                     </span>
                     {totalUnread > 0 && (
-                        <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold">
+                        <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-[hsl(var(--danger))] text-white text-[9px] font-bold">
                             {totalUnread}
                         </span>
                     )}
@@ -329,7 +329,7 @@ export default function MessagesPage() {
                                 className={clsx(
                                     "w-full text-left flex items-center gap-2.5 px-2 py-2 rounded-lg transition-all group mb-0.5",
                                     isActive
-                                        ? "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]"
+                                        ? "bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]"
                                         : "hover:bg-[hsl(var(--surface-2))]/60 dark:hover:bg-white/[0.04]"
                                 )}
                             >
@@ -387,7 +387,7 @@ export default function MessagesPage() {
                         <button
                             onClick={openNewConvDrawer}
                             aria-label="Crear nueva conversación"
-                            className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wide bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all shadow-sm shadow-blue-500/20 mt-1"
+                            className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wide bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all shadow-sm shadow-[hsl(var(--info)/20%)] mt-1"
                         >
                             <Plus size={13} /> Nueva conversación
                         </button>
@@ -412,7 +412,7 @@ export default function MessagesPage() {
                                 <div className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
                                     {wsStatus === "open" ? (
                                         <>
-                                            <Circle size={7} className="fill-emerald-400 text-emerald-400" />
+                                            <Circle size={7} className="fill-[hsl(var(--success))] text-[hsl(var(--success))]" />
                                             <span className="hidden xs:inline">Activo</span>
                                         </>
                                     ) : wsStatus === "error" ? (
@@ -422,7 +422,7 @@ export default function MessagesPage() {
                                         </>
                                     ) : (
                                         <>
-                                            <Circle size={7} className="fill-amber-400 text-amber-400" />
+                                            <Circle size={7} className="fill-[hsl(var(--warning))] text-[hsl(var(--warning))]" />
                                             <span className="hidden xs:inline">Conectando...</span>
                                         </>
                                     )}
@@ -500,7 +500,7 @@ export default function MessagesPage() {
                         {/* ── Input bar ── */}
                         <div className="border-t border-[hsl(var(--border))] dark:border-white/[0.05] p-2 md:p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
                             <div className="flex items-center gap-2">
-                                <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                                <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-[hsl(var(--primary))]/20 transition-all">
                                     <input
                                         ref={inputRef}
                                         type="text"
@@ -517,7 +517,7 @@ export default function MessagesPage() {
                                     onClick={handleSend}
                                     disabled={!input.trim() || sending}
                                     aria-label="Enviar mensaje"
-                                    className="size-9 rounded-xl bg-[hsl(var(--primary))] text-white flex items-center justify-center hover:bg-[hsl(var(--primary))] disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all shadow-sm shadow-blue-500/20 shrink-0"
+                                    className="size-9 rounded-xl bg-[hsl(var(--primary))] text-white flex items-center justify-center hover:bg-[hsl(var(--primary))] disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all shadow-sm shadow-[hsl(var(--info)/20%)] shrink-0"
                                 >
                                     {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                                 </button>

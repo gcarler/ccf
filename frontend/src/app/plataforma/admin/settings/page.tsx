@@ -121,7 +121,7 @@ export default function MinistrySettings() {
                 <section className="pt-6">
                     <button
                         onClick={handleLogout}
-                        className="w-full h-8 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white font-black rounded-lg border border-rose-500/20 transition-all flex items-center justify-center gap-3 uppercase text-[11px] tracking-wide shadow-lg shadow-rose-500/5 active:scale-[0.98]"
+                        className="w-full h-8 bg-[hsl(var(--danger))]/10 hover:bg-[hsl(var(--danger))] text-[hsl(var(--danger))] hover:text-white font-black rounded-lg border border-[hsl(var(--danger)/100%)]/20 transition-all flex items-center justify-center gap-3 uppercase text-[11px] tracking-wide shadow-lg shadow-[hsl(var(--danger)/5%)] active:scale-[0.98]"
                     >
                         <LogOut size={20} />
                         Cerrar Sesión Admin

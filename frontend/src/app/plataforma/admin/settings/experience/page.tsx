@@ -29,8 +29,8 @@ import clsx from 'clsx';
 
 const FEATURE_CARDS = [
     { id: 'gantt', label: 'Vista de Gantt', desc: 'Habilita el cronograma interactivo en proyectos.', icon: GanttChart, color: 'text-[hsl(var(--primary))]' },
-    { id: 'ai_coach', label: 'Optimus Brain Coach', desc: 'Asistente de IA para academia y CRM.', icon: Bot, color: 'text-sky-500' },
-    { id: 'call_center', label: 'Call Center Pastoral', icon: Smartphone, desc: 'Gestión de llamadas y mensajes masivos.', color: 'text-amber-500' },
+    { id: 'ai_coach', label: 'Optimus Brain Coach', desc: 'Asistente de IA para academia y CRM.', icon: Bot, color: 'text-[hsl(var(--info))]' },
+    { id: 'call_center', label: 'Call Center Pastoral', icon: Smartphone, desc: 'Gestión de llamadas y mensajes masivos.', color: 'text-[hsl(var(--warning))]' },
     { id: 'prayer_wall', label: 'Muro de Intercesión', icon: Heart, desc: 'Registro público de peticiones de oración.', color: 'text-[hsl(var(--destructive))]' },
     { id: 'kanban', label: 'Tableros Kanban', icon: KanbanSquare, desc: 'Visualización de procesos por arrastre.', color: 'text-[hsl(var(--success))]' },
     { id: 'audit_logs', label: 'Auditoría de Staff', icon: Shield, desc: 'Registro detallado de acciones administrativas.', color: 'text-[hsl(var(--primary))]' },
@@ -129,7 +129,7 @@ export default function WorkspaceExperienceManager() {
     const renderList = () => (
         <div className="space-y-4">
             {featureRows.map((feature) => (
-                <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex items-center justify-between gap-3 hover:border-blue-300 transition-all">
+                <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex items-center justify-between gap-3 hover:border-[hsl(var(--info)/30%)] transition-all">
                     <div className="flex items-center gap-3">
                         <div className={clsx("size-7 rounded-lg flex items-center justify-center", feature.enabled ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]")}>
                             <feature.icon size={24} />
@@ -178,7 +178,7 @@ export default function WorkspaceExperienceManager() {
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((feature) => (
-                            <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-blue-300 transition-all">
+                            <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-[hsl(var(--info)/30%)] transition-all">
                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{feature.label}</p>
                                 <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))]">{feature.desc}</p>
                             </button>
@@ -216,7 +216,7 @@ export default function WorkspaceExperienceManager() {
                     
                     {/* Header */}
                     <header className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-sky-50 dark:bg-sky-900/20 text-sky-600 rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-sky-100 dark:border-sky-900/30">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-info-text rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)]">
                             <Zap size={14} /> Workspace Experience Manager v3.0
                         </div>
                         <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
@@ -258,7 +258,7 @@ export default function WorkspaceExperienceManager() {
                                         className={clsx(
                                             "p-4 rounded-lg border-2 transition-all cursor-pointer group relative overflow-hidden",
                                             isEnabled 
-                                                ? "bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-blue-600 shadow-2xl shadow-blue-500/10 scale-[1.02]" 
+                                                ? "bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-[hsl(var(--info)/100%)] shadow-2xl shadow-[hsl(var(--info)/10%)] scale-[1.02]" 
                                                 : "bg-[hsl(var(--surface-1))] dark:bg-black/20 border-transparent grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
                                         )}
                                     >
@@ -291,20 +291,20 @@ export default function WorkspaceExperienceManager() {
                                     <h4 className="text-lg font-bold tracking-tight">Personalización de Marca</h4>
                                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium leading-relaxed italic">&ldquo;Configura el ADN visual de la plataforma para que refleje la identidad de Centro Cristiano de Fe.&rdquo;</p>
                                     <div className="flex gap-4">
-                                        <div className="size-10 rounded-full bg-[hsl(var(--primary))] cursor-pointer border-2 border-white ring-4 ring-blue-600/20 shadow-xl" />
-                                        <div className="size-10 rounded-full bg-sky-600 cursor-pointer hover:scale-110 transition-all" />
-                                        <div className="size-10 rounded-full bg-emerald-600 cursor-pointer hover:scale-110 transition-all" />
-                                        <div className="size-10 rounded-full bg-rose-600 cursor-pointer hover:scale-110 transition-all" />
+                                        <div className="size-10 rounded-full bg-[hsl(var(--primary))] cursor-pointer border-2 border-white ring-4 ring-[hsl(var(--info)/20%)] shadow-xl" />
+                                        <div className="size-10 rounded-full bg-[hsl(var(--info))] cursor-pointer hover:scale-110 transition-all" />
+                                        <div className="size-10 rounded-full bg-[hsl(var(--success))] cursor-pointer hover:scale-110 transition-all" />
+                                        <div className="size-10 rounded-full bg-[hsl(var(--danger))] cursor-pointer hover:scale-110 transition-all" />
                                     </div>
                                 </div>
                                 <div className="space-y-3 bg-white/5 p-4 rounded-lg border border-white/10 backdrop-blur-md">
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide ml-2">Nombre del Workspace</label>
-                                        <input type="text" defaultValue={SITE_NAME} className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all" />
+                                        <input type="text" defaultValue={SITE_NAME} className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all" />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide ml-2">URL del Logotipo (SVG/PNG)</label>
-                                        <input type="text" placeholder="https://..." className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-blue-500 transition-all" />
+                                        <input type="text" placeholder="https://..." className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all" />
                                     </div>
                                 </div>
                             </div>

@@ -108,7 +108,7 @@ function CheckboxRenderer({ value, node, column }: any) {
       onChange={(e) => {
         node.setDataValue(column.getColId(), e.target.checked);
       }}
-      className="w-4 h-4 rounded cursor-pointer accent-sky-600"
+      className="w-4 h-4 rounded cursor-pointer accent-[hsl(var(--primary))]"
     />
   );
 }
@@ -118,7 +118,7 @@ function RatingRenderer({ value }: any) {
   return (
     <span className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} className={clsx("text-sm", i <= n ? "text-yellow-400" : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-primary))]")}>★</span>
+        <span key={i} className={clsx("text-sm", i <= n ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-primary))]")}>★</span>
       ))}
     </span>
   );
@@ -238,9 +238,8 @@ const lightTheme = themeQuartz.withParams({
   oddRowBackgroundColor: "#f8fafc",
   headerBackgroundColor: "#f1f5f9",
   headerTextColor: "#475569",
-  selectedRowBackgroundColor: "#eef2ff",
-  accentColor: "#6366f1",
-  rangeSelectionBorderColor: "#6366f1",
+  // accent/range/selected colors are overridden via CSS variables in globals.css
+  // because themeQuartz.withParams does not reliably resolve CSS custom properties.
   cellHorizontalPaddingScale: 0.8,
 });
 
@@ -255,9 +254,8 @@ const darkTheme = themeQuartz.withParams({
   oddRowBackgroundColor: "rgba(255,255,255,0.02)",
   headerBackgroundColor: "rgba(255,255,255,0.04)",
   headerTextColor: "#94a3b8",
-  selectedRowBackgroundColor: "rgba(99,102,241,0.15)",
-  accentColor: "#6366f1",
-  rangeSelectionBorderColor: "#6366f1",
+  // accent/range/selected colors are overridden via CSS variables in globals.css
+  // because themeQuartz.withParams does not reliably resolve CSS custom properties.
   cellHorizontalPaddingScale: 0.8,
 });
 
@@ -409,7 +407,7 @@ export default function TableView<T extends Record<string, any>>({
                 }
               }}
               placeholder="Buscar…"
-              className="w-full pl-7 pr-7 py-1.5 text-xs border border-[hsl(var(--border))] dark:border-white/10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-1 focus:ring-sky-400"
+              className="w-full pl-7 pr-7 py-1.5 text-xs border border-[hsl(var(--border))] dark:border-white/10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-1 focus:ring-[hsl(var(--info))]"
             />
             {quickFilter && (
               <button onClick={() => {
@@ -428,12 +426,12 @@ export default function TableView<T extends Record<string, any>>({
             <>
               <span className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mr-1">{selectedIds.length} seleccionados</span>
               {actions?.map((a, i) => (
-                <button key={i} onClick={() => a.onClick(selectedIds as any)} className={clsx("flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors", a.danger ? "bg-red-50 dark:bg-red-900/20 text-[hsl(var(--destructive))] hover:bg-red-100" : "bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] hover:bg-blue-100")}>
+                <button key={i} onClick={() => a.onClick(selectedIds as any)} className={clsx("flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors", a.danger ? "bg-danger-soft text-danger-text hover:bg-danger-muted" : "bg-info-soft text-info-text hover:bg-info-muted")}>
                   {a.icon}{a.label}
                 </button>
               ))}
               {onDeleteRows && (
-                <button onClick={handleDeleteSelected} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-red-50 dark:bg-red-900/20 text-[hsl(var(--destructive))] hover:bg-red-100 transition-colors">
+                <button onClick={handleDeleteSelected} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg bg-danger-soft text-danger-text hover:bg-danger-muted transition-colors">
                   <Trash2 size={12} /> Eliminar
                 </button>
               )}

@@ -1,34 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import PersonaSelect from './PersonaSelect';
 
-const mockPersonas = [
-  {
-    id: '1',
-    first_name: 'Juan',
-    last_name: 'Pérez',
-    nombre_completo: 'Juan Pérez',
-    church_role: 'Líder de Jóvenes',
-    spiritual_status: 'Maduro',
-  },
-  {
-    id: '2',
-    first_name: 'María',
-    last_name: 'González',
-    nombre_completo: 'María González',
-    church_role: 'Madre de Célula',
-    spiritual_status: 'Maduro',
-  },
-  {
-    id: '3',
-    first_name: 'Carlos',
-    last_name: 'López',
-    nombre_completo: 'Carlos López',
-    church_role: 'Ejecutivo',
-    spiritual_status: 'En crecimiento',
-  },
-];
-
 const meta: Meta<typeof PersonaSelect> = {
+  tags: ['autodocs'],
   title: 'UI/PersonaSelect',
   component: PersonaSelect,
   parameters: {

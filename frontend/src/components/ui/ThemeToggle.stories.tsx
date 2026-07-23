@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import ThemeToggle from './ThemeToggle';
 
+
 const meta: Meta<typeof ThemeToggle> = {
+  tags: ['autodocs'],
   title: 'UI/ThemeToggle',
   component: ThemeToggle,
   parameters: {
@@ -13,7 +15,7 @@ const meta: Meta<typeof ThemeToggle> = {
         (window as any).__STORYBOOK__ = true;
       }
       return (
-        <div className="p-8 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg flex items-center justify-center">
+        <div className="p-8 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] rounded-lg flex items-center justify-center">
           <Story />
         </div>
       );

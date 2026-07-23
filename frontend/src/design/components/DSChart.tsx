@@ -5,7 +5,6 @@ import {
     LineChart, Line, AreaChart, Area, BarChart, Bar,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { colors } from '../tokens';
 
 interface ChartDataPoint {
     label: string;
@@ -177,7 +176,7 @@ export function DSChart({
     type = 'line',
     data = [],
     height = 300,
-    color = colors.primary[500],
+    color = 'hsl(var(--primary))',
 }: DSChartProps) {
     const gradientId = useId();
     const [mounted, setMounted] = useState(false);

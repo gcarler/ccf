@@ -12,37 +12,38 @@ describe('DSSkeleton', () => {
     it('applies md rounded by default', () => {
         const { container } = render(<DSSkeleton />);
         const skeleton = container.firstChild as HTMLElement;
-        expect(skeleton.style.borderRadius).toBe('0.375rem');
+        expect(skeleton.className).toContain('rounded-md');
     });
 
     it('applies sm rounded', () => {
         const { container } = render(<DSSkeleton rounded="sm" />);
         const skeleton = container.firstChild as HTMLElement;
-        expect(skeleton.style.borderRadius).toBe('0.25rem');
+        expect(skeleton.className).toContain('rounded');
+        expect(skeleton.className).not.toContain('rounded-md');
     });
 
     it('applies lg rounded', () => {
         const { container } = render(<DSSkeleton rounded="lg" />);
         const skeleton = container.firstChild as HTMLElement;
-        expect(skeleton.style.borderRadius).toBe('0.5rem');
+        expect(skeleton.className).toContain('rounded-lg');
     });
 
     it('applies xl rounded', () => {
         const { container } = render(<DSSkeleton rounded="xl" />);
         const skeleton = container.firstChild as HTMLElement;
-        expect(skeleton.style.borderRadius).toBe('0.75rem');
+        expect(skeleton.className).toContain('rounded-xl');
     });
 
     it('applies pill rounded', () => {
         const { container } = render(<DSSkeleton rounded="pill" />);
         const skeleton = container.firstChild as HTMLElement;
-        expect(skeleton.style.borderRadius).toBe('9999px');
+        expect(skeleton.className).toContain('rounded-full');
     });
 
     it('does not apply border radius when rounded is none', () => {
         const { container } = render(<DSSkeleton rounded="none" />);
         const skeleton = container.firstChild as HTMLElement;
-        expect(skeleton.style.borderRadius || '').toBe('');
+        expect(skeleton.className).not.toContain('rounded');
     });
 
     it('applies custom className', () => {

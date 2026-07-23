@@ -10,8 +10,8 @@ import {
     Minus,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { DSCard } from '@/design/components/DSCard';
-import { DSSectionHeader } from '@/design/components/DSSectionHeader';
+import { DSCard } from '@/design';
+import { DSSectionHeader } from '@/design';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────────────
 
@@ -188,14 +188,14 @@ export function SeoTrendCard({ trend }: { trend: SeoTrendResponse }) {
                 actions={
                     trend.is_alert ? (
                         <span
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300 text-[10px] font-bold uppercase tracking-wide"
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/15 text-danger-text dark:text-danger-text text-[10px] font-bold uppercase tracking-wide"
                             title={`Bajó más de ${trend.alert_threshold} puntos`}
                         >
                             <AlertTriangle size={11} />
                             Alerta · -{Math.abs(change ?? 0)} pts
                         </span>
                     ) : (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold uppercase tracking-wide">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/15 text-success-text dark:text-success-text text-[10px] font-bold uppercase tracking-wide">
                             Saludable
                         </span>
                     )
@@ -207,9 +207,9 @@ export function SeoTrendCard({ trend }: { trend: SeoTrendResponse }) {
                 <div className="md:col-span-1">
                     <div className={clsx(
                         'rounded-lg p-3',
-                        tone === 'emerald' && 'bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20',
-                        tone === 'amber' && 'bg-amber-50 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/20',
-                        tone === 'rose' && 'bg-rose-50 dark:bg-rose-500/10 border border-rose-200/60 dark:border-rose-500/20',
+                        tone === 'emerald' && 'bg-success-soft dark:bg-[hsl(var(--success))]/10 border border-[hsl(var(--success)/25%)]/60 dark:border-[hsl(var(--success)/100%)]/20',
+                        tone === 'amber' && 'bg-warning-soft dark:bg-[hsl(var(--warning))]/10 border border-[hsl(var(--warning)/25%)]/60 dark:border-[hsl(var(--warning)/100%)]/20',
+                        tone === 'rose' && 'bg-danger-soft dark:bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/25%)]/60 dark:border-[hsl(var(--danger)/100%)]/20',
                     )}>
                         <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             Score actual
@@ -226,8 +226,8 @@ export function SeoTrendCard({ trend }: { trend: SeoTrendResponse }) {
                         {change != null && (
                             <div className={clsx(
                                 'mt-2 inline-flex items-center gap-1 text-[11px] font-semibold',
-                                trendTone === 'emerald' && 'text-emerald-600 dark:text-emerald-400',
-                                trendTone === 'rose' && 'text-rose-600 dark:text-rose-400',
+                                trendTone === 'emerald' && 'text-success-text dark:text-[hsl(var(--success))]',
+                                trendTone === 'rose' && 'text-danger-text dark:text-[hsl(var(--danger))]',
                                 trendTone === 'blue' && 'text-[hsl(var(--text-secondary))]',
                             )}>
                                 <TrendIcon size={12} />
@@ -272,14 +272,14 @@ export function SeoTrendCard({ trend }: { trend: SeoTrendResponse }) {
                 <motion.div
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mt-3 flex items-start gap-2 rounded-lg border border-rose-300/60 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 p-2.5"
+                    className="mt-3 flex items-start gap-2 rounded-lg border border-[hsl(var(--danger)/30%)]/60 dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 p-2.5"
                 >
-                    <span className="text-rose-600 dark:text-rose-400 mt-0.5 shrink-0 inline-flex items-center justify-center size-4">▼</span>
+                    <span className="text-danger-text dark:text-[hsl(var(--danger))] mt-0.5 shrink-0 inline-flex items-center justify-center size-4">▼</span>
                     <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-bold text-rose-700 dark:text-rose-300">
+                        <p className="text-[12px] font-bold text-danger-text dark:text-danger-text">
                             Caída de {Math.abs(change)} puntos en el último día
                         </p>
-                        <p className="text-[11px] text-rose-700/80 dark:text-rose-300/80 mt-0.5">
+                        <p className="text-[11px] text-danger-text/80 dark:text-[hsl(var(--danger)/80%)] mt-0.5">
                             Umbral de alerta: {trend.alert_threshold} pts. Score previo: {trend.previous_score} → actual: {trend.current_score}.
                         </p>
                     </div>

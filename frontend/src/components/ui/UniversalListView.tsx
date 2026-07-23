@@ -43,9 +43,9 @@ interface UniversalListViewProps {
 
 const PRIORITY_STYLES: Record<string, string> = {
     low: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-[hsl(var(--surface-2))] dark:text-[hsl(var(--text-secondary))]",
-    medium: "bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-[hsl(var(--primary))]",
-    high: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    urgent: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+    medium: "bg-info-soft text-info-text dark:bg-[hsl(var(--info)/0.2)] dark:text-[hsl(var(--info))]",
+    high: "bg-warning-soft text-warning-text dark:bg-[hsl(var(--warning)/0.2)] dark:text-[hsl(var(--warning))]",
+    urgent: "bg-danger-soft text-danger-text dark:bg-[hsl(var(--danger)/0.2)] dark:text-[hsl(var(--danger))]",
 };
 
 const STATUS_ICONS: Record<string, React.ElementType> = {
@@ -204,9 +204,9 @@ export default function UniversalListView({
                                                     className={clsx(
                                                         "flex-shrink-0",
                                                         item.status === "completed" || item.status === "resolved"
-                                                            ? "text-emerald-500"
+                                                            ? "text-[hsl(var(--success))]"
                                                             : item.status === "open" || item.status === "urgent"
-                                                            ? "text-rose-500"
+                                                            ? "text-[hsl(var(--danger))]"
                                                             : "text-[hsl(var(--text-secondary))]"
                                                     )}
                                                 />
@@ -278,7 +278,7 @@ export default function UniversalListView({
                                                         e.stopPropagation();
                                                         onDelete(item);
                                                     }}
-                                                    className="opacity-0 group-hover:opacity-100 text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-opacity"
+                                                    className="opacity-0 group-hover:opacity-100 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-opacity"
                                                 >
                                                     <X size={14} />
                                                 </button>

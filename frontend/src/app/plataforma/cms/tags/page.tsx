@@ -198,20 +198,20 @@ export default function CmsTagsManagement() {
         <button
           onClick={() => setIsQuickAddOpen((prev) => !prev)}
           disabled={!canEdit}
-          className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
+          className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
         >
           <Plus size={14} /> Nueva etiqueta
         </button>
       </header>
 
       {error && (
-        <div className="mx-3 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+        <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
           <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
         </div>
       )}
 
       {isQuickAddOpen && (
-        <div className="bg-blue-50 dark:bg-blue-900/10 border-b-2 border-blue-300 dark:border-blue-500/30 overflow-hidden shrink-0">
+        <div className="bg-info-soft dark:bg-[hsl(var(--info))]/10 border-b-2 border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/30 overflow-hidden shrink-0">
           <form onSubmit={handleCreate} className="px-3 py-1.5 flex items-center gap-4">
             <div className="size-8 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center shrink-0">
               <Zap size={16} />
@@ -223,7 +223,7 @@ export default function CmsTagsManagement() {
               onKeyDown={(e) => e.key === "Escape" && setIsQuickAddOpen(false)}
               placeholder="Nombre de la etiqueta (Enter para crear)"
               disabled={!canEdit}
-              className="flex-1 bg-transparent border-none text-sm font-bold text-blue-900 dark:text-blue-200 placeholder:text-[hsl(var(--primary))] focus:ring-0"
+              className="flex-1 bg-transparent border-none text-sm font-bold text-info-text dark:text-[hsl(var(--info))] placeholder:text-[hsl(var(--primary))] focus:ring-0"
             />
             <button
               type="submit"
@@ -271,7 +271,7 @@ export default function CmsTagsManagement() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
                   className={clsx(
-                    "group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border px-4 py-3 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-200 flex items-center gap-3",
+                    "group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border px-4 py-3 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all duration-200 flex items-center gap-3",
                     isArchived
                       ? "border-dashed border-[hsl(var(--border))] dark:border-white/10 opacity-60"
                       : "border-[hsl(var(--border))]/70 dark:border-white/5"
@@ -279,7 +279,7 @@ export default function CmsTagsManagement() {
                 >
                   <div
                     onClick={() => setSelectedTag(tag)}
-                    className="size-6 rounded-md bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 flex items-center justify-center shrink-0 cursor-pointer"
+                    className="size-6 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] dark:bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0 cursor-pointer"
                   >
                     <Tag size={14} />
                   </div>
@@ -293,7 +293,7 @@ export default function CmsTagsManagement() {
                         {tag.name}
                       </h3>
                       {isArchived && (
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning-muted))] text-warning-text dark:bg-[hsl(var(--warning))]/20 dark:text-[hsl(var(--warning))]">
                           Archivada
                         </span>
                       )}
@@ -308,7 +308,7 @@ export default function CmsTagsManagement() {
                       <button
                         onClick={() => handleRestore(tag)}
                         disabled={!canEdit}
-                        className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-emerald-600 transition-all disabled:opacity-50"
+                        className="p-2 hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-success-text transition-all disabled:opacity-50"
                         title="Restaurar"
                       >
                         <RotateCcw size={15} />
@@ -317,7 +317,7 @@ export default function CmsTagsManagement() {
                       <button
                         onClick={() => handleArchive(tag)}
                         disabled={!canEdit}
-                        className="p-2 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-amber-600 transition-all disabled:opacity-50"
+                        className="p-2 hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-warning-text transition-all disabled:opacity-50"
                         title="Archivar"
                       >
                         <Archive size={15} />
@@ -379,7 +379,7 @@ export default function CmsTagsManagement() {
               <button
                 onClick={handleSave}
                 disabled={!canEdit}
-                className="w-full bg-[hsl(var(--primary))] text-white py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
+                className="w-full bg-[hsl(var(--primary))] text-white py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
               >
                 Guardar cambios
               </button>
@@ -387,7 +387,7 @@ export default function CmsTagsManagement() {
                 <button
                   onClick={() => handleRestore(selectedTag)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-emerald-200 text-emerald-700 dark:text-emerald-300 py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-emerald-50 dark:hover:bg-emerald-500/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-[hsl(var(--success)/25%)] text-success-text dark:text-success-text py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <RotateCcw size={14} /> Restaurar
                 </button>
@@ -395,7 +395,7 @@ export default function CmsTagsManagement() {
                 <button
                   onClick={() => handleArchive(selectedTag)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-amber-200 text-amber-700 dark:text-amber-300 py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-amber-50 dark:hover:bg-amber-500/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-[hsl(var(--warning)/25%)] text-warning-text dark:text-warning-text py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Archive size={14} /> Archivar
                 </button>

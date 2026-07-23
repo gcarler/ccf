@@ -19,11 +19,11 @@ const TYPE_ICON: Record<NotificationKind, React.ReactNode> = {
 
 const TYPE_COLOR: Record<NotificationKind, string> = {
     mention: 'text-[hsl(var(--primary))] bg-[hsl(var(--primary))]/10',
-    comment: 'text-[hsl(var(--primary))] bg-blue-500/10',
-    task: 'text-emerald-500 bg-emerald-500/10',
+    comment: 'text-[hsl(var(--primary))] bg-[hsl(var(--info))]/10',
+    task: 'text-[hsl(var(--success))] bg-[hsl(var(--success))]/10',
     system: 'text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]',
-    ai: 'text-[hsl(var(--primary))] bg-blue-500/10',
-    reminder: 'text-amber-500 bg-amber-500/10',
+    ai: 'text-[hsl(var(--primary))] bg-[hsl(var(--info))]/10',
+    reminder: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning))]/10',
 };
 
 export default function NotificationsCenter() {
@@ -67,7 +67,7 @@ export default function NotificationsCenter() {
             </header>
 
             {error && (
-                <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-1.5 text-sm font-semibold text-rose-600">
+                <div className="mb-3 rounded-lg border border-[hsl(var(--danger)/25%)] bg-danger-soft px-4 py-1.5 text-sm font-semibold text-danger-text">
                     {error}
                 </div>
             )}

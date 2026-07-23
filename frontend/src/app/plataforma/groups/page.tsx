@@ -11,8 +11,8 @@ import {
     MoreHorizontal
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import { DSCard } from '@/design/components/DSCard';
-import { DSMetric } from '@/design/components/DSMetric';
+import { DSCard } from '@/design';
+import { DSMetric } from '@/design';
 import { toast } from 'sonner';
 
 export default function GroupsPage() {
@@ -58,7 +58,7 @@ export default function GroupsPage() {
                         <DSCard key={group.id}>
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="size-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
+                                    <div className="size-9 rounded-lg bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                         <Home size={24} />
                                     </div>
                                     <div>

@@ -131,7 +131,7 @@ export function ProjectKanbanBoard({ project, tasks, phases, onTasksChange, onOp
                 {activeTask && (
                     <div
                         role="presentation"
-                        className="rotate-1 opacity-90 cursor-grabbing bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] rounded-md shadow-2xl border border-blue-500 p-3 w-[260px]"
+                        className="rotate-1 opacity-90 cursor-grabbing bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] rounded-md shadow-2xl border border-[hsl(var(--info)/100%)] p-3 w-[260px]"
                     >
                         <div className="h-[3px] w-full mb-2 bg-[hsl(var(--primary))] rounded-full" />
                         <p className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-2">

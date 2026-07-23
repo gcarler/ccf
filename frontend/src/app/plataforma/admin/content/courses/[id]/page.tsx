@@ -14,8 +14,8 @@ import {
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
+import { DSCard } from '@/design';
+import { DSBadge } from '@/design';
 import { toast } from 'sonner';
 
 
@@ -82,7 +82,7 @@ export default function AdminCourseContentPage() {
                         <button className="px-4 py-2 text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide hover:text-[hsl(var(--text-primary))] transition-all">
                             Vista Previa
                         </button>
-                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
+                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all flex items-center gap-2">
                             <Save size={14} /> Publicar Cambios
                         </button>
                     </div>
@@ -105,14 +105,14 @@ export default function AdminCourseContentPage() {
                         <section className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Lecciones y Módulos ({lessons.length})</h3>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all">
+                                <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:border-[hsl(var(--info)/100%)] transition-all">
                                     <Plus size={14} /> Nueva Lección
                                 </button>
                             </div>
 
                             <div className="space-y-3">
                                 {lessons.map((lesson, idx) => (
-                                    <div key={lesson.id} className="group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer">
+                                    <div key={lesson.id} className="group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 flex items-center justify-between hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer">
                                         <div className="flex items-center gap-4">
                                             <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors">
                                                 {String(idx + 1).padStart(2, '0')}
@@ -162,7 +162,7 @@ export default function AdminCourseContentPage() {
                             <p className="text-[11px] font-medium opacity-70">
                                 Última edición por Admin_CCF hace 1 hora.
                             </p>
-                            <button className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:text-blue-300">
+                            <button className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:text-info-text">
                                 Ver historial completo
                             </button>
                         </div>

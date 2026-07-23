@@ -170,7 +170,7 @@ export default function CrmSettingsPage() {
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-[hsl(var(--primary))] px-4 py-1.5 rounded-lg text-[11px] font-bold tracking-wide text-white hover:bg-[hsl(var(--primary))] transition-all uppercase shadow-xl shadow-blue-500/20 disabled:opacity-50 active:scale-95"
+                    className="flex items-center gap-2 bg-[hsl(var(--primary))] px-4 py-1.5 rounded-lg text-[11px] font-bold tracking-wide text-white hover:bg-[hsl(var(--primary))] transition-all uppercase shadow-xl shadow-[hsl(var(--info)/20%)] disabled:opacity-50 active:scale-95"
                 >
                     {isSaving ? <SpinnerIcon className="animate-spin" size={14} /> : <Save size={14} />}
                     {isSaving ? 'Sincronizando...' : 'Guardar Cambios'}
@@ -182,7 +182,7 @@ export default function CrmSettingsPage() {
                 {/* 1. Header */}
                 <div className="flex flex-col space-y-1">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-rose-100 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-md text-[10px] font-bold uppercase tracking-wide">
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/20 text-danger-text dark:text-[hsl(var(--danger))] rounded-md text-[10px] font-bold uppercase tracking-wide">
                             <Shield size={10} /> Privilegios Root
                         </div>
                     </div>
@@ -237,13 +237,13 @@ export default function CrmSettingsPage() {
                                     <div className="space-y-4">
                                         <ToggleSetting 
                                             disabled={!canEditCrm}
-                                            icon={Smartphone} color="text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10" title="Canal de WhatsApp Business" 
+                                            icon={Smartphone} color="text-[hsl(var(--success))] bg-success-soft dark:bg-[hsl(var(--success))]/10" title="Canal de WhatsApp Business" 
                                             desc="Habilita envío de notificaciones y seguimiento automático."
                                             active={config.enableWhatsApp} onToggle={(v: boolean) => setConfig({...config, enableWhatsApp: v})}
                                         />
                                         <ToggleSetting 
                                             disabled={!canEditCrm}
-                                            icon={Smartphone} color="text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10" title="Notificaciones SMS (Twilio)" 
+                                            icon={Smartphone} color="text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10" title="Notificaciones SMS (Twilio)" 
                                             desc="Para alertas urgentes cuando no hay internet."
                                             active={config.enableSMS} onToggle={(v: boolean) => setConfig({...config, enableSMS: v})}
                                         />
@@ -276,18 +276,18 @@ export default function CrmSettingsPage() {
                                                     <p className="text-[12px] text-[hsl(var(--text-secondary))] mt-0.5">MESH encripta y guarda un backup cada 24h.</p>
                                                 </div>
                                             </div>
-                                            <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-md text-[10px] font-bold uppercase tracking-wide">Activo</span>
+                                            <span className="px-2 py-1 bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/30 text-success-text dark:text-[hsl(var(--success))] rounded-md text-[10px] font-bold uppercase tracking-wide">Activo</span>
                                         </div>
 
-                                        <div className="flex items-center justify-between p-4 rounded-md bg-rose-50 dark:bg-rose-500/5 border border-rose-100 dark:border-rose-500/20 mt-4">
+                                        <div className="flex items-center justify-between p-4 rounded-md bg-danger-soft dark:bg-[hsl(var(--danger))]/5 border border-[hsl(var(--danger)/20%)] dark:border-[hsl(var(--danger)/100%)]/20 mt-4">
                                             <div className="flex items-start gap-4">
-                                                <AlertTriangle size={18} className="text-rose-600 dark:text-rose-500 mt-0.5" />
+                                                <AlertTriangle size={18} className="text-danger-text dark:text-[hsl(var(--danger))] mt-0.5" />
                                                 <div>
-                                                    <h4 className="text-xs font-bold text-rose-900 dark:text-rose-400">Purga del Sistema</h4>
-                                                    <p className="text-[12px] text-rose-700/70 dark:text-rose-500/80 mt-0.5">Atención: esto borrará todos los registros de personas permanentemente.</p>
+                                                    <h4 className="text-xs font-bold text-danger-text dark:text-[hsl(var(--danger))]">Purga del Sistema</h4>
+                                                    <p className="text-[12px] text-danger-text/70 dark:text-[hsl(var(--danger))]/80 mt-0.5">Atención: esto borrará todos los registros de personas permanentemente.</p>
                                                 </div>
                                             </div>
-                                            <button className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[11px] font-bold shadow-sm transition-all active:scale-95 shrink-0">
+                                            <button className="px-3 py-1.5 bg-[hsl(var(--danger))] hover:bg-[hsl(var(--danger))] text-white rounded-lg text-[11px] font-bold shadow-sm transition-all active:scale-95 shrink-0">
                                                 Purga Manual
                                             </button>
                                         </div>
@@ -388,7 +388,7 @@ export default function CrmSettingsPage() {
                                                             <div className="min-w-0">
                                                                 <div className="flex items-center gap-2">
                                                                     <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{position.name}</p>
-                                                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${position.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]'}`}>
+                                                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${position.is_active ? 'bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]'}`}>
                                                                         {position.is_active ? 'Activo' : 'Inactivo'}
                                                                     </span>
                                                                 </div>

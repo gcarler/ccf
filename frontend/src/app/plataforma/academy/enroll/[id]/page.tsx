@@ -234,8 +234,8 @@ export default function EnrollmentWizard() {
                                 className="flex flex-col items-center justify-center pt-12 text-center"
                             >
                                 <div className="relative mb-3">
-                                    <div className="absolute inset-0 bg-emerald-500/20 blur-3xl animate-pulse"></div>
-                                    <div className="relative size-10 rounded-md bg-emerald-500 border border-emerald-400 flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30">
+                                    <div className="absolute inset-0 bg-[hsl(var(--success))]/20 blur-3xl animate-pulse"></div>
+                                    <div className="relative size-10 rounded-md bg-[hsl(var(--success))] border border-[hsl(var(--success)/40%)] flex items-center justify-center text-white shadow-2xl shadow-[hsl(var(--success)/30%)]">
                                         <CheckCircle2 size={64} strokeWidth={2.5} />
                                     </div>
                                 </div>
@@ -275,7 +275,7 @@ export default function EnrollmentWizard() {
                         </button>
                         {step === 2 && (
                              <div className="flex items-center justify-center gap-2 mt-3">
-                                <Lock size={12} className="text-emerald-500" />
+                                <Lock size={12} className="text-[hsl(var(--success))]" />
                                 <p className="text-[9px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Transacción Encriptada 256-bit SSL</p>
                              </div>
                         )}

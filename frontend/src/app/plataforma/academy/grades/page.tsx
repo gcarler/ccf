@@ -125,7 +125,7 @@ function StatusPill({ label, value, highlight }: { label: string; value: string;
         <div
             className={`px-3 py-1.5 rounded-lg border text-[10px] font-semibold uppercase tracking-wide ${
                 highlight
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success)/100%)]/30'
                     : 'bg-white/5 text-[hsl(var(--text-secondary))] border-white/10'
             }`}
         >

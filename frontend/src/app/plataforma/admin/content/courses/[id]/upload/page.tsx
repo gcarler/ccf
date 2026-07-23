@@ -81,10 +81,10 @@ export default function UploadMaterials() {
                 </section>
 
                 {/* PDF Upload Card */}
-                <section className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-4 space-y-3 shadow-2xl group hover:border-emerald-500/30 transition-all">
+                <section className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-4 space-y-3 shadow-2xl group hover:border-[hsl(var(--success)/100%)]/30 transition-all">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="size-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-lg">
+                            <div className="size-7 rounded-lg bg-[hsl(var(--success))]/10 flex items-center justify-center text-[hsl(var(--success))] group-hover:bg-[hsl(var(--success))] group-hover:text-white transition-all shadow-lg">
                                 <FileText size={28} />
                             </div>
                             <div>
@@ -96,8 +96,8 @@ export default function UploadMaterials() {
                             <Plus size={20} />
                         </button>
                     </div>
-                    <div className="flex items-center justify-center border-2 border-dashed border-white/5 rounded-lg py-1.5 cursor-pointer hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group/box">
-                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide group-hover/box:text-emerald-500 transition-colors">Toca para seleccionar archivo PDF</p>
+                    <div className="flex items-center justify-center border-2 border-dashed border-white/5 rounded-lg py-1.5 cursor-pointer hover:border-[hsl(var(--success)/100%)]/40 hover:bg-[hsl(var(--success))]/5 transition-all group/box">
+                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide group-hover/box:text-[hsl(var(--success))] transition-colors">Toca para seleccionar archivo PDF</p>
                     </div>
                 </section>
 

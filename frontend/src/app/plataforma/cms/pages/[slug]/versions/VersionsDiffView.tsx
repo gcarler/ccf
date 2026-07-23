@@ -85,7 +85,7 @@ function DiffSummary({
     >
       <header className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
-          <div className="size-8 rounded-md bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] flex items-center justify-center">
+          <div className="size-8 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] flex items-center justify-center">
             <GitCompare size={16} />
           </div>
           <div>
@@ -102,7 +102,7 @@ function DiffSummary({
         {canRollback && onRollback && (
           <button
             onClick={() => onRollback(before.id)}
-            className="inline-flex items-center gap-2 rounded-md border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-all"
+            className="inline-flex items-center gap-2 rounded-md border border-[hsl(var(--warning)/30%)] dark:border-[hsl(var(--warning)/100%)]/40 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-warning-text dark:text-warning-text hover:bg-[hsl(var(--warning-muted))] dark:hover:bg-[hsl(var(--warning))]/20 transition-all"
           >
             <ArrowDown size={12} /> Restaurar v{before.version_number}
           </button>
@@ -151,10 +151,10 @@ function SummaryStat({
     <div
       className={clsx(
         "rounded-md border px-3 py-2",
-        tone === "emerald" && "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10",
-        tone === "rose" && "border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10",
-        tone === "amber" && "border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10",
-        tone === "sky" && "border-sky-200 dark:border-sky-500/30 bg-sky-50 dark:bg-sky-500/10",
+        tone === "emerald" && "border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30 bg-success-soft dark:bg-[hsl(var(--success))]/10",
+        tone === "rose" && "border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft dark:bg-[hsl(var(--danger))]/10",
+        tone === "amber" && "border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/30 bg-warning-soft dark:bg-[hsl(var(--warning))]/10",
+        tone === "sky" && "border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30 bg-info-soft dark:bg-[hsl(var(--info))]/10",
         tone === "muted" && "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-2))] dark:bg-white/[0.02]",
       )}
     >
@@ -384,29 +384,29 @@ function sectionTone(status: SectionDiffT["status"]) {
   switch (status) {
     case "added":
       return {
-        container: "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-500/5",
-        badge: "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
+        container: "border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30 bg-success-soft/40 dark:bg-[hsl(var(--success))]/5",
+        badge: "bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-success-text",
       };
     case "removed":
       return {
-        container: "border-rose-200 dark:border-rose-500/30 bg-rose-50/40 dark:bg-rose-500/5",
-        badge: "bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300",
+        container: "border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft/40 dark:bg-[hsl(var(--danger))]/5",
+        badge: "bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/20 text-danger-text dark:text-danger-text",
       };
     case "reordered":
       return {
-        container: "border-amber-200 dark:border-amber-500/30 bg-amber-50/40 dark:bg-amber-500/5",
-        badge: "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300",
+        container: "border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/30 bg-warning-soft/40 dark:bg-[hsl(var(--warning))]/5",
+        badge: "bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/20 text-warning-text dark:text-warning-text",
       };
     case "modified":
       return {
-        container: "border-sky-200 dark:border-sky-500/30 bg-sky-50/40 dark:bg-sky-500/5",
-        badge: "bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300",
+        container: "border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30 bg-info-soft/40 dark:bg-[hsl(var(--info))]/5",
+        badge: "bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20 text-info-text dark:text-info-text",
       };
     case "visibility-changed":
     case "status-changed":
       return {
-        container: "border-fuchsia-200 dark:border-fuchsia-500/30 bg-fuchsia-50/40 dark:bg-fuchsia-500/5",
-        badge: "bg-fuchsia-100 dark:bg-fuchsia-500/20 text-fuchsia-700 dark:text-fuchsia-300",
+        container: "border-[hsl(var(--domain-fuchsia)/30%)] dark:border-[hsl(var(--domain-fuchsia)/30%)] bg-[hsl(var(--domain-fuchsia)/40%)] dark:bg-[hsl(var(--domain-fuchsia)/5%)]",
+        badge: "bg-[hsl(var(--domain-fuchsia)/20%)] dark:bg-[hsl(var(--domain-fuchsia)/20%)] text-[hsl(var(--domain-fuchsia)/90%)] dark:text-[hsl(var(--domain-fuchsia))]",
       };
     case "unchanged":
     default:
@@ -453,8 +453,8 @@ function SectionPreview({
       className={clsx(
         "rounded-md border bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] p-2.5 space-y-1.5",
         side === "before"
-          ? "border-rose-200/70 dark:border-rose-500/20"
-          : "border-emerald-200/70 dark:border-emerald-500/20",
+          ? "border-[hsl(var(--danger)/25%)]/70 dark:border-[hsl(var(--danger)/100%)]/20"
+          : "border-[hsl(var(--success)/25%)]/70 dark:border-[hsl(var(--success)/100%)]/20",
         dimmed && "opacity-60",
       )}
     >

@@ -48,7 +48,7 @@ function formatDate(value?: string | null) {
 
 function statusBadge(isActive: boolean) {
   return isActive
-    ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+    ? "bg-success-soft dark:bg-[hsl(var(--success))]/10 text-success-text dark:text-success-text"
     : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]";
 }
 
@@ -285,7 +285,7 @@ export default function SectionTypesPage() {
                   onClick: () =>
                     toast(
                       "Tu rol no permite crear tipos de seccion. Coordinar con un publisher.",
-                      { icon: <AlertCircle className="h-4 w-4 text-amber-700" /> },
+                      { icon: <AlertCircle className="h-4 w-4 text-warning-text" /> },
                     ),
                 }
           }
@@ -428,7 +428,7 @@ export default function SectionTypesPage() {
                             onClick={() => openDeleteDrawer(row)}
                             disabled={!canPublish}
                             title={canPublish ? "Desactivar (soft-delete)" : "Sin permisos"}
-                            className="p-2 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10 text-[hsl(var(--text-secondary))] hover:text-amber-700 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[hsl(var(--text-secondary))] transition-all"
+                            className="p-2 rounded-lg hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 text-[hsl(var(--text-secondary))] hover:text-warning-text disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[hsl(var(--text-secondary))] transition-all"
                           >
                             <Archive size={14} />
                           </button>
@@ -438,7 +438,7 @@ export default function SectionTypesPage() {
                             onClick={() => handleReactivate(row)}
                             disabled={!canPublish}
                             title={canPublish ? "Reactivar" : "Sin permisos"}
-                            className="p-2 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-[hsl(var(--text-secondary))] hover:text-emerald-700 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[hsl(var(--text-secondary))] transition-all"
+                            className="p-2 rounded-lg hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 text-[hsl(var(--text-secondary))] hover:text-success-text disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[hsl(var(--text-secondary))] transition-all"
                           >
                             <RotateCcw size={14} />
                           </button>
@@ -453,7 +453,7 @@ export default function SectionTypesPage() {
         )}
 
         {!canPublish && (
-          <div className="rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2">
+          <div className="rounded-lg border border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/30 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-4 py-3 text-xs text-warning-text dark:text-[hsl(var(--warning))] flex items-start gap-2">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
               Tu rol&nbsp;
@@ -508,7 +508,7 @@ export default function SectionTypesPage() {
               className="w-full px-3 py-2 text-[13px] font-mono bg-[hsl(var(--bg-primary))] dark:bg-[#1a1c20] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             />
             {drawerMode === "edit" && (
-              <p className="text-[10px] text-amber-700 dark:text-amber-300">
+              <p className="text-[10px] text-warning-text dark:text-warning-text">
                 El nombre es inmutable. Para cambiarlo: desactivar este + crear uno nuevo.
               </p>
             )}
@@ -587,11 +587,11 @@ export default function SectionTypesPage() {
       >
         {target && (
           <div className="space-y-4">
-            <div className="rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3 py-2.5 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2">
+            <div className="rounded-lg border border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/30 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-3 py-2.5 text-xs text-warning-text dark:text-[hsl(var(--warning))] flex items-start gap-2">
               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>
                 Soft-delete: el registro queda para auditoria pero
-                <code className="mx-1 px-1 bg-amber-100 dark:bg-amber-500/20 rounded">
+                <code className="mx-1 px-1 bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/20 rounded">
                   get_allowed_section_types()
                 </code>
                 lo filtra y los editores no podran anadir secciones nuevas de este tipo.
@@ -622,7 +622,7 @@ export default function SectionTypesPage() {
                 type="button"
                 onClick={() => handleSoftDelete(target)}
                 disabled={saving}
-                className="flex-1 py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-[12px] font-bold uppercase tracking-wide transition-all"
+                className="flex-1 py-2.5 rounded-lg bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))] disabled:opacity-50 text-white text-[12px] font-bold uppercase tracking-wide transition-all"
               >
                 {saving ? "Procesando..." : "Desactivar"}
               </button>

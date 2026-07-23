@@ -35,7 +35,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                 </div>
                 
                 <div className="flex items-center gap-4 relative z-10 p-2">
-                    <div className="size-8 rounded-lg bg-gradient-to-br from-blue-600 to-sky-700 flex items-center justify-center text-white shadow-2xl shadow-blue-500/30">
+                    <div className="size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white shadow-2xl shadow-[hsl(var(--info)/30%)]">
                         <Target size={28} />
                     </div>
                     <div>
@@ -50,7 +50,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                 <div className="grid grid-cols-2 gap-3 mt-3 relative z-10">
                     {[
                         { label: 'Total Leads', value: stats.total, color: 'text-[hsl(var(--text-primary))] dark:text-white' },
-                        { label: 'Conversión', value: `${stats.conversion}%`, color: 'text-sky-600', icon: TrendingUp }
+                        { label: 'Conversión', value: `${stats.conversion}%`, color: 'text-info-text', icon: TrendingUp }
                     ].map((s) => (
                         <div key={s.label} className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] shadow-sm">
                             <p className="text-[8px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1.5">{s.label}</p>
@@ -71,14 +71,14 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                     </h3>
                     <div className="space-y-2">
                         {[
-                            { id: 'all', label: 'Todos los Prospectos', icon: Users, count: stats.total, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-500/5' },
-                            { id: 'new', label: 'Registros Nuevos', icon: UserPlus, count: stats.new, color: 'text-amber-600', bg: 'bg-amber-500/5' },
-                            { id: 'consolidated', label: 'Casos de Éxito', icon: CheckCircle2, count: stats.consolidated, color: 'text-emerald-600', bg: 'bg-emerald-500/5' },
+                            { id: 'all', label: 'Todos los Prospectos', icon: Users, count: stats.total, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info))]/5' },
+                            { id: 'new', label: 'Registros Nuevos', icon: UserPlus, count: stats.new, color: 'text-warning-text', bg: 'bg-[hsl(var(--warning))]/5' },
+                            { id: 'consolidated', label: 'Casos de Éxito', icon: CheckCircle2, count: stats.consolidated, color: 'text-success-text', bg: 'bg-[hsl(var(--success))]/5' },
                         ].map((s) => (
                             <motion.button 
                                 key={s.id}
                                 whileHover={{ x: 4 }}
-                                className="w-full flex items-center gap-4 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-md hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/[0.05] hover:border-blue-500/20 transition-all group"
+                                className="w-full flex items-center gap-4 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-md hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/[0.05] hover:border-[hsl(var(--info)/100%)]/20 transition-all group"
                             >
                                 <div className={clsx("size-8 rounded-lg flex items-center justify-center transition-all group-hover:scale-110", s.bg, s.color)}>
                                     <s.icon size={16} />
@@ -101,16 +101,16 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                             onChange={e => onSearchChange(e.target.value)}
                             placeholder="Nombre, teléfono o etiqueta..."
                             aria-label="Buscar prospectos"
-                            className="w-full pl-12 pr-6 py-2 text-xs font-bold rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] bg-[hsl(var(--surface-1))] dark:bg-[#1a1b1d] outline-none focus:ring-4 focus:ring-blue-500/10 dark:text-white transition-all placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-primary))]"
+                            className="w-full pl-12 pr-6 py-2 text-xs font-bold rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] bg-[hsl(var(--surface-1))] dark:bg-[#1a1b1d] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 dark:text-white transition-all placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-primary))]"
                         />
                     </div>
                 </section>
                 
-                <section className="p-4 bg-gradient-to-br from-blue-600 to-sky-700 rounded-md text-white shadow-2xl shadow-blue-500/25 relative overflow-hidden group">
+                <section className="p-4 bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] rounded-md text-white shadow-2xl shadow-[hsl(var(--info)/25%)] relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 transition-transform duration-700"><Zap size={80} /></div>
                     <div className="relative z-10">
                         <h4 className="text-sm font-bold uppercase tracking-tighter leading-tight mb-2">Asistente<br/>Optimus</h4>
-                        <p className="text-[10px] font-bold text-blue-100 uppercase tracking-wide leading-relaxed">
+                        <p className="text-[10px] font-bold text-[hsl(var(--info))] uppercase tracking-wide leading-relaxed">
                             Analizando tendencias de permanencia para optimizar el discipulado.
                         </p>
                     </div>

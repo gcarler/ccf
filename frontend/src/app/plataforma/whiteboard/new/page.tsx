@@ -108,7 +108,7 @@ export default function NewWhiteboardPage() {
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder="Ej: Planeacion CCF Q2"
-                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-3 text-sm font-bold outline-none focus:border-blue-400 dark:border-white/10 dark:bg-black/20"
+                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-3 text-sm font-bold outline-none focus:border-[hsl(var(--info)/40%)] dark:border-white/10 dark:bg-black/20"
               />
             </label>
 
@@ -140,7 +140,7 @@ export default function NewWhiteboardPage() {
                         onClick={() => setSelectedProjectId(project.id)}
                         className={`w-full flex items-center justify-between rounded-md px-3 py-2 text-left transition-colors ${
                           selected
-                            ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30"
+                            ? "bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30"
                             : "hover:bg-white/5"
                         }`}
                       >
@@ -171,7 +171,7 @@ export default function NewWhiteboardPage() {
               <button
                 onClick={handleCreate}
                 disabled={!canCreate}
-                className="rounded-lg bg-[hsl(var(--primary))] px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-white shadow-xl shadow-blue-500/20 disabled:opacity-50"
+                className="rounded-lg bg-[hsl(var(--primary))] px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-white shadow-xl shadow-[hsl(var(--info)/20%)] disabled:opacity-50"
               >
                 {creating ? (
                   <span className="flex items-center gap-2">
@@ -193,9 +193,9 @@ export default function NewWhiteboardPage() {
           <div className="relative min-h-[420px] overflow-hidden bg-[hsl(var(--bg-muted))] p-4 text-white">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.35),transparent_35%),radial-gradient(circle_at_80%_70%,rgba(14,165,233,0.2),transparent_30%)]" />
             <div className="relative flex h-full flex-col justify-between rounded-lg border border-white/10 bg-white/10 p-3 backdrop-blur">
-              <Sparkles className="text-blue-300" size={36} />
+              <Sparkles className="text-info-text" size={36} />
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-200">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--info))]">
                   Preview
                 </p>
                 <h2 className="mt-2 text-xl font-bold">{previewTitle}</h2>

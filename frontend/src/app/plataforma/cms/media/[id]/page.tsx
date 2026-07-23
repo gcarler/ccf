@@ -19,8 +19,8 @@ import {
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
+import { DSCard } from '@/design';
+import { DSBadge } from '@/design';
 import { toast } from 'sonner';
 
 function formatBytes(bytes?: number): string {
@@ -154,13 +154,13 @@ export default function CmsMediaDetailPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
-                        <button onClick={toggleArchiveItem} className={`p-2 rounded-md transition-all ${item.status === 'archived' ? 'text-emerald-600 hover:bg-emerald-500/10' : 'text-amber-600 hover:bg-amber-500/10'}`}>
+                        <button onClick={toggleArchiveItem} className={`p-2 rounded-md transition-all ${item.status === 'archived' ? 'text-success-text hover:bg-[hsl(var(--success))]/10' : 'text-warning-text hover:bg-[hsl(var(--warning))]/10'}`}>
                             {item.status === 'archived' ? <RotateCcw size={20} /> : <Archive size={20} />}
                         </button>
                         <button onClick={permanentDelete} className="p-2 rounded-md text-red-500 hover:bg-red-500/10 transition-all" title="Eliminar permanentemente">
                             <Trash2 size={20} />
                         </button>
-                        <button onClick={saveMetadata} disabled={saving} className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50">
+                        <button onClick={saveMetadata} disabled={saving} className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50">
                             <Save size={14} /> {saving ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
                     </div>
@@ -216,7 +216,7 @@ export default function CmsMediaDetailPage() {
                                 <input 
                                     value={item.alt_text || ''}
                                     onChange={(e) => setItem({ ...item, alt_text: e.target.value })}
-                                    className="w-full bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 py-2 text-xl font-semibold outline-none focus:border-blue-500 transition-all"
+                                    className="w-full bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 py-2 text-xl font-semibold outline-none focus:border-[hsl(var(--info)/100%)] transition-all"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -224,7 +224,7 @@ export default function CmsMediaDetailPage() {
                                 <input
                                     value={item.section || 'general'}
                                     onChange={(e) => setItem({ ...item, section: e.target.value })}
-                                    className="w-full bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 py-2 text-sm font-bold outline-none focus:border-blue-500 transition-all"
+                                    className="w-full bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all"
                                 />
                             </div>
                         </section>
@@ -258,13 +258,13 @@ export default function CmsMediaDetailPage() {
                                     value={tagsText}
                                     onChange={(e) => setTagsText(e.target.value)}
                                     placeholder="hero, comunidad, campana"
-                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-4 py-3 text-sm font-bold outline-none focus:border-blue-500"
+                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-4 py-3 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]"
                                 />
                                 <div className="flex flex-wrap gap-2">
                                     {tagsText.split(',').map((tag: string) => tag.trim()).filter(Boolean).map((tag: string) => (
                                         <DSBadge key={tag} tone="blue" label={`#${tag}`} />
                                     ))}
-                                    <button className="size-6 rounded-lg border border-dashed border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:border-blue-500 hover:text-[hsl(var(--primary))] transition-all">
+                                    <button className="size-6 rounded-lg border border-dashed border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/100%)] hover:text-[hsl(var(--primary))] transition-all">
                                         <Plus size={12} />
                                     </button>
                                 </div>

@@ -15,9 +15,9 @@ import {
     Eye,
     EyeOff,
 } from 'lucide-react';
-import { DSCard } from '@/design/components/DSCard';
-import { DSMetric } from '@/design/components/DSMetric';
-import { DSChart } from '@/design/components/DSChart';
+import { DSCard } from '@/design';
+import { DSMetric } from '@/design';
+import { DSChart } from '@/design';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { useToast } from '@/hooks/useToast';

@@ -105,18 +105,18 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
           className={clsx(
             "group flex items-center justify-center min-w-[40px] min-h-[40px] rounded-lg transition-all",
             "hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5",
-            open && "bg-blue-50 dark:bg-blue-500/10 ring-1 ring-blue-300 dark:ring-blue-500/40",
+            open && "bg-info-soft ring-1 ring-info/30",
             disabled && "opacity-50 cursor-not-allowed"
           )}
           title={displayName ? `Asignado a ${displayName}` : "Asignar persona"}
           aria-label="Selector de persona asignada"
         >
           {value ? (
-            <div className="size-6 rounded-full bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center font-semibold text-white shrink-0 shadow-sm text-[10px]">
+            <div className="size-6 rounded-full bg-gradient-to-br from-primary to-info flex items-center justify-center font-semibold text-white shrink-0 shadow-sm text-[10px]">
               {initials}
             </div>
           ) : (
-            <div className="size-6 rounded-full bg-[hsl(var(--surface-3))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:bg-blue-100 dark:group-hover:bg-blue-500/20 group-hover:text-[hsl(var(--primary))] transition-colors">
+            <div className="size-6 rounded-full bg-[hsl(var(--surface-3))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--info-muted))] dark:group-hover:bg-[hsl(var(--info)/0.2)] group-hover:text-[hsl(var(--primary))] transition-colors">
               <User size={12} />
             </div>
           )}
@@ -160,7 +160,7 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
                       setDisplayName(null);
                       setOpen(false);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[hsl(var(--danger-muted))] dark:hover:bg-[hsl(var(--danger)/0.1)] text-danger transition-colors"
                   >
                     <X size={12} />
                     <span className="text-[11px] font-bold">Quitar asignación</span>
@@ -177,11 +177,11 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
                     className={clsx(
                       "w-full flex items-center gap-2.5 px-3 py-2 transition-colors",
                       u.id === value
-                        ? "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300"
+                        ? "bg-info-soft text-info-text"
                         : "hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                     )}
                   >
-                    <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center font-semibold text-[hsl(var(--primary))] shrink-0 text-[10px]">
+                    <div className="size-6 rounded-full bg-info-soft flex items-center justify-center font-semibold text-info-text shrink-0 text-[10px]">
                       {u.username.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 text-left">

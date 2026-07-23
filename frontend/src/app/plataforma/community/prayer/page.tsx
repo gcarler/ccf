@@ -214,7 +214,7 @@ export default function PrayerWall() {
                                             <span className="text-[10px] font-semibold uppercase tracking-wide">En intercesión</span>
                                         </div>
                                         <button className="h-8 px-3 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg text-[10px] font-semibold uppercase tracking-wide transition-all hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3 group/btn hover:shadow-primary/20">
-                                            <Heart size={16} className="group-hover/btn:fill-rose-500 group-hover/btn:text-rose-500 transition-all duration-500" />
+                                            <Heart size={16} className="group-hover/btn:fill-[hsl(var(--danger))] group-hover/btn:text-[hsl(var(--danger))] transition-all duration-500" />
                                             Me uno
                                         </button>
                                     </div>

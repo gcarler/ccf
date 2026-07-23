@@ -74,7 +74,7 @@ export default function StudentCurriculum() {
                     <SummaryCard label="Avg progreso" value={`${summary.avgProgress}%`} tone="emerald" />
                 </div>
                 {loading && <p className="px-4 pb-6 text-sm text-[hsl(var(--text-secondary))]">Sincronizando tus cursos...</p>}
-                {error && <p className="px-4 pb-6 text-sm text-rose-400">{error}</p>}
+                {error && <p className="px-4 pb-6 text-sm text-[hsl(var(--danger))]">{error}</p>}
                 {!loading && filtered.length === 0 && (
                     <div className="px-4 py-1.5 text-center text-[hsl(var(--text-secondary))] space-y-3">
                         <BookOpen className="w-12 h-8 mx-auto text-[hsl(var(--text-secondary))]" />
@@ -97,8 +97,8 @@ export default function StudentCurriculum() {
                                         className={clsx(
                                             'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wide mb-3 border',
                                             enrollment.approved
-                                                ? 'text-emerald-500 border-emerald-200 bg-emerald-50'
-                                                : 'text-amber-500 border-amber-200 bg-amber-50'
+                                                ? 'text-[hsl(var(--success))] border-[hsl(var(--success)/25%)] bg-success-soft'
+                                                : 'text-[hsl(var(--warning))] border-[hsl(var(--warning)/25%)] bg-warning-soft'
                                         )}
                                     >
                                         {enrollment.approved ? <CheckCircle size={12} /> : <LinkIcon size={12} />}
@@ -129,9 +129,9 @@ export default function StudentCurriculum() {
 
 function SummaryCard({ label, value, tone }: { label: string; value: string | number; tone: 'blue' | 'sky' | 'emerald' }) {
     const colors: Record<'blue' | 'sky' | 'emerald', string> = {
-        blue: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10',
-        sky: 'bg-sky-50 text-sky-600 dark:bg-sky-500/10',
-        emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10',
+        blue: 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10',
+        sky: 'bg-info-soft text-info-text dark:bg-[hsl(var(--info))]/10',
+        emerald: 'bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/10',
     };
     return (
         <div className={`rounded-lg border border-[hsl(var(--border))] dark:border-white/5 px-4 py-1.5 flex items-center justify-between ${colors[tone]}`}>

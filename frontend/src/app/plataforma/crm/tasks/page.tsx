@@ -34,17 +34,17 @@ const STATUS_PROGRESS: Record<string, number> = { urgent: 15, pending: 35, in_pr
 
 // ─── Constants ───────────────────────────────────────────
 const STATUS_COLUMNS = [
-    { key: 'urgent', label: 'Urgente', icon: Flame, color: 'rose', bg: 'bg-rose-50 dark:bg-rose-900/10', border: 'border-rose-200 dark:border-rose-800/30', dot: 'bg-rose-500' },
+    { key: 'urgent', label: 'Urgente', icon: Flame, color: 'rose', bg: 'bg-danger-soft dark:bg-[hsl(var(--danger))]/10', border: 'border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/30%)]', dot: 'bg-[hsl(var(--danger))]' },
     { key: 'pending', label: 'Pendiente', icon: Circle, color: 'slate', bg: 'bg-[hsl(var(--surface-1))] dark:bg-white/[0.02]', border: 'border-[hsl(var(--border))] dark:border-white/10', dot: 'bg-[hsl(var(--surface-2))]' },
-    { key: 'in_progress', label: 'En Seguimiento', icon: Clock, color: 'blue', bg: 'bg-blue-50 dark:bg-blue-900/10', border: 'border-blue-200 dark:border-blue-800/30', dot: 'bg-[hsl(var(--primary))]' },
-    { key: 'done', label: 'Completada', icon: CheckCircle2, color: 'emerald', bg: 'bg-emerald-50 dark:bg-emerald-900/10', border: 'border-emerald-200 dark:border-emerald-800/30', dot: 'bg-emerald-500' },
+    { key: 'in_progress', label: 'En Seguimiento', icon: Clock, color: 'blue', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10', border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/30%)]', dot: 'bg-[hsl(var(--primary))]' },
+    { key: 'done', label: 'Completada', icon: CheckCircle2, color: 'emerald', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/10', border: 'border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/30%)]', dot: 'bg-[hsl(var(--success))]' },
 ];
 
 const CATEGORIES = ['Consolidación', 'Seguimiento', 'Oración', 'Administrativa', 'Otro'];
 
 const PRIORITY_STYLES: Record<string, string> = {
-    high: 'bg-rose-50 text-rose-600 dark:bg-rose-900/20',
-    medium: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20',
+    high: 'bg-danger-soft text-danger-text dark:bg-[hsl(var(--danger))]/20',
+    medium: 'bg-warning-soft text-warning-text dark:bg-[hsl(var(--warning))]/20',
     low: 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:bg-white/5',
 };
 
@@ -170,25 +170,25 @@ export default function CrmTasksPage() {
             rightActions={canEditCrm ? (
                 <button
                     onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nueva Tarea
                 </button>
             ) : undefined}
         >
             {tasksError && (
-                <div className="mx-4 mt-4 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div className="mx-4 mt-4 rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <div className="min-w-0">
-                        <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
                             No se pudo cargar el tablero de tareas
                         </p>
-                        <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                        <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
                             {tasksError}
                         </p>
                     </div>
                     <button
                         onClick={() => fetchTasks()}
-                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                     >
                         Reintentar
                     </button>
@@ -273,7 +273,7 @@ export default function CrmTasksPage() {
                                 <CheckSquare size={48} strokeWidth={1} className="text-[hsl(var(--text-secondary))]" />
                                 <p className="text-[hsl(var(--text-secondary))] font-bold uppercase text-sm">Sin tareas registradas</p>
                                 {canEditCrm && (
-                                    <button onClick={() => setIsCreateOpen(true)} className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20">
+                                    <button onClick={() => setIsCreateOpen(true)} className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)]">
                                         Crear primera tarea
                                     </button>
                                 )}
@@ -285,14 +285,14 @@ export default function CrmTasksPage() {
                                 role="button"
                                 tabIndex={0}
                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/tasks/${task.id}`); } }}
-                                className="flex items-center gap-4 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer group"
+                                className="flex items-center gap-4 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all cursor-pointer group"
                             >
                                 {canEditCrm ? (
                                     <button
                                         onClick={e => { e.stopPropagation(); updateTaskStatus(task.id, task.status === 'done' ? 'pending' : 'done'); }}
                                         className={clsx(
                                             "size-5 rounded-full border-2 flex-shrink-0 transition-all flex items-center justify-center",
-                                            task.status === 'done' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-[hsl(var(--border))] group-hover:border-blue-400'
+                                            task.status === 'done' ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)] text-white' : 'border-[hsl(var(--border))] group-hover:border-[hsl(var(--info)/40%)]'
                                         )}
                                     >
                                         {task.status === 'done' && <CheckCircle2 size={12} strokeWidth={3} />}
@@ -300,7 +300,7 @@ export default function CrmTasksPage() {
                                 ) : (
                                     <div className={clsx(
                                         "size-5 rounded-full border-2 flex-shrink-0",
-                                        task.status === 'done' ? 'bg-emerald-500 border-emerald-500' : 'border-[hsl(var(--border))]'
+                                        task.status === 'done' ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)]' : 'border-[hsl(var(--border))]'
                                     )} />
                                 )}
                                 <div className="flex-1">
@@ -376,7 +376,7 @@ export default function CrmTasksPage() {
                                 <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{new Date(`${isoDate}T00:00:00`).toLocaleDateString()}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {bucket.map(task => (
-                                        <button key={task.id} onClick={() => { setSelectedTask(task); setIsDetailOpen(true); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                        <button key={task.id} onClick={() => { setSelectedTask(task); setIsDetailOpen(true); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all">
                                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{task.title}</p>
                                             <p className="text-[10px] text-[hsl(var(--text-secondary))]">{task.persona_name || 'Sin persona asignado'}</p>
                                         </button>
@@ -439,7 +439,7 @@ export default function CrmTasksPage() {
                         <button onClick={() => setIsDetailOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))]">Cerrar</button>
                         <button
                             onClick={() => selectedTask && updateTaskStatus(selectedTask.id, selectedTask.status === 'done' ? 'pending' : 'done')}
-                            className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-[11px] font-bold shadow-lg shadow-emerald-500/20"
+                            className="px-4 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-[11px] font-bold shadow-lg shadow-[hsl(var(--success)/20%)]"
                         >
                             {selectedTask?.status === 'done' ? 'Reabrir' : 'Marcar Completada'}
                         </button>
@@ -506,7 +506,7 @@ export default function CrmTasksPage() {
                             form="create-task-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
+                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Crear Tarea

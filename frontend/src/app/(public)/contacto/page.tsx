@@ -46,8 +46,8 @@ export default function ContactoPage() {
         return (
             <main className="min-h-screen bg-[hsl(var(--bg-primary))] flex items-center justify-center p-4">
                 <div className="max-w-md text-center space-y-6">
-                    <div className="size-16 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center mx-auto">
-                        <CheckCircle size={32} className="text-emerald-600" />
+                    <div className="size-16 rounded-full bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/20 flex items-center justify-center mx-auto">
+                        <CheckCircle size={32} className="text-success-text" />
                     </div>
                     <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))]">¡Mensaje enviado!</h1>
                     <p className="text-[hsl(var(--text-secondary))]">
@@ -143,7 +143,7 @@ export default function ContactoPage() {
                     <button
                         type="submit"
                         disabled={loading || !form.full_name.trim() || !form.email.trim()}
-                        className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[hsl(var(--primary))] text-white rounded-xl font-bold text-sm uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[hsl(var(--primary))] text-white rounded-xl font-bold text-sm uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? (
                             <Loader2 size={18} className="animate-spin" />

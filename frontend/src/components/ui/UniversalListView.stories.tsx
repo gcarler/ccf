@@ -1,64 +1,103 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import UniversalListView from './UniversalListView';
-import type { ListItem } from './UniversalListView';
+import UniversalListView, { ListItem } from './UniversalListView';
 
-const sampleItems: ListItem[] = [
-  { id: 1, title: 'Preparar informe mensual', description: 'Recopilar datos de asistencia y ofrendas del mes', status: 'in_progress', priority: 'high', assignee: 'Juan Pérez', date: '2026-07-25', tags: ['finanzas'] },
-  { id: 2, title: 'Organizar reunión de líderes', description: 'Coordinar agenda y logística para la reunión trimestral', status: 'todo', priority: 'medium', assignee: 'María González', date: '2026-08-01', tags: ['liderazgo'] },
-  { id: 3, title: 'Actualizar directorio', description: 'Revisar y actualizar información de contacto de miembros', status: 'completed', priority: 'low', assignee: 'Carlos López', date: '2026-07-20', tags: ['administración'] },
-  { id: 4, title: 'Planificar campamento juvenil', description: 'Buscar lugar, presupuesto y agenda para el retiro de jóvenes', status: 'in_progress', priority: 'urgent', assignee: 'Ana Martínez', date: '2026-08-15', tags: ['jóvenes'] },
-];
 
 const meta: Meta<typeof UniversalListView> = {
+  tags: ['autodocs'],
   title: 'UI/UniversalListView',
   component: UniversalListView,
   parameters: {
-    layout: 'padded',
+    layout: 'centered',
   },
 };
 
 export default meta;
 type Story = StoryObj<typeof UniversalListView>;
 
+const sampleItems: ListItem[] = [
+  {
+    id: '1',
+    title: 'Revisar propuesta de proyecto',
+    description: 'Analizar alcance, costos y cronograma entregados por el cliente.',
+    status: 'in_progress',
+    priority: 'high',
+    assignee: 'María González',
+    date: '2026-07-25',
+    tags: ['ventas', 'urgente'],
+  },
+  {
+    id: '2',
+    title: 'Actualizar documentación técnica',
+    description: 'Incluir los nuevos endpoints del módulo de donaciones.',
+    status: 'pending',
+    priority: 'medium',
+    assignee: 'Carlos López',
+    date: '2026-07-28',
+    tags: ['docs'],
+  },
+  {
+    id: '3',
+    title: 'Desplegar hotfix de seguridad',
+    description: 'Aplicar parche de dependencias y validar en staging.',
+    status: 'completed',
+    priority: 'urgent',
+    assignee: 'Ana Martínez',
+    date: '2026-07-23',
+    tags: ['devops', 'seguridad'],
+  },
+  {
+    id: '4',
+    title: 'Diseñar landing de evento',
+    description: 'Crear mockups responsivos para la jornada de oración.',
+    status: 'open',
+    priority: 'low',
+    assignee: 'Luis Rodríguez',
+    date: '2026-08-01',
+  },
+];
+
 export const Default: Story = {
   args: {
     items: sampleItems,
-    onItemClick: (item) => console.log('Item clicked:', item),
-    title: 'Lista de tareas',
+    title: 'Tareas pendientes',
+  },
+};
+
+export const WithSearch: Story = {
+  args: {
+    items: sampleItems,
+    title: 'Tareas con búsqueda',
+    searchable: true,
+  },
+};
+
+export const WithActions: Story = {
+  args: {
+    items: sampleItems,
+    title: 'Tareas con acciones',
+    searchable: true,
+    onCreate: () => {},
+    onDelete: () => {},
+    onItemClick: () => {},
   },
 };
 
 export const EmptyState: Story = {
   args: {
     items: [],
-    title: 'Sin tareas',
-    emptyMessage: 'No hay tareas pendientes para mostrar.',
-    onItemClick: (item) => console.log('Item clicked:', item),
+    title: 'Sin elementos',
+    emptyMessage: 'No hay tareas para mostrar en esta vista.',
   },
 };
 
-export const Searchable: Story = {
+export const CustomColumns: Story = {
   args: {
     items: sampleItems,
-    searchable: true,
-    title: 'Tareas (búsqueda habilitada)',
-    onItemClick: (item) => console.log('Item clicked:', item),
-  },
-};
-
-export const WithCreation: Story = {
-  args: {
-    items: sampleItems,
-    title: 'Tareas del proyecto',
-    onCreate: () => console.log('Create new item'),
-    onItemClick: (item) => console.log('Item clicked:', item),
-  },
-};
-
-export const SingleItem: Story = {
-  args: {
-    items: [sampleItems[0]],
-    title: 'Tarea única',
-    onItemClick: (item) => console.log('Item clicked:', item),
+    title: 'Vista de seguimiento',
+    columns: [
+      { key: 'title', label: 'Actividad' },
+      { key: 'assignee', label: 'Responsable' },
+      { key: 'date', label: 'Fecha límite' },
+    ],
   },
 };

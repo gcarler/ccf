@@ -2,7 +2,6 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import { typography } from '../tokens';
 
 interface DSSectionHeaderProps {
     eyebrow?: string;
@@ -14,9 +13,7 @@ interface DSSectionHeaderProps {
 
 export function DSSectionHeader({ eyebrow, title, description, actions, align = 'left' }: DSSectionHeaderProps) {
     return (
-        <div className={clsx('flex flex-col gap-2 md:flex-row md:items-center', align === 'center' && 'text-center md:text-center md:flex-col')}
-            style={{ fontFamily: typography.family }}
-        >
+        <div className={clsx('flex flex-col gap-2 md:flex-row md:items-center font-sans', align === 'center' && 'text-center md:text-center md:flex-col')}>
             <div className={clsx('flex-1 space-y-1', align === 'center' && 'md:items-center')}>
                 {eyebrow && (
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">

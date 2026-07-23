@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 
-const INPUT = "w-full bg-[hsl(var(--bg-muted))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-blue-500 transition-all";
+const INPUT = "w-full bg-[hsl(var(--bg-muted))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)] transition-all";
 const LABEL = "block text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
 
 type Volunteer = {
@@ -30,9 +30,9 @@ type Volunteer = {
 
 function Badge({ label, tone = "blue" }: { label: string; tone?: string }) {
     const styles: Record<string, string> = {
-        blue: "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300 border-blue-200/50",
-        emerald: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/50",
-        sky: "bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-200/50",
+        blue: "bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-info-text border-[hsl(var(--info)/25%)]/50",
+        emerald: "bg-success-soft dark:bg-[hsl(var(--success))]/10 text-success-text dark:text-success-text border-[hsl(var(--success)/25%)]/50",
+        sky: "bg-info-soft dark:bg-[hsl(var(--info))]/10 text-info-text dark:text-info-text border-[hsl(var(--info)/25%)]/50",
     };
     return (
         <span className={clsx("inline-flex items-center px-3 py-1 rounded-md border text-[9px] font-bold uppercase tracking-wide", styles[tone] ?? styles.blue)}>
@@ -135,7 +135,7 @@ export default function VolunteerDetailPage() {
 
                     {/* Hero */}
                     <header className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-sm flex items-center gap-3">
-                        <div className="size-10 rounded-lg bg-gradient-to-br from-blue-500 to-sky-600 text-white flex items-center justify-center font-bold text-lg shadow-xl flex-shrink-0">
+                        <div className="size-10 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] text-white flex items-center justify-center font-bold text-lg shadow-xl flex-shrink-0">
                             {initials}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -148,7 +148,7 @@ export default function VolunteerDetailPage() {
                         {canEditCrm && (
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <button onClick={openEdit}
-                                    className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all">
+                                    className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all">
                                     <PencilLine size={13} /> Editar
                                 </button>
                                 <button
@@ -159,7 +159,7 @@ export default function VolunteerDetailPage() {
                                         destructive: true,
                                         onConfirm: handleDelete,
                                     })}
-                                    className="size-10 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-600 flex items-center justify-center hover:bg-rose-100 transition-all border border-rose-200/50">
+                                    className="size-10 rounded-md bg-danger-soft dark:bg-[hsl(var(--danger))]/10 text-danger-text flex items-center justify-center hover:bg-[hsl(var(--danger-muted))] transition-all border border-[hsl(var(--danger)/25%)]/50">
                                     <Trash2 size={15} />
                                 </button>
                             </div>
@@ -204,7 +204,7 @@ export default function VolunteerDetailPage() {
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-medium text-[hsl(var(--text-secondary))]">Fidelidad</span>
-                                        <div className="flex items-center gap-0.5 text-amber-400">
+                                        <div className="flex items-center gap-0.5 text-[hsl(var(--warning))]">
                                             {[...Array(5)].map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
                                         </div>
                                     </div>
@@ -251,7 +251,7 @@ export default function VolunteerDetailPage() {
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
                                     <Save size={14} /> {saving ? "Guardando..." : "Guardar"}
                                 </button>
                             </div>

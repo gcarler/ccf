@@ -76,7 +76,7 @@ export default function NewCoursePage() {
                 {/* Main Form Area */}
                 <div className="lg:col-span-8 space-y-3">
                     <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 -mr-16 -mt-16 size-10 bg-blue-600/5 rounded-full blur-[100px]" />
+                        <div className="absolute top-0 right-0 -mr-16 -mt-16 size-10 bg-[hsl(var(--info))]/5 rounded-full blur-[100px]" />
                         
                         <div className="relative z-10 space-y-3">
                             <div className="flex items-center gap-3">
@@ -152,7 +152,7 @@ export default function NewCoursePage() {
                 {/* Sidebar Preview */}
                 <aside className="lg:col-span-4 space-y-3">
                     <section className="p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white shadow-2xl space-y-3 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-blue-600/20 rounded-full blur-3xl" />
+                        <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-[hsl(var(--info))]/20 rounded-full blur-3xl" />
                         <div className="relative z-10 space-y-3">
                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Previsualización</h4>
                             <div className="aspect-video rounded-lg bg-white/5 border border-white/10 flex flex-col items-center justify-center gap-4 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all cursor-pointer group">

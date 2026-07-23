@@ -20,10 +20,10 @@ function SortablePersonaCard({ persona, onClick }: PersonaCardProps) {
         <div
             ref={setNodeRef} style={style} {...attributes} {...listeners}
             onClick={() => onClick(persona)}
-            className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-grab active:cursor-grabbing group"
+            className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-grab active:cursor-grabbing group"
         >
             <div className="flex items-start gap-3">
-                <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/20">
+                <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold shadow-lg shadow-[hsl(var(--info)/20%)]">
                     {persona.name.substring(0, 1)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -39,7 +39,7 @@ function SortablePersonaCard({ persona, onClick }: PersonaCardProps) {
                     </div>
                     <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">2</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-md text-[9px] font-bold uppercase">
+                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text rounded-md text-[9px] font-bold uppercase">
                     <Star size={10} /> VIP
                 </div>
             </div>

@@ -257,7 +257,7 @@ export default function DonationConfig() {
                 availableViews={DONATION_CONFIG_VIEWS}
                 rightActions={
 
-                    <button className="flex items-center gap-2 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
 
                         <Zap size={16} /> Aplicar Protocolo
 
@@ -287,7 +287,7 @@ export default function DonationConfig() {
 
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
 
-                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
+                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
 
                         >
 
@@ -297,7 +297,7 @@ export default function DonationConfig() {
 
                         <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
 
-                            Estructura de <br/> <span className="text-[hsl(var(--primary))] italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-400">Recaudación Pro.</span>
+                            Estructura de <br/> <span className="text-[hsl(var(--primary))] italic text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))]">Recaudación Pro.</span>
 
                         </h1>
 
@@ -336,7 +336,7 @@ export default function DonationConfig() {
 
                     >
 
-                        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] group-hover:bg-blue-600/20 transition-all duration-1000" />
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-[hsl(var(--info))]/10 rounded-full blur-[120px] group-hover:bg-[hsl(var(--info))]/20 transition-all duration-1000" />
 
                         <div className="relative z-10 space-y-3 text-center md:text-left">
 
@@ -521,7 +521,7 @@ export default function DonationConfig() {
 
                                 <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] shadow-sm">
 
-                                    <Zap size={14} className="text-amber-500" fill="currentColor" /> Automatización de Flujo
+                                    <Zap size={14} className="text-[hsl(var(--warning))]" fill="currentColor" /> Automatización de Flujo
 
                                 </div>
 
@@ -539,7 +539,7 @@ export default function DonationConfig() {
 
                                 <button className="flex-1 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-primary))] dark:text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:bg-[hsl(var(--surface-1))] transition-all active:scale-95 flex items-center justify-center gap-3"><Palette size={18} /> Estilo Documental</button>
 
-                                <button className="flex-1 px-4 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-blue-500/20"><Mail size={18} /> Validar Email</button>
+                                <button className="flex-1 px-4 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-[hsl(var(--info)/20%)]"><Mail size={18} /> Validar Email</button>
 
                             </div>
 

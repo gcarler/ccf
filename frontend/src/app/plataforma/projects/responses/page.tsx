@@ -93,7 +93,7 @@ export default function ProjectsResponsesPage() {
 
             <main className="flex-1 overflow-y-auto p-4">
                 {error && (
-                    <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                    <div className="mb-3 rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
                         <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
                     </div>
                 )}
@@ -106,7 +106,7 @@ export default function ProjectsResponsesPage() {
                 ) : viewType === 'grid' ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{unread.map((item) => <article key={item.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/60 dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{item.project}</p><h3 className="text-sm font-bold mt-1">{item.task_title || 'Actualización'}</h3><p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-1 line-clamp-3">{item.content}</p></article>)}</div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">{grouped.map((group) => <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span><span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{group.rows.length}</span></div><div className="space-y-2">{group.rows.map((item) => <div key={item.id} className={clsx("rounded-md border p-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5", item.type === 'mention' ? "border-amber-200" : "border-[hsl(var(--border))] dark:border-white/5")}><p className="text-sm font-medium">{item.task_title || item.project}</p></div>)}</div></section>)}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">{grouped.map((group) => <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span><span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{group.rows.length}</span></div><div className="space-y-2">{group.rows.map((item) => <div key={item.id} className={clsx("rounded-md border p-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5", item.type === 'mention' ? "border-[hsl(var(--warning)/25%)]" : "border-[hsl(var(--border))] dark:border-white/5")}><p className="text-sm font-medium">{item.task_title || item.project}</p></div>)}</div></section>)}</div>
                 ) : viewType === 'calendar' ? (
                     <UniversalCalendarView events={calendarEvents} title="Calendario de respuestas" />
                 ) : viewType === 'gantt' ? (

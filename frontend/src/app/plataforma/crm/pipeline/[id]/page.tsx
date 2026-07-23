@@ -14,8 +14,8 @@ import {
     User
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
+import { DSCard } from '@/design';
+import { DSBadge } from '@/design';
 import { toast } from 'sonner';
 import CrmDetailShell from '@/components/crm/CrmDetailShell';
 
@@ -140,7 +140,7 @@ export default function LeadDetailPage() {
                                 
                                 <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                                 
-                                <button className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
+                                <button className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
                                     Mover a Siguiente Etapa
                                 </button>
                             </div>

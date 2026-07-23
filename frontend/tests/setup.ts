@@ -64,7 +64,7 @@ Element.prototype.scrollIntoView = vi.fn();
 // Suppress React 18 act() warnings in tests
 const originalConsoleError = console.error;
 console.error = (...args: any[]) => {
-  if (typeof args[0] === 'string' && args[0].includes('act()')) {
+  if (typeof args[0] === 'string' && (args[0].includes('act()') || args[0].includes('was not wrapped in act'))) {
     return;
   }
   originalConsoleError(...args);

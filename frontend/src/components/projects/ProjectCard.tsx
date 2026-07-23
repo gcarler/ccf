@@ -99,8 +99,8 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
                 {/* Task stats */}
                 {tasks.length > 0 && (
                     <div className="flex items-center gap-3 text-[11px] font-medium">
-                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                            <span className="size-1.5 rounded-full bg-emerald-500 inline-block" />
+                        <span className="flex items-center gap-1 text-success-text dark:text-[hsl(var(--success))]">
+                            <span className="size-1.5 rounded-full bg-[hsl(var(--success))] inline-block" />
                             {completed} completadas
                         </span>
                         {inProgress > 0 && (
@@ -153,7 +153,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
                                     e.stopPropagation();
                                     onDelete?.(project.id);
                                 }}
-                                className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                                className="p-1.5 rounded-lg text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-colors"
                                 title="Eliminar proyecto"
                             >
                                 <Trash2 size={14} />

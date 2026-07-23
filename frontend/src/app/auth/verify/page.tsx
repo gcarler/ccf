@@ -35,8 +35,8 @@ function VerifyEmailContent() {
 
     const icon = () => {
         if (status === 'loading') return <Loader2 className="w-12 h-8 animate-spin text-primary" />;
-        if (status === 'success') return <CheckCircle2 className="w-12 h-8 text-emerald-400" />;
-        return <XCircle className="w-12 h-8 text-rose-400" />;
+        if (status === 'success') return <CheckCircle2 className="w-12 h-8 text-[hsl(var(--success))]" />;
+        return <XCircle className="w-12 h-8 text-[hsl(var(--danger))]" />;
     };
 
     return (

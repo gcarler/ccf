@@ -82,9 +82,9 @@ export default function DonationDetailPage() {
                                     <h1 className="mt-2 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{donation.donor || "Donante"}</h1>
                                     <p className="mt-2 text-sm font-semibold text-[hsl(var(--text-secondary))]">Referencia: {donation.reference_code || `DON-${donationId}`}</p>
                                 </div>
-                                <div className="rounded-lg bg-blue-50 px-3 py-1.5 text-right dark:bg-blue-500/10">
+                                <div className="rounded-lg bg-info-soft px-3 py-1.5 text-right dark:bg-[hsl(var(--info))]/10">
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Monto</p>
-                                    <p className="text-xl font-bold text-[hsl(var(--primary))] dark:text-blue-300">${amount.toLocaleString()}</p>
+                                    <p className="text-xl font-bold text-[hsl(var(--primary))] dark:text-info-text">${amount.toLocaleString()}</p>
                                 </div>
                             </header>
 

@@ -44,13 +44,13 @@ import { toast } from "sonner";
 
 // Paleta de colores para etiquetas
 const LABEL_COLORS = [
-    { bg: 'bg-rose-100 dark:bg-rose-900/30',   text: 'text-rose-700 dark:text-rose-300',   border: 'border-rose-300/50 dark:border-rose-500/30',   dot: 'bg-rose-500' },
+    { bg: 'bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/30',   text: 'text-danger-text dark:text-danger-text',   border: 'border-[hsl(var(--danger)/30%)]/50 dark:border-[hsl(var(--danger)/100%)]/30',   dot: 'bg-[hsl(var(--danger))]' },
     { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-300/50 dark:border-orange-500/30', dot: 'bg-orange-500' },
-    { bg: 'bg-amber-100 dark:bg-amber-900/30',  text: 'text-amber-700 dark:text-amber-300',  border: 'border-amber-300/50 dark:border-amber-500/30',  dot: 'bg-amber-500' },
-    { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-300/50 dark:border-emerald-500/30', dot: 'bg-emerald-500' },
-    { bg: 'bg-blue-100 dark:bg-blue-900/30',   text: 'text-[hsl(var(--primary))] dark:text-blue-300',   border: 'border-blue-300/50 dark:border-blue-500/30',   dot: 'bg-[hsl(var(--primary))]' },
-    { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-[hsl(var(--primary))] dark:text-blue-300', border: 'border-blue-300/50 dark:border-blue-500/30', dot: 'bg-[hsl(var(--primary))]' },
-    { bg: 'bg-pink-100 dark:bg-pink-900/30',   text: 'text-pink-700 dark:text-pink-300',   border: 'border-pink-300/50 dark:border-pink-500/30',   dot: 'bg-pink-500' },
+    { bg: 'bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/30',  text: 'text-warning-text dark:text-warning-text',  border: 'border-[hsl(var(--warning)/30%)]/50 dark:border-[hsl(var(--warning)/100%)]/30',  dot: 'bg-[hsl(var(--warning))]' },
+    { bg: 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/30', text: 'text-success-text dark:text-success-text', border: 'border-[hsl(var(--success)/30%)]/50 dark:border-[hsl(var(--success)/100%)]/30', dot: 'bg-[hsl(var(--success))]' },
+    { bg: 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30',   text: 'text-[hsl(var(--primary))] dark:text-info-text',   border: 'border-[hsl(var(--info)/30%)]/50 dark:border-[hsl(var(--info)/100%)]/30',   dot: 'bg-[hsl(var(--primary))]' },
+    { bg: 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30', text: 'text-[hsl(var(--primary))] dark:text-info-text', border: 'border-[hsl(var(--info)/30%)]/50 dark:border-[hsl(var(--info)/100%)]/30', dot: 'bg-[hsl(var(--primary))]' },
+    { bg: 'bg-[hsl(var(--domain-pink)/20%)] dark:bg-[hsl(var(--domain-pink)/30%)]',   text: 'text-[hsl(var(--domain-pink)/90%)] dark:text-[hsl(var(--domain-pink))]',   border: 'border-[hsl(var(--domain-pink)/50%)] dark:border-[hsl(var(--domain-pink)/30%)]',   dot: 'bg-[hsl(var(--domain-pink))]' },
     { bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]/60', text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]', border: 'border-[hsl(var(--border))]/50 dark:border-[hsl(var(--border))]/30', dot: 'bg-[hsl(var(--surface-2))]' },
 ];
 
@@ -94,13 +94,13 @@ interface TaskDetailPanelProps {
 // ─────────────────────────────────────────────────────────────────
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
     todo:        { label: STATUS_LABELS.todo,        color: 'text-[hsl(var(--text-secondary))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]/60',      icon: Circle },
-    in_progress: { label: STATUS_LABELS.in_progress, color: 'text-[hsl(var(--primary))]',    bg: 'bg-blue-50 dark:bg-blue-500/10',         icon: Loader2 },
-    review:      { label: STATUS_LABELS.review,      color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10',       icon: Eye },
-    completed:   { label: STATUS_LABELS.completed,   color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10',   icon: CheckCircle2 },
+    in_progress: { label: STATUS_LABELS.in_progress, color: 'text-[hsl(var(--primary))]',    bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10',         icon: Loader2 },
+    review:      { label: STATUS_LABELS.review,      color: 'text-warning-text', bg: 'bg-warning-soft dark:bg-[hsl(var(--warning))]/10',       icon: Eye },
+    completed:   { label: STATUS_LABELS.completed,   color: 'text-success-text', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/10',   icon: CheckCircle2 },
 };
 
 const PRIORITY_MAP: Record<string, { label: string; color: string; dot: string }> = {
-    urgent: { label: PRIORITY_LABELS.urgent, color: 'text-rose-600',   dot: 'bg-rose-500' },
+    urgent: { label: PRIORITY_LABELS.urgent, color: 'text-danger-text',   dot: 'bg-[hsl(var(--danger))]' },
     high:   { label: PRIORITY_LABELS.high,   color: 'text-orange-600', dot: 'bg-orange-500' },
     medium: { label: PRIORITY_LABELS.medium, color: 'text-[hsl(var(--primary))]',   dot: 'bg-[hsl(var(--primary))]' },
     low:    { label: PRIORITY_LABELS.low,    color: 'text-slate-700 dark:text-slate-400',  dot: 'bg-slate-500' },
@@ -175,8 +175,8 @@ function ActivityItem({
                     className={clsx(
                         'size-4 rounded border-2 flex items-center justify-center shrink-0 transition-all',
                         activity.completed
-                            ? 'bg-emerald-500 border-emerald-500 text-white'
-                            : 'border-[hsl(var(--border))] dark:border-[hsl(var(--border))] hover:border-blue-400'
+                            ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)] text-white'
+                            : 'border-[hsl(var(--border))] dark:border-[hsl(var(--border))] hover:border-[hsl(var(--info)/40%)]'
                     )}
                 >
                     {activity.completed && <Check size={9} strokeWidth={3} />}
@@ -196,7 +196,7 @@ function ActivityItem({
                             if (e.key === 'Enter') { onUpdateTitle(activity.id, titleVal); setEditing(false); }
                             if (e.key === 'Escape') { setTitleVal(activity.title); setEditing(false); }
                         }}
-                        className="flex-1 text-[12px] bg-transparent outline-none border-b border-blue-400 text-[hsl(var(--text-primary))] dark:text-white"
+                        className="flex-1 text-[12px] bg-transparent outline-none border-b border-[hsl(var(--info)/40%)] text-[hsl(var(--text-primary))] dark:text-white"
                     />
                 ) : (
                     <span
@@ -226,7 +226,7 @@ function ActivityItem({
                 {/* Add child button */}
                 <button
                     onClick={() => { onAddChild(activity.id); setExpanded(true); }}
-                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 opacity-0 group-hover:opacity-100 transition-all"
                     title="Añadir sub-actividad"
                 >
                     <Plus size={10} strokeWidth={2.5} />
@@ -235,7 +235,7 @@ function ActivityItem({
                 {/* Delete button */}
                 <button
                     onClick={() => onDelete(activity.id)}
-                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 opacity-0 group-hover:opacity-100 transition-all"
                     title="Eliminar actividad"
                 >
                     <X size={10} strokeWidth={2.5} />
@@ -861,7 +861,7 @@ export default function TaskDetailPanel({
                 {/* ── HEADER ─────────────────────────────────────── */}
                 <header className="shrink-0 px-4 pt-3 pb-0 border-b border-[hsl(var(--border))] dark:border-white/[0.06]">
                     {error && (
-                        <div className="mb-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                        <div className="mb-2 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-2 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
                             <p className="text-[10px] font-bold uppercase tracking-wide">{error}</p>
                         </div>
                     )}
@@ -887,7 +887,7 @@ export default function TaskDetailPanel({
                             <button
                                 onClick={onVerRutaClick}
                                 title="Ver ruta jerárquica"
-                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all border border-blue-200/50 dark:border-blue-500/20"
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10 hover:bg-[hsl(var(--info-muted))] dark:hover:bg-[hsl(var(--info))]/20 transition-all border border-[hsl(var(--info)/25%)]/50 dark:border-[hsl(var(--info)/100%)]/20"
                             >
                                 <GitBranch size={11} />
                                 Ver Ruta
@@ -911,8 +911,8 @@ export default function TaskDetailPanel({
                                 className={clsx(
                                     'p-1.5 rounded-lg transition-all',
                                     starred
-                                        ? 'text-amber-500 bg-amber-50 dark:bg-amber-500/10'
-                                        : 'text-[hsl(var(--text-secondary))] hover:text-amber-400 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5'
+                                        ? 'text-[hsl(var(--warning))] bg-warning-soft dark:bg-[hsl(var(--warning))]/10'
+                                        : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--warning))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5'
                                 )}
                             >
                                 <Star size={14} fill={starred ? 'currentColor' : 'none'} />
@@ -934,7 +934,7 @@ export default function TaskDetailPanel({
                             <button
                                 onClick={handleDeleteTask}
                                 title="Eliminar tarea"
-                                className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
+                                className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all"
                             >
                                 <Trash2 size={14} />
                             </button>
@@ -1074,7 +1074,7 @@ export default function TaskDetailPanel({
                                                             if (e.key === 'Escape') { setLabelPopoverOpen(false); setNewLabelInput(''); }
                                                         }}
                                                         placeholder="Ej: Alabanza, Urgente..."
-                                                        className="flex-1 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                                                        className="flex-1 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/40%)] transition-all"
                                                     />
                                                     <button
                                                         onClick={handleAddLabel}
@@ -1172,7 +1172,7 @@ export default function TaskDetailPanel({
                                                 onClick={() => handleDeleteAttachment(attachment.id)}
                                                 disabled={deletingAttachmentId === attachment.id}
                                                 title="Eliminar adjunto"
-                                                className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                                                className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-colors disabled:opacity-50"
                                             >
                                                 {deletingAttachmentId === attachment.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                                             </button>
@@ -1253,7 +1253,7 @@ export default function TaskDetailPanel({
                                         onClick={() => handleDeleteSupply(supply.id)}
                                         disabled={deletingSupplyId === supply.id}
                                         title="Eliminar insumo"
-                                        className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                                        className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-colors disabled:opacity-50"
                                     >
                                         {deletingSupplyId === supply.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                                     </button>
@@ -1368,7 +1368,7 @@ export default function TaskDetailPanel({
                                             <button
                                                 onClick={() => handleDeleteComment(c.id)}
                                                 title="Eliminar comentario"
-                                                className="opacity-0 group-hover:opacity-100 transition-opacity text-[hsl(var(--text-secondary))] hover:text-rose-500"
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))]"
                                             >
                                                 <Trash2 size={12} />
                                             </button>
@@ -1384,7 +1384,7 @@ export default function TaskDetailPanel({
                             <div className="size-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white shrink-0">
                                 T
                             </div>
-                            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.07] focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400/40 transition-all">
+                            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.07] focus-within:ring-2 focus-within:ring-[hsl(var(--primary))]/20 focus-within:border-[hsl(var(--info)/40%)]/40 transition-all">
                                 <input
                                     type="text"
                                     value={commentInput}
@@ -1410,7 +1410,7 @@ export default function TaskDetailPanel({
 
                         {/* Comment type selector */}
                         <div className="flex items-center gap-2 mt-2 pl-8">
-                            <button className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20">
+                            <button className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10 border border-[hsl(var(--info)/25%)]/50 dark:border-[hsl(var(--info)/100%)]/20">
                                 <MessageSquare size={9} /> Comentario
                                 <ChevronDown size={9} />
                             </button>

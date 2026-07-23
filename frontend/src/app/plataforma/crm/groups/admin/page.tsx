@@ -170,14 +170,14 @@ export default function GrupoAdmin() {
 
             <main className="space-y-4 pb-4">
                 {error && (
-                    <div className="flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-col gap-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-4 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))] md:flex-row md:items-center md:justify-between">
                         <div>
                             <p className="text-[11px] font-bold uppercase tracking-wide">No se pudo cargar el módulo</p>
                             <p className="text-xs">{error}</p>
                         </div>
                         <button
                             onClick={() => setReloadKey(key => key + 1)}
-                            className="rounded-md border border-amber-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-amber-100 dark:border-amber-400/30 dark:hover:bg-amber-500/20"
+                            className="rounded-md border border-[hsl(var(--warning)/30%)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/40%)]/30 dark:hover:bg-[hsl(var(--warning))]/20"
                         >
                             Reintentar
                         </button>
@@ -222,8 +222,8 @@ export default function GrupoAdmin() {
                             className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
                         >
                             <div className="mb-3 flex items-start justify-between">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/20"><Home size={24} /></div>
-                                <span className="rounded-lg bg-emerald-50 px-2 py-1 text-[8px] font-bold uppercase text-emerald-600 dark:bg-emerald-900/20">{grupo.status || "Activo"}</span>
+                                <div className="flex size-9 items-center justify-center rounded-lg bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20"><Home size={24} /></div>
+                                <span className="rounded-lg bg-success-soft px-2 py-1 text-[8px] font-bold uppercase text-success-text dark:bg-[hsl(var(--success))]/20">{grupo.status || "Activo"}</span>
                             </div>
                             <h4 className="text-base font-bold uppercase tracking-tight">{grupo.name}</h4>
                             <p className="mt-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]"><MapPin size={12} /> {grupo.zone || "Sin zona"}</p>

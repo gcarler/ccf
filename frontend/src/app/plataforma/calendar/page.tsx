@@ -96,7 +96,7 @@ export default function PlanificadorPage() {
   return (
     <Suspense fallback={
       <div className="flex flex-col items-center justify-center h-full gap-4 p-4 flex-1">
-        <div className="size-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-xs shadow-lg">CCF</div>
+        <div className="size-10 rounded-xl bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white font-bold text-xs shadow-lg">CCF</div>
         <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={24} />
         <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">Cargando calendario...</p>
       </div>
@@ -290,7 +290,7 @@ function PlanificadorInner() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 p-4 flex-1">
-        <div className="size-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-xs shadow-lg">
+        <div className="size-10 rounded-xl bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white font-bold text-xs shadow-lg">
           CCF
         </div>
         <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={24} />
@@ -308,7 +308,7 @@ function PlanificadorInner() {
         <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{error}</p>
         <button
           onClick={fetchAll}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20 hover:brightness-110 transition-all active:scale-95"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)] hover:brightness-110 transition-all active:scale-95"
         >
           <RefreshCw size={13} /> Reintentar
         </button>
@@ -352,7 +352,7 @@ function PlanificadorInner() {
             </h2>
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="px-2 py-1 rounded-md text-[10px] font-bold text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors border border-blue-200 dark:border-blue-500/20"
+              className="px-2 py-1 rounded-md text-[10px] font-bold text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20"
             >
               Hoy
             </button>
@@ -384,7 +384,7 @@ function PlanificadorInner() {
                         className={clsx(
                           'w-full text-left px-3 py-1.5 text-[11px] font-bold transition-colors capitalize',
                           timeMode === v
-                            ? 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10'
+                            ? 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10'
                             : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5',
                         )}
                       >
@@ -400,7 +400,7 @@ function PlanificadorInner() {
             <div className="relative">
               <button
                 onClick={() => setShowCreateDropdown(v => !v)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-white shadow-lg shadow-blue-500/20 hover:brightness-110 active:scale-95 transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-white shadow-lg shadow-[hsl(var(--info)/20%)] hover:brightness-110 active:scale-95 transition-all"
                 style={{ backgroundColor: viewMeta.color }}
               >
                 <Plus size={13} /> Crear

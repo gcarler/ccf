@@ -15,7 +15,7 @@ import {
     AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { DSCard } from '@/design/components/DSCard';
+import { DSCard } from '@/design';
 import { apiFetch } from '@/lib/http';
 import clsx from 'clsx';
 
@@ -108,7 +108,7 @@ export default function NewAssessmentPage() {
                         </button>
                         <button
                             onClick={handleSave}
-                            className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2"
+                            className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all flex items-center gap-2"
                         >
                             <Save size={14} /> Guardar Evaluacion
                         </button>
@@ -127,7 +127,7 @@ export default function NewAssessmentPage() {
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="Ej: Examen Final de Teologia Basica"
-                                    className="w-full bg-transparent border-b-2 border-[hsl(var(--border))] dark:border-white/5 py-1.5 text-lg font-bold outline-none focus:border-blue-500 transition-all"
+                                    className="w-full bg-transparent border-b-2 border-[hsl(var(--border))] dark:border-white/5 py-1.5 text-lg font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all"
                                 />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -159,7 +159,7 @@ export default function NewAssessmentPage() {
                             <h3 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Preguntas ({questions.length})</h3>
                             <button
                                 onClick={addQuestion}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:border-blue-500 transition-all"
+                                className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:border-[hsl(var(--info)/100%)] transition-all"
                             >
                                 <Plus size={14} /> Agregar Pregunta
                             </button>
@@ -227,7 +227,7 @@ export default function NewAssessmentPage() {
                                                 value={q.text}
                                                 onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
                                                 placeholder="Escribe la pregunta aqui..."
-                                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm font-bold outline-none focus:border-blue-500 transition-all resize-none"
+                                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all resize-none"
                                                 rows={2}
                                             />
                                         </div>
@@ -258,7 +258,7 @@ export default function NewAssessmentPage() {
                                                             }}
                                                             placeholder={`Opcion ${optIndex + 1}`}
                                                             className={clsx(
-                                                                "flex-1 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:border-blue-500 transition-all font-medium",
+                                                                "flex-1 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:border-[hsl(var(--info)/100%)] transition-all font-medium",
                                                                 q.type === 'true_false' && "cursor-default"
                                                             )}
                                                         />

@@ -42,9 +42,9 @@ const tabs: { id: RankBy; label: string; icon: LucideIcon }[] = [
 ];
 
 function renderPodiumIcon(index: number) {
-  if (index === 0) return <Crown size={16} className="text-amber-400" />;
+  if (index === 0) return <Crown size={16} className="text-[hsl(var(--warning))]" />;
   if (index === 1) return <Medal size={16} className="text-slate-400" />;
-  if (index === 2) return <Medal size={16} className="text-amber-700" />;
+  if (index === 2) return <Medal size={16} className="text-warning-text" />;
   return <span className="text-xs font-bold text-[hsl(var(--text-secondary))] w-4 text-center">{index + 1}</span>;
 }
 
@@ -89,7 +89,7 @@ export default function GroupRankingsPanel({ groupRankings, loadingGroups, activ
           {groupRankings.map((group, index) => (
             <div
               key={group.group_id}
-              className="flex items-center gap-3 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-3 hover:shadow-md hover:border-blue-500/20 transition-all"
+              className="flex items-center gap-3 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-3 hover:shadow-md hover:border-[hsl(var(--info)/100%)]/20 transition-all"
             >
               <div className="shrink-0 w-8 flex justify-center">
                 {renderPodiumIcon(index)}
@@ -130,13 +130,13 @@ export default function GroupRankingsPanel({ groupRankings, loadingGroups, activ
                 {activeTab === 'growth' && (
                   <div className="flex items-center gap-1">
                     {(group.growth || 0) >= 0 ? (
-                      <ArrowUpRight size={14} className="text-emerald-500" />
+                      <ArrowUpRight size={14} className="text-[hsl(var(--success))]" />
                     ) : (
-                      <ArrowDownRight size={14} className="text-rose-500" />
+                      <ArrowDownRight size={14} className="text-[hsl(var(--danger))]" />
                     )}
                     <span
                       className={`text-sm font-bold ${
-                        (group.growth || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                        (group.growth || 0) >= 0 ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--danger))]'
                       }`}
                     >
                       {group.growth && group.growth > 0 ? '+' : ''}

@@ -3,9 +3,9 @@
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import EmptyState from '@/components/ui/EmptyState';
 import { useAuth } from '@/context/AuthContext';
-import { DSCard } from '@/design/components/DSCard';
-import { DSChart } from '@/design/components/DSChart';
-import { DSMetric } from '@/design/components/DSMetric';
+import { DSCard } from '@/design';
+import { DSChart } from '@/design';
+import { DSMetric } from '@/design';
 import { apiFetch } from '@/lib/http';
 import { GraduationCap, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -116,7 +116,7 @@ export default function AcademyClient() {
                     { label: 'Dashboard Inteligente', icon: TrendingUp },
                 ]}
                 rightActions={
-                    <button onClick={() => router.push('/plataforma/academy/curriculum')} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
+                    <button onClick={() => router.push('/plataforma/academy/curriculum')} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
                         Ver Malla Curricular
                     </button>
                 }
@@ -145,7 +145,7 @@ export default function AcademyClient() {
                                     <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Tendencia de Crecimiento</h3>
                                     <p className="text-xl font-bold text-white italic">Inscripciones Mensuales</p>
                                 </div>
-                                <div className="size-10 rounded-md bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
+                                <div className="size-10 rounded-md bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                     <TrendingUp size={20} />
                                 </div>
                             </div>

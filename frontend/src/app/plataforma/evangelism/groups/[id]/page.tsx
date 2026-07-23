@@ -204,7 +204,7 @@ export default function GroupDetailPage() {
  key={s.id}
  onClick={() => setActiveSession(s)}
  className={`w-full text-left px-3 py-2.5 rounded-md border transition-all duration-200 ${isActive
- ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 shadow-sm'
+ ? 'bg-info-soft dark:bg-[hsl(var(--info))]/20 border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] shadow-sm'
  : 'bg-transparent border-transparent hover:bg-[hsl(var(--bg-muted))]'
  }`}
  >
@@ -215,10 +215,10 @@ export default function GroupDetailPage() {
  </p>
  {s.topic && <p className="text-[10px] font-medium text-[hsl(var(--text-secondary))] mt-0.5">{new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' })}</p>}
  {s.season_name && !s.topic && <p className="text-[10px] font-medium text-[hsl(var(--text-secondary))] mt-0.5">{s.season_name}</p>}
- {s.estado_habilitacion !== 'HABILITADO' && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-500 mt-0.5">Bloqueada</p>}
+ {s.estado_habilitacion !== 'HABILITADO' && <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))] mt-0.5">Bloqueada</p>}
  </div>
  <div className="flex items-center gap-2">
- <span className={`px-2 py-0.5 rounded-lg font-semibold ${isActive ? 'bg-blue-100 dark:bg-blue-900/50 text-[hsl(var(--primary))] dark:text-blue-300' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
+ <span className={`px-2 py-0.5 rounded-lg font-semibold ${isActive ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/50 text-[hsl(var(--primary))] dark:text-info-text' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
  {s.attendance_count}
  </span>
  <ChevronRight size={14} className={isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))]'} />
@@ -554,7 +554,7 @@ setRemoteResults([]);
  <button
  onClick={() => setShowAddAttendee(true)}
  disabled={!activeSessionEnabled}
- className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20"
+ className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all shadow-lg shadow-[hsl(var(--info)/20%)]"
  >
  <UserPlus size={14} /> Añadir Asistentes
  </button>
@@ -571,7 +571,7 @@ setRemoteResults([]);
  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">Capacidad</p>
  </div>
  <div className="flex-1 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4 text-center">
- <p className="text-lg font-bold text-emerald-600 dark:emerald-400">
+ <p className="text-lg font-bold text-success-text dark:emerald-400">
  {house.capacity && attendance ? `${Math.round(attendance.total / house.capacity * 100)}%` : 'â€”'}
  </p>
  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">Ocupación</p>
@@ -640,14 +640,14 @@ setRemoteResults([]);
  ) : (
  <>
  {alerts.map((alert, index) => (
- <div key={`${alert.type}-${index}`} className="rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-1.5">
- <p className="text-sm font-bold text-amber-800 dark:text-amber-200">{alert.message}</p>
+ <div key={`${alert.type}-${index}`} className="rounded-lg border border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/30 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-4 py-1.5">
+ <p className="text-sm font-bold text-warning-text dark:text-[hsl(var(--warning))]">{alert.message}</p>
  </div>
  ))}
  {repeatAbsentees.slice(0, 4).map((item) => (
- <div key={item.persona_id} className="rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 px-4 py-1.5">
- <p className="text-sm font-bold text-rose-800 dark:text-rose-200">{item.name}</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-500 mt-1">{item.absences} ausencias recurrentes</p>
+ <div key={item.persona_id} className="rounded-lg border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 px-4 py-1.5">
+ <p className="text-sm font-bold text-danger-text dark:text-[hsl(var(--danger))]">{item.name}</p>
+ <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--danger))] mt-1">{item.absences} ausencias recurrentes</p>
  </div>
  ))}
  </>
@@ -818,7 +818,7 @@ setRemoteResults([]);
 
  <div className="flex justify-end">
  {activeSession?.report_deadline && new Date() > new Date(activeSession.report_deadline) ? (
- <div className="flex items-center gap-2 text-rose-500 bg-rose-50 dark:bg-rose-500/10 px-4 py-1.5 rounded-lg">
+ <div className="flex items-center gap-2 text-[hsl(var(--danger))] bg-danger-soft dark:bg-[hsl(var(--danger))]/10 px-4 py-1.5 rounded-lg">
  <Clock size={16} />
  <span className="text-[11px] font-semibold uppercase tracking-wide">Plazo de reporte vencido ({new Date(activeSession.report_deadline).toLocaleString()})</span>
  </div>
@@ -826,7 +826,7 @@ setRemoteResults([]);
  <button
  onClick={handleSaveReport}
  disabled={savingReport || !activeSession || !activeSessionEnabled}
- className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+ className="inline-flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all shadow-lg shadow-[hsl(var(--success)/20%)] disabled:opacity-50"
  >
  {savingReport ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />}
  Guardar reporte
@@ -848,21 +848,21 @@ setRemoteResults([]);
  <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-[hsl(var(--border-primary))] overflow-hidden shadow-sm">
  <div className="px-4 py-2 border-b border-[hsl(var(--border-primary))] flex items-center justify-between">
  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
- <CheckCircle2 size={14} className="text-emerald-500" /> Lista de Asistencia
+ <CheckCircle2 size={14} className="text-[hsl(var(--success))]" /> Lista de Asistencia
  </h3>
- <span className="text-xs font-semibold text-[hsl(var(--primary))] bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-lg">{attendance.total} personas</span>
+ <span className="text-xs font-semibold text-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 px-3 py-1 rounded-lg">{attendance.total} personas</span>
  </div>
  <div className="divide-y divide-[hsl(var(--border-primary))]">
  {attendance.attendees.map((a) => (
  <div key={a.persona_id} className="flex items-center gap-4 px-4 py-1.5 hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 transition-colors">
- <div className="size-8 rounded-md bg-gradient-to-br from-blue-400 to-sky-600 text-white flex items-center justify-center text-xs font-semibold shrink-0">
+ <div className="size-8 rounded-md bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] text-white flex items-center justify-center text-xs font-semibold shrink-0">
  {a.name.charAt(0)}
  </div>
  <div className="flex-1 min-w-0">
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{a.name}</p>
  {a.role && <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">{a.role}</p>}
  </div>
- <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+ <CheckCircle2 size={16} className="text-[hsl(var(--success))] shrink-0" />
  </div>
  ))}
  </div>
@@ -876,7 +876,7 @@ setRemoteResults([]);
 
  {/* ADD ATTENDEES INLINE SECTION */}
  {showAddAttendee && (
- <div className="mx-8 mb-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-blue-200 dark:border-blue-500/30 rounded-lg p-4 shadow-sm animate-in slide-in-from-top-2 fade-in duration-200">
+ <div className="mx-8 mb-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30 rounded-lg p-4 shadow-sm animate-in slide-in-from-top-2 fade-in duration-200">
  <div className="flex items-center justify-between mb-4 pb-4 border-b border-[hsl(var(--border-primary))]">
  <div>
  <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))]">Registrar Asistentes</h3>
@@ -979,7 +979,7 @@ setRemoteResults([]);
  isSelected ? next.delete(m.id) : next.add(m.id);
  return next;
  })}
- className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-500/30' : 'hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 border border-transparent'}`}
+ className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${isSelected ? 'bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/30' : 'hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 border border-transparent'}`}
  >
  <div className={`size-9 rounded-md flex items-center justify-center text-sm font-semibold shrink-0 ${isSelected ? 'bg-[hsl(var(--primary))] text-white' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
  {isSelected ? <CheckCircle2 size={16} /> : (m.nombre_completo?.charAt(0) || '')}

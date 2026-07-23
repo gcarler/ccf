@@ -46,9 +46,9 @@ const SETTINGS_GROUPS = [
 ];
 
 const COLOR_MAP: Record<string, string> = {
-    blue: "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]",
-    sky: "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400",
-    emerald: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    blue: "bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]",
+    sky: "bg-info-soft dark:bg-[hsl(var(--info))]/10 text-info-text dark:text-[hsl(var(--info))]",
+    emerald: "bg-success-soft dark:bg-[hsl(var(--success))]/10 text-success-text dark:text-[hsl(var(--success))]",
 };
 
 export default function SettingsPage() {
@@ -90,7 +90,7 @@ export default function SettingsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 p-3 flex items-center gap-3 shadow-sm"
                 >
-                    <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-500/20 shrink-0">
+                    <div className="size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-[hsl(var(--info)/20%)] shrink-0">
                         {(user as any)?.name?.[0] ?? 'A'}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -100,13 +100,13 @@ export default function SettingsPage() {
                         <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium truncate">
                             {(user as any)?.email ?? 'usuario@ccf.com'}
                         </p>
-                        <span className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide">
+                        <span className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide">
                             <Shield size={9} /> Admin
                         </span>
                     </div>
                     <button
                         onClick={() => router.push('/plataforma/account')}
-                        className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md hover:border-blue-500/50 transition-all"
+                        className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md hover:border-[hsl(var(--info)/100%)]/50 transition-all"
                     >
                         Editar
                     </button>
@@ -132,7 +132,7 @@ export default function SettingsPage() {
                                 className={clsx(
                                     "flex flex-col items-center gap-2 py-1.5 rounded-md border-2 transition-all text-[11px] font-semibold uppercase tracking-wide",
                                     theme === t.id
-                                        ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]"
+                                        ? "border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]"
                                         : "border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))] dark:hover:border-white/10"
                                 )}
                             >
@@ -181,16 +181,16 @@ export default function SettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25 }}
-                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-rose-100 dark:border-rose-500/10 p-3 shadow-sm space-y-3"
+                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--danger)/20%)] dark:border-[hsl(var(--danger)/100%)]/10 p-3 shadow-sm space-y-3"
                 >
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-400 mb-4">Zona de Peligro</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--danger))] mb-4">Zona de Peligro</p>
                     <button
                         onClick={() => { logout(); router.push('/login'); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all text-[12px] font-bold"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all text-[12px] font-bold"
                     >
                         <LogOut size={16} /> Cerrar Sesión
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all text-[12px] font-bold">
+                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all text-[12px] font-bold">
                         <Trash2 size={16} /> Eliminar mi cuenta
                     </button>
                 </motion.div>

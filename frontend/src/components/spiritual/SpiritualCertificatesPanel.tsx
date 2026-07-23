@@ -35,7 +35,7 @@ export default function SpiritualCertificatesPanel() {
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center h-40 gap-3">
-                <Loader2 className="animate-spin text-cyan-600" size={24} />
+                <Loader2 className="animate-spin text-[hsl(var(--domain-cyan)/90%)]" size={24} />
                 <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Consultando registros...</p>
             </div>
         );
@@ -58,7 +58,7 @@ export default function SpiritualCertificatesPanel() {
                                 initial={{ opacity: 0, y: 15 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.1, type: 'spring', damping: 20 }}
-                                className="group relative bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-lg p-3 shadow-sm hover:shadow-2xl hover:shadow-blue-500/5 transition-all hover:border-blue-500/20"
+                                className="group relative bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-lg p-3 shadow-sm hover:shadow-2xl hover:shadow-[hsl(var(--info)/5%)] transition-all hover:border-[hsl(var(--info)/100%)]/20"
                             >
                                 <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:opacity-10 transition-opacity">
                                     <Award size={80} strokeWidth={1} />
@@ -67,13 +67,13 @@ export default function SpiritualCertificatesPanel() {
                                 <div className="flex items-start justify-between mb-3 relative z-10">
                                     <div className={clsx(
                                         "size-7 rounded-lg flex items-center justify-center border-2 shadow-lg transition-transform group-hover:scale-110",
-                                        isSacramento ? "bg-cyan-500/10 border-cyan-500/20 text-cyan-500" : "bg-blue-500/10 border-blue-500/20 text-[hsl(var(--primary))]"
+                                        isSacramento ? "bg-[hsl(var(--domain-cyan)/10%)] border-[hsl(var(--domain-cyan)/20%)] text-[hsl(var(--domain-cyan)/90%)]" : "bg-[hsl(var(--info))]/10 border-[hsl(var(--info)/100%)]/20 text-[hsl(var(--primary))]"
                                     )}>
                                         {isSacramento ? <Waves size={24} /> : <FileCheck size={24} />}
                                     </div>
                                     <span className={clsx(
                                         "text-[9px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-md border-2",
-                                        isSacramento ? "bg-cyan-50 text-cyan-600 border-cyan-100 dark:bg-cyan-900/40 dark:border-cyan-500/30" : "bg-blue-50 text-[hsl(var(--primary))] border-blue-100 dark:bg-blue-900/40 dark:border-blue-500/30"
+                                        isSacramento ? "bg-[hsl(var(--domain-cyan)/10%)] text-[hsl(var(--domain-cyan)/90%)] border-[hsl(var(--domain-cyan)/30%)] dark:bg-[hsl(var(--domain-cyan)/40%)] dark:border-[hsl(var(--domain-cyan)/30%)]" : "bg-info-soft text-[hsl(var(--primary))] border-[hsl(var(--info)/20%)] dark:bg-[hsl(var(--info))]/40 dark:border-[hsl(var(--info)/100%)]/30"
                                     )}>
                                         {cert.certificate_type || 'ACADEMIA'}
                                     </span>
@@ -84,7 +84,7 @@ export default function SpiritualCertificatesPanel() {
                                         {cert.course_title || cert.certificate_type}
                                     </h3>
                                     <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2">
-                                        <ShieldCheck size={12} className="text-emerald-500" /> Verificado {new Date(cert.issued_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                                        <ShieldCheck size={12} className="text-[hsl(var(--success))]" /> Verificado {new Date(cert.issued_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
                                     </p>
                                 </div>
 

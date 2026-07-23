@@ -56,7 +56,7 @@ export default function MyCardPage() {
     if (!persona) {
         return (
             <div className="min-h-screen bg-[hsl(var(--bg-primary))] flex flex-col items-center justify-center p-4 text-center space-y-3">
-                <div className="p-4 bg-rose-500/10 rounded-full text-rose-500">
+                <div className="p-4 bg-[hsl(var(--danger))]/10 rounded-full text-[hsl(var(--danger))]">
                     <ShieldCheck size={48} />
                 </div>
                 <h1 className="text-lg font-bold text-white">Perfil no Encontrado</h1>
@@ -73,38 +73,38 @@ export default function MyCardPage() {
             case 'pastor':
                 return {
                     name: 'PASTORAL ELITE',
-                    primary: 'from-sky-600 to-sky-900',
-                    border: 'border-sky-500/50',
-                    badge: 'bg-sky-500',
-                    glow: 'shadow-sky-500/20',
-                    accent: 'text-sky-300'
+                    primary: 'from-[hsl(var(--info))] to-[hsl(var(--info))]',
+                    border: 'border-[hsl(var(--info)/100%)]/50',
+                    badge: 'bg-[hsl(var(--info))]',
+                    glow: 'shadow-[hsl(var(--info)/20%)]',
+                    accent: 'text-[hsl(var(--info))]'
                 };
             case 'ministro':
                 return {
                     name: 'MINISTERIO UNGIDO',
-                    primary: 'from-amber-500 to-orange-900',
-                    border: 'border-amber-500/50',
-                    badge: 'bg-amber-500',
-                    glow: 'shadow-amber-500/20',
-                    accent: 'text-amber-200'
+                    primary: 'from-[hsl(var(--warning))] to-orange-900',
+                    border: 'border-[hsl(var(--warning)/100%)]/50',
+                    badge: 'bg-[hsl(var(--warning))]',
+                    glow: 'shadow-[hsl(var(--warning)/20%)]',
+                    accent: 'text-[hsl(var(--warning))]'
                 };
             case 'joven':
                 return {
                     name: 'GENERACIÓN RADICAL',
-                    primary: 'from-cyan-500 to-blue-800',
-                    border: 'border-cyan-500/50',
-                    badge: 'bg-cyan-500',
-                    glow: 'shadow-cyan-500/20',
-                    accent: 'text-cyan-200'
+                    primary: 'from-[hsl(var(--domain-cyan))] to-[hsl(var(--info))]',
+                    border: 'border-[hsl(var(--domain-cyan)/50%)]',
+                    badge: 'bg-[hsl(var(--domain-cyan))]',
+                    glow: 'shadow-[hsl(var(--domain-cyan)/20%)]',
+                    accent: 'text-[hsl(var(--domain-cyan))]'
                 };
             case 'servidor':
                 return {
                     name: 'SERVIDOR DE REINO',
-                    primary: 'from-emerald-500 to-teal-900',
-                    border: 'border-emerald-500/50',
-                    badge: 'bg-emerald-500',
-                    glow: 'shadow-emerald-500/20',
-                    accent: 'text-emerald-200'
+                    primary: 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))]',
+                    border: 'border-[hsl(var(--success)/100%)]/50',
+                    badge: 'bg-[hsl(var(--success))]',
+                    glow: 'shadow-[hsl(var(--success)/20%)]',
+                    accent: 'text-[hsl(var(--success))]'
                 };
             default:
                 return {
@@ -160,7 +160,7 @@ export default function MyCardPage() {
                 <div className="flex flex-col items-center text-center space-y-4 mb-3 mt-2 relative z-10">
                     <div className="size-10 rounded-lg bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white relative group-hover:scale-105 transition-transform duration-500">
                         <User size={48} className="text-white/50" />
-                        <div className="absolute -bottom-1 -right-1 size-6 bg-emerald-500 rounded-lg flex items-center justify-center border-4 border-[hsl(var(--border))] translate-x-1 translate-y-1">
+                        <div className="absolute -bottom-1 -right-1 size-6 bg-[hsl(var(--success))] rounded-lg flex items-center justify-center border-4 border-[hsl(var(--border))] translate-x-1 translate-y-1">
                             <ShieldCheck size={12} className="text-white" />
                         </div>
                     </div>
@@ -216,11 +216,11 @@ export default function MyCardPage() {
                     <span className="text-[10px] font-bold uppercase tracking-wide">Compartir</span>
                 </button>
                 <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-md transition-all active:scale-95 group">
-                    <Download size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-emerald-500 transition-colors" />
+                    <Download size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--success))] transition-colors" />
                     <span className="text-[10px] font-bold uppercase tracking-wide">Descargar</span>
                 </button>
                 <button className="col-span-2 flex items-center justify-center gap-3 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] p-3 rounded-md font-bold uppercase tracking-wide text-[11px] shadow-2xl hover:scale-105 transition-all active:scale-95">
-                    <Sparkles size={20} className="text-amber-500" /> Añadir a Google Wallet
+                    <Sparkles size={20} className="text-[hsl(var(--warning))]" /> Añadir a Google Wallet
                 </button>
             </div>
 

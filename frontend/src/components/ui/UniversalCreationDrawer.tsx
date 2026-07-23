@@ -32,12 +32,12 @@ type CreationPreset = 'general' | 'meeting' | 'activity' | 'project' | 'evangeli
 // ── Tab config ─────────────────────────────────────────────────────────────
 const TABS: { id: CreationType; label: string; icon: React.ElementType; color?: string; activeColor?: string }[] = [
     { id: 'task',       label: 'Tarea',        icon: CheckSquare,    color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' },
-    { id: 'event',      label: 'Evento',       icon: Calendar,       color: 'text-emerald-500', activeColor: 'text-emerald-600 dark:text-emerald-400' },
-    { id: 'project',    label: 'Proyecto',     icon: Layers,         color: 'text-amber-500', activeColor: 'text-amber-600 dark:text-amber-400' },
+    { id: 'event',      label: 'Evento',       icon: Calendar,       color: 'text-success', activeColor: 'text-success-text dark:text-success' },
+    { id: 'project',    label: 'Proyecto',     icon: Layers,         color: 'text-warning', activeColor: 'text-warning-text dark:text-warning' },
     { id: 'doc',        label: 'Documento',    icon: FileText,       color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' },
-    { id: 'reminder',   label: 'Recordatorio', icon: Bell,           color: 'text-rose-500', activeColor: 'text-rose-600 dark:text-rose-400' },
+    { id: 'reminder',   label: 'Recordatorio', icon: Bell,           color: 'text-danger', activeColor: 'text-danger-text dark:text-danger' },
     { id: 'whiteboard', label: 'Pizarra',      icon: LayoutDashboard,color: 'text-[hsl(var(--primary))]', activeColor: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' },
-    { id: 'panel',      label: 'Panel',        icon: Layers,         color: 'text-sky-500', activeColor: 'text-sky-600 dark:text-sky-400' },
+    { id: 'panel',      label: 'Panel',        icon: Layers,         color: 'text-info', activeColor: 'text-info-text dark:text-info' },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -87,7 +87,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
     const [eventDate, setEventDate] = useState(() => initialData?.initialDate || new Date().toISOString().split('T')[0]);
     const [eventEndDate, setEventEndDate] = useState(() => initialData?.initialDate || new Date().toISOString().split('T')[0]);
     const [eventLocation, setEventLocation] = useState('');
-    const [projectColor, setProjectColor] = useState('#7c3aed');
+    const [projectColor, setProjectColor] = useState('hsl(var(--primary))');
     
     // Interactivity & dropdown states
     const [showProjectDropdown, setShowProjectDropdown] = useState(false);
@@ -138,7 +138,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
             setAssignedToMe(false);
             setWhiteboardBg('grid');
             setPanelLayout('board');
-            setProjectColor('#7c3aed');
+            setProjectColor('hsl(var(--primary))');
             setEventType(
                 preset === 'meeting' ? 'Reunión'
                 : preset === 'evangelism' ? 'Celebración'
@@ -208,7 +208,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                 title,
                 description: 'Canal general para actividades sin proyecto específico',
                 status: 'planning',
-                color: '#7c3aed',
+                color: 'hsl(var(--primary))',
                 icon: 'layers',
             },
         });
@@ -340,11 +340,11 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         className={clsx(
                                             "absolute bottom-0 left-0 right-0 h-[2.5px]",
                                             tab.id === 'task' && "bg-[hsl(var(--primary))]",
-                                            tab.id === 'event' && "bg-emerald-500",
+                                            tab.id === 'event' && "bg-success",
                                             tab.id === 'doc' && "bg-[hsl(var(--primary))]",
-                                            tab.id === 'reminder' && "bg-rose-500",
+                                            tab.id === 'reminder' && "bg-danger",
                                             tab.id === 'whiteboard' && "bg-[hsl(var(--primary))]",
-                                            tab.id === 'panel' && "bg-sky-500"
+                                            tab.id === 'panel' && "bg-info"
                                         )}
                                     />
                                 )}
@@ -394,7 +394,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[12px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
                                             >
                                                 <span className="size-3 rounded-sm inline-block"
-                                                    style={{ backgroundColor: selectedProject?.color || '#2563eb' }} />
+                                                    style={{ backgroundColor: selectedProject?.color || 'hsl(var(--primary))' }} />
                                                 {selectedProject?.title || 'Seleccionar Proyecto'}
                                                 <ChevronDown size={11} />
                                             </button>
@@ -409,7 +409,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                             }}
                                                             className="flex items-center gap-2 px-3 py-2 w-full text-left text-[12px] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                                                         >
-                                                            <span className="size-2 rounded-full inline-block" style={{ backgroundColor: p.color || '#2563eb' }} />
+                                                            <span className="size-2 rounded-full inline-block" style={{ backgroundColor: p.color || 'hsl(var(--primary))' }} />
                                                             <span className="truncate">{p.title}</span>
                                                         </button>
                                                     ))}
@@ -441,7 +441,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                     value={description}
                                                     onChange={e => setDescription(e.target.value)}
                                                     placeholder="Añade la descripción o notas de esta tarea..."
-                                                    className="w-full min-h-[70px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                                    className="w-full min-h-[70px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
                                                 />
                                                 <div className="flex justify-end">
                                                     <button
@@ -500,7 +500,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                     e.stopPropagation();
                                                     setAssignedToMe(false);
                                                 }}
-                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-500/10 text-[11px] font-medium text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] hover:opacity-85 transition-colors"
+                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-info-muted dark:border-info/30 bg-info-soft text-[11px] font-medium text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] hover:opacity-85 transition-colors"
                                             >
                                                 <span className="size-4 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-white text-[9px] font-semibold uppercase">
                                                     {user?.username?.substring(0, 2).toUpperCase() || 'MI'}
@@ -530,9 +530,9 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             />
                                             <button className={clsx(
                                                 "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors pointer-events-none",
-                                                dueDate ? "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+                                                dueDate ? "border-success-muted dark:border-success/30 bg-success-soft text-success-text" : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                                             )}>
-                                                <Calendar size={12} className={dueDate ? "text-emerald-500" : "text-[hsl(var(--text-secondary))]"} />
+                                                <Calendar size={12} className={dueDate ? "text-success" : "text-[hsl(var(--text-secondary))]"} />
                                                 {dueDate ? `Fecha límite: ${dueDate}` : 'Fecha límite'}
                                             </button>
                                         </div>
@@ -546,15 +546,15 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             className={clsx(
                                                 "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-bold transition-all active:scale-95",
                                                 priority === 'normal' && "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5",
-                                                priority === 'alta' && "border-amber-200 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
-                                                priority === 'urgente' && "border-rose-200 dark:border-rose-500/30 bg-rose-50/50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400",
+                                                priority === 'alta' && "border-warning-muted dark:border-warning/30 bg-warning-soft text-warning-text",
+                                                priority === 'urgente' && "border-danger-muted dark:border-danger/30 bg-danger-soft text-danger-text",
                                                 priority === 'baja' && "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                                             )}
                                         >
                                             <Flag size={12} className={clsx(
                                                 priority === 'normal' && "text-[hsl(var(--text-secondary))]",
-                                                priority === 'alta' && "text-amber-500",
-                                                priority === 'urgente' && "text-rose-500",
+                                                priority === 'alta' && "text-warning",
+                                                priority === 'urgente' && "text-danger",
                                                 priority === 'baja' && "text-[hsl(var(--text-secondary))]"
                                             )} />
                                             Prioridad: {priority === 'normal' ? 'Normal' : priority === 'alta' ? 'Alta' : priority === 'urgente' ? 'Urgente' : 'Baja'}
@@ -569,7 +569,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 }}
                                                 className={clsx(
                                                     "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5",
-                                                    tags.length > 0 ? "border-blue-200 dark:border-blue-500/30 bg-blue-50/50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]"
+                                                    tags.length > 0 ? "border-[hsl(var(--info)/0.2)] dark:border-[hsl(var(--info)/0.3)] bg-info-soft dark:bg-[hsl(var(--info)/0.1)] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]"
                                                 )}
                                             >
                                                 <Tag size={12} className={tags.length > 0 ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]"} />
@@ -656,7 +656,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             >
                                                 {selectedProject ? (
                                                     <>
-                                                        <span className="size-2 rounded-full inline-block" style={{ backgroundColor: selectedProject.color || '#2563eb' }} />
+                                                        <span className="size-2 rounded-full inline-block" style={{ backgroundColor: selectedProject.color || 'hsl(var(--primary))' }} />
                                                         {selectedProject.title}
                                                     </>
                                                 ) : 'Global (Sin módulo)'}
@@ -683,7 +683,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                             }}
                                                             className="flex items-center gap-2 px-3 py-2 w-full text-left text-[12px] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                                                         >
-                                                            <span className="size-2 rounded-full inline-block" style={{ backgroundColor: p.color || '#2563eb' }} />
+                                                            <span className="size-2 rounded-full inline-block" style={{ backgroundColor: p.color || 'hsl(var(--primary))' }} />
                                                             <span className="truncate">{p.title}</span>
                                                         </button>
                                                     ))}
@@ -710,14 +710,14 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 type="date"
                                                 value={eventDate}
                                                 onChange={e => setEventDate(e.target.value)}
-                                                className="text-[13px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2.5 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer" 
+                                                className="text-[13px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2.5 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all cursor-pointer" 
                                             />
                                             <span className="text-[hsl(var(--text-secondary))] text-[11px] font-semibold">hasta</span>
                                             <input 
                                                 type="date"
                                                 value={eventEndDate}
                                                 onChange={e => setEventEndDate(e.target.value)}
-                                                className="text-[13px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2.5 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer" 
+                                                className="text-[13px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2.5 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all cursor-pointer" 
                                             />
                                         </div>
                                         <div className="flex items-center gap-3 pt-2">
@@ -727,7 +727,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 value={eventLocation}
                                                 onChange={e => setEventLocation(e.target.value)}
                                                 placeholder="Añadir invitados (correo o nombre)" 
-                                                className="text-[12px] flex-1 bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 pb-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:border-blue-500 placeholder:text-[hsl(var(--text-secondary))]"
+                                                className="text-[12px] flex-1 bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 pb-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:border-[hsl(var(--primary))] placeholder:text-[hsl(var(--text-secondary))]"
                                             />
                                         </div>
                                         <div className="flex items-start gap-3 pt-3">
@@ -736,7 +736,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 value={description}
                                                 onChange={e => setDescription(e.target.value)}
                                                 placeholder="Añadir descripción o enlace de la reunión" 
-                                                className="text-[12px] flex-1 min-h-[60px] bg-transparent border border-[hsl(var(--border))] dark:border-white/10 rounded p-2 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:border-blue-500 placeholder:text-[hsl(var(--text-secondary))] resize-none"
+                                                className="text-[12px] flex-1 min-h-[60px] bg-transparent border border-[hsl(var(--border))] dark:border-white/10 rounded p-2 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:border-[hsl(var(--primary))] placeholder:text-[hsl(var(--text-secondary))] resize-none"
                                             />
                                         </div>
                                     </div>
@@ -774,7 +774,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             value={description}
                                             onChange={e => setDescription(e.target.value)}
                                             placeholder="Describe el propósito del proyecto..."
-                                            className="w-full min-h-[90px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                            className="w-full min-h-[90px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all resize-none"
                                         />
                                         <p className="text-[11px] text-[hsl(var(--text-secondary))] leading-snug">
                                             Si no seleccionas un proyecto al crear una actividad, se usará el proyecto general.
@@ -806,7 +806,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 value={description}
                                                 onChange={e => setDescription(e.target.value)}
                                                 placeholder="Comienza a redactar el contenido de tu documento..."
-                                                className="w-full min-h-[90px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                                className="w-full min-h-[90px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all resize-none"
                                             />
                                         ) : (
                                             <div className="space-y-2">
@@ -857,7 +857,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 value={description}
                                                 onChange={e => setDescription(e.target.value)}
                                                 placeholder="Añade detalles o notas a este recordatorio..."
-                                                className="w-full min-h-[60px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                                className="w-full min-h-[60px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all resize-none"
                                             />
                                         ) : (
                                             <button 
@@ -906,7 +906,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                     className={clsx(
                                                         "px-3 py-1.5 rounded-lg border text-[12px] font-medium capitalize transition-all",
                                                         whiteboardBg === bg
-                                                            ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-semibold"
+                                                            ? "border-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-semibold"
                                                             : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                                                     )}
                                                 >
@@ -945,7 +945,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                     className={clsx(
                                                         "flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-all",
                                                         panelLayout === layout.id
-                                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 font-semibold"
+                                                            ? "border-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-semibold"
                                                             : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                                                     )}
                                                 >

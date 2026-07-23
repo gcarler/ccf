@@ -1,7 +1,38 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { DSChart } from './DSChart';
+
+const OriginalResizeObserver = global.ResizeObserver;
+
+beforeAll(() => {
+    // jsdom reports zero dimensions by default. ChartWrapper uses a ResizeObserver
+    // backed measurement, so without a non-zero bounding rect it will render the
+    // placeholder instead of the chart children.
+    class MockResizeObserver {
+        observe = vi.fn();
+        unobserve = vi.fn();
+        disconnect = vi.fn();
+    }
+    global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+        width: 800,
+        height: 300,
+        top: 0,
+        left: 0,
+        bottom: 300,
+        right: 800,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
+    } as DOMRect);
+});
+
+afterAll(() => {
+    vi.restoreAllMocks();
+    global.ResizeObserver = OriginalResizeObserver;
+});
 
 // Full stub of recharts for jsdom. Recharts' ResponsiveContainer measures
 // dimensions with ResizeObserver, which under jsdom always resolves to 0 — and
@@ -141,12 +172,11 @@ describe('DSChart', () => {
             expect(bar?.getAttribute('data-fill')).toBe('#ffaa00');
         });
 
-        it('uses a default hex color when none is provided', () => {
+        it('uses the default primary color when none is provided', () => {
             const { container } = render(<DSChart type="line" data={sampleData} />);
             const line = container.querySelector('.recharts-line');
             expect(line).toBeInTheDocument();
-            // colors.primary[500] resolves to a 3/4/6/8-digit hex; just assert it's set
-            expect(line?.getAttribute('data-stroke')).toMatch(/^#[0-9a-fA-F]{3,8}$/);
+            expect(line?.getAttribute('data-stroke')).toBe('hsl(var(--primary))');
         });
     });
 });

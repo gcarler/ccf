@@ -8,7 +8,7 @@ import { apiFetch } from "@/lib/http";
 import { Layout, FileText, PenTool, ArrowRight, Globe, Clock, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 import clsx from "clsx";
-import { DSCard } from "@/design/components/DSCard";
+import { DSCard } from '@/design';
 
 interface PageData {
   id: string;
@@ -21,10 +21,10 @@ interface PageData {
 }
 
 const STATUS_STYLES: Record<string, { label: string; color: string }> = {
-  published:  { label: "Publicado",   color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200" },
+  published:  { label: "Publicado",   color: "text-success-text bg-success-soft dark:bg-[hsl(var(--success))]/20 border-[hsl(var(--success)/25%)]" },
   draft:      { label: "Borrador",    color: "text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 border-[hsl(var(--border))]" },
-  in_review:  { label: "En Revisión", color: "text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200" },
-  archived:   { label: "Archivado",   color: "text-rose-500 bg-rose-50 dark:bg-rose-900/10 border-rose-200" },
+  in_review:  { label: "En Revisión", color: "text-warning-text bg-warning-soft dark:bg-[hsl(var(--warning))]/20 border-[hsl(var(--warning)/25%)]" },
+  archived:   { label: "Archivado",   color: "text-[hsl(var(--danger))] bg-danger-soft dark:bg-[hsl(var(--danger))]/10 border-[hsl(var(--danger)/25%)]" },
 };
 
 export default function CmsPageDetailPage() {
@@ -103,7 +103,7 @@ export default function CmsPageDetailPage() {
       >
         {/* Icon */}
         <div className="flex justify-center">
-          <div className="size-8 rounded-lg bg-gradient-to-br from-blue-600 to-sky-600 flex items-center justify-center shadow-2xl shadow-blue-500/30">
+          <div className="size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center shadow-2xl shadow-[hsl(var(--info)/30%)]">
             <PenTool size={32} className="text-white" strokeWidth={1.5} />
           </div>
         </div>
@@ -172,7 +172,7 @@ export default function CmsPageDetailPage() {
           {/* CTA button */}
           <button
             onClick={handleGoNow}
-            className="w-full flex items-center justify-center gap-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
+            className="w-full flex items-center justify-center gap-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
           >
             <PenTool size={16} />
             Abrir en el Builder ahora

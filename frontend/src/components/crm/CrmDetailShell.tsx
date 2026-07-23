@@ -8,20 +8,20 @@ type Variant = "sky" | "emerald" | "amber" | "rose";
 
 const VARIANT_PRESETS: Record<Variant, { primary: string; accent: string }> = {
     sky: {
-        primary: "from-blue-500/20",
-        accent: "from-sky-500/20"
+        primary: "to-[hsl(var(--info)/20%)]",
+        accent: "to-[hsl(var(--info)/20%)]"
     },
     emerald: {
-        primary: "from-emerald-500/15",
-        accent: "from-teal-500/20"
+        primary: "to-[hsl(var(--success)/15%)]",
+        accent: "from-[hsl(var(--domain-teal)/20%)]"
     },
     amber: {
-        primary: "from-amber-500/20",
+        primary: "to-[hsl(var(--warning)/20%)]",
         accent: "from-orange-500/15"
     },
     rose: {
-        primary: "from-rose-500/20",
-        accent: "from-sky-500/15"
+        primary: "to-[hsl(var(--danger)/20%)]",
+        accent: "to-[hsl(var(--info)/15%)]"
     }
 };
 

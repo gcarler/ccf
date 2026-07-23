@@ -122,7 +122,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                 </div>
 
                 <div className="p-4 space-y-2 flex-1 overflow-y-auto">
-                    <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-blue-100 dark:border-[hsl(var(--primary))]/20 rounded-lg shadow-sm">
+                    <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--info)/0.2)] dark:border-[hsl(var(--info)/0.2)] rounded-lg shadow-sm">
                         <div className="flex items-center gap-3 text-[hsl(var(--primary))] mb-1">
                             <FileText size={16} />
                             <span className="text-[11px] font-semibold uppercase tracking-wide">General</span>
@@ -169,7 +169,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                     <div className="flex items-center gap-3">
                         {lastSaved && (
                             <div className="flex items-center gap-2">
-                                <div className="size-1.5 rounded-full bg-emerald-500" />
+                                <div className="size-1.5 rounded-full bg-[hsl(var(--success))]" />
                                 <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide italic">Guardado a las {lastSaved.toLocaleTimeString()}</span>
                             </div>
                         )}
@@ -220,7 +220,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                         <EditorContent editor={editor} />
                     )}
                     {error && (
-                        <p className="absolute bottom-4 left-10 rounded-full bg-rose-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-600 dark:bg-rose-500/10 dark:text-rose-300">
+                        <p className="absolute bottom-4 left-10 rounded-full bg-danger-soft px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-danger-text">
                             {error}
                         </p>
                     )}
@@ -234,7 +234,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button aria-label="Eliminar contenido" title="Limpiar contenido" className="p-3 text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors" onClick={handleClear}><Trash2 size={18} /></button>
+                        <button aria-label="Eliminar contenido" title="Limpiar contenido" className="p-3 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-colors" onClick={handleClear}><Trash2 size={18} /></button>
                         <button aria-label="Exportar como texto" title="Exportar como texto plano" className="p-3 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors" onClick={handleExportText}><Download size={18} /></button>
                         <button aria-label="Más opciones" title="Más opciones" className="p-3 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors" onClick={() => {/* future: options menu */}}><MoreHorizontal size={18} /></button>
                     </div>

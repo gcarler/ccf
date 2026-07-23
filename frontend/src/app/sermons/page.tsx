@@ -7,9 +7,9 @@ import { Play, Search, Clock, Calendar, Mic, ChevronRight, Filter } from 'lucide
 
 const CATEGORIES = ['Todos', 'Salvación', 'Familia', 'Liderazgo', 'Profecía', 'Adoración', 'Discipulado'];
 const SERIES = [
-    { id: 1, category: 'Liderazgo', title: 'Levántate y Brilla', thumb: 'from-blue-600 to-sky-700', count: 6 },
-    { id: 2, category: 'Familia', title: 'Fundamentos del Hogar', thumb: 'from-rose-500 to-pink-600', count: 8 },
-    { id: 3, category: 'Salvación', title: 'El Camino de Regreso', thumb: 'from-amber-500 to-orange-600', count: 4 },
+    { id: 1, category: 'Liderazgo', title: 'Levántate y Brilla', thumb: 'from-[hsl(var(--info))] to-[hsl(var(--info))]', count: 6 },
+    { id: 2, category: 'Familia', title: 'Fundamentos del Hogar', thumb: 'from-[hsl(var(--danger))] to-[hsl(var(--domain-pink))]', count: 8 },
+    { id: 3, category: 'Salvación', title: 'El Camino de Regreso', thumb: 'from-[hsl(var(--warning))] to-orange-600', count: 4 },
 ];
 const SERMONS = [
     { id: 1, title: 'La Fe que Mueve Montañas', speaker: 'Pastor Samuel Torres', date: '2026-04-06', duration: '45 min', category: 'Fe', views: 1203, series: 'Levántate y Brilla' },
@@ -36,9 +36,9 @@ export default function SermonsPage() {
 
             {/* Hero */}
             <section className="relative py-1.5 px-3 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-blue-600/10 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-b to-[hsl(var(--info)/10%)] to-transparent" />
                 <div className="max-w-6xl mx-auto relative text-center">
-                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 text-[hsl(var(--primary))] text-[11px] font-bold uppercase tracking-wide mb-3">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-[11px] font-bold uppercase tracking-wide mb-3">
                         <Mic size={11} /> Prédicas & Mensajes
                     </span>
                     <h1 className="text-xl font-bold text-white mb-3 tracking-tight">
@@ -51,7 +51,7 @@ export default function SermonsPage() {
                         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                         <input value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar prédica..."
-                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-[hsl(var(--text-secondary))] text-sm outline-none focus:ring-2 focus:ring-blue-500/30 backdrop-blur" />
+                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-[hsl(var(--text-secondary))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30 backdrop-blur" />
                     </div>
                 </div>
             </section>
@@ -91,7 +91,7 @@ export default function SermonsPage() {
                     {filtered.map((s, i) => (
                         <motion.div key={s.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
                             className="bg-white/5 hover:bg-white/8 border border-white/5 hover:border-white/10 rounded-lg p-3 flex items-center gap-4 cursor-pointer group transition-all">
-                            <div className="size-7 rounded-lg bg-blue-600/20 flex items-center justify-center text-[hsl(var(--primary))] shrink-0 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
+                            <div className="size-7 rounded-lg bg-[hsl(var(--info))]/20 flex items-center justify-center text-[hsl(var(--primary))] shrink-0 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
                                 <Play size={22} className="ml-0.5" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -102,7 +102,7 @@ export default function SermonsPage() {
                                     <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]"><Calendar size={9} /> {s.date}</span>
                                     <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]"><Clock size={9} /> {s.duration}</span>
                                 </div>
-                                {s.series && <span className="text-[9px] text-blue-500/70 font-bold mt-0.5 block">Serie: {s.series}</span>}
+                                {s.series && <span className="text-[9px] text-[hsl(var(--info))]/70 font-bold mt-0.5 block">Serie: {s.series}</span>}
                             </div>
                             <div className="shrink-0 text-right">
                                 <p className="text-[10px] text-[hsl(var(--text-secondary))]">{s.views.toLocaleString()} vistas</p>

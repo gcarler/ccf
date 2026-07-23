@@ -36,17 +36,17 @@ type StatusFilter = "all" | "published" | "draft" | "in_review" | "archived";
 
 const SEVERITY_STYLES: Record<string, { tone: string; icon: typeof AlertCircle; label: string }> = {
   error: {
-    tone: "bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30",
+    tone: "bg-danger-soft text-danger-text dark:bg-[hsl(var(--danger))]/15 dark:text-danger-text border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30",
     icon: AlertCircle,
     label: "Error",
   },
   warning: {
-    tone: "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30",
+    tone: "bg-warning-soft text-warning-text dark:bg-[hsl(var(--warning))]/15 dark:text-warning-text border border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/30",
     icon: AlertTriangle,
     label: "Advertencia",
   },
   info: {
-    tone: "bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30",
+    tone: "bg-info-soft text-info-text dark:bg-[hsl(var(--info))]/15 dark:text-info-text border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30",
     icon: Info,
     label: "Info",
   },
@@ -68,24 +68,24 @@ function scoreTone(score: number): {
 } {
   if (score >= 80) {
     return {
-      bg: "bg-emerald-100 dark:bg-emerald-500/15",
-      text: "text-emerald-700 dark:text-emerald-300",
-      ring: "ring-emerald-300 dark:ring-emerald-500/40",
+      bg: "bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/15",
+      text: "text-success-text dark:text-success-text",
+      ring: "ring-[hsl(var(--success))] dark:ring-[hsl(var(--success)/40%)]",
       label: "Excelente",
     };
   }
   if (score >= 50) {
     return {
-      bg: "bg-amber-100 dark:bg-amber-500/15",
-      text: "text-amber-700 dark:text-amber-300",
-      ring: "ring-amber-300 dark:ring-amber-500/40",
+      bg: "bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/15",
+      text: "text-warning-text dark:text-warning-text",
+      ring: "ring-[hsl(var(--warning))] dark:ring-[hsl(var(--warning)/40%)]",
       label: "Atención",
     };
   }
   return {
-    bg: "bg-rose-100 dark:bg-rose-500/15",
-    text: "text-rose-700 dark:text-rose-300",
-    ring: "ring-rose-300 dark:ring-rose-500/40",
+    bg: "bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/15",
+    text: "text-danger-text dark:text-danger-text",
+    ring: "ring-[hsl(var(--danger))] dark:ring-[hsl(var(--danger)/40%)]",
     label: "Crítico",
   };
 }
@@ -215,13 +215,13 @@ export default function CmsSeoAuditPage() {
                 label="Hallazgos críticos"
                 value={metric(aggregate?.critical_issues, loading)}
                 icon={AlertCircle}
-                tone="bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-300"
+                tone="bg-danger-soft dark:bg-[hsl(var(--danger))]/15 text-danger-text dark:text-danger-text"
               />
               <StatCard
                 label="Páginas con errores"
                 value={metric(aggregate?.pages_with_errors, loading)}
                 icon={ShieldCheck}
-                tone="bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                tone="bg-warning-soft dark:bg-[hsl(var(--warning))]/15 text-warning-text dark:text-warning-text"
               />
             </section>
 
@@ -352,7 +352,7 @@ export default function CmsSeoAuditPage() {
                           </p>
                         </div>
                         {isCritical && (
-                          <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/15 border border-rose-200 dark:border-rose-500/30 px-2 py-1 rounded-full">
+                          <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-danger-text dark:text-danger-text bg-danger-soft dark:bg-[hsl(var(--danger))]/15 border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 px-2 py-1 rounded-full">
                             <AlertCircle size={11} /> Crítico
                           </span>
                         )}
@@ -419,7 +419,7 @@ export default function CmsSeoAuditPage() {
             </motion.div>
 
             {selectedPage.findings.length === 0 && (
-              <div className="rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 p-4 text-emerald-700 dark:text-emerald-300 flex items-center gap-3">
+              <div className="rounded-lg border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30 bg-success-soft dark:bg-[hsl(var(--success))]/10 p-4 text-success-text dark:text-success-text flex items-center gap-3">
                 <CheckCircle2 size={18} />
                 <p className="text-sm font-medium">
                   La página cumple con todas las validaciones SEO del audit

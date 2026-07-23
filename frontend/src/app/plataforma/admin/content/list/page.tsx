@@ -146,7 +146,7 @@ export default function AdminContentList() {
                 rightActions={
                     <button 
                         onClick={() => router.push('/plataforma/admin/content/courses/new')}
-                        className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
+                        className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
                     >
                         <Plus size={18} /> Crear Nuevo
                     </button>
@@ -170,7 +170,7 @@ export default function AdminContentList() {
                         <input 
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 pl-16 pr-8 text-sm font-bold shadow-sm focus:ring-8 focus:ring-[hsl(var(--primary))]/5 focus:border-blue-500 transition-all outline-none"
+                            className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 pl-16 pr-8 text-sm font-bold shadow-sm focus:ring-8 focus:ring-[hsl(var(--primary))]/5 focus:border-[hsl(var(--info)/100%)] transition-all outline-none"
                             placeholder={`Buscar en la biblioteca de ${activeTab === 'courses' ? 'cursos' : 'contenidos'}...`}
                         />
                     </div>
@@ -233,7 +233,7 @@ export default function AdminContentList() {
                                         </div>
                                         <div className="space-y-4">
                                             {group.items.map(item => (
-                                                <button key={item.id} onClick={() => openItem(item)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 hover:border-blue-300 transition-all">
+                                                <button key={item.id} onClick={() => openItem(item)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 hover:border-[hsl(var(--info)/30%)] transition-all">
                                                     <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{item.title}</p>
                                                     <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.code || item.modality || activeTab}</p>
                                                 </button>
@@ -337,7 +337,7 @@ function TabBtn({ label, active, onClick, icon: Icon }: any) {
             onClick={onClick}
             className={clsx(
                 "px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all relative flex items-center gap-3 shrink-0 border-b-2",
-                active ? "text-[hsl(var(--primary))] border-blue-600" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]"
+                active ? "text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]"
             )}
         >
             <Icon size={14} className={clsx(active ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]")} />

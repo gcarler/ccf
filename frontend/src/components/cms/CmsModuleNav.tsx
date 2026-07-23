@@ -127,7 +127,7 @@ export function CmsModuleNav() {
                 className={clsx(
                   "flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[12px] font-medium transition-colors whitespace-nowrap",
                   isActive
-                    ? "border-blue-500 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]"
+                    ? "border-[hsl(var(--info)/100%)] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]"
                     : "border-transparent text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))] hover:text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]",
                 )}
               >

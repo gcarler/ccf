@@ -27,21 +27,21 @@ const STAGE_PROGRESS: Record<string, number> = { new: 20, call: 40, visit: 60, d
 
 function getStatusStyles(stage: string) {
     switch (stage) {
-        case 'new':          return 'bg-blue-500/10 text-[hsl(var(--primary))] border-blue-500/20';
-        case 'call':         return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
-        case 'visit':        return 'bg-sky-500/10 text-sky-600 border-sky-500/20';
+        case 'new':          return 'bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]/20';
+        case 'call':         return 'bg-[hsl(var(--warning))]/10 text-warning-text border-[hsl(var(--warning)/100%)]/20';
+        case 'visit':        return 'bg-[hsl(var(--info))]/10 text-info-text border-[hsl(var(--info)/100%)]/20';
         case 'discipleship': return 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20';
-        case 'consolidated': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+        case 'consolidated': return 'bg-[hsl(var(--success))]/10 text-success-text border-[hsl(var(--success)/100%)]/20';
         default:             return 'bg-[hsl(var(--surface-2))]/10 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]/20';
     }
 }
 function getStatusDot(stage: string) {
     switch (stage) {
         case 'new':          return 'bg-[hsl(var(--primary))]';
-        case 'call':         return 'bg-amber-500';
-        case 'visit':        return 'bg-sky-500';
+        case 'call':         return 'bg-[hsl(var(--warning))]';
+        case 'visit':        return 'bg-[hsl(var(--info))]';
         case 'discipleship': return 'bg-[hsl(var(--primary))]';
-        case 'consolidated': return 'bg-emerald-500';
+        case 'consolidated': return 'bg-[hsl(var(--success))]';
         default:             return 'bg-[hsl(var(--surface-2))]';
     }
 }
@@ -161,7 +161,7 @@ export default function ContactsPage() {
             rightActions={canEditCrm ? (
                 <button
                     onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nuevo Contacto
                 </button>
@@ -169,18 +169,18 @@ export default function ContactsPage() {
         >
             <div className="flex flex-col h-full overflow-hidden">
                 {leadsError && (
-                    <div className="mx-4 mt-4 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="mx-4 mt-4 rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="min-w-0">
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                            <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
                                 No se pudo cargar el pipeline de contactos
                             </p>
-                            <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                            <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
                                 {leadsError}
                             </p>
                         </div>
                         <button
                             onClick={fetchLeads}
-                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                         >
                             Reintentar
                         </button>
@@ -201,7 +201,7 @@ export default function ContactsPage() {
                     <div className="flex gap-2 overflow-x-auto pb-1">
                         <button
                             onClick={() => setActiveFilter('all')}
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-[hsl(var(--primary))] text-white border-blue-600' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-white/10'}`}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--info)/100%)]' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-white/10'}`}
                         >
                             Todos ({leads.length})
                         </button>
@@ -209,7 +209,7 @@ export default function ContactsPage() {
                             <button
                                 key={s}
                                 onClick={() => setActiveFilter(s)}
-                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-[hsl(var(--primary))] text-white border-blue-600' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-white/10'}`}
+                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--info)/100%)]' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-white/10'}`}
                             >
                                 {STAGE_LABELS[s]} ({leads.filter(l => l.stage === s).length})
                             </button>
@@ -231,7 +231,7 @@ export default function ContactsPage() {
                             {canEditCrm && (
                                 <button
                                     onClick={() => setIsCreateOpen(true)}
-                                    className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20"
+                                    className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)]"
                                 >
                                     Agregar Contacto
                                 </button>
@@ -243,12 +243,12 @@ export default function ContactsPage() {
                         <div
                             key={lead.id}
                             onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)}
-                            className="bg-[hsl(var(--surface-1))] dark:bg-white/5 backdrop-blur-xl border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-3 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-xl"
+                            className="bg-[hsl(var(--surface-1))] dark:bg-white/5 backdrop-blur-xl border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-3 hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all group cursor-pointer shadow-sm hover:shadow-xl"
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex gap-4">
                                     <div className="relative">
-                                        <div className="size-8 rounded-lg bg-blue-500/10 dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--primary))] dark:text-white font-bold text-sm uppercase group-hover:border-blue-400 transition-colors">
+                                        <div className="size-8 rounded-lg bg-[hsl(var(--info))]/10 dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--primary))] dark:text-white font-bold text-sm uppercase group-hover:border-[hsl(var(--info)/40%)] transition-colors">
                                             {lead.nombre_completo?.charAt(0) || ''}{(lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0]) || ''}
                                         </div>
                                         <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white dark:border-[hsl(var(--surface-1))] ${getStatusDot(stage)}`} />
@@ -271,7 +271,7 @@ export default function ContactsPage() {
                                     onClick={e => { e.stopPropagation(); router.push('/plataforma/crm/pipeline'); }}
                                     className="text-[hsl(var(--primary))] text-[10px] font-bold uppercase tracking-wide flex items-center gap-2 hover:text-[hsl(var(--primary))] transition-colors"
                                 >
-                                    <div className="size-5 rounded-lg bg-blue-600/10 flex items-center justify-center">
+                                    <div className="size-5 rounded-lg bg-[hsl(var(--info))]/10 flex items-center justify-center">
                                         <Link2 size={11} />
                                     </div>
                                     Ver en Pipeline
@@ -281,14 +281,14 @@ export default function ContactsPage() {
                                         <a
                                             href={`tel:${lead.telefono ?? lead.phone}`}
                                             onClick={e => e.stopPropagation()}
-                                            className="size-9 rounded-md bg-emerald-500/10 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all border border-emerald-500/20"
+                                            className="size-9 rounded-md bg-[hsl(var(--success))]/10 text-success-text flex items-center justify-center hover:bg-[hsl(var(--success))] hover:text-white transition-all border border-[hsl(var(--success)/100%)]/20"
                                         >
                                             <Phone size={15} />
                                         </a>
                                     )}
                                     <button
                                         onClick={e => { e.stopPropagation(); }}
-                                        className="size-9 rounded-md bg-blue-500/10 text-[hsl(var(--primary))] flex items-center justify-center hover:bg-[hsl(var(--primary))] hover:text-white transition-all border border-blue-500/20"
+                                        className="size-9 rounded-md bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] flex items-center justify-center hover:bg-[hsl(var(--primary))] hover:text-white transition-all border border-[hsl(var(--info)/100%)]/20"
                                     >
                                         <MessageSquare size={15} />
                                     </button>
@@ -307,7 +307,7 @@ export default function ContactsPage() {
                                     <div className="space-y-2">
                                         {(groupedByStage[stage] ?? []).map(lead => {
                                             return (
-                                            <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                            <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2 text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all">
                                                 <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
                                                 <p className="text-[10px] text-[hsl(var(--text-secondary))]">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
                                             </button>
@@ -334,7 +334,7 @@ export default function ContactsPage() {
                                         {payload.items.map(lead => {
                                             const stage = lead.stage ?? 'new';
                                             return (
-                                            <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all">
+                                            <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all">
                                                 <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
                                                 <p className="text-[10px] text-[hsl(var(--text-secondary))]">{STAGE_LABELS[stage] || stage}</p>
                                             </button>
@@ -420,7 +420,7 @@ export default function ContactsPage() {
                             form="create-contact-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
+                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar

@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
-import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
+import { DSCard } from '@/design';
+import { DSBadge } from '@/design';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/http';
 import { getWorkspaceAuditEventKey, type WorkspaceAuditEvent } from '@/lib/workspaceAudit';
@@ -109,7 +109,7 @@ export default function AuditDetailPage() {
                             <DSCard>
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Metadatos de la Transacción</h3>
                                 <div className="bg-[hsl(var(--bg-muted))] rounded-lg p-3 overflow-x-auto">
-                                    <pre className="text-emerald-400 text-xs font-mono">
+                                    <pre className="text-[hsl(var(--success))] text-xs font-mono">
                                         {JSON.stringify(log, null, 4)}
                                     </pre>
                                 </div>
@@ -145,7 +145,7 @@ export default function AuditDetailPage() {
 
                                     <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
 
-                                    <div className="flex items-center gap-2 font-semibold text-emerald-600 uppercase tracking-wide">
+                                    <div className="flex items-center gap-2 font-semibold text-success-text uppercase tracking-wide">
                                         <Lock size={12} /> Registro Inmutable
                                     </div>
                                 </div>

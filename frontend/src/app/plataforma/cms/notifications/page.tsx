@@ -51,14 +51,14 @@ export default function NotificationsPage() {
   };
 
   const typeColors: Record<string, string> = {
-    mention: "bg-blue-100 text-[hsl(var(--primary))]",
-    approval_requested: "bg-amber-100 text-amber-700",
+    mention: "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]",
+    approval_requested: "bg-[hsl(var(--warning-muted))] text-warning-text",
     approval_granted: "bg-green-100 text-[hsl(var(--secondary))]",
     approval_rejected: "bg-red-100 text-[hsl(var(--destructive))]",
-    page_published: "bg-blue-100 text-[hsl(var(--primary))]",
+    page_published: "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]",
     page_archived: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]",
-    comment_added: "bg-cyan-100 text-cyan-700",
-    workflow_changed: "bg-blue-100 text-blue-800",
+    comment_added: "bg-[hsl(var(--domain-cyan)/20%)] text-[hsl(var(--domain-cyan)/90%)]",
+    workflow_changed: "bg-[hsl(var(--info-muted))] text-info-text",
   };
 
   return (
@@ -89,7 +89,7 @@ export default function NotificationsPage() {
         ) : notifs.length === 0 ? (
           <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Sin notificaciones</div>
         ) : notifs.map(n => (
-          <div key={n.id} className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${!n.is_read ? "bg-blue-50/50 border-blue-200" : "bg-[hsl(var(--bg-primary))]"}`}>
+          <div key={n.id} className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${!n.is_read ? "bg-info-soft/50 border-[hsl(var(--info)/25%)]" : "bg-[hsl(var(--bg-primary))]"}`}>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${typeColors[n.type] || "bg-[hsl(var(--surface-2))]"}`}>{n.type}</span>

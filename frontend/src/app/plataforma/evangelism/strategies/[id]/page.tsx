@@ -1336,7 +1336,7 @@ export default function StrategyDetailPage() {
  </button>
  ) : null}
  <button onClick={e => { e.stopPropagation(); router.push(`/plataforma/evangelism/groups/${g.id}`); }}
- className="absolute top-2 right-8 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Ver detalle">
+ className="absolute top-2 right-8 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Ver detalle">
  <Calendar size={14} />
  </button>
  {canManageStrategySurface ? (
@@ -1456,7 +1456,7 @@ export default function StrategyDetailPage() {
  value={sessionSearch}
  onChange={e => setSessionSearch(e.target.value)}
  placeholder="Buscar por tema, grupo o mes (ej. 2025-03)…"
- className="w-full pl-8 pr-8 h-8 text-xs rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-1 focus:ring-blue-400"
+ className="w-full pl-8 pr-8 h-8 text-xs rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--info))]"
  />
  {sessionSearch && (
  <button onClick={() => setSessionSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]">
@@ -1470,7 +1470,7 @@ export default function StrategyDetailPage() {
  <select
  value={sessionGroupFilter}
  onChange={e => setSessionGroupFilter(e.target.value)}
- className="h-7 px-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-blue-400">
+ className="h-7 px-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--info))]">
  <option value="all">Todos los grupos</option>
  {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
  </select>
@@ -1478,7 +1478,7 @@ export default function StrategyDetailPage() {
  <select
  value={sessionHabFilter}
  onChange={e => setSessionHabFilter(e.target.value as typeof sessionHabFilter)}
- className="h-7 px-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-blue-400">
+ className="h-7 px-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--info))]">
  <option value="all">Todas las habilitaciones</option>
  <option value="HABILITADO">Abiertas</option>
  <option value="DESHABILITADO">Bloqueadas</option>
@@ -1488,7 +1488,7 @@ export default function StrategyDetailPage() {
  <select
  value={sessionMonthFilter}
  onChange={e => setSessionMonthFilter(e.target.value)}
- className="h-7 px-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-blue-400">
+ className="h-7 px-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--info))]">
  <option value="all">Todos los meses</option>
  {sessionMonths.map(m => {
  const [y, mo] = m.split('-');
@@ -1890,7 +1890,7 @@ export default function StrategyDetailPage() {
  {/* Divisor arrastrable */}
  <div
  onMouseDown={handlePersonaSplitDrag}
- className="shrink-0 h-4 flex items-center justify-center cursor-row-resize group select-none border-y border-[hsl(var(--border-primary))] hover:border-blue-300 dark:hover:border-blue-500/40 transition-colors"
+ className="shrink-0 h-4 flex items-center justify-center cursor-row-resize group select-none border-y border-[hsl(var(--border-primary))] hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)]/40 transition-colors"
  title="Arrastra para ajustar el espacio"
  >
  <div className="w-12 h-1 rounded-full bg-[hsl(var(--bg-muted))] group-hover:bg-[hsl(var(--primary))] dark:group-hover:bg-[hsl(var(--primary))] transition-colors" />

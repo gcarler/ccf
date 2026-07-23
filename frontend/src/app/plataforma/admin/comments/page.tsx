@@ -134,7 +134,7 @@ export default function CommentModeration() {
                 rightActions={
                     <button className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--primary))] relative active:scale-95 transition-all">
                         <Bell size={20} />
-                        <span className="absolute top-2 right-2 size-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-[hsl(var(--bg-primary))]"></span>
+                        <span className="absolute top-2 right-2 size-2 bg-[hsl(var(--danger))] rounded-full ring-2 ring-white dark:ring-[hsl(var(--bg-primary))]"></span>
                     </button>
                 }
             />
@@ -145,7 +145,7 @@ export default function CommentModeration() {
                         key={f} onClick={() => setActiveFilter(f)}
                         className={clsx(
                             "px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all relative border-b-2 shrink-0",
-                            activeFilter === f ? "text-[hsl(var(--primary))] border-blue-600" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]"
+                            activeFilter === f ? "text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]"
                         )}
                     >
                         {f}
@@ -162,7 +162,7 @@ export default function CommentModeration() {
                         <div className="space-y-4">
                             <motion.div 
                                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
                             >
                                 <Zap size={12} className="animate-pulse" /> Protocolo de Moderación Activo
                             </motion.div>
@@ -285,7 +285,7 @@ export default function CommentModeration() {
                                         </div>
 
                                         <div className="flex gap-4 pt-8 border-t border-[hsl(var(--border))] dark:border-white/5">
-                                            <button className="flex-1 py-1.5 bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all active:scale-95 flex items-center justify-center gap-3">
+                                            <button className="flex-1 py-1.5 bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all active:scale-95 flex items-center justify-center gap-3">
                                                 <CheckCircle2 size={16} /> Aprobar Registro
                                             </button>
                                             <button className="px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide rounded-lg hover:bg-[hsl(var(--surface-3))] transition-all active:scale-95">

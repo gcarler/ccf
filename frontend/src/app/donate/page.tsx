@@ -105,7 +105,7 @@ export default function DonatePage() {
                     initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                     className="max-w-md w-full text-center space-y-3 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 shadow-2xl"
                 >
-                    <div className={`size-10 rounded-full mx-auto flex items-center justify-center shadow-lg ${isApproved ? 'bg-emerald-500' : 'bg-amber-500'}`}>
+                    <div className={`size-10 rounded-full mx-auto flex items-center justify-center shadow-lg ${isApproved ? 'bg-[hsl(var(--success))]' : 'bg-[hsl(var(--warning))]'}`}>
                         {isApproved ? <CheckCircle2 size={48} /> : <Sparkles size={48} />}
                     </div>
                     <div className="space-y-3">
@@ -139,7 +139,7 @@ export default function DonatePage() {
     return (
         <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] relative overflow-hidden flex flex-col items-center">
             {/* Decorative backgrounds */}
-            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-br from-blue-600 to-sky-900 opacity-10 dark:opacity-20 pointer-events-none" />
+            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] opacity-10 dark:opacity-20 pointer-events-none" />
             <div className="absolute top-[-10%] right-[-10%] size-96 bg-[hsl(var(--primary))] rounded-full blur-[120px] opacity-10 animate-pulse" />
 
             <header className="w-full max-w-5xl px-3 pt-12 flex items-center justify-between relative z-10">
@@ -156,7 +156,7 @@ export default function DonatePage() {
             <main className="w-full max-w-5xl px-3 py-1.5 grid grid-cols-1 lg:grid-cols-2 gap-3 relative z-10 items-start">
                 {/* Left Side: Inspiration */}
                 <div className="space-y-3 pt-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-[10px] font-bold uppercase tracking-wide">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-[10px] font-bold uppercase tracking-wide">
                         <HandHeart size={14} /> Tu siembra tiene propósito
                     </div>
                     <h2 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-[0.9]">
@@ -198,7 +198,7 @@ export default function DonatePage() {
                                     className={clsx(
                                         "py-1.5 rounded-lg font-bold text-sm transition-all",
                                         amount === val && !isCustom 
-                                            ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/30 scale-105" 
+                                            ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/30%)] scale-105" 
                                             : "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
                                     )}
                                 >
@@ -210,7 +210,7 @@ export default function DonatePage() {
                             onClick={() => setIsCustom(true)}
                             className={clsx(
                                 "w-full py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wide transition-all border-2",
-                                isCustom ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 text-[hsl(var(--primary))]" : "border-transparent bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))]"
+                                isCustom ? "border-[hsl(var(--info)/100%)] bg-info-soft/50 dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]" : "border-transparent bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))]"
                             )}
                         >
                             Otra cantidad personalizada
@@ -230,7 +230,7 @@ export default function DonatePage() {
                     <button
                         onClick={handleMercadoPago}
                         disabled={mpLoading || !amount || parseFloat(amount) <= 0}
-                        className="w-full py-2.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-sm uppercase tracking-wide shadow-xl shadow-blue-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-[hsl(var(--primary))]"
+                        className="w-full py-2.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-sm uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/30%)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-[hsl(var(--primary))]"
                     >
                         {mpLoading ? (
                             <><Loader2 size={18} className="animate-spin" /> Conectando...</>
@@ -272,7 +272,7 @@ export default function DonatePage() {
 function BenefitCard({ icon: Icon, title, desc }: any) {
     return (
         <div className="flex items-start gap-4 group">
-            <div className="size-10 rounded-md bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-[hsl(var(--primary))] shrink-0 group-hover:scale-110 transition-transform shadow-sm">
+            <div className="size-10 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/30 flex items-center justify-center text-[hsl(var(--primary))] shrink-0 group-hover:scale-110 transition-transform shadow-sm">
                 <Icon size={20} />
             </div>
             <div>
@@ -290,8 +290,8 @@ function TypeOption({ active, onClick, icon: Icon, label }: any) {
             className={clsx(
                 "p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-all group",
                 active 
-                    ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 shadow-md" 
-                    : "border-[hsl(var(--border))] dark:border-white/5 hover:border-blue-200"
+                    ? "border-[hsl(var(--info)/100%)] bg-info-soft/50 dark:bg-[hsl(var(--info))]/10 shadow-md" 
+                    : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--info)/25%)]"
             )}
         >
             <div className={clsx(

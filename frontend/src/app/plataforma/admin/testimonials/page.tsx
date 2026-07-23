@@ -29,7 +29,7 @@ export default function AdminTestimonialsPage() {
           </Link>
         </div>
         <div className="mt-5 flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-          <ShieldCheck size={14} className="text-emerald-400" /> Fuente unica del CMS
+          <ShieldCheck size={14} className="text-[hsl(var(--success))]" /> Fuente unica del CMS
         </div>
       </div>
     </div>

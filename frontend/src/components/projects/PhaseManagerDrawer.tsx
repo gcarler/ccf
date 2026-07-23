@@ -224,7 +224,7 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
         <RightPanel open={true} onClose={onClose} title="Gestionar Fases" width={480}>
             <div className="flex flex-col h-full">
                 {error && (
-                    <div className="mx-3 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                    <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
                         <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
                     </div>
                 )}
@@ -270,7 +270,7 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                                 type="text"
                                 value={phase.name}
                                 onChange={e => handleRename(i, e.target.value)}
-                                className="flex-1 text-[13px] font-bold bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] border-b border-transparent focus:border-blue-500 transition-all"
+                                className="flex-1 text-[13px] font-bold bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] border-b border-transparent focus:border-[hsl(var(--info)/100%)] transition-all"
                             />
 
                             {/* Slug (read-only, derived) */}
@@ -291,7 +291,7 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                     {/* Add phase */}
                     <button
                         onClick={handleAdd}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-md border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all text-[11px] font-semibold uppercase tracking-wide"
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-md border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--info)/100%)]/30 transition-all text-[11px] font-semibold uppercase tracking-wide"
                     >
                         <Plus size={14} /> Agregar Fase
                     </button>
@@ -308,7 +308,7 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 flex items-center gap-2 hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-50 transition-all"
+                        className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] flex items-center gap-2 hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-50 transition-all"
                     >
                         {saving ? (
                             <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

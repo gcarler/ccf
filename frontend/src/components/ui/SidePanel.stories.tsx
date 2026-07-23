@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import SidePanel from './SidePanel';
 
+
 const meta: Meta<typeof SidePanel> = {
+  tags: ['autodocs'],
   title: 'UI/SidePanel',
   component: SidePanel,
   parameters: {
@@ -9,7 +11,7 @@ const meta: Meta<typeof SidePanel> = {
   },
   decorators: [
     (Story) => (
-      <div className="w-full h-[500px] bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] relative overflow-hidden">
+      <div className="w-full h-[500px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] relative overflow-hidden">
         <Story />
       </div>
     ),
@@ -41,7 +43,7 @@ export const Default: Story = {
         </div>
         <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5">
           <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] w-24">Estado:</span>
-          <span className="text-[11px] font-semibold text-emerald-600">Activo</span>
+          <span className="text-[11px] font-semibold text-[hsl(var(--success))]">Activo</span>
         </div>
       </div>
     ),

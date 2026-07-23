@@ -311,7 +311,7 @@ function WorkspaceLayoutInner({
     if (!isMounted) return (
         <div className="h-screen w-full bg-[hsl(var(--bg-primary))] dark:bg-[#111213] flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
-                <div className="size-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-xs">
+                <div className="size-8 rounded-xl bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white font-bold text-xs">
                     CCF
                 </div>
                 <div className="size-1.5 rounded-full bg-[hsl(var(--primary))] animate-pulse" />
@@ -354,7 +354,7 @@ function WorkspaceLayoutInner({
                 className={clsx(
                     "p-1.5 rounded-md transition-all",
                     isFocusMode
-                        ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]"
+                        ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]"
                         : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
                 )}
                 aria-label={isFocusMode ? "Salir de modo enfoque" : "Entrar en modo enfoque"}
@@ -369,7 +369,7 @@ function WorkspaceLayoutInner({
                 aria-label="Notificaciones"
             >
                 <Bell size={14} />
-                <span className="absolute top-1 right-1 size-1 bg-rose-500 rounded-full ring-1 ring-white dark:ring-[#141517]" />
+                <span className="absolute top-1 right-1 size-1 bg-[hsl(var(--danger))] rounded-full ring-1 ring-white dark:ring-[#141517]" />
             </button>
 
             <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
@@ -493,7 +493,7 @@ function WorkspaceLayoutInner({
                                             <Tooltip content={layers.S2 ? 'Contraer panel' : 'Expandir panel'} side="right">
                                                 <button
                                                     onClick={cycleS2}
-                                                    className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all duration-200"
+                                                    className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-all duration-200"
                                                     aria-label={layers.S2 ? 'Contraer sidebar' : 'Expandir sidebar'}
                                                 >
                                                     {layers.S2 ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
@@ -542,11 +542,11 @@ function WorkspaceLayoutInner({
                             whileHover={{ scale: 1.1, rotate: 5 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setShowChat(true)}
-                            className="fixed bottom-20 right-4 z-[500] flex size-10 items-center justify-center rounded-lg border border-white/20 bg-gradient-to-tr from-sky-600 to-sky-600 text-white shadow-2xl shadow-sky-500/40 group sm:bottom-8 sm:right-8 sm:size-9"
+                            className="fixed bottom-20 right-4 z-[500] flex size-10 items-center justify-center rounded-lg border border-white/20 bg-gradient-to-tr from-[hsl(var(--info))] to-[hsl(var(--info))] text-white shadow-2xl shadow-[hsl(var(--info))]/40 group sm:bottom-8 sm:right-8 sm:size-9"
                             aria-label="Abrir MESH AI"
                         >
                             <Bot size={20} className="group-hover:animate-pulse" />
-                            <div className="absolute -top-1 -right-1 size-4 bg-emerald-500 rounded-full border-2 border-white dark:border-[#111213]" />
+                            <div className="absolute -top-1 -right-1 size-4 bg-[hsl(var(--success))] rounded-full border-2 border-white dark:border-[#111213]" />
                         </motion.button>
 
                         <div className="fixed bottom-4 left-1/2 z-[520] flex -translate-x-1/2 items-center gap-1 rounded-xl border border-[hsl(var(--border))] bg-white/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[#141517]/95 md:hidden">
@@ -683,7 +683,7 @@ function UserMenuDropdown({ displayName, username, logout }: { displayName: stri
                 <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] dark:group-hover:text-white transition-colors max-w-[80px] truncate">
                     {displayName}
                 </span>
-                <div className="size-5 rounded-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold text-[8px]">
+                <div className="size-5 rounded-md bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white font-bold text-[8px]">
                     {displayName?.substring(0, 2).toUpperCase()}
                 </div>
             </button>

@@ -2,7 +2,6 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import { radii, shadows } from '../tokens';
 
 interface DSCardProps extends React.HTMLAttributes<HTMLDivElement> {
     tone?: 'light' | 'dark' | 'glass';
@@ -22,7 +21,6 @@ export function DSCard({ tone = 'light', padding = 'md', className, children, ..
     return (
         <div
             className={clsx('rounded-lg shadow-sm', toneClass, paddingClass, className)}
-            style={{ borderRadius: radii.lg, boxShadow: shadows.card }}
             {...props}
         >
             {children}

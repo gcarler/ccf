@@ -97,7 +97,7 @@ export default function StudentCertificates() {
                         Cargando historial...
                         </div>
                     ) : error ? (
-                        <p className="px-4 py-1.5 text-center text-rose-400 font-semibold">{error}</p>
+                        <p className="px-4 py-1.5 text-center text-[hsl(var(--danger))] font-semibold">{error}</p>
                     ) : certificates.length === 0 ? (
                         <div className="px-4 py-1.5 text-center text-[hsl(var(--text-secondary))] space-y-4">
                             <Award className="w-12 h-8 mx-auto text-[hsl(var(--text-secondary))]" />

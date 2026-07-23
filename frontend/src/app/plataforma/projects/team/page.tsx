@@ -68,7 +68,7 @@ export default function TeamPage() {
             <div className="flex-1 flex flex-col font-display">
                 <div className="w-full mx-auto p-3 space-y-3 pb-4">
                     {error && (
-                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                        <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
                             <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
                         </div>
                     )}
@@ -77,7 +77,7 @@ export default function TeamPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                                <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 flex items-center justify-center">
                                     <Users size={14} className="text-[hsl(var(--primary))]" />
                                 </div>
                                 <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Recursos Humanos</span>
@@ -98,7 +98,7 @@ export default function TeamPage() {
                                     </p>
                                 </div>
                             )}
-                            <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                            <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                                 <UserPlus size={13} /> Invitar
                             </button>
                         </div>
@@ -129,8 +129,8 @@ export default function TeamPage() {
                                         {/* Status bar */}
                                         <div className={clsx(
                                             "absolute top-0 left-0 right-0 h-[3px]",
-                                            isOverloaded ? "bg-rose-500" :
-                                            persona.load_status === 'en_capacidad' ? "bg-amber-500" : "bg-emerald-500"
+                                            isOverloaded ? "bg-[hsl(var(--danger))]" :
+                                            persona.load_status === 'en_capacidad' ? "bg-[hsl(var(--warning))]" : "bg-[hsl(var(--success))]"
                                         )} />
 
                                         <div className="flex items-start justify-between mb-3">
@@ -142,11 +142,11 @@ export default function TeamPage() {
                                                     <p className="text-[13px] font-medium text-[hsl(var(--text-primary))] dark:text-white leading-none">{persona.name}</p>
                                                     <span className={clsx(
                                                         "text-[9px] font-semibold uppercase tracking-wide mt-0.5 block",
-                                                        isOverloaded ? "text-rose-500" : "text-[hsl(var(--text-secondary))]"
+                                                        isOverloaded ? "text-[hsl(var(--danger))]" : "text-[hsl(var(--text-secondary))]"
                                                     )}>{persona.load_status}</span>
                                                 </div>
                                             </div>
-                                            {isOverloaded && <AlertTriangle className="text-rose-500 shrink-0" size={16} />}
+                                            {isOverloaded && <AlertTriangle className="text-[hsl(var(--danger))] shrink-0" size={16} />}
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-2 mb-3">
@@ -156,7 +156,7 @@ export default function TeamPage() {
                                             </div>
                                             <div className="p-2 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md">
                                                 <p className="text-[9px] font-bold uppercase text-[hsl(var(--text-secondary))] mb-0.5">Criticas</p>
-                                                <p className={clsx("text-lg font-bold", persona.critical > 0 ? "text-rose-500" : "text-[hsl(var(--text-primary))] dark:text-white")}>
+                                                <p className={clsx("text-lg font-bold", persona.critical > 0 ? "text-[hsl(var(--danger))]" : "text-[hsl(var(--text-primary))] dark:text-white")}>
                                                     {persona.critical}
                                                 </p>
                                             </div>
@@ -165,14 +165,14 @@ export default function TeamPage() {
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide">
                                                 <span className="text-[hsl(var(--text-secondary))]">Saturación</span>
-                                                <span className={isOverloaded ? "text-rose-500" : "text-[hsl(var(--primary))]"}>{persona.capacity_percent}%</span>
+                                                <span className={isOverloaded ? "text-[hsl(var(--danger))]" : "text-[hsl(var(--primary))]"}>{persona.capacity_percent}%</span>
                                             </div>
                                             <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                                                 <motion.div
                                                     initial={{ width: 0 }}
                                                     animate={{ width: `${persona.capacity_percent}%` }}
                                                     transition={{ duration: 0.8, delay: idx * 0.05 + 0.3 }}
-                                                    className={clsx("h-full rounded-full", isOverloaded ? "bg-rose-500" : "bg-[hsl(var(--primary))]")}
+                                                    className={clsx("h-full rounded-full", isOverloaded ? "bg-[hsl(var(--danger))]" : "bg-[hsl(var(--primary))]")}
                                                 />
                                             </div>
                                         </div>
@@ -193,14 +193,14 @@ export default function TeamPage() {
                 <RightPanel title="Perfil de Carga" width={360}>
                     <div className="p-3 space-y-3">
                         <div className="flex items-center gap-3">
-                            <div className="size-10 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/20">
+                            <div className="size-10 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-[hsl(var(--info)/20%)]">
                                 {selectedPersona.name.substring(0, 2).toUpperCase()}
                             </div>
                             <div>
                                 <h3 className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">{selectedPersona.name}</h3>
                                 <span className={clsx(
                                     "text-[9px] font-semibold uppercase tracking-wide",
-                                    selectedPersona.load_status === 'sobrecargado' ? "text-rose-500" : "text-emerald-500"
+                                    selectedPersona.load_status === 'sobrecargado' ? "text-[hsl(var(--danger))]" : "text-[hsl(var(--success))]"
                                 )}>{selectedPersona.load_status}</span>
                             </div>
                         </div>
@@ -208,9 +208,9 @@ export default function TeamPage() {
                         <div className="grid grid-cols-2 gap-3">
                             {[
                                 { label: 'Tareas Activas', value: selectedPersona.open, color: 'text-[hsl(var(--primary))]' },
-                                { label: 'Criticas Hoy', value: selectedPersona.critical, color: 'text-rose-500' },
-                                { label: 'Saturacion', value: `${selectedPersona.capacity_percent}%`, color: selectedPersona.capacity_percent > 80 ? 'text-rose-500' : 'text-[hsl(var(--primary))]' },
-                                { label: 'Estado', value: selectedPersona.load_status === 'disponible' ? 'Disponible' : 'Ocupado', color: 'text-emerald-500' },
+                                { label: 'Criticas Hoy', value: selectedPersona.critical, color: 'text-[hsl(var(--danger))]' },
+                                { label: 'Saturacion', value: `${selectedPersona.capacity_percent}%`, color: selectedPersona.capacity_percent > 80 ? 'text-[hsl(var(--danger))]' : 'text-[hsl(var(--primary))]' },
+                                { label: 'Estado', value: selectedPersona.load_status === 'disponible' ? 'Disponible' : 'Ocupado', color: 'text-[hsl(var(--success))]' },
                             ].map(item => (
                                 <div key={item.label} className="bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md p-2 border border-[hsl(var(--border))] dark:border-white/5">
                                     <p className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.label}</p>

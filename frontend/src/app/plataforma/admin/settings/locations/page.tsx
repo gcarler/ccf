@@ -89,7 +89,7 @@ export default function LocationManagement() {
                 </div>
                 <button
                     onClick={() => setIsDrawerOpen(true)}
-                    className="flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                    className="flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
                 >
                     <PlusCircle size={18} /> Añadir Nueva Sede
                 </button>
@@ -109,7 +109,7 @@ export default function LocationManagement() {
                                 transition={{ delay: i * 0.05 }}
                                 key={loc.id}
                                 className={clsx(
-                                    "bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 flex flex-col gap-3 shadow-sm group hover:border-blue-500/30 transition-all relative overflow-hidden",
+                                    "bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 flex flex-col gap-3 shadow-sm group hover:border-[hsl(var(--info)/100%)]/30 transition-all relative overflow-hidden",
                                     !loc.active && "opacity-60"
                                 )}
                             >
@@ -119,7 +119,7 @@ export default function LocationManagement() {
 
                                 <div className="flex items-start justify-between relative z-10">
                                     <div className="flex gap-3">
-                                        <div className="size-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] flex items-center justify-center shadow-inner group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-500">
+                                        <div className="size-8 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] flex items-center justify-center shadow-inner group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-500">
                                             {loc.type === 'Central' ? <Church size={32} /> : loc.type === 'Sede' ? <Building2 size={32} /> : <DoorOpen size={32} />}
                                         </div>
                                         <div className="space-y-1">
@@ -142,7 +142,7 @@ export default function LocationManagement() {
                                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Pastor {loc.pastor || 'No asignado'}</p>
                                         </div>
                                     </div>
-                                    <button className="p-3 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all hover:bg-blue-50 dark:hover:bg-white/5 rounded-md">
+                                    <button className="p-3 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all hover:bg-info-soft dark:hover:bg-white/5 rounded-md">
                                         <Edit2 size={18} />
                                     </button>
                                 </div>
@@ -165,7 +165,7 @@ export default function LocationManagement() {
                         <button
                             form="location-create-form"
                             type="submit"
-                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
                         >
                             Confirmar Apertura
                         </button>

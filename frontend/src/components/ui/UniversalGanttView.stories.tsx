@@ -19,7 +19,9 @@ const sampleItems: GanttItem[] = [
   { id: 5, title: 'Evento de recaudación', subtitle: 'Finanzas', start_date: tomorrow, end_date: day5, color: 'rose', progress: 0 },
 ];
 
+
 const meta: Meta<typeof UniversalGanttView> = {
+  tags: ['autodocs'],
   title: 'UI/UniversalGanttView',
   component: UniversalGanttView,
   parameters: {

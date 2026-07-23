@@ -44,7 +44,7 @@ export default function ConfirmActionDrawer({ action, onClose }: Props) {
             }}
             className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-white transition-colors ${
               action?.destructive
-                ? 'bg-rose-600 hover:bg-rose-700'
+                ? 'bg-[hsl(var(--danger))] hover:bg-[hsl(var(--danger))]'
                 : 'bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]'
             }`}
           >
@@ -54,7 +54,7 @@ export default function ConfirmActionDrawer({ action, onClose }: Props) {
         </div>
       )}
     >
-      <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+      <div className="flex items-start gap-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/30 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
         <AlertTriangle size={18} className="mt-0.5 shrink-0" />
         <p className="text-sm leading-6">{action?.description}</p>
       </div>

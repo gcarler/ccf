@@ -176,7 +176,7 @@ export default function ContabilidadPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + idx * 0.06 }}
                   onClick={() => router.push(mod.href)}
-                  className="group text-left bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-200"
+                  className="group text-left bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all duration-200"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className={clsx("size-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-white shadow-lg", mod.color)}>

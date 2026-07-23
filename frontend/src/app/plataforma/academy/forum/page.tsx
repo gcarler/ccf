@@ -92,7 +92,7 @@ export default function AcademyForumPage() {
                 rightActions={
                     <button
                         onClick={() => setIsCreateOpen(true)}
-                        className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-white shadow-xl shadow-blue-500/20 transition-all active:scale-95"
+                        className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-white shadow-xl shadow-[hsl(var(--info)/20%)] transition-all active:scale-95"
                     >
                         <Plus size={14} /> Iniciar Debate
                     </button>
@@ -112,7 +112,7 @@ export default function AcademyForumPage() {
                                         className={clsx(
                                             "flex w-full items-center justify-between rounded-lg p-4 text-[12px] font-bold transition-all",
                                             activeCategory === category
-                                                ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-600/10"
+                                                ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10"
                                                 : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                                         )}
                                     >
@@ -130,7 +130,7 @@ export default function AcademyForumPage() {
                                     <Bot size={20} fill="currentColor" />
                                     <h4 className="text-[11px] font-semibold uppercase tracking-wide">IA Moderator</h4>
                                 </div>
-                                <p className="text-xs font-medium italic leading-relaxed text-blue-50">
+                                <p className="text-xs font-medium italic leading-relaxed text-[hsl(var(--info))]">
                                     Optimus sugiere revisar los debates recientes antes de abrir uno nuevo para evitar duplicados.
                                 </p>
                             </div>
@@ -164,7 +164,7 @@ export default function AcademyForumPage() {
                                     key={thread.id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="group cursor-pointer rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm transition-all hover:border-blue-500/20 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
+                                    className="group cursor-pointer rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm transition-all hover:border-[hsl(var(--info)/100%)]/20 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
                                 >
                                     <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
                                         <div className="flex shrink-0 flex-col items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/5 dark:bg-white/5">
@@ -173,8 +173,8 @@ export default function AcademyForumPage() {
                                         </div>
                                         <div className="flex-1 space-y-3">
                                             <div className="flex items-center gap-3">
-                                                <span className="rounded-full bg-blue-50 px-3 py-1 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-blue-900/20 dark:text-[hsl(var(--primary))]">{thread.category}</span>
-                                                {thread.is_resolved && <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[9px] font-semibold uppercase tracking-wide text-emerald-600 dark:bg-emerald-900/20"><CheckCircle2 size={12} /> Resuelto</span>}
+                                                <span className="rounded-full bg-info-soft px-3 py-1 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20 dark:text-[hsl(var(--primary))]">{thread.category}</span>
+                                                {thread.is_resolved && <span className="flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-[9px] font-semibold uppercase tracking-wide text-success-text dark:bg-[hsl(var(--success))]/20"><CheckCircle2 size={12} /> Resuelto</span>}
                                             </div>
                                             <h4 className="text-base font-bold tracking-tight text-[hsl(var(--text-primary))] transition-colors group-hover:text-[hsl(var(--primary))] dark:text-white">{thread.title}</h4>
                                             <div className="flex items-center gap-4 text-[hsl(var(--text-secondary))]">

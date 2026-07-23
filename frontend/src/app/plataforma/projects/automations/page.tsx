@@ -37,32 +37,32 @@ const TRIGGER_META: Record<
   overload: {
     icon: ShieldAlert,
     label: "Carga alta de tareas",
-    color: "text-rose-500",
-    bg: "bg-rose-50 dark:bg-rose-900/20",
+    color: "text-[hsl(var(--danger))]",
+    bg: "bg-danger-soft dark:bg-[hsl(var(--danger))]/20",
   },
   deadline: {
     icon: Bell,
     label: "Tarea cerca de su deadline",
     color: "text-[hsl(var(--primary))]",
-    bg: "bg-blue-50 dark:bg-blue-900/20",
+    bg: "bg-info-soft dark:bg-[hsl(var(--info))]/20",
   },
   stale: {
     icon: Clock,
     label: "Sin cambios por varios días",
-    color: "text-amber-500",
-    bg: "bg-amber-50 dark:bg-amber-900/20",
+    color: "text-[hsl(var(--warning))]",
+    bg: "bg-warning-soft dark:bg-[hsl(var(--warning))]/20",
   },
   weekly_summary: {
     icon: Bot,
     label: "Resumen periódico",
     color: "text-[hsl(var(--primary))]",
-    bg: "bg-blue-50 dark:bg-blue-900/20",
+    bg: "bg-info-soft dark:bg-[hsl(var(--info))]/20",
   },
   manual: {
     icon: Sparkles,
     label: "Disparador manual",
     color: "text-[hsl(var(--primary))]",
-    bg: "bg-blue-50 dark:bg-blue-900/20",
+    bg: "bg-info-soft dark:bg-[hsl(var(--info))]/20",
   },
 };
 
@@ -72,7 +72,7 @@ function getTriggerMeta(triggerType: string) {
       icon: Sparkles,
       label: triggerType,
       color: "text-[hsl(var(--primary))]",
-      bg: "bg-blue-50 dark:bg-blue-900/20",
+      bg: "bg-info-soft dark:bg-[hsl(var(--info))]/20",
     }
   );
 }
@@ -171,7 +171,7 @@ export default function AutomationsPage() {
       <div className="flex flex-col h-full font-display">
         <div className="w-full mx-auto p-3 space-y-3 pb-4">
           {error && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+            <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
               <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
             </div>
           )}
@@ -179,7 +179,7 @@ export default function AutomationsPage() {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 flex items-center justify-center">
                   <Sparkles size={14} className="text-[hsl(var(--primary))]" />
                 </div>
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
@@ -196,7 +196,7 @@ export default function AutomationsPage() {
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60"
+              className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60"
             >
               {creating ? (
                 <Loader2 size={13} className="animate-spin" />
@@ -209,7 +209,7 @@ export default function AutomationsPage() {
 
           {/* Active count */}
           <div className="flex items-center gap-3">
-            <span className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-emerald-200 dark:border-emerald-500/20">
+            <span className="px-2.5 py-1 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/20">
               {rules.filter((r) => r.is_active).length} activas
             </span>
             <span className="px-2.5 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--border))] dark:border-white/10">
@@ -236,7 +236,7 @@ export default function AutomationsPage() {
                     className={clsx(
                       "group p-3 rounded-lg border transition-all",
                       rule.is_active
-                        ? "bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border-[hsl(var(--border))] dark:border-white/[0.06] shadow-sm hover:shadow-lg hover:border-blue-200 dark:hover:border-blue-500/20"
+                        ? "bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border-[hsl(var(--border))] dark:border-white/[0.06] shadow-sm hover:shadow-lg hover:border-[hsl(var(--info)/25%)] dark:hover:border-[hsl(var(--info)/100%)]/20"
                         : "bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border-[hsl(var(--border))] dark:border-white/[0.04] opacity-60"
                     )}
                   >
@@ -302,9 +302,9 @@ export default function AutomationsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: rules.length * 0.07 }}
                 onClick={handleCreate}
-                className="flex flex-col items-center justify-center p-3 rounded-lg border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 text-center gap-2 group cursor-pointer hover:border-blue-400 dark:hover:border-blue-500/40 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all min-h-[100px]"
+                className="flex flex-col items-center justify-center p-3 rounded-lg border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 text-center gap-2 group cursor-pointer hover:border-[hsl(var(--info)/40%)] dark:hover:border-[hsl(var(--info)/100%)]/40 hover:bg-info-soft/50 dark:hover:bg-[hsl(var(--info))]/10 transition-all min-h-[100px]"
               >
-                <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-sm border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] group-hover:border-blue-200 dark:group-hover:border-blue-500/30 transition-all">
+                <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-sm border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] group-hover:border-[hsl(var(--info)/25%)] dark:group-hover:border-[hsl(var(--info)/100%)]/30 transition-all">
                   <Plus size={18} />
                 </div>
                 <div>

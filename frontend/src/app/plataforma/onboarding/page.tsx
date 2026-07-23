@@ -18,9 +18,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 const CAMPUSES = [
-    { id: 'central', name: 'Sede Central', location: 'Mocoa', color: 'from-blue-600 to-sky-700' },
-    { id: 'norte', name: 'Sede Norte', location: 'Villagarzón', color: 'from-emerald-600 to-teal-700' },
-    { id: 'sur', name: 'Sede Sur', location: 'Puerto Asís', color: 'from-rose-600 to-pink-700' },
+    { id: 'central', name: 'Sede Central', location: 'Mocoa', color: 'from-[hsl(var(--info))] to-[hsl(var(--info))]' },
+    { id: 'norte', name: 'Sede Norte', location: 'Villagarzón', color: 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))]' },
+    { id: 'sur', name: 'Sede Sur', location: 'Puerto Asís', color: 'from-[hsl(var(--danger))] to-[hsl(var(--domain-pink))]' },
 ];
 
 export default function OnboardingPage() {
@@ -37,7 +37,7 @@ export default function OnboardingPage() {
             {/* Background Orbs */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20 dark:opacity-40">
                 <div className="absolute top-[-10%] left-[-10%] size-96 bg-[hsl(var(--primary))] rounded-full blur-[120px] animate-pulse" />
-                <div className="absolute bottom-[-10%] right-[-10%] size-96 bg-sky-500 rounded-full blur-[120px] animate-pulse delay-700" />
+                <div className="absolute bottom-[-10%] right-[-10%] size-96 bg-[hsl(var(--info))] rounded-full blur-[120px] animate-pulse delay-700" />
             </div>
 
             {/* Stepper Indicator */}
@@ -50,7 +50,7 @@ export default function OnboardingPage() {
                             className={clsx(
                                 "size-8 rounded-full flex items-center justify-center font-semibold z-10 transition-all duration-500",
                                 step >= s 
-                                    ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/30 scale-110" 
+                                    ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/30%)] scale-110" 
                                     : "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/5"
                             )}
                         >
@@ -68,7 +68,7 @@ export default function OnboardingPage() {
                             className="space-y-3"
                         >
                             <div className="text-center space-y-4">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide">
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide">
                                     <Sparkles size={14} /> Bienvenido a la Familia
                                 </div>
                                 <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-tight">
@@ -112,8 +112,8 @@ export default function OnboardingPage() {
                                         className={clsx(
                                             "p-3 rounded-lg border-2 cursor-pointer transition-all flex flex-col items-center gap-4 group relative overflow-hidden",
                                             selectedCampus === campus.id 
-                                                ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 shadow-lg" 
-                                                : "border-[hsl(var(--border))] dark:border-white/5 hover:border-blue-200"
+                                                ? "border-[hsl(var(--info)/100%)] bg-info-soft/50 dark:bg-[hsl(var(--info))]/10 shadow-lg" 
+                                                : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--info)/25%)]"
                                         )}
                                     >
                                         <div className={clsx(
@@ -135,7 +135,7 @@ export default function OnboardingPage() {
 
                             <div className="flex gap-4">
                                 <button onClick={prevStep} className="px-4 py-2 border-2 border-[hsl(var(--border))] dark:border-white/5 rounded-lg font-black text-xs uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-all">Atrás</button>
-                                <button onClick={nextStep} className="flex-1 py-2 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-sm uppercase tracking-wide shadow-xl shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-3">Continuar <ArrowRight size={18} /></button>
+                                <button onClick={nextStep} className="flex-1 py-2 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-sm uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/30%)] active:scale-95 transition-all flex items-center justify-center gap-3">Continuar <ArrowRight size={18} /></button>
                             </div>
                         </motion.div>
                     )}
@@ -165,7 +165,7 @@ export default function OnboardingPage() {
                                 </div>
 
                                 <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center gap-4">
-                                    <div className="size-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 shrink-0"><ShieldCheck size={24} /></div>
+                                    <div className="size-7 rounded-lg bg-success-soft dark:bg-[hsl(var(--success))]/30 flex items-center justify-center text-success-text shrink-0"><ShieldCheck size={24} /></div>
                                     <p className="text-xs text-[hsl(var(--text-secondary))] font-medium leading-relaxed">Al completar el onboarding, aceptas nuestros términos de servicio y la política de protección de datos espirituales.</p>
                                 </div>
                             </div>
@@ -192,7 +192,7 @@ export default function OnboardingPage() {
 
 function FeatureItem({ icon: Icon, title, desc }: any) {
     return (
-        <div className="flex items-start gap-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 group transition-all hover:border-blue-500/30 hover:shadow-lg">
+        <div className="flex items-start gap-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 group transition-all hover:border-[hsl(var(--info)/100%)]/30 hover:shadow-lg">
             <div className="size-7 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all shadow-sm">
                 <Icon size={20} />
             </div>

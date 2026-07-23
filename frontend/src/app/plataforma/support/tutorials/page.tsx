@@ -7,18 +7,18 @@ import { FileText, Play, Clock, Star, Filter, Search, ChevronRight, Lock } from 
 import clsx from 'clsx';
 
 const TUTORIALS = [
-    { id: 1, title: `Primeros pasos en ${SITE_NAME}`, category: 'Inicio', duration: '5 min', level: 'Básico', views: 512, rating: 4.9, free: true, thumbnail: 'from-blue-500 to-sky-600' },
-    { id: 2, title: 'Cómo usar el CRM Pastoral correctamente', category: 'CRM', duration: '12 min', level: 'Intermedio', views: 341, rating: 4.8, free: true, thumbnail: 'from-sky-500 to-pink-600' },
-    { id: 3, title: 'Gestionar el pipeline de consolidación paso a paso', category: 'CRM', duration: '18 min', level: 'Intermedio', views: 289, rating: 4.7, free: false, thumbnail: 'from-emerald-500 to-teal-600' },
-    { id: 4, title: 'Crear cursos y contenido en la Academia', category: 'Academia', duration: '22 min', level: 'Avanzado', views: 198, rating: 4.6, free: false, thumbnail: 'from-amber-500 to-orange-600' },
-    { id: 5, title: 'Configurar finanzas y transparencia', category: 'Finanzas', duration: '15 min', level: 'Intermedio', views: 167, rating: 4.5, free: true, thumbnail: 'from-rose-500 to-red-600' },
+    { id: 1, title: `Primeros pasos en ${SITE_NAME}`, category: 'Inicio', duration: '5 min', level: 'Básico', views: 512, rating: 4.9, free: true, thumbnail: 'from-[hsl(var(--info))] to-[hsl(var(--info))]' },
+    { id: 2, title: 'Cómo usar el CRM Pastoral correctamente', category: 'CRM', duration: '12 min', level: 'Intermedio', views: 341, rating: 4.8, free: true, thumbnail: 'from-[hsl(var(--info))] to-[hsl(var(--domain-pink))]' },
+    { id: 3, title: 'Gestionar el pipeline de consolidación paso a paso', category: 'CRM', duration: '18 min', level: 'Intermedio', views: 289, rating: 4.7, free: false, thumbnail: 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))]' },
+    { id: 4, title: 'Crear cursos y contenido en la Academia', category: 'Academia', duration: '22 min', level: 'Avanzado', views: 198, rating: 4.6, free: false, thumbnail: 'from-[hsl(var(--warning))] to-orange-600' },
+    { id: 5, title: 'Configurar finanzas y transparencia', category: 'Finanzas', duration: '15 min', level: 'Intermedio', views: 167, rating: 4.5, free: true, thumbnail: 'from-[hsl(var(--danger))] to-red-600' },
     { id: 6, title: 'Administrar permisos y roles de usuario', category: 'Admin', duration: '10 min', level: 'Avanzado', views: 134, rating: 4.4, free: false, thumbnail: 'from-[hsl(var(--surface-3))] to-[hsl(var(--bg-muted))]' },
 ];
 
 const LEVEL_COLOR: Record<string, string> = {
-    'Básico': 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10',
-    'Intermedio': 'text-amber-600 bg-amber-50 dark:bg-amber-500/10',
-    'Avanzado': 'text-rose-600 bg-rose-50 dark:bg-rose-500/10',
+    'Básico': 'text-success-text bg-success-soft dark:bg-[hsl(var(--success))]/10',
+    'Intermedio': 'text-warning-text bg-warning-soft dark:bg-[hsl(var(--warning))]/10',
+    'Avanzado': 'text-danger-text bg-danger-soft dark:bg-[hsl(var(--danger))]/10',
 };
 
 export default function SupportTutorialsPage() {
@@ -33,13 +33,13 @@ export default function SupportTutorialsPage() {
     return (
         <div className="h-full flex flex-col bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
             <header className="h-8 border-b border-[hsl(var(--border))]/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
-                <FileText size={16} className="text-sky-500" />
+                <FileText size={16} className="text-[hsl(var(--info))]" />
                 <h1 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex-1">Tutoriales de la Plataforma</h1>
                 <div className="relative">
                     <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                     <input value={search} onChange={e => setSearch(e.target.value)}
                         placeholder="Buscar tutorial..."
-                        className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-md text-[12px] focus:ring-2 focus:ring-sky-500/20 w-56 transition-all text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]" />
+                        className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-md text-[12px] focus:ring-2 focus:ring-[hsl(var(--info)/20%)] w-56 transition-all text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]" />
                 </div>
             </header>
 
@@ -49,7 +49,7 @@ export default function SupportTutorialsPage() {
                 {['all', 'Básico', 'Intermedio', 'Avanzado'].map(level => (
                     <button key={level} onClick={() => setSelectedLevel(level)}
                         className={clsx("px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all",
-                            selectedLevel === level ? "bg-sky-50 dark:bg-sky-500/10 text-sky-600" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]")}>
+                            selectedLevel === level ? "bg-info-soft dark:bg-[hsl(var(--info))]/10 text-info-text" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]")}>
                         {level === 'all' ? 'Todos' : level}
                     </button>
                 ))}
@@ -88,16 +88,16 @@ export default function SupportTutorialsPage() {
                                     </span>
                                     <span className="text-[9px] text-[hsl(var(--text-secondary))] font-bold">{t.category}</span>
                                 </div>
-                                <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-snug group-hover:text-sky-600 transition-colors">
+                                <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-snug group-hover:text-info-text transition-colors">
                                     {t.title}
                                 </p>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-1">
-                                        <Star size={11} className="text-amber-400 fill-amber-400" />
+                                        <Star size={11} className="text-[hsl(var(--warning))] fill-[hsl(var(--warning))]" />
                                         <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))]">{t.rating}</span>
                                         <span className="text-[10px] text-[hsl(var(--text-secondary))] ml-1">{t.views} vistas</span>
                                     </div>
-                                    <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-sky-500 transition-colors" />
+                                    <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--info))] transition-colors" />
                                 </div>
                             </div>
                         </motion.div>

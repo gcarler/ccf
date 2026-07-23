@@ -134,7 +134,7 @@ export default function StudentSchedule() {
 
             <div className="flex-1 overflow-y-auto pb-12 px-4">
                     {(enrollmentError || lessonsError) && (
-                        <p className="text-center text-rose-400 text-sm py-2">{enrollmentError || lessonsError}</p>
+                        <p className="text-center text-[hsl(var(--danger))] text-sm py-2">{enrollmentError || lessonsError}</p>
                     )}
 
                     {(loading || lessonsLoading) && (
@@ -163,7 +163,7 @@ export default function StudentSchedule() {
                                 <div className="flex justify-center pt-3">
                                     <div
                                         className={`w-3 h-3 rounded-full ${
-                                            session.isVirtual ? 'bg-emerald-400 ring-4 ring-emerald-400/20' : 'bg-primary ring-4 ring-primary/20'
+                                            session.isVirtual ? 'bg-[hsl(var(--success))] ring-4 ring-[hsl(var(--success)/20%)]' : 'bg-primary ring-4 ring-primary/20'
                                         }`}
                                     ></div>
                                 </div>
@@ -187,12 +187,12 @@ export default function StudentSchedule() {
                                         </div>
                                         <div className="flex items-center gap-3 text-[hsl(var(--text-secondary))] text-sm">
                                             <div className="p-1.5 rounded-lg bg-white/5">
-                                                <MapPin size={14} className="text-rose-400" />
+                                                <MapPin size={14} className="text-[hsl(var(--danger))]" />
                                             </div>
                                             <span className="font-medium">{session.location}</span>
                                         </div>
                                         {session.isVirtual && (
-                                            <button className="flex items-center gap-3 text-emerald-400 text-sm font-bold mt-2 bg-emerald-500/10 p-3 rounded-md border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors w-fit">
+                                            <button className="flex items-center gap-3 text-[hsl(var(--success))] text-sm font-bold mt-2 bg-[hsl(var(--success))]/10 p-3 rounded-md border border-[hsl(var(--success)/100%)]/20 hover:bg-[hsl(var(--success))]/20 transition-colors w-fit">
                                                 <Video size={16} className="fill-current" />
                                                 <span className="uppercase tracking-wide text-[10px]">Unirse a sesión</span>
                                             </button>

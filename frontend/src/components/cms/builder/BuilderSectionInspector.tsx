@@ -249,7 +249,7 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                       <div key={`card-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                        {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                        {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
                         <input
                           value={safeString(itemObject.title)}
                           onChange={(e) => {
@@ -293,7 +293,7 @@ export default function BuilderSectionInspector({
                             const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" });
                             if (nextProps) saveSectionProps(nextProps);
                           }}
-                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}
+                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}
                         >
                           {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                           {isItemArchived ? "Restaurar" : "Archivar"}
@@ -321,7 +321,7 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                       <div key={`faq-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                        {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                        {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
                         <input
                           value={safeString(itemObject.q)}
                           onChange={(e) => {
@@ -351,7 +351,7 @@ export default function BuilderSectionInspector({
                             const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" });
                             if (nextProps) saveSectionProps(nextProps);
                           }}
-                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}
+                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}
                         >
                           {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                           {isItemArchived ? "Restaurar" : "Archivar"}
@@ -518,10 +518,10 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`stat-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
                           <input value={safeString(itemObject.value)} onChange={(e) => upsertArrayItem("items", index, { value: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { value: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Valor: 10K+" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.label)} onChange={(e) => upsertArrayItem("items", index, { label: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Etiqueta" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar" : "Archivar"}
                           </button>
@@ -542,11 +542,11 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`team-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
                           <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.role)} onChange={(e) => upsertArrayItem("items", index, { role: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { role: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Rol" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.image)} onChange={(e) => upsertArrayItem("items", index, { image: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { image: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL imagen" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar persona" : "Archivar persona"}
                           </button>
@@ -567,7 +567,7 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`pricing-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
                           <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre del plan" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.price)} onChange={(e) => upsertArrayItem("items", index, { price: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { price: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Precio" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <textarea value={safeString(itemObject.features)} onChange={(e) => upsertArrayItem("items", index, { features: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { features: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Beneficios, uno por linea" className="w-full min-h-[64px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
@@ -577,7 +577,7 @@ export default function BuilderSectionInspector({
                             <input type="checkbox" checked={safeString(itemObject.featured) === "true"} onChange={(e) => { const nextProps = upsertArrayItem("items", index, { featured: String(e.target.checked) }); if (nextProps) saveSectionProps(nextProps); }} />
                             Destacado (featured)
                           </label>
-                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar plan" : "Archivar plan"}
                           </button>
@@ -599,12 +599,12 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`gallery-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
                           {safeString(itemObject.url) && <OptimizedImage src={safeString(itemObject.url)} alt={safeString(itemObject.alt)} width={200} height={80} className="w-full h-20 object-cover rounded-md" />}
                           <input value={safeString(itemObject.url)} onChange={(e) => upsertArrayItem("items", index, { url: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { url: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL de imagen" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.alt)} onChange={(e) => upsertArrayItem("items", index, { alt: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { alt: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Alt text" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.caption)} onChange={(e) => upsertArrayItem("items", index, { caption: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { caption: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Leyenda (opcional)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar" : "Archivar"}
                           </button>
@@ -646,11 +646,11 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`timeline-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
                           <input value={safeString(itemObject.year)} onChange={(e) => upsertArrayItem("items", index, { year: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { year: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Año o etiqueta (ej: 2020)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.title)} onChange={(e) => upsertArrayItem("items", index, { title: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { title: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Título del hito" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <textarea value={safeString(itemObject.body)} onChange={(e) => upsertArrayItem("items", index, { body: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { body: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Descripción" className="w-full min-h-[48px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar hito" : "Archivar hito"}
                           </button>
@@ -671,11 +671,11 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`icon-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
                           <input value={safeString(itemObject.icon)} onChange={(e) => upsertArrayItem("items", index, { icon: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { icon: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Emoji icono (ej: 🎯)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.title)} onChange={(e) => upsertArrayItem("items", index, { title: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { title: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Título" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <textarea value={safeString(itemObject.body)} onChange={(e) => upsertArrayItem("items", index, { body: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { body: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Descripción breve" className="w-full min-h-[48px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
-                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar" : "Archivar"}
                           </button>
@@ -729,7 +729,7 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`manual-testimonial-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
                           <input value={safeString(itemObject.author)} onChange={(e) => upsertArrayItem("items", index, { author: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { author: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Autor" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.role)} onChange={(e) => upsertArrayItem("items", index, { role: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { role: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Rol" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <textarea value={safeString(itemObject.content)} onChange={(e) => upsertArrayItem("items", index, { content: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { content: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Contenido" className="w-full min-h-[64px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
@@ -738,7 +738,7 @@ export default function BuilderSectionInspector({
                             <option value="4">★★★★☆ 4 estrellas</option>
                             <option value="3">★★★☆☆ 3 estrellas</option>
                           </select>
-                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
                             {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
                             {isItemArchived ? "Restaurar" : "Archivar"}
                           </button>
@@ -758,7 +758,7 @@ export default function BuilderSectionInspector({
                   <button onClick={duplicateSection} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1">
                     <Copy size={11} /> Duplicar
                   </button>
-                  <button onClick={toggleSectionArchive} className={`col-span-2 rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 ${activeSection.status === "archived" ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
+                  <button onClick={toggleSectionArchive} className={`col-span-2 rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 ${activeSection.status === "archived" ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
                     {activeSection.status === "archived" ? <RotateCcw size={11} /> : <Archive size={11} />}
                     {activeSection.status === "archived" ? "Restaurar seccion" : "Archivar seccion"}
                   </button>

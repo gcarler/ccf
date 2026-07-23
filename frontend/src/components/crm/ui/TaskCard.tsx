@@ -7,8 +7,8 @@ import { UserCircle, Calendar, CheckCircle2 } from 'lucide-react';
 import { ConsolidationTask } from '@/types/crm';
 
 const PRIORITY_STYLES: Record<string, string> = {
-  high: 'bg-rose-50 text-rose-600 dark:bg-rose-900/20',
-  medium: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20',
+  high: 'bg-danger-soft text-danger-text dark:bg-[hsl(var(--danger))]/20',
+  medium: 'bg-warning-soft text-warning-text dark:bg-[hsl(var(--warning))]/20',
   low: 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:bg-white/5',
 };
 
@@ -36,8 +36,8 @@ export default function TaskCard({ task, onStatusChange, allowEditing = true }: 
             className={clsx(
               "mt-0.5 size-5 rounded-full border-2 flex-shrink-0 transition-all",
               task.status === 'done'
-                ? 'bg-emerald-500 border-emerald-500 text-white flex items-center justify-center'
-                : 'border-[hsl(var(--border))] dark:border-white/20 group-hover:border-blue-400'
+                ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)] text-white flex items-center justify-center'
+                : 'border-[hsl(var(--border))] dark:border-white/20 group-hover:border-[hsl(var(--info)/40%)]'
             )}
           >
             {task.status === 'done' && <CheckCircle2 size={12} strokeWidth={3} />}
@@ -47,7 +47,7 @@ export default function TaskCard({ task, onStatusChange, allowEditing = true }: 
             className={clsx(
               "mt-0.5 size-5 rounded-full border-2 flex-shrink-0",
               task.status === 'done'
-                ? 'bg-emerald-500 border-emerald-500'
+                ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)]'
                 : 'border-[hsl(var(--border))] dark:border-white/20'
             )}
           />

@@ -10,7 +10,19 @@ const config: Config = {
     theme: {
         extend: {
             colors: {
-                "primary": "#1973f0",
+                "primary": "hsl(var(--primary) / <alpha-value>)",
+                "success": "hsl(var(--success) / <alpha-value>)",
+                "warning": "hsl(var(--warning) / <alpha-value>)",
+                "info": "hsl(var(--info) / <alpha-value>)",
+                "danger": "hsl(var(--danger) / <alpha-value>)",
+                "success-text": "hsl(var(--success-text) / <alpha-value>)",
+                "warning-text": "hsl(var(--warning-text) / <alpha-value>)",
+                "info-text": "hsl(var(--info-text) / <alpha-value>)",
+                "danger-text": "hsl(var(--danger-text) / <alpha-value>)",
+                "success-muted": "hsl(var(--success-muted) / <alpha-value>)",
+                "warning-muted": "hsl(var(--warning-muted) / <alpha-value>)",
+                "info-muted": "hsl(var(--info-muted) / <alpha-value>)",
+                "danger-muted": "hsl(var(--danger-muted) / <alpha-value>)",
                 "navy-dark": "#0A192F",
                 "sky-blue": "#00B4DB",
                 "background-light": "#f6f7f8",

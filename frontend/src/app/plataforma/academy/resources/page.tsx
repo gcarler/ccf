@@ -109,7 +109,7 @@ export default function ResourcesLibrary() {
             </div>
 
             {(enrollmentsError || lessonsError) && (
-                <p className="text-sm text-rose-400 font-semibold">
+                <p className="text-sm text-[hsl(var(--danger))] font-semibold">
                     {enrollmentsError || lessonsError}
                 </p>
             )}
@@ -129,7 +129,7 @@ export default function ResourcesLibrary() {
             {favoriteResources.length > 0 && (
                 <section className="py-2 flex flex-col gap-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-white/70 dark:bg-[#16191d] p-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-500 flex items-center gap-2">
+                        <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--warning))] flex items-center gap-2">
                             <Star size={14} /> Guardados
                         </h2>
                         <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{favoriteResources.length}</span>
@@ -170,7 +170,7 @@ function ResourceRow({ resource, isFavorite, onToggleFavorite }: { resource: Res
             <div className="flex items-center gap-3">
                 <button
                     onClick={() => onToggleFavorite(resource.id)}
-                    className={`size-8 rounded-full border ${isFavorite ? 'border-amber-400 text-amber-400 bg-amber-50' : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-white/10'} hover:scale-105 transition-transform`}
+                    className={`size-8 rounded-full border ${isFavorite ? 'border-[hsl(var(--warning)/40%)] text-[hsl(var(--warning))] bg-warning-soft' : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-white/10'} hover:scale-105 transition-transform`}
                 >
                     <Star size={18} fill={isFavorite ? 'currentColor' : 'none'} />
                 </button>

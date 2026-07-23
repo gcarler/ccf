@@ -120,7 +120,7 @@ export default function ProjectDetailPage() {
                 try {
                     await apiFetch(`/projects/${id}`, { method: 'DELETE', token });
                     toast.success('Proyecto eliminado');
-                    router.push('/plataforma/projects/list#projects-list');
+                    router.push('/plataforma/projects?view=list#projects-list');
                 } catch {
                     toast.error('Error al eliminar proyecto');
                 }
@@ -180,7 +180,7 @@ export default function ProjectDetailPage() {
             <div className="flex flex-col h-full bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
                 <WorkspaceToolbar
                     breadcrumbs={[
-                        { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects/list#projects-list' },
+                        { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects?view=list#projects-list' },
                         { label: project?.title || 'Cargando...', icon: Calendar },
                     ]}
                     viewType={viewType}
@@ -197,11 +197,11 @@ export default function ProjectDetailPage() {
                             <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Fases
                             </button>
-                            <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-amber-600 active:scale-95 transition-all flex items-center gap-2">
+                            <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-[hsl(var(--warning))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning))] active:scale-95 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Editar
                             </button>
                             {canDeleteProject && (
-                                <button onClick={handleDeleteProject} className="px-3 py-1.5 bg-rose-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-rose-600 active:scale-95 transition-all flex items-center gap-2">
+                                <button onClick={handleDeleteProject} className="px-3 py-1.5 bg-[hsl(var(--danger))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--danger))] active:scale-95 transition-all flex items-center gap-2">
                                     <Trash2 size={14} /> Eliminar
                                 </button>
                             )}

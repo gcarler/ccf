@@ -145,12 +145,12 @@ export default function EvangelismShell({
     if (!canReadEvangelism) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center p-3">
-                <div className="max-w-md w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-8 text-center">
-                    <div className="mx-auto mb-4 size-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+                <div className="max-w-md w-full rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft px-3 py-8 text-center">
+                    <div className="mx-auto mb-4 size-7 rounded-lg bg-[hsl(var(--warning-muted))] text-warning-text flex items-center justify-center">
                         <ShieldAlert size={22} />
                     </div>
-                    <h2 className="text-lg font-bold text-amber-900">Acceso restringido</h2>
-                    <p className="mt-2 text-sm font-medium text-amber-800">
+                    <h2 className="text-lg font-bold text-warning-text">Acceso restringido</h2>
+                    <p className="mt-2 text-sm font-medium text-warning-text">
                         Este módulo requiere permisos de lectura sobre evangelismo.
                     </p>
                 </div>

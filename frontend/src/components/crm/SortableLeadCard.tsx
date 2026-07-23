@@ -62,16 +62,16 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             className={clsx(
                 "group relative p-4 mb-3 rounded-lg transition-all cursor-grab active:cursor-grabbing",
                 "bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))]/50 dark:border-white/5",
-                "hover:border-blue-500/30 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]",
+                "hover:border-[hsl(var(--info)/100%)]/30 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]",
                 "hover:-translate-y-1 active:scale-[0.98]",
                 isDragging && "opacity-0",
-                isOverlayDragging && "opacity-100 scale-105 shadow-2xl ring-2 ring-blue-500/30",
-                isSlaOverdue && "ring-1 ring-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.05)]"
+                isOverlayDragging && "opacity-100 scale-105 shadow-2xl ring-2 ring-[hsl(var(--primary))]/30",
+                isSlaOverdue && "ring-1 ring-[hsl(var(--warning)/20%)] shadow-[0_0_20px_rgba(245,158,11,0.05)]"
             )}
         >
             {/* SLA Overdue Pulse */}
             {isSlaOverdue && (
-                <div className="absolute inset-0 rounded-lg ring-2 ring-amber-500/10 animate-pulse pointer-events-none" />
+                <div className="absolute inset-0 rounded-lg ring-2 ring-[hsl(var(--warning)/10%)] animate-pulse pointer-events-none" />
             )}
             {/* Top Glow Accent */}
             <div className={clsx("absolute top-0 left-6 right-6 h-[1.5px] opacity-20 blur-[1px]", stage.color)} />
@@ -111,7 +111,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                     </div>
 
                     {isSlaOverdue && (
-                        <div className="absolute -top-1 -right-1 size-3 rounded-full bg-amber-500 border-2 border-white dark:border-[#1e1f21] z-20 animate-bounce" />
+                        <div className="absolute -top-1 -right-1 size-3 rounded-full bg-[hsl(var(--warning))] border-2 border-white dark:border-[#1e1f21] z-20 animate-bounce" />
                     )}
                 </div>
                 
@@ -133,14 +133,14 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
                 <button 
                     onClick={(e) => { e.stopPropagation(); window.open(`tel:${lead.phone}`); }}
-                    className="size-7 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] flex items-center justify-center hover:bg-[hsl(var(--primary))] hover:text-white transition-all shadow-sm"
+                    className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] flex items-center justify-center hover:bg-[hsl(var(--primary))] hover:text-white transition-all shadow-sm"
                     aria-label="Llamar"
                 >
                     <Phone size={12} />
                 </button>
                 <button 
                     onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}`); }}
-                    className="size-7 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                    className="size-7 rounded-lg bg-success-soft dark:bg-[hsl(var(--success))]/10 text-success-text dark:text-[hsl(var(--success))] flex items-center justify-center hover:bg-[hsl(var(--success))] hover:text-white transition-all shadow-sm"
                     aria-label="WhatsApp"
                 >
                     <MessageCircle size={12} />
@@ -163,8 +163,8 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                     {daysSince !== null && (
                         <div className={clsx(
                             "flex items-center gap-1 text-[10px] font-bold",
-                            daysSince > 14 ? 'text-rose-500' :
-                            daysSince > 7 ? 'text-amber-500' :
+                            daysSince > 14 ? 'text-[hsl(var(--danger))]' :
+                            daysSince > 7 ? 'text-[hsl(var(--warning))]' :
                             'text-[hsl(var(--text-secondary))]'
                         )}>
                             <Clock size={11} strokeWidth={3} />

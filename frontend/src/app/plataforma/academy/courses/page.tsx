@@ -15,7 +15,7 @@ export default function AcademyCoursesPage() {
     return (
         <div className="flex items-center justify-center h-full">
             <div className="text-center space-y-2">
-                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                <div className="w-8 h-8 border-4 border-[hsl(var(--info)/100%)] border-t-transparent rounded-full animate-spin mx-auto" />
                 <p className="text-sm text-[hsl(var(--text-secondary))]">Redirigiendo a Academia...</p>
             </div>
         </div>

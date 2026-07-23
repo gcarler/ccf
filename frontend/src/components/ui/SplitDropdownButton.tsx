@@ -67,6 +67,7 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick, mainLa
                 {/* Dropdown Chevron */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
+                    aria-label="Mostrar opciones"
                     className="h-7 w-7 flex items-center justify-center transition-colors hover:bg-white/15 active:bg-white/25"
                 >
                     <ChevronDown size={13} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />

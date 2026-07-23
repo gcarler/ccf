@@ -50,7 +50,7 @@ export default function ThemePage() {
                                 {theme === "night" ? "Modo noche" : "Modo dia"}
                             </p>
                         </div>
-                        <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-info-soft px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text">
                             <SunMoon size={12} /> Personalizacion activa
                         </span>
                     </div>

@@ -23,8 +23,8 @@ interface FormValues {
 }
 
 const PRIORITIES = [
-    { value: 'urgent', label: PRIORITY_LABELS.urgent, color: 'bg-rose-500', iconColor: 'text-rose-500' },
-    { value: 'high', label: PRIORITY_LABELS.high, color: 'bg-amber-500', iconColor: 'text-amber-500' },
+    { value: 'urgent', label: PRIORITY_LABELS.urgent, color: 'bg-[hsl(var(--danger))]', iconColor: 'text-[hsl(var(--danger))]' },
+    { value: 'high', label: PRIORITY_LABELS.high, color: 'bg-[hsl(var(--warning))]', iconColor: 'text-[hsl(var(--warning))]' },
     { value: 'medium', label: PRIORITY_LABELS.medium, color: 'bg-[hsl(var(--primary))]', iconColor: 'text-[hsl(var(--primary))]' },
     { value: 'low', label: PRIORITY_LABELS.low, color: 'bg-[hsl(var(--surface-2))]', iconColor: 'text-[hsl(var(--text-secondary))]' }
 ];
@@ -70,7 +70,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                         type="button"
                         onClick={handleSubmit(onFormSubmit)}
                         disabled={isSubmitting}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
                     >
                         {isSubmitting ? <Loader2 className="animate-spin" size={12} /> : <CheckSquare size={12} />}
                         {isSubmitting ? 'Creando...' : 'Crear Tarea'}
@@ -87,7 +87,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                         autoFocus
                         {...register('title', { required: true })}
                         placeholder="Ej: Revisión de Mezcla de Audio"
-                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-[hsl(var(--text-primary))] dark:text-white"
+                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all text-[hsl(var(--text-primary))] dark:text-white"
                     />
                 </div>
 
@@ -99,7 +99,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                         {...register('description')}
                         placeholder="Detalles adicionales, links, etc..."
                         rows={5}
-                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
+                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all resize-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                     />
                 </div>
 

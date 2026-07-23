@@ -133,12 +133,12 @@ export default function ScannerPage() {
  ) : (
  /* SUCCESS STATE */
  <div className="animate-in zoom-in-95 duration-500 flex flex-col items-center justify-center p-4 text-center space-y-3">
- <div className="p-4 bg-emerald-500/20 rounded-full text-emerald-500 shadow-[0_0_40px_rgba(16,185,129,0.2)]">
+ <div className="p-4 bg-[hsl(var(--success))]/20 rounded-full text-[hsl(var(--success))] shadow-[0_0_40px_rgba(16,185,129,0.2)]">
  <ShieldCheck size={80} />
  </div>
  <div className="space-y-2">
  <h2 className="text-lg font-bold text-white">{scannedData?.persona_name}</h2>
- <p className="text-emerald-500 font-extrabold uppercase tracking-wide text-xs px-3 py-1 bg-emerald-500/10 rounded-full inline-block">
+ <p className="text-[hsl(var(--success))] font-extrabold uppercase tracking-wide text-xs px-3 py-1 bg-[hsl(var(--success))]/10 rounded-full inline-block">
  {scannedData?.role} - VALIDADO
  </p>
  </div>
@@ -158,7 +158,7 @@ export default function ScannerPage() {
  {/* Footer Info */}
  <div className="flex items-center justify-center gap-4 text-[hsl(var(--text-secondary))]">
  <div className="flex items-center gap-2">
- <div className="size-2 bg-emerald-500 rounded-full animate-pulse"></div>
+ <div className="size-2 bg-[hsl(var(--success))] rounded-full animate-pulse"></div>
  <span className="text-[10px] font-semibold uppercase tracking-wide">Servidor Activo</span>
  </div>
  <div className="w-px h-3 bg-white/10"></div>

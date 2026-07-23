@@ -28,13 +28,13 @@ Plus,
 Settings2,
 X
 } from 'lucide-react';
-import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
+import React, { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import TitleCellEditor from './TitleCellEditor';
 
 // ─── Status / Priority configs ─────────────────────────────────────────────────
 const STATUS_OPTIONS = [
     { value:'todo',        label:'Pendiente',   dot:'bg-[hsl(var(--surface-2))]',   bg:'bg-[hsl(var(--surface-2))] dark:bg-white/5',            text:'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',      border:'border-[hsl(var(--border))] dark:border-white/10' },
-    { value:'in_progress', label:'En Progreso', dot:'bg-[hsl(var(--primary))]',    bg:'bg-blue-100 dark:bg-blue-500/20',         text:'text-[hsl(var(--primary))] dark:text-blue-300',        border:'border-blue-200 dark:border-blue-500/30' },
+    { value:'in_progress', label:'En Progreso', dot:'bg-[hsl(var(--primary))]',    bg:'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20',         text:'text-[hsl(var(--primary))] dark:text-info-text',        border:'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30' },
     { value:'review',      label:'En Revisión', dot:'bg-[hsl(var(--warning))]',   bg:'bg-[hsl(var(--warning)/0.15)] dark:bg-[hsl(var(--warning)/0.2)]',       text:'text-[hsl(var(--warning))]',      border:'border-[hsl(var(--warning)/0.3)]' },
     { value:'completed',   label:'Completado',  dot:'bg-[hsl(var(--success))]', bg:'bg-[hsl(var(--success)/0.15)] dark:bg-[hsl(var(--success)/0.2)]',   text:'text-[hsl(var(--success))]',  border:'border-[hsl(var(--success)/0.3)]' },
 ] as const;
@@ -297,7 +297,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 {/* Column visibility */}
                 <Popover.Root open={cfgOpen} onOpenChange={setCfgOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', cfgOpen ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', cfgOpen ? 'bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
                             <Settings2 size={12} /> Columnas
                         </button>
                     </Popover.Trigger>
@@ -321,7 +321,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 {/* Group by */}
                 <Popover.Root open={groupOpen} onOpenChange={setGroupOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', groupBy !== 'status' ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', groupBy !== 'status' ? 'bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
                             <Layers size={12} /> Agrupar{groupBy !== 'none' ? `: ${groupBy === 'status' ? 'Estado' : 'Prioridad'}` : ''}
                         </button>
                     </Popover.Trigger>
@@ -342,7 +342,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 {/* Filter */}
                 <Popover.Root open={filterOpen} onOpenChange={setFilterOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', activeFilters.length > 0 ? 'bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', activeFilters.length > 0 ? 'bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
                             <Filter size={12} /> Filtrar{activeFilters.length > 0 ? ` (${activeFilters.length})` : ''}
                         </button>
                     </Popover.Trigger>
@@ -353,7 +353,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                 {STATUS_OPTIONS.map(s => {
                                     const active = activeFilters.some(f => f.field === 'status' && f.value === s.value);
                                     return <button key={s.value} onClick={() => setActiveFilters(prev => active ? prev.filter(f => !(f.field==='status' && f.value===s.value)) : [...prev, { field: 'status', value: s.value, label: s.label }])}
-                                        className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all', active ? `${s.bg} ${s.text} ${s.border} ring-2 ring-blue-500/30` : `${s.bg} ${s.text} ${s.border} opacity-60 hover:opacity-100`)}>
+                                        className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all', active ? `${s.bg} ${s.text} ${s.border} ring-2 ring-[hsl(var(--primary))]/30` : `${s.bg} ${s.text} ${s.border} opacity-60 hover:opacity-100`)}>
                                         <div className={clsx('size-1.5 rounded-full', s.dot)} />{s.label}
                                     </button>;
                                 })}
@@ -363,7 +363,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                 {PRIORITY_OPTIONS.map(p => {
                                     const active = activeFilters.some(f => f.field === 'priority' && f.value === p.value);
                                     return <button key={p.value} onClick={() => setActiveFilters(prev => active ? prev.filter(f => !(f.field==='priority' && f.value===p.value)) : [...prev, { field: 'priority', value: p.value, label: p.label }])}
-                                        className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10', active ? 'ring-2 ring-blue-500/30 opacity-100' : 'opacity-60 hover:opacity-100', p.color)}>
+                                        className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10', active ? 'ring-2 ring-[hsl(var(--primary))]/30 opacity-100' : 'opacity-60 hover:opacity-100', p.color)}>
                                         <FlagIcon fill={p.fill} size={11} />{p.label}
                                     </button>;
                                 })}
@@ -376,7 +376,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 <div className="ml-0 sm:ml-auto flex min-w-0 items-center gap-1.5 overflow-x-auto">
                     {activeFilters.length > 0 && (
                         <div className="flex min-w-0 gap-1">
-                            {activeFilters.map((f, i) => <span key={i} className="flex shrink-0 items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] text-[10px] font-semibold">{f.label}<button onClick={() => setActiveFilters(p => p.filter((_,j) => j !== i))}><X size={9} /></button></span>)}
+                            {activeFilters.map((f, i) => <span key={i} className="flex shrink-0 items-center gap-1 px-2 py-0.5 rounded-full bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] text-[10px] font-semibold">{f.label}<button onClick={() => setActiveFilters(p => p.filter((_,j) => j !== i))}><X size={9} /></button></span>)}
                         </div>
                     )}
                     <button onClick={() => onAddTask('todo')} className="flex shrink-0 items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors">
@@ -389,7 +389,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
             <AnimatePresence>
                 {quickAddGroup && (
                     <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                        className="shrink-0 flex min-w-0 items-center gap-3 px-4 py-2.5 bg-blue-50/50 dark:bg-blue-500/5 border-b border-[hsl(var(--border))] dark:border-white/5">
+                        className="shrink-0 flex min-w-0 items-center gap-3 px-4 py-2.5 bg-info-soft/50 dark:bg-[hsl(var(--info))]/5 border-b border-[hsl(var(--border))] dark:border-white/5">
                         <Circle size={15} className="text-[hsl(var(--text-secondary))] shrink-0" />
                         <input
                             autoFocus

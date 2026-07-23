@@ -12,9 +12,9 @@ const HISTORY = [
 ];
 
 const STATUS_CONFIG: Record<string, any> = {
-    closed: { icon: CheckCircle, label: 'Cerrado', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-    in_progress: { icon: Clock, label: 'En Proceso', color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
-    open: { icon: AlertCircle, label: 'Abierto', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
+    closed: { icon: CheckCircle, label: 'Cerrado', color: 'text-success-text', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/10' },
+    in_progress: { icon: Clock, label: 'En Proceso', color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
+    open: { icon: AlertCircle, label: 'Abierto', color: 'text-warning-text', bg: 'bg-warning-soft dark:bg-[hsl(var(--warning))]/10' },
 };
 
 export default function SupportHistoryPage() {
@@ -75,7 +75,7 @@ export default function SupportHistoryPage() {
                                                     </>
                                                 )}
                                                 {item.rating && (
-                                                    <span className="text-[10px] text-amber-500 font-bold">{'★'.repeat(item.rating)}</span>
+                                                    <span className="text-[10px] text-[hsl(var(--warning))] font-bold">{'★'.repeat(item.rating)}</span>
                                                 )}
                                             </div>
                                         </div>
@@ -90,10 +90,10 @@ export default function SupportHistoryPage() {
                                             className="border-t border-[hsl(var(--border))] dark:border-white/5 px-3 py-1.5 space-y-3"
                                         >
                                             {item.resolution ? (
-                                                <div className="flex items-start gap-3 p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-md">
-                                                    <MessageSquare size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                                                <div className="flex items-start gap-3 p-4 bg-success-soft dark:bg-[hsl(var(--success))]/10 rounded-md">
+                                                    <MessageSquare size={14} className="text-[hsl(var(--success))] shrink-0 mt-0.5" />
                                                     <div>
-                                                        <p className="font-semibold text-emerald-600 uppercase tracking-wide mb-1">Resolución</p>
+                                                        <p className="font-semibold text-success-text uppercase tracking-wide mb-1">Resolución</p>
                                                         <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">{item.resolution}</p>
                                                     </div>
                                                 </div>

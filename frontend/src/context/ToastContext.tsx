@@ -25,15 +25,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 {toasts.map((toast) => (
                     <div
                         key={toast.id}
-                        className={`pointer-events-auto flex items-center gap-3 p-4 rounded-lg border shadow-2xl glass-card animate-in slide-in-from-right-10 fade-in duration-300 min-w-[300px] max-w-md ${toast.type === 'success' ? 'bg-emerald-50/90 border-emerald-100 text-emerald-800' :
-                                toast.type === 'error' ? 'bg-rose-50/90 border-rose-100 text-rose-800' :
-                                    toast.type === 'warning' ? 'bg-amber-50/90 border-amber-100 text-amber-800' :
-                                        'bg-blue-50/90 border-blue-100 text-blue-800'
+                        className={`pointer-events-auto flex items-center gap-3 p-4 rounded-lg border shadow-2xl glass-card animate-in slide-in-from-right-10 fade-in duration-300 min-w-[300px] max-w-md ${toast.type === 'success' ? 'bg-success-soft/90 border-[hsl(var(--success)/20%)] text-success-text' :
+                                toast.type === 'error' ? 'bg-danger-soft/90 border-[hsl(var(--danger)/20%)] text-danger-text' :
+                                    toast.type === 'warning' ? 'bg-warning-soft/90 border-[hsl(var(--warning)/20%)] text-warning-text' :
+                                        'bg-info-soft/90 border-[hsl(var(--info)/20%)] text-info-text'
                             }`}
                     >
-                        <div className={`p-2 rounded-md ${toast.type === 'success' ? 'bg-emerald-500 text-white' :
-                                toast.type === 'error' ? 'bg-rose-500 text-white' :
-                                    toast.type === 'warning' ? 'bg-amber-500 text-white' :
+                        <div className={`p-2 rounded-md ${toast.type === 'success' ? 'bg-[hsl(var(--success))] text-white' :
+                                toast.type === 'error' ? 'bg-[hsl(var(--danger))] text-white' :
+                                    toast.type === 'warning' ? 'bg-[hsl(var(--warning))] text-white' :
                                         'bg-[hsl(var(--primary))] text-white'
                             }`}>
                             {toast.type === 'success' && <CheckCircle size={18} />}

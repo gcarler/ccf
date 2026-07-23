@@ -47,7 +47,7 @@ export function FieldDiffRow({
             role="note"
             aria-label="Valor añadido en la versión B"
             className={clsx(
-              "block text-[12px] text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 rounded-md px-2.5 py-1.5",
+              "block text-[12px] text-success-text dark:text-success-text bg-success-soft dark:bg-[hsl(var(--success))]/10 border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30 rounded-md px-2.5 py-1.5",
               multiline && "whitespace-pre-wrap break-words",
             )}
           >
@@ -60,7 +60,7 @@ export function FieldDiffRow({
             role="note"
             aria-label="Valor eliminado en la versión B"
             className={clsx(
-              "block text-[12px] text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-md px-2.5 py-1.5 line-through",
+              "block text-[12px] text-danger-text dark:text-danger-text bg-danger-soft dark:bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 rounded-md px-2.5 py-1.5 line-through",
               multiline && "whitespace-pre-wrap break-words",
             )}
           >
@@ -129,7 +129,7 @@ export function TokenStream({ tokens, className }: { tokens: DiffToken[]; classN
               key={i}
               role="note"
               aria-label="texto añadido"
-              className="bg-emerald-100 dark:bg-emerald-500/25 text-emerald-900 dark:text-emerald-100 rounded-sm px-0.5"
+              className="bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/25 text-success-text dark:text-[hsl(var(--success))] rounded-sm px-0.5"
             >
               {token.value}
             </span>
@@ -140,7 +140,7 @@ export function TokenStream({ tokens, className }: { tokens: DiffToken[]; classN
             key={i}
             role="note"
             aria-label="texto eliminado"
-            className="bg-rose-100 dark:bg-rose-500/25 text-rose-800 dark:text-rose-100 line-through rounded-sm px-0.5"
+            className="bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/25 text-danger-text dark:text-[hsl(var(--danger))] line-through rounded-sm px-0.5"
           >
             {token.value}
           </span>
@@ -177,15 +177,15 @@ function DiffColumn({
       className={clsx(
         "rounded-md border px-2.5 py-1.5 text-[12px]",
         isBefore
-          ? "bg-rose-50/60 dark:bg-rose-500/5 border-rose-200/70 dark:border-rose-500/20"
-          : "bg-emerald-50/60 dark:bg-emerald-500/5 border-emerald-200/70 dark:border-emerald-500/20",
+          ? "bg-danger-soft/60 dark:bg-[hsl(var(--danger))]/5 border-[hsl(var(--danger)/25%)]/70 dark:border-[hsl(var(--danger)/100%)]/20"
+          : "bg-success-soft/60 dark:bg-[hsl(var(--success))]/5 border-[hsl(var(--success)/25%)]/70 dark:border-[hsl(var(--success)/100%)]/20",
         multiline && "whitespace-pre-wrap break-words",
       )}
     >
       {columnTokens.length > 0 ? (
         <TokenStream tokens={columnTokens} />
       ) : fallbackText !== undefined ? (
-        <span className={clsx(isBefore && "line-through text-rose-800/80 dark:text-rose-200/80")}>
+        <span className={clsx(isBefore && "line-through text-danger-text/80 dark:text-[hsl(var(--danger)/80%)]")}>
           {fallbackText || <span className="text-[hsl(var(--text-secondary))]">{emptyText}</span>}
         </span>
       ) : (

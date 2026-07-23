@@ -19,7 +19,7 @@ function AvatarNameRenderer({ data }: any) {
     const initials = data?.nombre_completo?.charAt(0) ?? '';
     return (
         <div className="flex items-center gap-2.5 h-full">
-            <div className="size-7 rounded-md bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/20 text-[hsl(var(--primary))] flex items-center justify-center font-bold text-xs flex-shrink-0">
+            <div className="size-7 rounded-md bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] dark:from-[hsl(var(--info)/40%)] dark:to-[hsl(var(--info)/20%)] text-[hsl(var(--primary))] flex items-center justify-center font-bold text-xs flex-shrink-0">
                 {initials}
             </div>
             <div>

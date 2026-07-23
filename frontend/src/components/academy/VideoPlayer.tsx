@@ -103,7 +103,7 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
                     onClick={togglePlay}
                     className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] cursor-pointer"
                 >
-                    <div className="size-10 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center shadow-2xl shadow-blue-500/40 animate-pulse">
+                    <div className="size-10 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center shadow-2xl shadow-[hsl(var(--info)/40%)] animate-pulse">
                         <Play size={32} fill="currentColor" className="ml-1" />
                     </div>
                 </div>

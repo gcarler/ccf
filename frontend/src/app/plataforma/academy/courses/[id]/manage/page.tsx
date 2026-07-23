@@ -121,7 +121,7 @@ export default function CourseManagementPage() {
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-full h-48 bg-gradient-to-b from-blue-600/5 to-transparent pointer-events-none" />
+            <div className="absolute top-0 left-0 w-full h-48 bg-gradient-to-b to-[hsl(var(--info)/5%)] to-transparent pointer-events-none" />
 
             <WorkspaceToolbar
                 breadcrumbs={[
@@ -181,11 +181,11 @@ export default function CourseManagementPage() {
                     className="w-full space-y-4"
                 >
                     <motion.section variants={itemVariants} className="bg-white/70 dark:bg-[hsl(var(--bg-primary))]/70 backdrop-blur-3xl rounded-lg border border-white dark:border-white/5 p-4 lg:p-4 shadow-2xl shadow-black/10/50 dark:shadow-none flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden group">
-                        <div className="absolute top-[-20%] right-[-5%] w-64 h-48 bg-blue-600/10 rounded-full blur-[80px] group-hover:bg-blue-600/20 transition-all duration-1000" />
+                        <div className="absolute top-[-20%] right-[-5%] w-64 h-48 bg-[hsl(var(--info))]/10 rounded-full blur-[80px] group-hover:bg-[hsl(var(--info))]/20 transition-all duration-1000" />
 
                         <div className="space-y-3 relative z-10">
                             <div className="flex items-center gap-3">
-                                <div className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-full text-[9px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20">
+                                <div className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-full text-[9px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)]">
                                     {course?.modality === 'formal' ? 'Ruta Ministerial' : 'Capacitacion'}
                                 </div>
                                 <div className="px-3 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-full text-[9px] font-semibold uppercase tracking-wide">
@@ -298,7 +298,7 @@ export default function CourseManagementPage() {
                                                             <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{student.progress}%</span>
                                                         </div>
                                                         <div className="h-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden p-0.5">
-                                                            <div className="h-full bg-[hsl(var(--primary))] rounded-full shadow-lg shadow-blue-500/20" style={{ width: `${student.progress}%` }} />
+                                                            <div className="h-full bg-[hsl(var(--primary))] rounded-full shadow-lg shadow-[hsl(var(--info)/20%)]" style={{ width: `${student.progress}%` }} />
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
@@ -309,7 +309,7 @@ export default function CourseManagementPage() {
                                                     </div>
                                                 </div>
 
-                                                <button className="w-full mt-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white group-hover:shadow-xl group-hover:shadow-blue-500/20 transition-all">Perfil Academico</button>
+                                                <button className="w-full mt-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white group-hover:shadow-xl group-hover:shadow-[hsl(var(--info)/20%)] transition-all">Perfil Academico</button>
                                             </div>
                                         ))
                                     ) : (
@@ -332,14 +332,14 @@ export default function CourseManagementPage() {
                                 key="attendance" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
                                 className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 lg:p-4 text-center space-y-4 shadow-2xl shadow-black/10/50 dark:shadow-none"
                             >
-                                <div className="size-10 bg-blue-50 dark:bg-blue-500/10 rounded-lg flex items-center justify-center mx-auto text-[hsl(var(--primary))] shadow-inner">
+                                <div className="size-10 bg-info-soft dark:bg-[hsl(var(--info))]/10 rounded-lg flex items-center justify-center mx-auto text-[hsl(var(--primary))] shadow-inner">
                                     <Calendar size={56} strokeWidth={1.5} />
                                 </div>
                                 <div className="max-w-xl mx-auto space-y-3">
                                     <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">Control de Asistencia</h3>
                                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium leading-relaxed">Inicia el registro para la sesion de hoy. Recuerda que el 75% de asistencia es requisito para la certificacion formal.</p>
                                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                                        <button className="w-full sm:w-auto px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all">
+                                        <button className="w-full sm:w-auto px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-[hsl(var(--info)/30%)] hover:scale-105 active:scale-95 transition-all">
                                             Iniciar Sesion Hoy
                                         </button>
                                         <button className="w-full sm:w-auto px-3 py-1.5 bg-transparent border-2 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] rounded-lg font-black text-xs uppercase tracking-wide hover:bg-[hsl(var(--surface-1))] transition-all">
@@ -355,13 +355,13 @@ export default function CourseManagementPage() {
                                 key="content" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
                                 className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 lg:p-4 text-center space-y-4"
                             >
-                                <div className="size-10 bg-sky-50 dark:bg-sky-500/10 rounded-lg flex items-center justify-center mx-auto text-sky-600 shadow-inner">
+                                <div className="size-10 bg-info-soft dark:bg-[hsl(var(--info))]/10 rounded-lg flex items-center justify-center mx-auto text-info-text shadow-inner">
                                     <BookOpen size={56} strokeWidth={1.5} />
                                 </div>
                                 <div className="max-w-xl mx-auto space-y-3">
                                     <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">Gestion Curricular</h3>
                                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium">Ajusta el contenido de las lecciones, actualiza recursos descargables y configura los criterios de evaluacion del programa.</p>
-                                    <button className="px-3 py-1.5 bg-sky-600 text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-sky-500/30 hover:scale-105 transition-all">
+                                    <button className="px-3 py-1.5 bg-[hsl(var(--info))] text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-[hsl(var(--info)/30%)] hover:scale-105 transition-all">
                                         Abrir Editor Curricular
                                     </button>
                                 </div>

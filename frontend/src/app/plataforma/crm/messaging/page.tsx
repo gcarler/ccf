@@ -177,18 +177,18 @@ export default function MessagingCampaignCenter() {
         >
             <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/50 dark:bg-[hsl(var(--surface-1))] overflow-hidden font-display rounded-lg">
                 {historyError && (
-                    <div className="mx-4 mt-4 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="mx-4 mt-4 rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="min-w-0">
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                            <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
                                 No se pudo cargar la mensajería
                             </p>
-                            <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                            <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
                                 {historyError}
                             </p>
                         </div>
                         <button
                             onClick={fetchHistory}
-                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                         >
                             Reintentar
                         </button>
@@ -216,7 +216,7 @@ export default function MessagingCampaignCenter() {
                                 role="button"
                                 tabIndex={0}
                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
-                                className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 flex items-center justify-between hover:border-blue-500/30 transition-all cursor-pointer group"
+                                className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 flex items-center justify-between hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer group"
                             >
                                 <div>
                                     <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</p>
@@ -302,7 +302,7 @@ export default function MessagingCampaignCenter() {
                                             role="button"
                                             tabIndex={0}
                                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
-                                            className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3 hover:border-blue-500/30 transition-all cursor-pointer"
+                                            className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3 hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer"
                                         >
                                             <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</p>
                                             <p className="text-[10px] text-[hsl(var(--text-secondary))]">{item.date} · {item.target_count} envíos</p>
@@ -341,7 +341,7 @@ export default function MessagingCampaignCenter() {
                                             role="button"
                                             tabIndex={0}
                                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
-                                            className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-3 hover:border-blue-500/30 transition-all cursor-pointer bg-[hsl(var(--surface-1))] dark:bg-white/5"
+                                            className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-3 hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer bg-[hsl(var(--surface-1))] dark:bg-white/5"
                                         >
                                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</p>
                                             <p className="text-[10px] text-[hsl(var(--text-secondary))]">{item.channel} · {item.status} · {item.target_count}</p>
@@ -405,7 +405,7 @@ export default function MessagingCampaignCenter() {
                     {/* Left Column: Composer */}
                     <div className="lg:col-span-7 space-y-3">
                         <section className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3 shadow-xl space-y-4 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-blue-600/5 rounded-full blur-3xl" />
+                            <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-[hsl(var(--info))]/5 rounded-full blur-3xl" />
                             
                             <div className="relative z-10 flex justify-between items-center">
                                 <div>
@@ -464,7 +464,7 @@ export default function MessagingCampaignCenter() {
                                 </div>
                                 <button 
                                     onClick={handleSendCampaign} disabled={isSending || !canEditCrm}
-                                    className="flex items-center gap-3 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
+                                    className="flex items-center gap-3 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all disabled:opacity-50"
                                 >
                                     {isSending ? <Clock size={18} className="animate-spin" /> : <Zap size={18} fill="currentColor" />}
                                     Lanzar Campaña
@@ -472,7 +472,7 @@ export default function MessagingCampaignCenter() {
                             </div>
                         </section>
 
-                        <section className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3 border border-blue-100 dark:border-blue-500/20 space-y-3">
+                        <section className="bg-info-soft dark:bg-[hsl(var(--info))]/10 rounded-lg p-3 border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20 space-y-3">
                             <div className="flex items-center gap-3 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">
                                 <Sparkles size={20} />
                                 <h3 className="text-[11px] font-bold uppercase tracking-wide">IA Copywriting Helper</h3>
@@ -500,7 +500,7 @@ export default function MessagingCampaignCenter() {
                             </div>
                             <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="size-8 rounded-md bg-blue-100 flex items-center justify-center text-[hsl(var(--primary))]"><Users size={20} /></div>
+                                    <div className="size-8 rounded-md bg-[hsl(var(--info-muted))] flex items-center justify-center text-[hsl(var(--primary))]"><Users size={20} /></div>
                                     <div>
                                         <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-0.5">Segmentos Seleccionados</p>
                                         <h4 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">{segments.length} <span className="text-[10px] text-[hsl(var(--text-secondary))] font-bold tracking-normal uppercase">Segmentos</span></h4>
@@ -530,7 +530,7 @@ export default function MessagingCampaignCenter() {
                                         <div className="flex items-center gap-4">
                                             <div className={clsx(
                                                 "size-9 rounded-lg flex items-center justify-center transition-all group-hover:scale-110",
-                                                item.channel === 'whatsapp' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600" : "bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))]"
+                                                item.channel === 'whatsapp' ? "bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text" : "bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))]"
                                             )}>
                                                 {item.channel === 'whatsapp' ? <MessageSquare size={20} /> : <Mail size={20} />}
                                             </div>
@@ -544,9 +544,9 @@ export default function MessagingCampaignCenter() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            {item.status === 'sent' && <CheckCircle2 size={16} className="text-emerald-500" />}
-                                            {item.status === 'delivered' && <Zap size={16} fill="currentColor" className="text-amber-500" />}
-                                            {item.status === 'failed' && <AlertCircle size={16} className="text-rose-500" />}
+                                            {item.status === 'sent' && <CheckCircle2 size={16} className="text-[hsl(var(--success))]" />}
+                                            {item.status === 'delivered' && <Zap size={16} fill="currentColor" className="text-[hsl(var(--warning))]" />}
+                                            {item.status === 'failed' && <AlertCircle size={16} className="text-[hsl(var(--danger))]" />}
                                             <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
                                         </div>
                                     </div>

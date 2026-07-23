@@ -7,12 +7,12 @@ import { Calendar, Clock, MapPin, Users, Search, ChevronRight, Star, Filter, Tic
 import clsx from 'clsx';
 
 const EVENTS = [
-    { id: 1, title: 'Retiro de Jóvenes 2026', date: '2026-05-02', endDate: '2026-05-04', time: '8:00 AM', location: 'Campamento El Buen Pastor', category: 'Retiro', attendees: 120, capacity: 150, featured: true, color: 'from-blue-600 to-sky-700' },
-    { id: 2, title: 'Concierto de Adoración Noches de Gloria', date: '2026-04-20', endDate: null, time: '6:00 PM', location: 'Sede Central - Mocoa', category: 'Adoración', attendees: 350, capacity: 500, featured: true, color: 'from-sky-600 to-blue-700' },
-    { id: 3, title: 'Seminario: Finanzas con Fe', date: '2026-04-26', endDate: null, time: '9:00 AM', location: 'Salón Principal CCF', category: 'Seminario', attendees: 45, capacity: 80, featured: false, color: 'from-amber-500 to-orange-600' },
-    { id: 4, title: 'Taller de Matrimonios Fuertes', date: '2026-05-10', endDate: '2026-05-11', time: '2:00 PM', location: 'Sede Centro - Pasto', category: 'Taller', attendees: 28, capacity: 40, featured: false, color: 'from-rose-500 to-pink-600' },
-    { id: 5, title: 'Cumbre de Líderes CCF 2026', date: '2026-06-01', endDate: '2026-06-03', time: 'Todo el día', location: 'Hotel Mocoa Real', category: 'Cumbre', attendees: 80, capacity: 100, featured: true, color: 'from-emerald-500 to-teal-600' },
-    { id: 6, title: 'Día de la Familia — Picnic Pastoral', date: '2026-04-19', endDate: null, time: '10:00 AM', location: 'Parque La Hormiga', category: 'Familia', attendees: 200, capacity: 300, featured: false, color: 'from-lime-500 to-green-600' },
+    { id: 1, title: 'Retiro de Jóvenes 2026', date: '2026-05-02', endDate: '2026-05-04', time: '8:00 AM', location: 'Campamento El Buen Pastor', category: 'Retiro', attendees: 120, capacity: 150, featured: true, color: 'from-[hsl(var(--info))] to-[hsl(var(--info))]' },
+    { id: 2, title: 'Concierto de Adoración Noches de Gloria', date: '2026-04-20', endDate: null, time: '6:00 PM', location: 'Sede Central - Mocoa', category: 'Adoración', attendees: 350, capacity: 500, featured: true, color: 'from-[hsl(var(--info))] to-[hsl(var(--info))]' },
+    { id: 3, title: 'Seminario: Finanzas con Fe', date: '2026-04-26', endDate: null, time: '9:00 AM', location: 'Salón Principal CCF', category: 'Seminario', attendees: 45, capacity: 80, featured: false, color: 'from-[hsl(var(--warning))] to-orange-600' },
+    { id: 4, title: 'Taller de Matrimonios Fuertes', date: '2026-05-10', endDate: '2026-05-11', time: '2:00 PM', location: 'Sede Centro - Pasto', category: 'Taller', attendees: 28, capacity: 40, featured: false, color: 'from-[hsl(var(--danger))] to-[hsl(var(--domain-pink))]' },
+    { id: 5, title: 'Cumbre de Líderes CCF 2026', date: '2026-06-01', endDate: '2026-06-03', time: 'Todo el día', location: 'Hotel Mocoa Real', category: 'Cumbre', attendees: 80, capacity: 100, featured: true, color: 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))]' },
+    { id: 6, title: 'Día de la Familia — Picnic Pastoral', date: '2026-04-19', endDate: null, time: '10:00 AM', location: 'Parque La Hormiga', category: 'Familia', attendees: 200, capacity: 300, featured: false, color: 'from-[hsl(var(--domain-lime))] to-green-600' },
 ];
 
 const CATEGORIES = ['Todos', 'Retiro', 'Adoración', 'Seminario', 'Taller', 'Cumbre', 'Familia'];
@@ -37,13 +37,13 @@ export default function EventsPage() {
 
             {/* Hero */}
             <section className="py-1.5 px-3 text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-emerald-600/10 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-b to-[hsl(var(--success)/10%)] to-transparent pointer-events-none" />
                 <div className="max-w-4xl mx-auto relative">
-                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold uppercase tracking-wide mb-3">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--success))]/20 text-[hsl(var(--success))] text-[11px] font-bold uppercase tracking-wide mb-3">
                         <Calendar size={11} /> Próximos Eventos
                     </span>
                     <h1 className="text-xl font-bold text-white mb-3 tracking-tight">
-                        Momentos que<br /><span className="text-emerald-400">Marcan tu Historia</span>
+                        Momentos que<br /><span className="text-[hsl(var(--success))]">Marcan tu Historia</span>
                     </h1>
                     <p className="text-[hsl(var(--text-secondary))] text-lg mb-3 max-w-xl mx-auto">
                         Retiros, cultos especiales, seminarios y momentos de comunidad diseñados para transformar tu vida.
@@ -52,7 +52,7 @@ export default function EventsPage() {
                         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                         <input value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar evento..."
-                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-[hsl(var(--text-secondary))] text-sm outline-none focus:ring-2 focus:ring-emerald-500/30 backdrop-blur" />
+                            className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-[hsl(var(--text-secondary))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--success)/30%)] backdrop-blur" />
                     </div>
                 </div>
             </section>
@@ -60,7 +60,7 @@ export default function EventsPage() {
             {/* Featured Events Carousel */}
             <section className="max-w-6xl mx-auto px-3 mb-3">
                 <p className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
-                    <Star size={10} className="inline mr-1.5 text-amber-400" />Eventos Destacados
+                    <Star size={10} className="inline mr-1.5 text-[hsl(var(--warning))]" />Eventos Destacados
                 </p>
                 <div className="grid grid-cols-3 gap-3">
                     {featured.map((ev, i) => (
@@ -97,7 +97,7 @@ export default function EventsPage() {
                 <Filter size={12} className="text-[hsl(var(--text-secondary))]" />
                 {CATEGORIES.map(c => (
                     <button key={c} onClick={() => setCat(c)}
-                        className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-emerald-600 text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
+                        className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-[hsl(var(--success))] text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
                         {c}
                     </button>
                 ))}
@@ -116,9 +116,9 @@ export default function EventsPage() {
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5">
                                     <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/10 text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{ev.category}</span>
-                                    {ev.featured && <Star size={10} className="text-amber-400 fill-amber-400" />}
+                                    {ev.featured && <Star size={10} className="text-[hsl(var(--warning))] fill-[hsl(var(--warning))]" />}
                                 </div>
-                                <p className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">{ev.title}</p>
+                                <p className="text-sm font-bold text-white group-hover:text-[hsl(var(--success))] transition-colors">{ev.title}</p>
                                 <div className="flex flex-wrap items-center gap-3 mt-1 text-[10px] text-[hsl(var(--text-secondary))]">
                                     <span className="flex items-center gap-1"><Calendar size={9} /> {ev.date}{ev.endDate ? ` → ${ev.endDate}` : ''}</span>
                                     <span className="flex items-center gap-1"><Clock size={9} /> {ev.time}</span>
@@ -131,10 +131,10 @@ export default function EventsPage() {
                                     <span className="text-[10px] text-[hsl(var(--text-secondary))]">{ev.attendees} / {ev.capacity}</span>
                                 </div>
                                 <div className="w-24 bg-white/10 rounded-full h-1.5">
-                                    <div className={clsx("rounded-full h-1.5", occupation > 80 ? "bg-rose-500" : occupation > 50 ? "bg-amber-500" : "bg-emerald-500")}
+                                    <div className={clsx("rounded-full h-1.5", occupation > 80 ? "bg-[hsl(var(--danger))]" : occupation > 50 ? "bg-[hsl(var(--warning))]" : "bg-[hsl(var(--success))]")}
                                         style={{ width: `${occupation}%` }} />
                                 </div>
-                                <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-emerald-400 hover:text-white transition-colors">
+                                <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--success))] hover:text-white transition-colors">
                                     <Ticket size={11} /> Inscribirme <ChevronRight size={10} />
                                 </button>
                             </div>

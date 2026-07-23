@@ -21,9 +21,9 @@ import {
 // ─── Status Config ────────────────────────────────────────────────────────────
 const STATUS_OPTIONS = [
     { value: 'todo',        label: 'Pendiente',   dot: 'bg-[hsl(var(--surface-2))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',           text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',    border: 'border-[hsl(var(--border))] dark:border-white/10' },
-    { value: 'in_progress', label: 'En Progreso', dot: 'bg-[hsl(var(--primary))]',  bg: 'bg-blue-100 dark:bg-blue-500/20',    text: 'text-[hsl(var(--primary))] dark:text-blue-300',  border: 'border-blue-200 dark:border-blue-500/30' },
-    { value: 'review',      label: 'En Revisión', dot: 'bg-amber-500',   bg: 'bg-amber-100 dark:bg-amber-500/20',    text: 'text-amber-700 dark:text-amber-300',  border: 'border-amber-200 dark:border-amber-500/30' },
-    { value: 'completed',   label: 'Completado',  dot: 'bg-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-500/20',  text: 'text-emerald-700 dark:text-emerald-300', border: 'border-emerald-200 dark:border-emerald-500/30' },
+    { value: 'in_progress', label: 'En Progreso', dot: 'bg-[hsl(var(--primary))]',  bg: 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20',    text: 'text-[hsl(var(--primary))] dark:text-info-text',  border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30' },
+    { value: 'review',      label: 'En Revisión', dot: 'bg-[hsl(var(--warning))]',   bg: 'bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/20',    text: 'text-warning-text dark:text-warning-text',  border: 'border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/30' },
+    { value: 'completed',   label: 'Completado',  dot: 'bg-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/20',  text: 'text-success-text dark:text-success-text', border: 'border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30' },
 ] as const;
 function getStatus(val: string) {
     return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0];
@@ -32,9 +32,9 @@ function getStatus(val: string) {
 // ─── Group header pill styles ─────────────────────────────────────────────────
 const GROUP_PILL: Record<string, string> = {
     todo:        'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]',
-    in_progress: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-500/20 dark:text-blue-300',
-    review:      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    completed:   'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    in_progress: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20 dark:text-info-text',
+    review:      'bg-[hsl(var(--warning-muted))] text-warning-text dark:bg-[hsl(var(--warning))]/30 dark:text-[hsl(var(--warning))]',
+    completed:   'bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/30 dark:text-[hsl(var(--success))]',
 };
 
 // ─── TYPE DEFINITIONS ─────────────────────────────────────────────────────────
@@ -90,13 +90,13 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
             </div>
             {/* Toolbar */}
             <div className="flex items-center gap-1 px-3 pb-3">
-                <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Adjuntar">
+                <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors" title="Adjuntar">
                     <Paperclip size={13} />
                 </button>
-                <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Mencionar">
+                <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors" title="Mencionar">
                     <AtSign size={13} />
                 </button>
-                <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors" title="Emoji">
+                <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors" title="Emoji">
                     <Smile size={13} />
                 </button>
                 <div className="flex-1" />
@@ -106,7 +106,7 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
                     className={clsx(
                         'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold transition-all',
                         text.trim()
-                            ? 'bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))] shadow-md shadow-blue-500/20 active:scale-95'
+                            ? 'bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))] shadow-md shadow-[hsl(var(--info)/20%)] active:scale-95'
                             : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] cursor-not-allowed'
                     )}
                     disabled={!text.trim()}
@@ -172,8 +172,8 @@ function TaskRow({
                     className={clsx(
                         'size-4 rounded-full border-2 flex items-center justify-center text-[9px] transition-all active:scale-95',
                         status === 'completed'
-                            ? 'bg-emerald-500 border-emerald-500 text-white'
-                            : 'border-[hsl(var(--border))] dark:border-white/20 text-transparent hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10'
+                            ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)] text-white'
+                            : 'border-[hsl(var(--border))] dark:border-white/20 text-transparent hover:border-[hsl(var(--success)/40%)] hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10'
                     )}
                     aria-label={status === 'completed' ? 'Desmarcar tarea' : 'Completar tarea'}
                 >
@@ -235,8 +235,8 @@ function TaskRow({
                     className={clsx(
                         'flex items-center justify-center size-8 rounded-lg border transition-all min-h-[40px] min-w-[32px]',
                         commentOpen
-                            ? 'border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]'
-                            : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:border-blue-200 dark:hover:border-blue-500/30 hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10'
+                            ? 'border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/40 bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]'
+                            : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/25%)] dark:hover:border-[hsl(var(--info)/100%)]/30 hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10'
                     )}
                     aria-label="Ver comentarios y actividad"
                 >
@@ -359,9 +359,9 @@ function StatusGroup({
 
                         {/* Quick-add row */}
                         {isAddingHere ? (
-                            <div className="flex items-center gap-2 px-4 py-2 border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-blue-50/30 dark:bg-blue-500/5 min-h-[40px]">
+                            <div className="flex items-center gap-2 px-4 py-2 border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-info-soft/30 dark:bg-[hsl(var(--info))]/5 min-h-[40px]">
                                 <div className="w-8 flex-shrink-0 flex items-center justify-center">
-                                    <div className="size-4 rounded-full border-2 border-blue-400 dark:border-blue-500" />
+                                    <div className="size-4 rounded-full border-2 border-[hsl(var(--info)/40%)] dark:border-[hsl(var(--info)/100%)]" />
                                 </div>
                                 <input
                                     ref={inputRef}
@@ -478,7 +478,7 @@ export default function ProjectListView({
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.15 }}
-                        className="overflow-hidden sticky top-0 z-30 border-b-2 border-blue-300 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-900/10"
+                        className="overflow-hidden sticky top-0 z-30 border-b-2 border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/40 bg-info-soft dark:bg-[hsl(var(--info))]/10"
                     >
                         <QuickAddBar
                             quickAddTitle={quickAddTitle || ''}
@@ -549,7 +549,7 @@ function QuickAddBar({
 
     return (
         <div className="flex items-center gap-3 px-4 py-3 min-h-[40px]">
-            <div className="size-5 rounded-full border-2 border-blue-400 dark:border-blue-500 shrink-0" />
+            <div className="size-5 rounded-full border-2 border-[hsl(var(--info)/40%)] dark:border-[hsl(var(--info)/100%)] shrink-0" />
             <input
                 ref={inputRef}
                 type="text"

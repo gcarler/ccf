@@ -34,11 +34,11 @@ const ACTIONS = [
 ];
 
 const TRIGGER_COLORS: Record<string, string> = {
-    new_persona: 'bg-blue-500/10 text-[hsl(var(--primary))] border-blue-500/20',
-    birthday: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-    inactivity: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
+    new_persona: 'bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]/20',
+    birthday: 'bg-[hsl(var(--warning))]/10 text-warning-text border-[hsl(var(--warning)/100%)]/20',
+    inactivity: 'bg-[hsl(var(--danger))]/10 text-danger-text border-[hsl(var(--danger)/100%)]/20',
     low_attendance: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
-    anniversary: 'bg-sky-500/10 text-sky-600 border-sky-500/20',
+    anniversary: 'bg-[hsl(var(--info))]/10 text-info-text border-[hsl(var(--info)/100%)]/20',
     stage_change: 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20',
 };
 
@@ -170,7 +170,7 @@ export default function AutomationsPage() {
             rightActions={
                 <button
                     onClick={openCreate}
-                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nueva Regla
                 </button>
@@ -182,14 +182,14 @@ export default function AutomationsPage() {
                         <Loader2 className="animate-spin text-[hsl(var(--text-secondary))]" size={24} />
                     </div>
                 ) : error && (
-                    <div className="flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-col gap-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-4 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))] md:flex-row md:items-center md:justify-between">
                         <div>
                             <p className="text-[11px] font-bold uppercase tracking-wide">No se pudieron cargar las automatizaciones</p>
                             <p className="text-xs">{error}</p>
                         </div>
                         <button
                             onClick={() => setReloadKey(key => key + 1)}
-                            className="rounded-md border border-amber-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-amber-100 dark:border-amber-400/30 dark:hover:bg-amber-500/20"
+                            className="rounded-md border border-[hsl(var(--warning)/30%)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/40%)]/30 dark:hover:bg-[hsl(var(--warning))]/20"
                         >
                             Reintentar
                         </button>
@@ -200,7 +200,7 @@ export default function AutomationsPage() {
                 <div className="grid grid-cols-3 gap-3 mb-2">
                     {[
                         { label: 'Total Reglas', val: rules.length, color: 'text-[hsl(var(--text-primary))] dark:text-white' },
-                        { label: 'Activas', val: rules.filter(r => r.active).length, color: 'text-emerald-600' },
+                        { label: 'Activas', val: rules.filter(r => r.active).length, color: 'text-success-text' },
                         { label: 'Inactivas', val: rules.filter(r => !r.active).length, color: 'text-[hsl(var(--text-secondary))]' },
                     ].map(s => (
                         <div key={s.label} className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 text-center">
@@ -224,7 +224,7 @@ export default function AutomationsPage() {
                         </div>
                         <button
                             onClick={openCreate}
-                            className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20"
+                            className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)]"
                         >
                             Crear primera regla
                         </button>
@@ -276,20 +276,20 @@ export default function AutomationsPage() {
                                                 title={rule.active ? 'Desactivar' : 'Activar'}
                                             >
                                                 {rule.active
-                                                    ? <ToggleRight size={28} className="text-emerald-500" />
+                                                    ? <ToggleRight size={28} className="text-[hsl(var(--success))]" />
                                                     : <ToggleLeft size={28} className="text-[hsl(var(--text-secondary))]" />
                                                 }
                                             </button>
                                             <button
                                                 onClick={() => openEdit(rule)}
-                                                className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                                                className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/20 transition-all"
                                             >
                                                 <Settings2 size={16} />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(rule.id)}
                                                 disabled={deletingId === rule.id}
-                                                className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all disabled:opacity-50"
+                                                className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-danger-text hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/20 transition-all disabled:opacity-50"
                                             >
                                                 {deletingId === rule.id
                                                     ? <Loader2 size={16} className="animate-spin" />
@@ -325,7 +325,7 @@ export default function AutomationsPage() {
                             form="automation-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
+                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
                             {editingRule ? 'Guardar Cambios' : 'Crear Regla'}
@@ -359,8 +359,8 @@ export default function AutomationsPage() {
                                         className={clsx(
                                             "flex items-center gap-3 px-4 py-1.5 rounded-lg border text-left transition-all",
                                             selected
-                                                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                                : "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:border-blue-300"
+                                                ? "border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/20"
+                                                : "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:border-[hsl(var(--info)/30%)]"
                                         )}
                                     >
                                         <div className={clsx("size-8 rounded-md flex items-center justify-center", selected ? 'bg-[hsl(var(--primary))] text-white' : 'bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))]')}>

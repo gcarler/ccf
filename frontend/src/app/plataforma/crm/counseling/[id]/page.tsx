@@ -6,8 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import CrmShell from "@/components/crm/CrmShell";
 import { Heart, MessageSquare, User, LayoutDashboard, Shield } from "lucide-react";
-import { DSCard } from "@/design/components/DSCard";
-import { DSBadge } from "@/design/components/DSBadge";
+import { DSCard } from '@/design';
+import { DSBadge } from '@/design';
 import { toast } from "sonner";
 
 type CounselingDetail = {
@@ -213,7 +213,7 @@ export default function CounselingDetailPage() {
                                             <button
                                                 onClick={handleSave}
                                                 disabled={saving}
-                                                className="px-3 py-1.5 bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-wide rounded hover:bg-emerald-700 disabled:opacity-50"
+                                                className="px-3 py-1.5 bg-[hsl(var(--success))] text-white text-[10px] font-bold uppercase tracking-wide rounded hover:bg-[hsl(var(--success))] disabled:opacity-50"
                                             >
                                                 {saving ? "Guardando..." : "Guardar"}
                                             </button>

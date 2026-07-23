@@ -66,7 +66,7 @@ export const MODULE_CONFIGS: Record<string, ModuleConfig> = {
           {
             id: 'projects-home',
             label: 'Portfolio',
-            href: '/plataforma/projects/list#projects-list',
+            href: '/plataforma/projects?view=list#projects-list',
             icon: Layout,
           },
           {

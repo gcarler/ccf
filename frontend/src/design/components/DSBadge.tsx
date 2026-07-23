@@ -2,7 +2,6 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import { radii, typography } from '../tokens';
 
 type Tone = 'slate' | 'blue' | 'emerald' | 'amber';
 
@@ -23,11 +22,10 @@ export function DSBadge({ tone = 'slate', label, className, ...props }: DSBadgeP
         <span
             className={clsx(
                 'px-1.5 py-0.5 inline-flex items-center justify-center text-[9px] font-semibold uppercase tracking-wide',
-                'border border-white/10 shadow-sm backdrop-blur',
+                'rounded font-sans border border-white/10 shadow-sm backdrop-blur',
                 toneStyles[tone],
                 className
             )}
-            style={{ borderRadius: radii.sm, fontFamily: typography.family }}
             {...props}
         >
             {label}

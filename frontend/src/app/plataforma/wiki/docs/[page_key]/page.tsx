@@ -110,8 +110,8 @@ export default function WikiDocEditPage() {
     if (error) return (
         <div className="flex-1 flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
             <div className="text-center space-y-4">
-                <AlertCircle size={32} className="text-rose-500 mx-auto" />
-                <p className="font-bold text-sm text-rose-500">{error}</p>
+                <AlertCircle size={32} className="text-[hsl(var(--danger))] mx-auto" />
+                <p className="font-bold text-sm text-[hsl(var(--danger))]">{error}</p>
             </div>
         </div>
     );

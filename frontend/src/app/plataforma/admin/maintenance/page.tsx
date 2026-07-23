@@ -208,7 +208,7 @@ export default function AdminMaintenancePage() {
                         <div className="space-y-4">
                             <motion.div 
                                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-500 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-amber-500/20"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--warning))]/10 text-warning-text dark:text-[hsl(var(--warning))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--warning)/100%)]/20"
                             >
                                 <Zap size={12} className="animate-pulse" /> Protocolo de Salud Activa
                             </motion.div>
@@ -222,7 +222,7 @@ export default function AdminMaintenancePage() {
 
                         <motion.button 
                             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                            className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-[hsl(var(--text-primary))] text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-all shadow-2xl shadow-amber-500/20 flex items-center gap-3 group"
+                            className="px-4 py-1.5 bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))] text-[hsl(var(--text-primary))] text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-all shadow-2xl shadow-[hsl(var(--warning)/20%)] flex items-center gap-3 group"
                         >
                             <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" /> Programar Revisión
                         </motion.button>
@@ -247,14 +247,14 @@ export default function AdminMaintenancePage() {
                             <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg overflow-hidden shadow-sm shadow-black/10/50">
                                 <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 flex items-center justify-between">
                                     <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
-                                        <History size={16} className="text-amber-500" /> Tareas de Seguimiento Técnico
+                                        <History size={16} className="text-[hsl(var(--warning))]" /> Tareas de Seguimiento Técnico
                                     </h3>
-                                    <span className="px-4 py-1 bg-rose-50 dark:bg-rose-900/20 text-rose-600 font-semibold rounded-full border border-rose-100 dark:border-rose-800 uppercase tracking-wide">Estado Crítico: {stats. review}</span>
+                                    <span className="px-4 py-1 bg-danger-soft dark:bg-[hsl(var(--danger))]/20 text-danger-text font-semibold rounded-full border border-[hsl(var(--danger)/20%)] dark:border-[hsl(var(--danger)/100%)] uppercase tracking-wide">Estado Crítico: {stats. review}</span>
                                 </div>
                                 <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                                     {loading ? (
                                         <div className="p-4 flex flex-col items-center gap-4">
-                                            <Loader2 className="animate-spin text-amber-500" size={32} />
+                                            <Loader2 className="animate-spin text-[hsl(var(--warning))]" size={32} />
                                             <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizando con Servidor...</p>
                                         </div>
                                     ) : tasks.length > 0 ? tasks.map((row, i) => (
@@ -306,19 +306,19 @@ export default function AdminMaintenancePage() {
                                 className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg shadow-sm space-y-3 aura-tech"
                             >
                                 <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
-                                    <ShieldCheck size={16} className="text-amber-500" /> Salud de Activos
+                                    <ShieldCheck size={16} className="text-[hsl(var(--warning))]" /> Salud de Activos
                                 </h3>
                                 <div className="flex flex-col items-center justify-center py-2 gap-3">
                                     <div className="relative size-10 p-4 rounded-full border-2 border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-center shadow-inner">
-                                        <div className="size-full rounded-full bg-gradient-to-tr from-amber-500/5 to-amber-500/20 animate-pulse" />
+                                        <div className="size-full rounded-full bg-gradient-to-tr to-[hsl(var(--warning)/5%)] to-[hsl(var(--warning)/20%)] animate-pulse" />
                                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                                             <span className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white italic tracking-tighter">{stats.operative}%</span>
-                                            <span className="font-semibold text-emerald-500 uppercase tracking-wide mt-1">Óptimo</span>
+                                            <span className="font-semibold text-[hsl(var(--success))] uppercase tracking-wide mt-1">Óptimo</span>
                                         </div>
                                         {/* Circular Progress Simulated */}
                                         <svg className="absolute inset-0 size-full -rotate-90">
-                                            <circle cx="88" cy="88" r="84" fill="none" stroke="currentColor" strokeWidth="8" className="text-amber-500/10" />
-                                            <circle cx="88" cy="88" r="84" fill="none" stroke="currentColor" strokeWidth="8" strokeDasharray="527" strokeDashoffset={527 - (527 * stats.operative) / 100} strokeLinecap="round" className="text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
+                                            <circle cx="88" cy="88" r="84" fill="none" stroke="currentColor" strokeWidth="8" className="text-[hsl(var(--warning))]/10" />
+                                            <circle cx="88" cy="88" r="84" fill="none" stroke="currentColor" strokeWidth="8" strokeDasharray="527" strokeDashoffset={527 - (527 * stats.operative) / 100} strokeLinecap="round" className="text-[hsl(var(--warning))] shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
                                         </svg>
                                     </div>
                                 </div>

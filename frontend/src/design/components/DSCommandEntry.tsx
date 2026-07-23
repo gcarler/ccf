@@ -23,12 +23,11 @@ export function DSCommandEntry({
     ...props
 }: DSCommandEntryProps) {
     return (
-        <div
-            className={clsx(
+        <div                className={clsx(
                 "flex items-center gap-2 rounded-md border px-2.5 py-1.5 transition-all cursor-pointer",
                 active
-                    ? "border-blue-500/40 bg-[hsl(var(--primary))] text-white shadow-sm"
-                    : "border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] hover:border-blue-300 hover:bg-blue-50",
+                    ? "border-[hsl(var(--primary)_/_0.4)] bg-[hsl(var(--primary))] text-white shadow-sm"
+                    : "border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] hover:border-[hsl(var(--primary)_/_0.5)] hover:bg-[hsl(var(--primary)_/_0.05)]",
                 className
             )}
             {...props}

@@ -398,7 +398,7 @@ export default function CmsHomePage() {
     <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]/60 dark:bg-[hsl(var(--admin-bg-primary))]">
       <div className="space-y-3 px-4 py-2 lg:px-3">
         {dataIssue && (
-          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <div className="flex items-start gap-3 rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft px-4 py-3 text-sm text-warning-text dark:border-[hsl(var(--warning)/100%)]/30 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{dataIssue}</span>
           </div>
@@ -410,7 +410,7 @@ export default function CmsHomePage() {
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-blue-300 hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
+            className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
           >
             Ver sitio público
             <ExternalLink size={14} />
@@ -422,7 +422,7 @@ export default function CmsHomePage() {
           {metricCards.map((metric) => {
             const Icon = metric.icon;
             return (
-              <Link key={metric.label} href={metric.href} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))] transition-colors hover:border-blue-300 dark:hover:border-blue-500/50">
+              <Link key={metric.label} href={metric.href} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))] transition-colors hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)]/50">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric.label}</p>
                   <Icon size={15} className="text-[hsl(var(--text-secondary))]" />
@@ -472,7 +472,7 @@ export default function CmsHomePage() {
                     <span className="w-24 text-xs text-[hsl(var(--text-secondary))] truncate">{d.label}</span>
                     <div className="flex-1 h-4 rounded bg-[hsl(var(--surface-1))] dark:bg-white/5 overflow-hidden">
                       <div
-                        className="h-full rounded bg-emerald-500/80"
+                        className="h-full rounded bg-[hsl(var(--success))]/80"
                         style={{ width: `${Math.max((d.value / maxTypeValue) * 100, 2)}%` }}
                       />
                     </div>
@@ -512,11 +512,11 @@ export default function CmsHomePage() {
                   <Link
                     key={check.label}
                     href={canEdit ? check.href : "/cms"}
-                    className="group rounded-lg border border-[hsl(var(--border))] p-4 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/50"
+                    className="group rounded-lg border border-[hsl(var(--border))] p-4 transition-colors hover:border-[hsl(var(--info)/30%)] dark:border-white/10 dark:hover:border-[hsl(var(--info)/100%)]/50"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className={isWarning ? "rounded-lg bg-amber-50 p-2 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300" : "rounded-lg bg-emerald-50 p-2 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"}>
+                        <div className={isWarning ? "rounded-lg bg-warning-soft p-2 text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text" : "rounded-lg bg-success-soft p-2 text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text"}>
                           <Icon size={16} />
                         </div>
                         <div>
@@ -524,7 +524,7 @@ export default function CmsHomePage() {
                           <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">{check.description}</p>
                         </div>
                       </div>
-                      <span className={isWarning ? "text-lg font-semibold text-amber-700 dark:text-amber-300" : "text-lg font-semibold text-emerald-700 dark:text-emerald-300"}>
+                      <span className={isWarning ? "text-lg font-semibold text-warning-text dark:text-warning-text" : "text-lg font-semibold text-success-text dark:text-success-text"}>
                         {loading ? "..." : check.value}
                       </span>
                     </div>
@@ -552,7 +552,7 @@ export default function CmsHomePage() {
 
             <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {quickLinks.map(({ label, href, description, icon: Icon }) => (
-                <Link key={href} href={href} className="rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/50">
+                <Link key={href} href={href} className="rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-[hsl(var(--info)/30%)] dark:border-white/10 dark:hover:border-[hsl(var(--info)/100%)]/50">
                   <div className="flex items-center gap-2">
                     <Icon size={15} className="text-[hsl(var(--primary))]" />
                     <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{label}</p>
@@ -614,7 +614,7 @@ export default function CmsHomePage() {
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Últimos publicados.</p>
               </div>
               {canEdit && (
-                <Link href="/plataforma/cms/posts" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-blue-300 hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
+                <Link href="/plataforma/cms/posts" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
                   Ver todo
                 </Link>
               )}
@@ -631,7 +631,7 @@ export default function CmsHomePage() {
                   <div key={post.slug} className="rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{post.title}</p>
-                      <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                      <span className="shrink-0 rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-bold text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text">
                         {post.status}
                       </span>
                     </div>
@@ -691,7 +691,7 @@ export default function CmsHomePage() {
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Ultimas historias recibidas para revision y publicacion.</p>
               </div>
               {canEdit && (
-                <Link href="/plataforma/cms/testimonials" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-blue-300 hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
+                <Link href="/plataforma/cms/testimonials" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
                   Ver todo
                 </Link>
               )}
@@ -709,7 +709,7 @@ export default function CmsHomePage() {
                   <div key={testimony.id} className="rounded-lg border border-[hsl(var(--border))] p-4 dark:border-white/10">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{testimony.emotion || "Sin categoria"}</p>
-                      <span className={testimony.is_approved ? "rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "rounded-full bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}>
+                      <span className={testimony.is_approved ? "rounded-full bg-success-soft px-2 py-1 text-[10px] font-bold text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text" : "rounded-full bg-warning-soft px-2 py-1 text-[10px] font-bold text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text"}>
                         {testimony.is_approved ? "Aprobado" : "Pendiente"}
                       </span>
                     </div>
@@ -727,7 +727,7 @@ export default function CmsHomePage() {
                 <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Ruta de gestion</h2>
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Secuencia recomendada para publicar cambios del sitio.</p>
               </div>
-              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              <CheckCircle2 className="h-5 w-5 text-success-text" />
             </div>
             <div className="mt-5 space-y-3">
               {[
@@ -741,7 +741,7 @@ export default function CmsHomePage() {
                   href={step.href}
                   target={step.external ? "_blank" : undefined}
                   rel={step.external ? "noopener noreferrer" : undefined}
-                  className="flex items-start gap-3 rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/50"
+                  className="flex items-start gap-3 rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-[hsl(var(--info)/30%)] dark:border-white/10 dark:hover:border-[hsl(var(--info)/100%)]/50"
                 >
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--bg-muted))] text-xs font-semibold text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))]">
                     {index + 1}

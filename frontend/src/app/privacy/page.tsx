@@ -10,7 +10,7 @@ export default function PrivacyPage() {
             <Navbar />
             <div className="pt-32 pb-4 container mx-auto px-3 max-w-4xl relative z-10">
                 <div className="glass-card bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] p-4 rounded-lg shadow-2xl border border-[hsl(var(--border))] dark:border-white/5">
-                    <div className="w-16 h-8 bg-emerald-500/10 text-emerald-500 rounded-lg flex items-center justify-center mb-3">
+                    <div className="w-16 h-8 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] rounded-lg flex items-center justify-center mb-3">
                         <ShieldAlert size={32} />
                     </div>
                     <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-3 tracking-tight">

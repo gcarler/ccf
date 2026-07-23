@@ -78,7 +78,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                         {/* Header */}
                         <header className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between px-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0">
                             <div className="flex items-center gap-3">
-                                <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                                <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-lg shadow-[hsl(var(--info))]/20">
                                     <Inbox size={18} />
                                 </div>
                                 <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] tracking-tight">Inbox</h3>
@@ -87,11 +87,11 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                 <span className={clsx(
                                     'text-[10px] font-bold uppercase tracking-wide flex items-center gap-1',
                                     socketStatus === 'open'
-                                        ? 'text-emerald-500'
+                                        ? 'text-[hsl(var(--success))]'
                                         : socketStatus === 'connecting'
-                                            ? 'text-amber-500'
+                                            ? 'text-[hsl(var(--warning))]'
                                             : socketStatus === 'error'
-                                                ? 'text-rose-500'
+                                                ? 'text-[hsl(var(--danger))]'
                                                 : 'text-[hsl(var(--text-secondary))]'
                                 )}>
                                     <span className="size-2 rounded-full bg-current" />
@@ -113,7 +113,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={14} />
                                 <input 
                                     type="text" placeholder="Buscar en notificaciones..." 
-                                    className="w-full h-9 bg-[hsl(var(--surface-2))] dark:bg-black/20 border-transparent rounded-md pl-10 pr-4 text-[12px] font-medium focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-black/40 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none"
+                                    className="w-full h-9 bg-[hsl(var(--surface-2))] dark:bg-black/20 border-transparent rounded-md pl-10 pr-4 text-[12px] font-medium focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-black/40 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all outline-none"
                                 />
                             </div>
                             <div className="flex gap-1">
@@ -152,14 +152,14 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                             transition={{ delay: idx * 0.05 }}
                                             className={clsx(
                                                 "group relative px-3 py-2 flex gap-4 transition-all cursor-pointer",
-                                                !notif.is_read ? "bg-blue-50/30 dark:bg-blue-500/5" : "hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+                                                !notif.is_read ? "bg-info-soft/30 dark:bg-[hsl(var(--info))]/5" : "hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                                             )}
                                         >
                                             <div className="shrink-0 pt-1">
                                                 <div className={clsx(
                                                     "size-10 rounded-lg flex items-center justify-center shadow-sm",
-                                                    notif.notif_type === 'mention' ? "bg-sky-100 dark:bg-sky-900/30 text-sky-600" :
-                                                    notif.notif_type === 'task' ? "bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))]" :
+                                                    notif.notif_type === 'mention' ? "bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-info-text" :
+                                                    notif.notif_type === 'task' ? "bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))]" :
                                                     "bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))]"
                                                 )}>
                                                     {notif.notif_type === 'mention' ? <User size={20} /> : 
@@ -176,7 +176,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                                 {/* Inline Actions */}
                                                 <div className="pt-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button onClick={(e) => { e.stopPropagation(); handleClear(notif.id); }} className="px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">Archivar</button>
-                                                    <button className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Ver</button>
+                                                    <button className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info))]/20 active:scale-95 transition-all">Ver</button>
                                                 </div>
                                             </div>
                                             {!notif.is_read && (
@@ -218,7 +218,7 @@ function Tab({ active, label, count, onClick }: any) {
             onClick={onClick}
             className={clsx(
                 "px-4 py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide transition-all flex items-center gap-2",
-                active ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20" : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-secondary))]"
+                active ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info))]/20" : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-secondary))]"
             )}
         >
             {label}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSButton } from './DSButton';
 
 describe('DSButton', () => {
@@ -74,5 +75,18 @@ describe('DSButton', () => {
   it('passes additional props', () => {
     render(<DSButton data-testid="custom-button">Button</DSButton>);
     expect(screen.getByTestId('custom-button')).toBeInTheDocument();
+  });
+
+  it('forwards ref to the button element', () => {
+    const ref = React.createRef<HTMLButtonElement>();
+    render(<DSButton ref={ref}>Button</DSButton>);
+    expect(ref.current).toBeInstanceOf(HTMLButtonElement);
+    expect(ref.current?.tagName).toBe('BUTTON');
+  });
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<DSButton>Accessible</DSButton>);
+    const results = await axe(container);
+    expect(results.violations).toHaveLength(0);
   });
 });

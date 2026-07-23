@@ -43,6 +43,15 @@
   --danger-muted: 0 84.2% 95%;
   --danger-text: 0 70% 28%;
 
+  /* Domain color tokens (milestones, categories, builder types) */
+  --domain-cyan: 183 100% 35%;
+  --domain-fuchsia: 300 100% 50%;
+  --domain-pink: 330 100% 50%;
+  --domain-teal: 170 80% 40%;
+  --domain-lime: 90 100% 40%;
+  --domain-indigo: 240 100% 60%;
+  --domain-purple: 270 100% 60%;
+
   /* Whiteboard color tokens */
   --whiteboard-bg: 0 0% 98%; /* #fafafa */
   --whiteboard-canvas: 0 0% 100%; /* #ffffff */
@@ -326,34 +335,10 @@
   }
 
   /* ── Semantic Color Utilities ── */
-  .bg-success { background-color: hsl(var(--success)); }
-  .bg-success-muted { background-color: hsl(var(--success-muted)); }
-  .bg-warning { background-color: hsl(var(--warning)); }
-  .bg-warning-muted { background-color: hsl(var(--warning-muted)); }
-  .bg-info { background-color: hsl(var(--info)); }
-  .bg-info-muted { background-color: hsl(var(--info-muted)); }
-  .bg-danger { background-color: hsl(var(--danger)); }
-  .bg-danger-muted { background-color: hsl(var(--danger-muted)); }
-
-  .text-success { color: hsl(var(--success)); }
-  .text-success-text { color: hsl(var(--success-text)); }
-  .text-warning { color: hsl(var(--warning)); }
-  .text-warning-text { color: hsl(var(--warning-text)); }
-  .text-info { color: hsl(var(--info)); }
-  .text-info-text { color: hsl(var(--info-text)); }
-  .text-danger { color: hsl(var(--danger)); }
-  .text-danger-text { color: hsl(var(--danger-text)); }
-
-  .border-success { border-color: hsl(var(--success)); }
-  .border-success-muted { border-color: hsl(var(--success-muted)); }
-  .border-warning-muted { border-color: hsl(var(--warning-muted)); }
-  .border-info { border-color: hsl(var(--info)); }
-  .border-info-muted { border-color: hsl(var(--info-muted)); }
-  .border-danger { border-color: hsl(var(--danger)); }
-  .border-danger-muted { border-color: hsl(var(--danger-muted)); }
-
   .shadow-primary { box-shadow: 0 4px 12px 0 hsl(var(--primary) / 0.15); }
   .shadow-success { box-shadow: 0 4px 12px 0 hsl(var(--success) / 0.15); }
+  .shadow-warning { box-shadow: 0 4px 12px 0 hsl(var(--warning) / 0.15); }
+  .shadow-danger { box-shadow: 0 4px 12px 0 hsl(var(--danger) / 0.15); }
 
   /* ── Semantic Component Utilities ── */
   /* Badges: muted bg + text in light, soft bg + bright text in dark */
@@ -414,6 +399,17 @@
   .hover\:bg-danger-muted:hover { background-color: hsl(var(--danger-muted)); }
   .hover\:bg-info-muted:hover { background-color: hsl(var(--info-muted)); }
   .hover\:bg-warning-muted:hover { background-color: hsl(var(--warning-muted)); }
+}
+
+/* AG Grid Quartz theme semantic overrides.
+   themeQuartz.withParams does not reliably resolve CSS custom properties,
+   so we override the AG Grid CSS variables directly.
+   The `html` prefix raises specificity above AG Grid's built-in rules. */
+html .ag-theme-quartz,
+html .ag-theme-quartz-dark {
+  --ag-accent-color: hsl(var(--primary));
+  --ag-range-selection-border-color: hsl(var(--primary));
+  --ag-selected-row-background-color: hsl(var(--primary) / 0.15);
 }
 
 /* Login page form elements */

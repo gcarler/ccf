@@ -2,11 +2,11 @@ import { UserPlus, Phone, Calendar, Sparkles, CheckCircle2 } from 'lucide-react'
 import { StatusOption } from '@/components/ui/StatusPicker';
 
 export const PIPELINE_STAGES: (StatusOption & { dot: string; colBg: string; emptyIcon: any })[] = [
-    { label: 'NUEVO', value: 'new', color: 'bg-[hsl(var(--primary))]', dot: 'bg-[hsl(var(--primary))]', text: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50', colBg: 'bg-blue-500/5', emptyIcon: UserPlus },
-    { label: 'POR LLAMAR', value: 'call', color: 'bg-amber-500', dot: 'bg-amber-500', text: 'text-amber-600', bg: 'bg-amber-50', colBg: 'bg-amber-500/5', emptyIcon: Phone },
-    { label: 'VISITA', value: 'visit', color: 'bg-sky-500', dot: 'bg-sky-500', text: 'text-sky-600', bg: 'bg-sky-50', colBg: 'bg-sky-500/5', emptyIcon: Calendar },
-    { label: 'DISCIPULADO', value: 'discipleship', color: 'bg-sky-500', dot: 'bg-sky-500', text: 'text-sky-600', bg: 'bg-sky-50', colBg: 'bg-sky-500/5', emptyIcon: Sparkles },
-    { label: 'CONSOLIDADO', value: 'consolidated', color: 'bg-emerald-500', dot: 'bg-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-50', colBg: 'bg-emerald-500/5', emptyIcon: CheckCircle2 },
+    { label: 'NUEVO', value: 'new', color: 'bg-[hsl(var(--primary))]', dot: 'bg-[hsl(var(--primary))]', text: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft', colBg: 'bg-[hsl(var(--info))]/5', emptyIcon: UserPlus },
+    { label: 'POR LLAMAR', value: 'call', color: 'bg-[hsl(var(--warning))]', dot: 'bg-[hsl(var(--warning))]', text: 'text-warning-text', bg: 'bg-warning-soft', colBg: 'bg-[hsl(var(--warning))]/5', emptyIcon: Phone },
+    { label: 'VISITA', value: 'visit', color: 'bg-[hsl(var(--info))]', dot: 'bg-[hsl(var(--info))]', text: 'text-info-text', bg: 'bg-info-soft', colBg: 'bg-[hsl(var(--info))]/5', emptyIcon: Calendar },
+    { label: 'DISCIPULADO', value: 'discipleship', color: 'bg-[hsl(var(--info))]', dot: 'bg-[hsl(var(--info))]', text: 'text-info-text', bg: 'bg-info-soft', colBg: 'bg-[hsl(var(--info))]/5', emptyIcon: Sparkles },
+    { label: 'CONSOLIDADO', value: 'consolidated', color: 'bg-[hsl(var(--success))]', dot: 'bg-[hsl(var(--success))]', text: 'text-success-text', bg: 'bg-success-soft', colBg: 'bg-[hsl(var(--success))]/5', emptyIcon: CheckCircle2 },
 ];
 
 export const STAGE_LABEL: Record<string, string> = {

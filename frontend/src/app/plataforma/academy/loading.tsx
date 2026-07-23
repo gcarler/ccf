@@ -30,7 +30,7 @@ export default function AcademyLoading() {
                                 <div className={`absolute inset-0 ${shimmer}`} />
                             </div>
                         ))}
-                        <div className="h-48 rounded-md border border-white/10 bg-gradient-to-br from-sky-500/30 to-sky-500/30 relative overflow-hidden">
+                        <div className="h-48 rounded-md border border-white/10 bg-gradient-to-br to-[hsl(var(--info)/30%)] to-[hsl(var(--info)/30%)] relative overflow-hidden">
                             <div className={`absolute inset-0 ${shimmer}`} />
                         </div>
                     </div>

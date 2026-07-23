@@ -178,7 +178,7 @@ export default function RankingsPage() {
               Métricas y Análisis
             </p>
             <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight flex items-center gap-2">
-              <Trophy size={22} className="text-amber-500" />
+              <Trophy size={22} className="text-[hsl(var(--warning))]" />
               Ranking de grupos
             </h1>
           </div>

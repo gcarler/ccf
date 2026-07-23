@@ -21,10 +21,10 @@ import {
     List,
     Filter,
 } from 'lucide-react';
-import { DSCard } from '@/design/components/DSCard';
-import { DSMetric } from '@/design/components/DSMetric';
-import { DSChart } from '@/design/components/DSChart';
-import { DSSectionHeader } from '@/design/components/DSSectionHeader';
+import { DSCard } from '@/design';
+import { DSMetric } from '@/design';
+import { DSChart } from '@/design';
+import { DSSectionHeader } from '@/design';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 
@@ -435,7 +435,7 @@ export default function DashboardShell({
             {error && !loading && (
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center space-y-2">
-                        <AlertTriangle size={32} className="mx-auto text-amber-500" />
+                        <AlertTriangle size={32} className="mx-auto text-[hsl(var(--warning))]" />
                         <p className="text-sm text-[hsl(var(--text-secondary))]">{error}</p>
                         <button
                             onClick={fetchDashboard}

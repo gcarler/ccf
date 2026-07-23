@@ -66,7 +66,7 @@ export default function AcademyTeachersPage() {
                 rightActions={
                     <button
                         onClick={() => router.push("/plataforma/academy/teacher")}
-                        className="rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20"
+                        className="rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
                     >
                         Panel docente
                     </button>
@@ -92,7 +92,7 @@ export default function AcademyTeachersPage() {
                                 value={query}
                                 onChange={(event) => setQuery(event.target.value)}
                                 placeholder="Buscar facilitador..."
-                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] py-1.5 pl-11 pr-4 text-sm font-semibold outline-none focus:border-blue-400 dark:border-white/10 dark:bg-black/20"
+                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] py-1.5 pl-11 pr-4 text-sm font-semibold outline-none focus:border-[hsl(var(--info)/40%)] dark:border-white/10 dark:bg-black/20"
                             />
                         </div>
                     </header>
@@ -101,7 +101,7 @@ export default function AcademyTeachersPage() {
                         {filtered.map((teacher) => (
                             <article
                                 key={teacher.id}
-                                className="cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
+                                className="cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 transition-all hover:-translate-y-0.5 hover:border-[hsl(var(--info)/30%)] hover:bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
                                 onClick={() => router.push(`/plataforma/academy/teacher?teacher=${teacher.id}`)}
                             >
                                 <div className="mb-3 flex items-center gap-3">
@@ -140,7 +140,7 @@ export default function AcademyTeachersPage() {
 function Metric({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) {
     return (
         <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10">
+            <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10">
                 <Icon size={20} />
             </div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>

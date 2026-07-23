@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
-import { DSCard } from '@/design/components/DSCard';
+import { DSCard } from '@/design';
 import { Settings, Plus, Edit2, Trash2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
@@ -117,7 +117,7 @@ export default function RolesSettingsPage() {
                                                 {role.name}
                                             </span>
                                             {role.is_leadership && (
-                                                <span className="px-2 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 text-[9px] font-semibold uppercase tracking-wide rounded-lg">
+                                                <span className="px-2 py-1 bg-warning-soft dark:bg-[hsl(var(--warning))]/20 text-warning-text text-[9px] font-semibold uppercase tracking-wide rounded-lg">
                                                     Suma a Liderazgo
                                                 </span>
                                             )}
@@ -150,7 +150,7 @@ export default function RolesSettingsPage() {
                         <button type="button" onClick={() => setIsEditing(null)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
-                        <button type="button" onClick={handleSave as any} className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/30 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                        <button type="button" onClick={handleSave as any} className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/30%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                             <Save size={16}/> Guardar
                         </button>
                     </>

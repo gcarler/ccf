@@ -151,8 +151,8 @@ export default function ForgotPasswordPage() {
                                 animate={{ opacity: 1, scale: 1 }}
                                 className="flex flex-col items-center text-center gap-4 py-6"
                             >
-                                <div className="w-14 h-14 rounded-full bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center">
-                                    <CheckCircle2 className="text-emerald-500" size={28} />
+                                <div className="w-14 h-14 rounded-full bg-success-soft border-2 border-[hsl(var(--success)/25%)] flex items-center justify-center">
+                                    <CheckCircle2 className="text-[hsl(var(--success))]" size={28} />
                                 </div>
                                 <div>
                                     <p className="text-ccf-blue-dark font-extrabold text-base m-0 mb-1">
@@ -203,7 +203,7 @@ export default function ForgotPasswordPage() {
                                             initial={{ opacity: 0, scale: 0.96 }}
                                             animate={{ opacity: 1, scale: 1 }}
                                             exit={{ opacity: 0, scale: 0.96 }}
-                                            className="px-3 py-1.5 bg-rose-50 border-2 border-rose-200 rounded-lg text-rose-600 text-[11px] font-bold text-center uppercase tracking-wider"
+                                            className="px-3 py-1.5 bg-danger-soft border-2 border-[hsl(var(--danger)/25%)] rounded-lg text-danger-text text-[11px] font-bold text-center uppercase tracking-wider"
                                         >
                                             {error}
                                         </motion.div>

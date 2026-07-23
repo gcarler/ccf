@@ -520,7 +520,7 @@ export default function CounselingPage() {
                         </div>
                         <div className="p-4 space-y-3 overflow-y-auto flex-1 custom-scrollbar">
                             {filteredSessions.filter(s => s.status === status).map(session => (
-                                        <div key={session.id} onClick={() => openSessionDetail(session)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSessionDetail(session); } }} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] p-3 space-y-4 shadow-sm hover:shadow-xl hover:shadow-sky-500/5 hover:border-sky-500/40 transition-all duration-300 group relative overflow-hidden flex flex-col cursor-pointer">
+                                        <div key={session.id} onClick={() => openSessionDetail(session)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSessionDetail(session); } }} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] p-3 space-y-4 shadow-sm hover:shadow-xl hover:shadow-[hsl(var(--info)/5%)] hover:border-[hsl(var(--info)/100%)]/40 transition-all duration-300 group relative overflow-hidden flex flex-col cursor-pointer">
                                     <div className="flex justify-between items-start">
                                         <div className="flex gap-1.5 flex-wrap">
                                             {session.priority_level && (

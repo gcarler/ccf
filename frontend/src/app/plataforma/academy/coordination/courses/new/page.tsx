@@ -68,7 +68,7 @@ export default function NewCoursePage() {
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden relative">
             {/* Background elements */}
-            <div className="absolute top-0 right-0 w-[500px] h-48 bg-blue-600/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-0 right-0 w-[500px] h-48 bg-[hsl(var(--info))]/5 rounded-full blur-[100px] pointer-events-none" />
             
             <WorkspaceToolbar
                 breadcrumbs={[
@@ -135,18 +135,18 @@ export default function NewCoursePage() {
  className="w-full space-y-3"
                 >
                     <header className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                             <Plus size={14} strokeWidth={3} /> Laboratorio de Contenido
                         </div>
-                        <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">Diseña un <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">Nuevo Futuro.</span></h1>
+                        <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">Diseña un <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))]">Nuevo Futuro.</span></h1>
                         <p className="text-[hsl(var(--text-secondary))] text-sm font-medium max-w-2xl leading-relaxed">Configura los cimientos de una nueva experiencia educativa para la comunidad CCF.</p>
                     </header>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Basic Info */}
-                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-black/10/20 dark:shadow-none space-y-4 group transition-all hover:border-blue-500/20">
+                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-black/10/20 dark:shadow-none space-y-4 group transition-all hover:border-[hsl(var(--info)/100%)]/20">
                             <div className="flex items-center gap-4 text-[hsl(var(--primary))]">
-                                <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shadow-inner">
+                                <div className="size-9 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center shadow-inner">
                                     <FileText size={24} strokeWidth={2.5} />
                                 </div>
                                 <h2 className="text-base font-semibold uppercase tracking-wide">Identidad del Programa</h2>
@@ -158,7 +158,7 @@ export default function NewCoursePage() {
                                     <input 
                                         required type="text" placeholder="Ej: CCF-01" value={formData.code}
                                         onChange={(e) => setFormData({...formData, code: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
                                     />
                                 </div>
                                 <div className="space-y-3">
@@ -166,7 +166,7 @@ export default function NewCoursePage() {
                                     <input 
                                         required type="text" placeholder="Ej: Fundamentos de la Fe" value={formData.title}
                                         onChange={(e) => setFormData({...formData, title: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
                                     />
                                 </div>
                                 <div className="md:col-span-2 space-y-3">
@@ -174,16 +174,16 @@ export default function NewCoursePage() {
                                     <textarea 
                                         rows={4} placeholder="Describe el impacto y los objetivos de este programa..." value={formData.description}
                                         onChange={(e) => setFormData({...formData, description: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-md px-4 py-2 text-sm font-medium outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all resize-none leading-relaxed"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-md px-4 py-2 text-sm font-medium outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all resize-none leading-relaxed"
                                     />
                                 </div>
                             </div>
                         </motion.div>
 
                         {/* Configuration */}
-                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-black/10/20 dark:shadow-none space-y-4 group transition-all hover:border-sky-500/20">
-                            <div className="flex items-center gap-4 text-sky-600">
-                                <div className="size-9 rounded-lg bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center shadow-inner">
+                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-black/10/20 dark:shadow-none space-y-4 group transition-all hover:border-[hsl(var(--info)/100%)]/20">
+                            <div className="flex items-center gap-4 text-info-text">
+                                <div className="size-9 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center shadow-inner">
                                     <Clock size={24} strokeWidth={2.5} />
                                 </div>
                                 <h2 className="text-base font-semibold uppercase tracking-wide">Reglas de Negocio</h2>
@@ -195,7 +195,7 @@ export default function NewCoursePage() {
                                     <select 
                                         value={formData.modality}
                                         onChange={(e) => setFormData({...formData, modality: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none appearance-none cursor-pointer focus:border-sky-500/50 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none appearance-none cursor-pointer focus:border-[hsl(var(--info)/100%)]/50 transition-all"
                                     >
                                         <option value="formal">Academia Formal</option>
                                         <option value="non_formal">Capacitación Libre</option>
@@ -206,7 +206,7 @@ export default function NewCoursePage() {
                                     <input 
                                         type="number" value={formData.duration_hours}
                                         onChange={(e) => setFormData({...formData, duration_hours: parseInt(e.target.value)})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-sky-500/50 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 transition-all"
                                     />
                                 </div>
                                 <div className="space-y-3">
@@ -214,13 +214,13 @@ export default function NewCoursePage() {
                                     <input 
                                         type="text" placeholder="Ej: Diplomado" value={formData.certificate_type}
                                         onChange={(e) => setFormData({...formData, certificate_type: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-sky-500/50 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 transition-all"
                                     />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                                <label className="flex items-center justify-between p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-blue-500/20 transition-all group/toggle">
+                                <label className="flex items-center justify-between p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-[hsl(var(--info)/100%)]/20 transition-all group/toggle">
                                     <div className="space-y-1">
                                         <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-none">Publicar ahora</p>
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hacer visible en el catálogo global</p>
@@ -231,7 +231,7 @@ export default function NewCoursePage() {
                                         className="size-8 rounded-md accent-blue-600 transition-transform active:scale-90"
                                     />
                                 </label>
-                                <label className="flex items-center justify-between p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-sky-500/20 transition-all group/toggle">
+                                <label className="flex items-center justify-between p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-[hsl(var(--info)/100%)]/20 transition-all group/toggle">
                                     <div className="space-y-1">
                                         <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-none">Autogestionado</p>
                                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin restricciones de fecha o cohorte</p>
