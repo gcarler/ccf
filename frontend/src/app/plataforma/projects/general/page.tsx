@@ -94,7 +94,7 @@ export default function ProjectsGeneralPage() {
             viewOptions={GENERAL_VIEWS}
         >
             {error && (
-                <div className="mx-4 mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                <div className="mx-4 mt-4 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
                     <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}

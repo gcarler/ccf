@@ -72,7 +72,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
     if (loading && !session) {
         return (
             <div className="flex flex-col items-center justify-center h-full gap-4">
-                <Loader2 className="animate-spin text-sky-600" size={32} />
+                <Loader2 className="animate-spin text-info-text" size={32} />
                 <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cargando expediente...</p>
             </div>
         );
@@ -82,7 +82,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113]">
             {/* Header Cinematic */}
             <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-[hsl(var(--surface-1))]/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
-                <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-sky-600 dark:text-white">
+                <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-info-text dark:text-white">
                     <Heart size={160} />
                 </div>
                 
@@ -97,7 +97,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                     <div className="flex gap-2">
                         <span className={clsx(
                             "px-3 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg",
-                            session.status === 'Realizada' ? "bg-emerald-600 text-white shadow-emerald-500/20" : "bg-amber-500 text-white shadow-amber-500/20"
+                            session.status === 'Realizada' ? "bg-[hsl(var(--success))] text-white shadow-[hsl(var(--success)/20%)]" : "bg-[hsl(var(--warning))] text-white shadow-[hsl(var(--warning)/20%)]"
                         )}>
                             <div className="size-1.5 rounded-full bg-[hsl(var(--bg-primary))] animate-pulse" />
                             {session.status}
@@ -108,7 +108,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                 <div className="flex items-center gap-4 relative z-10">
                     <motion.div 
                         whileHover={{ scale: 1.05 }}
-                        className="size-10 rounded-lg bg-gradient-to-br from-sky-600 to-sky-700 flex items-center justify-center text-white shadow-2xl shadow-sky-500/30 border-4 border-white dark:border-[#1e1f21]"
+                        className="size-10 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white shadow-2xl shadow-[hsl(var(--info)/30%)] border-4 border-white dark:border-[#1e1f21]"
                     >
                         <Heart size={28} />
                     </motion.div>
@@ -117,7 +117,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                             {session.topic || 'Sin tema <br/> asignado'}
                         </h2>
                         <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] flex items-center gap-1.5 uppercase tracking-wide opacity-70">
-                            <span className="p-1.5 bg-sky-500/10 rounded-lg text-sky-600"><User size={12} /></span> {session.persona_name || 'Persona CCF'}
+                            <span className="p-1.5 bg-[hsl(var(--info))]/10 rounded-lg text-info-text"><User size={12} /></span> {session.persona_name || 'Persona CCF'}
                         </p>
                     </div>
                 </div>
@@ -148,7 +148,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                         onClick={() => setActiveTab(tab.id as any)} 
                         className={clsx(
                             "px-3 py-2 text-[10px] font-bold uppercase tracking-wide border-b-2 transition-all flex items-center gap-2.5 shrink-0",
-                            activeTab === tab.id ? "border-sky-600 text-sky-600" : "border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white"
+                            activeTab === tab.id ? "border-[hsl(var(--info)/100%)] text-info-text" : "border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white"
                         )}
                     >
                         <tab.icon size={12} className={activeTab === tab.id ? "animate-pulse" : ""} /> {tab.label}
@@ -163,7 +163,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                         <motion.div key="details" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="space-y-3">
                             <section className="space-y-4">
                                 <h3 className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2">
-                                    <BookOpen size={14} className="text-sky-600" /> Resumen
+                                    <BookOpen size={14} className="text-info-text" /> Resumen
                                 </h3>
                                 <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] italic leading-relaxed">
                                     &quot;{session.summary || 'No hay un resumen registrado para esta sesión.'}&quot;
@@ -173,11 +173,11 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                             <section className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2">
-                                        <Lock size={14} className="text-rose-500" /> Notas Confidenciales
+                                        <Lock size={14} className="text-[hsl(var(--danger))]" /> Notas Confidenciales
                                     </h3>
                                     <button 
                                         onClick={() => setShowNotes(!showNotes)}
-                                        className="text-[9px] font-bold text-sky-600 uppercase tracking-wider flex items-center gap-1.5 p-1 px-2.5 bg-sky-50 dark:bg-white/5 rounded-md border border-sky-100 dark:border-white/10 active:scale-90 transition-all"
+                                        className="text-[9px] font-bold text-info-text uppercase tracking-wider flex items-center gap-1.5 p-1 px-2.5 bg-info-soft dark:bg-white/5 rounded-md border border-[hsl(var(--info)/20%)] dark:border-white/10 active:scale-90 transition-all"
                                     >
                                         {showNotes ? <EyeOff size={12} /> : <Eye size={12} />} {showNotes ? 'Ocultar' : 'Revelar Portal'}
                                     </button>
@@ -202,12 +202,12 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                     <div className={clsx(
                                         "p-4 rounded-md border transition-all duration-700 min-h-[140px]",
                                         showNotes 
-                                            ? "bg-rose-50 dark:bg-rose-500/[0.03] border-rose-100 dark:border-rose-500/20" 
+                                            ? "bg-danger-soft dark:bg-[hsl(var(--danger))]/[0.03] border-[hsl(var(--danger)/20%)] dark:border-[hsl(var(--danger)/100%)]/20" 
                                             : "bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border-[hsl(var(--border))] dark:border-white/[0.05]"
                                     )}>
                                         <p className={clsx(
                                             "text-sm font-medium leading-relaxed transition-all duration-700",
-                                            showNotes ? "text-[hsl(var(--text-primary))] dark:text-rose-100 tracking-tight" : "text-transparent"
+                                            showNotes ? "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--danger))] tracking-tight" : "text-transparent"
                                         )}>
                                             {session.confidential_notes || 'Sin notas confidenciales registradas para este encuentro pastoral.'}
                                         </p>
@@ -217,7 +217,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                             initial={{ y: -100 }}
                                             animate={{ y: 300 }}
                                             transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                                            className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-rose-500/50 to-transparent z-20 pointer-events-none"
+                                            className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--danger)/50%)] to-transparent z-20 pointer-events-none"
                                         />
                                     )}
                                 </div>
@@ -227,7 +227,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                 <div className="grid grid-cols-2 gap-3 pt-4">
                                     <button 
                                         onClick={() => handleUpdateStatus('Realizada')}
-                                        className="py-2 bg-emerald-600 text-white rounded-lg text-[9px] font-bold uppercase tracking-wide shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                                        className="py-2 bg-[hsl(var(--success))] text-white rounded-lg text-[9px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] flex items-center justify-center gap-2"
                                     >
                                         <CheckCircle2 size={14} /> Completar
                                     </button>
@@ -249,7 +249,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                 <div className="relative border-l-2 border-[hsl(var(--border))] dark:border-white/5 ml-2 space-y-3 pl-6">
                                     {session.history.map((h: any) => (
                                         <div key={h.id} className="relative">
-                                            <div className="absolute -left-[31px] top-1 size-4 rounded-full border-4 border-white dark:border-[#1e1f21] bg-sky-600 shadow-sm" />
+                                            <div className="absolute -left-[31px] top-1 size-4 rounded-full border-4 border-white dark:border-[#1e1f21] bg-[hsl(var(--info))] shadow-sm" />
                                             <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10">
                                                 <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] mb-1">{h.text}</p>
                                                 <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{h.date}</p>

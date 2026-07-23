@@ -72,11 +72,11 @@ export default function PersonaSelect({
             <button
                 type="button"
                 onClick={() => setOpen(!open)}
-                className="w-full flex items-center gap-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2 text-sm font-medium text-left hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                className="w-full flex items-center gap-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2 text-sm font-medium text-left hover:border-[hsl(var(--primary)_/_0.6)] dark:hover:border-[hsl(var(--primary)_/_0.5)] transition-colors"
             >
                 {selected ? (
                     <>
-                        <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                        <div className="size-6 rounded-full bg-[hsl(var(--primary)_/_0.12)] dark:bg-[hsl(var(--primary)_/_0.25)] flex items-center justify-center shrink-0">
                             <UserIcon size={12} className="text-[hsl(var(--primary))]" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -137,7 +137,7 @@ export default function PersonaSelect({
                                 }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors text-left"
                             >
-                                <div className="size-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                                <div className="size-6 rounded-full bg-[hsl(var(--primary)_/_0.12)] dark:bg-[hsl(var(--primary)_/_0.25)] flex items-center justify-center shrink-0">
                                     <UserIcon size={12} className="text-[hsl(var(--primary))]" />
                                 </div>
                                 <div className="min-w-0 flex-1">

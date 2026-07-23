@@ -47,8 +47,8 @@ const COLOR_OPTIONS = [
 ];
 
 const STATUS_OPTIONS = [
-    { value: 'planning', label: 'Planificación', dot: 'bg-amber-500' },
-    { value: 'active', label: 'En Marcha', dot: 'bg-emerald-500' },
+    { value: 'planning', label: 'Planificación', dot: 'bg-[hsl(var(--warning))]' },
+    { value: 'active', label: 'En Marcha', dot: 'bg-[hsl(var(--success))]' },
 ];
 
 export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defaultStatus }: Props) {

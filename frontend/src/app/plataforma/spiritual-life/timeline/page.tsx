@@ -19,11 +19,11 @@ interface Milestone {
 }
 
 const MILESTONE_DEFS: Record<string, { label: string; icon: any; color: string; bg: string; border: string }> = {
-    Decision_Fe:       { label: 'Decisión de Fe',        icon: Zap,    color: 'text-amber-600',  bg: 'bg-amber-50 dark:bg-amber-900/20',    border: 'border-amber-200 dark:border-amber-500/20' },
-    Bautismo_Aguas:    { label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-cyan-600',   bg: 'bg-cyan-50 dark:bg-cyan-900/20',      border: 'border-cyan-200 dark:border-cyan-500/20'   },
-    Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20',  border: 'border-blue-200 dark:border-blue-500/20'},
-    Persona_Oficial:   { label: 'Participación Oficial',      icon: Shield, color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-500/20'},
-    Liderazgo:         { label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-900/20',      border: 'border-blue-200 dark:border-blue-500/20'  },
+    Decision_Fe:       { label: 'Decisión de Fe',        icon: Zap,    color: 'text-warning-text',  bg: 'bg-warning-soft dark:bg-[hsl(var(--warning))]/20',    border: 'border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/20' },
+    Bautismo_Aguas:    { label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-[hsl(var(--domain-cyan)/90%)]',   bg: 'bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/20%)]',      border: 'border-[hsl(var(--domain-cyan)/30%)] dark:border-[hsl(var(--domain-cyan)/20%)]'   },
+    Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20',  border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20'},
+    Persona_Oficial:   { label: 'Participación Oficial',      icon: Shield, color: 'text-success-text',bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/20', border: 'border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/20'},
+    Liderazgo:         { label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20',      border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20'  },
 };
 
 export default function SpiritualTimelinePage() {
@@ -47,7 +47,7 @@ export default function SpiritualTimelinePage() {
                 <div className="flex items-center justify-between">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                            <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 flex items-center justify-center">
                                 <Calendar size={14} className="text-[hsl(var(--primary))]" />
                             </div>
                             <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Línea de Tiempo</span>
@@ -59,7 +59,7 @@ export default function SpiritualTimelinePage() {
                             Cada hito de tu caminar con Cristo, registrado y celebrado.
                         </p>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                         <Plus size={13} /> Registrar Hito
                     </button>
                 </div>

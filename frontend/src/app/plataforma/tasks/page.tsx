@@ -25,9 +25,9 @@ interface Task {
 }
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
-  urgent: { label: "Urgente", color: "text-rose-600 bg-rose-50 dark:bg-rose-900/20", dot: "bg-rose-500" },
+  urgent: { label: "Urgente", color: "text-danger-text bg-danger-soft dark:bg-[hsl(var(--danger))]/20", dot: "bg-[hsl(var(--danger))]" },
   high: { label: "Alta", color: "text-orange-600 bg-orange-50 dark:bg-orange-900/20", dot: "bg-orange-500" },
-  medium: { label: "Media", color: "text-amber-600 bg-amber-50 dark:bg-amber-900/20", dot: "bg-amber-500" },
+  medium: { label: "Media", color: "text-warning-text bg-warning-soft dark:bg-[hsl(var(--warning))]/20", dot: "bg-[hsl(var(--warning))]" },
   low: { label: "Baja", color: "text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]", dot: "bg-[hsl(var(--surface-2))]" },
 };
 
@@ -173,7 +173,7 @@ export default function UserTasksPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: Math.min(index * 0.025, 0.2) }}
         onClick={() => setSelectedTask(task as TaskDetail)}
-        className="group w-full text-left rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-lg dark:border-white/10 dark:bg-[#252528]"
+        className="group w-full text-left rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm transition-all hover:border-[hsl(var(--info)/30%)] hover:shadow-lg dark:border-white/10 dark:bg-[#252528]"
       >
         <div className="flex items-start gap-3">
           <button
@@ -182,9 +182,9 @@ export default function UserTasksPage() {
               completeTask(task);
             }}
             disabled={savingTaskId === task.id}
-            className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-[hsl(var(--border))] transition-all hover:border-emerald-400 hover:bg-emerald-50 disabled:opacity-60 dark:border-white/10"
+            className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-[hsl(var(--border))] transition-all hover:border-[hsl(var(--success)/40%)] hover:bg-success-soft disabled:opacity-60 dark:border-white/10"
           >
-            {savingTaskId === task.id ? <CheckCircle2 size={13} className="text-emerald-500" /> : <Circle size={12} className="text-[hsl(var(--text-secondary))]" />}
+            {savingTaskId === task.id ? <CheckCircle2 size={13} className="text-[hsl(var(--success))]" /> : <Circle size={12} className="text-[hsl(var(--text-secondary))]" />}
           </button>
           <div className="min-w-0 flex-1">
             <p className="line-clamp-2 text-[13px] font-bold leading-snug text-[hsl(var(--text-primary))] transition-colors group-hover:text-[hsl(var(--primary))] dark:text-white">
@@ -196,13 +196,13 @@ export default function UserTasksPage() {
                 <FolderOpen size={10} /> {task.project_title || "Sin proyecto"}
               </span>
               {task.due_date && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-blue-900/20">
+                <span className="inline-flex items-center gap-1 rounded-full bg-info-soft px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20">
                   <CalendarDays size={10} /> {new Date(task.due_date).toLocaleDateString("es-CO")}
                 </span>
               )}
             </div>
           </div>
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-50 px-2 py-1 font-semibold text-amber-600 dark:bg-amber-900/20">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-warning-soft px-2 py-1 font-semibold text-warning-text dark:bg-[hsl(var(--warning))]/20">
             <Zap size={10} fill="currentColor" /> {xp}
           </span>
         </div>
@@ -258,7 +258,7 @@ export default function UserTasksPage() {
                       "rounded-md px-3 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all",
                       filterPriority === priority
                         ? "bg-[hsl(var(--primary))] text-white"
-                        : "border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] hover:border-blue-300 dark:border-white/10 dark:bg-white/5"
+                        : "border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] dark:border-white/10 dark:bg-white/5"
                     )}
                   >
                     {priority === "all" ? "Todo" : PRIORITY_CONFIG[priority]?.label}
@@ -278,7 +278,7 @@ export default function UserTasksPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex min-h-[55vh] flex-col items-center justify-center gap-4 text-center">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-500 dark:bg-emerald-900/20">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-success-soft text-[hsl(var(--success))] dark:bg-[hsl(var(--success))]/20">
                 <CheckCircle2 size={28} />
               </div>
               <div>
@@ -287,7 +287,7 @@ export default function UserTasksPage() {
                   {query || filterPriority !== "all" ? "Ajusta los filtros para ver otras tareas." : "No tienes tareas activas asignadas en este momento."}
                 </p>
               </div>
-              <Link href="/plataforma/projects/list#projects-list" className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+              <Link href="/plataforma/projects?view=list#projects-list" className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white">
                 <FolderOpen size={13} /> Ver proyectos
               </Link>
             </div>

@@ -3,7 +3,6 @@
 import React, { useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { X } from 'lucide-react';
-import { radii, shadows } from '../tokens';
 
 interface DSModalProps {
     open: boolean;
@@ -22,6 +21,20 @@ const sizeClasses = {
 
 let openModalsCount = 0;
 
+const FOCUSABLE_SELECTORS = [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
+function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
+    if (!container) return [];
+    return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS));
+}
+
 export function DSModal({
     open,
     onClose,
@@ -31,30 +44,81 @@ export function DSModal({
     showClose = true,
 }: DSModalProps) {
     const modalRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLElement | null>(null);
+    const hasOpenedRef = useRef(false);
 
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
         };
 
+        const handleTab = (e: KeyboardEvent) => {
+            if (e.key !== 'Tab') return;
+            const modal = modalRef.current;
+            if (!modal) return;
+
+            const focusable = getFocusableElements(modal);
+            if (focusable.length === 0) {
+                e.preventDefault();
+                return;
+            }
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            const active = document.activeElement as HTMLElement | null;
+
+            if (e.shiftKey) {
+                if (active === first || !modal.contains(active)) {
+                    e.preventDefault();
+                    last.focus();
+                }
+            } else {
+                if (active === last || !modal.contains(active)) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            }
+        };
+
         if (open) {
+            triggerRef.current = document.activeElement as HTMLElement | null;
             document.addEventListener('keydown', handleEscape);
+            document.addEventListener('keydown', handleTab);
 
             if (openModalsCount === 0) {
                 document.body.style.overflow = 'hidden';
             }
             openModalsCount++;
+            hasOpenedRef.current = true;
+
+            // Move focus to the first focusable element (close button or content)
+            const firstFocusable = getFocusableElements(modalRef.current)[0];
+            firstFocusable?.focus();
         }
 
         return () => {
             document.removeEventListener('keydown', handleEscape);
-            openModalsCount--;
+            document.removeEventListener('keydown', handleTab);
 
-            if (openModalsCount === 0) {
-                document.body.style.overflow = '';
+            if (hasOpenedRef.current) {
+                openModalsCount--;
+                hasOpenedRef.current = false;
+
+                if (openModalsCount === 0) {
+                    document.body.style.overflow = '';
+                }
             }
         };
     }, [open, onClose]);
+
+    // Restore focus when the modal is fully closed
+    const previousOpenRef = React.useRef(open);
+    useEffect(() => {
+        if (previousOpenRef.current && !open) {
+            triggerRef.current?.focus();
+        }
+        previousOpenRef.current = open;
+    }, [open]);
 
     if (!open) return null;
 
@@ -71,12 +135,11 @@ export function DSModal({
             <div
                 ref={modalRef}
                 className={clsx(
-                    'relative w-full mx-4 bg-[hsl(var(--bg-primary))]',
+                    'relative w-full mx-4 bg-[hsl(var(--bg-primary))] rounded-lg',
                     'border border-[hsl(var(--border))] dark:border-white/10',
                     'shadow-2xl',
                     sizeClasses[size]
                 )}
-                style={{ borderRadius: radii.lg, boxShadow: shadows.dropdown }}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={title ? 'modal-title' : undefined}

@@ -87,4 +87,11 @@ describe('DSInput', () => {
     render(<DSInput icon={TestIcon} />);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
   });
+
+  it('forwards ref to the input element', () => {
+    const ref = React.createRef<HTMLInputElement>();
+    render(<DSInput ref={ref} />);
+    expect(ref.current).toBeInstanceOf(HTMLInputElement);
+    expect(ref.current?.tagName).toBe('INPUT');
+  });
 });

@@ -28,11 +28,11 @@ export interface UniversalGanttViewProps {
 }
 
 const COLORS = {
-    blue: 'bg-[hsl(var(--primary))] shadow-blue-500/20',
-    sky: 'bg-sky-500 shadow-sky-500/20',
-    emerald: 'bg-emerald-500 shadow-emerald-500/20',
-    amber: 'bg-amber-500 shadow-amber-500/20',
-    rose: 'bg-rose-500 shadow-rose-500/20',
+    blue: 'bg-[hsl(var(--primary))] shadow-[hsl(var(--primary))/0.2]',
+    sky: 'bg-[hsl(var(--info))] shadow-[hsl(var(--info))/0.2]',
+    emerald: 'bg-[hsl(var(--success))] shadow-[hsl(var(--success))/0.2]',
+    amber: 'bg-[hsl(var(--warning))] shadow-[hsl(var(--warning))/0.2]',
+    rose: 'bg-[hsl(var(--danger))] shadow-[hsl(var(--danger))/0.2]',
 };
 
 const toDateKey = (date: Date) => {
@@ -221,7 +221,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                     {onOptimize && (
                         <button
                             onClick={onOptimize}
-                            className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide flex items-center gap-2 shadow-xl shadow-blue-500/10 hover:scale-105 transition-all"
+                            className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide flex items-center gap-2 shadow-xl shadow-[hsl(var(--info)/10%)] hover:scale-105 transition-all"
                         >
                             <Zap size={14} /> Optimus Brain
                         </button>
@@ -242,7 +242,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                             {days.map((day, i) => (
                                 <div key={i} className={clsx(
                                     "w-[160px] p-3 flex flex-col gap-1 border-r border-[hsl(var(--border))] dark:border-white/5",
-                                    day.toDateString() === today.toDateString() ? "bg-blue-50/50 dark:bg-blue-500/5 text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]"
+                                    day.toDateString() === today.toDateString() ? "bg-info-soft dark:bg-[hsl(var(--info)/0.05)] text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]"
                                 )}>
                                     <span className="text-[10px] font-semibold uppercase tracking-tighter opacity-60">
                                         {day.toLocaleDateString('es-ES', { weekday: 'long' })}
@@ -306,12 +306,12 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                         <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">En Curso</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="size-2 rounded-full bg-sky-500" />
+                        <div className="size-2 rounded-full bg-[hsl(var(--info))]" />
                         <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Planificado</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="size-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20" />
-                        <span className="font-semibold text-emerald-500 uppercase tracking-wide">Ejecución Exitosa</span>
+                        <div className="size-2 rounded-full bg-[hsl(var(--success))] shadow-lg shadow-[hsl(var(--success))/0.2]" />
+                        <span className="font-semibold text-[hsl(var(--success))] uppercase tracking-wide">Ejecución Exitosa</span>
                     </div>
                 </div>
                 <button className="flex items-center gap-2 font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-colors">

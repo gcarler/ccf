@@ -2,7 +2,9 @@ import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import SplitDropdownButton from './SplitDropdownButton';
 import { Plus, FileText, Bell, LayoutDashboard, Layout, List } from 'lucide-react';
 
+
 const meta: Meta<typeof SplitDropdownButton> = {
+  tags: ['autodocs'],
   title: 'UI/SplitDropdownButton',
   component: SplitDropdownButton,
   parameters: {
@@ -74,7 +76,7 @@ export const Disabled: Story = {
     onMainClick: () => {
       // Disabled - no action
     },
-    onOptionClick: (id) => {
+    onOptionClick: () => {
       // Disabled - no action
     },
     mainLabel: 'Acción',

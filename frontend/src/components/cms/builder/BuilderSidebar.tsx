@@ -65,8 +65,8 @@ export default function BuilderSidebar({
           <div className="space-y-2 pt-2 border-t border-[hsl(var(--border))] dark:border-white/10">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Plantillas rápidas</p>
             {popupTemplate && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50/70 p-3 dark:border-rose-500/20 dark:bg-rose-500/5">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-200">Pop-up</p>
+              <div className="rounded-lg border border-[hsl(var(--danger)/25%)] bg-danger-soft/70 p-3 dark:border-[hsl(var(--danger)/100%)]/20 dark:bg-[hsl(var(--danger))]/5">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-danger-text dark:text-[hsl(var(--danger))]">Pop-up</p>
                 <p className="mt-1 text-[11px] text-[hsl(var(--text-secondary))]">
                   Crea un aviso temporal sin editar el contenido principal de la página.
                 </p>
@@ -74,7 +74,7 @@ export default function BuilderSidebar({
                   type="button"
                   onClick={() => addTemplateSection(popupTemplate)}
                   disabled={!activeSlug || !canEdit}
-                  className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"
+                  className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[hsl(var(--danger))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"
                 >
                   <Plus size={12} /> Crear pop-up
                 </button>

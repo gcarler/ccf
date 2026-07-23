@@ -41,7 +41,7 @@ export default function AdminSettingsProfilePage() {
                             <motion.span
                                 initial={{ opacity: 0, x: 10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-md text-[10px] font-semibold uppercase tracking-wide"
+                                className="px-3 py-1.5 bg-[hsl(var(--success))]/20 text-[hsl(var(--success))] rounded-md text-[10px] font-semibold uppercase tracking-wide"
                             >
                                 ✓ Guardado
                             </motion.span>
@@ -116,7 +116,7 @@ export default function AdminSettingsProfilePage() {
                 </Section>
 
                 {editing && (
-                    <div className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[11px] text-amber-400 font-bold">
+                    <div className="flex items-start gap-3 p-4 bg-[hsl(var(--warning))]/10 border border-[hsl(var(--warning)/100%)]/20 rounded-lg text-[11px] text-[hsl(var(--warning))] font-bold">
                         <AlertCircle size={16} className="shrink-0 mt-0.5" />
                         Los cambios se reflejarán en todo el ecosistema CCF, incluyendo el sitio público.
                     </div>

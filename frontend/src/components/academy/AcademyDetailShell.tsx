@@ -24,20 +24,20 @@ type Variant = "sky" | "emerald" | "amber" | "blue";
 
 const VARIANT_PRESETS: Record<Variant, { primary: string; secondary: string }> = {
     sky: {
-        primary: "from-sky-500/20",
-        secondary: "from-sky-500/10",
+        primary: "to-[hsl(var(--info)/20%)]",
+        secondary: "to-[hsl(var(--info)/10%)]",
     },
     emerald: {
-        primary: "from-emerald-500/15",
-        secondary: "from-teal-500/10",
+        primary: "to-[hsl(var(--success)/15%)]",
+        secondary: "from-[hsl(var(--domain-teal)/10%)]",
     },
     amber: {
-        primary: "from-amber-500/20",
-        secondary: "from-rose-500/10",
+        primary: "to-[hsl(var(--warning)/20%)]",
+        secondary: "to-[hsl(var(--danger)/10%)]",
     },
     blue: {
-        primary: "from-blue-500/15",
-        secondary: "from-sky-500/10",
+        primary: "to-[hsl(var(--info)/15%)]",
+        secondary: "to-[hsl(var(--info)/10%)]",
     },
 };
 

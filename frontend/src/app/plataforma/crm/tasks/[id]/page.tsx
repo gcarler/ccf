@@ -12,8 +12,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
+import { DSCard } from '@/design';
+import { DSBadge } from '@/design';
 import CrmShell from '@/components/crm/CrmShell';
 import { toast } from 'sonner';
 import clsx from 'clsx';
@@ -161,7 +161,7 @@ export default function CrmTaskDetailPage() {
                                         <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Prioridad</p>
                                         <div className={clsx(
                                             'flex items-center gap-2 px-3 py-2 rounded-md text-xs font-bold',
-                                            task.priority === 'high' ? 'bg-rose-500/10 text-rose-600' : 'bg-amber-500/10 text-amber-600'
+                                            task.priority === 'high' ? 'bg-[hsl(var(--danger))]/10 text-danger-text' : 'bg-[hsl(var(--warning))]/10 text-warning-text'
                                         )}>
                                             <Flag size={14} /> {String(task.priority ?? 'normal').toUpperCase()}
                                         </div>

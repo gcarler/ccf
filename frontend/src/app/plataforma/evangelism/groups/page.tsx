@@ -261,12 +261,12 @@ export default function GroupPage() {
  <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">Grupos en Casa</h1>
  {activeSeason
  ? <p className="text-[hsl(var(--text-secondary))] text-sm font-medium flex items-center gap-1.5 mt-2">
- <span className="inline-block size-2 rounded-full bg-emerald-500" />
+ <span className="inline-block size-2 rounded-full bg-[hsl(var(--success))]" />
  Temporada activa: <strong className="text-[hsl(var(--text-primary))] ">{activeSeason.name}</strong>
  <span className="text-[hsl(var(--text-secondary))] /20">·</span>
  {PERIODICITY_LABEL[activeSeason.periodicity]}
  </p>
- : <p className="text-amber-500 text-sm font-bold mt-2 flex items-center gap-2">
+ : <p className="text-[hsl(var(--warning))] text-sm font-bold mt-2 flex items-center gap-2">
  <Clock size={16} /> Sin temporada activa. Crea una para comenzar.
  </p>
  }
@@ -289,8 +289,8 @@ export default function GroupPage() {
  {canManageEvangelism && (
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
    <button onClick={requestSendReminders} disabled={sendingReminders}
-    className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-md transition-all text-left disabled:opacity-60">
-    <div className="size-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
+    className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] hover:shadow-md transition-all text-left disabled:opacity-60">
+    <div className="size-10 rounded-lg bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
      {sendingReminders ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
     </div>
     <div className="flex-1 min-w-0">
@@ -300,8 +300,8 @@ export default function GroupPage() {
     </div>
    </button>
    <Link href="/plataforma/crm?counseling=open"
-    className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-amber-300 dark:hover:border-amber-500 hover:shadow-md transition-all">
-    <div className="size-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
+    className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-[hsl(var(--warning)/30%)] dark:hover:border-[hsl(var(--warning)/100%)] hover:shadow-md transition-all">
+    <div className="size-10 rounded-lg bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/30 text-warning-text dark:text-[hsl(var(--warning))] flex items-center justify-center shrink-0">
      <Award size={18} />
     </div>
     <div className="flex-1 min-w-0">
@@ -309,7 +309,7 @@ export default function GroupPage() {
      <p className="text-sm font-bold text-[hsl(var(--text-primary))] mt-0.5">
       Consejería pendiente
       {counselingCount !== null && (
-       <span className="ml-2 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px] font-bold">{counselingCount}</span>
+       <span className="ml-2 px-2 py-0.5 rounded-md bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/30 text-warning-text dark:text-warning-text text-[10px] font-bold">{counselingCount}</span>
       )}
      </p>
      <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">Tickets abiertos esperando respuesta pastoral.</p>
@@ -334,9 +334,9 @@ export default function GroupPage() {
  <button
  key={h.id}
  onClick={() => router.push(`/plataforma/evangelism/groups/${h.id}`)}
- className="text-left bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-3 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:border-blue-500/30 transition-all group"
+ className="text-left bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-3 shadow-sm hover:shadow-xl hover:shadow-[hsl(var(--info)/5%)] hover:border-[hsl(var(--info)/100%)]/30 transition-all group"
  >
- <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+ <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
  <Home size={24} />
  </div>
  <p className="text-lg font-bold text-[hsl(var(--text-primary))]">{h.name}</p>
@@ -364,7 +364,7 @@ export default function GroupPage() {
  {seasons.map(s => (
  <div key={s.id} className={clsx(
  "bg-[hsl(var(--bg-primary))] rounded-lg border p-3 shadow-sm transition-all",
- s.status === 'Activa' ? 'border-blue-400/50 shadow-blue-500/10' : 'border-[hsl(var(--border-primary))]'
+ s.status === 'Activa' ? 'border-[hsl(var(--info)/40%)]/50 shadow-[hsl(var(--info)/10%)]' : 'border-[hsl(var(--border-primary))]'
  )}>
  <div className="flex items-start justify-between mb-4">
  <DSBadge tone={s.status === 'Activa' ? 'emerald' : 'slate'} label={s.status} />
@@ -406,13 +406,13 @@ export default function GroupPage() {
  <tr key={row.grupo_id} onClick={() => router.push(`/plataforma/evangelism/groups/${row.grupo_id}`)} className="group hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/[0.01] transition-colors cursor-pointer">
  <td className="px-4 py-2">
  <div className="flex items-center gap-4">
- <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Home size={18} /></div>
+ <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><Home size={18} /></div>
  <span className="text-base font-bold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">{house?.name || `Grupo #${row.grupo_id}`}</span>
  </div>
  </td>
  <td className="px-4 py-2 text-center text-sm font-bold text-[hsl(var(--text-secondary))]">{row.total_sessions}</td>
  <td className="px-4 py-2 text-center">
- <span className="px-4 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-md text-sm font-semibold">{row.total_attendance}</span>
+ <span className="px-4 py-1.5 bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-md text-sm font-semibold">{row.total_attendance}</span>
  </td>
  <td className="px-4 py-2 text-center text-sm font-bold text-[hsl(var(--text-secondary))]">{row.avg}</td>
  </tr>
@@ -438,7 +438,7 @@ export default function GroupPage() {
  <button disabled={savingSeason} onClick={() => setShowNewSeason(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
  Cancelar
  </button>
- <button onClick={handleCreateSeason} disabled={savingSeason || !isSeasonFormValid} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60">
+ <button onClick={handleCreateSeason} disabled={savingSeason || !isSeasonFormValid} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60">
  {savingSeason ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} Crear
  </button>
  </>
@@ -476,15 +476,15 @@ export default function GroupPage() {
  <button disabled={savingSession} onClick={() => setShowNewSession(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
  Cancelar
  </button>
- <button onClick={handleCreateSession} disabled={savingSession || !isSessionFormValid} className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-60">
+ <button onClick={handleCreateSession} disabled={savingSession || !isSessionFormValid} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-60">
  {savingSession ? <Loader2 size={14} className="animate-spin" /> : <ChevronRight size={14} />} Registrar
  </button>
  </>
  }
  >
  <div className="space-y-3 mt-4">
- <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-900/30">
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-blue-300 mb-1">Temporada Activa</p>
+ <div className="p-4 bg-info-soft dark:bg-[hsl(var(--info))]/20 rounded-lg border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)]">
+ <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-info-text mb-1">Temporada Activa</p>
  <p className="text-sm font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{activeSeason?.name}</p>
  </div>
  

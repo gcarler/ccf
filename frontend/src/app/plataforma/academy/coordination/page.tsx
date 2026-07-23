@@ -114,7 +114,7 @@ export default function CoordinationConsole() {
                         <div className="flex items-center gap-3">
                             <button 
                                 onClick={() => router.push('/plataforma/academy/coordination/courses/new')}
-                                className="inline-flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all"
+                                className="inline-flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:scale-105 active:scale-95 transition-all"
                             >
                                 <Plus size={14} /> Nuevo Programa
                             </button>
@@ -143,7 +143,7 @@ export default function CoordinationConsole() {
                                     <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Piloto Academia CCF</h2>
                                 </div>
                                 <div className="text-right">
-                                    <div className="size-8 rounded-full border-4 border-blue-500/20 flex items-center justify-center relative">
+                                    <div className="size-8 rounded-full border-4 border-[hsl(var(--info)/100%)]/20 flex items-center justify-center relative">
                                         <svg className="absolute inset-0 rotate-[-90deg]">
                                             <circle cx="40" cy="40" r="36" fill="transparent" stroke="currentColor" strokeWidth="4" className="text-[hsl(var(--primary))]" strokeDasharray={226} strokeDashoffset={226 - (226 * readinessPerc / 100)} />
                                         </svg>
@@ -215,7 +215,7 @@ export default function CoordinationConsole() {
                                             value={search}
                                             onChange={(e) => setSearch(e.target.value)}
                                             placeholder="Filtrar por nombre del curso o cohorte..."
-                                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border-2 border-transparent focus:border-blue-500/20 rounded-lg py-3 pl-12 pr-4 text-sm font-bold outline-none transition-all shadow-inner"
+                                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border-2 border-transparent focus:border-[hsl(var(--info)/100%)]/20 rounded-lg py-3 pl-12 pr-4 text-sm font-bold outline-none transition-all shadow-inner"
                                         />
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -227,7 +227,7 @@ export default function CoordinationConsole() {
                                                     className={clsx(
                                                         "px-4 py-2 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all",
                                                         modalityFilter === m 
-                                                            ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-lg shadow-blue-500/5" 
+                                                            ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/5%)]" 
                                                             : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                                                     )}
                                                 >
@@ -284,7 +284,7 @@ export default function CoordinationConsole() {
                                                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
                                                             <button
                                                                 onClick={() => router.push(`/plataforma/academy/courses/${course.id}/lessons`)}
-                                                                className="px-4 py-2 rounded-md text-[9px] font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all"
+                                                                className="px-4 py-2 rounded-md text-[9px] font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 active:scale-95 transition-all"
                                                             >
                                                                 Lecciones
                                                             </button>

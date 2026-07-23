@@ -47,11 +47,11 @@ const STAGE_LABELS: Record<string, string> = {
 
 const STAGE_BADGES: Record<string, string> = {
     new: 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border-[hsl(var(--border))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))] dark:border-white/10',
-    call: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20',
-    visit: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/20',
-    discipleship: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/20',
-    consolidated: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20',
-    lost: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:border-rose-500/20',
+    call: 'bg-warning-soft text-warning-text border-[hsl(var(--warning)/25%)] dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text dark:border-[hsl(var(--warning)/100%)]/20',
+    visit: 'bg-info-soft text-info-text border-[hsl(var(--info)/25%)] dark:bg-[hsl(var(--info))]/10 dark:text-info-text dark:border-[hsl(var(--info)/100%)]/20',
+    discipleship: 'bg-info-soft text-info-text border-[hsl(var(--info)/25%)] dark:bg-[hsl(var(--info))]/10 dark:text-info-text dark:border-[hsl(var(--info)/100%)]/20',
+    consolidated: 'bg-success-soft text-success-text border-[hsl(var(--success)/25%)] dark:bg-[hsl(var(--success))]/10 dark:text-success-text dark:border-[hsl(var(--success)/100%)]/20',
+    lost: 'bg-danger-soft text-danger-text border-[hsl(var(--danger)/25%)] dark:bg-[hsl(var(--danger))]/10 dark:text-danger-text dark:border-[hsl(var(--danger)/100%)]/20',
 };
 
 function formatDate(value?: string | null) {
@@ -443,7 +443,7 @@ export default function LeadDetail() {
                                             </div>
                                             <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.message}</p>
                                             {item.prayer && (
-                                                <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
+                                                <div className="mt-3 rounded-md border border-[hsl(var(--success)/25%)] bg-success-soft p-3 text-xs text-success-text dark:border-[hsl(var(--success)/100%)]/20 dark:bg-[hsl(var(--success))]/10 dark:text-[hsl(var(--success))]">
                                                     <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide">
                                                         <Heart size={11} />
                                                         Motivo de oración

@@ -1,5 +1,5 @@
 export const PROJECTS_LIST_ANCHOR = 'projects-list';
-export const PROJECTS_LIST_ROUTE = '/plataforma/projects/list#projects-list';
+export const PROJECTS_LIST_ROUTE = '/plataforma/projects?view=list#projects-list';
 
 export function getProjectMetricHref(label: string): string {
     const normalized = label.toLowerCase();

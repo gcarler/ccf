@@ -96,7 +96,7 @@ export default function TemplatesPage() {
         </div>
         <button
           onClick={() => { setFormData({ canal: "WHATSAPP", variables_requeridas: [] }); setIsModalOpen(true); }}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
+          className="bg-[hsl(var(--info))] hover:bg-[hsl(var(--info))] text-white px-4 py-2 rounded-md font-medium"
         >
           Nueva Plantilla
         </button>
@@ -104,7 +104,7 @@ export default function TemplatesPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-10 gap-3">
-          <Loader2 size={20} className="animate-spin text-blue-600" />
+          <Loader2 size={20} className="animate-spin text-info-text" />
           <span className="text-sm text-gray-500 dark:text-gray-400">Cargando plantillas...</span>
         </div>
       ) : (
@@ -125,7 +125,7 @@ export default function TemplatesPage() {
               <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end">
                 <button
                   onClick={() => { setFormData(p); setIsModalOpen(true); }}
-                  className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 font-medium"
+                  className="text-sm text-info-text hover:text-info-text dark:text-[hsl(var(--info))] font-medium"
                 >
                   Editar
                 </button>
@@ -218,7 +218,7 @@ export default function TemplatesPage() {
                 <input
                   type="file"
                   onChange={e => setSelectedFile(e.target.files?.[0] || null)}
-                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-info-soft file:text-info-text hover:file:bg-[hsl(var(--info-muted))]"
                 />
               </div>
 
@@ -232,7 +232,7 @@ export default function TemplatesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium"
+                  className="px-4 py-2 bg-[hsl(var(--info))] hover:bg-[hsl(var(--info))] text-white rounded-md font-medium"
                 >
                   Guardar
                 </button>

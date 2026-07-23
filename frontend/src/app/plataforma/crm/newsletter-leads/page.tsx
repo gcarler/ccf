@@ -57,11 +57,11 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 const STAGE_COLORS: Record<string, string> = {
-    new: 'bg-blue-500/10 text-[hsl(var(--primary))] border-blue-500/20',
-    call: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-    visit: 'bg-sky-500/10 text-sky-600 border-sky-500/20',
+    new: 'bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]/20',
+    call: 'bg-[hsl(var(--warning))]/10 text-warning-text border-[hsl(var(--warning)/100%)]/20',
+    visit: 'bg-[hsl(var(--info))]/10 text-info-text border-[hsl(var(--info)/100%)]/20',
     discipleship: 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20',
-    consolidated: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+    consolidated: 'bg-[hsl(var(--success))]/10 text-success-text border-[hsl(var(--success)/100%)]/20',
 };
 
 export default function NewsletterLeadsPage() {
@@ -176,7 +176,7 @@ export default function NewsletterLeadsPage() {
                         className={clsx(
                             "flex items-center gap-2 px-3 py-2 rounded-md text-[11px] font-bold uppercase tracking-wide transition-all",
                             showFilters
-                                ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20"
+                                ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
                                 : "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10"
                         )}
                     >
@@ -185,7 +185,7 @@ export default function NewsletterLeadsPage() {
                     <button
                         onClick={handleExport}
                         disabled={exporting}
-                        className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--success))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-50"
                     >
                         {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                         Exportar CSV
@@ -198,10 +198,10 @@ export default function NewsletterLeadsPage() {
                 {summary && (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 pt-4 pb-2">
                         {[
-                            { label: 'Total leads', value: summary.total, icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
-                            { label: 'Con email', value: summary.withEmail, icon: Mail, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
-                            { label: 'Nuevos', value: summary.newCount, icon: Tag, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
-                            { label: 'Landings', value: summary.landingPages, icon: Globe, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+                            { label: 'Total leads', value: summary.total, icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
+                            { label: 'Con email', value: summary.withEmail, icon: Mail, color: 'text-success-text', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/10' },
+                            { label: 'Nuevos', value: summary.newCount, icon: Tag, color: 'text-warning-text', bg: 'bg-warning-soft dark:bg-[hsl(var(--warning))]/10' },
+                            { label: 'Landings', value: summary.landingPages, icon: Globe, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
                         ].map((stat, i) => (
                             <div key={i} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3">
                                 <div className="flex items-center gap-2 mb-1">
@@ -266,11 +266,11 @@ export default function NewsletterLeadsPage() {
                             <div
                                 key={lead.case_id}
                                 onClick={() => router.push(`/plataforma/crm/contacts/${lead.case_id}`)}
-                                className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-4 hover:border-blue-300 dark:hover:border-blue-700 transition-all group cursor-pointer shadow-sm hover:shadow-md"
+                                className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-4 hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all group cursor-pointer shadow-sm hover:shadow-md"
                             >
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="flex items-center gap-3">
-                                        <div className="size-9 rounded-lg bg-blue-50 dark:bg-[hsl(var(--primary))]/10 border border-blue-200 dark:border-[hsl(var(--primary))]/20 flex items-center justify-center text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-sm">
+                                        <div className="size-9 rounded-lg bg-info-soft dark:bg-[hsl(var(--primary))]/10 border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--primary))]/20 flex items-center justify-center text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-sm">
                                             {lead.nombre_completo?.charAt(0) || (lead.first_name?.charAt(0) ?? '?')}{(lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0]) || (lead.last_name?.charAt(0) ?? '')}
                                         </div>
                                         <div>
@@ -373,7 +373,7 @@ export default function NewsletterLeadsPage() {
                                                 <button
                                                     key={lead.case_id}
                                                     onClick={() => router.push(`/plataforma/crm/contacts/${lead.case_id}`)}
-                                                    className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-blue-300 dark:hover:border-blue-700 transition-all"
+                                                    className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all"
                                                 >
                                                     <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                         {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}

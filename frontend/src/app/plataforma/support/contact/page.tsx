@@ -9,9 +9,9 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 
 const CHANNELS = [
-    { icon: MessageSquare, label: 'Chat en Vivo', desc: 'Lun-Vie 8am-6pm', color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10', badge: 'En linea' },
-    { icon: Mail, label: 'Correo Electronico', desc: 'soporte@ccf.org', color: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10', badge: 'Responde en 24h' },
-    { icon: Phone, label: 'Linea Directa', desc: '+57 (8) 420 0000', color: 'text-sky-500 bg-sky-50 dark:bg-sky-500/10', badge: 'Horario habil' },
+    { icon: MessageSquare, label: 'Chat en Vivo', desc: 'Lun-Vie 8am-6pm', color: 'text-[hsl(var(--success))] bg-success-soft dark:bg-[hsl(var(--success))]/10', badge: 'En linea' },
+    { icon: Mail, label: 'Correo Electronico', desc: 'soporte@ccf.org', color: 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10', badge: 'Responde en 24h' },
+    { icon: Phone, label: 'Linea Directa', desc: '+57 (8) 420 0000', color: 'text-[hsl(var(--info))] bg-info-soft dark:bg-[hsl(var(--info))]/10', badge: 'Horario habil' },
 ];
 
 const TOPICS = ['Acceso y Cuenta', 'CRM Pastoral', 'Academia', 'Finanzas', 'Proyectos', 'Configuracion', 'Reporte de Bug', 'Solicitud de Feature', 'Otro'];
@@ -65,8 +65,8 @@ export default function SupportContactPage() {
     if (submitted) return (
         <div className="h-full flex flex-col items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-[#0f1117] space-y-5">
             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                className="size-10 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
-                <CheckCircle size={48} className="text-emerald-500" />
+                className="size-10 rounded-lg bg-success-soft dark:bg-[hsl(var(--success))]/10 flex items-center justify-center">
+                <CheckCircle size={48} className="text-[hsl(var(--success))]" />
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="text-center">
                 <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">Mensaje Enviado</h2>
@@ -74,7 +74,7 @@ export default function SupportContactPage() {
                 <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-1">Numero de caso: CCF-{ticketId}</p>
             </motion.div>
             <button onClick={resetForm}
-                className="px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-semibold hover:bg-[hsl(var(--primary))] transition-all shadow-lg shadow-blue-500/20">
+                className="px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-semibold hover:bg-[hsl(var(--primary))] transition-all shadow-lg shadow-[hsl(var(--info)/20%)]">
                 Enviar otra consulta
             </button>
         </div>
@@ -83,7 +83,7 @@ export default function SupportContactPage() {
     return (
         <div className="h-full flex flex-col bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
             <header className="h-8 border-b border-[hsl(var(--border))]/60 dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
-                <LifeBuoy size={16} className="text-rose-500" />
+                <LifeBuoy size={16} className="text-[hsl(var(--danger))]" />
                 <h1 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contacto Directo</h1>
             </header>
 
@@ -143,7 +143,7 @@ export default function SupportContactPage() {
                                     {['normal', 'alta', 'urgente'].map((priority) => (
                                         <button type="button" key={priority} onClick={() => setForm((current) => ({ ...current, priority }))}
                                             className={clsx('flex-1 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border-2 transition-all',
-                                                form.priority === priority ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))]'
+                                                form.priority === priority ? 'border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]'
                                                     : 'border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]')}>
                                             {priority}
                                         </button>
@@ -159,7 +159,7 @@ export default function SupportContactPage() {
                             </div>
 
                             <button type="submit" disabled={submitting}
-                                className="w-full flex items-center justify-center gap-2 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[12px] uppercase tracking-wide transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
+                                className="w-full flex items-center justify-center gap-2 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[12px] uppercase tracking-wide transition-all shadow-lg shadow-[hsl(var(--info)/20%)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
                                 {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                                 {submitting ? 'Enviando...' : 'Enviar Mensaje'}
                             </button>

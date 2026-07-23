@@ -29,16 +29,16 @@ export default function AcademyAccountPage() {
     const enrollments = profile?.active_courses ?? [];
     const averageGrade = enrollments.filter((item) => item.final_grade != null);
     const stats = [
-        { icon: BookOpen, label: 'Cursos Activos', value: profile?.enrollments_count ?? 0, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-500/10' },
-        { icon: Award, label: 'Certificados', value: profile?.certificates_count ?? 0, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10' },
-        { icon: Star, label: 'Progreso', value: `${Math.round(profile?.total_progress ?? 0)}%`, color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-500/10' },
-        { icon: Calendar, label: 'Promedio', value: averageGrade.length ? `${Math.round(averageGrade.reduce((sum, item) => sum + (item.final_grade ?? 0), 0) / averageGrade.length)}%` : '—', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
+        { icon: BookOpen, label: 'Cursos Activos', value: profile?.enrollments_count ?? 0, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
+        { icon: Award, label: 'Certificados', value: profile?.certificates_count ?? 0, color: 'text-warning-text', bg: 'bg-warning-soft dark:bg-[hsl(var(--warning))]/10' },
+        { icon: Star, label: 'Progreso', value: `${Math.round(profile?.total_progress ?? 0)}%`, color: 'text-info-text', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
+        { icon: Calendar, label: 'Promedio', value: averageGrade.length ? `${Math.round(averageGrade.reduce((sum, item) => sum + (item.final_grade ?? 0), 0) / averageGrade.length)}%` : '—', color: 'text-success-text', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/10' },
     ];
 
     return (
         <div className="min-h-full bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21]">
             {/* Hero Header */}
-            <div className="bg-gradient-to-br from-blue-600 to-sky-700 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10"
                     style={{ backgroundImage: "radial-gradient(circle at 70% 50%, white 0%, transparent 60%)" }} />
                 <div className="max-w-4xl mx-auto px-3 py-1.5 relative">
@@ -56,14 +56,14 @@ export default function AcademyAccountPage() {
                                 <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-[9px] font-semibold uppercase tracking-wide">
                                     Estudiante
                                 </span>
-                                <span className="px-2 py-0.5 rounded-full bg-amber-400/30 text-amber-200 text-[9px] font-semibold uppercase tracking-wide">
+                                <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--warning))]/30 text-[hsl(var(--warning))] text-[9px] font-semibold uppercase tracking-wide">
                                     Destacado
                                 </span>
                             </div>
                             <h1 className="text-lg font-bold text-white tracking-tight">
                                 {profile?.username ?? user?.username ?? 'Estudiante CCF'}
                             </h1>
-                            <p className="text-blue-200 text-sm font-medium">
+                            <p className="text-[hsl(var(--info))] text-sm font-medium">
                                 {user?.email ?? '—'}
                             </p>
                         </div>
@@ -148,7 +148,7 @@ export default function AcademyAccountPage() {
                             <div className="space-y-2">
                                 {enrollments.map((course: EnrollmentRecord) => (
                                     <div key={course.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all">
-                                        <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white text-sm font-semibold shrink-0">
+                                        <div className="size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white text-sm font-semibold shrink-0">
                                             {course.course.title?.[0] ?? 'C'}
                                         </div>
                                         <div className="flex-1 min-w-0">

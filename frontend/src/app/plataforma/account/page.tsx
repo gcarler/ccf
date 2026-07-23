@@ -220,7 +220,7 @@ export default function AccountSettingsPage() {
                                     {/* Profile Hero Card */}
                                     <section className="flex flex-col md:flex-row items-center gap-3 p-4 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm group">
                                         <div className="relative group cursor-pointer">
-                                            <div className="size-10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-2 border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center overflow-hidden transition-all group-hover:border-blue-500 group-hover:shadow-2xl group-hover:scale-105 duration-500">
+                                            <div className="size-10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-2 border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center overflow-hidden transition-all group-hover:border-[hsl(var(--info)/100%)] group-hover:shadow-2xl group-hover:scale-105 duration-500">
                                                 <OptimizedImage src={`https://ui-avatars.com/api/?name=${user?.username}&background=2563eb&color=fff&size=128`} alt="Avatar" width={128} height={128} />
                                             </div>
                                             <div className="absolute -bottom-2 -right-2 size-10 bg-[hsl(var(--primary))] text-white rounded-lg flex items-center justify-center shadow-2xl border-4 border-white dark:border-[hsl(var(--surface-1))] group-hover:scale-110 transition-transform">
@@ -404,7 +404,7 @@ function InputField({ label, icon: Icon, value, placeholder, type = "text", onCh
                     type={type} value={value} placeholder={placeholder}
                     onChange={(e) => onChange?.(e.target.value)}
                     className={clsx(
-                        "w-full bg-[hsl(var(--surface-1))] dark:bg-black/40 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 pr-6 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-blue-500/50 focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-black/60 outline-none transition-all",
+                        "w-full bg-[hsl(var(--surface-1))] dark:bg-black/40 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 pr-6 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)]/50 focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-black/60 outline-none transition-all",
                         Icon ? "pl-14" : "pl-6"
                     )}
                 />
@@ -419,7 +419,7 @@ function ThemeCard({ label, icon: Icon, active }: any) {
             "p-4 rounded-lg border-2 cursor-pointer transition-all flex flex-col items-center gap-3 group relative overflow-hidden",
             active 
                 ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] shadow-2xl shadow-[hsl(var(--primary))/0.1] scale-[1.02]" 
-                : "border-[hsl(var(--border))] dark:border-white/5 hover:border-blue-200 hover:scale-[1.02]"
+                : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--info)/25%)] hover:scale-[1.02]"
         )}>
             {active && <div className="absolute top-4 right-4 size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_8px_rgba(59,130,246,0.8)]" />}
             <div className={clsx(

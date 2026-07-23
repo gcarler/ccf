@@ -471,7 +471,7 @@ export default function PastoralTeamPage() {
                 </div>
               )}
               {successMsg && (
-                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                <div className="p-3 rounded-xl bg-success-soft dark:bg-[hsl(var(--success))]/10 border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/20 text-xs text-success-text dark:text-[hsl(var(--success))] flex items-center gap-2">
                   <Check size={14} />
                   {successMsg}
                 </div>
@@ -697,7 +697,7 @@ export default function PastoralTeamPage() {
 
             <div className="p-6 space-y-4">
               {successMsg && (
-                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                <div className="p-3 rounded-xl bg-success-soft dark:bg-[hsl(var(--success))]/10 border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/20 text-xs text-success-text dark:text-[hsl(var(--success))] flex items-center gap-2">
                   <Check size={14} />
                   {successMsg}
                 </div>

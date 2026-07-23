@@ -103,7 +103,7 @@ export default function ProjectsInboxPage() {
             viewOptions={['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
         >
             {error && (
-                <div className="mx-4 mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                <div className="mx-4 mt-4 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
                     <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
@@ -144,14 +144,14 @@ export default function ProjectsInboxPage() {
                             <motion.div 
                                 key={msg.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                                 className={clsx(
-                                    "p-4 flex gap-4 hover:bg-blue-50/30 dark:hover:bg-blue-500/5 transition-all cursor-pointer group relative",
-                                    !msg.is_read && "bg-blue-50/50 dark:bg-blue-500/5"
+                                    "p-4 flex gap-4 hover:bg-info-soft/30 dark:hover:bg-[hsl(var(--info))]/5 transition-all cursor-pointer group relative",
+                                    !msg.is_read && "bg-info-soft/50 dark:bg-[hsl(var(--info))]/5"
                                 )}
                             >
                                     <div className="shrink-0 pt-1">
                                         <div className={clsx(
                                             "size-8 rounded-lg flex items-center justify-center shadow-sm",
-                                            msg.type === 'mention' ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" : "bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))]"
+                                            msg.type === 'mention' ? "bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/30 text-warning-text" : "bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))]"
                                         )}>
                                             {msg.type === 'mention' ? <AtSign size={20} /> : <MessageCircle size={20} />}
                                         </div>
@@ -207,6 +207,6 @@ function formatRelative(rawDate: string) {
 
 function Tab({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
     return (
-        <button onClick={onClick} className={clsx("px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-all border-b-2", active ? "text-[hsl(var(--primary))] border-blue-600" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]")}>{label}</button>
+        <button onClick={onClick} className={clsx("px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-all border-b-2", active ? "text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]")}>{label}</button>
     );
 }

@@ -66,7 +66,7 @@ export default function CustomRolesPanel({
       </div>
 
       {canManage && showRoleForm && (
-        <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg space-y-2">
+        <div className="mb-3 p-3 bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] rounded-lg space-y-2">
           <input value={newRoleName} onChange={e => setNewRoleName(e.target.value)}
           placeholder="Nombre del rol (ej: Coordinador de zona)"
           className="w-full px-2.5 py-1.5 text-[12px] bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none" />
@@ -92,7 +92,7 @@ export default function CustomRolesPanel({
                 <div className="flex items-center gap-2">
                   <span className="text-[12px] font-semibold text-[hsl(var(--text-primary))] ">{r.nombre_rol}</span>
                   {editDefaultRoleId === r.id && (
-                  <span className="px-1.5 py-0.5 rounded bg-blue-100 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300">
+                  <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--info-muted))] text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 dark:text-info-text">
                   Defecto
                   </span>
                   )}

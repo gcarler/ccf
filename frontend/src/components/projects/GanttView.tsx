@@ -76,17 +76,17 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
         // Color by status/priority (aligned with backend phase slugs)
         const colorMap: Record<string, string> = {
             todo:        'bg-[hsl(var(--surface-2))] shadow-slate-500/20',
-            in_progress: 'bg-[hsl(var(--primary))] shadow-blue-500/25',
-            review:      'bg-amber-500 shadow-amber-500/20',
-            completed:   'bg-emerald-500 shadow-emerald-500/25',
+            in_progress: 'bg-[hsl(var(--primary))] shadow-[hsl(var(--info)/25%)]',
+            review:      'bg-[hsl(var(--warning))] shadow-[hsl(var(--warning)/20%)]',
+            completed:   'bg-[hsl(var(--success))] shadow-[hsl(var(--success)/25%)]',
         };
 
         const prioMap: Record<string, string> = {
-            urgent: 'bg-rose-600 shadow-rose-500/25',
+            urgent: 'bg-[hsl(var(--danger))] shadow-[hsl(var(--danger)/25%)]',
             high:   'bg-orange-500 shadow-orange-500/25',
         };
         const barColor = task.priority ? (prioMap[task.priority] ?? null) : null;
-        const barClass = barColor ?? colorMap[task.status ?? ''] ?? 'bg-[hsl(var(--primary))] shadow-blue-500/20';
+        const barClass = barColor ?? colorMap[task.status ?? ''] ?? 'bg-[hsl(var(--primary))] shadow-[hsl(var(--info)/20%)]';
 
         return { left, width, barClass };
     };
@@ -124,7 +124,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
                             <div
                                 key={task.id}
                                 onClick={() => onTaskClick(task)}
-                                className="h-8 flex items-center px-3 border-b border-[hsl(var(--border))] dark:border-white/5 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-colors cursor-pointer group"
+                                className="h-8 flex items-center px-3 border-b border-[hsl(var(--border))] dark:border-white/5 hover:bg-info-soft/50 dark:hover:bg-[hsl(var(--info))]/5 transition-colors cursor-pointer group"
                             >
                                 <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">{task.title}</span>
                             </div>
@@ -157,7 +157,7 @@ export default function GanttView({ tasks, onTaskClick }: GanttViewProps) {
                                     style={{ width: dayWidth }}
                                     className={clsx(
                                         "h-full flex items-center justify-center shrink-0 border-r border-[hsl(var(--border))] dark:border-white/5 text-[10px] font-bold",
-                                        isSameDay(day, new Date()) ? "bg-blue-500/10 text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]"
+                                        isSameDay(day, new Date()) ? "bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]"
                                     )}
                                 >
                                     {format(day, 'd')}

@@ -537,7 +537,7 @@ export default function PrayerSupportCenter() {
                                 className={clsx(
                                     "w-full px-4 py-1.5 rounded-lg border font-bold text-sm transition-all disabled:opacity-50",
                                     newPrayer.is_urgent
-                                        ? "bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.2)] border-rose-300 dark:border-rose-700 text-[hsl(var(--destructive))]"
+                                        ? "bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.2)] border-[hsl(var(--danger)/30%)] dark:border-[hsl(var(--danger)/100%)] text-[hsl(var(--destructive))]"
                                         : "bg-[hsl(var(--surface-1))] dark:bg-black/20 border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]"
                                 )}
                             >

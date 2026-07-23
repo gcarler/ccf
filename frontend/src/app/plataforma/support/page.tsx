@@ -204,7 +204,7 @@ export default function SupportPage() {
                 ) : viewType === 'list' ? (
                     <div className="mx-auto max-w-5xl space-y-3 p-3">
                         {filteredTickets.map((ticket) => (
-                            <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition hover:border-blue-300 dark:border-white/10 dark:bg-white/5">
+                            <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition hover:border-[hsl(var(--info)/30%)] dark:border-white/10 dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-4">
                                     <div className="min-w-0">
                                         <p className="truncate text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{ticket.subject}</p>
@@ -257,11 +257,11 @@ export default function SupportPage() {
                 ) : (
  <div className="p-3 w-full space-y-3">
                         {/* User View */}
-                        <section className="bg-gradient-to-br from-blue-600 to-sky-700 rounded-lg p-4 text-white shadow-xl relative overflow-hidden">
+                        <section className="bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] rounded-lg p-4 text-white shadow-xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-48 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                             <div className="relative z-10">
                                 <h2 className="text-xl font-bold mb-4">¿Cómo podemos ayudarte?</h2>
-                                <p className="text-blue-100 font-medium text-lg mb-3 max-w-xl">Nuestro equipo pastoral y técnico está listo para apoyarte en lo que necesites.</p>
+                                <p className="text-[hsl(var(--info))] font-medium text-lg mb-3 max-w-xl">Nuestro equipo pastoral y técnico está listo para apoyarte en lo que necesites.</p>
                                 <button 
                                     onClick={() => setIsCreateDrawerOpen(true)}
                                     className="px-4 py-1.5 bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] rounded-lg font-black text-sm uppercase tracking-wide shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
@@ -273,12 +273,12 @@ export default function SupportPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm space-y-4">
-                                <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-[hsl(var(--primary))]"><Mail size={24} /></div>
+                                <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 flex items-center justify-center text-[hsl(var(--primary))]"><Mail size={24} /></div>
                                 <h3 className="text-xl font-bold">Correo Electrónico</h3>
                                 <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm">Escríbenos directamente a soporte@ccf.org para consultas institucionales.</p>
                             </div>
                             <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm space-y-4">
-                                <div className="size-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600"><MessageSquare size={24} /></div>
+                                <div className="size-7 rounded-lg bg-success-soft dark:bg-[hsl(var(--success))]/30 flex items-center justify-center text-success-text"><MessageSquare size={24} /></div>
                                 <h3 className="text-xl font-bold">WhatsApp</h3>
                                 <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm">Respuesta rápida para emergencias pastorales y dudas técnicas.</p>
                             </div>
@@ -289,7 +289,7 @@ export default function SupportPage() {
                             {tickets.length === 0 ? (
                                 <div className="p-4 text-center border-2 border-dashed border-[hsl(var(--border))] dark:border-white/5 rounded-lg text-[hsl(var(--text-secondary))] text-sm font-medium italic">No has abierto tickets recientemente.</div>
                             ) : tickets.map(ticket => (
-                                <div key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg hover:border-blue-500/30 transition-all cursor-pointer flex items-center justify-between group">
+                                <div key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer flex items-center justify-between group">
                                     <div className="flex items-center gap-4">
                                         <div className="size-10 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]"><FileText size={20} /></div>
                                         <div>
@@ -300,7 +300,7 @@ export default function SupportPage() {
                                     <div className="flex items-center gap-4">
                                         <div className={clsx(
                                             "px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-tight",
-                                            ticket.status === 'abierto' ? "bg-blue-50 text-[hsl(var(--primary))]" : "bg-emerald-50 text-emerald-600"
+                                            ticket.status === 'abierto' ? "bg-info-soft text-[hsl(var(--primary))]" : "bg-success-soft text-success-text"
                                         )}>{ticket.status}</div>
                                         <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors" />
                                     </div>
@@ -319,7 +319,7 @@ export default function SupportPage() {
                 actions={
                     <>
                         <button className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))]" onClick={() => setIsDrawerOpen(false)}>Cerrar</button>
-                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Enviar Mensaje</button>
+                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold shadow-lg shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">Enviar Mensaje</button>
                     </>
                 }
             >
@@ -347,7 +347,7 @@ export default function SupportPage() {
                         </h4>
                         <div className="space-y-3">
                             <div className="flex gap-4 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md border border-[hsl(var(--border))] dark:border-white/5">
-                                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-[hsl(var(--primary))] shrink-0"><Send size={14} /></div>
+                                <div className="w-8 h-8 rounded-lg bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 flex items-center justify-center text-[hsl(var(--primary))] shrink-0"><Send size={14} /></div>
                                 <div><p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Ticket Recibido</p><p className="text-[10px] text-[hsl(var(--text-secondary))]">Asignado automáticamente al departamento correspondiente.</p></div>
                             </div>
                         </div>
@@ -370,7 +370,7 @@ export default function SupportPage() {
                             form="create-ticket-form"
                             type="submit"
                             disabled={isSubmitting}
-                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
                             Enviar Solicitud

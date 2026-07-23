@@ -95,8 +95,8 @@ export default function StudentProgressPage() {
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden font-sans relative">
             {/* Ambient Background Glows */}
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-sky-600/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[hsl(var(--info))]/5 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[hsl(var(--info))]/5 rounded-full blur-[100px] pointer-events-none" />
 
             <WorkspaceToolbar
                 breadcrumbs={[
@@ -178,26 +178,26 @@ export default function StudentProgressPage() {
                     {/* Hero Section Premium */}
                     <motion.section variants={itemVariants} className="relative rounded-lg bg-[hsl(var(--primary))] overflow-hidden group border border-white/10 shadow-2xl">
                         <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.05] mix-blend-overlay" />
-                        <div className="absolute top-[-50%] right-[-10%] w-[80%] h-[200%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-400/20 via-blue-900/10 to-transparent blur-3xl pointer-events-none" />
+                        <div className="absolute top-[-50%] right-[-10%] w-[80%] h-[200%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] to-[hsl(var(--info)/20%)] via-[hsl(var(--info)/10%)] to-transparent blur-3xl pointer-events-none" />
                         
                         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between p-4 lg:p-4 gap-4">
                             <div className="space-y-3 max-w-xl">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] font-semibold uppercase tracking-wide text-blue-100 border border-white/10">
-                                    <Trophy size={14} className="text-amber-400" /> Rendimiento Académico
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--info))] border border-white/10">
+                                    <Trophy size={14} className="text-[hsl(var(--warning))]" /> Rendimiento Académico
                                 </div>
                                 <h1 className="text-xl lg:text-xl font-bold text-white tracking-tighter leading-[0.9] mb-4">
-                                    Tu camino <br /> al <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-500">Propósito.</span>
+                                    Tu camino <br /> al <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))]">Propósito.</span>
                                 </h1>
-                                <p className="text-blue-100/60 text-sm font-medium leading-relaxed">
+                                <p className="text-[hsl(var(--info)/60%)] text-sm font-medium leading-relaxed">
                                     Estás en el nivel <strong>{Math.floor(stats.average_grade / 10)}</strong>. Tu constancia está dando frutos, continúa así.
                                 </p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:w-[400px]">
-                                <HeaderStat label="Promedio" value={stats.average_grade.toFixed(1)} icon={Star} color="text-amber-400" bg="bg-amber-400/20" />
-                                <HeaderStat label="Certificados" value={stats.certificates} icon={Award} color="text-emerald-400" bg="bg-emerald-400/20" />
-                                <HeaderStat label="Pendientes" value={stats.total_courses - stats.completed_courses} icon={BookOpen} color="text-[hsl(var(--primary))]" bg="bg-blue-400/20" />
-                                <HeaderStat label="Logros" value={stats.completed_courses} icon={CheckCircle2} color="text-sky-400" bg="bg-sky-400/20" />
+                                <HeaderStat label="Promedio" value={stats.average_grade.toFixed(1)} icon={Star} color="text-[hsl(var(--warning))]" bg="bg-[hsl(var(--warning))]/20" />
+                                <HeaderStat label="Certificados" value={stats.certificates} icon={Award} color="text-[hsl(var(--success))]" bg="bg-[hsl(var(--success))]/20" />
+                                <HeaderStat label="Pendientes" value={stats.total_courses - stats.completed_courses} icon={BookOpen} color="text-[hsl(var(--primary))]" bg="bg-[hsl(var(--info))]/20" />
+                                <HeaderStat label="Logros" value={stats.completed_courses} icon={CheckCircle2} color="text-[hsl(var(--info))]" bg="bg-[hsl(var(--info))]/20" />
                             </div>
                         </div>
                     </motion.section>
@@ -223,13 +223,13 @@ export default function StudentProgressPage() {
                                 progress.map(course => (
                                     <div 
                                         key={course.id} 
-                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 lg:p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
+                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 lg:p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 group hover:border-[hsl(var(--info)/100%)]/30 hover:shadow-2xl hover:shadow-[hsl(var(--info)/5%)] transition-all duration-500"
                                     >
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-center gap-3">
                                                 <span className={clsx(
                                                     "px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide",
-                                                    course.status === 'completed' ? "bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]" : "bg-blue-500/10 text-[hsl(var(--primary))]"
+                                                    course.status === 'completed' ? "bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]" : "bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]"
                                                 )}>
                                                     {course.status === 'completed' ? 'Completado' : 'En Curso'}
                                                 </span>
@@ -264,7 +264,7 @@ export default function StudentProgressPage() {
                                                         animate={{ width: `${course.progress_percent}%` }}
                                                         className={clsx(
                                                             "h-full rounded-full transition-all duration-1000 shadow-inner",
-                                                            course.progress_percent === 100 ? "bg-[hsl(var(--success))] shadow-[hsl(var(--success))/0.2]" : "bg-gradient-to-r from-blue-600 to-blue-400 shadow-blue-500/20"
+                                                            course.progress_percent === 100 ? "bg-[hsl(var(--success))] shadow-[hsl(var(--success))/0.2]" : "bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))] shadow-[hsl(var(--info)/20%)]"
                                                         )}
                                                     />
                                                 </div>
@@ -295,7 +295,7 @@ export default function StudentProgressPage() {
                                     <div className="max-w-md mx-auto space-y-4">
                                         <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Aún no tienes progreso registrado</h3>
                                         <p className="text-[hsl(var(--text-secondary))] font-medium">Inscríbete en un curso de nuestro catálogo para comenzar tu formación espiritual hoy mismo.</p>
-                                        <button onClick={() => router.push('/plataforma/academy')} className="mt-3 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md font-black text-xs uppercase tracking-wide shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all">Explorar Catálogo</button>
+                                        <button onClick={() => router.push('/plataforma/academy')} className="mt-3 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md font-black text-xs uppercase tracking-wide shadow-2xl shadow-[hsl(var(--info)/30%)] hover:scale-105 transition-all">Explorar Catálogo</button>
                                     </div>
                                 </div>
                             )}
@@ -315,7 +315,7 @@ function HeaderStat({ label, value, icon: Icon, color, bg }: any) {
                 <Icon size={22} strokeWidth={2.5} />
             </div>
             <div>
-                <p className="font-semibold text-blue-200/50 uppercase tracking-wide mb-1 leading-none">{label}</p>
+                <p className="font-semibold text-[hsl(var(--info)/50%)] uppercase tracking-wide mb-1 leading-none">{label}</p>
                 <p className="text-xl font-bold text-white tracking-tighter leading-none">{value}</p>
             </div>
         </div>

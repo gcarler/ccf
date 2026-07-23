@@ -106,10 +106,10 @@ export default function CertificateView({ data }: CertificateProps) {
     return (
         <div className="max-w-4xl mx-auto space-y-3 animate-fade-in">
             {/* Professional Certificate Render */}
-            <div className="relative aspect-[1.414/1] w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-[16px] border-[hsl(var(--border))] dark:border-blue-900/20 shadow-2xl p-4 flex flex-col items-center justify-between text-center overflow-hidden group">
+            <div className="relative aspect-[1.414/1] w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-[16px] border-[hsl(var(--border))] dark:border-[hsl(var(--info)/20%)] shadow-2xl p-4 flex flex-col items-center justify-between text-center overflow-hidden group">
                 {/* Background Decoration */}
-                <div className="absolute top-0 right-0 w-64 h-48 bg-[hsl(var(--surface-1))] dark:bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-64 h-48 bg-[hsl(var(--surface-1))] dark:bg-blue-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+                <div className="absolute top-0 right-0 w-64 h-48 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--info))]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-64 h-48 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--info))]/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
                 {/* Header */}
                 <div className="relative z-10 space-y-4">

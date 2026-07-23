@@ -18,7 +18,7 @@ export default function BlockWrapper({ block, isSelected, onSelect, onRemove, on
       </div>
       <div className={clsx('absolute -top-3 right-2 flex items-center gap-1 transition-opacity z-10', isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100')}>
         <button onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="size-6 flex items-center justify-center rounded bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]" title="Duplicar" aria-label="Duplicar"><Copy size={11} /></button>
-        <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="size-6 flex items-center justify-center rounded bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-rose-500" title="Eliminar" aria-label="Eliminar"><Trash2 size={11} /></button>
+        <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="size-6 flex items-center justify-center rounded bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))]" title="Eliminar" aria-label="Eliminar"><Trash2 size={11} /></button>
       </div>
       <div className="relative">{children}</div>
     </div>

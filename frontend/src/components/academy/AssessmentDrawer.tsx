@@ -159,7 +159,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                     <motion.div key="result" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center h-full text-center space-y-3">
                                         <div className={clsx(
                                             "size-10 rounded-lg flex items-center justify-center shadow-2xl relative",
-                                            result.passed ? "bg-emerald-500 text-white shadow-emerald-500/30" : "bg-rose-500 text-white shadow-rose-500/30"
+                                            result.passed ? "bg-[hsl(var(--success))] text-white shadow-[hsl(var(--success)/30%)]" : "bg-[hsl(var(--danger))] text-white shadow-[hsl(var(--danger)/30%)]"
                                         )}>
                                             {result.passed ? <Trophy size={64} /> : <AlertCircle size={64} />}
                                             <motion.div 
@@ -181,18 +181,18 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                         </div>
                                         <div className="flex gap-4 pt-6">
                                             {result.passed ? (
-                                                <button onClick={onClose} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-blue-600/20 active:scale-95 transition-all">Continuar a mi Panel</button>
+                                                <button onClick={onClose} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">Continuar a mi Panel</button>
                                             ) : (
                                                 <>
                                                     <button onClick={onClose} className="px-4 py-2 border-2 border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-1))] transition-all">Cerrar</button>
-                                                    <button onClick={() => { setResult(null); setCurrentStep(0); setAnswers({}); }} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-blue-600/20 active:scale-95 transition-all">Reintentar</button>
+                                                    <button onClick={() => { setResult(null); setCurrentStep(0); setAnswers({}); }} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">Reintentar</button>
                                                 </>
                                             )}
                                         </div>
                                     </motion.div>
                                 ) : isWelcome ? (
                                     <motion.div key="welcome" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center justify-center h-full text-center space-y-3">
-                                        <div className="size-10 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))] shadow-inner">
+                                        <div className="size-10 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))] shadow-inner">
                                             <ShieldCheck size={48} />
                                         </div>
                                         <div className="space-y-3">
@@ -203,7 +203,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                                 Asegúrate de estar en un lugar tranquilo antes de iniciar.
                                             </p>
                                         </div>
-                                        <button onClick={nextStep} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-blue-600/20 active:scale-95 transition-all flex items-center gap-4 group">
+                                        <button onClick={nextStep} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all flex items-center gap-4 group">
                                             Iniciar Examen <ArrowRight className="group-hover:translate-x-1 transition-transform" />
                                         </button>
                                     </motion.div>
@@ -213,7 +213,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                         className="space-y-3"
                                     >
                                         <div className="space-y-4">
-                                            <span className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide bg-blue-50 dark:bg-blue-500/10 px-3 py-1 rounded-lg">Pregunta {currentStep} de {questions.length}</span>
+                                            <span className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide bg-info-soft dark:bg-[hsl(var(--info))]/10 px-3 py-1 rounded-lg">Pregunta {currentStep} de {questions.length}</span>
                                             <h3 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">
                                                 {questions[currentStep - 1].question_text}
                                             </h3>
@@ -238,15 +238,15 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                                     className={clsx(
                                                         "w-full text-left p-3 rounded-lg border-2 transition-all group flex items-center gap-3",
                                                         isSelected
-                                                            ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-xl shadow-blue-600/20"
-                                                            : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:border-blue-500/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 shadow-sm"
+                                                            ? "bg-[hsl(var(--primary))] border-[hsl(var(--info)/100%)] text-white shadow-xl shadow-[hsl(var(--info)/20%)]"
+                                                            : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/100%)]/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 shadow-sm"
                                                     )}
                                                 >
                                                     <div className={clsx(
                                                         "size-8 rounded-md flex items-center justify-center shrink-0 shadow-inner border transition-colors",
                                                         answers[questions[currentStep - 1].id] === option.id 
                                                             ? "bg-white/20 border-white/30 text-white" 
-                                                            : "bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] group-hover:border-blue-500/50"
+                                                            : "bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] group-hover:border-[hsl(var(--info)/100%)]/50"
                                                     )}>
                                                         {answers[questions[currentStep - 1].id] === option.id ? <CheckCircle2 size={18} /> : <HelpCircle size={18} />}
                                                     </div>
@@ -271,7 +271,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                     <button 
                                         onClick={handleSubmit}
                                         disabled={submitting || !answers[questions[currentStep - 1].id]}
-                                        className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-blue-600/20 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
+                                        className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
                                     >
                                         {submitting ? <Loader2 className="animate-spin" size={18} /> : <>Finalizar Examen <Trophy size={18} /></>}
                                     </button>

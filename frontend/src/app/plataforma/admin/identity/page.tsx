@@ -27,13 +27,13 @@ Zap
 import { useCallback,useEffect,useState } from 'react';
 
 const CHURCH_ROLES = [
-    { value: 'LIDER', label: 'Líder', color: 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400' },
-    { value: 'SERVIDOR', label: 'Servidor', color: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]' },
-    { value: 'MIEMBRO_BAUTIZADO', label: 'Persona Bautizado', color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' },
+    { value: 'LIDER', label: 'Líder', color: 'bg-warning-soft text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]' },
+    { value: 'SERVIDOR', label: 'Servidor', color: 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]' },
+    { value: 'MIEMBRO_BAUTIZADO', label: 'Persona Bautizado', color: 'bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-[hsl(var(--success))]' },
     { value: 'SIMPATIZANTE', label: 'Simpatizante', color: 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]' },
-    { value: 'VISITANTE_SERVICIO', label: 'Visitante (Servicio)', color: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]' },
+    { value: 'VISITANTE_SERVICIO', label: 'Visitante (Servicio)', color: 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]' },
     { value: 'VISITANTE_EVANGELISMO', label: 'Visitante (Evangelismo)', color: 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' },
-    { value: 'VISITANTE_ONLINE', label: 'Visitante (Online)', color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-500/10 dark:text-cyan-400' },
+    { value: 'VISITANTE_ONLINE', label: 'Visitante (Online)', color: 'bg-[hsl(var(--domain-cyan)/10%)] text-[hsl(var(--domain-cyan)/90%)] dark:bg-[hsl(var(--domain-cyan)/10%)] dark:text-[hsl(var(--domain-cyan))]' },
 ];
 
 const MINISTRIES = ['APOSTOL', 'PROFETA', 'EVANGELISTA', 'PASTOR', 'MAESTRO'];
@@ -274,7 +274,7 @@ export default function IdentityManagementPage() {
                 breadcrumbs={[{ label: 'Administración', icon: Shield }, { label: 'Gestión de Identidad', icon: Users }]}
                 onSearch={setSearch}
                 rightActions={
-                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-[hsl(var(--primary))]">
+                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]">
                         <UserPlus size={14} /> Nuevo Usuario
                     </button>
                 }
@@ -285,7 +285,7 @@ export default function IdentityManagementPage() {
                     {/* Header */}
                     <div>
                         <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">
-                            Identidad <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-600">Integral.</span>
+                            Identidad <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))]">Integral.</span>
                         </h1>
                         <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">
                             Gestiona el estado vital, roles ministeriales, oficio espiritual y permisos de plataforma de cada persona.
@@ -294,10 +294,10 @@ export default function IdentityManagementPage() {
 
                     {/* Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <StatCard icon={UserCheck} label="Usuarios Activos" value={users.filter(u => u.is_active).length} color="text-emerald-500" bg="bg-emerald-50 dark:bg-emerald-500/10" />
+                        <StatCard icon={UserCheck} label="Usuarios Activos" value={users.filter(u => u.is_active).length} color="text-[hsl(var(--success))]" bg="bg-success-soft dark:bg-[hsl(var(--success))]/10" />
                         <StatCard icon={AlertTriangle} label="Usuarios Inactivos" value={users.filter(u => !u.is_active).length} color="text-[hsl(var(--text-secondary))]" bg="bg-[hsl(var(--surface-1))] dark:bg-white/5" />
-                        <StatCard icon={Crown} label="Roles operativos" value={users.filter(u => u.role !== 'MIEMBRO').length} color="text-amber-500" bg="bg-amber-50 dark:bg-amber-500/10" />
-                        <StatCard icon={Users} label="Total Usuarios" value={users.length} color="text-[hsl(var(--primary))]" bg="bg-blue-50 dark:bg-blue-500/10" />
+                        <StatCard icon={Crown} label="Roles operativos" value={users.filter(u => u.role !== 'MIEMBRO').length} color="text-[hsl(var(--warning))]" bg="bg-warning-soft dark:bg-[hsl(var(--warning))]/10" />
+                        <StatCard icon={Users} label="Total Usuarios" value={users.length} color="text-[hsl(var(--primary))]" bg="bg-info-soft dark:bg-[hsl(var(--info))]/10" />
                     </div>
 
                     {/* Users Table */}
@@ -331,7 +331,7 @@ export default function IdentityManagementPage() {
                                         >
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="size-9 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-600 flex items-center justify-center text-white font-semibold text-xs">
+                                                    <div className="size-9 rounded-lg bg-gradient-to-tr from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white font-semibold text-xs">
                                                         {user.username.substring(0, 2).toUpperCase()}
                                                     </div>
                                                     <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{user.username}</p>
@@ -341,8 +341,8 @@ export default function IdentityManagementPage() {
                                             <td className="px-4 py-2">
                                                 <span className={clsx(
                                                     "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase",
-                                                    user.role === 'admin' ? "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400" :
-                                                    user.role === 'pastor' ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]" :
+                                                    user.role === 'admin' ? "bg-info-soft text-info-text dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--info))]" :
+                                                    user.role === 'pastor' ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]" :
                                                     "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]"
                                                 )}>
                                                     {user.role}
@@ -350,7 +350,7 @@ export default function IdentityManagementPage() {
                                             </td>
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-2">
-                                                    <div className={clsx("size-2 rounded-full", user.is_active ? "bg-emerald-500" : "bg-[hsl(var(--surface-2))]")} />
+                                                    <div className={clsx("size-2 rounded-full", user.is_active ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--surface-2))]")} />
                                                     <span className="text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))]">{user.is_active ? 'Activo' : 'Inactivo'}</span>
                                                 </div>
                                             </td>
@@ -358,7 +358,7 @@ export default function IdentityManagementPage() {
                                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleSelectUser(user); }}
-                                                        className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md transition-all text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]"
+                                                        className="p-2 hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 rounded-md transition-all text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]"
                                                     >
                                                         <Eye size={16} />
                                                     </button>
@@ -384,7 +384,7 @@ export default function IdentityManagementPage() {
                         <button className="px-3 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors" onClick={() => setIsDrawerOpen(false)}>Cancelar</button>
                         <button
                             disabled={saving || profileLoading}
-                            className="px-4 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleSaveProfile}
                         >
                             {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
@@ -402,11 +402,11 @@ export default function IdentityManagementPage() {
                         {/* Estado Vital */}
                         <section>
                             <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2 mb-3">
-                                <HeartHandshake size={14} className="text-rose-500" /> Estado Vital
+                                <HeartHandshake size={14} className="text-[hsl(var(--danger))]" /> Estado Vital
                             </h4>
                             <div className="grid grid-cols-2 gap-2">
                                 {[
-                                    { value: 'ACTIVO', label: 'Activo', color: 'bg-emerald-500' },
+                                    { value: 'ACTIVO', label: 'Activo', color: 'bg-[hsl(var(--success))]' },
                                     { value: 'INACTIVO', label: 'Inactivo', color: 'bg-[hsl(var(--surface-2))]' },
                                 ].map(s => (
                                     <button
@@ -415,7 +415,7 @@ export default function IdentityManagementPage() {
                                         className={clsx(
                                             "flex items-center gap-2 p-3 rounded-lg border-2 transition-all",
                                             activityStatus === s.value
-                                                ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
+                                                ? "border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/10"
                                                 : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--border))]"
                                         )}
                                     >
@@ -429,7 +429,7 @@ export default function IdentityManagementPage() {
                         {/* Rol en la Iglesia (Dimensión B) */}
                         <section>
                             <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2 mb-3">
-                                <Crown size={14} className="text-amber-500" /> Rol en la Iglesia
+                                <Crown size={14} className="text-[hsl(var(--warning))]" /> Rol en la Iglesia
                             </h4>
                             <div className="grid grid-cols-1 gap-1.5">
                                 {CHURCH_ROLES.map(r => (
@@ -439,7 +439,7 @@ export default function IdentityManagementPage() {
                                         className={clsx(
                                             "flex items-center justify-between p-2.5 rounded-lg border-2 transition-all",
                                             churchRole === r.value
-                                                ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
+                                                ? "border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/10"
                                                 : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--border))]"
                                         )}
                                     >
@@ -453,7 +453,7 @@ export default function IdentityManagementPage() {
                                     value={churchRoleReason}
                                     onChange={e => setChurchRoleReason(e.target.value)}
                                     placeholder="Razón del cambio..."
-                                    className="mt-2 w-full px-3 py-2 text-xs bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-blue-500"
+                                    className="mt-2 w-full px-3 py-2 text-xs bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-[hsl(var(--info)/100%)]"
                                 />
                             )}
                             {churchRoleHistory && churchRoleHistory.length > 0 && (
@@ -474,7 +474,7 @@ export default function IdentityManagementPage() {
                         {/* Ministerios (Dimensión A) */}
                         <section>
                             <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2 mb-3">
-                                <BookOpen size={14} className="text-emerald-500" /> Oficio Espiritual (Efesios 4:11)
+                                <BookOpen size={14} className="text-[hsl(var(--success))]" /> Oficio Espiritual (Efesios 4:11)
                             </h4>
                             <div className="grid grid-cols-1 gap-1.5">
                                 {MINISTRIES.map(m => (
@@ -484,13 +484,13 @@ export default function IdentityManagementPage() {
                                         className={clsx(
                                             "flex items-center justify-between p-2.5 rounded-lg border-2 transition-all",
                                             ministries.includes(m)
-                                                ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
+                                                ? "border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/10"
                                                 : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--border))]"
                                         )}
                                     >
                                         <span className="text-xs font-semibold">{m}</span>
                                         {ministries.includes(m) && (
-                                            ministries.indexOf(m) === 0 ? <Crown size={14} className="text-amber-500" /> : <UserCheck size={14} className="text-[hsl(var(--primary))]" />
+                                            ministries.indexOf(m) === 0 ? <Crown size={14} className="text-[hsl(var(--warning))]" /> : <UserCheck size={14} className="text-[hsl(var(--primary))]" />
                                         )}
                                     </button>
                                 ))}
@@ -501,7 +501,7 @@ export default function IdentityManagementPage() {
                                     <select
                                         value={primaryMinistry}
                                         onChange={e => setPrimaryMinistry(e.target.value)}
-                                        className="mt-1 w-full px-3 py-2 text-xs bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-blue-500"
+                                        className="mt-1 w-full px-3 py-2 text-xs bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-[hsl(var(--info)/100%)]"
                                     >
                                         <option value="">Seleccionar...</option>
                                         {ministries.map(m => <option key={m} value={m}>{m}</option>)}
@@ -523,7 +523,7 @@ export default function IdentityManagementPage() {
                                         className={clsx(
                                             "flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all",
                                             platformRole === r
-                                                ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
+                                                ? "border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/10"
                                                 : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--border))]"
                                         )}
                                     >
@@ -537,14 +537,14 @@ export default function IdentityManagementPage() {
                         {/* Seguridad */}
                         <section>
                             <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2 mb-3">
-                                <Key size={14} className="text-amber-500" /> Seguridad de Cuenta
+                                <Key size={14} className="text-[hsl(var(--warning))]" /> Seguridad de Cuenta
                             </h4>
                             <button
                                 onClick={handleResetPassword}
                                 disabled={saving}
                                 className="w-full p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                             >
-                                <Zap size={16} className="text-amber-500" /> Resetear Contraseña
+                                <Zap size={16} className="text-[hsl(var(--warning))]" /> Resetear Contraseña
                             </button>
                         </section>
 
@@ -556,7 +556,7 @@ export default function IdentityManagementPage() {
                                 </h4>
                                 <div className="flex flex-wrap gap-1">
                                     {Object.entries(profile.permisos_efectivos).map(([key, val]) => (
-                                        <span key={key} className="px-2 py-0.5 bg-blue-50 dark:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded text-[9px] font-semibold uppercase">
+                                        <span key={key} className="px-2 py-0.5 bg-info-soft dark:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded text-[9px] font-semibold uppercase">
                                             {key}: {val}
                                         </span>
                                     ))}
@@ -578,7 +578,7 @@ export default function IdentityManagementPage() {
                         <button className="px-3 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors" onClick={() => setIsCreateOpen(false)}>Cancelar</button>
                         <button
                             disabled={saving}
-                            className="px-4 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleCreateUser}
                         >
                             {saving ? <Loader2 className="animate-spin" size={14} /> : <UserPlus size={14} />}
@@ -594,7 +594,7 @@ export default function IdentityManagementPage() {
                             value={newUsername}
                             onChange={e => setNewUsername(e.target.value)}
                             placeholder="ej: juan.perez"
-                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-[hsl(var(--info)/100%)]"
                         />
                     </div>
                     <div>
@@ -604,7 +604,7 @@ export default function IdentityManagementPage() {
                             value={newEmail}
                             onChange={e => setNewEmail(e.target.value)}
                             placeholder="ej: juan@ccf.com"
-                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-[hsl(var(--info)/100%)]"
                         />
                     </div>
                     <div>
@@ -614,7 +614,7 @@ export default function IdentityManagementPage() {
                             value={newPassword}
                             onChange={e => setNewPassword(e.target.value)}
                             placeholder="Mínimo 6 caracteres"
-                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-[hsl(var(--info)/100%)]"
                         />
                     </div>
                     <div>
@@ -627,7 +627,7 @@ export default function IdentityManagementPage() {
                                     className={clsx(
                                         "flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all",
                                         newRole === r
-                                            ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
+                                            ? "border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/10"
                                             : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--border))]"
                                     )}
                                 >
@@ -645,7 +645,7 @@ export default function IdentityManagementPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
                     <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/10 rounded-xl shadow-2xl w-full max-w-sm mx-4 p-5 space-y-4">
                         <div className="flex items-center gap-2">
-                            <Key size={18} className="text-amber-500" />
+                            <Key size={18} className="text-[hsl(var(--warning))]" />
                             <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Resetear Contraseña</h3>
                         </div>
                         <p className="text-xs text-[hsl(var(--text-secondary))]">
@@ -658,7 +658,7 @@ export default function IdentityManagementPage() {
                             placeholder="Mínimo 6 caracteres"
                             autoFocus
                             onKeyDown={e => { if (e.key === 'Enter') submitResetPassword(); if (e.key === 'Escape') setShowResetModal(false); }}
-                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-blue-500"
+                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-[hsl(var(--info)/100%)]"
                         />
                         <div className="flex justify-end gap-2">
                             <button
@@ -670,7 +670,7 @@ export default function IdentityManagementPage() {
                             <button
                                 disabled={saving || !resetPassword || resetPassword.length < 6}
                                 onClick={submitResetPassword}
-                                className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {saving ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
                                 {saving ? 'Guardando...' : 'Confirmar'}

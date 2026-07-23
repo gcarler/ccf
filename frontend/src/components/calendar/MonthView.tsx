@@ -63,14 +63,14 @@ export default function MonthView({ currentDate, events, onSave, onEventClick }:
                 className={clsx(
                   'min-h-[100px] p-2 border-r border-b border-[hsl(var(--border))] dark:border-white/5 group transition-colors cursor-pointer hover:bg-[hsl(var(--surface-1))]/50 dark:hover:bg-white/[0.02]',
                   !inMonth && 'opacity-30',
-                  openPopoverDay === dayKey && 'ring-2 ring-inset ring-blue-500/50'
+                  openPopoverDay === dayKey && 'ring-2 ring-inset ring-[hsl(var(--primary))]/50'
                 )}
               >
                 <span
                   className={clsx(
                     'inline-flex size-6 items-center justify-center rounded-full text-[11px] font-bold transition-all',
                     isToday(day)
-                      ? 'bg-[hsl(var(--primary))] text-white shadow-sm shadow-blue-400'
+                      ? 'bg-[hsl(var(--primary))] text-white shadow-sm shadow-[hsl(var(--info))]'
                       : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] dark:group-hover:text-white'
                   )}
                 >

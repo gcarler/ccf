@@ -37,11 +37,11 @@ import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
 const CMS_POST_VIEWS: ViewType[] = ["grid", "list", "table", "board", "kanban"];
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  published: { label: "Publicado", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" },
+  published: { label: "Publicado", color: "bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/20 dark:text-[hsl(var(--success))]" },
   draft: { label: "Borrador", color: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]" },
-  in_review: { label: "En revisión", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400" },
-  approved: { label: "Aprobado", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400" },
-  archived: { label: "Archivado", color: "bg-rose-100 text-rose-600 dark:bg-rose-900/10 dark:text-rose-400" },
+  in_review: { label: "En revisión", color: "bg-[hsl(var(--warning-muted))] text-warning-text dark:bg-[hsl(var(--warning))]/20 dark:text-[hsl(var(--warning))]" },
+  approved: { label: "Aprobado", color: "bg-[hsl(var(--info-muted))] text-info-text dark:bg-[hsl(var(--info))]/20 dark:text-[hsl(var(--info))]" },
+  archived: { label: "Archivado", color: "bg-[hsl(var(--danger-muted))] text-danger-text dark:bg-[hsl(var(--danger))]/10 dark:text-[hsl(var(--danger))]" },
 };
 
 function slugify(value: string) {
@@ -236,14 +236,14 @@ export default function CmsPostsManagement() {
                 <button
                   key={post.id}
                   onClick={() => openPost(post)}
-                  className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-blue-400 hover:shadow-lg transition-all"
+                  className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-[hsl(var(--info)/40%)] hover:shadow-lg transition-all"
                 >
                   <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{post.title}</p>
                   <p className="text-[10px] font-mono text-[hsl(var(--text-secondary))] mt-2 truncate">/{post.slug}</p>
                   {post.categories && post.categories.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {post.categories.map((cat) => (
-                        <span key={cat.id} className="px-1.5 py-0.5 rounded text-[9px] bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+                        <span key={cat.id} className="px-1.5 py-0.5 rounded text-[9px] bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/20 dark:text-success-text">
                           {cat.name}
                         </span>
                       ))}
@@ -300,14 +300,14 @@ export default function CmsPostsManagement() {
         <button
           onClick={() => setIsQuickAddOpen((prev) => !prev)}
           disabled={!canEdit}
-          className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
+          className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
         >
           <Plus size={14} /> Nuevo post
         </button>
       </header>
 
       {error && (
-        <div className="mx-3 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+        <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
           <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
         </div>
       )}
@@ -318,7 +318,7 @@ export default function CmsPostsManagement() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-blue-50 dark:bg-blue-900/10 border-b-2 border-blue-300 dark:border-blue-500/30 overflow-hidden shrink-0"
+            className="bg-info-soft dark:bg-[hsl(var(--info))]/10 border-b-2 border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/30 overflow-hidden shrink-0"
           >
             <form onSubmit={handleCreatePost} className="px-3 py-1.5 flex items-center gap-4">
               <div className="size-8 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center shrink-0">
@@ -332,7 +332,7 @@ export default function CmsPostsManagement() {
                 onKeyDown={(e) => e.key === "Escape" && setIsQuickAddOpen(false)}
                 placeholder="Título del nuevo post (Enter para crear)"
                 disabled={!canEdit}
-                className="flex-1 bg-transparent border-none text-sm font-bold text-blue-900 dark:text-blue-200 placeholder:text-[hsl(var(--primary))] focus:ring-0"
+                className="flex-1 bg-transparent border-none text-sm font-bold text-info-text dark:text-[hsl(var(--info))] placeholder:text-[hsl(var(--primary))] focus:ring-0"
               />
               <button type="submit" disabled={!canEdit} className="bg-[hsl(var(--primary))] text-white px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50">
                 Guardar
@@ -363,13 +363,13 @@ export default function CmsPostsManagement() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
-                  className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all duration-200 flex items-center gap-4"
+                  className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all duration-200 flex items-center gap-4"
                 >
                   <button
                     onClick={() => toggleSelect(post.id)}
                     className={clsx(
                       "size-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all",
-                      selectedIds.has(post.id) ? "bg-[hsl(var(--primary))] border-blue-600" : "border-[hsl(var(--border))] dark:border-white/20 hover:border-blue-400"
+                      selectedIds.has(post.id) ? "bg-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]" : "border-[hsl(var(--border))] dark:border-white/20 hover:border-[hsl(var(--info)/40%)]"
                     )}
                   >
                     {selectedIds.has(post.id) && <Check size={11} className="text-white" strokeWidth={3} />}
@@ -377,7 +377,7 @@ export default function CmsPostsManagement() {
 
                   <div
                     onClick={() => openPost(post)}
-                    className="size-7 rounded-md bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 flex items-center justify-center shrink-0 cursor-pointer"
+                    className="size-7 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] dark:bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0 cursor-pointer"
                   >
                     <FileText size={20} />
                   </div>
@@ -395,14 +395,14 @@ export default function CmsPostsManagement() {
                       </>}
                       {post.categories && post.categories.length > 0 && <>
                         <div className="size-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full" />
-                        <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+                        <div className="flex items-center gap-1 text-[11px] text-success-text dark:text-[hsl(var(--success))]">
                           <FolderOpen size={11} />
                           {post.categories.map((c) => c.name).join(", ")}
                         </div>
                       </>}
                       {post.tags && post.tags.length > 0 && <>
                         <div className="size-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full" />
-                        <div className="flex items-center gap-1 text-[11px] text-fuchsia-600 dark:text-fuchsia-400">
+                        <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--domain-fuchsia)/90%)] dark:text-[hsl(var(--domain-fuchsia))]">
                           <Tag size={11} />
                           {post.tags.map((t) => t.name).join(", ")}
                         </div>
@@ -415,7 +415,7 @@ export default function CmsPostsManagement() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleRestorePost(post); }}
                         disabled={!canEdit}
-                        className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-emerald-600 transition-all disabled:opacity-50"
+                        className="p-2 hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-success-text transition-all disabled:opacity-50"
                         title="Restaurar a borrador"
                       >
                         <RotateCcw size={15} />
@@ -424,7 +424,7 @@ export default function CmsPostsManagement() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleArchivePost(post); }}
                         disabled={!canEdit}
-                        className="p-2 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-amber-600 transition-all disabled:opacity-50"
+                        className="p-2 hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-warning-text transition-all disabled:opacity-50"
                         title="Archivar post"
                       >
                         <Archive size={15} />
@@ -467,7 +467,7 @@ export default function CmsPostsManagement() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="size-8 rounded-md bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 flex items-center justify-center shrink-0">
+                          <div className="size-8 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] dark:bg-[hsl(var(--domain-fuchsia)/20%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0">
                             <FileText size={14} />
                           </div>
                           <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate max-w-[200px]">{post.title}</span>
@@ -488,7 +488,7 @@ export default function CmsPostsManagement() {
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => openPost(post)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase hover:bg-blue-100 transition-all"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase hover:bg-[hsl(var(--info-muted))] transition-all"
                           >
                             <PenTool size={10} /> Editar
                           </button>
@@ -498,8 +498,8 @@ export default function CmsPostsManagement() {
                             className={clsx(
                               "p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 disabled:opacity-40",
                               post.status === "archived"
-                                ? "hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-[hsl(var(--text-secondary))] hover:text-emerald-600"
-                                : "hover:bg-amber-50 dark:hover:bg-amber-500/10 text-[hsl(var(--text-secondary))] hover:text-amber-600"
+                                ? "hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 text-[hsl(var(--text-secondary))] hover:text-success-text"
+                                : "hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 text-[hsl(var(--text-secondary))] hover:text-warning-text"
                             )}
                           >
                             {post.status === "archived" ? <RotateCcw size={13} /> : <Archive size={13} />}
@@ -523,9 +523,9 @@ export default function CmsPostsManagement() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.025 }}
                   onClick={() => openPost(post)}
-                  className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all cursor-pointer flex items-center gap-4"
+                  className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer flex items-center gap-4"
                 >
-                  <div className="size-6 rounded-md bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 flex items-center justify-center shrink-0 group-hover:bg-fuchsia-600 group-hover:text-white transition-all">
+                  <div className="size-6 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] dark:bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0 group-hover:bg-[hsl(var(--domain-fuchsia))] group-hover:text-white transition-all">
                     <FileText size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -543,7 +543,7 @@ export default function CmsPostsManagement() {
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); openPost(post); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide hover:bg-blue-100 transition-all"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
                   >
                     <PenTool size={11} /> Editar
                   </button>
@@ -649,8 +649,8 @@ export default function CmsPostsManagement() {
                           className={clsx(
                             "px-3 py-1.5 rounded-md text-[11px] font-medium transition-all disabled:opacity-50",
                             isSelected
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30"
-                              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-emerald-300"
+                              ? "bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/20 dark:text-success-text border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30"
+                              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--success)/30%)]"
                           )}
                         >
                           {cat.name}
@@ -682,8 +682,8 @@ export default function CmsPostsManagement() {
                           className={clsx(
                             "px-3 py-1.5 rounded-md text-[11px] font-medium transition-all disabled:opacity-50",
                             isSelected
-                              ? "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/20 dark:text-fuchsia-300 border border-fuchsia-200 dark:border-fuchsia-500/30"
-                              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-fuchsia-300"
+                              ? "bg-[hsl(var(--domain-fuchsia)/20%)] text-[hsl(var(--domain-fuchsia)/90%)] dark:bg-[hsl(var(--domain-fuchsia)/20%)] dark:text-[hsl(var(--domain-fuchsia))] border border-[hsl(var(--domain-fuchsia)/30%)] dark:border-[hsl(var(--domain-fuchsia)/30%)]"
+                              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--domain-fuchsia)/100%)]"
                           )}
                         >
                           {tag.name}
@@ -718,14 +718,14 @@ export default function CmsPostsManagement() {
             </section>
 
             <div className="pt-6 border-t border-[hsl(var(--border))] dark:border-white/5">
-              <button onClick={handleSavePost} disabled={!canEdit} className="w-full bg-[hsl(var(--primary))] text-white py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50">
+              <button onClick={handleSavePost} disabled={!canEdit} className="w-full bg-[hsl(var(--primary))] text-white py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50">
                 Guardar cambios
               </button>
               {selectedPost.status === "archived" ? (
                 <button
                   onClick={() => handleRestorePost(selectedPost)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-emerald-200 text-emerald-700 dark:text-emerald-300 py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-emerald-50 dark:hover:bg-emerald-500/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-[hsl(var(--success)/25%)] text-success-text dark:text-success-text py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <RotateCcw size={14} /> Restaurar a borrador
                 </button>
@@ -733,7 +733,7 @@ export default function CmsPostsManagement() {
                 <button
                   onClick={() => handleArchivePost(selectedPost)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-amber-200 text-amber-700 dark:text-amber-300 py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-amber-50 dark:hover:bg-amber-500/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-[hsl(var(--warning)/25%)] text-warning-text dark:text-warning-text py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Archive size={14} /> Archivar post
                 </button>
@@ -752,9 +752,9 @@ export default function CmsPostsManagement() {
       >
         {pendingArchivePost && (
           <div className="space-y-4">
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+            <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft p-4 text-warning-text dark:border-[hsl(var(--warning)/100%)]/30 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
               <p className="text-sm font-semibold">{pendingArchivePost.title}</p>
-              <p className="mt-2 text-xs leading-5 text-amber-800 dark:text-amber-200">
+              <p className="mt-2 text-xs leading-5 text-warning-text dark:text-[hsl(var(--warning))]">
                 El post quedará archivado y podrás restaurarlo después.
               </p>
             </div>
@@ -768,7 +768,7 @@ export default function CmsPostsManagement() {
               <button
                 onClick={confirmArchivePost}
                 disabled={!canEdit}
-                className="flex-1 rounded-md bg-amber-500 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-amber-600 disabled:opacity-50"
+                className="flex-1 rounded-md bg-[hsl(var(--warning))] px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--warning))] disabled:opacity-50"
               >
                 Archivar
               </button>

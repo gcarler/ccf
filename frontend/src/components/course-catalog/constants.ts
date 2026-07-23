@@ -11,9 +11,9 @@ export const ACCESS_LABEL: Record<AccessLevel, string> = {
 };
 
 export const ACCESS_COLOR: Record<AccessLevel, string> = {
-    open: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    persona: "bg-blue-500/10 text-[hsl(var(--primary))] border-blue-500/20",
-    advanced: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    open: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success)/100%)]/20",
+    persona: "bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]/20",
+    advanced: "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))] border-[hsl(var(--warning)/100%)]/20",
 };
 
 export const COURSE_CATALOG_AVAILABLE_VIEWS = [

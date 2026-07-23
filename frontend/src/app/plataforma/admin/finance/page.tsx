@@ -203,7 +203,7 @@ export default function FinanceAdminPage() {
                 rightActions={
                     <div className="flex items-center gap-2">
                         <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] rounded-md text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all active:scale-95"><Download size={14} /> Exportar</button>
-                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all"><Plus size={14} /> Registrar Transacción</button>
+                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"><Plus size={14} /> Registrar Transacción</button>
                     </div>
                 }
             />
@@ -355,7 +355,7 @@ export default function FinanceAdminPage() {
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 className="space-y-3"
                             >
-                                <section className="p-4 lg:p-4 bg-gradient-to-br from-[hsl(var(--bg-muted))] via-sky-950 to-sky-900 rounded-lg text-white shadow-2xl relative overflow-hidden group">
+                                <section className="p-4 lg:p-4 bg-gradient-to-br from-[hsl(var(--bg-muted))] via-[hsl(var(--info))] to-[hsl(var(--info))] rounded-lg text-white shadow-2xl relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-1000"><Sparkles size={240} /></div>
                                     <div className="absolute -bottom-20 -left-20 size-96 bg-[hsl(var(--primary))/0.1] blur-[100px] rounded-full" />
                                     
@@ -365,7 +365,7 @@ export default function FinanceAdminPage() {
                                         </div>
                                         <h2 className="text-xl lg:text-xl font-bold tracking-tighter leading-none">
                                             Tu tesorería está <br/>
-                                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 italic">saludable y protegida.</span>
+                                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--success))] italic">saludable y protegida.</span>
                                         </h2>
                                         <p className="text-xl text-[hsl(var(--text-secondary))] font-medium leading-relaxed max-w-2xl">
                                             Optimus Brain ha analizado las últimas 450 transacciones y no ha detectado anomalías. El flujo de caja proyectado para el próximo mes cubre el 100% de los compromisos ministeriales con un excedente del 12% para fondo de reserva.
@@ -411,7 +411,7 @@ export default function FinanceAdminPage() {
 
                     <section className="space-y-4 pt-6 border-t border-[hsl(var(--border))] dark:border-white/5">
                         <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2"><Receipt size={14} /> Comprobante Digital</h4>
-                        <div className="aspect-[3/4] w-full max-w-[320px] mx-auto rounded-lg bg-[hsl(var(--surface-1))] dark:bg-black/40 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/5 flex flex-col items-center justify-center text-[hsl(var(--text-secondary))] space-y-4 group cursor-pointer hover:border-blue-500/50 hover:bg-[hsl(var(--bg-primary))] transition-all duration-500">
+                        <div className="aspect-[3/4] w-full max-w-[320px] mx-auto rounded-lg bg-[hsl(var(--surface-1))] dark:bg-black/40 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/5 flex flex-col items-center justify-center text-[hsl(var(--text-secondary))] space-y-4 group cursor-pointer hover:border-[hsl(var(--info)/100%)]/50 hover:bg-[hsl(var(--bg-primary))] transition-all duration-500">
                             <div className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
                                 <FileText size={56} strokeWidth={1} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
                             </div>

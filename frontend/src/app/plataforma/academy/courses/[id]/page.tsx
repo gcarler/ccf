@@ -13,9 +13,9 @@ import {
     FileText,
     Calendar
 } from 'lucide-react';
-import { DSBadge } from '@/design/components/DSBadge';
-import { DSCard } from '@/design/components/DSCard';
-import { DSMetric } from '@/design/components/DSMetric';
+import { DSBadge } from '@/design';
+import { DSCard } from '@/design';
+import { DSMetric } from '@/design';
 import { toast } from 'sonner';
 
 interface CourseStats {
@@ -109,7 +109,7 @@ export default function CourseCoordinationPage() {
                     <div className="flex items-center gap-3">
                         <button 
                             onClick={() => router.push(`/plataforma/academy/courses/${id}/manage`)}
-                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all"
                         >
                             Gestionar Cohorte
                         </button>
@@ -144,7 +144,7 @@ export default function CourseCoordinationPage() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-8 rounded-md bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
+                                        <div className="size-8 rounded-md bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                             <Calendar size={20} />
                                         </div>
                                         <div>
@@ -159,7 +159,7 @@ export default function CourseCoordinationPage() {
 
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-8 rounded-md bg-amber-500/10 flex items-center justify-center text-amber-600">
+                                        <div className="size-8 rounded-md bg-[hsl(var(--warning))]/10 flex items-center justify-center text-warning-text">
                                             <FileText size={20} />
                                         </div>
                                         <div>

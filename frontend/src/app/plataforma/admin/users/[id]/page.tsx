@@ -15,8 +15,8 @@ import {
     X,
     Check
 } from 'lucide-react';
-import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
+import { DSCard } from '@/design';
+import { DSBadge } from '@/design';
 import { toast } from 'sonner';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
@@ -187,7 +187,7 @@ export default function UserDetailPage() {
                                 disabled={isSubmitting}
                                 className={`px-3 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all shadow-sm border ${
                                     user.is_active 
-                                    ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-rose-200 dark:border-[hsl(var(--destructive))/0.3] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)]' 
+                                    ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--destructive))/0.3] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)]' 
                                     : 'bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)] text-[hsl(var(--success))] hover:bg-[hsl(var(--success))/0.15]'
                                 }`}
                             >
@@ -204,11 +204,11 @@ export default function UserDetailPage() {
                     <div className="lg:col-span-8 space-y-3">
                         {/* Profile Header */}
                         <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none flex flex-col md:flex-row items-center gap-3 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-48 bg-gradient-to-bl from-blue-500/10 to-transparent pointer-events-none rounded-bl-full" />
+                            <div className="absolute top-0 right-0 w-64 h-48 bg-gradient-to-bl to-[hsl(var(--info)/10%)] to-transparent pointer-events-none rounded-bl-full" />
                             
                             <div className="size-10 rounded-full bg-[hsl(var(--surface-1))] dark:bg-black/20 flex items-center justify-center border-4 border-white dark:border-[hsl(var(--bg-primary))] shadow-xl relative z-10">
                                 <User size={48} className="text-[hsl(var(--text-secondary))]" strokeWidth={1.5} />
-                                {user.is_active && <div className="absolute bottom-2 right-2 size-4 bg-emerald-500 border-2 border-white dark:border-[hsl(var(--bg-primary))] rounded-full" />}
+                                {user.is_active && <div className="absolute bottom-2 right-2 size-4 bg-[hsl(var(--success))] border-2 border-white dark:border-[hsl(var(--bg-primary))] rounded-full" />}
                             </div>
                             
                             <div className="space-y-3 text-center md:text-left relative z-10 flex-1">
@@ -231,14 +231,14 @@ export default function UserDetailPage() {
                             <div className="space-y-4">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] flex items-center justify-center"><Shield size={18} /></div>
+                                        <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] flex items-center justify-center"><Shield size={18} /></div>
                                         <div>
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Rol Asignado (Permisos Granulares)</p>
                                             {isEditingRole ? (
                                                 <select 
                                                     value={editRoleId || ''} 
                                                     onChange={e => setEditRoleId(e.target.value || null)}
-                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] min-w-[200px]"
+                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--info)/100%)]/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] min-w-[200px]"
                                                 >
                                                     <option value="">Sin rol asignado</option>
                                                     {roles.map(r => (
@@ -258,14 +258,14 @@ export default function UserDetailPage() {
                                             <button onClick={saveRole} disabled={isSubmitting} className="p-2 text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] transition-colors rounded-lg shadow-md"><Check size={16}/></button>
                                         </div>
                                     ) : (
-                                        <button onClick={() => setIsEditingRole(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-blue-50 hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
+                                        <button onClick={() => setIsEditingRole(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-info-soft hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
                                             Cambiar Rol
                                         </button>
                                     )}
                                 </div>
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-10 rounded-md bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] flex items-center justify-center"><Mail size={18} /></div>
+                                        <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] flex items-center justify-center"><Mail size={18} /></div>
                                         <div>
                                             <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Correo Electrónico</p>
                                             {isEditingEmail ? (
@@ -273,7 +273,7 @@ export default function UserDetailPage() {
                                                     type="email" 
                                                     value={editEmail} 
                                                     onChange={e => setEditEmail(e.target.value)}
-                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
+                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--info)/100%)]/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                     autoFocus
                                                 />
                                             ) : (
@@ -287,7 +287,7 @@ export default function UserDetailPage() {
                                             <button onClick={saveEmail} disabled={isSubmitting} className="p-2 text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] transition-colors rounded-lg shadow-md"><Check size={16}/></button>
                                         </div>
                                     ) : (
-                                        <button onClick={() => setIsEditingEmail(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-blue-50 hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
+                                        <button onClick={() => setIsEditingEmail(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-info-soft hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
                                             Cambiar Email
                                         </button>
                                     )}

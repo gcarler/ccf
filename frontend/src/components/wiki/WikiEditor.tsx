@@ -124,14 +124,14 @@ export default function WikiEditor({
                             )}
                             {status === 'saved' && (
                                 <>
-                                    <Cloud size={14} className="text-emerald-500" />
+                                    <Cloud size={14} className="text-[hsl(var(--success))]" />
                                     <span className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Guardado</span>
                                 </>
                             )}
                             {status === 'error' && (
                                 <>
-                                    <CloudOff size={14} className="text-rose-500" />
-                                    <span className="text-[11px] font-bold uppercase tracking-wide text-rose-500">Error al guardar</span>
+                                    <CloudOff size={14} className="text-[hsl(var(--danger))]" />
+                                    <span className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--danger))]">Error al guardar</span>
                                 </>
                             )}
                         </motion.div>
@@ -145,7 +145,7 @@ export default function WikiEditor({
             {/* Footer Metadata */}
             <div className="mt-3 pt-8 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between text-[hsl(var(--text-secondary))]">
                 <div className="flex items-center gap-2">
-                    <div className="size-2 rounded-full bg-emerald-500" />
+                    <div className="size-2 rounded-full bg-[hsl(var(--success))]" />
                     <span className="text-[10px] font-semibold uppercase tracking-wide">Editor Activo</span>
                 </div>
                 {lastSaved && (

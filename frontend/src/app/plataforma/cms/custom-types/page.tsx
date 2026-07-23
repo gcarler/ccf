@@ -74,8 +74,8 @@ export default function CustomTypesPage() {
   };
 
   const statusColors: Record<string, string> = {
-    draft: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]", in_review: "bg-amber-100 text-amber-700",
-    approved: "bg-blue-100 text-[hsl(var(--primary))]", published: "bg-green-100 text-[hsl(var(--secondary))]",
+    draft: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]", in_review: "bg-[hsl(var(--warning-muted))] text-warning-text",
+    approved: "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]", published: "bg-green-100 text-[hsl(var(--secondary))]",
     archived: "bg-red-100 text-[hsl(var(--destructive))]", obsolete: "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]",
   };
 
@@ -187,7 +187,7 @@ export default function CustomTypesPage() {
           <p className="text-sm text-[hsl(var(--text-secondary))]">La entrada quedara archivada dentro del tipo seleccionado.</p>
           <div className="flex gap-2">
             <button onClick={() => setPendingArchiveEntry(null)} className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium">Cancelar</button>
-            <button onClick={deleteEntry} className="flex-1 rounded-lg bg-amber-500 px-3 py-2 text-sm font-medium text-white hover:bg-amber-600">Archivar</button>
+            <button onClick={deleteEntry} className="flex-1 rounded-lg bg-[hsl(var(--warning))] px-3 py-2 text-sm font-medium text-white hover:bg-[hsl(var(--warning))]">Archivar</button>
           </div>
         </div>
       </SidePanel>

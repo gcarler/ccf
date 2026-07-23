@@ -119,7 +119,7 @@ export default function MediaPicker({
       >
         <div className="flex items-center justify-between border-b border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-md bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300 flex items-center justify-center">
+            <div className="size-10 rounded-md bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text flex items-center justify-center">
               <ImageIcon size={18} />
             </div>
             <div>
@@ -149,7 +149,7 @@ export default function MediaPicker({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar por archivo, alt text o seccion"
-              className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-500"
+              className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent py-2 pl-9 pr-3 text-sm outline-none focus:border-[hsl(var(--info)/100%)]"
             />
           </div>
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50">
@@ -185,7 +185,7 @@ export default function MediaPicker({
                   <button
                     key={item.id}
                     onClick={() => onSelect(item)}
-                    className={`group text-left rounded-lg border overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] transition-all ${isSelected ? "border-blue-500 ring-2 ring-blue-500/20" : "border-[hsl(var(--border))] dark:border-white/10 hover:border-blue-300"}`}
+                    className={`group text-left rounded-lg border overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] transition-all ${isSelected ? "border-[hsl(var(--info)/100%)] ring-2 ring-[hsl(var(--primary))]/20" : "border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--info)/30%)]"}`}
                   >
                     <div className="relative aspect-video bg-[hsl(var(--surface-2))] dark:bg-white/5">
                       <OptimizedImage

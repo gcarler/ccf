@@ -69,7 +69,7 @@ function RightPanel({
             transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
             style={{ width: `min(${width}px, 100vw)`, minWidth: 0, maxWidth: '100vw' }}
             className={clsx(
-                'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border-l border-[hsl(var(--border))] dark:border-white/5',
+                'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] border-l border-[hsl(var(--border))] dark:border-white/5',
                 isControlled || rightMode === 'overlay'
                     ? 'fixed right-0 top-10 h-[calc(100vh-2.5rem)] z-[35] shadow-[-24px_0_60px_rgba(0,0,0,0.12)]'
                     : 'relative h-full z-[25] shadow-[-8px_0_24px_rgba(0,0,0,0.06)]'

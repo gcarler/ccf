@@ -198,7 +198,7 @@ export default function AttendanceDrawer({
     )}
     <div className="space-y-2">
     {personas.map((m, i) => (
-    <div key={m.persona_id} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${m.status === 'first_time' ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' : 'bg-[hsl(var(--bg-muted))]'}`}>
+    <div key={m.persona_id} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${m.status === 'first_time' ? 'bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]' : 'bg-[hsl(var(--bg-muted))]'}`}>
     <div className="flex-1 min-w-0">
     <div className="flex items-center gap-1.5">
     <p className="text-xs font-semibold text-[hsl(var(--text-primary))] ">{m.name}</p>
@@ -212,7 +212,7 @@ export default function AttendanceDrawer({
     {([
     { status: 'present', label: 'P', cls: 'bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-[hsl(var(--secondary))]', activeCls: 'ring-2 ring-green-500' },
     { status: 'absent', label: 'A', cls: 'bg-red-100 text-[hsl(var(--destructive))] dark:bg-red-900/30 dark:text-[hsl(var(--destructive))]', activeCls: 'ring-2 ring-red-500' },
-    { status: 'first_time', label: '1°', cls: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-[hsl(var(--primary))]', activeCls: 'ring-2 ring-blue-500' },
+    { status: 'first_time', label: '1°', cls: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 dark:text-[hsl(var(--primary))]', activeCls: 'ring-2 ring-[hsl(var(--primary))]' },
     ] as const).map(opt => (
     <button key={opt.status}
     onClick={() => setPersonas(prev => prev.map((x, j) => j === i ? { ...x, status: opt.status } : x))}
@@ -238,7 +238,7 @@ export default function AttendanceDrawer({
     {!showVisitorSearch && !showNewVisitorForm ? (
     <div className="flex gap-2">
     <button onClick={() => setShowVisitorSearch(true)}
-    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[hsl(var(--border-primary))] dark:border-white/20 text-xs text-[hsl(var(--text-secondary))] hover:border-blue-400 hover:text-[hsl(var(--primary))] dark:hover:border-blue-700 dark:hover:text-[hsl(var(--primary))] transition-colors">
+    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[hsl(var(--border-primary))] dark:border-white/20 text-xs text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/40%)] hover:text-[hsl(var(--primary))] dark:hover:border-[hsl(var(--info)/100%)] dark:hover:text-[hsl(var(--primary))] transition-colors">
     <Search size={13} />Buscar existente
     </button>
     <button onClick={() => setShowNewVisitorForm(true)}

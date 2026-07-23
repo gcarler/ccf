@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import UniversalWikiView from './UniversalWikiView';
 
+
 const meta: Meta<typeof UniversalWikiView> = {
+  tags: ['autodocs'],
   title: 'UI/UniversalWikiView',
   component: UniversalWikiView,
   parameters: {

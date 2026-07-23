@@ -100,7 +100,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                         {/* Header */}
                         <header className="p-3 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--bg-primary))] shrink-0">
                             <div className="flex items-center gap-4">
-                                <div className="size-7 rounded-lg bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 relative">
+                                <div className="size-7 rounded-lg bg-[hsl(var(--info))] flex items-center justify-center text-white shadow-lg shadow-[hsl(var(--info))/0.3] relative">
                                     <Bot size={24} />
                                     <div className="absolute -bottom-1 -right-1 size-4 bg-[hsl(var(--success))] rounded-full border-2 border-white" />
                                 </div>
@@ -131,7 +131,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                 >
                                     <div className={clsx(
                                         "size-8 rounded-md flex items-center justify-center shrink-0 shadow-sm",
-                                        msg.role === 'bot' ? "bg-sky-50 dark:bg-sky-900/20 text-sky-600" : "bg-[hsl(var(--primary))] text-white"
+                                        msg.role === 'bot' ? "bg-info-soft dark:bg-[hsl(var(--info)/0.2)] text-[hsl(var(--info))]" : "bg-[hsl(var(--primary))] text-white"
                                     )}>
                                         {msg.role === 'bot' ? <Sparkles size={16} /> : <User size={16} />}
                                     </div>
@@ -164,7 +164,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                             ))}
                             {loading && (
                                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
-                                    <div className="size-8 rounded-md bg-sky-50 dark:bg-sky-900/20 flex items-center justify-center text-sky-600 shrink-0">
+                                    <div className="size-8 rounded-md bg-info-soft dark:bg-[hsl(var(--info)/0.2)] flex items-center justify-center text-[hsl(var(--info))] shrink-0">
                                         <Loader2 size={16} className="animate-spin" />
                                     </div>
                                     <div className="bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 rounded-lg flex gap-1 items-center">
@@ -189,7 +189,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                 <button 
                                     type="submit"
                                     disabled={!input.trim() || loading}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 size-10 rounded-md bg-sky-600 text-white flex items-center justify-center hover:bg-sky-500 active:scale-95 transition-all shadow-lg shadow-sky-500/30 disabled:opacity-50"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 size-10 rounded-md bg-[hsl(var(--info))] text-white flex items-center justify-center hover:bg-[hsl(var(--info)/0.85)] active:scale-95 transition-all shadow-lg shadow-[hsl(var(--info))/0.3] disabled:opacity-50"
                                 >
                                     <Send size={18} />
                                 </button>

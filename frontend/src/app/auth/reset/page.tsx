@@ -101,8 +101,8 @@ function ResetPasswordContent() {
                         {loading && <Loader2 className="w-4 h-4 animate-spin" />} Actualizar contraseña
                     </button>
                 </form>
-                {message && <p className="text-emerald-400 text-sm font-semibold text-center">{message}</p>}
-                {error && <p className="text-rose-400 text-sm font-semibold text-center">{error}</p>}
+                {message && <p className="text-[hsl(var(--success))] text-sm font-semibold text-center">{message}</p>}
+                {error && <p className="text-[hsl(var(--danger))] text-sm font-semibold text-center">{error}</p>}
             </div>
         </div>
     );

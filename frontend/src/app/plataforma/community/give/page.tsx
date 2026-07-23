@@ -258,8 +258,8 @@ export default function GivingAndConnection() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4 bg-[hsl(var(--surface-2))] px-4 py-2 rounded-md border border-[hsl(var(--border))] hover:border-emerald-500/30 transition-all cursor-pointer group">
-                            <div className="size-8 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                        <div className="flex items-center gap-4 bg-[hsl(var(--surface-2))] px-4 py-2 rounded-md border border-[hsl(var(--border))] hover:border-[hsl(var(--success)/100%)]/30 transition-all cursor-pointer group">
+                            <div className="size-8 rounded-md bg-[hsl(var(--success))]/10 flex items-center justify-center text-[hsl(var(--success))] group-hover:bg-[hsl(var(--success))] group-hover:text-white transition-all">
                                 <Phone size={18} />
                             </div>
                             <div className="flex flex-col">

@@ -129,7 +129,7 @@ export default function ActaManagementPage() {
     const renderCourseList = () => (
         <div className="space-y-4">
             {courses.map((course) => (
-                <button key={course.id} onClick={() => setSelectedCourse(course)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex items-center justify-between hover:border-blue-300 transition-all">
+                <button key={course.id} onClick={() => setSelectedCourse(course)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex items-center justify-between hover:border-[hsl(var(--info)/30%)] transition-all">
                     <div>
                         <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{course.title}</h3>
                         <p className="mt-1 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{course.code} · {course.modality}</p>
@@ -155,7 +155,7 @@ export default function ActaManagementPage() {
                         <tr key={course.id} onClick={() => setSelectedCourse(course)} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] cursor-pointer">
                             <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{course.title}</td>
                             <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{course.code}</td>
-                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", course.id === selectedCourse?.id ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-blue-50 text-[hsl(var(--primary))]")}>{course.id === selectedCourse?.id ? 'Seleccionado' : 'Disponible'}</span></td>
+                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", course.id === selectedCourse?.id ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-info-soft text-[hsl(var(--primary))]")}>{course.id === selectedCourse?.id ? 'Seleccionado' : 'Disponible'}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -173,7 +173,7 @@ export default function ActaManagementPage() {
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((course) => (
-                            <button key={course.id} onClick={() => setSelectedCourse(course)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-blue-300 transition-all">
+                            <button key={course.id} onClick={() => setSelectedCourse(course)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-[hsl(var(--info)/30%)] transition-all">
                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{course.title}</p>
                                 <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))]">{course.code}</p>
                             </button>
@@ -277,7 +277,7 @@ export default function ActaManagementPage() {
                                         <header className="flex items-start justify-between gap-3">
                                             <div className="space-y-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
+                                                    <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-xl shadow-[hsl(var(--info)/20%)]">
                                                         <School size={24} />
                                                     </div>
                                                     <div>
@@ -314,7 +314,7 @@ export default function ActaManagementPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="p-4 bg-[hsl(var(--primary))] rounded-lg text-white shadow-2xl shadow-blue-500/30 relative overflow-hidden group">
+                                            <div className="p-4 bg-[hsl(var(--primary))] rounded-lg text-white shadow-2xl shadow-[hsl(var(--info)/30%)] relative overflow-hidden group">
                                                 <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
                                                     <FileText size={64} />
                                                 </div>
@@ -322,7 +322,7 @@ export default function ActaManagementPage() {
                                                     <div className="space-y-2">
                                                         <h4 className="text-[11px] font-semibold uppercase tracking-wide text-white/60">Simulación de Cierre</h4>
                                                         <p className="text-lg font-bold tracking-tight">12 Alumnos</p>
-                                                        <p className="text-sm font-medium text-blue-100/80">Listos para recibir certificación según los criterios actuales.</p>
+                                                        <p className="text-sm font-medium text-[hsl(var(--info)/80%)]">Listos para recibir certificación según los criterios actuales.</p>
                                                     </div>
                                                     <button className="w-full py-1.5 mt-3 bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] rounded-lg font-black text-[10px] uppercase tracking-wide shadow-xl active:scale-95 transition-all">Ver Alumnos Calificados</button>
                                                 </div>

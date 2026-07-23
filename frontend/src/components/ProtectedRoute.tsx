@@ -44,7 +44,6 @@ function GateScreen({
 
     // Colores del brand CCF
     const teal = 'hsl(var(--primary))';
-    const navy = 'hsl(var(--primary))';
     const warnColor = 'hsl(var(--warning))';
 
     const accentColor = isWarning ? warnColor : teal;

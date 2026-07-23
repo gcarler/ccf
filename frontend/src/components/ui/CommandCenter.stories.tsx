@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import { CommandCenter } from './CommandCenter';
 
+
 const meta: Meta<typeof CommandCenter> = {
+  tags: ['autodocs'],
   title: 'UI/CommandCenter',
   component: CommandCenter,
   parameters: {

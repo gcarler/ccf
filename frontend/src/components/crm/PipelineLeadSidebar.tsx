@@ -67,7 +67,7 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                     <div className="relative">
                         <motion.div 
                             whileHover={{ scale: 1.05 }}
-                            className="size-10 rounded-lg bg-gradient-to-br from-blue-600 to-sky-700 text-white flex items-center justify-center font-bold text-xl shadow-2xl shadow-blue-500/30 border-4 border-white dark:border-[#1e1f21]"
+                            className="size-10 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] text-white flex items-center justify-center font-bold text-xl shadow-2xl shadow-[hsl(var(--info)/30%)] border-4 border-white dark:border-[#1e1f21]"
                         >
                             {lead.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? ''}{lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? ''}
                         </motion.div>
@@ -92,13 +92,13 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
 
                 <div className="p-4 bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] shadow-sm mt-3 relative z-10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-blue-500/10 rounded-md text-[hsl(var(--primary))]"><Smartphone size={16} /></div>
+                        <div className="p-2.5 bg-[hsl(var(--info))]/10 rounded-md text-[hsl(var(--primary))]"><Smartphone size={16} /></div>
                         <div>
                             <p className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
                             <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">WhatsApp Disponible</p>
                         </div>
                     </div>
-                    <button className="p-2.5 bg-[hsl(var(--primary))] text-white rounded-md shadow-lg shadow-blue-500/20 active:scale-90 transition-all" aria-label="Llamar">
+                    <button className="p-2.5 bg-[hsl(var(--primary))] text-white rounded-md shadow-lg shadow-[hsl(var(--info)/20%)] active:scale-90 transition-all" aria-label="Llamar">
                         <Phone size={14} />
                     </button>
                 </div>
@@ -113,17 +113,17 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                     <div className="space-y-2">
                         <button
                             onClick={() => onViewFullProfile(lead.id)}
-                            className="w-full flex items-center gap-4 p-3 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wider hover:bg-[hsl(var(--primary))] transition-all shadow-xl shadow-blue-500/20 active:scale-95 group"
+                            className="w-full flex items-center gap-4 p-3 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wider hover:bg-[hsl(var(--primary))] transition-all shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 group"
                         >
                             <ExternalLink size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /> 
                             Ver Expediente Completo
                         </button>
                         <div className="grid grid-cols-2 gap-2">
                             <button className="flex items-center justify-center gap-2 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-lg text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/[0.05] transition-all">
-                                <MessageCircle size={14} className="text-emerald-500" /> WhatsApp
+                                <MessageCircle size={14} className="text-[hsl(var(--success))]" /> WhatsApp
                             </button>
                             <button className="flex items-center justify-center gap-2 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-lg text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/[0.05] transition-all">
-                                <FileText size={14} className="text-sky-500" /> Notas
+                                <FileText size={14} className="text-[hsl(var(--info))]" /> Notas
                             </button>
                         </div>
                     </div>
@@ -133,7 +133,7 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                     <h3 className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                         <History size={14} className="text-[hsl(var(--primary))]" /> Modificar Etapa
                     </h3>
-                    <div className="grid grid-cols-1 gap-1.5 focus-within:ring-2 focus-within:ring-blue-500/10 p-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/[0.05]">
+                    <div className="grid grid-cols-1 gap-1.5 focus-within:ring-2 focus-within:ring-[hsl(var(--primary))]/10 p-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/[0.05]">
                         {safeStages.map(s => (
                             <button
                                 key={s.value}
@@ -171,7 +171,7 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                                         transition={{ delay: idx * 0.05 }}
                                         className="relative"
                                     >
-                                        <div className="absolute -left-[21px] top-0 size-[13px] rounded-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113] border-2 border-blue-500 shadow-sm z-10" />
+                                        <div className="absolute -left-[21px] top-0 size-[13px] rounded-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113] border-2 border-[hsl(var(--info)/100%)] shadow-sm z-10" />
                                         
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">

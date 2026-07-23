@@ -9,14 +9,14 @@ import type { ProjectTaskRecord } from '@/types/projects';
 import { STATUS_LABELS, PRIORITY_LABELS } from '@/lib/projects/constants';
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
-    completed:   { label: STATUS_LABELS.completed,   cls: 'bg-emerald-50 border-emerald-100 text-emerald-600' },
-    in_progress: { label: STATUS_LABELS.in_progress, cls: 'bg-blue-50 border-blue-100 text-[hsl(var(--primary))]' },
-    review:      { label: STATUS_LABELS.review,      cls: 'bg-amber-50 border-amber-100 text-amber-700' },
+    completed:   { label: STATUS_LABELS.completed,   cls: 'bg-success-soft border-[hsl(var(--success)/20%)] text-success-text' },
+    in_progress: { label: STATUS_LABELS.in_progress, cls: 'bg-info-soft border-[hsl(var(--info)/20%)] text-[hsl(var(--primary))]' },
+    review:      { label: STATUS_LABELS.review,      cls: 'bg-warning-soft border-[hsl(var(--warning)/20%)] text-warning-text' },
     todo:        { label: STATUS_LABELS.todo,        cls: 'bg-slate-50 border-slate-100 text-slate-600' },
 };
 
 const PRIORITY_MAP: Record<string, { label: string; cls: string }> = {
-    urgent: { label: PRIORITY_LABELS.urgent, cls: 'text-rose-600' },
+    urgent: { label: PRIORITY_LABELS.urgent, cls: 'text-danger-text' },
     high:   { label: PRIORITY_LABELS.high,   cls: 'text-orange-500' },
     medium: { label: PRIORITY_LABELS.medium, cls: 'text-[hsl(var(--primary))]' },
     low:    { label: PRIORITY_LABELS.low,    cls: 'text-[hsl(var(--text-secondary))]' },
@@ -27,7 +27,7 @@ function TitleRenderer({ value, data }: { value: string; data: { id?: string; st
     return (
         <div className="flex items-center gap-2.5">
             <div className={clsx('size-4 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                st ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-[hsl(var(--border))] dark:border-white/20')}>
+                st ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)] text-white' : 'border-[hsl(var(--border))] dark:border-white/20')}>
                 {st && <span className="text-[8px] font-bold">✓</span>}
             </div>
             <span className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{value}</span>

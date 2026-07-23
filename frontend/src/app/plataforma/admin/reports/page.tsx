@@ -82,7 +82,7 @@ export default function AdvancedBIReports() {
                         className={clsx(
                             "flex items-center gap-3 px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all active:scale-95",
                             activeTab === tab.id 
-                                ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-xl shadow-blue-500/10" 
+                                ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-xl shadow-[hsl(var(--info)/10%)]" 
                                 : "text-[hsl(var(--text-secondary))] hover:bg-white/50 dark:hover:bg-white/5"
                         )}
                     >
@@ -96,12 +96,12 @@ export default function AdvancedBIReports() {
                 {/* Main Insight Card */}
                 <div className="lg:col-span-8 space-y-3">
                     <section className="relative overflow-hidden rounded-lg bg-[hsl(var(--bg-muted))] border border-white/5 p-4 text-white shadow-2xl group min-h-[400px] flex flex-col justify-between">
-                        <div className="absolute top-0 right-0 -mr-24 -mt-24 size-96 bg-blue-600/20 rounded-full blur-[100px] group-hover:bg-blue-600/30 transition-all duration-1000" />
+                        <div className="absolute top-0 right-0 -mr-24 -mt-24 size-96 bg-[hsl(var(--info))]/20 rounded-full blur-[100px] group-hover:bg-[hsl(var(--info))]/30 transition-all duration-1000" />
                         
                         <div className="relative z-10 flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-3 mb-4">
-                                    <div className="px-3 py-1 bg-blue-500/20 text-[hsl(var(--primary))] border border-blue-500/30 rounded-full text-[9px] font-semibold uppercase tracking-wide flex items-center gap-2">
+                                    <div className="px-3 py-1 bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] border border-[hsl(var(--info)/100%)]/30 rounded-full text-[9px] font-semibold uppercase tracking-wide flex items-center gap-2">
                                         <Layers size={12} /> Perspectiva de {activeTab}
                                     </div>
                                     <span className="text-[hsl(var(--text-secondary))] text-[10px] font-bold uppercase tracking-wide">Actulizado hace 2 min</span>
@@ -140,7 +140,7 @@ export default function AdvancedBIReports() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
                             <div className="flex justify-between items-center">
-                                <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center">
+                                <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] flex items-center justify-center">
                                     <Users size={24} />
                                 </div>
                                 <button className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"><ChevronDown size={18} /></button>
@@ -196,7 +196,7 @@ export default function AdvancedBIReports() {
                         </div>
                         
                         <div className="space-y-4">
-                            <button className="w-full flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-transparent hover:border-blue-500/30 transition-all group">
+                            <button className="w-full flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-transparent hover:border-[hsl(var(--info)/100%)]/30 transition-all group">
                                 <div className="flex items-center gap-4 text-left">
                                     <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-sm group-hover:scale-110 transition-transform">
                                         <Calendar size={18} />
@@ -209,7 +209,7 @@ export default function AdvancedBIReports() {
                                 <ArrowUpRight size={16} className="text-[hsl(var(--text-secondary))]" />
                             </button>
 
-                            <button className="w-full flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-transparent hover:border-blue-500/30 transition-all group">
+                            <button className="w-full flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-transparent hover:border-[hsl(var(--info)/100%)]/30 transition-all group">
                                 <div className="flex items-center gap-4 text-left">
                                     <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-sm group-hover:scale-110 transition-transform">
                                         <BookOpen size={18} />
@@ -257,7 +257,7 @@ export default function AdvancedBIReports() {
                             </div>
                         </div>
 
-                        <button className="w-full py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                        <button className="w-full py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
                             Generar PDF Inteligente
                         </button>
                     </div>

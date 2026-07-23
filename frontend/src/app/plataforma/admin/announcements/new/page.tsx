@@ -94,7 +94,7 @@ export default function NewAnnouncementPage() {
                 {/* Editor Content */}
                 <div className="lg:col-span-8 space-y-3">
                     <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-blue-600/5 rounded-full blur-3xl" />
+                        <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-[hsl(var(--info))]/5 rounded-full blur-3xl" />
                         
                         <div className="relative z-10 space-y-3">
                             <div className="space-y-2">
@@ -118,8 +118,8 @@ export default function NewAnnouncementPage() {
                     </section>
 
                     {/* AI Copywriting Suggestion */}
-                    <section className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-4 border border-blue-100 dark:border-blue-500/20 flex gap-3 items-start group">
-                        <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20 transition-transform group-hover:scale-110"><Bot size={24} className="text-white" /></div>
+                    <section className="bg-info-soft dark:bg-[hsl(var(--info))]/10 rounded-lg p-4 border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20 flex gap-3 items-start group">
+                        <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shrink-0 shadow-lg shadow-[hsl(var(--info)/20%)] transition-transform group-hover:scale-110"><Bot size={24} className="text-white" /></div>
                         <div className="space-y-2">
                             <h4 className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide flex items-center gap-2"><Sparkles size={14} /> Optimus Copy Helper</h4>
                             <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium italic leading-relaxed">
@@ -161,7 +161,7 @@ export default function NewAnnouncementPage() {
                                 onClick={() => setFormData({ ...formData, is_featured: !formData.is_featured })}
                                 className={`w-full flex items-center justify-between p-4 rounded-lg transition-all ${
                                     formData.is_featured
-                                        ? 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300'
+                                        ? 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text'
                                         : 'bg-[hsl(var(--surface-1))] dark:bg-black/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
                                 }`}
                             >
@@ -177,7 +177,7 @@ export default function NewAnnouncementPage() {
                     </section>
 
                     <section className="p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white shadow-2xl space-y-3 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-blue-600/20 rounded-full blur-3xl" />
+                        <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-[hsl(var(--info))]/20 rounded-full blur-3xl" />
                         <div className="relative z-10 flex flex-col gap-3">
                             <div className="flex items-center gap-3">
                                 <Eye size={20} className="text-[hsl(var(--primary))]" />

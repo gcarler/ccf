@@ -26,25 +26,25 @@ import {
 const ISSUE_STYLE: Record<CmsReadinessIssue["severity"], { icon: typeof AlertCircle; className: string; label: string }> = {
   error: {
     icon: AlertCircle,
-    className: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300",
+    className: "border-[hsl(var(--danger)/25%)] bg-danger-soft text-danger-text dark:border-[hsl(var(--danger)/100%)]/30 dark:bg-[hsl(var(--danger))]/10 dark:text-danger-text",
     label: "Crítico",
   },
   warning: {
     icon: AlertTriangle,
-    className: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300",
+    className: "border-[hsl(var(--warning)/25%)] bg-warning-soft text-warning-text dark:border-[hsl(var(--warning)/100%)]/30 dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text",
     label: "Atención",
   },
   info: {
     icon: ShieldCheck,
-    className: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300",
+    className: "border-[hsl(var(--info)/25%)] bg-info-soft text-info-text dark:border-[hsl(var(--info)/100%)]/30 dark:bg-[hsl(var(--info))]/10 dark:text-info-text",
     label: "Info",
   },
 };
 
 const CAPABILITY_STYLE: Record<CmsReadinessCapability["status"], string> = {
-  ready: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300",
-  partial: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300",
-  attention: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300",
+  ready: "border-[hsl(var(--success)/25%)] bg-success-soft text-success-text dark:border-[hsl(var(--success)/100%)]/30 dark:bg-[hsl(var(--success))]/10 dark:text-success-text",
+  partial: "border-[hsl(var(--warning)/25%)] bg-warning-soft text-warning-text dark:border-[hsl(var(--warning)/100%)]/30 dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text",
+  attention: "border-[hsl(var(--danger)/25%)] bg-danger-soft text-danger-text dark:border-[hsl(var(--danger)/100%)]/30 dark:bg-[hsl(var(--danger))]/10 dark:text-danger-text",
 };
 
 function scoreLabel(score: number) {
@@ -133,7 +133,7 @@ export default function CmsReadinessPage() {
         )}
 
         {!loading && !data && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+          <div className="rounded-lg border border-[hsl(var(--danger)/25%)] bg-danger-soft p-4 text-sm text-danger-text dark:border-[hsl(var(--danger)/100%)]/30 dark:bg-[hsl(var(--danger))]/10 dark:text-danger-text">
             No hay datos de readiness disponibles.
           </div>
         )}
@@ -154,9 +154,9 @@ export default function CmsReadinessPage() {
                   <ShieldCheck
                     size={22}
                     className={clsx(
-                      data.score >= 85 && "text-emerald-500",
-                      data.score < 85 && data.score >= 65 && "text-amber-500",
-                      data.score < 65 && "text-rose-500",
+                      data.score >= 85 && "text-[hsl(var(--success))]",
+                      data.score < 85 && data.score >= 65 && "text-[hsl(var(--warning))]",
+                      data.score < 65 && "text-[hsl(var(--danger))]",
                     )}
                   />
                 </div>
@@ -164,9 +164,9 @@ export default function CmsReadinessPage() {
                   <div
                     className={clsx(
                       "h-full rounded-full",
-                      data.score >= 85 && "bg-emerald-500",
-                      data.score < 85 && data.score >= 65 && "bg-amber-500",
-                      data.score < 65 && "bg-rose-500",
+                      data.score >= 85 && "bg-[hsl(var(--success))]",
+                      data.score < 85 && data.score >= 65 && "bg-[hsl(var(--warning))]",
+                      data.score < 65 && "bg-[hsl(var(--danger))]",
                     )}
                     style={{ width: `${data.score}%` }}
                   />
@@ -195,7 +195,7 @@ export default function CmsReadinessPage() {
                 </div>
                 <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/10">
                   {data.issues.length === 0 ? (
-                    <div className="flex items-center gap-2 px-4 py-8 text-sm text-emerald-600 dark:text-emerald-300">
+                    <div className="flex items-center gap-2 px-4 py-8 text-sm text-success-text dark:text-success-text">
                       <CheckCircle2 size={16} />
                       No hay brechas activas en el CMS.
                     </div>

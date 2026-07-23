@@ -115,7 +115,7 @@ export default function CandidatesDashboard() {
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
                     <div className="flex-1 h-1.5 w-32 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${row.original.progress}%` }} className={clsx("h-full", row.original.progress >= 100 ? "bg-emerald-500" : "bg-[hsl(var(--primary))]")} />
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${row.original.progress}%` }} className={clsx("h-full", row.original.progress >= 100 ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--primary))]")} />
                     </div>
                     <span className="font-semibold text-[hsl(var(--text-secondary))]">{Math.round(row.original.progress)}%</span>
                 </div>
@@ -132,7 +132,7 @@ export default function CandidatesDashboard() {
             cell: ({ row }) => (
                 <span className={clsx(
                     "px-4 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wide border",
-                    row.original.status === 'ready' ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800" : "bg-blue-50 text-[hsl(var(--primary))] border-blue-100 dark:bg-blue-900/20 dark:border-blue-800"
+                    row.original.status === 'ready' ? "bg-success-soft text-success-text border-[hsl(var(--success)/20%)] dark:bg-[hsl(var(--success))]/20 dark:border-[hsl(var(--success)/100%)]" : "bg-info-soft text-[hsl(var(--primary))] border-[hsl(var(--info)/20%)] dark:bg-[hsl(var(--info))]/20 dark:border-[hsl(var(--info)/100%)]"
                 )}>
                     {row.original.status === 'ready' ? 'Óptimo para Hito' : 'En Discipulado'}
                 </span>
@@ -141,7 +141,7 @@ export default function CandidatesDashboard() {
         {
             id: 'actions',
             header: '',
-            cell: () => <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all hover:bg-blue-50 dark:hover:bg-white/5 rounded-md"><ChevronRight size={18} /></button>
+            cell: () => <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all hover:bg-info-soft dark:hover:bg-white/5 rounded-md"><ChevronRight size={18} /></button>
         }
     ], []);
 
@@ -184,7 +184,7 @@ export default function CandidatesDashboard() {
                             <input 
                                 value={search} onChange={e => setSearch(e.target.value)}
                                 placeholder="Filtrar por nombre de participante..." 
-                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-8 focus:ring-[hsl(var(--primary))]/5 focus:border-blue-500 transition-all shadow-sm" 
+                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-8 focus:ring-[hsl(var(--primary))]/5 focus:border-[hsl(var(--info)/100%)] transition-all shadow-sm" 
                             />
                         </div>
                     </div>
@@ -208,9 +208,9 @@ export default function CandidatesDashboard() {
 
 function CandidateStat({ label, value, icon: Icon, color, auraColor }: any) {
     const colors: any = {
-        emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800',
-        blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800',
-        amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800'
+        emerald: 'text-success-text bg-success-soft dark:bg-[hsl(var(--success))]/20 border-[hsl(var(--success)/20%)] dark:border-[hsl(var(--success)/100%)]',
+        blue: 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20 border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]',
+        amber: 'text-warning-text bg-warning-soft dark:bg-[hsl(var(--warning))]/20 border-[hsl(var(--warning)/20%)] dark:border-[hsl(var(--warning)/100%)]'
     };
     return (
         <div

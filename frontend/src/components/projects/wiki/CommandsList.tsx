@@ -58,7 +58,7 @@ export const CommandsList = forwardRef((props: any, ref) => {
                         className={clsx(
                             "w-full flex items-center gap-3 px-2 py-2 rounded-md transition-all text-left",
                             index === selectedIndex
-                                ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20"
+                                ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
                                 : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                         )}
                     >
@@ -70,7 +70,7 @@ export const CommandsList = forwardRef((props: any, ref) => {
                         </div>
                         <div>
                             <p className="text-[12px] font-bold leading-none">{item.title}</p>
-                            <p className={clsx("text-[10px] mt-0.5 font-medium", index === selectedIndex ? "text-blue-100" : "text-[hsl(var(--text-secondary))]")}>
+                            <p className={clsx("text-[10px] mt-0.5 font-medium", index === selectedIndex ? "text-[hsl(var(--info))]" : "text-[hsl(var(--text-secondary))]")}>
                                 {item.description}
                             </p>
                         </div>

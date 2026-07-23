@@ -23,9 +23,9 @@ import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { useAuth } from '@/context/AuthContext';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
-import { DSCard } from '@/design/components/DSCard';
-import { DSChart } from '@/design/components/DSChart';
-import { DSMetric } from '@/design/components/DSMetric';
+import { DSCard } from '@/design';
+import { DSChart } from '@/design';
+import { DSMetric } from '@/design';
 import { apiFetch } from '@/lib/http';
 import { useProjects } from '@/hooks/useProjects';
 import type { ProjectRecord } from '@/types/projects';
@@ -318,15 +318,15 @@ export default function ProjectsClient({
                     </div>
                     <div>
                         <Link href="/plataforma/projects/tasks?view=list&scope=all" className="block">
-                            <DSCard className="hover:border-rose-400/30 transition-all cursor-pointer">
+                            <DSCard className="hover:border-[hsl(var(--danger)/40%)]/30 transition-all cursor-pointer">
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Tareas</h3>
                                 <div className="space-y-4 pt-4">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">Tareas Atrasadas</span>
-                                        <span className="text-sm font-semibold text-rose-500">{dashboard?.delayed_tasks_count || 0}</span>
+                                        <span className="text-sm font-semibold text-[hsl(var(--danger))]">{dashboard?.delayed_tasks_count || 0}</span>
                                     </div>
                                     <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                        <div className="h-full bg-rose-500" style={{ width: '15%' }} />
+                                        <div className="h-full bg-[hsl(var(--danger))]" style={{ width: '15%' }} />
                                     </div>
                                     <p className="text-[10px] text-[hsl(var(--text-secondary))] italic">
                                         Se recomienda revisar los hitos críticos para evitar cuellos de botella.

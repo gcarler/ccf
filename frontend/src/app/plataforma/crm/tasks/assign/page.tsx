@@ -236,7 +236,7 @@ export default function TaskAssignment() {
                                     </div>
                                     <div>
                                         <p className="font-bold uppercase tracking-tight text-sm leading-none mb-1">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</p>
-                                        <p className={clsx("text-[10px] font-bold uppercase tracking-wide", selectedPersonaId === m.id ? "text-blue-100" : "text-[hsl(var(--text-secondary))]")}>{m.church_role} · {m.spiritual_status}</p>
+                                        <p className={clsx("text-[10px] font-bold uppercase tracking-wide", selectedPersonaId === m.id ? "text-[hsl(var(--info))]" : "text-[hsl(var(--text-secondary))]")}>{m.church_role} · {m.spiritual_status}</p>
                                     </div>
                                 </div>
                                 <div className={clsx(

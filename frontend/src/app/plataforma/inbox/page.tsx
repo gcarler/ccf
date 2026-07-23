@@ -22,11 +22,11 @@ import { NotificationKind, formatNotificationTime } from '@/lib/notifications';
 type InboxFilter = 'all' | 'unread' | 'mention' | 'task' | 'ai';
 
 const TYPE_CONFIG: Record<NotificationKind, { icon: React.ElementType; color: string; bg: string }> = {
-    mention: { icon: AtSign, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-    comment: { icon: MessageSquare, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-    task: { icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+    mention: { icon: AtSign, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20' },
+    comment: { icon: MessageSquare, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20' },
+    task: { icon: CheckCircle2, color: 'text-success-text', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/20' },
     system: { icon: Bell, color: 'text-[hsl(var(--text-secondary))]', bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5' },
-    ai: { icon: Bot, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+    ai: { icon: Bot, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20' },
     reminder: { icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
 };
 
@@ -84,7 +84,7 @@ export default function InboxPage() {
                     <Bell size={13} />
                     Bandeja de Entrada
                     {unreadCount > 0 && (
-                        <span className="inline-flex items-center justify-center size-5 rounded-full bg-rose-500 text-white font-semibold">
+                        <span className="inline-flex items-center justify-center size-5 rounded-full bg-[hsl(var(--danger))] text-white font-semibold">
                             {unreadCount}
                         </span>
                     )}
@@ -163,7 +163,7 @@ export default function InboxPage() {
                             </div>
                             <p className="text-sm font-bold text-[hsl(var(--text-secondary))]">Sin notificaciones</p>
                             <p className="text-xs text-[hsl(var(--text-secondary))]">Todo limpio por aqui, {displayName}.</p>
-                            {error && <p className="text-xs font-semibold text-rose-500">{error}</p>}
+                            {error && <p className="text-xs font-semibold text-[hsl(var(--danger))]">{error}</p>}
                         </motion.div>
                     ) : (
                         <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/[0.03]">
@@ -182,7 +182,7 @@ export default function InboxPage() {
                                             'w-full text-left flex items-start gap-4 px-3 py-1.5 group relative transition-colors',
                                             notification.read
                                                 ? 'hover:bg-[hsl(var(--surface-1))]/50 dark:hover:bg-white/[0.02]'
-                                                : 'bg-blue-50/30 dark:bg-blue-500/[0.04] hover:bg-blue-50/50 dark:hover:bg-blue-500/[0.07]',
+                                                : 'bg-info-soft/30 dark:bg-[hsl(var(--info))]/[0.04] hover:bg-info-soft/50 dark:hover:bg-[hsl(var(--info))]/[0.07]',
                                         )}
                                         onClick={() => void markRead(notification.id)}
                                     >

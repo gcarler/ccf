@@ -147,7 +147,7 @@ export default function AssessmentPage() {
                     >
                         <div className={clsx(
                             "size-10 rounded-full mx-auto flex items-center justify-center shadow-lg",
-                            result.passed ? "bg-emerald-500 text-white shadow-emerald-500/20" : "bg-rose-500 text-white shadow-rose-500/20"
+                            result.passed ? "bg-[hsl(var(--success))] text-white shadow-[hsl(var(--success)/20%)]" : "bg-[hsl(var(--danger))] text-white shadow-[hsl(var(--danger)/20%)]"
                         )}>
                             {result.passed ? <Trophy size={40} /> : <AlertCircle size={40} />}
                         </div>
@@ -162,7 +162,7 @@ export default function AssessmentPage() {
                         <div className="space-y-3">
                             <button
                                 onClick={() => router.push('/plataforma/academy')}
-                                className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-sm uppercase tracking-wide shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                                className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-sm uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
                             >
                                 Volver a la Academia
                             </button>
@@ -217,8 +217,8 @@ export default function AssessmentPage() {
                                 className={clsx(
                                     "w-full rounded-lg border p-4 text-left transition-all",
                                     currentStep === index
-                                        ? "border-blue-500 bg-blue-50/70 dark:bg-blue-500/10"
-                                        : "border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] hover:border-blue-200 dark:border-white/10 dark:bg-white/5"
+                                        ? "border-[hsl(var(--info)/100%)] bg-info-soft/70 dark:bg-[hsl(var(--info))]/10"
+                                        : "border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] hover:border-[hsl(var(--info)/25%)] dark:border-white/10 dark:bg-white/5"
                                 )}
                             >
                                 <div className="flex items-center justify-between gap-4">
@@ -229,7 +229,7 @@ export default function AssessmentPage() {
                                     <span className={clsx(
                                         "rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide",
                                         answeredQuestionIds.has(question.id)
-                                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                                            ? "bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text"
                                             : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/10"
                                     )}>
                                         {answeredQuestionIds.has(question.id) ? 'Respondida' : 'Pendiente'}
@@ -329,8 +329,8 @@ export default function AssessmentPage() {
                                                     className={clsx(
                                                         "w-full p-3 text-left rounded-lg border-2 transition-all group relative overflow-hidden",
                                                         isSelected
-                                                            ? "border-blue-600 bg-[hsl(var(--primary))] text-white shadow-xl shadow-blue-500/20"
-                                                            : "border-[hsl(var(--border))] dark:border-white/5 hover:border-blue-200 dark:hover:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5"
+                                                            ? "border-[hsl(var(--info)/100%)] bg-[hsl(var(--primary))] text-white shadow-xl shadow-[hsl(var(--info)/20%)]"
+                                                            : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--info)/25%)] dark:hover:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5"
                                                     )}
                                                 >
                                             <div className="flex items-center gap-4 relative z-10">
@@ -353,7 +353,7 @@ export default function AssessmentPage() {
                                         value={answers.find(a => a.question_id === currentQuestion.id)?.text_response || ''}
                                         onChange={(e) => handleAnswer(currentQuestion.id, { text_response: e.target.value })}
                                         placeholder="Escribe tu respuesta aqui..."
-                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-2 border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 text-base font-medium outline-none focus:border-blue-500 transition-all min-h-[200px]"
+                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-2 border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 text-base font-medium outline-none focus:border-[hsl(var(--info)/100%)] transition-all min-h-[200px]"
                                     />
                                 )}
                             </motion.div>
@@ -374,7 +374,7 @@ export default function AssessmentPage() {
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || answers.length < assessment.questions.length}
-                                className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[10px] uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
+                                className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[10px] uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all disabled:opacity-50"
                             >
                                 {isSubmitting ? 'Enviando...' : 'Finalizar Evaluacion'}
                             </button>

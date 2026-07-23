@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import StatusPicker from './StatusPicker';
 
+
 const meta: Meta<typeof StatusPicker> = {
+  tags: ['autodocs'],
   title: 'UI/StatusPicker',
   component: StatusPicker,
   parameters: {
@@ -25,21 +27,21 @@ const statusOptions = [
     value: 'in_progress',
     color: 'bg-[hsl(var(--primary))]/20',
     text: 'text-[hsl(var(--primary))]',
-    bg: 'bg-blue-50',
+    bg: 'bg-info-soft',
   },
   {
     label: 'En Revisión',
     value: 'review',
-    color: 'bg-amber-500/20',
-    text: 'text-amber-600',
-    bg: 'bg-amber-50',
+    color: 'bg-[hsl(var(--warning)/0.2)]',
+    text: 'text-warning-text',
+    bg: 'bg-warning-soft',
   },
   {
     label: 'Completado',
     value: 'completed',
-    color: 'bg-emerald-500/20',
-    text: 'text-emerald-600',
-    bg: 'bg-emerald-50',
+    color: 'bg-[hsl(var(--success)/0.2)]',
+    text: 'text-success-text',
+    bg: 'bg-success-soft',
   },
 ];
 
@@ -66,10 +68,9 @@ export const WithCustomColors: Story = {
       },
       {
         label: 'Medio',
-        value: 'medium',
-        color: 'bg-amber-500/20',
-        text: 'text-amber-600',
-        bg: 'bg-amber-50',
+        value: 'medium',        color: 'bg-[hsl(var(--warning)/0.2)]',
+    text: 'text-warning-text',
+    bg: 'bg-warning-soft',
       },
       {
         label: 'Alto',
@@ -102,10 +103,9 @@ export const SingleOption: Story = {
     options: [
       {
         label: 'Solo Opción',
-        value: 'only',
-        color: 'bg-[hsl(var(--primary))]/20',
-        text: 'text-[hsl(var(--primary))]',
-        bg: 'bg-blue-50',
+        value: 'only',        color: 'bg-[hsl(var(--primary))]/20',
+    text: 'text-[hsl(var(--primary))]',
+    bg: 'bg-info-soft',
       },
     ],
     onSelect: (value) => {

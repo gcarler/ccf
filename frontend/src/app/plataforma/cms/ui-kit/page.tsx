@@ -1,20 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
-import { DSBadge } from "@/design/components/DSBadge";
-import { DSButton } from "@/design/components/DSButton";
-import { DSCard } from "@/design/components/DSCard";
-import { DSCommandEntry } from "@/design/components/DSCommandEntry";
-import { DSInput } from "@/design/components/DSInput";
-import { DSMetric } from "@/design/components/DSMetric";
-import { DSModal } from "@/design/components/DSModal";
-import { DSSectionHeader } from "@/design/components/DSSectionHeader";
-import { DSSelect } from "@/design/components/DSSelect";
-import { DSSkeleton } from "@/design/components/DSSkeleton";
-import { DSTabs } from "@/design/components/DSTabs";
-import { DSToolbarChip } from "@/design/components/DSToolbarChip";
-import { DSTooltip } from "@/design/components/DSTooltip";
-import { toast } from "@/design/components/DSToast";
+import { DSBadge } from '@/design';
+import { DSButton } from '@/design';
+import { DSCard } from '@/design';
+import { DSCommandEntry } from '@/design';
+import { DSInput } from '@/design';
+import { DSMetric } from '@/design';
+import { DSModal } from '@/design';
+import { DSSectionHeader } from '@/design';
+import { DSSelect } from '@/design';
+import { DSSkeleton } from '@/design';
+import { DSTabs } from '@/design';
+import { DSToolbarChip } from '@/design';
+import { DSTooltip } from '@/design';
+import { toast } from '@/design';
 
 export default function CmsUiKitPage() {
   const [activeChip, setActiveChip] = useState("all");

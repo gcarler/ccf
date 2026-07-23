@@ -115,10 +115,10 @@ export default function StudentProfilePage() {
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] to-[hsl(var(--info)/5%)] via-transparent to-transparent pointer-events-none" />
                 
                 {error && (
-                    <div className="mb-3 text-rose-500 text-sm font-semibold bg-rose-500/10 border border-rose-500/20 rounded-lg px-4 py-1.5 relative z-10">
+                    <div className="mb-3 text-[hsl(var(--danger))] text-sm font-semibold bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/100%)]/20 rounded-lg px-4 py-1.5 relative z-10">
                         {error}
                     </div>
                 )}
@@ -174,16 +174,16 @@ export default function StudentProfilePage() {
                     {/* Left Column: Identity Card */}
                     <aside className="lg:col-span-4 space-y-3">
                         <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3 shadow-xl relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-blue-600/10 rounded-full blur-3xl group-hover:bg-blue-600/20 transition-all duration-1000" />
+                            <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-[hsl(var(--info))]/10 rounded-full blur-3xl group-hover:bg-[hsl(var(--info))]/20 transition-all duration-1000" />
                             
                             <div className="relative z-10 flex flex-col items-center text-center space-y-3">
                                 <div className="relative">
-                                    <div className="size-10 rounded-md bg-gradient-to-tr from-blue-600 to-sky-600 p-1 shadow-2xl">
+                                    <div className="size-10 rounded-md bg-gradient-to-tr from-[hsl(var(--info))] to-[hsl(var(--info))] p-1 shadow-2xl">
                                         <div className="size-full rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] flex items-center justify-center text-lg font-bold text-[hsl(var(--primary))] uppercase border-4 border-white dark:border-[hsl(var(--bg-primary))]">
                                             {user.username?.charAt(0)}
                                         </div>
                                     </div>
-                                    <div className="absolute -bottom-2 -right-2 size-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center shadow-lg border-4 border-white dark:border-[hsl(var(--bg-primary))]">
+                                    <div className="absolute -bottom-2 -right-2 size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--warning))] to-[hsl(var(--warning))] text-white flex items-center justify-center shadow-lg border-4 border-white dark:border-[hsl(var(--bg-primary))]">
                                         <Zap size={18} fill="currentColor" />
                                     </div>
                                 </div>
@@ -214,7 +214,7 @@ export default function StudentProfilePage() {
                                              aria-valuemin={0}
                                              aria-valuemax={100}
                                              aria-label="Progreso total del programa pastoral"
-                                             initial={{ width: 0 }} animate={{ width: `${profile?.total_progress ?? 0}%` }} className="h-full bg-gradient-to-r from-blue-600 to-sky-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"
+                                             initial={{ width: 0 }} animate={{ width: `${profile?.total_progress ?? 0}%` }} className="h-full bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))] rounded-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"
                                          />
                                      </div>
                                  </div>
@@ -228,11 +228,11 @@ export default function StudentProfilePage() {
                                 <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-3">Vitrina de Logros MESH</h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     {[
-                                        { icon: Star, color: 'from-amber-400 to-orange-500', locked: false, title: 'Excelencia' },
-                                        { icon: BookOpen, color: 'from-blue-400 to-sky-600', locked: false, title: 'Sabiduría' },
-                                        { icon: Heart, color: 'from-rose-400 to-pink-600', locked: false, title: 'Servicio' },
-                                        { icon: Zap, color: 'from-sky-400 to-sky-600', locked: false, title: 'Poder' },
-                                        { icon: ShieldCheck, color: 'from-emerald-400 to-teal-600', locked: false, title: 'Fidelidad' },
+                                        { icon: Star, color: 'from-[hsl(var(--warning))] to-orange-500', locked: false, title: 'Excelencia' },
+                                        { icon: BookOpen, color: 'from-[hsl(var(--info))] to-[hsl(var(--info))]', locked: false, title: 'Sabiduría' },
+                                        { icon: Heart, color: 'from-[hsl(var(--danger))] to-[hsl(var(--domain-pink))]', locked: false, title: 'Servicio' },
+                                        { icon: Zap, color: 'from-[hsl(var(--info))] to-[hsl(var(--info))]', locked: false, title: 'Poder' },
+                                        { icon: ShieldCheck, color: 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))]', locked: false, title: 'Fidelidad' },
                                         { icon: Target, color: 'from-[hsl(var(--surface-3))] to-[hsl(var(--bg-muted))]', locked: true, title: 'Misiones' },
                                     ].map((badge) => (
                                         <div key={badge.title} className="flex flex-col items-center gap-3">
@@ -281,8 +281,8 @@ export default function StudentProfilePage() {
                                     <div key={step.label} className="relative z-10 flex flex-col items-center gap-4 group cursor-pointer">
                                         <div className={clsx(
                                             "size-9 rounded-lg flex items-center justify-center transition-all border-4 border-white dark:border-[hsl(var(--bg-primary))]",
-                                            step.done ? "bg-[hsl(var(--primary))] text-white shadow-xl shadow-blue-500/20" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] group-hover:bg-blue-100",
-                                            step.active && "ring-4 ring-blue-500/20 scale-110"
+                                            step.done ? "bg-[hsl(var(--primary))] text-white shadow-xl shadow-[hsl(var(--info)/20%)]" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--info-muted))]",
+                                            step.active && "ring-4 ring-[hsl(var(--primary))]/20 scale-110"
                                         )}>
                                             {step.done ? <CheckCircle2 size={20} /> : <span className="font-semibold">{i+1}</span>}
                                         </div>
@@ -301,7 +301,7 @@ export default function StudentProfilePage() {
                                 </div>
                                 <div className="space-y-4">
                                     {activeCourses.map((enrollment: EnrollmentRecord) => (
-                                        <article key={enrollment.id} className="flex flex-col lg:flex-row lg:items-center gap-4 rounded-md border border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/60 dark:bg-white/5 p-3 hover:border-blue-500/30 transition-colors">
+                                        <article key={enrollment.id} className="flex flex-col lg:flex-row lg:items-center gap-4 rounded-md border border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/60 dark:bg-white/5 p-3 hover:border-[hsl(var(--info)/100%)]/30 transition-colors">
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-1">{enrollment.course.modality === 'formal' ? 'Formal' : 'No formal'}</p>
                                                 <h4 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white mb-1 leading-tight truncate">{enrollment.course.title}</h4>
@@ -330,11 +330,11 @@ export default function StudentProfilePage() {
                                      </div>
                                  ) : (
                                      certificates.map((cert, i) => (
-                                         <div key={cert.id ?? `cert-${i}`} className="group p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-md hover:border-blue-500/30 transition-all shadow-sm hover:shadow-xl flex flex-col justify-between h-[200px]">                                         <div className="flex justify-between items-start">
-                                                 <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center group-hover:scale-110 transition-transform"><Award size={24} aria-hidden="true" /></div>
+                                         <div key={cert.id ?? `cert-${i}`} className="group p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-md hover:border-[hsl(var(--info)/100%)]/30 transition-all shadow-sm hover:shadow-xl flex flex-col justify-between h-[200px]">                                         <div className="flex justify-between items-start">
+                                                 <div className="size-9 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] flex items-center justify-center group-hover:scale-110 transition-transform"><Award size={24} aria-hidden="true" /></div>
                                                   <button
                                                       aria-label={`Descargar certificado del curso ${cert.course_title ?? ''}`.trim()}
-                                                      className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 transition-colors"
+                                                      className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft transition-colors"
                                                   ><Download size={18} aria-hidden="true" /></button>
                                              </div>
                                              <div>
@@ -356,7 +356,7 @@ export default function StudentProfilePage() {
 
 function StatBox({ icon: Icon, label, value, color }: any) {
     const colors: any = {
-        blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20',
+        blue: 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20',
         emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))/0.1]',
         amber: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning))/0.08] dark:bg-[hsl(var(--warning))/0.1]'
     };
@@ -374,7 +374,7 @@ function StatBox({ icon: Icon, label, value, color }: any) {
 }
 
 function ProgressPill({ label, value, tone }: { label: string; value: number; tone: 'primary' | 'emerald' }) {
-    const bg = tone === 'primary' ? 'from-blue-500 to-sky-500 shadow-[0_0_10px_rgba(37,99,235,0.4)]' : 'from-emerald-500 to-teal-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]';
+    const bg = tone === 'primary' ? 'from-[hsl(var(--info))] to-[hsl(var(--info))] shadow-[0_0_10px_rgba(37,99,235,0.4)]' : 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))] shadow-[0_0_10px_rgba(16,185,129,0.4)]';
     return (
         <div className="w-full">
             <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5">

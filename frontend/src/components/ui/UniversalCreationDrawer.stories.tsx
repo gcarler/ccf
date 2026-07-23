@@ -1,13 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import UniversalCreationDrawer from './UniversalCreationDrawer';
 
-// Mock data for the creation drawer
-const mockProject: any = {
-  id: '1',
-  title: 'Proyecto de muestra',
-};
-
 const meta: Meta<typeof UniversalCreationDrawer> = {
+  tags: ['autodocs'],
   title: 'UI/UniversalCreationDrawer',
   component: UniversalCreationDrawer,
   parameters: {

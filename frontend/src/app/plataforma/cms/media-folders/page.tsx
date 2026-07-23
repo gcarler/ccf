@@ -46,7 +46,7 @@ export default function MediaFoldersPage() {
               {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
             </button>
           ) : <div className="w-3" />}
-          <FolderTree size={14} className="text-amber-500" />
+          <FolderTree size={14} className="text-[hsl(var(--warning))]" />
           <span className="text-sm">{folder.name}</span>
           <span className="text-[10px] text-[hsl(var(--text-secondary))] font-mono">{folder.path}</span>
         </div>

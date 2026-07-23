@@ -28,7 +28,7 @@ export default function ProjectActivityFeed({ activities }: Props) {
                     <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Actividad Reciente</h3>
                     <p className="text-[9px] font-medium text-[hsl(var(--primary))] uppercase mt-0.5">Pulso del Equipo</p>
                 </div>
-                <div className="size-7 rounded-md bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-[hsl(var(--primary))]">
+                <div className="size-7 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 flex items-center justify-center text-[hsl(var(--primary))]">
                     <Clock size={12} />
                 </div>
             </header>
@@ -81,9 +81,9 @@ export default function ProjectActivityFeed({ activities }: Props) {
 
 function getIcon(type: string) {
     switch (type) {
-        case 'project_created': return <Plus size={14} className="text-emerald-600" />;
+        case 'project_created': return <Plus size={14} className="text-success-text" />;
         case 'task_created': return <Plus size={14} className="text-[hsl(var(--primary))]" />;
-        case 'status_changed': return <RefreshCcw size={14} className="text-amber-600" />;
+        case 'status_changed': return <RefreshCcw size={14} className="text-warning-text" />;
         case 'comment_added': return <MessageSquare size={14} className="text-[hsl(var(--primary))]" />;
         default: return <ArrowRight size={14} className="text-[hsl(var(--text-secondary))]" />;
     }
@@ -91,10 +91,10 @@ function getIcon(type: string) {
 
 function getIconBg(type: string) {
     switch (type) {
-        case 'project_created': return "bg-emerald-100 dark:bg-emerald-900/20";
-        case 'task_created': return "bg-blue-100 dark:bg-blue-900/20";
-        case 'status_changed': return "bg-amber-100 dark:bg-amber-900/20";
-        case 'comment_added': return "bg-blue-100 dark:bg-blue-900/20";
+        case 'project_created': return "bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/20";
+        case 'task_created': return "bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20";
+        case 'status_changed': return "bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/20";
+        case 'comment_added': return "bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20";
         default: return "bg-[hsl(var(--surface-2))] dark:bg-white/5";
     }
 }

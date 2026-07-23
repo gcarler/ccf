@@ -178,12 +178,12 @@ export default function ForumThreadDetail() {
                 {viewType === 'list' && (
  <div className="w-full space-y-4">
                     <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3 shadow-xl space-y-3 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-blue-600/5 rounded-full blur-3xl" />
+                        <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-[hsl(var(--info))]/5 rounded-full blur-3xl" />
 
                         <div className="relative z-10 flex flex-col gap-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-[9px] font-semibold uppercase tracking-wide">{thread.category}</span>
+                                    <span className="px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-[9px] font-semibold uppercase tracking-wide">{thread.category}</span>
                                     <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{thread.created_at}</span>
                                 </div>
                                 <button aria-label="Más opciones del debate" className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors"><MoreVertical size={20} aria-hidden="true" /></button>
@@ -209,16 +209,16 @@ export default function ForumThreadDetail() {
                                     <button className="flex items-center gap-2 px-4 py-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-md font-semibold text-[hsl(var(--primary))] transition-all">
                                         <ThumbsUp size={16} /> {thread.upvotes}
                                     </button>
-                                    <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-all"><ThumbsDown size={16} /></button>
+                                    <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-all"><ThumbsDown size={16} /></button>
                                 </div>
                             </div>
                         </div>
                     </section>
 
-                    <section className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3 border border-blue-100 dark:border-blue-500/20 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-blue-600/10 rounded-full blur-3xl group-hover:bg-blue-600/20 transition-all duration-1000" />
+                    <section className="bg-info-soft dark:bg-[hsl(var(--info))]/10 rounded-lg p-3 border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-[hsl(var(--info))]/10 rounded-full blur-3xl group-hover:bg-[hsl(var(--info))]/20 transition-all duration-1000" />
                         <div className="relative z-10 flex gap-4 items-start">
-                            <div className="size-9 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20"><Bot size={24} className="text-white" /></div>
+                            <div className="size-9 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shrink-0 shadow-lg shadow-[hsl(var(--info)/20%)]"><Bot size={24} className="text-white" /></div>
                             <div className="space-y-3">
                                 <h4 className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide flex items-center gap-2">
                                     <Sparkles size={14} /> Optimus Teological Assistant
@@ -240,11 +240,11 @@ export default function ForumThreadDetail() {
                                     animate={{ opacity: 1, y: 0 }}
                                     className={clsx(
                                         "p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border rounded-md transition-all relative overflow-hidden",
-                                        reply.is_accepted ? "border-emerald-500/30 shadow-emerald-500/5" : "border-[hsl(var(--border))] dark:border-white/10"
+                                        reply.is_accepted ? "border-[hsl(var(--success)/100%)]/30 shadow-[hsl(var(--success)/5%)]" : "border-[hsl(var(--border))] dark:border-white/10"
                                     )}
                                 >
                                     {reply.is_accepted && (
-                                        <div className="absolute top-0 right-0 p-4 opacity-10"><Award size={48} className="text-emerald-500" /></div>
+                                        <div className="absolute top-0 right-0 p-4 opacity-10"><Award size={48} className="text-[hsl(var(--success))]" /></div>
                                     )}
                                     <div className="flex gap-4 items-start">
                                         <div className="flex flex-col items-center gap-2 shrink-0">
@@ -258,7 +258,7 @@ export default function ForumThreadDetail() {
                                                     <span className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{reply.time}</span>
                                                 </div>
                                                 {reply.is_accepted && (
-                                                    <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-full text-[9px] font-semibold uppercase tracking-wide flex items-center gap-1.5">
+                                                    <span className="px-3 py-1 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text rounded-full text-[9px] font-semibold uppercase tracking-wide flex items-center gap-1.5">
                                                         <CheckCircle2 size={12} /> Mejor Respuesta
                                                     </span>
                                                 )}
@@ -266,7 +266,7 @@ export default function ForumThreadDetail() {
                                             <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed">{reply.text}</p>
                                             <div className="flex items-center gap-4 pt-4">
                                                 <button aria-label={`Votar a favor (${reply.upvotes} votos)`} className="flex items-center gap-1.5 font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors uppercase"><ThumbsUp size={14} aria-hidden="true" /> {reply.upvotes}</button>
-                                                <button aria-label={`Votar en contra`} className="p-2 text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-all"><ThumbsDown size={16} aria-hidden="true" /></button>
+                                                <button aria-label={`Votar en contra`} className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-all"><ThumbsDown size={16} aria-hidden="true" /></button>
                                                 <button className="font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors uppercase">Responder</button>
                                             </div>
                                         </div>
@@ -292,7 +292,7 @@ export default function ForumThreadDetail() {
                     <button
                         onClick={handleSendReply}
                         aria-label="Publicar respuesta"
-                        className="size-9 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] rounded-full flex items-center justify-center text-white shadow-xl shadow-blue-500/20 active:scale-90 transition-all"
+                        className="size-9 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] rounded-full flex items-center justify-center text-white shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-90 transition-all"
                     >
                         <Send size={20} fill="currentColor" aria-hidden="true" />
                     </button>

@@ -39,8 +39,8 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
       return (
         <div className="flex items-center justify-center min-h-[400px] p-4">
           <div className="text-center space-y-4 max-w-md">
-            <div className="size-8 rounded-lg bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center mx-auto">
-              <AlertTriangle size={28} className="text-rose-500" />
+            <div className="size-8 rounded-lg bg-danger-soft dark:bg-[hsl(var(--danger))]/10 flex items-center justify-center mx-auto">
+              <AlertTriangle size={28} className="text-[hsl(var(--danger))]" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white mb-1">

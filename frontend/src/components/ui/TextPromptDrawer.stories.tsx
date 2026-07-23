@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import TextPromptDrawer from './TextPromptDrawer';
 
+
 const meta: Meta<typeof TextPromptDrawer> = {
+  tags: ['autodocs'],
   title: 'UI/TextPromptDrawer',
   component: TextPromptDrawer,
   parameters: {

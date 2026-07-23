@@ -3,7 +3,6 @@
 import React from 'react';
 import clsx from 'clsx';
 import { LucideIcon } from 'lucide-react';
-import { colors, radii, motion } from '../tokens';
 
 type Variant = 'solid' | 'soft' | 'outline';
 type Tone = 'neutral' | 'dark';
@@ -17,7 +16,7 @@ interface DSToolbarChipProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     tone?: Tone;
 }
 
-const baseStyle = 'inline-flex items-center justify-center font-semibold uppercase tracking-wide transition-all active:scale-95 whitespace-nowrap gap-1.5';
+const baseStyle = 'inline-flex items-center justify-center font-semibold uppercase tracking-wide transition-all duration-150 active:scale-95 whitespace-nowrap gap-1.5';
 
 const variantClasses: Record<Variant, string> = {
     solid: 'text-white border border-transparent shadow-sm',
@@ -30,17 +29,19 @@ const sizeClasses = {
     md: 'px-2.5 py-1 text-[9px] rounded-md',
 };
 
-export function DSToolbarChip({ label, active, variant = 'soft', size = 'md', icon: Icon, tone = 'neutral', className, ...props }: DSToolbarChipProps) {
+export function DSToolbarChip({ label, active, variant = 'soft', size = 'md', icon: Icon, tone = 'neutral', type = 'button', className, ...props }: DSToolbarChipProps) {
     const styleVariant = active ? 'solid' : variant;
     return (
         <button
-            className={clsx(baseStyle, variantClasses[styleVariant], sizeClasses[size], className)}
-            style={{
-                borderRadius: radii.md,
-                backgroundColor: active ? colors.primary[600] : undefined,
-                color: tone === 'dark' ? 'hsl(var(--text-primary))' : undefined,
-                transitionDuration: motion.duration.base,
-            }}
+            type={type}
+            className={clsx(
+                baseStyle,
+                variantClasses[styleVariant],
+                sizeClasses[size],
+                active && 'bg-[hsl(var(--primary))]',
+                tone === 'dark' && 'text-[hsl(var(--text-primary))]',
+                className
+            )}
             {...props}
         >
             {Icon && <Icon size={size === 'sm' ? 11 : 12} className={clsx('transition-colors', active ? 'text-white' : 'text-[hsl(var(--text-secondary))]')} />}

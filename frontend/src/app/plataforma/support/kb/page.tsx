@@ -39,11 +39,11 @@ const CATEGORY_META: Record<
   string,
   { icon: LucideIcon; color: string }
 > = {
-  "getting-started": { icon: Zap, color: "text-amber-500 bg-amber-50 dark:bg-amber-500/10" },
-  crm: { icon: Users, color: "text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10" },
-  academy: { icon: BookOpen, color: "text-sky-500 bg-sky-50 dark:bg-sky-500/10" },
-  projects: { icon: Layout, color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10" },
-  finances: { icon: TrendingUp, color: "text-rose-500 bg-rose-50 dark:bg-rose-500/10" },
+  "getting-started": { icon: Zap, color: "text-[hsl(var(--warning))] bg-warning-soft dark:bg-[hsl(var(--warning))]/10" },
+  crm: { icon: Users, color: "text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10" },
+  academy: { icon: BookOpen, color: "text-[hsl(var(--info))] bg-info-soft dark:bg-[hsl(var(--info))]/10" },
+  projects: { icon: Layout, color: "text-[hsl(var(--success))] bg-success-soft dark:bg-[hsl(var(--success))]/10" },
+  finances: { icon: TrendingUp, color: "text-[hsl(var(--danger))] bg-danger-soft dark:bg-[hsl(var(--danger))]/10" },
   admin: { icon: FileText, color: "text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5" },
 };
 
@@ -97,7 +97,7 @@ export default function SupportKBPage() {
   return (
     <div className="h-full flex flex-col bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
       {/* Hero Search */}
-      <div className="bg-gradient-to-br from-blue-600 to-sky-700 p-4 text-center relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] p-4 text-center relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-10"
           style={{
@@ -110,7 +110,7 @@ export default function SupportKBPage() {
           <h1 className="text-lg font-bold text-white mb-2">
             Base de Conocimientos
           </h1>
-          <p className="text-blue-200 text-sm mb-3">
+          <p className="text-[hsl(var(--info))] text-sm mb-3">
             Encuentra respuestas a todas tus preguntas sobre la plataforma CCF
           </p>
           <div className="max-w-lg mx-auto relative">
@@ -122,7 +122,7 @@ export default function SupportKBPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar artículos, guías, tutoriales..."
-              className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-[hsl(var(--bg-primary))] shadow-2xl text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-400/40 font-medium"
+              className="w-full pl-12 pr-5 py-1.5 rounded-lg bg-[hsl(var(--bg-primary))] shadow-2xl text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--info)/40%)] font-medium"
             />
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function SupportKBPage() {
                           className={clsx(
                             "flex items-center gap-4 p-3 rounded-lg border transition-all text-left shadow-sm group",
                             selectedCat === cat.id
-                              ? "border-blue-500 bg-blue-50 dark:bg-blue-500/10"
+                              ? "border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/10"
                               : "border-[hsl(var(--border))]/60 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] hover:shadow-md"
                           )}
                         >
@@ -193,7 +193,7 @@ export default function SupportKBPage() {
               {/* Popular Articles */}
               <section>
                 <div className="flex items-center gap-2 mb-5">
-                  <Star size={14} className="text-amber-500" />
+                  <Star size={14} className="text-[hsl(var(--warning))]" />
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                     {selectedCat ? "Artículos" : "Artículos más Populares"}
                   </p>
@@ -229,7 +229,7 @@ export default function SupportKBPage() {
                             <span className="text-[10px] text-[hsl(var(--text-secondary))]">
                               {article.views} vistas
                             </span>
-                            <span className="text-[10px] text-emerald-500 font-bold">
+                            <span className="text-[10px] text-[hsl(var(--success))] font-bold">
                               {article.helpful}% útil
                             </span>
                           </div>

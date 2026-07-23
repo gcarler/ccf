@@ -92,7 +92,7 @@ export default function SpiritualMilestones() {
                 return (
                     <div key={m.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] flex items-center justify-center"><Icon size={24} /></div>
+                            <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] flex items-center justify-center"><Icon size={24} /></div>
                             <div>
                                 <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{m.name}</h3>
                                 <p className="mt-1 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{m.description || 'Hito ministerial'}</p>
@@ -178,7 +178,7 @@ export default function SpiritualMilestones() {
                 setViewType={setViewType}
                 availableViews={MILESTONE_VIEWS}
                 rightActions={
-                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
                         <Plus size={14} /> Nueva Insignia
                     </button>
                 }
@@ -193,7 +193,7 @@ export default function SpiritualMilestones() {
                     <header className="space-y-4">
                         <motion.div 
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
+                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
                         >
                             <Sparkles size={12} className="animate-pulse" /> Reconocimiento del Crecimiento
                         </motion.div>
@@ -235,7 +235,7 @@ export default function SpiritualMilestones() {
                                                 </div>
                                                 
                                                 <div className="relative z-10 space-y-3">
-                                                    <div className="size-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] flex items-center justify-center shadow-inner group-hover:rotate-12 transition-transform duration-500">
+                                                    <div className="size-8 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] flex items-center justify-center shadow-inner group-hover:rotate-12 transition-transform duration-500">
                                                         <Icon size={32} strokeWidth={1.5} />
                                                     </div>
                                                     <div>
@@ -257,7 +257,7 @@ export default function SpiritualMilestones() {
 
                                 {/* Bulk Action Area Cinematic */}
                                 <section className="bg-[hsl(var(--bg-muted))] p-4 lg:p-4 rounded-lg text-white relative overflow-hidden group shadow-2xl">
-                                    <div className="absolute top-0 right-0 -mr-20 -mt-20 size-96 bg-blue-600/20 rounded-full blur-[120px] group-hover:bg-blue-600/30 transition-all duration-1000" />
+                                    <div className="absolute top-0 right-0 -mr-20 -mt-20 size-96 bg-[hsl(var(--info))]/20 rounded-full blur-[120px] group-hover:bg-[hsl(var(--info))]/30 transition-all duration-1000" />
                                     
                                     <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-3 items-center">
                                         <div className="space-y-3">
@@ -265,7 +265,7 @@ export default function SpiritualMilestones() {
                                                 <div className="flex items-center gap-3 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[10px]">
                                                     <Zap size={16} fill="currentColor" /> Optimus Brain Processing
                                                 </div>
-                                                <h2 className="text-lg lg:text-xl font-bold tracking-tighter leading-none uppercase">Registro Masivo <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-sky-400 italic">de Conquistas.</span></h2>
+                                                <h2 className="text-lg lg:text-xl font-bold tracking-tighter leading-none uppercase">Registro Masivo <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))] italic">de Conquistas.</span></h2>
                                             </div>
                                             <p className="text-lg text-[hsl(var(--text-secondary))] font-medium leading-relaxed max-w-xl italic">
                                                 &ldquo;Sube la nómina de vencedores y Optimus Brain se encargará de estampar los certificados digitales y actualizar las Hojas de Vida instantáneamente.&rdquo;
@@ -276,7 +276,7 @@ export default function SpiritualMilestones() {
                                             </div>
                                         </div>
                                         <div className="hidden lg:flex justify-center relative">
-                                            <div className="size-10 rounded-lg border-4 border-blue-500/20 flex items-center justify-center animate-pulse">
+                                            <div className="size-10 rounded-lg border-4 border-[hsl(var(--info)/100%)]/20 flex items-center justify-center animate-pulse">
                                                 <div className="size-10 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shadow-[0_0_50px_rgba(37,99,235,0.4)]">
                                                     <Check size={80} strokeWidth={3} className="text-white" />
                                                 </div>

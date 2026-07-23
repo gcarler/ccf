@@ -18,7 +18,7 @@ describe('DSCard', () => {
   it('applies dark theme', () => {
     const { container } = render(<DSCard tone="dark">Content</DSCard>);
     const card = container.firstChild as HTMLElement;
-    expect(card.className).toContain('bg-[#0f1116]');
+    expect(card.className).toContain('bg-[hsl(var(--bg-primary))]/5');
   });
 
   it('applies glass theme', () => {
@@ -54,6 +54,6 @@ describe('DSCard', () => {
   it('applies shadow', () => {
     const { container } = render(<DSCard>Content</DSCard>);
     const card = container.firstChild as HTMLElement;
-    expect(card.style.boxShadow).toBeTruthy();
+    expect(card.className).toContain('shadow-sm');
   });
 });

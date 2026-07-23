@@ -158,10 +158,10 @@ export default function MyTasks() {
                     <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
                     <div className="flex items-center gap-3 mb-3 relative z-10">
                         <div className="p-2 bg-white/10 rounded-md backdrop-blur-md border border-white/10"><CheckCircle2 size={18} /></div>
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-blue-100">Tareas Pendientes</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--info))]">Tareas Pendientes</span>
                     </div>
                     <h3 className="text-xl font-bold mb-2 relative z-10 tracking-tighter">{stats.pending}</h3>
-                    <p className="text-[10px] font-bold text-blue-100/60 uppercase tracking-wide relative z-10">Compromisos activos</p>
+                    <p className="text-[10px] font-bold text-[hsl(var(--info)/60%)] uppercase tracking-wide relative z-10">Compromisos activos</p>
                 </motion.div>
 
                 <motion.div 

@@ -43,39 +43,39 @@ interface TaskEditDrawerProps {
 const PRIORITY_OPTIONS = [
     {
         value: 'urgent', label: PRIORITY_LABELS.urgent,
-        color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-500/10',
-        border: 'border-rose-200 dark:border-rose-500/30',
-        dot: 'bg-rose-500', bar: 'bg-rose-500',
-        glow: 'shadow-rose-500/20',
+        color: 'text-danger-text dark:text-danger', bg: 'bg-danger-soft',
+        border: 'border-danger-muted dark:border-danger/30',
+        dot: 'bg-danger', bar: 'bg-danger',
+        glow: 'shadow-danger',
     },
     {
         value: 'high', label: PRIORITY_LABELS.high,
-        color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-500/10',
-        border: 'border-orange-200 dark:border-orange-500/30',
-        dot: 'bg-orange-500', bar: 'bg-orange-500',
-        glow: 'shadow-orange-500/20',
+        color: 'text-warning-text dark:text-warning', bg: 'bg-warning-soft',
+        border: 'border-warning-muted dark:border-warning/30',
+        dot: 'bg-warning', bar: 'bg-warning',
+        glow: 'shadow-warning',
     },
     {
         value: 'medium', label: PRIORITY_LABELS.medium,
-        color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10',
-        border: 'border-amber-200 dark:border-amber-500/30',
-        dot: 'bg-amber-500', bar: 'bg-amber-500',
-        glow: 'shadow-amber-500/20',
+        color: 'text-warning-text dark:text-warning', bg: 'bg-warning-soft',
+        border: 'border-warning-muted dark:border-warning/30',
+        dot: 'bg-warning', bar: 'bg-warning',
+        glow: 'shadow-warning',
     },
     {
         value: 'low', label: PRIORITY_LABELS.low,
-        color: 'text-slate-700 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-slate-500/10',
-        border: 'border-slate-200 dark:border-slate-500/30',
-        dot: 'bg-slate-500', bar: 'bg-slate-500',
-        glow: 'shadow-slate-500/20',
+        color: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]', bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]',
+        border: 'border-[hsl(var(--border))] dark:border-white/10',
+        dot: 'bg-[hsl(var(--text-secondary))]', bar: 'bg-[hsl(var(--text-secondary))]',
+        glow: 'shadow-[hsl(var(--text-secondary))]/20',
     },
 ];
 
 const STATUS_OPTIONS = [
     { value: 'todo',        label: STATUS_LABELS.todo,        color: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]/60',      icon: Circle },
-    { value: 'in_progress', label: STATUS_LABELS.in_progress, color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',     bg: 'bg-blue-50 dark:bg-blue-500/10',          icon: Clock },
-    { value: 'review',      label: STATUS_LABELS.review,      color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-500/10',  icon: Eye },
-    { value: 'completed',   label: STATUS_LABELS.completed,   color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10',  icon: CheckCircle2 },
+    { value: 'in_progress', label: STATUS_LABELS.in_progress, color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',     bg: 'bg-info-soft',          icon: Clock },
+    { value: 'review',      label: STATUS_LABELS.review,      color: 'text-warning-text dark:text-warning', bg: 'bg-warning-soft',  icon: Eye },
+    { value: 'completed',   label: STATUS_LABELS.completed,   color: 'text-success-text dark:text-success', bg: 'bg-success-soft',  icon: CheckCircle2 },
 ];
 
 const XP_MAP: Record<string, number> = { urgent: 100, high: 60, medium: 40, low: 20 };
@@ -239,7 +239,7 @@ export default function TaskEditDrawer({
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: '100%', opacity: 0 }}
                         transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-                        className="fixed right-0 top-10 bottom-0 w-full max-w-[460px] z-[101] flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#18191c] shadow-[-32px_0_80px_rgba(0,0,0,0.14)] dark:shadow-[-32px_0_80px_rgba(0,0,0,0.5)]"
+                        className="fixed right-0 top-10 bottom-0 w-full max-w-[460px] z-[101] flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-[-32px_0_80px_rgba(0,0,0,0.14)] dark:shadow-[-32px_0_80px_rgba(0,0,0,0.5)]"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Priority accent bar — top */}
@@ -273,7 +273,7 @@ export default function TaskEditDrawer({
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                                     transition={{ duration: 0.13 }}
-                                                    className="absolute left-0 top-full mt-2 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#222326] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
+                                                    className="absolute left-0 top-full mt-2 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
                                                 >
                                                     {STATUS_OPTIONS.map(opt => (
                                                         <button key={opt.value}
@@ -296,7 +296,7 @@ export default function TaskEditDrawer({
                                     </div>
 
                                     {/* XP badge */}
-                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg font-semibold tracking-wide border border-amber-200/50 dark:border-amber-500/20">
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-warning-soft text-warning-text dark:text-warning rounded-lg font-semibold tracking-wide border border-warning-muted dark:border-warning/20">
                                         <Zap size={9} fill="currentColor" /> +{xp} XP
                                     </span>
                                 </div>
@@ -306,18 +306,18 @@ export default function TaskEditDrawer({
                                     <AnimatePresence mode="wait">
                                         {saving ? (
                                             <motion.div key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10">
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-[hsl(var(--primary))] bg-info-soft">
                                                 <Loader2 size={11} className="animate-spin" /> Guardando...
                                             </motion.div>
                                         ) : saved ? (
                                             <motion.div key="saved" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10">
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-success-text bg-success-soft dark:text-success">
                                                 <CheckCheck size={11} /> Guardado
                                             </motion.div>
                                         ) : dirty ? (
                                             <motion.button key="save" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                                                 onClick={handleSave}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[hsl(var(--primary))] text-white shadow-md shadow-blue-500/25 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[hsl(var(--primary))] text-white shadow-md shadow-primary active:scale-95 transition-all">
                                                 <Save size={11} /> Guardar
                                             </motion.button>
                                         ) : null}
@@ -400,7 +400,7 @@ export default function TaskEditDrawer({
                                             type="date"
                                             value={form.due_date ? form.due_date.split('T')[0] : ''}
                                             onChange={e => updateField('due_date', e.target.value || null)}
-                                            className="h-8 px-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.08] text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+                                            className="h-8 px-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.08] text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                                         />
                                     </div>
                                 </MetaRow>
@@ -426,26 +426,26 @@ export default function TaskEditDrawer({
                                     onChange={e => updateField('description', e.target.value || null)}
                                     rows={3}
                                     placeholder="Añade contexto o detalles sobre esta tarea..."
-                                    className="w-full px-3 py-2.5 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/[0.07] text-[13px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400/50 resize-none transition-all leading-relaxed"
+                                    className="w-full px-3 py-2.5 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/[0.07] text-[13px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 resize-none transition-all leading-relaxed"
                                 />
                             </div>
 
                             {/* ─ MESH AI ─ */}
                             <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
-                                <div className="rounded-lg bg-gradient-to-br from-blue-50 via-sky-50/50 to-blue-50/30 dark:from-blue-900/15 dark:via-sky-900/10 dark:to-transparent border border-blue-200/60 dark:border-blue-500/20 overflow-hidden">
+                                <div className="rounded-lg bg-gradient-to-br from-info-muted/80 via-info-muted/40 to-info-muted/20 dark:from-info/10 dark:via-info/5 dark:to-transparent border border-info-muted dark:border-info/20 overflow-hidden">
                                     {/* AI header */}
-                                    <div className="flex items-center justify-between px-4 py-3 border-b border-blue-200/40 dark:border-blue-500/15">
+                                    <div className="flex items-center justify-between px-4 py-3 border-b border-primary/20 dark:border-primary/20">
                                         <div className="flex items-center gap-2">
-                                            <div className="size-6 rounded-lg bg-gradient-to-br from-blue-600 to-sky-600 flex items-center justify-center shadow-sm">
+                                            <div className="size-6 rounded-lg bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--info))] flex items-center justify-center shadow-sm">
                                                 <Sparkles size={11} className="text-white" />
                                             </div>
-                                            <span className="font-semibold text-[hsl(var(--primary))] dark:text-blue-300 tracking-wide uppercase">MESH AI</span>
-                                            <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-semibold rounded-md uppercase tracking-wider">Beta</span>
+                                            <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--info))] tracking-wide uppercase">MESH AI</span>
+                                            <span className="px-1.5 py-0.5 bg-info-muted dark:bg-info/20 text-info-text dark:text-info font-semibold rounded-md uppercase tracking-wider">Beta</span>
                                         </div>
                                         <button
                                             onClick={handleAiSuggest}
                                             disabled={aiLoading}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-sky-600 text-white text-[10px] font-bold shadow-md shadow-blue-500/25 hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--info))] text-white text-[10px] font-bold shadow-md shadow-primary hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
                                         >
                                             {aiLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
                                             {aiLoading ? 'Analizando...' : 'Sugerir'}
@@ -470,7 +470,7 @@ export default function TaskEditDrawer({
                                                 </motion.div>
                                             ) : (
                                                 <motion.p key="ai-placeholder" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                                    className="text-[12px] text-blue-400/70 dark:text-blue-400/50 font-medium">
+                                                    className="text-[12px] text-info-text/70 dark:text-info/50 font-medium">
                                                     Haz clic en &quot;Sugerir&quot; para recibir orientación contextual de MESH sobre esta tarea.
                                                 </motion.p>
                                             )}
@@ -497,14 +497,14 @@ export default function TaskEditDrawer({
                                             exit={{ opacity: 0, height: 0 }}
                                             className="overflow-hidden mt-3"
                                         >
-                                            <div className="p-4 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-500/30 space-y-3">
-                                                <p className="text-[12px] font-bold text-rose-700 dark:text-rose-300">
+                                            <div className="p-4 rounded-lg bg-danger-soft border border-danger-muted dark:border-danger/30 space-y-3">
+                                                <p className="text-[12px] font-bold text-danger-text dark:text-danger">
                                                     ¿Eliminar &ldquo;{form.title.slice(0, 40)}{form.title.length > 40 ? '...' : ''}&rdquo;?
                                                 </p>
-                                                <p className="text-[11px] text-rose-500/80 dark:text-rose-400/60">Esta acción no se puede deshacer.</p>
+                                                <p className="text-[11px] text-danger-text/80 dark:text-danger/60">Esta acción no se puede deshacer.</p>
                                                 <div className="flex gap-2">
                                                     <button onClick={handleDelete}
-                                                        className="flex-1 py-2.5 bg-rose-600 text-white rounded-md text-[11px] font-bold hover:bg-rose-700 active:scale-95 transition-all shadow-md shadow-rose-500/20">
+                                                        className="flex-1 py-2.5 bg-danger text-white rounded-md text-[11px] font-bold hover:bg-[hsl(var(--danger)/0.85)] active:scale-95 transition-all shadow-md shadow-danger">
                                                         Sí, eliminar
                                                     </button>
                                                     <button onClick={() => setShowDeleteConfirm(false)}
@@ -552,9 +552,9 @@ export default function TaskEditDrawer({
                                 className={clsx(
                                     'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all',
                                     dirty
-                                        ? 'bg-[hsl(var(--primary))] text-white shadow-sm shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95'
+                                        ? 'bg-[hsl(var(--primary))] text-white shadow-sm shadow-primary active:scale-95'
                                         : saved
-                                        ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                        ? 'bg-success-soft text-success-text dark:text-success'
                                         : 'bg-transparent text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] cursor-default'
                                 )}
                             >
@@ -592,7 +592,7 @@ function QuickBtn({ icon: Icon, label, onClick, danger = false }: { icon: any; l
             className={clsx(
                 'flex items-center gap-2 px-3 py-2.5 rounded-md text-[11px] font-semibold border transition-all group hover:-translate-y-[1px] hover:shadow-sm active:scale-95',
                 danger
-                    ? 'text-rose-500 dark:text-rose-400 bg-transparent border-rose-200 dark:border-rose-500/20 hover:bg-rose-50 dark:hover:bg-rose-500/10'
+                    ? 'text-danger bg-transparent border-danger-muted dark:border-danger/30 hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger)/0.1)]'
                     : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border-[hsl(var(--border))] dark:border-white/[0.07] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.06] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]'
             )}
         >

@@ -138,7 +138,7 @@ export default function CmsBrandingPage() {
             Gestiona el logo y nombre que aparece en navbar, sidebar y footer del sitio público.
           </p>
           {!canEdit && (
-            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-amber-600">
+            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-warning-text">
               Solo lectura: este rol no puede guardar branding.
             </p>
           )}

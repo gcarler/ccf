@@ -122,7 +122,7 @@ function NavRow({
             <div className={clsx(
                 'relative flex items-center gap-1.5 px-2 py-1.5 mx-1.5 rounded-md transition-all duration-150 group cursor-pointer',
                 isActive
-                    ? 'bg-blue-600/10 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-blue-300'
+                    ? 'bg-[hsl(var(--info))]/10 dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-info-text'
                     : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]/80 dark:hover:bg-white/[0.04] hover:text-navy-dark dark:hover:text-white'
             )}>
                 {/* Active indicator bar */}
@@ -152,7 +152,7 @@ function NavRow({
                             <span className={clsx(
                                 'px-1 py-px rounded text-[9px] font-bold leading-none shrink-0',
                                 isActive
-                                    ? 'bg-blue-200 dark:bg-blue-500/20 text-[hsl(var(--primary))] dark:text-blue-300'
+                                    ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] dark:text-info-text'
                                     : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
                             )}>
                                 {item.count}
@@ -376,7 +376,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                     <Tooltip content={isCollapsed ? 'Expandir panel' : 'Contraer panel'} side="right">
                         <button
                             onClick={onToggle}
-                            className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all duration-200 shrink-0"
+                            className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-all duration-200 shrink-0"
                             aria-label={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
                         >
                             {isCollapsed

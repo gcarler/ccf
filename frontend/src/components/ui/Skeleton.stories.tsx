@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import Skeleton from './Skeleton';
 
+
 const meta: Meta<typeof Skeleton> = {
+  tags: ['autodocs'],
   title: 'UI/Skeleton',
   component: Skeleton,
 };
@@ -29,7 +31,7 @@ export const DifferentSizes: Story = {
 export const InCard: Story = {
   args: {},
   render: () => (
-    <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg shadow-md w-64">
+    <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] rounded-lg shadow-md w-64">
       <div className="space-y-4">
         <div className="flex items-center space-x-3">
           <Skeleton className="w-10 h-10 rounded-full" />

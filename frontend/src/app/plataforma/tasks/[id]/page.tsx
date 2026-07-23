@@ -15,8 +15,8 @@ import {
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { DSCard } from '@/design/components/DSCard';
-import { DSBadge } from '@/design/components/DSBadge';
+import { DSCard } from '@/design';
+import { DSBadge } from '@/design';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
@@ -70,7 +70,7 @@ export default function TaskDetailPage() {
             <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects/list#projects-list' },
+                    { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects?view=list#projects-list' },
                     { label: 'Tareas', icon: CheckCircle2, href: '/plataforma/tasks' },
                     { label: `Task-${id}`, icon: CheckCircle2 },
                 ]}
@@ -79,7 +79,7 @@ export default function TaskDetailPage() {
                         <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
                             <MoreVertical size={20} />
                         </button>
-                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all">
+                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
                             Finalizar Tarea
                         </button>
                     </div>

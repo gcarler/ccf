@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 
-const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all text-[hsl(var(--text-primary))] dark:text-white";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all text-[hsl(var(--text-primary))] dark:text-white";
 const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4";
 
 export default function EditCoursePage() {
@@ -78,7 +78,7 @@ export default function EditCoursePage() {
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-[500px] h-48 bg-blue-600/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-0 right-0 w-[500px] h-48 bg-[hsl(var(--info))]/5 rounded-full blur-[100px] pointer-events-none" />
 
             <WorkspaceToolbar
                 breadcrumbs={[
@@ -110,14 +110,14 @@ export default function EditCoursePage() {
                             </div>
                             <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
                                 Actualiza el <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">Programa.</span>
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))]">Programa.</span>
                             </h1>
                         </motion.header>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-sm space-y-3 hover:border-blue-500/20 transition-all">
+                            <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-sm space-y-3 hover:border-[hsl(var(--info)/100%)]/20 transition-all">
                                 <div className="flex items-center gap-4 text-[hsl(var(--primary))]">
-                                    <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shadow-inner">
+                                    <div className="size-9 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center shadow-inner">
                                         <FileText size={22} strokeWidth={2.5} />
                                     </div>
                                     <h2 className="text-base font-semibold uppercase tracking-wide">Identidad del Programa</h2>
@@ -139,9 +139,9 @@ export default function EditCoursePage() {
                                 </div>
                             </motion.div>
 
-                            <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-sm space-y-3 hover:border-sky-500/20 transition-all">
-                                <div className="flex items-center gap-4 text-sky-600">
-                                    <div className="size-9 rounded-lg bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center shadow-inner">
+                            <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-sm space-y-3 hover:border-[hsl(var(--info)/100%)]/20 transition-all">
+                                <div className="flex items-center gap-4 text-info-text">
+                                    <div className="size-9 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center shadow-inner">
                                         <Clock size={22} strokeWidth={2.5} />
                                     </div>
                                     <h2 className="text-base font-semibold uppercase tracking-wide">Configuracion Academica</h2>
@@ -169,7 +169,7 @@ export default function EditCoursePage() {
                                         { key: 'is_published', title: 'Publicado', desc: 'Visible en el catalogo global' },
                                         { key: 'is_self_paced', title: 'Autogestionado', desc: 'Sin restricciones de cohorte' },
                                     ].map(({ key, title, desc }) => (
-                                        <label key={key} className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-blue-500/20 transition-all">
+                                        <label key={key} className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-[hsl(var(--info)/100%)]/20 transition-all">
                                             <div>
                                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{title}</p>
                                                 <p className={LABEL}>{desc}</p>

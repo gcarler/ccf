@@ -22,7 +22,7 @@ export default function HtmlPreview({ html, onClose }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={copyHtml} className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-xs font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">{copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}{copied ? 'Copiado' : 'Copiar HTML'}</button>
+            <button onClick={copyHtml} className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-xs font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">{copied ? <Check size={12} className="text-[hsl(var(--success))]" /> : <Copy size={12} />}{copied ? 'Copiado' : 'Copiar HTML'}</button>
             <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]" aria-label="Cerrar"><X size={14} /></button>
           </div>
         </div>

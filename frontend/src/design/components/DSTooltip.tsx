@@ -3,7 +3,6 @@
 import React from 'react';
 import clsx from 'clsx';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-import { radii, typography } from '../tokens';
 
 interface DSTooltipProps {
     children: React.ReactNode;
@@ -29,7 +28,7 @@ export function DSTooltip({
                         side={side}
                         sideOffset={sideOffset}
                         className={clsx(
-                            'z-[10000] select-none px-2.5 py-1.5',
+                            'z-[10000] select-none px-2.5 py-1.5 rounded font-sans',
                             'bg-[hsl(var(--bg-muted))]',
                             'text-[9px] font-semibold uppercase tracking-wide',
                             'text-white',
@@ -37,7 +36,6 @@ export function DSTooltip({
                             'shadow-xl',
                             'animate-in fade-in zoom-in-95 duration-200'
                         )}
-                        style={{ borderRadius: radii.sm, fontFamily: typography.family }}
                     >
                         {content}
                         <TooltipPrimitive.Arrow className="fill-[hsl(var(--bg-muted))]" />

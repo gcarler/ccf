@@ -119,7 +119,7 @@ export default function SubmissionsPage() {
                                         href={`${apiUrl('')}${sub.file_url}`} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-3 py-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-md text-xs font-bold hover:bg-emerald-500/20 transition-colors border border-emerald-500/20"
+                                        className="inline-flex items-center gap-2 px-3 py-3 bg-[hsl(var(--success))]/10 text-success-text dark:text-[hsl(var(--success))] rounded-md text-xs font-bold hover:bg-[hsl(var(--success))]/20 transition-colors border border-[hsl(var(--success)/100%)]/20"
                                     >
                                         <Download size={16} /> Descargar Documento <ExternalLink size={14} />
                                     </a>
@@ -165,7 +165,7 @@ export default function SubmissionsPage() {
                                         <div className="text-center space-y-4">
                                             {sub.grade !== null ? (
                                                 <div className="flex flex-col items-center gap-3">
-                                                    <div className="p-4 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 rounded-lg border border-emerald-500/20 shadow-sm">
+                                                    <div className="p-4 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] dark:text-[hsl(var(--success))] rounded-lg border border-[hsl(var(--success)/100%)]/20 shadow-sm">
                                                         <p className="text-[10px] font-semibold uppercase tracking-wide mb-1">Calificación</p>
                                                         <p className="text-lg font-bold leading-none">{sub.grade}</p>
                                                     </div>
@@ -185,7 +185,7 @@ export default function SubmissionsPage() {
                                                 </div>
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center h-full gap-4">
-                                                    <div className="p-4 bg-amber-500/10 text-amber-500 rounded-full border border-amber-500/20 shadow-sm">
+                                                    <div className="p-4 bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))] rounded-full border border-[hsl(var(--warning)/100%)]/20 shadow-sm">
                                                         <AlertCircle size={32} />
                                                     </div>
                                                     <p className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Pendiente de Revisión</p>

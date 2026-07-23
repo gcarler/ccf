@@ -247,7 +247,7 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
         </button>
 
         {message && (
-          <p className={`text-center text-sm font-medium ${message.includes("Gracias") ? "text-emerald-600" : "text-rose-600"}`}>
+          <p className={`text-center text-sm font-medium ${message.includes("Gracias") ? "text-success-text" : "text-danger-text"}`}>
             {message}
           </p>
         )}

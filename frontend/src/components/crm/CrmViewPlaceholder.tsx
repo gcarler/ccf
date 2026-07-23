@@ -80,7 +80,7 @@ export default function CrmViewPlaceholder({
 
   return (
     <div className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-4 text-center shadow-sm">
-      <div className="mx-auto mb-3 flex size-8 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/20 dark:text-[hsl(var(--primary))]">
+      <div className="mx-auto mb-3 flex size-8 items-center justify-center rounded-lg bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20 dark:text-[hsl(var(--primary))]">
         <Construction size={32} />
       </div>
       <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase italic tracking-tighter">

@@ -122,7 +122,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
             "group flex items-center gap-1.5 px-2 py-1 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all",
             "hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5",
             open && "bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10",
-            isOverdue ? "text-rose-500 dark:text-rose-400" : isToday2 ? "text-amber-500 dark:text-amber-400" : label ? "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]" : "text-[hsl(var(--text-secondary))] dark:text-white/20",
+            isOverdue ? "text-danger" : isToday2 ? "text-warning" : label ? "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]" : "text-[hsl(var(--text-secondary))] dark:text-white/20",
             disabled && "opacity-50 cursor-not-allowed"
           )}
           aria-label="Seleccionar fecha límite"
@@ -179,7 +179,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
                     isSelected
                       ? "bg-[hsl(var(--primary))] text-white font-bold shadow-sm"
                       : isTodayCell
-                      ? "bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] font-bold ring-1 ring-blue-200"
+                      ? "bg-info-soft text-info-text font-bold ring-1 ring-info/30"
                       : isPast
                       ? "text-[hsl(var(--text-secondary))] dark:text-white/20 hover:bg-[hsl(var(--surface-1))]"
                       : "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
@@ -197,7 +197,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
                 setViewMonth(today.getMonth());
                 selectDate(today);
               }}
-              className="flex-1 text-[11px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+              className="flex-1 text-[11px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] py-1.5 rounded-lg hover:bg-[hsl(var(--info-muted))] dark:hover:bg-[hsl(var(--info)/0.1)] transition-colors"
             >
               Hoy
             </button>
@@ -207,7 +207,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
                   onChange(null);
                   setOpen(false);
                 }}
-                className="flex-1 text-[11px] font-bold text-rose-500 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                className="flex-1 text-[11px] font-bold text-danger py-1.5 rounded-lg hover:bg-[hsl(var(--danger-muted))] dark:hover:bg-[hsl(var(--danger)/0.1)] transition-colors"
               >
                 Quitar
               </button>

@@ -177,9 +177,9 @@ export default function PastorDetailPage() {
                                 {(() => {
                                     const tagLabels = getStringArray(cms, "tags");
                                     const tagColors = [
-                                        'from-blue-500/10 to-blue-500/5 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border-blue-200/50 dark:border-blue-500/10',
-                                        'from-emerald-500/10 to-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-500/10',
-                                        'from-amber-500/10 to-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-200/50 dark:border-amber-500/10',
+                                        'to-[hsl(var(--info)/10%)] to-[hsl(var(--info)/5%)] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border-[hsl(var(--info)/25%)]/50 dark:border-[hsl(var(--info)/100%)]/10',
+                                        'to-[hsl(var(--success)/10%)] to-[hsl(var(--success)/5%)] text-success-text dark:text-[hsl(var(--success))] border-[hsl(var(--success)/25%)]/50 dark:border-[hsl(var(--success)/100%)]/10',
+                                        'to-[hsl(var(--warning)/10%)] to-[hsl(var(--warning)/5%)] text-warning-text dark:text-[hsl(var(--warning))] border-[hsl(var(--warning)/25%)]/50 dark:border-[hsl(var(--warning)/100%)]/10',
                                     ];
                                     if (tagLabels.length === 0) return null;
                                     return (

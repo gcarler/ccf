@@ -41,10 +41,10 @@ export default function DigitalCertificatesPage() {
                 <div className="flex items-center justify-between">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <div className="size-7 rounded-lg bg-cyan-50 dark:bg-cyan-900/30 flex items-center justify-center">
-                                <ShieldCheck size={14} className="text-cyan-600" />
+                            <div className="size-7 rounded-lg bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/30%)] flex items-center justify-center">
+                                <ShieldCheck size={14} className="text-[hsl(var(--domain-cyan)/90%)]" />
                             </div>
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-cyan-600">Certificación Oficial</span>
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--domain-cyan)/90%)]">Certificación Oficial</span>
                         </div>
                         <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
                             Mis Certificados
@@ -78,7 +78,7 @@ export default function DigitalCertificatesPage() {
                                     initial={{ opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.07 }}
-                                    className="group bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-lg p-3 hover:border-cyan-300 dark:hover:border-cyan-500/30 hover:shadow-lg transition-all relative overflow-hidden"
+                                    className="group bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-lg p-3 hover:border-[hsl(var(--domain-cyan)/100%)] dark:hover:border-[hsl(var(--domain-cyan)/30%)] hover:shadow-lg transition-all relative overflow-hidden"
                                 >
                                     {/* Decorative watermark */}
                                     <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.07] transition-all duration-700">
@@ -87,14 +87,14 @@ export default function DigitalCertificatesPage() {
 
                                     <div className="relative z-10 space-y-4">
                                         <div className="flex items-start justify-between">
-                                            <div className="size-7 rounded-lg bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-100 dark:border-cyan-500/20 flex items-center justify-center text-cyan-600">
+                                            <div className="size-7 rounded-lg bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/20%)] border border-[hsl(var(--domain-cyan)/30%)] dark:border-[hsl(var(--domain-cyan)/20%)] flex items-center justify-center text-[hsl(var(--domain-cyan)/90%)]">
                                                 {isSacramento ? <Waves size={24} /> : <FileCheck size={24} />}
                                             </div>
                                             <span className={clsx(
                                                 "text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full border",
                                                 isSacramento
-                                                    ? "bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 border-cyan-200 dark:border-cyan-500/20"
-                                                    : "bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] border-blue-200 dark:border-blue-500/20"
+                                                    ? "bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/20%)] text-[hsl(var(--domain-cyan)/90%)] border-[hsl(var(--domain-cyan)/30%)] dark:border-[hsl(var(--domain-cyan)/20%)]"
+                                                    : "bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20"
                                             )}>
                                                 {cert.certificate_type ?? 'Academia'}
                                             </span>
@@ -114,7 +114,7 @@ export default function DigitalCertificatesPage() {
                                                 {cert.certificate_code}
                                             </code>
                                             <div className="flex items-center gap-2">
-                                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg active:scale-95 transition-all shadow-sm shadow-blue-500/20">
+                                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg active:scale-95 transition-all shadow-sm shadow-[hsl(var(--info)/20%)]">
                                                     <Download size={12} /> PDF
                                                 </button>
                                                 <button className="p-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-lg transition-all">
@@ -131,7 +131,7 @@ export default function DigitalCertificatesPage() {
 
                 {/* Verification Banner */}
                 <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-lg p-3 flex flex-col md:flex-row items-center gap-4 shadow-sm">
-                    <div className="size-10 rounded-md bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 shrink-0">
+                    <div className="size-10 rounded-md bg-success-soft dark:bg-[hsl(var(--success))]/20 border border-[hsl(var(--success)/20%)] dark:border-[hsl(var(--success)/100%)]/20 flex items-center justify-center text-success-text shrink-0">
                         <ShieldCheck size={20} />
                     </div>
                     <div className="flex-1 text-center md:text-left">

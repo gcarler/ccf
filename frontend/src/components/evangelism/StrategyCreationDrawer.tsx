@@ -254,7 +254,7 @@ export default function StrategyCreationDrawer({
                                     onClick={() => setValue('recurrence', r)}
                                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex-1 justify-center ${
                                         watch('recurrence') === r
-                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-blue-200 dark:border-blue-800'
+                                            ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]'
                                             : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
                                     }`}
                                 >
@@ -277,7 +277,7 @@ export default function StrategyCreationDrawer({
                                     onClick={() => setValue('dayOfWeek', d)}
                                     className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
                                         watch('dayOfWeek') === d
-                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-blue-200 dark:border-blue-800'
+                                            ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]'
                                             : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
                                     }`}
                                 >
@@ -295,7 +295,7 @@ export default function StrategyCreationDrawer({
                             type="time"
                             value={watch('startTime')}
                             onChange={e => setValue('startTime', e.target.value)}
-                            className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
                         />
                     </div>
                     </>
@@ -349,7 +349,7 @@ export default function StrategyCreationDrawer({
                                     <input
                                         {...register(`phases.${i}.name`)}
                                         placeholder={`Fase ${i + 1}`}
-                                        className="flex-1 px-2.5 py-1.5 text-[12px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] focus:border-blue-500 focus:outline-none"
+                                        className="flex-1 px-2.5 py-1.5 text-[12px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--info)/100%)] focus:outline-none"
                                     />
                                     <select
                                         {...register(`phases.${i}.type`)}
@@ -387,7 +387,7 @@ export default function StrategyCreationDrawer({
                         <input
                             {...register('nicheObjective')}
                             placeholder="Ej: Universidades, Cárceles, Fundaciones"
-                            className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
                         />
                     </div>
                 )}
@@ -423,7 +423,7 @@ export default function StrategyCreationDrawer({
                     <input
                         {...register('name', { required: true })}
                         placeholder="Nombre de la estrategia..."
-                        className="w-full px-3 py-2 text-[14px] font-medium bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        className="w-full px-3 py-2 text-[14px] font-medium bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
                     />
                 </div>
 
@@ -438,7 +438,7 @@ export default function StrategyCreationDrawer({
                             <input
                                 type="date"
                                 {...register('startDate')}
-                                className="flex-1 px-2.5 py-1.5 text-[12px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                                className="flex-1 px-2.5 py-1.5 text-[12px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] cursor-pointer"
                             />
                         </div>
                         <span className="text-[hsl(var(--text-secondary))] text-[11px] font-semibold">→</span>
@@ -446,7 +446,7 @@ export default function StrategyCreationDrawer({
                             <input
                                 type="date"
                                 {...register('endDate')}
-                                className="flex-1 px-2.5 py-1.5 text-[12px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                                className="flex-1 px-2.5 py-1.5 text-[12px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] cursor-pointer"
                             />
                         </div>
                     </div>
@@ -460,7 +460,7 @@ export default function StrategyCreationDrawer({
                     <textarea
                         {...register('description')}
                         placeholder="Propósito u objetivos de la estrategia..."
-                        className="w-full min-h-[80px] px-3 py-2 text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
+                        className="w-full min-h-[80px] px-3 py-2 text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] resize-none"
                     />
                 </div>
             </form>

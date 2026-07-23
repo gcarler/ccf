@@ -45,7 +45,7 @@ export default function LeadersPanel({ leaders, loadingLeaders }: Props) {
             <DSCard key={leader.leader_id || leader.group_id} tone="light" className="hover:shadow-md transition-all">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="size-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
+                  <div className="size-9 rounded-lg bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
                     <User size={18} />
                   </div>
                   <div>

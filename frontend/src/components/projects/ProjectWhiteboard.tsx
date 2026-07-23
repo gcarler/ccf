@@ -341,7 +341,7 @@ export default function ProjectWhiteboard({
         submitLabel={isAiDrawing ? "Generando…" : "Generar"}
       />
       {loadError && (
-        <div className="mx-4 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+        <div className="mx-4 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
           <p className="text-[11px] font-bold uppercase tracking-wide">{loadError}</p>
         </div>
       )}
@@ -367,15 +367,15 @@ export default function ProjectWhiteboard({
               </>
             ) : saveStatus === "error" ? (
               <>
-                <Cloud size={10} className="text-rose-500" />
-                <span className="text-[9px] font-semibold uppercase text-rose-500">
+                <Cloud size={10} className="text-[hsl(var(--danger))]" />
+                <span className="text-[9px] font-semibold uppercase text-[hsl(var(--danger))]">
                   Error
                 </span>
               </>
             ) : (
               <>
-                <Cloud size={10} className="text-emerald-500" />
-                <span className="text-[9px] font-semibold uppercase text-emerald-500">
+                <Cloud size={10} className="text-[hsl(var(--success))]" />
+                <span className="text-[9px] font-semibold uppercase text-[hsl(var(--success))]">
                   Guardado
                 </span>
               </>
@@ -420,14 +420,14 @@ export default function ProjectWhiteboard({
           </div>
           <button
             onClick={clearCanvas}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 rounded-md text-[10px] font-bold uppercase tracking-wide hover:bg-rose-100 transition-colors border border-rose-200 dark:border-rose-500/20"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-danger-soft text-danger-text rounded-md text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--danger-muted))] transition-colors border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/20"
           >
             <Eraser size={11} /> Limpiar
           </button>
           <div className="w-px h-5 bg-[hsl(var(--surface-3))] dark:bg-white/10" />
           <button
             onClick={onClose}
-            className="p-1.5 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
+            className="p-1.5 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all"
             title="Cerrar (Esc)"
           >
             <X size={16} />
@@ -485,7 +485,7 @@ export default function ProjectWhiteboard({
             onClick={deleteSelected}
             icon={Trash2}
             label="Eliminar (Del)"
-            color="text-rose-500"
+            color="text-[hsl(var(--danger))]"
           />
           <div className="h-px w-7 bg-[hsl(var(--surface-2))] dark:bg-white/10 mx-auto my-0.5" />
           <ToolBtn
@@ -560,7 +560,7 @@ export default function ProjectWhiteboard({
                 <button
                   key={`${layer.type}-${layer.index}`}
                   onClick={() => focusLayer(layer.index)}
-                  className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] p-2 text-left text-[11px] font-medium text-[hsl(var(--text-secondary))] transition-all hover:border-blue-200 hover:bg-blue-50/40 dark:border-white/5 dark:hover:bg-blue-500/10"
+                  className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] p-2 text-left text-[11px] font-medium text-[hsl(var(--text-secondary))] transition-all hover:border-[hsl(var(--info)/25%)] hover:bg-info-soft/40 dark:border-white/5 dark:hover:bg-[hsl(var(--info))]/10"
                 >
                   <span className="flex items-center gap-2">
                     <History size={12} /> {layer.label}

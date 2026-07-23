@@ -114,7 +114,7 @@ export default function WhiteboardPage() {
               {filtered.map((board) => (
                 <article
                   key={board.project_id}
-                  className="group rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm transition-all hover:border-blue-300 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
+                  className="group rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm transition-all hover:border-[hsl(var(--info)/30%)] hover:shadow-xl dark:border-white/10 dark:bg-white/5"
                 >
                   <button
                     onClick={() =>
@@ -144,13 +144,13 @@ export default function WhiteboardPage() {
                       onClick={() =>
                         router.push(`/plataforma/whiteboard/${board.project_id}`)
                       }
-                      className="rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20"
+                      className="rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
                     >
                       Abrir
                     </button>
                     <button
                       onClick={() => deleteBoard(board.project_id)}
-                      className="rounded-md p-2 text-[hsl(var(--text-secondary))] transition-all hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10"
+                      className="rounded-md p-2 text-[hsl(var(--text-secondary))] transition-all hover:bg-danger-soft hover:text-[hsl(var(--danger))] dark:hover:bg-[hsl(var(--danger))]/10"
                       title="Eliminar pizarra"
                     >
                       <Trash2 size={16} />

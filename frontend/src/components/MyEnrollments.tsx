@@ -274,9 +274,9 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                       </div>
 
                       <div className="space-y-4">
-                        <h4 className="text-sm font-bold text-white flex items-center gap-2"><Upload size={18} className="text-emerald-500" /> Entregar Tarea</h4>
+                        <h4 className="text-sm font-bold text-white flex items-center gap-2"><Upload size={18} className="text-[hsl(var(--success))]" /> Entregar Tarea</h4>
                         <div className="p-3 bg-[hsl(var(--bg-muted))] border border-white/5 rounded-lg flex flex-col items-center justify-center text-center gap-4">
-                          <div className="p-4 bg-emerald-500/10 rounded-full text-emerald-500"><FileText size={24} /></div>
+                          <div className="p-4 bg-[hsl(var(--success))]/10 rounded-full text-[hsl(var(--success))]"><FileText size={24} /></div>
                           <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-relaxed">Sube tu trabajo en PDF o Word para ser calificado.</p>
                           <label className="w-full py-3 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-all cursor-pointer text-center">
                             <input
@@ -330,7 +330,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
             const progressOffset = progressCircumference - (progressCircumference * item.progress_percent) / 100;
 
             return (
-              <article key={item.id} className="bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-[#e8eaed] dark:border-white/5 p-4 rounded-lg flex flex-col gap-3 group hover:border-[hsl(var(--primary))]/30 transition-all hover:shadow-xl hover:shadow-sky-500/5 cursor-pointer" onClick={() => openLessons(item)}>
+              <article key={item.id} className="bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-[#e8eaed] dark:border-white/5 p-4 rounded-lg flex flex-col gap-3 group hover:border-[hsl(var(--primary))]/30 transition-all hover:shadow-xl hover:shadow-[hsl(var(--info)/5%)] cursor-pointer" onClick={() => openLessons(item)}>
                 <div className="flex gap-4 items-center relative">
                   <div className="relative flex size-7 shrink-0 items-center justify-center">
                     <svg className="absolute inset-0 size-7 -rotate-90" viewBox="0 0 100 100">
@@ -346,7 +346,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                     <div className="flex justify-between items-start">
                       <h3 className="font-bold text-sm truncate pr-2 text-[hsl(var(--text-primary))] dark:text-white tracking-tight">{item.course.title}</h3>
                       <div className="flex items-center gap-1.5 shrink-0">
-                         <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-900/30 uppercase tracking-wide">{Math.round(item.progress_percent)}%</span>
+                         <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] px-2 py-0.5 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 uppercase tracking-wide">{Math.round(item.progress_percent)}%</span>
                          <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors" />
                       </div>
                     </div>
@@ -365,7 +365,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                   {item.approved && certificatesByEnrollment[item.id] ? (
                     <button 
                         onClick={(e) => { e.stopPropagation(); setSelectedCertificate({ cert: certificatesByEnrollment[item.id], enrollment: item }); }} 
-                        className="flex-1 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all flex items-center justify-center gap-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+                        className="flex-1 py-1.5 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all flex items-center justify-center gap-2 hover:bg-[hsl(var(--success-muted))] dark:hover:bg-[hsl(var(--success))]/40"
                     >
                       <Award size={12} /> Certificado Disponible
                     </button>

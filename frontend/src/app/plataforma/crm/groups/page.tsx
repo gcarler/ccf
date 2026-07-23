@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { Grupo } from '@/types/crm';
 
-const ZONE_COLORS = ['from-blue-500 to-sky-600', 'from-blue-500 to-sky-600', 'from-emerald-500 to-teal-600', 'from-orange-500 to-amber-600', 'from-rose-500 to-pink-600', 'from-sky-500 to-cyan-600'];
+const ZONE_COLORS = ['from-[hsl(var(--info))] to-[hsl(var(--info))]', 'from-[hsl(var(--info))] to-[hsl(var(--info))]', 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))]', 'from-orange-500 to-[hsl(var(--warning))]', 'from-[hsl(var(--danger))] to-[hsl(var(--domain-pink))]', 'from-[hsl(var(--info))] to-[hsl(var(--domain-cyan))]'];
 
 function getZoneColor(id: string) {
     const n = parseInt(String(id).replace(/-/g, '').slice(-4), 16) || 0;
@@ -229,18 +229,18 @@ export default function CrmGroupsPage() {
                 </div>
 
                 {groupsError && (
-                    <div className="mx-3 mb-3 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="mx-3 mb-3 rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="min-w-0">
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                            <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
                                 No se pudo cargar la lista de grupos
                             </p>
-                            <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                            <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
                                 {groupsError}
                             </p>
                         </div>
                         <button
                             onClick={loadGroups}
-                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                         >
                             Reintentar
                         </button>
@@ -250,10 +250,10 @@ export default function CrmGroupsPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-3 -mt-3 mb-3 relative z-10">
                     {[
-                        { label: 'Total Grupos', value: stats.total, icon: Users, bg: 'bg-emerald-500' },
+                        { label: 'Total Grupos', value: stats.total, icon: Users, bg: 'bg-[hsl(var(--success))]' },
                         { label: 'Integrantes Activos', value: stats.totalPersonas, icon: Users, bg: 'bg-[hsl(var(--primary))]' },
                         { label: 'Grupos Activos', value: stats.active, icon: Activity, bg: 'bg-[hsl(var(--primary))]' },
-                        { label: 'Ocup. Promedio', value: `${stats.avgCapacity}%`, icon: TrendingUp, bg: 'bg-amber-500' },
+                        { label: 'Ocup. Promedio', value: `${stats.avgCapacity}%`, icon: TrendingUp, bg: 'bg-[hsl(var(--warning))]' },
                     ].map(s => (
                         <div key={s.label} className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg transition-all duration-300">
                             <div className={`inline-flex size-8 rounded-md ${s.bg} items-center justify-center text-white mb-3 shadow-md`}>
@@ -273,7 +273,7 @@ export default function CrmGroupsPage() {
                             value={query}
                             onChange={e => setQuery(e.target.value)}
                             placeholder="Buscar por nombre, zona o líder..."
-                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all placeholder:text-[hsl(var(--text-secondary))]"
+                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--success)/30%)] focus:border-[hsl(var(--success)/40%)] transition-all placeholder:text-[hsl(var(--text-secondary))]"
                         />
                     </div>
 
@@ -323,7 +323,7 @@ export default function CrmGroupsPage() {
                                                     <Home size={22} />
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide ${isActive ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]'}`}>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide ${isActive ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]'}`}>
                                                         {isActive ? 'Activo' : group.status}
                                                     </span>
                                                     <button onClick={e => { e.stopPropagation(); }} className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors" aria-label="Más opciones">
@@ -332,7 +332,7 @@ export default function CrmGroupsPage() {
                                                 </div>
                                             </div>
 
-                                            <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                            <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white mb-1 group-hover:text-success-text dark:group-hover:text-[hsl(var(--success))] transition-colors">
                                                 {group.name}
                                             </h3>
 
@@ -387,10 +387,10 @@ export default function CrmGroupsPage() {
                                                     <span className="text-[11px] font-bold">{group.personas_count || 0} integrantes</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-[hsl(var(--text-secondary))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-md transition-colors" aria-label="Agregar">
+                                                    <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-[hsl(var(--text-secondary))] hover:text-success-text hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/20 rounded-md transition-colors" aria-label="Agregar">
                                                         <UserPlus size={14} />
                                                     </button>
-                                                    <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+                                                    <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--success))] group-hover:translate-x-1 transition-all" />
                                                 </div>
                                             </div>
                                         </div>
@@ -417,7 +417,7 @@ export default function CrmGroupsPage() {
                             value={personaQuery}
                             onChange={event => setPersonaQuery(event.target.value)}
                             placeholder="Buscar persona..."
-                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] py-1.5 pl-11 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] py-1.5 pl-11 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--success)/20%)] dark:border-white/10 dark:bg-white/5 dark:text-white"
                         />
                     </div>
                     <div className="space-y-2">
@@ -430,7 +430,7 @@ export default function CrmGroupsPage() {
                                 <button
                                     onClick={() => handleInvitePersona(persona.id)}
                                     disabled={assigningPersonaId === persona.id}
-                                    className="flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
+                                    className="flex items-center gap-2 rounded-md bg-[hsl(var(--success))] px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
                                 >
                                     {assigningPersonaId === persona.id ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />}
                                     Agregar
@@ -438,18 +438,18 @@ export default function CrmGroupsPage() {
                             </div>
                         ))}
                         {personasError && (
-                            <div className="rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 text-left">
-                                <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+                            <div className="rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 text-left">
+                                <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
                                     No se pudo cargar la lista de personas
                                 </p>
-                                <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">
+                                <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
                                     {personasError}
                                 </p>
                                 <button
                                     onClick={() => {
                                         setInviteGroup(current => (current ? { ...current } : current));
                                     }}
-                                    className="mt-3 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                                    className="mt-3 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                                 >
                                     Reintentar
                                 </button>

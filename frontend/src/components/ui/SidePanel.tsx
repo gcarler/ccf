@@ -37,7 +37,7 @@ export default function SidePanel({
                     exit={{ x: "100%", opacity: 0 }}
                     transition={{ type: "spring", damping: 25, stiffness: 200 }}
                     className={clsx(
-                        "fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] max-w-full bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-[hsl(var(--border))] dark:border-white/10 flex flex-col",
+                        "fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] max-w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] shadow-2xl border-l border-[hsl(var(--border))] dark:border-white/10 flex flex-col",
                         width
                     )}
                 >
@@ -46,6 +46,7 @@ export default function SidePanel({
                         <div className="flex min-w-0 items-center gap-3">
                             <button
                                 onClick={onClose}
+                                aria-label="Cerrar"
                                 className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] transition-all"
                             >
                                 <X size={18} />
@@ -53,12 +54,12 @@ export default function SidePanel({
                             <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10" />
                             <div className="flex items-center gap-1">
                                 {onPrev && (
-                                    <button onClick={onPrev} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))]">
+                                    <button onClick={onPrev} aria-label="Anterior" className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))]">
                                         <ChevronUp size={16} />
                                     </button>
                                 )}
                                 {onNext && (
-                                    <button onClick={onNext} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))]">
+                                    <button onClick={onNext} aria-label="Siguiente" className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))]">
                                         <ChevronDown size={16} />
                                     </button>
                                 )}

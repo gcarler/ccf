@@ -101,7 +101,7 @@ export default function ProjectsWelcomePage() {
                     </div>
                 )}
                 {viewType === 'grid' && (
-                <section className="max-w-3xl rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-transparent">
+                <section className="max-w-3xl rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-gradient-to-br from-[hsl(var(--info))] to-white dark:from-[hsl(var(--info)/20%)] dark:to-transparent">
                     <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">Workspace de proyectos</p>
                     <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-2 tracking-tight">Bienvenido al espacio de coordinacion</h1>
                     <p className="text-[hsl(var(--text-secondary))] mt-2">Desde aqui puedes crear proyectos, mover tareas en Kanban y monitorear respuestas del equipo en un solo flujo.</p>

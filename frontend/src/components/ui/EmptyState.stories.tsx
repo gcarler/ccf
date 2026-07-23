@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import EmptyState from './EmptyState';
-import { Ghost, Plus, CheckCircle, AlertTriangle, Info } from 'lucide-react';
+import { Plus, CheckCircle, AlertTriangle, Info } from 'lucide-react';
+
 
 const meta: Meta<typeof EmptyState> = {
+  tags: ['autodocs'],
   title: 'UI/EmptyState',
   component: EmptyState,
   parameters: {

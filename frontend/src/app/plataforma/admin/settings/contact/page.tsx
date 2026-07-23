@@ -38,10 +38,10 @@ interface ScheduleItem {
 }
 
 const TYPE_OPTIONS: { value: ContactItem["type"]; label: string; icon: React.ElementType; color: string }[] = [
-  { value: "phone", label: "Teléfono", icon: Phone, color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10" },
+  { value: "phone", label: "Teléfono", icon: Phone, color: "text-[hsl(var(--success))] bg-success-soft dark:bg-[hsl(var(--success))]/10" },
   { value: "whatsapp", label: "WhatsApp", icon: MessageCircle, color: "text-green-600 bg-green-50 dark:bg-green-500/10" },
-  { value: "email", label: "Correo", icon: Mail, color: "text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10" },
-  { value: "address", label: "Dirección", icon: MapPin, color: "text-amber-500 bg-amber-50 dark:bg-amber-500/10" },
+  { value: "email", label: "Correo", icon: Mail, color: "text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10" },
+  { value: "address", label: "Dirección", icon: MapPin, color: "text-[hsl(var(--warning))] bg-warning-soft dark:bg-[hsl(var(--warning))]/10" },
 ];
 
 const DEFAULT_CONTACTS: ContactItem[] = [
@@ -394,7 +394,7 @@ export default function AdminSettingsContactPage() {
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => handleDeleteContact(c.id)}
-                                className="px-2 py-1 bg-rose-500 text-white text-[9px] font-bold uppercase rounded transition-all"
+                                className="px-2 py-1 bg-[hsl(var(--danger))] text-white text-[9px] font-bold uppercase rounded transition-all"
                               >
                                 Sí
                               </button>
@@ -408,7 +408,7 @@ export default function AdminSettingsContactPage() {
                           ) : (
                             <button
                               onClick={() => setDeleteConfirmId(c.id)}
-                              className="p-1.5 text-rose-500/50 hover:text-rose-500 transition-colors rounded-lg hover:bg-rose-500/10"
+                              className="p-1.5 text-[hsl(var(--danger))]/50 hover:text-[hsl(var(--danger))] transition-colors rounded-lg hover:bg-[hsl(var(--danger))]/10"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -490,7 +490,7 @@ export default function AdminSettingsContactPage() {
                         <div className="flex items-center gap-1 shrink-0">
                           <button
                             onClick={() => handleDeleteSchedule(i)}
-                            className="px-2 py-1 bg-rose-500 text-white text-[9px] font-bold uppercase rounded transition-all"
+                            className="px-2 py-1 bg-[hsl(var(--danger))] text-white text-[9px] font-bold uppercase rounded transition-all"
                           >
                             Sí
                           </button>
@@ -504,7 +504,7 @@ export default function AdminSettingsContactPage() {
                       ) : (
                         <button
                           onClick={() => setDeleteConfirmScheduleIdx(i)}
-                          className="p-1.5 text-rose-500/50 hover:text-rose-500 transition-colors rounded-lg hover:bg-rose-500/10 shrink-0"
+                          className="p-1.5 text-[hsl(var(--danger))]/50 hover:text-[hsl(var(--danger))] transition-colors rounded-lg hover:bg-[hsl(var(--danger))]/10 shrink-0"
                         >
                           <Trash2 size={14} />
                         </button>

@@ -391,7 +391,7 @@ export default function CmsMediaLibrary() {
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60 shrink-0"
+          className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60 shrink-0"
         >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
           {uploading ? "Subiendo..." : "Subir Archivos"}
@@ -408,7 +408,7 @@ export default function CmsMediaLibrary() {
             className={clsx(
               "px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all",
               filter === opt.id
-                ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20"
+                ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
                 : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10"
             )}
           >
@@ -443,7 +443,7 @@ export default function CmsMediaLibrary() {
               {!search && (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all"
+                  className="flex items-center gap-2 px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all"
                 >
                   <Plus size={16} /> Subir primer archivo
                 </button>
@@ -495,7 +495,7 @@ export default function CmsMediaLibrary() {
                         <button
                           onClick={e => { e.stopPropagation(); optimizeItem(item); }}
                           disabled={optimizingId === item.id}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--info))] hover:bg-[hsl(var(--info))] rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
                         >
                           {optimizingId === item.id ? <Loader2 size={10} className="animate-spin" /> : <Zap size={10} />}
                           Optimizar
@@ -566,7 +566,7 @@ export default function CmsMediaLibrary() {
                       item.status === "archived" && "opacity-70 border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.05)]",
                       selectedItem?.id === item.id
                         ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.1)]"
-                        : "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] hover:border-blue-300 dark:hover:border-blue-700"
+                        : "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)]"
                     )}
                   >
                     <div className="size-10 rounded-md overflow-hidden flex-shrink-0 bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">

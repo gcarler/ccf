@@ -56,7 +56,7 @@ export interface TableColumn<T> {
   render?: (value: unknown, item: T) => React.ReactNode;
 }
 
-interface UniversalTableViewProps<T> {
+export interface UniversalTableViewProps<T> {
   data: T[];
   columns: TableColumn<T>[];
   groupBy?: string;
@@ -143,21 +143,21 @@ function applyFilters<T>(data: T[], filters: ActiveFilter[]): T[] {
 // ─── Status / Priority maps ───────────────────────────────────────────────────
 
 const STATUS_MAP: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  todo:          { label: 'Pendiente',   bg: 'bg-amber-50 dark:bg-amber-900/20',     text: 'text-amber-700 dark:text-amber-400',     dot: 'bg-amber-400'    },
-  pending:       { label: 'Pendiente',   bg: 'bg-amber-50 dark:bg-amber-900/20',     text: 'text-amber-700 dark:text-amber-400',     dot: 'bg-amber-400'    },
-  pendiente:     { label: 'Pendiente',   bg: 'bg-amber-50 dark:bg-amber-900/20',     text: 'text-amber-700 dark:text-amber-400',     dot: 'bg-amber-400'    },
-  in_progress:   { label: 'En Progreso', bg: 'bg-blue-50 dark:bg-blue-900/20',       text: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',       dot: 'bg-[hsl(var(--primary))]'     },
-  review:        { label: 'En Revisión', bg: 'bg-blue-50 dark:bg-blue-900/20',       text: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',       dot: 'bg-[hsl(var(--primary))]'     },
-  done:          { label: 'Terminado',   bg: 'bg-cyan-50 dark:bg-cyan-900/20',       text: 'text-cyan-700 dark:text-cyan-400',       dot: 'bg-cyan-500'     },
-  completed:     { label: 'Completado',  bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500'  },
-  realizada:     { label: 'Realizada',   bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500'  },
-  blocked:       { label: 'Bloqueado',   bg: 'bg-rose-50 dark:bg-rose-900/20',       text: 'text-rose-700 dark:text-rose-400',       dot: 'bg-rose-500'     },
-  activo:        { label: 'Activo',      bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500'  },
+  todo:          { label: 'Pendiente',   bg: 'bg-warning-soft',  text: 'text-warning-text',  dot: 'bg-warning'  },
+  pending:       { label: 'Pendiente',   bg: 'bg-warning-soft',  text: 'text-warning-text',  dot: 'bg-warning'  },
+  pendiente:     { label: 'Pendiente',   bg: 'bg-warning-soft',  text: 'text-warning-text',  dot: 'bg-warning'  },
+  in_progress:   { label: 'En Progreso', bg: 'bg-info-soft',     text: 'text-info-text',     dot: 'bg-info'     },
+  review:        { label: 'En Revisión', bg: 'bg-info-soft',     text: 'text-info-text',     dot: 'bg-info'     },
+  done:          { label: 'Terminado',   bg: 'bg-info-soft',     text: 'text-info-text',     dot: 'bg-info'     },
+  completed:     { label: 'Completado',  bg: 'bg-success-soft',  text: 'text-success-text',  dot: 'bg-success'  },
+  realizada:     { label: 'Realizada',   bg: 'bg-success-soft',  text: 'text-success-text',  dot: 'bg-success'  },
+  blocked:       { label: 'Bloqueado',   bg: 'bg-danger-soft',   text: 'text-danger-text',   dot: 'bg-danger'   },
+  activo:        { label: 'Activo',      bg: 'bg-success-soft',  text: 'text-success-text',  dot: 'bg-success'  },
   inactivo:      { label: 'Inactivo',    bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',         text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',     dot: 'bg-[hsl(var(--surface-2))]'    },
-  habilitado:    { label: 'Abierta',     bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-500'  },
-  deshabilitado: { label: 'Bloqueada',   bg: 'bg-amber-50 dark:bg-amber-900/20',     text: 'text-amber-700 dark:text-amber-400',     dot: 'bg-amber-400'    },
+  habilitado:    { label: 'Abierta',     bg: 'bg-success-soft',  text: 'text-success-text',  dot: 'bg-success'  },
+  deshabilitado: { label: 'Bloqueada',   bg: 'bg-warning-soft',  text: 'text-warning-text',  dot: 'bg-warning'  },
   cerrado:       { label: 'Cerrada',     bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',         text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',     dot: 'bg-[hsl(var(--surface-2))]'    },
-  cancelada:     { label: 'Cancelada',   bg: 'bg-rose-50 dark:bg-rose-900/20',       text: 'text-rose-700 dark:text-rose-400',       dot: 'bg-rose-500'     },
+  cancelada:     { label: 'Cancelada',   bg: 'bg-danger-soft',   text: 'text-danger-text',   dot: 'bg-danger'   },
 };
 function getStatus(v: string) {
   return STATUS_MAP[String(v ?? '').toLowerCase()] ?? {
@@ -169,10 +169,10 @@ function getStatus(v: string) {
 }
 
 const PRIORITY_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  urgent: { label: 'Urgente', color: 'text-rose-600 dark:text-rose-400',     bg: 'bg-rose-50 dark:bg-rose-900/20'     },
-  high:   { label: 'Alta',    color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-  medium: { label: 'Media',   color: 'text-amber-600 dark:text-amber-400',   bg: 'bg-amber-50 dark:bg-amber-900/20'   },
-  normal: { label: 'Normal',  color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',     bg: 'bg-blue-50 dark:bg-blue-900/20'     },
+  urgent: { label: 'Urgente', color: 'text-danger-text',  bg: 'bg-danger-soft'  },
+  high:   { label: 'Alta',    color: 'text-warning',       bg: 'bg-warning-soft' },
+  medium: { label: 'Media',   color: 'text-warning-text',  bg: 'bg-warning-soft' },
+  normal: { label: 'Normal',  color: 'text-info-text',     bg: 'bg-info-soft'    },
   low:    { label: 'Baja',    color: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',   bg: 'bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]'      },
 };
 
@@ -231,7 +231,7 @@ function IdCell({ value }: { value: unknown }) {
 function ProgressCell({ value }: { value: unknown }) {
   const raw = Number(value || 0);
   const pct = isNaN(raw) ? 0 : Math.round(raw <= 1 ? raw * 100 : raw);
-  const color = pct === 100 ? 'bg-emerald-500' : pct >= 60 ? 'bg-[hsl(var(--primary))]' : 'bg-amber-400';
+  const color = pct === 100 ? 'bg-success' : pct >= 60 ? 'bg-primary' : 'bg-warning';
   return (
     <div className="flex items-center gap-2.5 w-full pr-2">
       <div className="flex-1 h-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
@@ -296,7 +296,7 @@ function FilterRow({
       )}
       <button
         onClick={onRemove}
-        className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+        className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft transition-colors"
       >
         <X size={12} />
       </button>
@@ -791,7 +791,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                 </button>
                 {activeFilters.length > 0 && (
                   <button onClick={() => setActiveFilters([])}
-                    className="text-[11px] text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors">
+                    className="text-[11px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-colors">
                     Limpiar todo
                   </button>
                 )}

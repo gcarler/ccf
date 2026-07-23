@@ -45,7 +45,7 @@ export default function PublicCertificatePage() {
     if (error || !certificate) return (
         <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] p-4">
             <div className="max-w-md w-full text-center space-y-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl">
-                <ShieldAlert size={64} className="text-rose-500 mx-auto" />
+                <ShieldAlert size={64} className="text-[hsl(var(--danger))] mx-auto" />
                 <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Certificado No Valido</h2>
                 <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">El codigo de certificado proporcionado no existe en nuestros registros oficiales.</p>
                 <button
@@ -62,7 +62,7 @@ export default function PublicCertificatePage() {
         <div className="min-h-screen bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] overflow-y-auto py-1.5 px-4">
  <div className="w-full space-y-3">
                 <div className="flex flex-col items-center text-center space-y-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-semibold uppercase tracking-wide border border-emerald-100 dark:border-emerald-900/40">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--success)/20%)] dark:border-[hsl(var(--success)/40%)]">
                         Certificado Verificado por CCF
                     </div>
                     <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Validacion Oficial de Logro</h1>

@@ -98,7 +98,7 @@ function MentorAssignmentDrawer({
                     <button
                         onClick={onSave}
                         disabled={saving || !selectedMentorId}
-                        className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60"
+                        className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)] transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60"
                     >
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                         Guardar
@@ -108,8 +108,8 @@ function MentorAssignmentDrawer({
         >
             <div className="mt-6 space-y-4">
                 {currentMentor?.mentor_name ? (
-                    <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Mentoría actual</p>
+                    <div className="rounded-lg border border-[hsl(var(--success)/100%)]/20 bg-[hsl(var(--success))]/5 p-4">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-success-text dark:text-success-text">Mentoría actual</p>
                         <p className="mt-1 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{currentMentor.mentor_name}</p>
                         <p className="text-xs text-[hsl(var(--text-secondary))]">{currentMentor.mentor_role || 'Mentor activo'}</p>
                     </div>
@@ -148,8 +148,8 @@ function MentorAssignmentDrawer({
                                         className={clsx(
                                             "w-full rounded-lg border p-3 text-left transition-all",
                                             selected
-                                                ? "border-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10"
-                                                : "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:border-blue-500/30"
+                                                ? "border-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10"
+                                                : "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:border-[hsl(var(--info)/100%)]/30"
                                         )}
                                     >
                                         <div className="flex items-start justify-between gap-3">
@@ -186,7 +186,7 @@ function MentorAssignmentDrawer({
                 </div>
 
                 {error ? (
-                    <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
+                    <div className="rounded-lg border border-[hsl(var(--danger)/100%)]/20 bg-[hsl(var(--danger))]/5 px-3 py-2 text-sm text-danger-text dark:text-danger-text">
                         {error}
                     </div>
                 ) : null}
@@ -269,11 +269,11 @@ function getDeptName(departments: any[], id: number | null | undefined): string 
 function metricToneClass(tone?: string) {
     switch (tone) {
         case 'emerald':
-            return 'bg-emerald-500';
+            return 'bg-[hsl(var(--success))]';
         case 'amber':
-            return 'bg-amber-500';
+            return 'bg-[hsl(var(--warning))]';
         case 'rose':
-            return 'bg-rose-500';
+            return 'bg-[hsl(var(--danger))]';
         case 'blue':
             return 'bg-[hsl(var(--primary))]';
         default:
@@ -562,7 +562,7 @@ export default function PersonaDetailPage() {
 
     if (loading) return (
         <div className="h-full flex flex-col items-center justify-center space-y-4">
-            <div className="size-9 rounded-lg bg-blue-600/10 flex items-center justify-center">
+            <div className="size-9 rounded-lg bg-[hsl(var(--info))]/10 flex items-center justify-center">
                 <Activity size={24} className="text-[hsl(var(--primary))] animate-spin" />
             </div>
             <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Accediendo al Expediente...</p>
@@ -602,9 +602,9 @@ export default function PersonaDetailPage() {
             ]}
             rightActions={canEditCrm ? (
                 <div className="flex gap-2">
-                    <button title="Editar" aria-label="Editar" onClick={() => setIsEditOpen(true)} className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Edit3 size={16} /></button>
-                    <button title="Compartir" aria-label="Compartir" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><Share2 size={16} /></button>
-                    <button title="Más acciones" aria-label="Más acciones" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 transition-all"><MoreHorizontal size={16} /></button>
+                    <button title="Editar" aria-label="Editar" onClick={() => setIsEditOpen(true)} className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--info)/100%)]/30 transition-all"><Edit3 size={16} /></button>
+                    <button title="Compartir" aria-label="Compartir" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--info)/100%)]/30 transition-all"><Share2 size={16} /></button>
+                    <button title="Más acciones" aria-label="Más acciones" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--info)/100%)]/30 transition-all"><MoreHorizontal size={16} /></button>
                 </div>
             ) : undefined}
         >
@@ -615,11 +615,11 @@ export default function PersonaDetailPage() {
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                 className="relative bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-xl shadow-black/10/20 dark:shadow-none overflow-hidden group"
             >
-                <div className="absolute top-0 right-0 w-[500px] h-full bg-gradient-to-l from-blue-600/5 to-transparent pointer-events-none" />
+                <div className="absolute top-0 right-0 w-[500px] h-full bg-gradient-to-l to-[hsl(var(--info)/5%)] to-transparent pointer-events-none" />
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-3">
                     {/* Avatar */}
                     <div className="relative shrink-0">
-                        <div className="size-10 lg:size-10 rounded-md bg-gradient-to-tr from-blue-600 to-sky-700 flex items-center justify-center text-white text-xl font-bold shadow-2xl shadow-blue-500/30 group-hover:scale-105 transition-transform duration-500">
+                        <div className="size-10 lg:size-10 rounded-md bg-gradient-to-tr from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white text-xl font-bold shadow-2xl shadow-[hsl(var(--info)/30%)] group-hover:scale-105 transition-transform duration-500">
                             {initials}
                         </div>
                         <div className="absolute -bottom-3 -right-3 size-9 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg flex items-center justify-center shadow-xl border border-[hsl(var(--border))] dark:border-white/10">
@@ -630,7 +630,7 @@ export default function PersonaDetailPage() {
                     {/* Info */}
                     <div className="flex-1 space-y-2">
                         <div className="space-y-2">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-500/10 rounded-full text-[10px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide border border-blue-100 dark:border-blue-500/20">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/10 rounded-full text-[10px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20">
                                 ID: #{persona.id} <span className="text-[hsl(var(--text-secondary))]">•</span> {persona.status}
                             </div>
                             <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">{fullName}</h1>
@@ -638,16 +638,16 @@ export default function PersonaDetailPage() {
                         </div>
                         <div className="flex flex-wrap gap-3 items-center">
                             {persona.email !== '—' && <span className="flex items-center gap-2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm"><Mail size={16} className="text-[hsl(var(--primary))]" /> {persona.email}</span>}
-                            {persona.phone !== '—' && <span className="flex items-center gap-2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm"><Phone size={16} className="text-emerald-500" /> {persona.phone}</span>}
-                            {persona.address !== '—' && <span className="flex items-center gap-2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm"><MapPin size={16} className="text-rose-500" /> {persona.address}</span>}
+                            {persona.phone !== '—' && <span className="flex items-center gap-2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm"><Phone size={16} className="text-[hsl(var(--success))]" /> {persona.phone}</span>}
+                            {persona.address !== '—' && <span className="flex items-center gap-2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm"><MapPin size={16} className="text-[hsl(var(--danger))]" /> {persona.address}</span>}
                         </div>
                     </div>
 
                     {/* Quick Stats */}
                     <div className="flex flex-row lg:flex-col gap-3 shrink-0">
-                        <QuickStat label="Puntos MESH" value={persona.xp} icon={Star} color="text-amber-500" />
+                        <QuickStat label="Puntos MESH" value={persona.xp} icon={Star} color="text-[hsl(var(--warning))]" />
                         <QuickStat label="Nivel" value={persona.level} icon={Zap} color="text-[hsl(var(--primary))]" />
-                        <QuickStat label="Grupo" value={persona.house} icon={Heart} color="text-rose-500" />
+                        <QuickStat label="Grupo" value={persona.house} icon={Heart} color="text-[hsl(var(--danger))]" />
                     </div>
                 </div>
             </motion.section>
@@ -769,7 +769,7 @@ export default function PersonaDetailPage() {
                                 {persona.family.length > 0 ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {persona.family.map((f: any) => (
-                                            <div key={f.id} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all cursor-pointer">
+                                            <div key={f.id} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-[hsl(var(--info)/100%)]/30 hover:bg-info-soft/50 dark:hover:bg-[hsl(var(--info))]/5 transition-all cursor-pointer">
                                                 <div className="flex items-center gap-3">
                                                     <div className="size-9 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] flex items-center justify-center shadow-sm border border-[hsl(var(--border))] dark:border-white/10">
                                                         <User size={16} className="text-[hsl(var(--text-secondary))]" />
@@ -800,26 +800,26 @@ export default function PersonaDetailPage() {
                                 const metrics = insight?.metrics ?? [];
                                 const currentMentor = insight?.current_mentorship ?? persona.current_mentorship;
                                 return (
-                                    <div className="p-4 bg-gradient-to-br from-sky-600 via-blue-600 to-sky-800 rounded-md text-white shadow-xl relative overflow-hidden group">
+                                    <div className="p-4 bg-gradient-to-br from-[hsl(var(--info))] via-[hsl(var(--info))] to-[hsl(var(--info))] rounded-md text-white shadow-xl relative overflow-hidden group">
                                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-700"><Sparkles size={100} /></div>
                                         <div className="relative z-10 space-y-4">
                                             <div className="flex items-center gap-2">
-                                                <Flame size={18} className="text-amber-300" />
+                                                <Flame size={18} className="text-[hsl(var(--warning))]" />
                                                 <h4 className="text-base font-bold tracking-tight uppercase">{insight?.title || 'MESH Insight'}</h4>
                                             </div>
                                             <div className="space-y-2">
-                                                <p className="text-sm font-medium text-blue-100 leading-relaxed">
+                                                <p className="text-sm font-medium text-[hsl(var(--info))] leading-relaxed">
                                                     {insight?.summary || `${fullName} tiene potencial pastoral en su área de servicio.`}
                                                 </p>
-                                                <p className="text-xs text-blue-100/90 leading-relaxed">
+                                                <p className="text-xs text-[hsl(var(--info)/90%)] leading-relaxed">
                                                     {insight?.recommendation || 'Mantener seguimiento activo y asignar acompañamiento si hace falta.'}
                                                 </p>
                                             </div>
                                             {currentMentor?.mentor_name ? (
                                                 <div className="rounded-lg bg-white/10 p-3 border border-white/10">
-                                                    <p className="text-[10px] font-bold uppercase tracking-wide text-blue-100">Mentoría actual</p>
+                                                    <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--info))]">Mentoría actual</p>
                                                     <p className="mt-1 text-sm font-bold text-white">{currentMentor.mentor_name}</p>
-                                                    <p className="text-[11px] text-blue-100/90">{currentMentor.mentor_role || 'Mentor activo'}</p>
+                                                    <p className="text-[11px] text-[hsl(var(--info)/90%)]">{currentMentor.mentor_role || 'Mentor activo'}</p>
                                                 </div>
                                             ) : null}
                                             {metrics.length > 0 ? (
@@ -837,7 +837,7 @@ export default function PersonaDetailPage() {
                                             {insight?.signals?.length ? (
                                                 <div className="flex flex-wrap gap-2">
                                                     {insight.signals.slice(0, 4).map((signal) => (
-                                                        <span key={signal} className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-50">
+                                                        <span key={signal} className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--info))]">
                                                             {signal}
                                                         </span>
                                                     ))}
@@ -863,9 +863,9 @@ export default function PersonaDetailPage() {
                             {/* Indicadores de Salud */}
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-4 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-2">
                                 <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Indicadores de Salud</h3>
-                                <HealthIndicator label="Asistencia Mensual" value={Math.max(0, Math.min(100, Math.round(persona.mesh_insight?.attendance_rate ?? 0)))} color="bg-emerald-500" />
+                                <HealthIndicator label="Asistencia Mensual" value={Math.max(0, Math.min(100, Math.round(persona.mesh_insight?.attendance_rate ?? 0)))} color="bg-[hsl(var(--success))]" />
                                 <HealthIndicator label="Progreso Academia" value={Math.max(0, Math.min(100, Math.round(persona.mesh_insight?.academy_progress ?? persona.academy_progress ?? 0)))} color="bg-[hsl(var(--primary))]" />
-                                <HealthIndicator label="Compromiso Voluntario" value={Math.max(0, Math.min(100, Math.round(persona.mesh_insight?.volunteer_commitment ?? persona.volunteer_commitment ?? 0)))} color="bg-amber-500" />
+                                <HealthIndicator label="Compromiso Voluntario" value={Math.max(0, Math.min(100, Math.round(persona.mesh_insight?.volunteer_commitment ?? persona.volunteer_commitment ?? 0)))} color="bg-[hsl(var(--warning))]" />
                             </div>
                         </div>
                     </>}
@@ -886,7 +886,7 @@ export default function PersonaDetailPage() {
                                         <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Dones Espirituales</p>
                                         <div className="flex flex-wrap gap-2">
                                             {persona.spiritual_gifts.split(',').map((gift: string, i: number) => (
-                                                <span key={i} className="px-3 py-1.5 bg-blue-50 dark:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] dark:text-blue-300 text-[11px] font-bold rounded-md border border-blue-100 dark:border-[hsl(var(--primary))]/20 uppercase tracking-wide">
+                                                <span key={i} className="px-3 py-1.5 bg-info-soft dark:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] dark:text-info-text text-[11px] font-bold rounded-md border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--primary))]/20 uppercase tracking-wide">
                                                     {gift.trim()}
                                                 </span>
                                             ))}
@@ -906,11 +906,11 @@ export default function PersonaDetailPage() {
                             </div>
                         </div>
                         <div className="lg:col-span-4 space-y-3">
-                            <div className="p-4 bg-gradient-to-br from-rose-500 to-pink-600 rounded-md text-white shadow-xl relative overflow-hidden">
+                            <div className="p-4 bg-gradient-to-br from-[hsl(var(--danger))] to-[hsl(var(--domain-pink))] rounded-md text-white shadow-xl relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-4 opacity-10"><Heart size={80} /></div>
                                 <div className="relative z-10 space-y-4">
                                     <h4 className="text-sm font-bold uppercase tracking-wide">Cuidado Pastoral</h4>
-                                    <p className="text-sm text-rose-100 leading-relaxed">Esta persona está siendo acompañada activamente en su proceso espiritual.</p>
+                                    <p className="text-sm text-[hsl(var(--danger))] leading-relaxed">Esta persona está siendo acompañada activamente en su proceso espiritual.</p>
                                     <button
                                         onClick={() => {
                                             setMentorDrawerConfig({
@@ -919,7 +919,7 @@ export default function PersonaDetailPage() {
                                             });
                                             setMentorDrawerOpen(true);
                                         }}
-                                        className="w-full py-1.5 bg-[hsl(var(--surface-1))] text-rose-700 rounded-lg font-bold text-[10px] uppercase tracking-wide hover:scale-105 transition-all"
+                                        className="w-full py-1.5 bg-[hsl(var(--surface-1))] text-danger-text rounded-lg font-bold text-[10px] uppercase tracking-wide hover:scale-105 transition-all"
                                     >
                                         Asignar Pastor
                                     </button>
@@ -958,7 +958,7 @@ export default function PersonaDetailPage() {
                             {/* Summary Cards */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {[
-                                    { label: 'Total Diezmos', value: donations.filter(d => d.donation_type === 'diezmo').reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-emerald-500', icon: TrendingUp },
+                                    { label: 'Total Diezmos', value: donations.filter(d => d.donation_type === 'diezmo').reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-[hsl(var(--success))]', icon: TrendingUp },
                                     { label: 'Total Ofrendas', value: donations.filter(d => d.donation_type === 'ofrenda').reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-[hsl(var(--primary))]', icon: DollarSign },
                                     { label: 'Total Registrado', value: donations.reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-[hsl(var(--primary))]', icon: Award },
                                 ].map((stat, i) => (
@@ -982,15 +982,15 @@ export default function PersonaDetailPage() {
                                         {donations.map((d: any, i: number) => (
                                             <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="size-9 rounded-md bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center">
-                                                        <DollarSign size={16} className="text-emerald-600" />
+                                                    <div className="size-9 rounded-md bg-success-soft dark:bg-[hsl(var(--success))]/10 flex items-center justify-center">
+                                                        <DollarSign size={16} className="text-success-text" />
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white capitalize">{d.donation_type}</p>
                                                         <p className="text-[10px] text-[hsl(var(--text-secondary))]">{formatDate(d.created_at)}</p>
                                                     </div>
                                                 </div>
-                                                <p className="text-sm font-bold text-emerald-600">{formatCurrency(d.amount)}</p>
+                                                <p className="text-sm font-bold text-success-text">{formatCurrency(d.amount)}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -1079,7 +1079,7 @@ export default function PersonaDetailPage() {
                 actions={
                     <>
                         <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">Cancelar</button>
-                        <button type="button" onClick={handleSavePersona} disabled={isEditSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
+                        <button type="button" onClick={handleSavePersona} disabled={isEditSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)] transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
                             {isEditSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Guardar
                         </button>

@@ -18,19 +18,19 @@ describe('DSBadge', () => {
     it('applies blue tone', () => {
         render(<DSBadge label="Test" tone="blue" />);
         const badge = screen.getByText('Test');
-        expect(badge.className).toContain('bg-blue-500/15');
+        expect(badge.className).toContain('bg-[hsl(var(--info-muted))]');
     });
 
     it('applies emerald tone', () => {
         render(<DSBadge label="Test" tone="emerald" />);
         const badge = screen.getByText('Test');
-        expect(badge.className).toContain('bg-emerald-500/15');
+        expect(badge.className).toContain('bg-[hsl(var(--success-muted))]');
     });
 
     it('applies amber tone', () => {
         render(<DSBadge label="Test" tone="amber" />);
         const badge = screen.getByText('Test');
-        expect(badge.className).toContain('bg-amber-500/15');
+        expect(badge.className).toContain('bg-[hsl(var(--warning-muted))]');
     });
 
     it('applies custom className', () => {
@@ -51,5 +51,7 @@ describe('DSBadge', () => {
         expect(badge.className).toContain('text-[9px]');
         expect(badge.className).toContain('font-semibold');
         expect(badge.className).toContain('uppercase');
+        expect(badge.className).toContain('rounded');
+        expect(badge.className).toContain('font-sans');
     });
 });

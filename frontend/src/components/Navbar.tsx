@@ -24,7 +24,7 @@ export default function Navbar() {
     const navItems = [
         { label: 'Inicio', href: '/' },
         { label: 'Academia', href: '/plataforma/academy' },
-        { label: 'Proyectos', href: '/plataforma/projects/list#projects-list' },
+        { label: 'Proyectos', href: '/plataforma/projects?view=list#projects-list' },
         { label: 'Prédicas', href: '/predicas' },
         { label: 'Libros', href: '/books' },
         { label: 'Testimonios', href: '/testimonios' },
@@ -51,7 +51,7 @@ export default function Navbar() {
                     }`}>
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 group">
-                        <div className="bg-[hsl(var(--primary))] p-1.5 rounded-md group-hover:scale-105 transition-transform shadow-md shadow-blue-500/20 overflow-hidden">
+                        <div className="bg-[hsl(var(--primary))] p-1.5 rounded-md group-hover:scale-105 transition-transform shadow-md shadow-[hsl(var(--info)/20%)] overflow-hidden">
                             {logoUrl ? (
                                 <OptimizedImage src={logoUrl} alt={siteName} width={16} height={16} className="w-4 h-4 object-contain" />
                             ) : (
@@ -103,7 +103,7 @@ export default function Navbar() {
                                 </Link>
                                 <button
                                     onClick={logout}
-                                    className="p-1.5 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20 transition-colors"
+                                    className="p-1.5 rounded-md bg-danger-soft text-danger-text hover:bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/10 dark:text-[hsl(var(--danger))] dark:hover:bg-[hsl(var(--danger))]/20 transition-colors"
                                     title="Cerrar Sesión"
                                 >
                                     <LogOut size={14} />
@@ -114,7 +114,7 @@ export default function Navbar() {
                                 <Link href="/login" className="px-3 py-1.5 rounded-md text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-colors">
                                     Login
                                 </Link>
-                                <Link href="/register" className="px-3 py-1.5 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-semibold shadow-md shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                                <Link href="/register" className="px-3 py-1.5 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-semibold shadow-md shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                                     Empezar
                                 </Link>
                             </div>
@@ -183,7 +183,7 @@ function NavDropdown({ label, items, active }: { label: string, items: any[], ac
         >
             <button
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1 ${active
-                    ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10'
+                    ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10'
                     : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
                     }`}
             >
@@ -198,7 +198,7 @@ function NavDropdown({ label, items, active }: { label: string, items: any[], ac
                         <Link
                             key={sub.href}
                             href={sub.href}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-all"
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-all"
                         >
                             {sub.label}
                         </Link>
@@ -222,7 +222,7 @@ function NavLink({
         <Link
             href={href}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all relative group flex items-center ${active
-                ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10'
+                ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10'
                 : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
                 }`}
         >

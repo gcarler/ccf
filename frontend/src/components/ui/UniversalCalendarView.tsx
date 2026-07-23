@@ -28,11 +28,11 @@ interface UniversalCalendarViewProps {
 }
 
 const COLORS: any = {
-    blue: 'bg-[hsl(var(--primary))] shadow-blue-500/20 text-white',
-    sky: 'bg-sky-600 shadow-sky-500/20 text-white',
-    emerald: 'bg-emerald-600 shadow-emerald-500/20 text-white',
-    amber: 'bg-amber-600 shadow-amber-500/20 text-white',
-    rose: 'bg-rose-600 shadow-rose-500/20 text-white',
+    blue: 'bg-[hsl(var(--primary))] shadow-[hsl(var(--primary))/0.2] text-white',
+    sky: 'bg-[hsl(var(--info))] shadow-[hsl(var(--info))/0.2] text-white',
+    emerald: 'bg-[hsl(var(--success))] shadow-[hsl(var(--success))/0.2] text-white',
+    amber: 'bg-[hsl(var(--warning))] shadow-[hsl(var(--warning))/0.2] text-white',
+    rose: 'bg-[hsl(var(--danger))] shadow-[hsl(var(--danger))/0.2] text-white',
 };
 
 const DAY_LABELS = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
@@ -75,19 +75,19 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm">
             
             {/* ─── Control Header ─── */}
             <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-lg bg-blue-50 dark:bg-[hsl(var(--primary))]/10 flex items-center justify-center text-[hsl(var(--primary))] border border-blue-100/50 dark:border-[hsl(var(--primary))]/20">
+                    <div className="size-8 rounded-lg bg-info-soft dark:bg-[hsl(var(--info)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] border border-[hsl(var(--info)/0.2)] dark:border-[hsl(var(--info)/0.2)]">
                         <CalendarIcon size={28} />
                     </div>
                     <div>
                         <h2 className="text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] dark:text-white uppercase italic leading-none">{title}</h2>
                         <div className="flex items-center gap-2 mt-2">
                             <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}</span>
-                            <Sparkles size={12} className="text-amber-500" />
+                            <Sparkles size={12} className="text-[hsl(var(--warning))]" />
                         </div>
                     </div>
                 </div>
@@ -159,8 +159,8 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                                 }}
                                 className={clsx(
                                     "min-h-[140px] p-4 flex flex-col gap-3 transition-all cursor-pointer group relative overflow-hidden",
-                                    isToday ? "bg-blue-50/50 dark:bg-[hsl(var(--primary))]/10" : "bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]",
-                                    dragOverDay?.toDateString() === day.toDateString() && "ring-2 ring-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10"
+                                    isToday ? "bg-info-soft dark:bg-[hsl(var(--primary))]/10" : "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]",
+                                    dragOverDay?.toDateString() === day.toDateString() && "ring-2 ring-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--primary))]/10"
                                 )}
                             >
                                 <div className="flex items-center justify-between relative z-10">
@@ -220,11 +220,11 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                         <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Servicios Centrales</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="size-2 rounded-full bg-emerald-600" />
+                        <div className="size-2 rounded-full bg-[hsl(var(--success))]" />
                         <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Eventos de Red</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="size-2 rounded-full bg-amber-600" />
+                        <div className="size-2 rounded-full bg-[hsl(var(--warning))]" />
                         <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Consejería Especial</span>
                     </div>
                 </div>

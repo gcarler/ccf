@@ -68,7 +68,7 @@ export default function SearchAdminPage() {
                   <p className="text-sm font-medium truncate">{r.title || r.entity_slug}</p>
                   <p className="text-xs text-[hsl(var(--text-secondary))]">{r.entity_type} · {r.entity_slug}</p>
                 </div>
-                {r.boost_score > 0 && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">+{r.boost_score}</span>}
+                {r.boost_score > 0 && <span className="text-[10px] bg-[hsl(var(--warning-muted))] text-warning-text px-1.5 py-0.5 rounded font-bold">+{r.boost_score}</span>}
               </div>
             ))}
           </div>
@@ -100,12 +100,12 @@ export default function SearchAdminPage() {
       <div className="space-y-2">
         {promoted.map(p => (
           <div key={p.id} className="flex items-center gap-3 p-3 border rounded-xl bg-[hsl(var(--bg-primary))]">
-            <TrendingUp size={14} className="text-amber-500" />
+            <TrendingUp size={14} className="text-[hsl(var(--warning))]" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium">{p.title || p.entity_slug}</p>
               <p className="text-xs text-[hsl(var(--text-secondary))]">&quot;{p.query_text}&quot; → {p.entity_type}/{p.entity_id}</p>
             </div>
-            <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded">+{p.boost_score}</span>
+            <span className="text-xs font-bold bg-[hsl(var(--warning-muted))] text-warning-text px-2 py-0.5 rounded">+{p.boost_score}</span>
           </div>
         ))}
       </div>

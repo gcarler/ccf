@@ -133,7 +133,7 @@ export default function AdminSettingsSessionsPage() {
             <div className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
                 <div className="px-4 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-500/10 text-[hsl(var(--primary))]">
+                        <div className="p-2 rounded-lg bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]">
                             <Monitor size={18} />
                         </div>
                         <div>
@@ -152,7 +152,7 @@ export default function AdminSettingsSessionsPage() {
                         {sessions.length > 1 && (
                             <button
                                 onClick={handleRevokeAll}
-                                className="px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[11px] font-semibold hover:bg-rose-500/20 transition-colors flex items-center gap-1.5"
+                                className="px-3 py-1.5 rounded-lg bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/100%)]/20 text-[hsl(var(--danger))] text-[11px] font-semibold hover:bg-[hsl(var(--danger))]/20 transition-colors flex items-center gap-1.5"
                             >
                                 <LogOut size={13} />
                                 Revocar todas
@@ -189,7 +189,7 @@ export default function AdminSettingsSessionsPage() {
                                 transition={{ delay: i * 0.05 }}
                                 className={`bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border rounded-lg p-4 transition-all ${
                                     session.is_current
-                                        ? 'border-blue-500/30 shadow-lg shadow-blue-500/5'
+                                        ? 'border-[hsl(var(--info)/100%)]/30 shadow-lg shadow-[hsl(var(--info)/5%)]'
                                         : 'border-white/10 hover:border-white/20'
                                 }`}
                             >
@@ -197,7 +197,7 @@ export default function AdminSettingsSessionsPage() {
                                     <div className="flex items-start gap-3 flex-1">
                                         <div className={`p-2 rounded-lg ${
                                             session.is_current
-                                                ? 'bg-blue-500/10 text-[hsl(var(--primary))]'
+                                                ? 'bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]'
                                                 : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]'
                                         }`}>
                                             <DeviceIcon size={18} />
@@ -208,7 +208,7 @@ export default function AdminSettingsSessionsPage() {
                                                     {browser}
                                                 </span>
                                                 {session.is_current && (
-                                                    <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-[hsl(var(--primary))] text-[10px] font-bold uppercase">
+                                                    <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] text-[10px] font-bold uppercase">
                                                         Actual
                                                     </span>
                                                 )}
@@ -235,7 +235,7 @@ export default function AdminSettingsSessionsPage() {
                                         <button
                                             onClick={() => handleRevoke(session.id)}
                                             disabled={revoking === session.id}
-                                            className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-50"
+                                            className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/20 transition-colors disabled:opacity-50"
                                             title="Revocar sesión"
                                         >
                                             {revoking === session.id ? (

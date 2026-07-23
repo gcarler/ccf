@@ -196,12 +196,12 @@ export default function RolesPage() {
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-md bg-blue-50 text-[hsl(var(--primary))] flex items-center justify-center">
+                                        <div className="w-10 h-10 rounded-md bg-info-soft text-[hsl(var(--primary))] flex items-center justify-center">
                                             <Shield size={20} />
                                         </div>
                                         <h3 className="font-bold text-[hsl(var(--text-primary))]">{role.name}</h3>
                                     </div>
-                                    <button onClick={(e) => handleDelete(e, role.id)} className="opacity-0 group-hover:opacity-100 p-2 text-[hsl(var(--text-secondary))] hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all">
+                                    <button onClick={(e) => handleDelete(e, role.id)} className="opacity-0 group-hover:opacity-100 p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft rounded-lg transition-all">
                                         <Trash2 size={16} />
                                     </button>
                                 </div>
@@ -248,7 +248,7 @@ export default function RolesPage() {
                             value={editingRole.name || ''}
                             onChange={e => setEditingRole({...editingRole, name: e.target.value})}
                             placeholder="Ej. Secretaria CRM"
-                            className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg outline-none focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-blue-500 font-bold text-[hsl(var(--text-primary))] transition-all"
+                            className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg outline-none focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)] font-bold text-[hsl(var(--text-primary))] transition-all"
                         />
                     </div>
 
@@ -270,13 +270,13 @@ export default function RolesPage() {
                                                 <div 
                                                     key={p} 
                                                     onClick={() => togglePermission(p)}
-                                                    className={`flex items-start gap-4 p-4 rounded-md cursor-pointer border transition-all ${isActive ? 'bg-blue-50 border-blue-200' : 'bg-[hsl(var(--bg-primary))] border-[hsl(var(--border))] hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))]'}`}
+                                                    className={`flex items-start gap-4 p-4 rounded-md cursor-pointer border transition-all ${isActive ? 'bg-info-soft border-[hsl(var(--info)/25%)]' : 'bg-[hsl(var(--bg-primary))] border-[hsl(var(--border))] hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))]'}`}
                                                 >
                                                     <div className={`mt-0.5 shrink-0 w-5 h-5 rounded flex items-center justify-center transition-all ${isActive ? 'bg-[hsl(var(--primary))] text-white shadow-md' : 'bg-[hsl(var(--surface-2))] text-transparent border border-[hsl(var(--border))]'}`}>
                                                         <Check size={12} strokeWidth={4} />
                                                     </div>
                                                     <div>
-                                                        <p className={`text-sm font-bold ${isActive ? 'text-blue-900' : 'text-[hsl(var(--text-primary))]'}`}>{p}</p>
+                                                        <p className={`text-sm font-bold ${isActive ? 'text-info-text' : 'text-[hsl(var(--text-primary))]'}`}>{p}</p>
                                                         <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{permissionsMap[p]}</p>
                                                     </div>
                                                 </div>

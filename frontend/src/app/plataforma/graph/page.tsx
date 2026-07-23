@@ -136,7 +136,7 @@ export default function KnowledgeGraphPage() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Buscar nodo por nombre, id o detalle..."
-                  className="h-10 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] pl-9 pr-3 text-sm outline-none ring-blue-500/20 transition focus:ring-4 dark:border-white/10 dark:bg-white/5"
+                  className="h-10 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] pl-9 pr-3 text-sm outline-none ring-[hsl(var(--primary))]/20 transition focus:ring-4 dark:border-white/10 dark:bg-white/5"
                 />
               </div>
 
@@ -169,7 +169,7 @@ export default function KnowledgeGraphPage() {
                   <Skeleton className="h-[60%] w-[90%] rounded-lg" />
                 </div>
               ) : error ? (
-                <div className="grid h-full place-items-center text-sm font-semibold text-rose-500">{error}</div>
+                <div className="grid h-full place-items-center text-sm font-semibold text-[hsl(var(--danger))]">{error}</div>
               ) : (
                 <ForceGraph2D
                   graphData={graphData}

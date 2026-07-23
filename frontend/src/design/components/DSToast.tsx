@@ -3,7 +3,6 @@
 import React from 'react';
 import clsx from 'clsx';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-import { radii, typography } from '../tokens';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -62,12 +61,12 @@ export function DSToast({
         <div
             className={clsx(
                 'flex items-start gap-3 p-3 min-w-[280px] max-w-[400px]',
+                'rounded-md font-sans',
                 'border',
                 config.bgColor,
                 config.borderColor,
                 'shadow-lg'
             )}
-            style={{ borderRadius: radii.md, fontFamily: typography.family }}
             role="alert"
             aria-live="polite"
         >

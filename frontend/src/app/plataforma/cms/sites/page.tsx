@@ -80,7 +80,7 @@ export default function CmsSitesPage() {
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-3">
           {!canManage && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
+            <div className="rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft px-3 py-2 text-xs font-bold text-warning-text">
               Tu rol puede consultar sitios, pero no crear ni activar/desactivar.
             </div>
           )}
@@ -103,7 +103,7 @@ export default function CmsSitesPage() {
                     <p className="text-sm font-bold">{site.name}</p>
                     <p className="text-[10px] uppercase tracking-wide text-[hsl(var(--text-secondary))]">{site.site_key} · {site.base_path}</p>
                   </div>
-                  <button onClick={() => toggle(site)} disabled={!canManage} className={`rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide ${site.is_active ? "bg-emerald-100 text-emerald-700" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"} disabled:opacity-50`}>
+                  <button onClick={() => toggle(site)} disabled={!canManage} className={`rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide ${site.is_active ? "bg-[hsl(var(--success-muted))] text-success-text" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"} disabled:opacity-50`}>
                     {site.is_active ? "Activo" : "Inactivo"}
                   </button>
                 </div>

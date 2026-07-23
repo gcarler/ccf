@@ -30,16 +30,16 @@ const TEAMS = ['Alabanza', 'Ujieres', 'Niños', 'Cocina', 'Medios', 'Oración', 
 const VOLUNTEER_ROLES = ['Líder de Equipo', 'Asistente de Líder', 'Servidor', 'Apoyo'];
 
 const TEAM_COLORS: Record<string, string> = {
-    'Alabanza': 'from-blue-500 to-sky-600',
-    'Ujieres': 'from-blue-500 to-sky-600',
-    'Niños': 'from-pink-500 to-rose-600',
-    'Cocina': 'from-orange-500 to-amber-600',
-    'Medios': 'from-cyan-500 to-sky-600',
-    'Oración': 'from-emerald-500 to-teal-600',
-    'Evangelismo': 'from-amber-500 to-yellow-600',
+    'Alabanza': 'from-[hsl(var(--info))] to-[hsl(var(--info))]',
+    'Ujieres': 'from-[hsl(var(--info))] to-[hsl(var(--info))]',
+    'Niños': 'from-[hsl(var(--domain-pink))] to-[hsl(var(--danger))]',
+    'Cocina': 'from-orange-500 to-[hsl(var(--warning))]',
+    'Medios': 'from-[hsl(var(--domain-cyan))] to-[hsl(var(--info))]',
+    'Oración': 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))]',
+    'Evangelismo': 'from-[hsl(var(--warning))] to-yellow-600',
     'Limpieza': 'from-[hsl(var(--surface-3))] to-[hsl(var(--bg-muted))]',
-    'Logística': 'from-sky-500 to-blue-600',
-    'Otro': 'from-fuchsia-500 to-pink-600',
+    'Logística': 'from-[hsl(var(--info))] to-[hsl(var(--info))]',
+    'Otro': 'from-[hsl(var(--domain-fuchsia))] to-[hsl(var(--domain-pink))]',
 };
 
 function getTeamColor(team: string) {
@@ -172,14 +172,14 @@ export default function VolunteersPage() {
                 </div>
 
                 {volunteersError && (
-                    <div className="mx-3 mb-3 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="mx-3 mb-3 rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="min-w-0">
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">No se pudo cargar el voluntariado</p>
-                            <p className="text-sm text-amber-900/80 dark:text-amber-100/80 mt-1 break-words">{volunteersError}</p>
+                            <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">No se pudo cargar el voluntariado</p>
+                            <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">{volunteersError}</p>
                         </div>
                         <button
                             onClick={loadVolunteers}
-                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:opacity-90 transition-all"
+                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                         >
                             Reintentar
                         </button>
@@ -191,8 +191,8 @@ export default function VolunteersPage() {
                     {[
                         { label: 'Total Servidores', value: stats.total, icon: Heart, bg: 'bg-[hsl(var(--primary))]' },
                         { label: 'Equipos Activos', value: stats.teams, icon: Users, bg: 'bg-[hsl(var(--primary))]' },
-                        { label: 'Disponibles', value: stats.active, icon: CheckCircle2, bg: 'bg-emerald-500' },
-                        { label: 'Líderes de Equipo', value: stats.leaders, icon: Shield, bg: 'bg-amber-500' },
+                        { label: 'Disponibles', value: stats.active, icon: CheckCircle2, bg: 'bg-[hsl(var(--success))]' },
+                        { label: 'Líderes de Equipo', value: stats.leaders, icon: Shield, bg: 'bg-[hsl(var(--warning))]' },
                     ].map(s => (
                         <div key={s.label} className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg transition-all duration-300">
                             <div className={`inline-flex size-8 rounded-md ${s.bg} items-center justify-center text-white mb-3 shadow-md`}>
@@ -214,12 +214,12 @@ export default function VolunteersPage() {
                                 onChange={e => setQuery(e.target.value)}
                                 placeholder="Buscar servidor, equipo o rol..."
                                 aria-label="Buscar servidores"
-                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] focus:border-blue-400 transition-all placeholder:text-[hsl(var(--text-secondary))]"
+                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] focus:border-[hsl(var(--info)/40%)] transition-all placeholder:text-[hsl(var(--text-secondary))]"
                             />
                         </div>
                         <button
                             onClick={() => setShowFilters(p => !p)}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all border ${showFilters ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]'}`}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all border ${showFilters ? 'bg-info-soft dark:bg-[hsl(var(--info))]/20 border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] text-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]'}`}
                         >
                             <Filter size={14} /> Equipos
                         </button>
@@ -250,7 +250,7 @@ export default function VolunteersPage() {
                     {/* Add Form */}
                     <AnimatePresence>
                         {showAddForm && (
-                            <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-blue-200 dark:border-blue-700/30 p-4 shadow-xl">
+                            <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/30%)] p-4 shadow-xl">
                                 <div className="flex items-center justify-between mb-5">
                                     <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Registrar Servidor</h3>
                                     <button onClick={() => setShowAddForm(false)} aria-label="Cerrar" className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] transition-colors"><X size={16} /></button>
@@ -280,7 +280,7 @@ export default function VolunteersPage() {
                                 </div>
                                 <div className="flex justify-end gap-3 mt-5">
                                     <button onClick={() => setShowAddForm(false)} className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-md hover:bg-[hsl(var(--surface-3))] transition-colors">Cancelar</button>
-                                    <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] transition-all active:scale-95 disabled:opacity-60">
+                                    <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all active:scale-95 disabled:opacity-60">
                                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                                         {saving ? 'Guardando...' : 'Registrar'}
                                     </button>
@@ -353,7 +353,7 @@ export default function VolunteersPage() {
                                                             .toUpperCase()}
                                                     </div>
                                                     <div className="flex items-center gap-1.5">
-                                                        <CircleDot size={10} className={`${!v.status || v.status === 'active' ? 'text-emerald-500' : 'text-[hsl(var(--text-secondary))]'}`} />
+                                                        <CircleDot size={10} className={`${!v.status || v.status === 'active' ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--text-secondary))]'}`} />
                                                         <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">
                                                             {!v.status || v.status === 'active' ? 'Activo' : 'Inactivo'}
                                                         </span>
@@ -365,7 +365,7 @@ export default function VolunteersPage() {
                                                 </h4>
 
                                                 <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] mb-3">
-                                                    {v.role === 'Líder de Equipo' ? <Star size={11} className="text-amber-500" /> : <Shield size={11} />}
+                                                    {v.role === 'Líder de Equipo' ? <Star size={11} className="text-[hsl(var(--warning))]" /> : <Shield size={11} />}
                                                     <span className="text-[11px] font-medium">{v.role || 'Servidor'}</span>
                                                 </div>
 

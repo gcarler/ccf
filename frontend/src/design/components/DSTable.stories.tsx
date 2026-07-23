@@ -21,8 +21,8 @@ const columns: ColumnDef<User, any>[] = [
         cell: ({ getValue }) => (
             <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase ${
                 getValue() === 'active' 
-                    ? 'bg-emerald-500/15 text-emerald-400' 
-                    : 'bg-slate-500/15 text-slate-400'
+                    ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' 
+                    : 'bg-[hsl(var(--text-secondary)/0.15)] text-[hsl(var(--text-secondary))]'
             }`}>
                 {getValue() === 'active' ? 'Activo' : 'Inactivo'}
             </span>

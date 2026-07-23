@@ -6,8 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import CrmShell from "@/components/crm/CrmShell";
 import { Home, MapPin, Users, Calendar, LayoutDashboard, Shield, History } from "lucide-react";
-import { DSCard } from "@/design/components/DSCard";
-import { DSBadge } from "@/design/components/DSBadge";
+import { DSCard } from '@/design';
+import { DSBadge } from '@/design';
 import { toast } from "sonner";
 import { GrupoDetail } from '@/types/crm';
 
@@ -128,7 +128,7 @@ export default function GroupDetailPage() {
                         <DSCard>
                             <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Liderazgo</h3>
                             <div className="flex items-center gap-4">
-                                <div className="size-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))]">
+                                <div className="size-9 rounded-lg bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                     <Shield size={24} />
                                 </div>
                                 <div>
@@ -147,7 +147,7 @@ export default function GroupDetailPage() {
                                     <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase">Personas Frecuentes</p>
                                 </div>
                                 <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5">
-                                    <History size={20} className="text-emerald-500 mb-2" />
+                                    <History size={20} className="text-[hsl(var(--success))] mb-2" />
                                     <p className="text-lg font-bold">{group.capacity ?? 0}</p>
                                     <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase">Capacidad</p>
                                 </div>

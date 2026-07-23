@@ -21,7 +21,7 @@ interface Props {
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
     urgent: { label: PRIORITY_LABELS.urgent, color: 'text-[hsl(var(--destructive))]',    bg: 'bg-red-50 dark:bg-red-900/20'    },
     high:   { label: PRIORITY_LABELS.high,   color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-    medium: { label: PRIORITY_LABELS.medium, color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-900/20'  },
+    medium: { label: PRIORITY_LABELS.medium, color: 'text-[hsl(var(--primary))]',   bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20'  },
     low:    { label: PRIORITY_LABELS.low,    color: 'text-[hsl(var(--text-secondary))]',  bg: 'bg-[hsl(var(--surface-1))] dark:bg-white/5'     },
 };
 
@@ -71,10 +71,10 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
             onClick={() => onOpen(task)}
             className={clsx(
                 'bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] rounded-md shadow-sm border cursor-pointer',
-                'hover:shadow-md hover:border-blue-400/50 dark:hover:border-blue-500/40',
+                'hover:shadow-md hover:border-[hsl(var(--info)/40%)]/50 dark:hover:border-[hsl(var(--info)/100%)]/40',
                 'transition-all duration-150 group/card relative overflow-hidden',
                 isDragging
-                    ? 'shadow-2xl border-blue-500'
+                    ? 'shadow-2xl border-[hsl(var(--info)/100%)]'
                     : 'border-[hsl(var(--border))] dark:border-white/8'
             )}
         >
@@ -137,7 +137,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                             <DropdownMenu.Trigger asChild>
                                 <button
                                     onClick={(e) => e.stopPropagation()}
-                                    className="size-7 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+                                    className="size-7 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors"
                                     aria-label="Opciones de tarea"
                                 >
                                     <MoreHorizontal size={14} />
@@ -160,7 +160,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                                             <DropdownMenu.Separator className="h-px bg-[hsl(var(--border))] dark:bg-white/10 my-1" />
                                             <DropdownMenu.Item
                                                 onClick={handleDelete}
-                                                className="flex items-center gap-2 px-2.5 py-2 text-[12px] font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg cursor-pointer outline-none"
+                                                className="flex items-center gap-2 px-2.5 py-2 text-[12px] font-semibold text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 rounded-lg cursor-pointer outline-none"
                                             >
                                                 <Trash2 size={13} /> Eliminar
                                             </DropdownMenu.Item>

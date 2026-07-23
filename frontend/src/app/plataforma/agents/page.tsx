@@ -195,7 +195,7 @@ export default function AgentsPage() {
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition-colors ${
                                 activeTab === tab.id
-                                    ? 'bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border-b-2 border-blue-600 text-[hsl(var(--primary))] font-medium'
+                                    ? 'bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border-b-2 border-[hsl(var(--info)/100%)] text-[hsl(var(--primary))] font-medium'
                                     : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white'
                             }`}
                         >
@@ -307,7 +307,7 @@ export default function AgentsPage() {
                                             <h3 className="font-medium text-[hsl(var(--text-primary))] dark:text-white">{tool.name}</h3>
                                         </div>
                                         <p className="text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] mb-2">{tool.description}</p>
-                                        <span className="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-[hsl(var(--primary))] dark:text-blue-300 text-xs rounded">
+                                        <span className="inline-block px-2 py-1 bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))] text-[hsl(var(--primary))] dark:text-info-text text-xs rounded">
                                             {tool.module}
                                         </span>
                                     </div>
@@ -346,7 +346,7 @@ export default function AgentsPage() {
                                             setActiveTab('chat');
                                             setChatMessages([]);
                                         }}
-                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] text-left hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-colors"
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">

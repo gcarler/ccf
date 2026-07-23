@@ -109,7 +109,7 @@ export default function StrategyOverviewForm({
           <button onClick={() => canManage && setEditActiva(!editActiva)} disabled={!canManage}
             className={`w-full px-3 py-2 rounded-lg text-[12px] font-bold transition-all text-left ${
             editActiva
-            ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+            ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/30 text-success-text dark:text-success-text border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]'
             : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border-primary))]'
             }`}>
             {editActiva ? 'Activa' : 'Inactiva'}

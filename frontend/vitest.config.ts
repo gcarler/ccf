@@ -9,6 +9,7 @@ export default defineConfig({
       "tests/**/*.test.ts",
       "tests/**/*.test.tsx",
       "src/design/**/*.test.tsx",
+      "src/components/**/*.test.{ts,tsx}",
       "src/lib/**/*.test.{ts,tsx}",
     ],
     setupFiles: ["./tests/setup.ts"],

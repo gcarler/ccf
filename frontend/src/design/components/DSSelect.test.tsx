@@ -93,4 +93,11 @@ describe('DSSelect', () => {
         const options = screen.getAllByRole('option');
         expect(options[1]).toBeDisabled();
     });
+
+    it('forwards ref to the select element', () => {
+        const ref = React.createRef<HTMLSelectElement>();
+        render(<DSSelect ref={ref} options={sampleOptions} />);
+        expect(ref.current).toBeInstanceOf(HTMLSelectElement);
+        expect(ref.current?.tagName).toBe('SELECT');
+    });
 });

@@ -134,7 +134,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
         <div className="space-y-4 pb-4 overflow-y-auto h-full pr-2 scrollbar-thin">
             {/* 1. Header de Misión con Pulso de Salud */}
             <header className="relative p-4 rounded-lg bg-[hsl(var(--bg-muted))] text-white overflow-hidden shadow-2xl border border-white/5">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-sky-600/20" />
+                <div className="absolute inset-0 bg-gradient-to-br to-[hsl(var(--info)/20%)] to-[hsl(var(--info)/20%)]" />
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                     <Radio size={220} />
                 </div>
@@ -142,8 +142,8 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="max-w-2xl space-y-3">
                         <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 bg-[hsl(var(--primary))] rounded-full text-[10px] font-bold uppercase tracking-wide text-white shadow-lg shadow-blue-500/40">Misión Proactiva</span>
-                            <div className="size-2 rounded-full bg-emerald-400 animate-ping" />
+                            <span className="px-2 py-1 bg-[hsl(var(--primary))] rounded-full text-[10px] font-bold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/40%)]">Misión Proactiva</span>
+                            <div className="size-2 rounded-full bg-[hsl(var(--success))] animate-ping" />
                             <span className="text-[10px] font-medium text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizado en tiempo real</span>
                         </div>
                         <h1 className="text-xl font-bold tracking-tight leading-none text-white">
@@ -185,7 +185,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             <svg className="size-full -rotate-90" viewBox="0 0 36 36">
                                 <circle cx="18" cy="18" r="16" fill="none" className="stroke-white/5" strokeWidth="3"></circle>
                                 <motion.circle
-                                    cx="18" cy="18" r="16" fill="none" className="stroke-blue-500" strokeWidth="3"
+                                    cx="18" cy="18" r="16" fill="none" className="stroke-[hsl(var(--info))]" strokeWidth="3"
                                     initial={{ strokeDasharray: "0, 100" }}
                                     animate={{ strokeDasharray: `${dbProgress}, 100` }}
                                     transition={{ duration: 1.5, ease: "easeOut" }}
@@ -200,7 +200,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-0.5">Avance Real</span>
                             <div className="text-xl font-bold tracking-tighter">{dbProgress}%</div>
                             <div className="flex items-center gap-2 mt-2">
-                                <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded text-[9px] font-semibold uppercase">Salud: Óptima</div>
+                                <div className="px-2 py-0.5 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] rounded text-[9px] font-semibold uppercase">Salud: Óptima</div>
                             </div>
                         </div>
                     </div>
@@ -210,7 +210,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
             {/* 2. Analítica de Impacto */}
             <section className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <AnalyticCard title="Velocidad" value="4.2" detail="Tareas/Día" icon={TrendingUp} color="text-[hsl(var(--primary))]" />
-                <AnalyticCard title="Retraso" value="0" detail="Días de lag" icon={Clock} color="text-emerald-500" />
+                <AnalyticCard title="Retraso" value="0" detail="Días de lag" icon={Clock} color="text-[hsl(var(--success))]" />
                 <AnalyticCard title="Hitos" value={`${milestones.filter(m => m.is_completed).length}/${milestones.length}`} detail="Metas logradas" icon={Trophy} color="text-yellow-500" />
                 <AnalyticCard title="Riesgo" value="Bajo" detail="Sin bloqueos" icon={AlertCircle} color="text-[hsl(var(--text-secondary))]" />
             </section>
@@ -233,8 +233,8 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                         disabled={isBusy}
                                         className={clsx(
                                             "size-8 rounded-md flex items-center justify-center shadow-lg transition-colors shrink-0",
-                                            m.is_completed ? "bg-emerald-500 text-white"
-                                                : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-emerald-500/10 hover:text-emerald-500",
+                                            m.is_completed ? "bg-[hsl(var(--success))] text-white"
+                                                : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--success))]/10 hover:text-[hsl(var(--success))]",
                                             isBusy && "opacity-60 cursor-wait"
                                         )}
                                         title={m.is_completed ? 'Reabrir hito' : 'Completar hito'}
@@ -254,7 +254,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                         onClick={() => milestoneDelete(m)}
                                         disabled={isBusy}
                                         title="Eliminar hito"
-                                        className="p-1.5 rounded-lg text-rose-500/60 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                                        className="p-1.5 rounded-lg text-[hsl(var(--danger))]/60 hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                         <Trash2 size={14} />
                                     </button>
@@ -380,7 +380,7 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
                                 aria-label={t.status === 'completed' ? 'Reabrir tarea' : 'Completar tarea'}
                                 className={clsx(
                                     "size-3 rounded-full shadow-sm shrink-0 transition-all hover:scale-125",
-                                    t.status === 'completed' ? "bg-emerald-500" : "bg-[hsl(var(--primary))]",
+                                    t.status === 'completed' ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--primary))]",
                                 )}
                             />
                             <InlineTextInput

@@ -73,7 +73,7 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
         </div>
         <div className="bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg p-3 text-center">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Tendencia de Crecimiento</p>
-          <h3 className={`text-xl font-bold ${analytics.kpis.trend_percentage > 0 ? 'text-emerald-500' : analytics.kpis.trend_percentage < 0 ? 'text-[hsl(var(--destructive))]' : 'text-[hsl(var(--text-secondary))]'}`}>
+          <h3 className={`text-xl font-bold ${analytics.kpis.trend_percentage > 0 ? 'text-[hsl(var(--success))]' : analytics.kpis.trend_percentage < 0 ? 'text-[hsl(var(--destructive))]' : 'text-[hsl(var(--text-secondary))]'}`}>
             {analytics.kpis.trend_percentage > 0 ? '+' : ''}{analytics.kpis.trend_percentage}%
           </h3>
           <p className="text-xs font-medium text-[hsl(var(--text-secondary))] mt-1">Respecto al mes anterior</p>
@@ -103,7 +103,7 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
                     {d.avg_attendance} asis.
                   </div>
                   <div
-                    className="w-full bg-blue-100 dark:bg-blue-900/40 hover:bg-[hsl(var(--primary))] dark:hover:bg-[hsl(var(--primary))] rounded-t-lg transition-all duration-500"
+                    className="w-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/40 hover:bg-[hsl(var(--primary))] dark:hover:bg-[hsl(var(--primary))] rounded-t-lg transition-all duration-500"
                     style={{ height: `${heightPct}%` }}
                   ></div>
                   <div className="mt-2 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] rotate-[-45deg] origin-top-left translate-y-2 translate-x-2">

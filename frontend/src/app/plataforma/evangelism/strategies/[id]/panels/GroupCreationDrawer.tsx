@@ -72,7 +72,7 @@ export default function GroupCreationDrawer({
     </>}>
     <div className="space-y-4">
     {strategy?.typology === 'relacional' && (
-    <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-[11px] text-[hsl(var(--primary))] dark:text-blue-300">
+    <div className="px-3 py-2 bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] rounded-lg text-[11px] text-[hsl(var(--primary))] dark:text-info-text">
     <p className="font-semibold">Config. heredada:</p>
     <p>Recurrencia: {strategy.recurrence} · Día: {strategy.day_of_week} · Hora: {strategy.start_time}</p>
     </div>
@@ -115,7 +115,7 @@ export default function GroupCreationDrawer({
     </div>
     </div>
     {customRoles.length === 0 ? (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-medium text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+    <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft px-3 py-2 text-[12px] font-medium text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text">
     Esta estrategia no tiene roles definidos. El grupo se creará sin cargos de servicio por defecto.
     </div>
     ) : customRoles.map((role) => {

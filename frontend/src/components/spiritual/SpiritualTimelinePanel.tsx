@@ -17,11 +17,11 @@ interface Milestone {
 }
 
 const MILESTONE_DEFS: Record<string, { label: string; icon: any; color: string; bg: string; border: string }> = {
-    Decision_Fe:       { label: 'Decisión de Fe',        icon: Zap,    color: 'text-amber-600',  bg: 'bg-amber-50 dark:bg-amber-900/20',    border: 'border-amber-200 dark:border-amber-500/20' },
-    Bautismo_Aguas:    { label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-cyan-600',   bg: 'bg-cyan-50 dark:bg-cyan-900/20',      border: 'border-cyan-200 dark:border-cyan-500/20'   },
-    Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20',  border: 'border-blue-200 dark:border-blue-500/20'},
-    Persona_Oficial:   { label: 'Participación Oficial',      icon: Shield, color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-500/20'},
-    Liderazgo:         { label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-900/20',      border: 'border-blue-200 dark:border-blue-500/20'  },
+    Decision_Fe:       { label: 'Decisión de Fe',        icon: Zap,    color: 'text-warning-text',  bg: 'bg-warning-soft dark:bg-[hsl(var(--warning))]/20',    border: 'border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/20' },
+    Bautismo_Aguas:    { label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-[hsl(var(--domain-cyan)/90%)]',   bg: 'bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/20%)]',      border: 'border-[hsl(var(--domain-cyan)/30%)] dark:border-[hsl(var(--domain-cyan)/20%)]'   },
+    Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20',  border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20'},
+    Persona_Oficial:   { label: 'Participación Oficial',      icon: Shield, color: 'text-success-text',bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/20', border: 'border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/20'},
+    Liderazgo:         { label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20',      border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20'  },
 };
 
 export default function SpiritualTimelinePanel() {
@@ -84,7 +84,7 @@ export default function SpiritualTimelinePanel() {
                                     <Icon size={18} className={clsx('transition-all', def.color)} />
                                 </div>
 
-                                <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-lg p-3 shadow-sm group-hover:shadow-xl group-hover:shadow-blue-500/[0.03] transition-all group-hover:border-blue-500/20">
+                                <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-lg p-3 shadow-sm group-hover:shadow-xl group-hover:shadow-[hsl(var(--info))]/[0.03] transition-all group-hover:border-[hsl(var(--info)/100%)]/20">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
                                             <p className="font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-tight uppercase tracking-tight">{def.label}</p>

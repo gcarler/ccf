@@ -63,7 +63,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                     onClick={() => isNight && toggleTheme()}
                     className={`size-6 rounded-lg flex items-center justify-center transition-all ${
                         !isNight
-                            ? "bg-[hsl(var(--bg-primary))] text-amber-500 shadow-sm"
+                            ? "bg-[hsl(var(--bg-primary))] text-[hsl(var(--warning))] shadow-sm"
                             : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                     }`}
                     title="Cambiar a modo claro"
@@ -94,7 +94,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                 onClick={toggleTheme}
                 className={`size-10 rounded-lg flex items-center justify-center transition-all group ${
                     isNight
-                        ? "text-[hsl(var(--text-secondary))] hover:bg-white/5 hover:text-amber-300"
+                        ? "text-[hsl(var(--text-secondary))] hover:bg-white/5 hover:text-[hsl(var(--warning))]"
                         : "text-[hsl(var(--text-secondary))] hover:bg-black/5 hover:text-[hsl(var(--primary))]"
                 } ${className}`}
             >

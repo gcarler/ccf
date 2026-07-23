@@ -207,8 +207,8 @@ export default function AgendaEventsPage() {
                                 <span
                                     className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${
                                         isAgendaEditing
-                                            ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
-                                            : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                                            ? "bg-warning-soft text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text"
+                                            : "bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text"
                                     }`}
                                 >
                                     {isAgendaEditing ? "1 evento en edición" : `${sortedEvents.length} eventos visibles`}
@@ -220,7 +220,7 @@ export default function AgendaEventsPage() {
                     <section className="grid gap-3 lg:grid-cols-[380px,1fr]">
                         <form onSubmit={handleCreate} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
                             <div className="mb-5 flex items-center gap-3">
-                                <div className="flex size-6 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]">
+                                <div className="flex size-6 items-center justify-center rounded-lg bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]">
                                     <Plus size={18} />
                                 </div>
                                 <div>
@@ -236,7 +236,7 @@ export default function AgendaEventsPage() {
                                         value={form.title}
                                         onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                                         placeholder="Ej: Reunión de liderazgo"
-                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                     />
                                 </div>
 
@@ -247,7 +247,7 @@ export default function AgendaEventsPage() {
                                             type="date"
                                             value={form.start_at}
                                             onChange={(e) => setForm((prev) => ({ ...prev, start_at: e.target.value }))}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
@@ -256,7 +256,7 @@ export default function AgendaEventsPage() {
                                             type="date"
                                             value={form.end_at}
                                             onChange={(e) => setForm((prev) => ({ ...prev, end_at: e.target.value }))}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                 </div>
@@ -267,7 +267,7 @@ export default function AgendaEventsPage() {
                                         value={form.location}
                                         onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
                                         placeholder="Ej: Salón principal"
-                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                     />
                                 </div>
 
@@ -278,7 +278,7 @@ export default function AgendaEventsPage() {
                                         value={form.description}
                                         onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                                         placeholder="Notas de la reunión o contexto para la agenda"
-                                        className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                     />
                                 </div>
                             </div>
@@ -320,12 +320,12 @@ export default function AgendaEventsPage() {
                                     {sortedEvents.map((event) => (
                                         <article
                                             key={event.id}
-                                            className="rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-blue-300 dark:border-white/10 dark:hover:border-blue-500/30"
+                                            className="rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-[hsl(var(--info)/30%)] dark:border-white/10 dark:hover:border-[hsl(var(--info)/100%)]/30"
                                         >
                                             {editingEventId === event.id ? (
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between gap-3">
-                                                        <span className="rounded-full bg-amber-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
+                                                        <span className="rounded-full bg-warning-soft px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
                                                             Edición rápida
                                                         </span>
                                                         <div className="flex gap-2">
@@ -361,7 +361,7 @@ export default function AgendaEventsPage() {
                                                             <input
                                                                 value={editForm.title}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5">
@@ -370,7 +370,7 @@ export default function AgendaEventsPage() {
                                                                 type="date"
                                                                 value={editForm.start_at}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, start_at: e.target.value }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5">
@@ -379,7 +379,7 @@ export default function AgendaEventsPage() {
                                                                 type="date"
                                                                 value={editForm.end_at}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, end_at: e.target.value }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5 md:col-span-2">
@@ -387,7 +387,7 @@ export default function AgendaEventsPage() {
                                                             <input
                                                                 value={editForm.location}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, location: e.target.value }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5 md:col-span-2">
@@ -396,7 +396,7 @@ export default function AgendaEventsPage() {
                                                                 rows={3}
                                                                 value={editForm.description}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                                                                className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                                             />
                                                         </div>
                                                     </div>
@@ -416,7 +416,7 @@ export default function AgendaEventsPage() {
                                                             ) : null}
                                                         </div>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]">
+                                                            <span className="rounded-full bg-info-soft px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]">
                                                                 Agenda simple
                                                             </span>
                                                             <button

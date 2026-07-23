@@ -3,9 +3,9 @@
 import DashboardEmbed from '@/components/DashboardEmbed';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { useAuth } from '@/context/AuthContext';
-import { DSCard } from '@/design/components/DSCard';
-import { DSChart } from '@/design/components/DSChart';
-import { DSMetric } from '@/design/components/DSMetric';
+import { DSCard } from '@/design';
+import { DSChart } from '@/design';
+import { DSMetric } from '@/design';
 import { apiFetch } from '@/lib/http';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';

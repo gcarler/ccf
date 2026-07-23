@@ -151,7 +151,7 @@ export default function WebhooksPage() {
                   {expandedId === wh.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 </button>
                 <button onClick={() => toggle(wh.id, wh.is_active)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))]" title={wh.is_active ? "Desactivar" : "Activar"}>
-                  {wh.is_active ? <PowerOff size={14} className="text-amber-500" /> : <Power size={14} className="text-[hsl(var(--secondary))]" />}
+                  {wh.is_active ? <PowerOff size={14} className="text-[hsl(var(--warning))]" /> : <Power size={14} className="text-[hsl(var(--secondary))]" />}
                 </button>
                 <button onClick={() => setPendingDelete(wh)} className="p-1.5 rounded-lg hover:bg-red-50" title="Eliminar">
                   <Trash2 size={14} className="text-[hsl(var(--destructive))]" />

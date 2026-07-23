@@ -234,11 +234,11 @@ export default function IntelligenceConsole() {
 
                     {/* Ask Optimus Interface */}
                     <section className="bg-[hsl(var(--bg-muted))] rounded-lg p-4 text-white shadow-2xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 -mr-20 -mt-20 size-10 bg-blue-600/20 rounded-full blur-[80px] group-hover:bg-blue-600/30 transition-all duration-1000" />
+                        <div className="absolute top-0 right-0 -mr-20 -mt-20 size-10 bg-[hsl(var(--info))]/20 rounded-full blur-[80px] group-hover:bg-[hsl(var(--info))]/30 transition-all duration-1000" />
                         
                         <div className="relative z-10 space-y-3">
                             <div className="flex items-center gap-4">
-                                <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shadow-lg shadow-blue-500/20"><Bot size={28} /></div>
+                                <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shadow-lg shadow-[hsl(var(--info)/20%)]"><Bot size={28} /></div>
                                 <div>
                                     <h3 className="text-lg font-bold tracking-tight leading-none mb-1 uppercase">Consultar Base de Conocimientos</h3>
                                     <p className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide">Query el Cerebro Central de CCF</p>
@@ -249,7 +249,7 @@ export default function IntelligenceConsole() {
                                 <input 
                                     value={query} onChange={(e) => setQuery(e.target.value)}
                                     placeholder="¿Cuál es la tendencia de crecimiento en el curso de liderazgo?"
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-4 pr-16 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-[hsl(var(--primary))/0.2] focus:border-blue-500/50 transition-all placeholder:text-[hsl(var(--text-secondary))]"
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-4 pr-16 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--info)/100%)]/50 transition-all placeholder:text-[hsl(var(--text-secondary))]"
                                 />
                                 <button 
                                     onClick={handleAskOptimus} disabled={isAsking}
@@ -265,7 +265,7 @@ export default function IntelligenceConsole() {
                                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                         className="p-4 bg-white/5 border border-white/10 rounded-lg space-y-4"
                                     >
-                                        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-emerald-400"><ShieldCheck size={14} /> Respuesta Certificada</div>
+                                        <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--success))]"><ShieldCheck size={14} /> Respuesta Certificada</div>
                                         <p className="text-[hsl(var(--text-secondary))] leading-relaxed text-sm font-medium">{aiResponse.answer}</p>
                                         <div className="pt-4 border-t border-white/5 flex gap-3 flex-wrap">
                                             {aiResponse.sources?.map((s: string, i: number) => (
@@ -291,7 +291,7 @@ export default function IntelligenceConsole() {
                             </button>
                         </div>
                         {loadError && (
-                            <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600">
+                            <div className="rounded-lg border border-[hsl(var(--danger)/25%)] bg-danger-soft px-4 py-3 text-sm font-semibold text-danger-text">
                                 {loadError}
                             </div>
                         )}
@@ -302,7 +302,7 @@ export default function IntelligenceConsole() {
                                     <div className="relative z-10 space-y-4">
                                         <div className="flex justify-between items-start">
                                             <div className="size-10 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--primary))]"><BrainCircuit size={20} /></div>
-                                            {!insight.acknowledged && <div className="px-2 py-0.5 bg-blue-100 text-[hsl(var(--primary))] rounded text-[8px] font-semibold uppercase tracking-wide">NUEVO</div>}
+                                            {!insight.acknowledged && <div className="px-2 py-0.5 bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] rounded text-[8px] font-semibold uppercase tracking-wide">NUEVO</div>}
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white mb-1 uppercase tracking-tight">{insight.title}</h4>
@@ -317,7 +317,7 @@ export default function IntelligenceConsole() {
                                                 {acknowledgingId === insight.id ? 'Procesando...' : 'Reconocer'} <ChevronRight size={14} />
                                             </button>
                                         ) : (
-                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">Reconocido</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-success-text">Reconocido</span>
                                         )}
                                     </div>
                                 </div>
@@ -342,7 +342,7 @@ export default function IntelligenceConsole() {
                             <div className="space-y-3">
                                 <AgentState label="Optimus Analysis" load={65} status="Online" color="bg-[hsl(var(--primary))]" />
                                 <AgentState label="Crawler Doctrinal" load={12} status="Idle" color="bg-[hsl(var(--surface-2))]" />
-                                <AgentState label="Messenger Bot" load={94} status="Busy" color="bg-amber-500" />
+                                <AgentState label="Messenger Bot" load={94} status="Busy" color="bg-[hsl(var(--warning))]" />
                             </div>
                         </div>
 
@@ -412,12 +412,12 @@ export default function IntelligenceConsole() {
                         )}
                     </section>
 
-                    <section className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
+                    <section className="p-4 bg-info-soft dark:bg-[hsl(var(--info))]/10 rounded-lg border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20">
                         <div className="flex items-center gap-3 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] mb-4">
                             <Activity size={18} />
                             <h5 className="text-[11px] font-semibold uppercase tracking-wide">Uptime del Cerebro</h5>
                         </div>
-                        <div className="h-2 w-full bg-blue-200 dark:bg-white/10 rounded-full overflow-hidden mb-2">
+                        <div className="h-2 w-full bg-[hsl(var(--info-muted))] dark:bg-white/10 rounded-full overflow-hidden mb-2">
                             <div className="h-full bg-[hsl(var(--primary))] w-[99.9%]" />
                         </div>
                         <p className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide text-right">99.98% Anual</p>
@@ -430,13 +430,13 @@ export default function IntelligenceConsole() {
 
 function StatusCard({ label, value, status, icon: Icon, color }: any) {
     const colors: any = {
-        blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20',
-        sky: 'text-sky-600 bg-sky-50 dark:bg-sky-900/20',
-        amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20'
+        blue: 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20',
+        sky: 'text-info-text bg-info-soft dark:bg-[hsl(var(--info))]/20',
+        amber: 'text-warning-text bg-warning-soft dark:bg-[hsl(var(--warning))]/20'
     };
     const statusTone = status === 'degraded'
-        ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600'
-        : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600';
+        ? 'bg-danger-soft dark:bg-[hsl(var(--danger))]/20 text-danger-text'
+        : 'bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text';
     return (
         <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all relative overflow-hidden">
             <div className="flex justify-between items-start">
@@ -444,7 +444,7 @@ function StatusCard({ label, value, status, icon: Icon, color }: any) {
                     <Icon size={28} />
                 </div>
                 <div className={clsx("flex items-center gap-1.5 px-2 py-1 rounded-lg", statusTone)}>
-                    <div className={clsx("size-1.5 rounded-full animate-pulse", status === 'degraded' ? 'bg-rose-500' : 'bg-emerald-500')} />
+                    <div className={clsx("size-1.5 rounded-full animate-pulse", status === 'degraded' ? 'bg-[hsl(var(--danger))]' : 'bg-[hsl(var(--success))]')} />
                     <span className="text-[8px] font-semibold uppercase">{status}</span>
                 </div>
             </div>

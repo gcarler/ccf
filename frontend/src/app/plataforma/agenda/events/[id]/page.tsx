@@ -125,10 +125,10 @@ export default function AgendaEventDetailPage() {
                                 <span
                                     className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${
                                         saving
-                                            ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300"
+                                            ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text"
                                             : hasUnsavedChanges
-                                                ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
-                                                : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                                                ? "bg-warning-soft text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text"
+                                                : "bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text"
                                     }`}
                                 >
                                     {saving
@@ -169,7 +169,7 @@ export default function AgendaEventDetailPage() {
                                     <input
                                         value={event.title}
                                         onChange={(e) => setEvent({ ...event, title: e.target.value })}
-                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                     />
                                 </div>
 
@@ -180,7 +180,7 @@ export default function AgendaEventDetailPage() {
                                             type="datetime-local"
                                             value={event.start_at.slice(0, 16)}
                                             onChange={(e) => setEvent({ ...event, start_at: new Date(e.target.value).toISOString() })}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
@@ -189,7 +189,7 @@ export default function AgendaEventDetailPage() {
                                             type="datetime-local"
                                             value={(event.end_at || event.start_at).slice(0, 16)}
                                             onChange={(e) => setEvent({ ...event, end_at: new Date(e.target.value).toISOString() })}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                 </div>
@@ -201,7 +201,7 @@ export default function AgendaEventDetailPage() {
                                         <input
                                             value={event.location || ""}
                                             onChange={(e) => setEvent({ ...event, location: e.target.value })}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] py-3 pl-10 pr-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] py-3 pl-10 pr-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
                                 </div>
@@ -212,7 +212,7 @@ export default function AgendaEventDetailPage() {
                                         rows={5}
                                         value={event.description || ""}
                                         onChange={(e) => setEvent({ ...event, description: e.target.value })}
-                                        className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-blue-500 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                     />
                                 </div>
                             </div>

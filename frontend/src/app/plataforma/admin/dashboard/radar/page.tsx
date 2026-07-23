@@ -96,13 +96,13 @@ export default function PastorRadarPage() {
             `}</style>
 
             {/* Background cinematic glow */}
-            <div className="absolute top-0 right-0 size-[600px] bg-blue-600/5 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
+            <div className="absolute top-0 right-0 size-[600px] bg-[hsl(var(--info))]/5 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
 
             <header className="flex flex-col gap-4 relative z-10">
                 <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit border border-blue-500/20"
+                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit border border-[hsl(var(--info)/100%)]/20"
                 >
                     <Shield size={12} className="animate-pulse" /> Inteligencia Ministerial Optimus v3.9
                 </motion.div>
@@ -111,7 +111,7 @@ export default function PastorRadarPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="text-xl lg:text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none"
                 >
-                    Radar <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-400">Pastoral</span>
+                    Radar <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))]">Pastoral</span>
                 </motion.h1>
                 <motion.p 
                     initial={{ opacity: 0 }}
@@ -129,10 +129,10 @@ export default function PastorRadarPage() {
                     <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide animate-pulse">Iniciando Red Neuronal...</p>
                 </div>
             ) : error ? (
-                <div className="p-4 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 rounded-lg text-rose-600 text-center space-y-4">
+                <div className="p-4 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/20%)] dark:border-[hsl(var(--danger)/30%)] rounded-lg text-danger-text text-center space-y-4">
                     <Zap size={40} className="mx-auto" />
                     <p className="font-semibold uppercase tracking-wide">Error de Sincronización: {error}</p>
-                    <button onClick={() => fetchRadar()} className="px-4 py-3 bg-rose-600 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-xl">Reintentar</button>
+                    <button onClick={() => fetchRadar()} className="px-4 py-3 bg-[hsl(var(--danger))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-xl">Reintentar</button>
                 </div>
             ) : (
                 <>
@@ -161,7 +161,7 @@ export default function PastorRadarPage() {
                                 </h2>
                                 <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Métricas consolidadas semestrales</p>
                             </div>
-                            <span className="font-semibold text-[hsl(var(--primary))] bg-blue-50 px-4 py-1.5 rounded-full tracking-wide border border-blue-100 uppercase">Live BI</span>
+                            <span className="font-semibold text-[hsl(var(--primary))] bg-info-soft px-4 py-1.5 rounded-full tracking-wide border border-[hsl(var(--info)/20%)] uppercase">Live BI</span>
                         </div>
                         
                         <div className="h-48 flex items-end justify-between gap-4 pt-10 px-4">
@@ -170,7 +170,7 @@ export default function PastorRadarPage() {
                                     <div 
                                         className={clsx(
                                             "w-full rounded-t-2xl transition-all duration-700 relative shimmer-bar",
-                                            i === 5 ? "bg-gradient-to-t from-blue-600 to-sky-500 shadow-[0_0_30px_rgba(37,99,235,0.3)]" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 group-hover/bar:bg-[hsl(var(--surface-3))]"
+                                            i === 5 ? "bg-gradient-to-t from-[hsl(var(--info))] to-[hsl(var(--info))] shadow-[0_0_30px_rgba(37,99,235,0.3)]" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 group-hover/bar:bg-[hsl(var(--surface-3))]"
                                         )}
                                         style={{ height: `${h}%` }}
                                     >
@@ -220,8 +220,8 @@ export default function PastorRadarPage() {
 
 function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
     const colorMap: any = {
-        blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20 border-blue-100',
-        cyan: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/20 border-cyan-100',
+        blue: 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20 border-[hsl(var(--info)/20%)]',
+        cyan: 'text-[hsl(var(--domain-cyan)/90%)] bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/20%)] border-[hsl(var(--domain-cyan)/30%)]',
         emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)]',
         amber: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] border-[hsl(var(--warning)/0.3)]'
     };

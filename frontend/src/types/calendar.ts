@@ -35,7 +35,7 @@ export const HOUR_HEIGHT = 60; // px per hour
 export const EVENT_TYPE_META: Record<CalEventType, { label: string; chip: string; color: string }> = {
   task: {
     label: 'Tarea',
-    chip: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300',
+    chip: 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text',
     color: '#3b82f6',
   },
   agenda_event: {
@@ -45,12 +45,12 @@ export const EVENT_TYPE_META: Record<CalEventType, { label: string; chip: string
   },
   evangelism_event: {
     label: 'Evento',
-    chip: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
+    chip: 'bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text',
     color: '#10b981',
   },
   evangelism_strategy: {
     label: 'Estrategia',
-    chip: 'bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-300',
+    chip: 'bg-[hsl(var(--domain-teal)/10%)] text-[hsl(var(--domain-teal)/90%)] dark:bg-[hsl(var(--domain-teal)/10%)] dark:text-[hsl(var(--domain-teal))]',
     color: '#0d9488',
   },
   evangelism_session: {
@@ -60,22 +60,22 @@ export const EVENT_TYPE_META: Record<CalEventType, { label: string; chip: string
   },
   consolidation_case: {
     label: 'Consolidación',
-    chip: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
+    chip: 'bg-warning-soft text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text',
     color: '#f59e0b',
   },
   consolidation_task: {
     label: 'Tarea CRM',
-    chip: 'bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-500/10 dark:text-fuchsia-300',
+    chip: 'bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] dark:bg-[hsl(var(--domain-fuchsia)/10%)] dark:text-[hsl(var(--domain-fuchsia))]',
     color: '#d946ef',
   },
   project_milestone: {
     label: 'Hito',
-    chip: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-blue-300',
+    chip: 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text',
     color: '#3b82f6',
   },
   birthday: {
     label: 'Cumpleaños',
-    chip: 'bg-pink-50 text-pink-700 dark:bg-pink-500/10 dark:text-pink-300',
+    chip: 'bg-[hsl(var(--domain-pink)/10%)] text-[hsl(var(--domain-pink)/90%)] dark:bg-[hsl(var(--domain-pink)/10%)] dark:text-[hsl(var(--domain-pink))]',
     color: '#ec4899',
   },
   reminder: {

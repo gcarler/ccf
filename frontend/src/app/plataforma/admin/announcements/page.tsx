@@ -141,7 +141,7 @@ export default function AnnouncementsAdmin() {
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-[hsl(var(--primary))] text-[10px] font-semibold uppercase tracking-wide">{ann.category}</span>
-                            {ann.featured && <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase">Destacado</span>}
+                            {ann.featured && <span className="px-2 py-0.5 rounded-full bg-info-soft text-[hsl(var(--primary))] text-[9px] font-semibold uppercase">Destacado</span>}
                             <span className={clsx(
                                 "px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase",
                                 ann.status === 'published' ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : ann.status === 'draft' ? "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
@@ -157,7 +157,7 @@ export default function AnnouncementsAdmin() {
                             </button>
                         )}
                         {ann.status !== 'archived' && (
-                            <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-rose-600 rounded-md transition-all" title="Archivar">
+                            <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-danger-text rounded-md transition-all" title="Archivar">
                                 <Archive size={16} />
                             </button>
                         )}
@@ -253,7 +253,7 @@ export default function AnnouncementsAdmin() {
                 rightActions={
                     <button 
                         onClick={() => router.push('/plataforma/admin/announcements/new')}
-                        className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
+                        className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
                     >
                         <Plus size={18} /> Nuevo Comunicado
                     </button>
@@ -269,12 +269,12 @@ export default function AnnouncementsAdmin() {
                     <header className="space-y-4 text-center md:text-left">
                         <motion.div 
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-blue-500/20"
+                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
                         >
                             <Sparkles size={12} className="animate-pulse" /> Difusión de Visión CCF
                         </motion.div>
                         <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
-                            El latido de la <br/> <span className="text-[hsl(var(--primary))] italic text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-400">Comunidad.</span>
+                            El latido de la <br/> <span className="text-[hsl(var(--primary))] italic text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))]">Comunidad.</span>
                         </h1>
                     </header>
 
@@ -313,11 +313,11 @@ export default function AnnouncementsAdmin() {
                                         className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
                                         style={{ backgroundImage: `linear-gradient(to top, rgba(10, 15, 22, 0.95) 0%, rgba(10, 15, 22, 0.4) 50%, transparent 100%), url('https://picsum.photos/seed/1438232992991-995b7058bbb3/800/600')` }}
                                     />
-                                    <div className="absolute inset-0 bg-blue-600/5 mix-blend-overlay" />
+                                    <div className="absolute inset-0 bg-[hsl(var(--info))]/5 mix-blend-overlay" />
                                     
                                     <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-4 flex flex-col items-start gap-3 relative z-10">
                                         <div className="flex items-center gap-4">
-                                            <span className="px-3 py-2 bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-full shadow-2xl shadow-blue-500/40">Noticia Destacada</span>
+                                            <span className="px-3 py-2 bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-full shadow-2xl shadow-[hsl(var(--info)/40%)]">Noticia Destacada</span>
                                             <span className="px-3 py-2 bg-white/10 backdrop-blur-xl text-white text-[10px] font-semibold uppercase tracking-wide rounded-full border border-white/10">{featuredAnn.category}</span>
                                         </div>
                                         <h2 className="text-white text-lg lg:text-xl font-bold leading-tight tracking-tighter uppercase max-w-4xl">{featuredAnn.title}</h2>
@@ -375,7 +375,7 @@ export default function AnnouncementsAdmin() {
                                                             </button>
                                                         )}
                                                         <button className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-md transition-all"><Edit3 size={16} /></button>
-                                                        <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-rose-600 rounded-md transition-all" title="Archivar"><X size={16} /></button>
+                                                        <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-danger-text rounded-md transition-all" title="Archivar"><X size={16} /></button>
                                                     </div>
                                                 </div>
                                             </motion.div>
@@ -385,7 +385,7 @@ export default function AnnouncementsAdmin() {
                                     {/* Empty State / Add Card */}
                                     <div 
                                         onClick={() => router.push('/plataforma/admin/announcements/new')}
-                                        className="bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center space-y-3 hover:border-blue-500/50 hover:bg-blue-50/50 transition-all cursor-pointer group"
+                                        className="bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center space-y-3 hover:border-[hsl(var(--info)/100%)]/50 hover:bg-info-soft/50 transition-all cursor-pointer group"
                                     >
                                         <div className="size-8 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] shadow-xl flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">
                                             <Plus size={40} strokeWidth={1.5} />

@@ -70,7 +70,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
         <div className="min-w-[280px] w-[280px] flex flex-col shrink-0 gap-2">
             {/* Column Header */}
             {error && (
-                <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                <div className="rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-2 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
                     <p className="text-[10px] font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
@@ -110,7 +110,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                 ref={setNodeRef}
                 className={clsx(
                     'flex flex-col gap-2.5 min-h-12 p-2 rounded-md transition-all duration-150',
-                    isOver ? 'bg-blue-50/80 dark:bg-blue-500/10 ring-2 ring-blue-400/30' : 'bg-[hsl(var(--surface-1))]/40 dark:bg-white/[0.02]'
+                    isOver ? 'bg-info-soft/80 dark:bg-[hsl(var(--info))]/10 ring-2 ring-[hsl(var(--info)/30%)]' : 'bg-[hsl(var(--surface-1))]/40 dark:bg-white/[0.02]'
                 )}
             >
                 <SortableContext id={id} items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
@@ -123,7 +123,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                 {tasks.length === 0 && !isAdding && (
                     <div className={clsx(
                         'flex-1 flex items-center justify-center py-2 rounded-lg border-2 border-dashed transition-all',
-                        isOver ? 'border-blue-400 bg-blue-50/50' : 'border-[hsl(var(--border))] dark:border-white/10'
+                        isOver ? 'border-[hsl(var(--info)/40%)] bg-info-soft/50' : 'border-[hsl(var(--border))] dark:border-white/10'
                     )}>
                         <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">Suelta aquí</p>
                     </div>
@@ -137,7 +137,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
                             transition={{ duration: 0.15 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#25262b] rounded-md border border-blue-300 dark:border-blue-500/40 shadow-md p-3 flex flex-col gap-2"
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#25262b] rounded-md border border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/40 shadow-md p-3 flex flex-col gap-2"
                         >
                             <input
                                 ref={inputRef}

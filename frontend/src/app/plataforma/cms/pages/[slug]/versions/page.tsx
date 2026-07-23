@@ -203,7 +203,7 @@ export default function PageVersionsDiffPage() {
           </div>
         )}
         {error && !loading && (
-          <div className="rounded-lg border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 p-4 text-rose-800 dark:text-rose-200 text-[12px]">
+          <div className="rounded-lg border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 p-4 text-danger-text dark:text-[hsl(var(--danger))] text-[12px]">
             <p className="font-semibold mb-1">No se pudieron cargar las versiones</p>
             <p className="opacity-80">{error}</p>
           </div>
@@ -236,7 +236,7 @@ export default function PageVersionsDiffPage() {
         )}
       </div>
       {rollingBack && (
-        <div className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 text-[12px] text-amber-800 dark:text-amber-200 shadow-lg">
+        <div className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--warning)/30%)] bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-3 py-2 text-[12px] text-warning-text dark:text-[hsl(var(--warning))] shadow-lg">
           <Loader2 size={14} className="animate-spin" /> Restaurando versión…
         </div>
       )}
@@ -363,8 +363,8 @@ function VersionPicker({
       className={clsx(
         "relative inline-flex items-center gap-1.5 rounded-md border px-2 py-1",
         accent === "rose"
-          ? "border-rose-200 dark:border-rose-500/30 bg-rose-50/60 dark:bg-rose-500/5"
-          : "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/60 dark:bg-emerald-500/5",
+          ? "border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft/60 dark:bg-[hsl(var(--danger))]/5"
+          : "border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30 bg-success-soft/60 dark:bg-[hsl(var(--success))]/5",
       )}
     >
       <span className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
@@ -446,7 +446,7 @@ function SingleVersionState({
       </p>
       <button
         onClick={onBackToBuilder}
-        className="inline-flex items-center gap-1.5 rounded-md bg-[hsl(var(--primary))] text-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 hover:opacity-90"
+        className="inline-flex items-center gap-1.5 rounded-md bg-[hsl(var(--primary))] text-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:opacity-90"
       >
         <RotateCcw size={12} /> Ir al builder
       </button>

@@ -266,7 +266,7 @@ export default function AdminUsersPage() {
                                             "flex items-center justify-between p-3 rounded-lg border-2 transition-all group",
                                             selectedUser.role === role 
                                                 ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white shadow-xl shadow-[hsl(var(--primary))/0.2]" 
-                                                : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:border-blue-500/30"
+                                                : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/100%)]/30"
                                         )}
                                     >
                                         <span className="text-[12px] font-semibold uppercase tracking-wide">{role}</span>

@@ -3,9 +3,9 @@
 import DashboardEmbed from '@/components/DashboardEmbed';
 import DSSkeleton from '@/components/ui/Skeleton';
 import { useAuth } from '@/context/AuthContext';
-import { DSCard } from '@/design/components/DSCard';
-import { DSChart } from '@/design/components/DSChart';
-import { DSMetric } from '@/design/components/DSMetric';
+import { DSCard } from '@/design';
+import { DSChart } from '@/design';
+import { DSMetric } from '@/design';
 import { apiFetch } from '@/lib/http';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import {

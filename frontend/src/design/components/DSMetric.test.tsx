@@ -23,19 +23,19 @@ describe('DSMetric', () => {
   it('applies blue tone styling to trend', () => {
     render(<DSMetric label="Users" value="1,234" trend="+12%" tone="blue" />);
     const trend = screen.getByText('+12%');
-    expect(trend.className).toContain('bg-blue-50');
+    expect(trend.className).toContain('bg-[hsl(var(--info-muted))]');
   });
 
   it('applies emerald tone styling to trend', () => {
     render(<DSMetric label="Users" value="1,234" trend="+12%" tone="emerald" />);
     const trend = screen.getByText('+12%');
-    expect(trend.className).toContain('bg-emerald-50');
+    expect(trend.className).toContain('bg-[hsl(var(--success-muted))]');
   });
 
   it('applies amber tone styling to trend', () => {
     render(<DSMetric label="Users" value="1,234" trend="+12%" tone="amber" />);
     const trend = screen.getByText('+12%');
-    expect(trend.className).toContain('bg-amber-50');
+    expect(trend.className).toContain('bg-[hsl(var(--warning-muted))]');
   });
 
   it('renders icon when provided', () => {

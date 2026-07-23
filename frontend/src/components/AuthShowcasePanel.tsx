@@ -83,7 +83,7 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
         >
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute -top-16 right-[-40px] w-64 h-48 bg-primary/40 blur-[150px]"></div>
-                <div className="absolute bottom-0 left-[-60px] w-72 h-48 bg-blue-500/30 blur-[180px]"></div>
+                <div className="absolute bottom-0 left-[-60px] w-72 h-48 bg-[hsl(var(--info))]/30 blur-[180px]"></div>
                 <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.08]"></div>
             </div>
 
@@ -101,7 +101,7 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
                         <div key={stat.label} className="rounded-lg bg-white/5 border border-white/10 p-4">
                             <p className="text-xs uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">{stat.label}</p>
                             <p className="text-lg font-bold text-white">{stat.value}</p>
-                            <p className="text-[11px] text-emerald-300 font-semibold mt-1">{stat.trend}</p>
+                            <p className="text-[11px] text-[hsl(var(--success))] font-semibold mt-1">{stat.trend}</p>
                         </div>
                     ))}
                 </div>
@@ -135,7 +135,7 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
 
                 <div className="rounded-lg border border-white/10 bg-white/5 p-3 space-y-3">
                     <div className="flex items-center gap-3">
-                        <ShieldCheck className="w-5 h-5 text-emerald-300" />
+                        <ShieldCheck className="w-5 h-5 text-[hsl(var(--success))]" />
                         <p className="text-xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio real</p>
                     </div>
                     <p className="text-lg font-semibold leading-snug text-white">&ldquo;{testimonial.quote}&rdquo;</p>

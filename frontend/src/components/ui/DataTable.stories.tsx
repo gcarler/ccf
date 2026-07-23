@@ -14,34 +14,36 @@ const sampleData = [
 // Sample columns configuration
 const sampleColumns = [
   { 
-    headerName: 'ID', 
+    header: 'ID', 
     accessorKey: 'id',
     size: 80
   },
   { 
-    headerName: 'Nombre', 
+    header: 'Nombre', 
     accessorKey: 'name',
   },
   { 
-    headerName: 'Email', 
+    header: 'Email', 
     accessorKey: 'email',
   },
   { 
-    headerName: 'Estado', 
+    header: 'Estado', 
     accessorKey: 'status',
   },
   { 
-    headerName: 'Edad', 
+    header: 'Edad', 
     accessorKey: 'age',
     size: 60
   },
   { 
-    headerName: 'Departamento', 
+    header: 'Departamento', 
     accessorKey: 'department',
   },
 ];
 
+
 const meta: Meta<typeof DataTable> = {
+  tags: ['autodocs'],
   title: 'UI/DataTable',
   component: DataTable,
   parameters: {
@@ -80,11 +82,11 @@ export const WithColumnSelection: Story = {
     data: sampleData,
     columns: [
       { 
-        headerName: 'Nombre completo', 
+        header: 'Nombre completo', 
         accessorKey: 'name',
       },
       { 
-        headerName: 'Correo electrónico', 
+        header: 'Correo electrónico', 
         accessorKey: 'email',
       },
     ],
