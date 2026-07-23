@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     X as CloseIcon,
     Printer,
@@ -54,20 +54,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
     const [newMessageContent, setNewMessageContent] = useState('');
     const [messageChannel, setMessageChannel] = useState('whatsapp');
 
-    useEffect(() => {
-        if (!initialPersona) return;
-        loadPersonaData(initialPersona.id);
-    }, [initialPersona, token]);
-
-    const loadPersonaData = async (personaId: string) => {
-        if (!token) return;
-
-        fetchTimeline(personaId);
-        fetchFinance(personaId);
-        fetchTasks(personaId);
-    };
-
-    const fetchTimeline = async (id: string) => {
+    const fetchTimeline = useCallback(async (id: string) => {
         setLoadingHistory(true);
         try {
             const data = await apiFetch(`/crm/personas/${id}/timeline`, { token, cache: 'no-store' });
@@ -77,9 +64,9 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
         } finally {
             setLoadingHistory(false);
         }
-    };
+    }, [token]);
 
-    const fetchFinance = async (id: string) => {
+    const fetchFinance = useCallback(async (id: string) => {
         setLoadingFinance(true);
         try {
             const data = await apiFetch<any[]>(`/crm/personas/${id}/donations`, { token });
@@ -89,9 +76,9 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
         } finally {
             setLoadingFinance(false);
         }
-    };
+    }, [token]);
 
-    const fetchTasks = async (id: string) => {
+    const fetchTasks = useCallback(async (id: string) => {
         setLoadingTasks(true);
         try {
             const data = await apiFetch<any[]>(`/crm/tasks?assignee_id=${id}`, { token });
@@ -101,7 +88,19 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
         } finally {
             setLoadingTasks(false);
         }
-    };
+    }, [token]);
+
+    const loadPersonaData = useCallback(async (personaId: string) => {
+        if (!token) return;
+        fetchTimeline(personaId);
+        fetchFinance(personaId);
+        fetchTasks(personaId);
+    }, [token, fetchTimeline, fetchFinance, fetchTasks]);
+
+    useEffect(() => {
+        if (!initialPersona?.id) return;
+        loadPersonaData(initialPersona.id);
+    }, [initialPersona?.id, loadPersonaData]);
 
     const handleUpdatePersona = async () => {
         if (!token) return;

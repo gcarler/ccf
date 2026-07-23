@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -45,7 +45,7 @@ export default function DocumentosPage() {
   const [form, setForm] = useState({ title: "", description: "", file_url: "", file_name: "", file_size: 0, mime_type: "", document_type: "other", tag_ids: [] as string[] });
   const [tagForm, setTagForm] = useState({ name: "", color: "#6B7280" });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
@@ -57,9 +57,9 @@ export default function DocumentosPage() {
       if (Array.isArray(t)) setTags(t);
     } catch (e) { console.error(e); }
     setLoading(false);
-  };
+  }, [token]);
 
-  useEffect(() => { fetchData(); }, [token]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const filtered = documents.filter((d) => {
     const matchesSearch = d.title?.toLowerCase().includes(search.toLowerCase()) || d.description?.toLowerCase().includes(search.toLowerCase());

@@ -68,7 +68,6 @@ Sparkles,
 Trash2,
 UserCheck,
 UserMinus,
-UserPlus,
 Users,
 X
 } from 'lucide-react';

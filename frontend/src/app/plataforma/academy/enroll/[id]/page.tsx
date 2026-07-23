@@ -47,7 +47,7 @@ export default function EnrollmentWizard() {
 
         fetchCourse();
         return () => ctrl.abort();
-    }, [isAuthenticated, courseId, addToast]);
+    }, [isAuthenticated, courseId, addToast, router]);
 
     const handleEnrollment = async () => {
         setEnrolling(true);

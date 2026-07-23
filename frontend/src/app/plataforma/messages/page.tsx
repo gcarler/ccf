@@ -96,28 +96,30 @@ export default function MessagesPage() {
     useEffect(() => { loadConversations(); }, [loadConversations]);
 
     useEffect(() => {
-        if (!token || !activeConv) return;
+        const convId = activeConv?.id;
+        if (!token || !convId) return;
         const controller = new AbortController();
         setMessages([]);
         setLoadingMessages(true);
         apiFetch<DirectMessageItem[]>(
-            `/chat/conversations/${activeConv.id}/messages`,
+            `/chat/conversations/${convId}/messages`,
             { token, query: { limit: "100" }, signal: controller.signal }
         ).then((data) => { if (Array.isArray(data)) setMessages(data.reverse()); })
         .catch((err) => { if (err?.name !== "AbortError") addToast("Error al cargar mensajes", "error"); })
         .finally(() => { if (!controller.signal.aborted) setLoadingMessages(false); });
-        apiFetch(`/chat/conversations/${activeConv.id}/read`, { method: "POST", token, signal: controller.signal })
+        apiFetch(`/chat/conversations/${convId}/read`, { method: "POST", token, signal: controller.signal })
             .catch(() => { addToast("No se pudo marcar como leído", "error"); });
         return () => controller.abort();
     }, [activeConv?.id, token, addToast]);
 
     const loadOlderMessages = useCallback(async () => {
-        if (!token || !activeConv || loadingMessages || messagesRef.current.length === 0) return;
+        const convId = activeConv?.id;
+        if (!token || !convId || loadingMessages || messagesRef.current.length === 0) return;
         setLoadingMessages(true);
         try {
             const oldest = messagesRef.current[0];
             const older = await apiFetch<DirectMessageItem[]>(
-                `/chat/conversations/${activeConv.id}/messages`,
+                `/chat/conversations/${convId}/messages`,
                 { token, query: { limit: "50", before: oldest.created_at } }
             );
             if (Array.isArray(older) && older.length > 0) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -47,7 +47,7 @@ export default function FirmaPage() {
     signers: [{ email: "", full_name: "", role: "signer", signing_order: 0 }],
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
@@ -55,9 +55,9 @@ export default function FirmaPage() {
       if (Array.isArray(r)) setRequests(r);
     } catch (e) { console.error(e); }
     setLoading(false);
-  };
+  }, [token]);
 
-  useEffect(() => { fetchData(); }, [token]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleCreate = async () => {
     if (!token) return;

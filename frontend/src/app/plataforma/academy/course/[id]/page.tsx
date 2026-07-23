@@ -179,7 +179,7 @@ export default function CourseViewPage() {
                 </div>
             )
         });
-    }, [activeLesson, course, pushSidebarPanel, router]);
+    }, [activeLesson, course, completionRate, pushSidebarPanel, router]);
 
     if (loading) {
         return (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
@@ -59,7 +59,7 @@ export default function FundsPage() {
     const [fPublic, setFPublic] = useState(false);
     const [fTarget, setFTarget] = useState("");
 
-    const loadFunds = async () => {
+    const loadFunds = useCallback(async () => {
         if (!token) return;
         try {
             setLoading(true);
@@ -70,9 +70,9 @@ export default function FundsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
 
-    useEffect(() => { loadFunds(); }, [token]);
+    useEffect(() => { loadFunds(); }, [loadFunds]);
 
     const openCreate = () => {
         setSelected(null);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
     X as CloseIcon, 
     Heart, 
@@ -36,12 +36,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
     const [showNotes, setShowNotes] = useState(false);
     const [activeTab, setActiveTab] = useState<'details' | 'timeline' | 'ai'>('details');
 
-    useEffect(() => {
-        if (!initialSession?.id) return;
-        fetchSessionDetails(initialSession.id);
-    }, [initialSession, token]);
-
-    const fetchSessionDetails = async (id: number) => {
+    const fetchSessionDetails = useCallback(async (id: number) => {
         setLoading(true);
         try {
             const data = await apiFetch(`/crm/counseling/${id}`, { token });
@@ -51,7 +46,12 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
+
+    useEffect(() => {
+        if (!initialSession?.id) return;
+        fetchSessionDetails(initialSession.id);
+    }, [initialSession?.id, fetchSessionDetails]);
 
     const handleUpdateStatus = async (status: string) => {
         if (!token) return;

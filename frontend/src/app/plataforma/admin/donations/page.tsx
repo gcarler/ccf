@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import {
@@ -68,7 +68,7 @@ export default function DonationsManagementPage() {
     const [fPersonaId, setFPersonaId] = useState("");
     const [fFundId, setFFundId] = useState("1");
 
-    const loadDonations = async (signal?: AbortSignal) => {
+    const loadDonations = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         try {
             const data = await apiFetch<Donation[]>("/finance/transactions", { token, signal });
@@ -87,9 +87,9 @@ export default function DonationsManagementPage() {
         } catch {
             toast.error("Error al cargar donaciones");
         }
-    };
+    }, [token]);
 
-    useEffect(() => { loadDonations(); }, [token]);
+    useEffect(() => { loadDonations(); }, [loadDonations]);
 
     const openCreate = () => {
         setSelected(null);

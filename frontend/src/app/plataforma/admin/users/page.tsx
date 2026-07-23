@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Users, Shield, UserPlus,
     ShieldCheck, Zap,
@@ -39,7 +39,7 @@ export default function AdminUsersPage() {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
-    const fetchUsers = async (signal?: AbortSignal) => {
+    const fetchUsers = useCallback(async (signal?: AbortSignal) => {
         setLoading(true);
         try {
             const data = await apiFetch<{ items: AdminUser[]; total: number }>('/admin/users', { token, signal });
@@ -50,13 +50,13 @@ export default function AdminUsersPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token, addToast]);
 
     useEffect(() => {
         const controller = new AbortController();
         fetchUsers(controller.signal);
         return () => controller.abort();
-    }, [token]);
+    }, [fetchUsers]);
 
     const handleBulkProvision = async () => {
         setProvisioning(true);
