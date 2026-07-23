@@ -138,6 +138,11 @@ const nextConfig = {
                 destination: '/plataforma/evangelism/groups/:path*',
                 permanent: true,
             },
+            {
+                source: '/plataforma/projects/list',
+                destination: '/plataforma/projects?view=list#projects-list',
+                permanent: true,
+            },
         ];
     },
     async rewrites() {

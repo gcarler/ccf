@@ -564,7 +564,7 @@ class CmsPostTag(Base):
 
 
 class CmsSeoSnapshot(Base):
-    """Daily SEO score snapshot per ``CmsSite`` (faro global model).
+    """Daily SEO score snapshot per ``CmsSite`` (CCF global model).
 
     Captured by ``backend.scheduler`` (cron) to power the "SEO score trend"
     widget on ``/plataforma/dashboard/cms``. Today the audit is computed

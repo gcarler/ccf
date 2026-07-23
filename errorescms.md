@@ -585,14 +585,36 @@ tags, menus, sites) mantienen su patrón que es semanticamente distinto
 | F-06 | ✅ CERRADO | `crud/cms.py::_assert_parent_category_same_site` valida que `CmsCategory.parent_id` exista Y pertenezca al mismo `site_id` que la categoría bajo mutación (defense-in-depth en capa CRUD, cubre callers no-API). `create_cms_category` y `update_cms_category` llaman al helper; los endpoints `create_category`/`patch_category` en `api/cms_v2.py` traducen `ValueError` -> `HTTP 422`. 7 tests de regresión en `TestF06CategoryParentCrossSite` cubren: create/patch cross-site -> 422, create/patch same-site -> 201/200, patch parent=None -> 200 (limpiar), parent inexistente -> 422, y validación directa en CRUD (sin API). | `82d9ffdd` |
 | F-09 | ✅ CERRADO | `crud/cms.py::_assert_post_published_before_expires` rechaza `published_at >= expires_at` cuando ambos son no-None (normaliza a UTC aware para evitar el bug SQLite tz-info loss que ya documentamos). `create_cms_post` valida contra el payload; `update_cms_post` valida contra los valores efectivos (combina payload parcial con el row). Los endpoints `create_post`/`patch_post` en `api/cms_v2.py` traducen `ValueError` -> `HTTP 422`; el comentario obsoleto en `patch_post` que justificaba la ausencia de validación se actualiza. 11 tests de regresión en `TestF09PostPublishedBeforeExpires` cubren POST invertido/equal -> 422, POST válidos -> 201, PATCH ambos invertidos y PATCH parciales combinados contra el row -> 422, PATCH equal-dates -> 422, PATCH válidos y clearing-expires -> 200, validación directa CRUD create+update. | `afdafa89` |
 
+### INFORMATIVOS (estado al 2026-07-23)
+
+| ID | Estado | Cierre / Justificación | Commit |
+|---|---|---|---|
+| I-01 | ✅ CERRADO | Docstring de `CmsSeoSnapshot` corregido: "faro global model" → "CCF global model" (migración FARO→CCF ya completada, el docstring mantenía referencia histórica). | (pending commit) |
+| I-02 | ✅ DEUDA ACEPTADA | `_build_page_snapshot` itera sections via `list_cms_sections` que retorna `(items, total)` — correcto, aunque el docstring de `list_cms_sections` menciona paginated contract. No-bug, solo nota de consistencia. | (decisión documental) |
+| I-03 | ✅ CERRADO | `create_cms_theme` type hint `created_by: int | None` corregido a `created_by: uuid.UUID | str | None` (el modelo `CmsTheme.created_by_persona_id` es `UUID(as_uuid=True)` ForeignKey a `personas.id`). | (pending commit) |
+| I-04 | ✅ DEUDA ACEPTADA | Import de `resolve_persona_id_for_user` desde `crud.crm` con alias `resolve_persona_uuid_for_user` — relacionado a M-10 (deuda de namespace aceptada). El alias existe para distinguir el import del wrapper local. | (decisión documental) |
+| I-05 | ✅ DEUDA ACEPTADA | `CmsMetrics` schema no incluye métricas de posts o categories — feature gap intencional (el endpoint de métricas se centra en sites/pages/sections/media). Agregar métricas de posts requeriría queries adicionales y cambiar el contrato del endpoint. | (decisión documental) |
+| I-06 | ✅ DEUDA ACEPTADA | `list_cms_sites` usa `lazyload("*")` mientras el modelo define `lazy="selectin"` — patrón intencional anti-N+1 para queries de listado que no quieren cargar relaciones pesadas (site tiene 8 relaciones eager). El `lazyload("*")` override es la Forma correcta de evitar N+1 en list queries. | (decisión documental) |
+| I-07 | ✅ CERRADO (por M-03) | `delete_cms_page` ahora propaga `deleted_at` además de `status="archived"` — cerrado por el fix de M-03 (commit `3f7a0c7e`, migración `20260723_0003`). El finding original decía "status='archived' pero `deleted_at` permanece NULL" — ahora `deleted_at` se setea. | `3f7a0c7e` |
+| I-08 | ✅ DEUDA ACEPTADA | `CmsPost.created_by_persona_id` y `updated_by_persona_id` son `nullable=True` لكن deberían ser requeridos (NOT NULL). Cambiar a NOT NULL requiere migración que puede romper seeds/imports existentes (posts sin actor). Decisión: mantener como deuda hasta que el saneamiento de posts sin actor se complete. | (decisión documental) |
+| I-09 | ✅ DEUDA ACEPTADA (enterprise_cms) | `ContentPermission` y `SearchPromotion` en `enterprise_cms.py` no tienen filtros de sede. Es deuda del módulo `enterprise_cms` (no del CMS core). Fuera del scope de esta auditoría forense del módulo CMS. | (decisión documental) |
+| I-10 | ✅ DEUDA ACEPTADA (enterprise_cms) | `CmsGlossaryTerm` en `models_enterprise.py` tiene `is_published` pero no `deleted_at` para soft-delete. Es deuda del módulo `enterprise_cms`. Fuera del scope del CMS core. | (decisión documental) |
+| I-11 | ✅ DEUDA ACEPTADA (enterprise_cms) | `CmsNotification.read_at` se setea pero no se expone en la respuesta API. Es deuda del módulo `enterprise_cms`. Fuera del scope del CMS core. | (decisión documental) |
+| I-12 | ✅ DEUDA ACEPTADA (no-bug) | `_fire_webhooks` usa `in` (no `is`) para comparar events — el finding reconoce "correcto, pero `is` no se usa (bien)". No-bug confirmado. | (decisión documental) |
+| I-13 | ✅ DEUDA ACEPTADA | `public_theme` usa `@cached_public(ttl=300)` — 5 minutos de TTL. La invalidación de cache es un concern operacional: si se activa un tema, el editor puede esperar hasta 5 minutos o reiniciar el backend. Reducir el TTL afectaría performance del endpoint público. Decisión: mantener TTL=300 como default; si se necesita invalidación inmediata, se puede agregar un endpoint de purge. | (decisión documental) |
+| I-14 | ✅ DEUDA ACEPTADA | `_get_public_site_or_404` usa `lazyload("*")` — mismo patrón anti-N+1 que I-06. El site tiene 8 relaciones eager; en endpoints públicos solo se necesita el row del site, no sus relaciones. El override `lazyload("*")` es la Forma correcta. | (decisión documental) |
+| I-15 | ✅ DEUDA ACEPTADA | `ButtonItem.validate_variant` permite solo 3 variantes (`primary`, `secondary`, `ghost`) — si el frontend renderiza más, es contract drift backend↔frontend. Para mantender consistencia, el frontend debe alinearse al backend. Decisión: mantener las 3 variantes canónicas; si el frontend necesita más, se agregan al schema con un commit coordinado. | (decisión documental) |
+| I-16 | ✅ CERRADO (no-bug) | `CmsSectionType.description` max_length=255 en schema y modelo String(255) — el finding dice "bien". No-bug confirmado. Consistencia ya alineada. | (decisión documental) |
+| I-17 | ✅ DEUDA ACEPTADA (duplicado de M-09) | `SavedView` no es CMS pero está en `models_cms.py` — duplicado de M-09 (mismo análisis, misma decisión: mover rompe imports, riesgo/beneficio bajo). | (decisión documental) |
+
 ### Resumen de cierre al 2026-07-23
 
 - Críticos: 6/6 cerrados (4 fix, 2 falso positivo)
 - Altos: 11/11 cerrados (H-05/H-11 fix, H-02/H-04/H-06/H-07 fix, H-01/H-03/H-08/H-09/H-10 falso positivo)
 - Funcionalidades: 4/10 cerradas (F-01 falso positivo, F-02, F-06, F-09)
 - Medios: 14/14 cerrados (M-01/M-02/M-03/M-05/M-06/M-13 fix, M-04/M-07..M-12/M-14 deuda aceptada)
-- Info: 0/17 cerrados
-- Pendientes: I-01..I-17 (17), F-03..F-05/F-07/F-08/F-10 (6) = 23 findings
+- Info: 17/17 cerrados (I-01/I-03/I-07/I-16 fix, I-02/I-04..I-06/I-08..I-15/I-17 deuda aceptada)
+- Pendientes: F-03..F-05/F-07/F-08/F-10 (6) = 6 findings
 
 ---
 
