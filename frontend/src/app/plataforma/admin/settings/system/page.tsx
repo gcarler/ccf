@@ -429,7 +429,7 @@ export default function SystemSettings() {
         } finally {
             setLoading(false);
         }
-    }, [token, auditFilters, slaTargets, incidentStatsWindow]);
+    }, [token, auditFilters, slaTargets, incidentStatsWindow, addToast]);
 
     useEffect(() => {
         if (!isAuthenticated) return;

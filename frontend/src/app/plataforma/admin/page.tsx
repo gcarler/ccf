@@ -103,7 +103,7 @@ export default function AdminDashboardPage() {
     };
     fetchData(controller.signal);
     return () => controller.abort();
-  }, [token]);
+  }, [token, addToast]);
 
   const handleOpenTask = (task: AgentTask) => {
     setSelectedTask(task);

@@ -218,7 +218,7 @@ export default function PrayerSupportCenter() {
             label: PRAYER_STATUS_OPTIONS.find(o => o.value === status)?.label ?? status.toUpperCase(),
             items: filtered.filter(r => r.status === status),
         }));
-    }, [filtered, PRAYER_STATUS_OPTIONS]);
+    }, [filtered]);
 
     return (
         <CrmShell

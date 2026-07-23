@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -20,7 +20,7 @@ export default function SecurityAuditPage() {
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchLogs = async (signal?: AbortSignal) => {
+    const fetchLogs = useCallback(async (signal?: AbortSignal) => {
         if (!token) {
             setLoading(false);
             return;
@@ -40,14 +40,14 @@ export default function SecurityAuditPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
 
     useEffect(() => {
         if (!isAuthenticated) return;
         const controller = new AbortController();
         fetchLogs(controller.signal);
         return () => controller.abort();
-    }, [isAuthenticated, token]);
+    }, [isAuthenticated, token, fetchLogs]);
 
     if (!isAuthenticated) return null;
 

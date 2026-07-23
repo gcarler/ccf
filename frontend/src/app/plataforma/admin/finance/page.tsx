@@ -72,7 +72,7 @@ export default function FinanceAdminPage() {
             setSummary(summaryData);
         } catch (e: unknown) { if (e instanceof DOMException && e.name === 'AbortError') return; console.error(e); addToast('Error al cargar datos financieros', 'error'); }
         finally { setLoading(false); }
-    }, [token]);
+    }, [token, addToast]);
 
     useEffect(() => {
         const controller = new AbortController();
