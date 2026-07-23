@@ -1,5 +1,3 @@
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import UniversalTableView, { TableColumn, UniversalTableViewProps } from './UniversalTableView';
