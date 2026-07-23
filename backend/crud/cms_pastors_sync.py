@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+import uuid as _uuid
 
 from sqlalchemy.orm import Session
 
@@ -204,17 +205,26 @@ def sync_pastoral_profiles_from_cms_section(db: Session) -> dict[str, int]:
     return {"matched": matched, "created": created, "total": len(pastors)}
 
 
-def build_pastors_section_props(db: Session) -> dict[str, list[dict[str, object]]]:
+def build_pastors_section_props(db: Session, *, sede_id: _uuid.UUID | None = None) -> dict[str, list[dict[str, object]]]:
     """Build the ``pastors`` section payload from live pastoral Persona records.
 
     Only personas with ``is_pastoral_leader == True`` are included, ordered by
     main pastor first and then alphabetically by full name.
+
+    Axioma 3 (C-04): when ``sede_id`` is provided, only pastoral leaders
+    belonging to that sede are included. When ``sede_id`` is ``None``
+    (orphan site operated by an admin), an empty list is returned — an
+    admin reassigning an orphan site should publish an empty team, not a
+    cross-sede dump of every pastor in the platform.
     """
+    if sede_id is None:
+        return {"pastors": []}
     leaders = (
         db.query(models.Persona)
         .filter(
             models.Persona.is_pastoral_leader.is_(True),
             models.Persona.estado_vital != "FALLECIDO",
+            models.Persona.sede_id == sede_id,
         )
         .order_by(
             models.Persona.is_main_pastor.desc(),
@@ -249,12 +259,45 @@ def build_pastors_section_props(db: Session) -> dict[str, list[dict[str, object]
 def update_pastors_section_from_profiles(db: Session) -> bool:
     """Overwrite the CMS ``pastors`` section with data from pastoral profiles.
 
+    Axioma 3 — Multi-Tenant (C-04 fix): the pastor list is scoped to the
+    sede that owns the site the ``pastors`` section belongs to. Before
+    this fix the query pulled ``is_pastoral_leader`` personas across ALL
+    sedes, so publishing the ``pastors`` page of site A leaked pastors of
+    sede B into site A's public page. Now the site's ``sede_id`` drives
+    the filter; sites without sede_id (orphans, admin-only) fall back to
+    an empty list rather than a cross-sede dump.
+
     Returns ``True`` if the section was updated.
     """
     section = get_cms_pastors_section(db)
     if section is None:
         return False
-    section.props_json = build_pastors_section_props(db)
+    sede_id = _resolve_section_sede_id(db, section)
+    section.props_json = build_pastors_section_props(db, sede_id=sede_id)
     db.commit()
     db.refresh(section)
     return True
+
+
+def _resolve_section_sede_id(db: Session, section: models.CmsSection) -> _uuid.UUID | None:
+    """Resolve the sede_id of the site owning ``section`` (Axioma 3 scope).
+
+    Walks section.page.site.sede_id. Returns ``None`` for orphan sites
+    (no sede); callers must treat ``None`` as "no pastors to publish"
+    rather than "all pastors" to avoid a cross-sede leak.
+    """
+    page = (
+        db.query(models.CmsPage)
+        .filter(models.CmsPage.id == section.page_id)
+        .first()
+    )
+    if page is None:
+        return None
+    site = (
+        db.query(models.CmsSite)
+        .filter(models.CmsSite.id == page.site_id)
+        .first()
+    )
+    if site is None:
+        return None
+    return site.sede_id
