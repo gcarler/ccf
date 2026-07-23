@@ -300,7 +300,18 @@ class MediaFileVersion(Base):
 # ─── 11. REDIRECTS ─────────────────────────────────────────────────────────
 
 class CmsRedirect(Base):
-    """URL redirects for maintaining coherence during restructuring."""
+    """URL redirects for maintaining coherence during restructuring.
+
+    F-04 (errorescms.md): soporta 3 match_types:
+      - ``exact`` (default): match literal de from_path con el path pedido
+      - ``wildcard``: ``*`` o ``?`` estilo glob, via fnmatch
+      - ``regex``: Python ``re.search`` contra el path pedido
+
+    ``resolve_redirect``Crud helper aplica prioridad exact > wildcard > regex
+    y dentro de cada tipo por ``priority DESC`` (más alto = más prioritario).
+    En caso de empate dentro del mismo tipo, recorre por longitud descending
+    de ``from_path`` (más específico primero).
+    """
     __tablename__ = "cms_redirects"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), nullable=False, index=True)
@@ -309,6 +320,9 @@ class CmsRedirect(Base):
     status_code = Column(Integer, default=301)
     # 301 permanent, 302 temporary
     is_active = Column(Boolean, default=True, index=True)
+    # F-04: tipo de matching + prioridad dentro del tipo
+    match_type = Column(String(20), nullable=False, default="exact", index=True)
+    priority = Column(Integer, nullable=False, default=0)
     hit_count = Column(Integer, default=0)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
