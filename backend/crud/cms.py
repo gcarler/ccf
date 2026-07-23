@@ -977,6 +977,15 @@ def delete_cms_section(db: Session, row: models.CmsSection) -> bool:
 
 def archive_cms_section(db: Session, row: models.CmsSection) -> models.CmsSection:
     row.status = "archived"
+    # H-04 (errorescms.md): al archivar de tambien se fija ``deleted_at``
+    # para que las queries de readiness que filtran por
+    # ``deleted_at.is_(None)`` (cms_v2.py:1181,1196,1205) y las que filtran
+    # por ``status != "archived"`` queden alineadas semanticamente.  Sin
+    # este seteo, archived_sections tenian status="archived" pero
+    # ``deleted_at`` None; los OR-compuestos los capturaban de todas
+    # formas (defense-in-depth), pero era una inconsistencia semantica
+    # que podia romper queries futuras que usen solo ``deleted_at``.
+    row.deleted_at = _utcnow()
     db.commit()
     db.refresh(row)
     return row
@@ -1657,7 +1666,11 @@ def update_announcement(
     )
     data = payload.model_dump(exclude_unset=True)
     previous_status = row.status
-    for field in ("title", "content", "category", "image_url", "is_featured", "status"):
+    # H-06 (errorescms.md): ``is_active`` ahora en el iter de fields
+    # mutables (antes no era propagado por el CRUD aunque el schema lo
+    # exponia).  Mismo patrón in-condicional para aceptar cualquier
+    # valor incluido False.
+    for field in ("title", "content", "category", "image_url", "is_featured", "status", "is_active"):
         if field in data and data[field] is not None:
             setattr(row, field, data[field])
     if previous_status != "published" and row.status == "published":
@@ -2086,6 +2099,9 @@ def create_cms_post(
         content=payload.content,
         featured_image_url=payload.featured_image_url,
         status=payload.status,
+        # H-07 (errorescms.md): persistir el locale opcional; si no
+        # viene, el schema/ORM usan el default ``server_default="es"``.
+        locale=payload.locale,
         seo_json=payload.seo_json or {},
         published_at=payload.published_at,
         created_by_persona_id=resolve_persona_id_for_user(db, user_id),
@@ -2121,6 +2137,9 @@ def update_cms_post(
         row.featured_image_url = data["featured_image_url"]
     if "status" in data and data["status"] is not None:
         row.status = str(data["status"]).strip()
+    # H-07 (errorescms.md): locale reprogramable via PATCH.
+    if "locale" in data and data["locale"] is not None:
+        row.locale = str(data["locale"]).strip()
     if "seo_json" in data and data["seo_json"] is not None:
         row.seo_json = data["seo_json"]
     if "published_at" in data:
