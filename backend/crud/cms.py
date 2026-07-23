@@ -11,6 +11,7 @@ pasar por el helper API `_get_scoped_*` correspondiente.
 
 import datetime as dt
 import logging
+import os
 import uuid
 
 from sqlalchemy import func, or_
@@ -2495,3 +2496,170 @@ def cleanup_old_publish_logs(
     deleted = stale.delete(synchronize_session=False)
     db.commit()
     return deleted
+
+
+# ── F-10 (errorescms.md): limpieza de media items huerfanos ─────────
+# Un ``CmsMediaItem`` es "huerfano" cuando:
+#   * esta activo (``status != "archived"``)
+#   * pertenece a la sede del actor (Axioma 3)
+#   * NO aparece entre los IDs recolectados por
+#     ``collect_section_media_ids`` de las secciones activas de los
+#     sites de esa sede.
+#
+# La mutacion pre-supone que el caller API ya resolvio el set de
+# ``referenced_ids`` (via ``collect_section_media_ids``) y lo pasa como
+# parametro.  Esto respeta la separacion API/CRUD de CCF: el helper que
+# escanea ``props_json`` vive en ``api/_cms_helpers`` (no en CRUD), y el
+# CRUD se ocupa solo de la mutacion + scope + guard H-05.
+#
+# ``dry_run`` retorna el count de items que se archivarian/borrarian sin
+# mutar.  ``permanent`` ademas hard-deletea el archivo fisico bajo
+# ``/root/ccf/uploads`` con el guard de path traversal de H-05; el row
+# tambien se hard-deletea (no se archiva) en ese modo, igual que
+# ``delete_cms_media_item(permanent=True)``.
+
+
+def cleanup_orphan_cms_media(
+    db: Session,
+    *,
+    sede_id: uuid.UUID | str | None,
+    referenced_media_ids: set[str],
+    actor_user_id: str | uuid.UUID,
+    dry_run: bool = False,
+    permanent: bool = False,
+) -> int:
+    """F-10 (errorescms.md): archiva (o borra) media items activos de la
+    sede del actor que NO esten referenciados por ninguna seccion.
+
+    Args:
+        db: ``Session`` de BD.
+        sede_id: ``sede_id`` del actor.  ``None`` solo para superadmin
+            canonico sin sede; en ese caso NO aplica la operacion (retorna 0)
+            — la limpieza de orfanos esta scopeada por sede y no se permite
+            ejecutar a nivel plataforma para evitar borrar media que otra
+            sede podria estar usando.
+        referenced_media_ids: set de IDs (como ``str`` canonico) que si
+            estan referenciados por secciones.  El caller los arma via
+            ``collect_section_media_ids``.  Un ID ausente de este set se
+            considera huerfano.
+        actor_user_id: Actor UUID del usuario autenticado (para la
+            revalidacion de scope y la huella de auditoria).
+        dry_run: Si True, solo retorna el count sin mutar.
+        permanent: Si True, hard-deletea el archivo fisico (con guard
+            H-05) y el row.  Si False, soft-archive (``status=archived``).
+
+    Returns:
+        Numero de items archivados/borrados (o que se procesarian en
+        ``dry_run``).
+    """
+    if sede_id is None:
+        # Superadmin sin sede no puede limpiar orfanos a nivel plataforma:
+        # el set de referenciados estaria mezclando sedes y borraria media
+        # ajena.  Forzar scope por sede.
+        return 0
+
+    txn_sede = str(sede_id)
+    # Axioma 3 — defense-in-depth en CRUD: re-check de que el actor
+    # efectivamente pertenece a ``sede_id`` (cubre callers no-API como
+    # el scheduler via la variante ``*_scheduled``).  El API layer ya
+    # pre-filtro por ``_actor_sede_or_none``; el re-check CRUD cierra
+    # el TOCTOU gap donde un caller directo al CRUD podria pedir limpiar
+    # otra sede pasando un ``sede_id`` ajeno + ``actor_user_id`` propio.
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    if actor_sede is not None and str(actor_sede) != txn_sede:
+        # El actor no pertenece a la sede que pretende limpiar.  No
+        # muta nada; el API layer traduce segun contrato (normally 403).
+        return 0
+
+    return _apply_cleanup_orphan_cms_media(
+        db,
+        sede_id=sede_id,
+        referenced_media_ids=referenced_media_ids,
+        dry_run=dry_run,
+        permanent=permanent,
+    )
+
+
+def cleanup_orphan_cms_media_scheduled(
+    db: Session,
+    *,
+    sede_id: uuid.UUID | str,
+    referenced_media_ids: set[str],
+    dry_run: bool = False,
+    permanent: bool = False,
+) -> int:
+    """F-10 — variante del cleanup para invocacion desde ``scheduler.py``.
+
+    No requiere ``actor_user_id`` (operacion de mantenimiento operacional,
+    no creacion/mutacion de UGC con autor); el scheduler corre sin sesion
+    HTTP igual que ``process_due_content`` (user_id=None en CmsPublishLog).
+
+    Axioma 3 sigue cubierto por el scope explicito ``sede_id``: la
+    mutacion solo opera sobre ``CmsMediaItem.sede_id == sede_id`` y no
+    hay forma de pasar una sede ajena desde el scheduler (la sede se
+    itera dentro del scheduler a partir de ``models.Sede``).
+
+    No expone ``actor_user_id`` porque no existe actor autenticado en
+    el contexto del cron; cualquier caller que SI tenga actor debe usar
+    ``cleanup_orphan_cms_media`` (API path) que aplica el defense-in-depth
+    re-check.
+    """
+    if sede_id is None:
+        return 0
+    return _apply_cleanup_orphan_cms_media(
+        db,
+        sede_id=sede_id,
+        referenced_media_ids=referenced_media_ids,
+        dry_run=dry_run,
+        permanent=permanent,
+    )
+
+
+def _apply_cleanup_orphan_cms_media(
+    db: Session,
+    *,
+    sede_id: uuid.UUID | str,
+    referenced_media_ids: set[str],
+    dry_run: bool = False,
+    permanent: bool = False,
+) -> int:
+    """Mutacion interna compartida por la API + la variante scheduled."""
+    referenced = {str(mid) for mid in referenced_media_ids}
+    active_media = (
+        db.query(models.CmsMediaItem)
+        .filter(models.CmsMediaItem.sede_id == sede_id)
+        .filter(models.CmsMediaItem.status != "archived")
+        .all()
+    )
+    orphans = [m for m in active_media if str(m.id) not in referenced]
+
+    if dry_run:
+        return len(orphans)
+
+    purged = 0
+    for row in orphans:
+        if permanent:
+            # Guard H-05: path traversal hardening antes de os.remove.
+            if row.url:
+                rel = row.url.lstrip("/").replace("uploads/", "", 1)
+                full = os.path.normpath(os.path.join("/root/ccf/uploads", rel))
+                if not full.startswith("/root/ccf/uploads"):
+                    # url malformado/posible traversal: no se borra el
+                    # archivo fisico, pero se archiva el row (mas seguro
+                    # que fallar el cleanup completo).
+                    row.status = "archived"
+                elif os.path.exists(full) and os.path.isfile(full):
+                    os.remove(full)
+                    db.delete(row)
+                else:
+                    # Archivo fisico ya ausente: borra el row.
+                    db.delete(row)
+            else:
+                db.delete(row)
+        else:
+            row.status = "archived"
+        purged += 1
+
+    if purged:
+        db.commit()
+    return purged

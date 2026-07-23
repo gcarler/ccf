@@ -95,10 +95,17 @@ def _run_scheduling_pass(db_session, dry_run: bool) -> dict[str, int | dict]:
     auditoria operacional con más de 90 días (default). El cron de
     cada minuto lo corre (idempotente: si no hay logs viejos,
     retorna 0 sin afectar métricas).
+
+    F-10 (errorescms.md): ``orphan_media_archived`` archiva media items
+    activos de cada sede que no esten referenciados por ninguna seccion
+    de los sites de esa sede.  Cron-suave: opcional via env
+    ``CMS_ORPHAN_MEDIA_CLEANUP=1`` (default off para no introducir
+    mutaciones adicionales en el cron de cada minuto sin opt-in).
     """
     from backend.crud.cms import (
         capture_daily_seo_snapshots,
         cleanup_old_publish_logs,
+        cleanup_orphan_cms_media_scheduled,
         process_due_content,
     )
 
@@ -118,7 +125,69 @@ def _run_scheduling_pass(db_session, dry_run: bool) -> dict[str, int | dict]:
         "sites_visited": snapshot_counts["sites_captured"],
     }
     counts["publish_logs_purged"] = publish_logs_purged
+
+    # F-10: cleanup de media items huerfanos por sede (opt-in via env).
+    # Default OFF: el cron de cada minuto no debe introducir mutaciones
+    # adicionales sin opt-in explicito del operador.  El endpoint API
+    # (``DELETE /cms/media/cleanup``) es la via primaria para limpiar.
+    orphan_media_archived = _maybe_run_orphan_media_cleanup(
+        db_session, dry_run=dry_run
+    )
+    counts["orphan_media_archived"] = orphan_media_archived
     return counts
+
+
+def _maybe_run_orphan_media_cleanup(db_session, *, dry_run: bool) -> int:
+    """F-10 (errorescms.md): archiva media huerfano por sede, opt-in.
+
+    El cleanup itera cada ``Sede``, recolecta los ``referenced_ids`` de
+    las secciones activas de sus sites via ``collect_section_media_ids``
+    (helper del paquete ``api._cms_helpers``), y archiva los items
+    activos no referenciados via ``cleanup_orphan_cms_media_scheduled``.
+
+    Opt-in: si ``CMS_ORPHAN_MEDIA_CLEANUP`` no esta en ``1``/``true``,
+    retorna 0 sin tocar la DB.  Esto evita que un cron de cada minuto
+    mute media sin consentimiento del operador; el endpoint API sigue
+    siendo la via primaria.
+    """
+    import os
+
+    from backend import models
+
+    if os.environ.get("CMS_ORPHAN_MEDIA_CLEANUP", "").lower() not in ("1", "true", "yes"):
+        return 0
+
+    from backend.api._cms_helpers import collect_section_media_ids
+    from backend.crud.cms import cleanup_orphan_cms_media_scheduled
+
+    total = 0
+    sedes = db_session.query(models.Sede).all()
+    for sede in sedes:
+        sites = (
+            db_session.query(models.CmsSite)
+            .filter(models.CmsSite.sede_id == sede.id)
+            .all()
+        )
+        referenced_ids: set[str] = set()
+        for site in sites:
+            sections = (
+                db_session.query(models.CmsSection)
+                .join(models.CmsPage, models.CmsPage.id == models.CmsSection.page_id)
+                .filter(models.CmsPage.site_id == site.id)
+                .filter(models.CmsSection.status != "archived")
+                .filter(models.CmsSection.deleted_at.is_(None))
+                .all()
+            )
+            for mid in collect_section_media_ids(sections):
+                referenced_ids.add(mid)
+        total += cleanup_orphan_cms_media_scheduled(
+            db_session,
+            sede_id=sede.id,
+            referenced_media_ids=referenced_ids,
+            dry_run=dry_run,
+            permanent=False,
+        )
+    return total
 
 
 def main() -> int:
@@ -146,6 +215,7 @@ def main() -> int:
         # una captura) y no debe disparar el heartbeat ni cada minuto.
         # ``publish_logs_purged`` (F-08) se incluye para evitar heartbeat
         # silencioso cuando el scheduler purga muchos logs viejos.
+        # ``orphan_media_archived`` (F-10) se incluye idem.
         seo = counts.get("seo") or {}
         work_done = (
             counts.get("pages_published", 0) > 0
@@ -153,6 +223,7 @@ def main() -> int:
             or counts.get("posts_archived", 0) > 0
             or seo.get("snapshots", 0) > 0
             or counts.get("publish_logs_purged", 0) > 0
+            or counts.get("orphan_media_archived", 0) > 0
         )
         if not work_done:
             log.info("No due content found")
@@ -160,12 +231,14 @@ def main() -> int:
 
         log.info(
             "Scheduler run: pages_published=%d pages_archived=%d "
-            "posts_archived=%d seo_snapshots=%d publish_logs_purged=%d",
+            "posts_archived=%d seo_snapshots=%d publish_logs_purged=%d "
+            "orphan_media_archived=%d",
             counts["pages_published"],
             counts["pages_archived"],
             counts["posts_archived"],
             seo.get("snapshots", 0),
             counts.get("publish_logs_purged", 0),
+            counts.get("orphan_media_archived", 0),
         )
         return 0
     except Exception as exc:
