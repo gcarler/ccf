@@ -4,6 +4,7 @@ from __future__ import annotations
 import datetime as dt
 import uuid
 
+import pytest
 from sqlalchemy import inspect
 
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
@@ -392,6 +393,201 @@ class TestApiPatchPostScheduling:
         )
         assert resp.status_code == 200, resp.text
         assert resp.json()["expires_at"] is not None
+
+
+# ── 4b. F-09 — published_at < expires_at validation ──────────────────────
+
+
+class TestF09PostPublishedBeforeExpires:
+    """F-09 (errorescms.md): ``CmsPost.published_at`` debe ser anterior a
+    ``expires_at`` cuando ambos son no-None.  La validación vive en el
+    CRUD (defense-in-depth) resolviendo valores efectivos contra el row
+    en PATCH parcial; la API traduce ``ValueError`` -> 422.
+    """
+
+    ADMIN_EMAIL = "cms-f09-admin@example.com"
+
+    def _headers(self, client):
+        return auth_headers(client, email=self.ADMIN_EMAIL)
+
+    def _seed(self, db_session):
+        seed_admin(db_session, email=self.ADMIN_EMAIL)
+        return _seed_site(db_session, key="f09-site")
+
+    # ── API: POST create ────────────────────────────────────────────────
+
+    def test_create_with_inverted_dates_returns_422(self, client, db_session):
+        site = self._seed(db_session)
+        resp = client.post(
+            f"/api/cms/v2/sites/{site.site_key}/posts",
+            headers=self._headers(client),
+            json={
+                "slug": "bad",
+                "title": "Bad",
+                "published_at": "2099-12-31T00:00:00Z",
+                "expires_at": "2099-01-01T00:00:00Z",
+            },
+        )
+        assert resp.status_code == 422, resp.text
+        assert "expires_at" in resp.text or "published_at" in resp.text
+
+    def test_create_with_valid_dates_returns_201(self, client, db_session):
+        site = self._seed(db_session)
+        resp = client.post(
+            f"/api/cms/v2/sites/{site.site_key}/posts",
+            headers=self._headers(client),
+            json={
+                "slug": "ok",
+                "title": "OK",
+                "published_at": "2099-01-01T00:00:00Z",
+                "expires_at": "2099-12-31T00:00:00Z",
+            },
+        )
+        assert resp.status_code == 201, resp.text
+
+    def test_create_with_only_published_at_returns_201(self, client, db_session):
+        site = self._seed(db_session)
+        resp = client.post(
+            f"/api/cms/v2/sites/{site.site_key}/posts",
+            headers=self._headers(client),
+            json={"slug": "pub-only", "title": "Pub", "published_at": "2099-06-01T00:00:00Z"},
+        )
+        assert resp.status_code == 201, resp.text
+
+    # ── API: PATCH update ───────────────────────────────────────────────
+
+    def test_patch_both_inverted_returns_422(self, client, db_session):
+        site = self._seed(db_session)
+        _make_post(db_session, site.id, slug="both-inv")
+        resp = client.patch(
+            f"/api/cms/v2/sites/{site.site_key}/posts/both-inv",
+            headers=self._headers(client),
+            json={
+                "published_at": "2099-12-31T00:00:00Z",
+                "expires_at": "2099-01-01T00:00:00Z",
+            },
+        )
+        assert resp.status_code == 422, resp.text
+
+    def test_patch_only_expires_before_existing_published_returns_422(self, client, db_session):
+        # PATCH parcial: solo trae expires_at < published_at ya en row.
+        site = self._seed(db_session)
+        _make_post(
+            db_session, site.id, slug="exp-vs-pub",
+            published_at=dt.datetime(2099, 12, 31, tzinfo=dt.timezone.utc),
+        )
+        resp = client.patch(
+            f"/api/cms/v2/sites/{site.site_key}/posts/exp-vs-pub",
+            headers=self._headers(client),
+            json={"expires_at": "2099-01-01T00:00:00Z"},
+        )
+        assert resp.status_code == 422, resp.text
+
+    def test_patch_only_published_after_existing_expires_returns_422(self, client, db_session):
+        # PATCH parcial inverso: solo trae published_at > expires_at ya en row.
+        site = self._seed(db_session)
+        _make_post(
+            db_session, site.id, slug="pub-vs-exp",
+            expires_at=dt.datetime(2099, 1, 1, tzinfo=dt.timezone.utc),
+        )
+        resp = client.patch(
+            f"/api/cms/v2/sites/{site.site_key}/posts/pub-vs-exp",
+            headers=self._headers(client),
+            json={"published_at": "2099-12-31T00:00:00Z"},
+        )
+        assert resp.status_code == 422, resp.text
+
+    def test_patch_valid_dates_returns_200(self, client, db_session):
+        site = self._seed(db_session)
+        _make_post(db_session, site.id, slug="ok-patch")
+        resp = client.patch(
+            f"/api/cms/v2/sites/{site.site_key}/posts/ok-patch",
+            headers=self._headers(client),
+            json={
+                "published_at": "2099-01-01T00:00:00Z",
+                "expires_at": "2099-12-31T00:00:00Z",
+            },
+        )
+        assert resp.status_code == 200, resp.text
+
+    def test_patch_clearing_expires_keeps_published_returns_200(self, client, db_session):
+        # expires_at=None desactiva la restricción aunque published_at quede.
+        site = self._seed(db_session)
+        _make_post(
+            db_session, site.id, slug="clear-exp",
+            published_at=dt.datetime(2099, 6, 1, tzinfo=dt.timezone.utc),
+            expires_at=dt.datetime(2099, 12, 31, tzinfo=dt.timezone.utc),
+        )
+        resp = client.patch(
+            f"/api/cms/v2/sites/{site.site_key}/posts/clear-exp",
+            headers=self._headers(client),
+            json={"expires_at": None},
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["expires_at"] is None
+
+    def test_patch_published_equals_expires_returns_422(self, client, db_session):
+        # Frontera: published_at == expires_at debe rechazarse (>=, no >).
+        site = self._seed(db_session)
+        _make_post(db_session, site.id, slug="eq-dates")
+        same = "2099-06-01T00:00:00Z"
+        resp = client.patch(
+            f"/api/cms/v2/sites/{site.site_key}/posts/eq-dates",
+            headers=self._headers(client),
+            json={"published_at": same, "expires_at": same},
+        )
+        assert resp.status_code == 422, resp.text
+
+    # ── CRUD directo (defense-in-depth sin pasar por API) ────────────────
+
+    def test_crud_create_inverted_raises_valueError(self, db_session):
+        from backend import crud, models, schemas
+
+        site = models.CmsSite(
+            id=uuid.uuid4(), site_key="f09-crud-crt", name="F09",
+            base_path="/f09c", is_active=True,
+        )
+        db_session.add(site)
+        db_session.flush()
+        payload = schemas.CmsPostCreate(
+            slug="bad-crud",
+            title="Bad CRUD",
+            published_at=dt.datetime(2099, 12, 31, tzinfo=dt.timezone.utc),
+            expires_at=dt.datetime(2099, 1, 1, tzinfo=dt.timezone.utc),
+        )
+        with pytest.raises(ValueError, match="earlier than"):
+            crud.create_cms_post(db_session, site.id, payload, user_id=None)
+
+    def test_crud_update_inverted_raises_valueError(self, db_session):
+        from backend import crud, models, schemas
+
+        site = models.CmsSite(
+            id=uuid.uuid4(), site_key="f09-crud-upd", name="F09u",
+            base_path="/f09u", is_active=True,
+        )
+        db_session.add(site)
+        db_session.flush()
+        row = models.CmsPost(
+            id=uuid.uuid4(), site_id=site.id, slug="upd-crud", title="Upd",
+            status="draft", locale="es",
+        )
+        db_session.add(row)
+        db_session.commit()
+
+        payload = schemas.CmsPostUpdate(
+            published_at=dt.datetime(2099, 12, 31, tzinfo=dt.timezone.utc),
+            expires_at=dt.datetime(2099, 1, 1, tzinfo=dt.timezone.utc),
+        )
+        with pytest.raises(ValueError, match="earlier than"):
+            crud.update_cms_post(db_session, row, payload, user_id=None)
+
+        # sanity: orden correcto no lanza y persiste
+        ok = schemas.CmsPostUpdate(
+            published_at=dt.datetime(2099, 1, 1, tzinfo=dt.timezone.utc),
+            expires_at=dt.datetime(2099, 12, 31, tzinfo=dt.timezone.utc),
+        )
+        updated = crud.update_cms_post(db_session, row, ok, user_id=None)
+        assert updated.published_at is not None and updated.expires_at is not None
 
 
 # ── 5. Multi-tenant boundary (Axioma 3) ──────────────────────────────────

@@ -2112,12 +2112,38 @@ def get_cms_post_by_id(db: Session, post_id: uuid.UUID):
     return db.query(models.CmsPost).filter(models.CmsPost.id == post_id).first()
 
 
+def _assert_post_published_before_expires(
+    published_at: dt.datetime | None, expires_at: dt.datetime | None
+) -> None:
+    """F-09: valida coherencia temporal de ``CmsPost``.
+
+    Un post con auto-archivo (``expires_at``) debe publicarse antes de
+    expirar; si ``published_at >= expires_at`` el scheduler de
+    auto-archivo entraría en un estado contradictorio (expira antes o en
+    el mismo instante de publicar).  Solo valida cuando AMBOS son
+    no-None — cualquiera de los dos en None desactiva la restricción
+    (``published_at=None`` significa no publicado; ``expires_at=None``
+    significa sin auto-archivo).
+
+    Compara normalizando a UTC aware para evitar el bug de tz-info loss
+    que ya documentamos para SQLite (ver MEMORY §SQLite tz-info loss
+    invariant).
+    """
+    if published_at is None or expires_at is None:
+        return
+    pub = published_at if published_at.tzinfo is not None else published_at.replace(tzinfo=dt.timezone.utc)
+    exp = expires_at if expires_at.tzinfo is not None else expires_at.replace(tzinfo=dt.timezone.utc)
+    if pub >= exp:
+        raise ValueError("published_at must be earlier than expires_at")
+
+
 def create_cms_post(
     db: Session,
     site_id: uuid.UUID,
     payload: schemas.CmsPostCreate,
     user_id: uuid.UUID | None,
 ):
+    _assert_post_published_before_expires(payload.published_at, payload.expires_at)
     row = models.CmsPost(
         site_id=site_id,
         slug=payload.slug.strip().lower(),
@@ -2175,6 +2201,9 @@ def update_cms_post(
     # reset explícito.
     if "expires_at" in data:
         row.expires_at = data["expires_at"]
+    # F-09: validar coherencia temporal contra los valores efectivos
+    # (PATCH parcial: combinar payload con el estado actual del row).
+    _assert_post_published_before_expires(row.published_at, row.expires_at)
     if user_id is not None:
         row.updated_by_persona_id = resolve_persona_id_for_user(db, user_id)
     db.flush()
