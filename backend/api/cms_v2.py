@@ -2581,7 +2581,10 @@ def create_post(
         raise HTTPException(status_code=422, detail="slug is required")
     if crud.get_cms_post(db, site.id, payload.slug):
         raise HTTPException(status_code=409, detail="slug already exists")
-    row = crud.create_cms_post(db, site.id, payload, current_user.id)
+    try:
+        row = crud.create_cms_post(db, site.id, payload, current_user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
     p = schemas.CmsPostReadWithTaxonomies.model_validate(row)
     p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, row.id)]
     p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, row.id)]
@@ -2622,11 +2625,14 @@ def patch_post(
         "archived",
     }:
         raise HTTPException(status_code=422, detail="invalid status")
-    # Scheduled publish + auto-archive (2026-07-06): posts manejan
-    # ``expires_at`` opcional; no tienen pre-condition con ``published_at``
-    # aquí porque ``published_at`` puede ser None (auto-published por
-    # ``publish`` workflow). Sin validación extra.
-    updated = crud.update_cms_post(db, row, payload, current_user.id)
+    # F-09 (errorescms.md): validación de coherencia temporal
+    # ``published_at < expires_at`` vive en el CRUD (defense-in-depth,
+    # cubre callers no-API) resolviendo los valores efectivos contra el
+    # estado actual del row; aquí solo mapeamos ValueError -> 422.
+    try:
+        updated = crud.update_cms_post(db, row, payload, current_user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
     p = schemas.CmsPostReadWithTaxonomies.model_validate(updated)
     p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, updated.id)]
     p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, updated.id)]
