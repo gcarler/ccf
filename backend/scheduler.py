@@ -70,7 +70,8 @@ def _get_db_session(settings: Any):
 
 
 def _run_scheduling_pass(db_session, dry_run: bool) -> dict[str, int | dict]:
-    """Delega a ``crud.process_due_content`` + ``capture_daily_seo_snapshots``.
+    """Delega a ``crud.process_due_content`` + ``capture_daily_seo_snapshots``
+    + ``cleanup_old_publish_logs``.
 
     La capa CRUD centraliza las queries + transiciones + audit logging;
     esta función es un orquestador thin que sólo materializa el contexto
@@ -81,6 +82,7 @@ def _run_scheduling_pass(db_session, dry_run: bool) -> dict[str, int | dict]:
         {
           "pages_published": int, "pages_archived": int, "posts_archived": int,
           "seo": {"snapshots": int, "skipped": int, "sites_visited": int},
+          "publish_logs_purged": int,
         }
 
     El dict anidado ``seo`` se separa del flat-list de counts
@@ -88,11 +90,24 @@ def _run_scheduling_pass(db_session, dry_run: bool) -> dict[str, int | dict]:
     ``main()`` no considere ruido a las snapshots idempotentes (el
     día siguiente a uno con captura, ``skipped`` vale N>0 y un flat
     check lo consideraría "trabajo realizado").
+
+    F-08 (errorescms.md): ``publish_logs_purged`` purga logs de
+    auditoria operacional con más de 90 días (default). El cron de
+    cada minuto lo corre (idempotente: si no hay logs viejos,
+    retorna 0 sin afectar métricas).
     """
-    from backend.crud.cms import capture_daily_seo_snapshots, process_due_content
+    from backend.crud.cms import (
+        capture_daily_seo_snapshots,
+        cleanup_old_publish_logs,
+        process_due_content,
+    )
 
     counts = process_due_content(db_session, dry_run=dry_run)
     snapshot_counts = capture_daily_seo_snapshots(
+        db_session, dry_run=dry_run
+    )
+    # F-08: limpieza periodica de CmsPublishLog (retention 90 dias default)
+    publish_logs_purged = cleanup_old_publish_logs(
         db_session, dry_run=dry_run
     )
     if not dry_run:
@@ -102,6 +117,7 @@ def _run_scheduling_pass(db_session, dry_run: bool) -> dict[str, int | dict]:
         "skipped": snapshot_counts["skipped_count"],
         "sites_visited": snapshot_counts["sites_captured"],
     }
+    counts["publish_logs_purged"] = publish_logs_purged
     return counts
 
 
@@ -128,12 +144,15 @@ def main() -> int:
         # uno de los counts planos o el sub-conteo ``seo.snapshots`` es
         # positivo. ``seo.skipped`` es idempotente (el día siguiente a
         # una captura) y no debe disparar el heartbeat ni cada minuto.
+        # ``publish_logs_purged`` (F-08) se incluye para evitar heartbeat
+        # silencioso cuando el scheduler purga muchos logs viejos.
         seo = counts.get("seo") or {}
         work_done = (
             counts.get("pages_published", 0) > 0
             or counts.get("pages_archived", 0) > 0
             or counts.get("posts_archived", 0) > 0
             or seo.get("snapshots", 0) > 0
+            or counts.get("publish_logs_purged", 0) > 0
         )
         if not work_done:
             log.info("No due content found")
@@ -141,11 +160,12 @@ def main() -> int:
 
         log.info(
             "Scheduler run: pages_published=%d pages_archived=%d "
-            "posts_archived=%d seo_snapshots=%d",
+            "posts_archived=%d seo_snapshots=%d publish_logs_purged=%d",
             counts["pages_published"],
             counts["pages_archived"],
             counts["posts_archived"],
             seo.get("snapshots", 0),
+            counts.get("publish_logs_purged", 0),
         )
         return 0
     except Exception as exc:

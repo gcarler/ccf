@@ -2446,3 +2446,52 @@ def get_public_cms_post(db: Session, site_id: uuid.UUID, slug: str):
         )
         .first()
     )
+
+
+# ── F-08 (errorescms.md): limpieza periodica de CmsPublishLog ────────
+# La tabla ``cms_publish_logs`` crece indefinidamente: cada transicion de
+# ``CmsPage`` (publish/archive/schedule) y ``CmsPost`` (archive) genera un
+# row. Sin cleanup, millones de logs antiguos deterioran el rendimiento de
+# queries de auditorolve y auditoria. ``cleanup_old_publish_logs`` purge
+# los logs con ``created_at < now - retention_days``.
+#
+# ``CmsPublishLog`` es un log de auditoria operacional (NO pastoral ni
+# transaccional), asi que hard-delete es seguro aqui (REGLAS.md §6 solo
+# protege ``personas`` y entidades pastorales/transaccionales).
+# ``actor_persona_id`` referencia un FK a ``personas.id`` pero es nullable
+# y solo para trazabilidad — no es la identidad del row.
+
+
+def cleanup_old_publish_logs(
+    db: Session,
+    *,
+    retention_days: int = 90,
+    dry_run: bool = False,
+    now: dt.datetime | None = None,
+) -> int:
+    """F-08 (errorescms.md): purga ``CmsPublishLog`` con ``created_at`` anterior
+    a ``now - retention_days``.
+
+    ``retention_days`` default 90 conserva ~3 meses de historico (suficiente
+    para auditoria reciente y debugging). El cron job del scheduler lo
+    invoca con el default; un operador puede llamarlo manualmente con
+    otra ventana si necesita mas/menos retencion.
+
+    Args:
+        db: Session de BD.
+        retention_days: Días a conservar desde ``now``. Default 90.
+        dry_run: Si True, solo retorna el count sin borrar.
+        now: Override opcional del timestamp (para tests deterministas).
+
+    Returns:
+        Número de logs purgados (o que se purgarían en dry_run).
+    """
+    cutoff = (now or _now_utc()) - dt.timedelta(days=max(1, retention_days))
+    stale = db.query(models.CmsPublishLog).filter(
+        models.CmsPublishLog.created_at < cutoff
+    )
+    if dry_run:
+        return stale.count()
+    deleted = stale.delete(synchronize_session=False)
+    db.commit()
+    return deleted
