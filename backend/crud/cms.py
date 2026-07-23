@@ -871,6 +871,71 @@ def update_cms_page(
     return row
 
 
+def clone_cms_page(
+    db: Session,
+    source: models.CmsPage,
+    new_slug: str,
+    user_id: uuid.UUID | None,
+    *,
+    new_title: str | None = None,
+):
+    """Clone a CMS page with all its active sections (F-02).
+
+    La página clonada siempre arranca como ``draft`` sin
+    ``published_version_id`` y sin schedule (``publish_at``/``expires_at``
+    en None).  Las secciones se duplican con nuevos IDs y nuevos
+    ``section_key`` (UUID hex) para evitar colisiones de unique-key.
+
+    El caller API es responsable de verificar scope (``_get_scoped_site_or_404``)
+    y unicidad del slug destino.  Este helper asume que ``new_slug`` ya
+    pasó por ``_slugify`` y no existe en el site.
+    """
+    persona_id = resolve_persona_id_for_user(db, user_id)
+    cloned_page = models.CmsPage(
+        site_id=source.site_id,
+        slug=new_slug,
+        title=(new_title or source.title).strip(),
+        status="draft",
+        seo_json=dict(source.seo_json or {}),
+        published_version_id=None,
+        locale=source.locale,
+        publish_at=None,
+        expires_at=None,
+        created_by_persona_id=persona_id,
+        updated_by_persona_id=persona_id,
+    )
+    db.add(cloned_page)
+    db.flush()  # populate cloned_page.id for FK sections
+
+    # Clone active sections (exclude archived/soft-deleted)
+    sections, _ = list_cms_sections(db, source.id, limit=1000)
+    active_sections = [
+        s for s in sections
+        if s.status != "archived" and s.deleted_at is None
+    ]
+    for source_section in active_sections:
+        cloned_section = models.CmsSection(
+            page_id=cloned_page.id,
+            section_key=uuid.uuid4().hex,
+            type=source_section.type,
+            props_json=dict(source_section.props_json or {}),
+            sort_order=source_section.sort_order,
+            is_visible=source_section.is_visible,
+            status="active",
+            is_global=source_section.is_global,
+            global_key=None,  # don't clone global_key uniqueness
+            locale=source_section.locale,
+            created_by_persona_id=persona_id,
+            updated_by_persona_id=persona_id,
+        )
+        db.add(cloned_section)
+
+    if not _commit_or_conflict(db):
+        return None
+    db.refresh(cloned_page)
+    return cloned_page
+
+
 def delete_cms_page(db: Session, row: models.CmsPage) -> bool:
     row.status = "archived"
     db.commit()

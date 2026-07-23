@@ -144,6 +144,7 @@ from backend.schemas.cms import (
                                      CmsMenuRead,
                                      CmsMenuUpdate,
                                      CmsMetrics,
+                                     CmsPageClone,
                                      CmsPageCreate,
                                      CmsPageRead,
                                      CmsPageUpdate,

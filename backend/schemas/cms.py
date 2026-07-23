@@ -228,6 +228,19 @@ class CmsPageUpdate(BaseModel):
     expires_at: Optional[datetime] = None
 
 
+class CmsPageClone(BaseModel):
+    """Body for POST /cms/v2/sites/{site_key}/pages/{slug}/clone (F-02).
+
+    Clona una página existente con todas sus secciones.  La página clonada
+    siempre arranca como ``draft`` (sin ``published_version_id``, sin
+    ``publish_at``/``expires_at`` schedule) para que el editor la revise y
+    publique manualmente via el workflow endpoint.
+    """
+
+    new_slug: str = Field(min_length=1, max_length=160)
+    new_title: Optional[str] = None
+
+
 class CmsPageRead(BaseModel):
     id: UUID
     site_id: UUID

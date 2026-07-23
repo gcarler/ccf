@@ -532,3 +532,121 @@ class TestSectionTypes:
     def test_list_only_active(self, full):
         c, h = full["c"], full["h"]
         assert _ok(c.get("/api/cms/v2/section-types?only_active=true", headers=h).status_code)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CLONE PAGE (F-02)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestClonePageF02:
+    """F-02: POST /cms/v2/sites/{site_key}/pages/{slug}/clone."""
+
+    def test_clone_page_with_sections(self, full):
+        c, h = full["c"], full["h"]
+        site_key = f"clone-{uuid.uuid4().hex[:6]}"
+
+        # Create site + source page
+        assert _ok(c.post("/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone Site", "base_path": "/cl"}, headers=h).status_code)
+        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages", json={"slug": "source", "title": "Source Page", "status": "draft"}, headers=h).status_code)
+
+        # Add two sections to source page
+        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages/source/sections", json={"type": "hero", "props_json": {"title": "Hello"}}, headers=h).status_code)
+        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages/source/sections", json={"type": "rich_text", "props_json": {"content": "<p>Body</p>"}}, headers=h).status_code)
+
+        # Clone
+        resp = c.post(
+            f"/api/cms/v2/sites/{site_key}/pages/source/clone",
+            json={"new_slug": "cloned-page", "new_title": "Cloned Page"},
+            headers=h,
+        )
+        assert resp.status_code == 201, f"clone: {resp.status_code} {resp.text}"
+        body = resp.json()
+        assert body["slug"] == "cloned-page"
+        assert body["title"] == "Cloned Page"
+        assert body["status"] == "draft"
+        assert body["published_version_id"] is None
+        assert body["publish_at"] is None
+        assert body["expires_at"] is None
+
+        # Verify cloned page has same number of sections
+        sections_resp = c.get(f"/api/cms/v2/sites/{site_key}/pages/cloned-page/sections", headers=h)
+        assert _ok(sections_resp.status_code)
+        assert sections_resp.json()["total"] == 2
+
+    def test_clone_page_default_title(self, full):
+        """Clone without new_title uses source title."""
+        c, h = full["c"], full["h"]
+        site_key = f"clonet-{uuid.uuid4().hex[:6]}"
+
+        assert _ok(c.post("/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone T", "base_path": "/ct"}, headers=h).status_code)
+        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages", json={"slug": "orig", "title": "Original Title", "status": "draft"}, headers=h).status_code)
+
+        resp = c.post(
+            f"/api/cms/v2/sites/{site_key}/pages/orig/clone",
+            json={"new_slug": "cloned-t"},
+            headers=h,
+        )
+        assert resp.status_code == 201, f"clone: {resp.status_code} {resp.text}"
+        assert resp.json()["title"] == "Original Title"
+
+    def test_clone_page_duplicate_slug_409(self, full):
+        """Clone with a slug that already exists returns 409."""
+        c, h = full["c"], full["h"]
+        site_key = f"cloned-{uuid.uuid4().hex[:6]}"
+
+        assert _ok(c.post("/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone D", "base_path": "/cd"}, headers=h).status_code)
+        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages", json={"slug": "page-a", "title": "A", "status": "draft"}, headers=h).status_code)
+        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages", json={"slug": "page-b", "title": "B", "status": "draft"}, headers=h).status_code)
+
+        resp = c.post(
+            f"/api/cms/v2/sites/{site_key}/pages/page-a/clone",
+            json={"new_slug": "page-b"},
+            headers=h,
+        )
+        assert resp.status_code == 409
+
+    def test_clone_page_same_slug_422(self, full):
+        """Clone with same slug as source returns 422."""
+        c, h = full["c"], full["h"]
+        site_key = f"clones-{uuid.uuid4().hex[:6]}"
+
+        assert _ok(c.post("/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone S", "base_path": "/cs"}, headers=h).status_code)
+        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages", json={"slug": "same", "title": "Same", "status": "draft"}, headers=h).status_code)
+
+        resp = c.post(
+            f"/api/cms/v2/sites/{site_key}/pages/same/clone",
+            json={"new_slug": "same"},
+            headers=h,
+        )
+        assert resp.status_code == 422
+
+    def test_clone_page_not_found(self, full):
+        """Clone a non-existent page returns 404."""
+        c, h = full["c"], full["h"]
+        site_key = f"clonen-{uuid.uuid4().hex[:6]}"
+
+        assert _ok(c.post("/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone N", "base_path": "/cn"}, headers=h).status_code)
+
+        resp = c.post(
+            f"/api/cms/v2/sites/{site_key}/pages/nonexistent/clone",
+            json={"new_slug": "whatever"},
+            headers=h,
+        )
+        assert resp.status_code == 404
+
+    def test_clone_page_empty_slug_422(self, full):
+        """Clone with empty new_slug returns 422 (M-02 validation)."""
+        c, h = full["c"], full["h"]
+        site_key = f"clonee-{uuid.uuid4().hex[:6]}"
+
+        assert _ok(c.post("/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone E", "base_path": "/ce"}, headers=h).status_code)
+        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages", json={"slug": "source", "title": "S", "status": "draft"}, headers=h).status_code)
+
+        resp = c.post(
+            f"/api/cms/v2/sites/{site_key}/pages/source/clone",
+            json={"new_slug": ""},
+            headers=h,
+        )
+        assert resp.status_code == 422
+
