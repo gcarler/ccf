@@ -53,7 +53,7 @@ export default function StrategyOverviewForm({
   onSave,
 }: OverviewFormProps) {
   return (
-    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg p-4 space-y-4">
+    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg p-4 space-y-4">
       <div>
         <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Nombre</label>
         <input type="text" value={editName} onChange={e => setEditName(e.target.value)} readOnly={!canManage}

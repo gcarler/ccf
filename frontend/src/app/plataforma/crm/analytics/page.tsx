@@ -387,7 +387,7 @@ function WikiView({
                 value={wikiNotes}
                 onChange={(event) => onChange(event.target.value)}
                 placeholder="Documenta definiciones de metricas, fuentes de datos, supuestos y acuerdos de interpretacion para liderazgo pastoral..."
-                className="min-h-[320px] w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-[hsl(var(--text-secondary))]"
+                className="min-h-[320px] w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-black/20 dark:text-[hsl(var(--text-secondary))]"
             />
         </div>
     );

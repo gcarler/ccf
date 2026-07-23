@@ -99,7 +99,7 @@ export default function DocumentosPage() {
 
   return (
     <WorkspaceLayout sidebarTitle="Documentos" sidebarSections={SECTIONS}>
-      <div className="h-full overflow-y-auto bg-[#f8fafc] dark:bg-[#1E1F21] font-display scrollbar-thin">
+      <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] font-display scrollbar-thin">
         <div className="w-full px-4 py-3 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export default function DocumentosPage() {
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
-              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar documentos..." className="pl-9 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[12px] w-full focus:ring-2 focus:ring-blue-500/20" />
+              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar documentos..." className="pl-9 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[12px] w-full focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]" />
             </div>
           </div>
 
@@ -174,15 +174,15 @@ export default function DocumentosPage() {
               filtered.map((doc) => {
                 const Icon = typeIcons[doc.document_type] || FileText;
                 return (
-                  <motion.div key={doc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 shadow-sm hover:shadow-lg hover:border-blue-500/20 transition-all group">
+                  <motion.div key={doc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 shadow-sm hover:shadow-lg hover:border-[hsl(var(--primary)/0.2)] transition-all group">
                     <div className="flex items-start justify-between mb-2">
-                      <div className="size-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] flex items-center justify-center"><Icon size={16} /></div>
-                      <button onClick={() => handleDelete(doc.id)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-500 transition-all"><Trash2 size={12} /></button>
+                      <div className="size-8 rounded-lg bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] flex items-center justify-center"><Icon size={16} /></div>
+                      <button onClick={() => handleDelete(doc.id)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] transition-all"><Trash2 size={12} /></button>
                     </div>
                     <h3 className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate mb-1">{doc.title}</h3>
                     <p className="text-[10px] text-[hsl(var(--text-secondary))] line-clamp-2 mb-2">{doc.description || "Sin descripción"}</p>
                     {doc.ai_summary && (
-                      <div className="mb-2 p-1.5 rounded-md bg-fuchsia-50 dark:bg-fuchsia-900/10 text-[10px] text-fuchsia-700 dark:text-fuchsia-300">
+                      <div className="mb-2 p-1.5 rounded-md bg-[hsl(var(--primary)/0.08)] text-[10px] text-[hsl(var(--primary))]">
                         <span className="font-bold">IA:</span> {doc.ai_summary}
                       </div>
                     )}
@@ -191,7 +191,7 @@ export default function DocumentosPage() {
                         <span key={t.id} className="px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white" style={{ backgroundColor: t.color }}>{t.name}</span>
                       ))}
                       {doc.ai_tags?.map((tag: string, idx: number) => (
-                        <span key={idx} className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/20 dark:text-fuchsia-300">{tag}</span>
+                        <span key={idx} className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))]">{tag}</span>
                       ))}
                     </div>
                     <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="mt-2 block text-[10px] font-bold text-[hsl(var(--primary))] hover:underline">Abrir archivo →</a>

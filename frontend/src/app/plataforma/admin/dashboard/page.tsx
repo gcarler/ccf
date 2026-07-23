@@ -148,7 +148,7 @@ export default function AdminDashboard() {
                                         initial={{ height: 0 }} animate={{ height: `${h}%` }}
                                         className={clsx(
                                             "w-full rounded-t-2xl transition-all duration-700 relative",
-                                            i === 6 ? "bg-[hsl(var(--primary))] shadow-[0_0_20px_rgba(37,99,235,0.4)]" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 opacity-60 group-hover/bar:opacity-100"
+                                            i === 6 ? "bg-[hsl(var(--primary))] shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 opacity-60 group-hover/bar:opacity-100"
                                         )}
                                     >
                                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity bg-[hsl(var(--bg-muted))] text-white px-2 py-1 rounded font-semibold">
@@ -169,11 +169,11 @@ export default function AdminDashboard() {
                         </div>
                         <div className="space-y-4">
                             {[
-                                { title: 'Nueva Inscripción', desc: 'Ricardo Mendez se unió a "Fundamentos de la Fe"', time: 'Hace 5 min', icon: UserPlus, color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50' },
-                                { title: 'Donación Recibida', desc: 'Ofrenda especial pro-construcción confirmada', time: 'Hace 12 min', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50' },
-                                { title: 'Examen Completado', desc: 'Elena Rodriguez aprobó "Historia de la Iglesia"', time: 'Hace 45 min', icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                                { title: 'Nueva Inscripción', desc: 'Ricardo Mendez se unió a "Fundamentos de la Fe"', time: 'Hace 5 min', icon: UserPlus, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info-muted))]' },
+                                { title: 'Donación Recibida', desc: 'Ofrenda especial pro-construcción confirmada', time: 'Hace 12 min', icon: Heart, color: 'text-[hsl(var(--destructive))]', bg: 'bg-[hsl(var(--destructive)/0.08)]' },
+                                { title: 'Examen Completado', desc: 'Elena Rodriguez aprobó "Historia de la Iglesia"', time: 'Hace 45 min', icon: Target, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success-muted))]' },
                             ].map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg hover:border-blue-500/20 transition-all group cursor-pointer shadow-sm hover:shadow-md">
+                                <div key={idx} className="flex items-center gap-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg hover:border-[hsl(var(--primary))/0.2] transition-all group cursor-pointer shadow-sm hover:shadow-md">
                                     <div className={clsx("size-7 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform", item.bg, "dark:bg-white/10", item.color)}>
                                         <item.icon size={28} />
                                     </div>
@@ -193,7 +193,7 @@ export default function AdminDashboard() {
                     {/* ACADEMY PERFORMANCE SECTION - MVP-006 */}
                     <section className="pt-10 space-y-3">
                          <div className="flex items-center gap-4 px-4">
-                            <div className="size-10 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                            <div className="size-10 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-lg shadow-[hsl(var(--primary))/0.2]">
                                 <Target size={20} />
                             </div>
                             <div>
@@ -222,7 +222,7 @@ export default function AdminDashboard() {
                              <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 px-2">Cursos más Populares</h4>
                              <div className="space-y-4">
                                 {academy?.top_courses.map((course, i) => (
-                                    <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 group hover:border-blue-500/20 transition-all">
+                                    <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 group hover:border-[hsl(var(--primary))/0.2] transition-all">
                                         <div className="flex items-center gap-4">
                                             <span className="font-semibold text-[hsl(var(--text-secondary))]">0{i+1}</span>
                                             <span className="text-sm font-semibold group-hover:text-[hsl(var(--primary))] transition-colors">{course.title}</span>
@@ -241,7 +241,7 @@ export default function AdminDashboard() {
                 {/* Sidebar Contextual BI */}
                 <aside className="lg:col-span-4 space-y-3">
                     <div className="bg-[hsl(var(--bg-muted))] rounded-lg p-4 text-white shadow-2xl space-y-3 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 -mr-20 -mt-20 size-10 bg-blue-600/20 rounded-full blur-[80px] group-hover:bg-blue-600/30 transition-all duration-1000" />
+                        <div className="absolute top-0 right-0 -mr-20 -mt-20 size-10 bg-[hsl(var(--primary))/0.2] rounded-full blur-[80px] group-hover:bg-[hsl(var(--primary))/0.3] transition-all duration-1000" />
                         
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-3">
@@ -251,8 +251,8 @@ export default function AdminDashboard() {
                             <div className="relative size-56 mx-auto mb-3">
                                 <svg className="size-full -rotate-90 drop-shadow-2xl" viewBox="0 0 36 36">
                                     <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
-                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#2563eb" strokeWidth="4.5" strokeDasharray="75 100" />
-                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#334155" strokeWidth="4.5" strokeDasharray="25 100" strokeDashoffset="-75" />
+                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--primary))" strokeWidth="4.5" strokeDasharray="75 100" />
+                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--surface-2))" strokeWidth="4.5" strokeDasharray="25 100" strokeDashoffset="-75" />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                                     <span className="text-lg font-bold tracking-tighter">75%</span>
@@ -315,8 +315,8 @@ function ModalityCard({ title, stats, icon: Icon, color }: any) {
     if (!stats) return <div className="h-48 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />;
     
     const colorMap: any = {
-        blue: { text: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50', bar: 'bg-[hsl(var(--primary))]', border: 'border-blue-100' },
-        amber: { text: 'text-amber-600', bg: 'bg-amber-50', bar: 'bg-amber-600', border: 'border-amber-100' }
+        blue: { text: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info-muted))]', bar: 'bg-[hsl(var(--primary))]', border: 'border-[hsl(var(--primary))/0.2]' },
+        amber: { text: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning-muted))]', bar: 'bg-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning))/0.2]' }
     };
     const c = colorMap[color];
 
@@ -335,7 +335,7 @@ function ModalityCard({ title, stats, icon: Icon, color }: any) {
             <div>
                 <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wider">{title}</h4>
                 <div className="flex items-center gap-2 mt-1">
-                    <div className="size-1.5 rounded-full bg-emerald-500" />
+                    <div className="size-1.5 rounded-full bg-[hsl(var(--success))]" />
                     <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{stats.completed} de {stats.total} finalizados</p>
                 </div>
             </div>
@@ -364,9 +364,9 @@ function ModalityCard({ title, stats, icon: Icon, color }: any) {
 
 function StatCard({ label, value, icon: Icon, trend, color }: any) {
     const colors: any = {
-        blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20',
-        rose: 'text-rose-600 bg-rose-50 dark:bg-rose-900/20',
-        emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
+        blue: 'text-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)]',
+        rose: 'text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.15)]',
+        emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.15)]'
     };
     return (
         <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
@@ -377,7 +377,7 @@ function StatCard({ label, value, icon: Icon, trend, color }: any) {
                         <Icon size={28} />
                     </div>
                     <div className={clsx("font-semibold px-2 py-0.5 rounded-lg border", 
-                        trend.startsWith('+') ? "text-emerald-500 bg-emerald-50 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-500/20" : "text-rose-500 bg-rose-50 border-rose-100 dark:bg-rose-900/20 dark:border-rose-500/20"
+                        trend.startsWith('+') ? "text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border-[hsl(var(--success))/0.2] dark:bg-[hsl(var(--success)/0.15)] dark:border-[hsl(var(--success))/0.2]" : "text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.2)] dark:bg-[hsl(var(--destructive)/0.15)] dark:border-[hsl(var(--destructive)/0.2)]"
                     )}>
                         {trend}
                     </div>

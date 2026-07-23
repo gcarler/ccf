@@ -94,15 +94,15 @@ export default function FirmaPage() {
 
   const statusConfig: Record<string, { label: string; color: string }> = {
     draft: { label: "Borrador", color: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]" },
-    sent: { label: "Enviado", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400" },
-    completed: { label: "Completado", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" },
-    expired: { label: "Expirado", color: "bg-rose-100 text-rose-600 dark:bg-rose-900/10 dark:text-rose-400" },
+    sent: { label: "Enviado", color: "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]" },
+    completed: { label: "Completado", color: "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" },
+    expired: { label: "Expirado", color: "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" },
     cancelled: { label: "Cancelado", color: "bg-gray-100 text-gray-600 dark:bg-gray-900/10 dark:text-gray-400" },
   };
 
   return (
     <WorkspaceLayout sidebarTitle="Firma Digital" sidebarSections={SECTIONS}>
-      <div className="h-full overflow-y-auto bg-[#f8fafc] dark:bg-[#1E1F21] font-display scrollbar-thin">
+      <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] font-display scrollbar-thin">
         <div className="w-full px-4 py-3 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -152,7 +152,7 @@ export default function FirmaPage() {
                         <option value="witness">Testigo</option>
                         <option value="approver">Aprobador</option>
                       </select>
-                      <button onClick={() => setForm({ ...form, signers: form.signers.filter((_, i) => i !== idx) })} className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"><Trash2 size={14} /></button>
+                      <button onClick={() => setForm({ ...form, signers: form.signers.filter((_, i) => i !== idx) })} className="p-2 text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-lg"><Trash2 size={14} /></button>
                     </div>
                   </div>
                 ))}
@@ -177,7 +177,7 @@ export default function FirmaPage() {
                   <motion.div key={req.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="size-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-[hsl(var(--primary))] flex items-center justify-center"><PenTool size={16} /></div>
+                        <div className="size-8 rounded-lg bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] flex items-center justify-center"><PenTool size={16} /></div>
                         <div>
                           <p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-white">{req.title}</p>
                           <p className="text-[10px] text-[hsl(var(--text-secondary))]">{req.country_code} · {req.legal_framework}</p>
@@ -200,9 +200,9 @@ export default function FirmaPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide",
-                              signer.status === "signed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" :
-                              signer.status === "declined" ? "bg-rose-100 text-rose-600 dark:bg-rose-900/10 dark:text-rose-400" :
-                              "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+                              signer.status === "signed" ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" :
+                              signer.status === "declined" ? "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" :
+                              "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]"
                             )}>{signer.status}</span>
                             {req.status === "sent" && signer.status === "pending" && (
                               <button onClick={() => handleSign(req.id, signer.id)} className="px-2 py-1 rounded-md bg-[hsl(var(--primary))] text-white text-[9px] font-bold uppercase tracking-wide flex items-center gap-1"><PenTool size={10} /> Firmar</button>
@@ -213,7 +213,7 @@ export default function FirmaPage() {
                     </div>
 
                     {req.status === "draft" && (
-                      <button onClick={() => handleSend(req.id)} className="mt-3 w-full py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-[11px] font-bold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-blue-100 transition-all"><Send size={14} /> Enviar para firmar</button>
+                      <button onClick={() => handleSend(req.id)} className="mt-3 w-full py-2 rounded-lg bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] text-[11px] font-bold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-[hsl(var(--info)/0.2)] transition-all"><Send size={14} /> Enviar para firmar</button>
                     )}
                   </motion.div>
                 );

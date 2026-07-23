@@ -94,11 +94,11 @@ export default function PastoresIndexPage() {
                 ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                     {pastors.map((pastor, idx) => (
-                        <div key={pastor.id || pastor.slug} className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117] rounded-2xl overflow-hidden border border-[hsl(var(--border))]/70 dark:border-white/[0.06] shadow-lg shadow-black/10/40 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:shadow-2xl hover:shadow-[hsl(var(--primary))/0.15] dark:hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col"
+                        <div key={pastor.id || pastor.slug} className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-2xl overflow-hidden border border-[hsl(var(--border))]/70 dark:border-white/[0.06] shadow-lg shadow-black/10/40 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:shadow-2xl hover:shadow-[hsl(var(--primary))/0.15] dark:hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col"
                             style={{ animationDelay: `${idx * 100}ms` }}>
 
                             {/* Image */}
-                            <Link href={`/pastores/${pastor.slug}`} className="relative h-52 w-full bg-[hsl(var(--surface-2))] dark:bg-[#0a0c12] overflow-hidden block">
+                            <Link href={`/pastores/${pastor.slug}`} className="relative h-52 w-full bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] overflow-hidden block">
                                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-[hsl(var(--primary))/0.1] to-transparent pointer-events-none z-10" />
                                 {pastor.photo_url || (pastor as CmsPastor).image ? (
                                     <Image
@@ -113,7 +113,7 @@ export default function PastoresIndexPage() {
                                         <span className="text-4xl font-bold text-[hsl(var(--primary))/0.3]">{pastor.name.charAt(0)}</span>
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0c12]/90 via-black/30 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--surface-2))/0.9] via-black/30 to-transparent" />
                                 {pastor.is_main_pastor && principalLabel && (
                                     <div className="absolute top-3 left-3 z-20">
                                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--primary))] text-white text-[9px] font-bold uppercase tracking-wider shadow-lg">
@@ -129,7 +129,7 @@ export default function PastoresIndexPage() {
                             </Link>
 
                             {/* Content */}
-                            <div className="p-4 flex-1 flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#0f1117]">
+                            <div className="p-4 flex-1 flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
                                 <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-3 flex-1 leading-relaxed line-clamp-3">
                                     {pastor.bio_short || (pastor as CmsPastor).story || ''}
                                 </p>

@@ -14,15 +14,15 @@ import clsx from "clsx";
 
 const DONATION_TYPES = ["Diezmo", "Ofrenda", "Especial", "Misiones", "Construcción"];
 
-const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-blue-500 transition-all";
 const LABEL = "block text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
 
 function StatCard({ label, value, tone }: { label: string; value: string; tone: string }) {
     const colors: Record<string, string> = {
-        blue: "text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-500/10",
-        emerald: "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10",
-        amber: "text-amber-600 bg-amber-50 dark:bg-amber-500/10",
-        sky: "text-sky-600 bg-sky-50 dark:bg-sky-500/10",
+        blue: "text-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)]",
+        emerald: "text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.1)]",
+        amber: "text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.1)]",
+        sky: "text-[hsl(var(--info))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)]",
     };
     return (
         <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
@@ -153,8 +153,8 @@ export default function DonationsManagementPage() {
         const done = status === "completed";
         return (
             <span className={clsx("inline-flex items-center px-2.5 py-0.5 rounded-lg border text-[9px] font-semibold uppercase tracking-wide",
-                done ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/50"
-                     : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200/50")}>
+                done ? "bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] dark:text-[hsl(var(--success))] border-[hsl(var(--success))/0.2]"
+                     : "bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))] border-[hsl(var(--warning))/0.2]")}>
                 {done ? "Completado" : "Pendiente"}
             </span>
         );
@@ -191,7 +191,7 @@ export default function DonationsManagementPage() {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={16} />
                             <input value={query} onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Buscar por donante o tipo..."
-                                className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 pl-11 pr-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 transition-all" />
+                                className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 pl-11 pr-4 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all" />
                         </div>
                         <div className="flex items-center gap-2">
                             <button className="flex items-center gap-2 px-4 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
@@ -245,7 +245,7 @@ export default function DonationsManagementPage() {
                                                             {deleteId === d.id ? (
                                                                 <div className="flex items-center gap-1">
                                                                     <button onClick={() => handleDelete()}
-                                                                        className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-[9px] font-semibold uppercase">
+                                                                        className="px-3 py-1.5 rounded-lg bg-[hsl(var(--destructive))] text-white text-[9px] font-semibold uppercase">
                                                                         Confirmar
                                                                     </button>
                                                                     <button onClick={() => setDeleteId(null)}
@@ -255,7 +255,7 @@ export default function DonationsManagementPage() {
                                                                 </div>
                                                             ) : (
                                                                 <button onClick={() => setDeleteId(d.id)}
-                                                                    className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-rose-600 hover:text-white transition-all">
+                                                                    className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive))] hover:text-white transition-all">
                                                                     <Trash2 size={14} />
                                                                 </button>
                                                             )}

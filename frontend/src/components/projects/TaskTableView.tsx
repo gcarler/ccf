@@ -35,16 +35,16 @@ import TitleCellEditor from './TitleCellEditor';
 const STATUS_OPTIONS = [
     { value:'todo',        label:'Pendiente',   dot:'bg-[hsl(var(--surface-2))]',   bg:'bg-[hsl(var(--surface-2))] dark:bg-white/5',            text:'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',      border:'border-[hsl(var(--border))] dark:border-white/10' },
     { value:'in_progress', label:'En Progreso', dot:'bg-[hsl(var(--primary))]',    bg:'bg-blue-100 dark:bg-blue-500/20',         text:'text-[hsl(var(--primary))] dark:text-blue-300',        border:'border-blue-200 dark:border-blue-500/30' },
-    { value:'review',      label:'En Revisión', dot:'bg-amber-500',   bg:'bg-amber-100 dark:bg-amber-500/20',       text:'text-amber-700 dark:text-amber-300',      border:'border-amber-200 dark:border-amber-500/30' },
-    { value:'completed',   label:'Completado',  dot:'bg-emerald-500', bg:'bg-emerald-100 dark:bg-emerald-500/20',   text:'text-emerald-700 dark:text-emerald-300',  border:'border-emerald-200 dark:border-emerald-500/30' },
+    { value:'review',      label:'En Revisión', dot:'bg-[hsl(var(--warning))]',   bg:'bg-[hsl(var(--warning)/0.15)] dark:bg-[hsl(var(--warning)/0.2)]',       text:'text-[hsl(var(--warning))]',      border:'border-[hsl(var(--warning)/0.3)]' },
+    { value:'completed',   label:'Completado',  dot:'bg-[hsl(var(--success))]', bg:'bg-[hsl(var(--success)/0.15)] dark:bg-[hsl(var(--success)/0.2)]',   text:'text-[hsl(var(--success))]',  border:'border-[hsl(var(--success)/0.3)]' },
 ] as const;
 function getStatus(val: string) { return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0]; }
 
 const PRIORITY_OPTIONS = [
-    { value:'low',    label:'Baja',    color:'text-[hsl(var(--text-secondary))]',  fill:'#94a3b8' },
-    { value:'medium', label:'Media',   color:'text-[hsl(var(--primary))]',   fill:'#3b82f6' },
-    { value:'high',   label:'Alta',    color:'text-orange-500', fill:'#f97316' },
-    { value:'urgent', label:'Urgente', color:'text-rose-500',   fill:'#ef4444' },
+    { value:'low',    label:'Baja',    color:'text-[hsl(var(--text-secondary))]',  fill:'hsl(var(--text-secondary))' },
+    { value:'medium', label:'Media',   color:'text-[hsl(var(--primary))]',   fill:'hsl(var(--primary))' },
+    { value:'high',   label:'Alta',    color:'text-[hsl(var(--warning))]', fill:'hsl(var(--warning))' },
+    { value:'urgent', label:'Urgente', color:'text-[hsl(var(--destructive))]',   fill:'hsl(var(--destructive))' },
 ] as const;
 function getPriority(val: string) { return PRIORITY_OPTIONS.find(p => p.value === val) ?? PRIORITY_OPTIONS[1]; }
 
@@ -56,8 +56,8 @@ const FlagIcon = ({ fill, size = 14 }: { fill: string; size?: number }) => (
 );
 
 // ─── AG Grid Themes ────────────────────────────────────────────────────────────
-const lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: '#ffffff', foregroundColor: '#1e293b', borderColor: '#e2e8f0', oddRowBackgroundColor: '#f8fafc', headerBackgroundColor: '#f1f5f9', headerTextColor: '#475569', selectedRowBackgroundColor: '#eef2ff', accentColor: '#6366f1', cellHorizontalPaddingScale: 0.8 });
-const darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: 'rgb(15 23 42)', foregroundColor: '#e2e8f0', borderColor: 'rgba(255,255,255,0.08)', oddRowBackgroundColor: 'rgba(255,255,255,0.02)', headerBackgroundColor: 'rgba(255,255,255,0.04)', headerTextColor: '#94a3b8', selectedRowBackgroundColor: 'rgba(99,102,241,0.15)', accentColor: '#6366f1', cellHorizontalPaddingScale: 0.8 });
+const lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: 'hsl(var(--bg-primary))', foregroundColor: 'hsl(var(--text-primary))', borderColor: 'hsl(var(--border))', oddRowBackgroundColor: 'hsl(var(--surface-1))', headerBackgroundColor: 'hsl(var(--surface-2))', headerTextColor: 'hsl(var(--text-secondary))', selectedRowBackgroundColor: 'hsl(var(--primary)/0.1)', accentColor: 'hsl(var(--primary))', cellHorizontalPaddingScale: 0.8 });
+const darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: 'hsl(var(--admin-bg-secondary))', foregroundColor: 'hsl(var(--text-secondary))', borderColor: 'hsla(0,0%,100%,0.08)', oddRowBackgroundColor: 'hsla(0,0%,100%,0.02)', headerBackgroundColor: 'hsla(0,0%,100%,0.04)', headerTextColor: 'hsl(var(--text-secondary))', selectedRowBackgroundColor: 'hsla(var(--primary-hsl),0.15)', accentColor: 'hsl(var(--primary))', cellHorizontalPaddingScale: 0.8 });
 
 // ─── AG Grid Cell Renderers (use context for callbacks) ────────────────────────
 function TitleRenderer(params: ICellRendererParams) {
@@ -66,7 +66,7 @@ function TitleRenderer(params: ICellRendererParams) {
     return (
         <div className="flex items-center gap-2 h-full w-full text-left group">
             <div className={clsx('size-4 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                task.status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-[hsl(var(--border))] dark:border-white/20')}>
+                task.status === 'completed' ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-white' : 'border-[hsl(var(--border))] dark:border-white/20')}>
                 {task.status === 'completed' && <span className="text-[7px] font-bold">✓</span>}
             </div>
             <span className="text-[13px] font-semibold truncate group-hover:text-[hsl(var(--primary))] transition-colors">
@@ -286,7 +286,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
         <div className="flex min-w-0 flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] font-sans overflow-hidden">
 
             {error && (
-                <div className="mx-3 mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))]">
                     <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
@@ -368,7 +368,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                     </button>;
                                 })}
                             </div>
-                            {activeFilters.length > 0 && <button onClick={() => setActiveFilters([])} className="w-full text-[11px] font-bold text-rose-500 py-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors border-t border-[hsl(var(--border))] dark:border-white/5 mt-1">Limpiar filtros</button>}
+                            {activeFilters.length > 0 && <button onClick={() => setActiveFilters([])} className="w-full text-[11px] font-bold text-[hsl(var(--destructive))] py-1.5 hover:bg-[hsl(var(--destructive)/0.1)] dark:hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors border-t border-[hsl(var(--border))] dark:border-white/5 mt-1">Limpiar filtros</button>}
                         </Popover.Content>
                     </Popover.Portal>
                 </Popover.Root>

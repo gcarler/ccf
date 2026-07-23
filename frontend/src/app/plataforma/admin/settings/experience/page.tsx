@@ -31,8 +31,8 @@ const FEATURE_CARDS = [
     { id: 'gantt', label: 'Vista de Gantt', desc: 'Habilita el cronograma interactivo en proyectos.', icon: GanttChart, color: 'text-[hsl(var(--primary))]' },
     { id: 'ai_coach', label: 'Optimus Brain Coach', desc: 'Asistente de IA para academia y CRM.', icon: Bot, color: 'text-sky-500' },
     { id: 'call_center', label: 'Call Center Pastoral', icon: Smartphone, desc: 'Gestión de llamadas y mensajes masivos.', color: 'text-amber-500' },
-    { id: 'prayer_wall', label: 'Muro de Intercesión', icon: Heart, desc: 'Registro público de peticiones de oración.', color: 'text-rose-500' },
-    { id: 'kanban', label: 'Tableros Kanban', icon: KanbanSquare, desc: 'Visualización de procesos por arrastre.', color: 'text-emerald-500' },
+    { id: 'prayer_wall', label: 'Muro de Intercesión', icon: Heart, desc: 'Registro público de peticiones de oración.', color: 'text-[hsl(var(--destructive))]' },
+    { id: 'kanban', label: 'Tableros Kanban', icon: KanbanSquare, desc: 'Visualización de procesos por arrastre.', color: 'text-[hsl(var(--success))]' },
     { id: 'audit_logs', label: 'Auditoría de Staff', icon: Shield, desc: 'Registro detallado de acciones administrativas.', color: 'text-[hsl(var(--primary))]' },
 ];
 const EXPERIENCE_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
@@ -139,7 +139,7 @@ export default function WorkspaceExperienceManager() {
                             <p className="mt-1 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{feature.desc}</p>
                         </div>
                     </div>
-                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", feature.enabled ? "bg-emerald-50 text-emerald-600" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]")}>{feature.enabled ? 'Activo' : 'Inactivo'}</span>
+                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", feature.enabled ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]")}>{feature.enabled ? 'Activo' : 'Inactivo'}</span>
                 </button>
             ))}
         </div>
@@ -160,7 +160,7 @@ export default function WorkspaceExperienceManager() {
                         <tr key={feature.id} onClick={() => toggleFeature(feature.id)} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] cursor-pointer">
                             <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{feature.label}</td>
                             <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{feature.desc}</td>
-                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", feature.enabled ? "bg-emerald-50 text-emerald-600" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]")}>{feature.enabled ? 'Activo' : 'Inactivo'}</span></td>
+                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", feature.enabled ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]")}>{feature.enabled ? 'Activo' : 'Inactivo'}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -190,7 +190,7 @@ export default function WorkspaceExperienceManager() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Ajustes', icon: Settings }, { label: 'Experiencia de Usuario', icon: Sparkles }]}
                 viewType={viewType}
@@ -210,7 +210,7 @@ export default function WorkspaceExperienceManager() {
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4 relative pb-4">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--primary)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
  <div className="w-full space-y-3 relative z-10">
                     

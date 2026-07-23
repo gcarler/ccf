@@ -90,7 +90,7 @@ export default function NewCoursePage() {
                                     <input 
                                         value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
                                         placeholder="Ej: Fundamentos de la Fe"
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 px-3 text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 px-3 text-sm font-semibold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -98,7 +98,7 @@ export default function NewCoursePage() {
                                     <input 
                                         value={formData.code} onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})}
                                         placeholder="Ej: FUND-01"
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 px-3 text-sm font-semibold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all uppercase"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 px-3 text-sm font-semibold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all uppercase"
                                     />
                                 </div>
                             </div>
@@ -108,7 +108,7 @@ export default function NewCoursePage() {
                                 <textarea 
                                     value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
                                     placeholder="Describe el propósito espiritual y académico del curso..."
-                                    className="w-full h-40 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none"
+                                    className="w-full h-40 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 text-sm font-medium outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all resize-none"
                                 />
                             </div>
                         </div>

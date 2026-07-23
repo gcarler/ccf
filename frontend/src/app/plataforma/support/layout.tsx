@@ -47,7 +47,7 @@ export default function SupportLayout({
                 sidebarTitle="Soporte / Ayuda"
                 sidebarSections={SIDEBAR_SECTIONS}
             >
-                <div className="bg-[#f8f9fb] dark:bg-[#020617] min-h-full">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] min-h-full">
                     {children}
                 </div>
             </WorkspaceLayout>

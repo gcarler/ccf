@@ -173,7 +173,7 @@ export default function CandidatesDashboard() {
                 </section>
 
                 {/* Main Table Area Cinematic */}
-                <section className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 shadow-xl space-y-3">
+                <section className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 shadow-xl space-y-3">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-4">
                         <div>
                             <h3 className="text-xl font-bold tracking-tighter uppercase leading-none dark:text-white">Nómina de Candidatos</h3>
@@ -184,7 +184,7 @@ export default function CandidatesDashboard() {
                             <input 
                                 value={search} onChange={e => setSearch(e.target.value)}
                                 placeholder="Filtrar por nombre de participante..." 
-                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all shadow-sm" 
+                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-8 focus:ring-[hsl(var(--primary))]/5 focus:border-blue-500 transition-all shadow-sm" 
                             />
                         </div>
                     </div>
@@ -214,7 +214,7 @@ function CandidateStat({ label, value, icon: Icon, color, auraColor }: any) {
     };
     return (
         <div
-            className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm flex items-center gap-3 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm flex items-center gap-3 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as any}
         >
             <style jsx>{`

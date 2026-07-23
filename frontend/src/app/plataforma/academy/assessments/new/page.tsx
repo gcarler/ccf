@@ -92,7 +92,7 @@ export default function NewAssessmentPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap },
@@ -137,7 +137,7 @@ export default function NewAssessmentPage() {
                                         type="number"
                                         value={passingScore}
                                         onChange={(e) => setPassingScore(Number(e.target.value))}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -147,7 +147,7 @@ export default function NewAssessmentPage() {
                                         value={courseId}
                                         onChange={(e) => setCourseId(e.target.value)}
                                         placeholder="Ej: 1"
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:ring-4 focus:ring-blue-500/10"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10"
                                     />
                                 </div>
                             </div>
@@ -213,7 +213,7 @@ export default function NewAssessmentPage() {
                                             </div>
                                             <button
                                                 onClick={() => removeQuestion(q.id)}
-                                                className="text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors"
+                                                className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] transition-colors"
                                             >
                                                 <Trash2 size={18} />
                                             </button>
@@ -242,7 +242,7 @@ export default function NewAssessmentPage() {
                                                             className={clsx(
                                                                 'size-8 rounded-lg flex items-center justify-center border-2 transition-all shrink-0',
                                                                 q.correct_option === optIndex
-                                                                    ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                                                                    ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-white shadow-lg shadow-[hsl(var(--success))/0.2]'
                                                                     : 'border-[hsl(var(--border))] dark:border-white/10 text-transparent bg-[hsl(var(--bg-primary))] dark:bg-white/5'
                                                             )}
                                                         >
@@ -269,7 +269,7 @@ export default function NewAssessmentPage() {
                                                                     const newCorrect = q.correct_option === optIndex ? 0 : (q.correct_option! > optIndex ? q.correct_option! - 1 : q.correct_option);
                                                                     updateQuestion(q.id, { options: newOpts, correct_option: newCorrect });
                                                                 }}
-                                                                className="text-[hsl(var(--text-secondary))] hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                                                                className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] opacity-0 group-hover:opacity-100 transition-all"
                                                             >
                                                                 <Trash2 size={14} />
                                                             </button>
@@ -290,11 +290,11 @@ export default function NewAssessmentPage() {
                                         )}
 
                                         {q.type === 'text' && (
-                                            <div className="p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-lg">
-                                                <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide flex items-center gap-2">
+                                            <div className="p-3 bg-[hsl(var(--warning)/0.08)] border border-[hsl(var(--warning)/0.3)] rounded-lg">
+                                                <p className="text-[10px] font-bold text-[hsl(var(--warning))] uppercase tracking-wide flex items-center gap-2">
                                                     <AlertCircle size={14} /> Pregunta Abierta
                                                 </p>
-                                                <p className="text-[11px] text-amber-600 dark:text-amber-400/70 mt-1">Estas preguntas requieren calificacion manual por parte del docente en el panel de entregas.</p>
+                                                <p className="text-[11px] text-[hsl(var(--warning))] mt-1">Estas preguntas requieren calificacion manual por parte del docente en el panel de entregas.</p>
                                             </div>
                                         )}
                                     </div>

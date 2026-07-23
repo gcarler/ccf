@@ -111,7 +111,7 @@ export default function AdvancedBIReports() {
                             </div>
                             <div className="flex flex-col items-end gap-2">
                                 <span className="text-xl font-bold text-white tracking-tighter">84.2%</span>
-                                <div className="flex items-center gap-1.5 text-emerald-500 text-[10px] font-semibold uppercase tracking-wide">
+                                <div className="flex items-center gap-1.5 text-[hsl(var(--success))] text-[10px] font-semibold uppercase tracking-wide">
                                     <TrendingUp size={14} /> +5.4% este mes
                                 </div>
                             </div>
@@ -169,7 +169,7 @@ export default function AdvancedBIReports() {
 
                         <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 space-y-3 shadow-xl">
                             <div className="flex justify-between items-center">
-                                <div className="size-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
+                                <div className="size-7 rounded-lg bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] flex items-center justify-center">
                                     <Target size={24} />
                                 </div>
                                 <button className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"><Filter size={18} /></button>
@@ -178,8 +178,8 @@ export default function AdvancedBIReports() {
                                 <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Costo por Estudiante</p>
                                 <h4 className="text-lg font-bold tracking-tight">$12.50 / mes</h4>
                             </div>
-                            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-500/20">
-                                <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 leading-relaxed uppercase tracking-wider">
+                            <div className="p-4 bg-[hsl(var(--success-muted))] rounded-lg border border-[hsl(var(--success)/0.3)]">
+                                <p className="text-[10px] font-bold text-[hsl(var(--success))] leading-relaxed uppercase tracking-wider">
                                     Optimus AI: &quot;Reducción del 15% en costos operativos mediante automatización de actas.&quot;
                                 </p>
                             </div>
@@ -231,8 +231,8 @@ export default function AdvancedBIReports() {
                             <div className="relative size-10 mx-auto mb-3">
                                 <svg className="size-full -rotate-90 drop-shadow-2xl" viewBox="0 0 36 36">
                                     <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="rgba(59,130,246,0.1)" strokeWidth="4" />
-                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#3b82f6" strokeWidth="4" strokeDasharray="65 100" />
-                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="#1e293b" strokeWidth="4" strokeDasharray="35 100" strokeDashoffset="-65" />
+                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--info))" strokeWidth="4" strokeDasharray="65 100" />
+                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--text-primary))" strokeWidth="4" strokeDasharray="35 100" strokeDashoffset="-65" />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                                     <span className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">$45K</span>

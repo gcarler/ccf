@@ -36,8 +36,8 @@ interface SocialChannel {
 const PLATFORMS = [
     { id: 'facebook', icon: Facebook, label: 'Facebook', color: 'text-[hsl(var(--primary))]', aura: 'rgba(37, 99, 235, 0.1)' },
     { id: 'instagram', icon: Instagram, label: 'Instagram', color: 'text-pink-600', aura: 'rgba(219, 39, 119, 0.1)' },
-    { id: 'youtube', icon: Youtube, label: 'YouTube', color: 'text-rose-600', aura: 'rgba(225, 29, 72, 0.1)' },
-    { id: 'whatsapp', icon: MessageCircle, label: 'WhatsApp', color: 'text-emerald-600', aura: 'rgba(16, 185, 129, 0.1)' },
+    { id: 'youtube', icon: Youtube, label: 'YouTube', color: 'text-[hsl(var(--destructive))]', aura: 'rgba(225, 29, 72, 0.1)' },
+    { id: 'whatsapp', icon: MessageCircle, label: 'WhatsApp', color: 'text-[hsl(var(--success))]', aura: 'rgba(16, 185, 129, 0.1)' },
 ];
 const SOCIAL_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
@@ -129,7 +129,7 @@ export default function SocialMediaSettings() {
                             <p className="mt-1 text-[10px] font-bold text-[hsl(var(--text-secondary))] truncate">{row.channel?.url || 'Sin URL configurada'}</p>
                         </div>
                     </div>
-                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", row.channel?.url ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{row.channel?.url ? 'Activo' : 'Pendiente'}</span>
+                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", row.channel?.url ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{row.channel?.url ? 'Activo' : 'Pendiente'}</span>
                 </div>
             ))}
         </div>
@@ -150,7 +150,7 @@ export default function SocialMediaSettings() {
                         <tr key={row.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
                             <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{row.label}</td>
                             <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))] truncate max-w-[420px]">{row.channel?.url || '—'}</td>
-                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", row.channel?.url ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{row.channel?.url ? 'Activo' : 'Pendiente'}</span></td>
+                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", row.channel?.url ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{row.channel?.url ? 'Activo' : 'Pendiente'}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -216,7 +216,7 @@ export default function SocialMediaSettings() {
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--info)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
  <div className="w-full space-y-3 relative z-10">
                     

@@ -123,7 +123,7 @@ export default function TeacherWorkspace() {
             sidebarTitle="Academia"
             allowedPermissions={['academy:edit', 'academy:manage']}
         >
-            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0f1114]">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
                 <WorkspaceToolbar
                     breadcrumbs={[
                         { label: 'Academia', icon: GraduationCap },
@@ -150,11 +150,11 @@ export default function TeacherWorkspace() {
 
                 <main className="flex-1 overflow-y-auto p-4 space-y-3">
                     {!isStaff && (
-                        <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 rounded-lg">
-                            <p className="text-sm font-bold text-amber-800 dark:text-amber-400 flex items-center gap-2">
+                        <div className="p-4 bg-[hsl(var(--warning)/0.08)] border border-[hsl(var(--warning)/0.3)] rounded-lg">
+                            <p className="text-sm font-bold text-[hsl(var(--warning))] flex items-center gap-2">
                                 <Shield size={18} /> Acceso Restringido
                             </p>
-                            <p className="text-xs text-amber-700 dark:text-amber-400/70 mt-1">Este panel está reservado para docentes y coordinación. Solicita permisos al administrador.</p>
+                            <p className="text-xs text-[hsl(var(--warning))] mt-1">Este panel está reservado para docentes y coordinación. Solicita permisos al administrador.</p>
                         </div>
                     )}
 
@@ -176,7 +176,7 @@ export default function TeacherWorkspace() {
                                 value={wikiNotes}
                                 onChange={(e) => setWikiNotes(e.target.value)}
                                 placeholder="Documenta rúbricas, criterios de aprobación, política de feedback y tiempos de respuesta..."
-                                className="w-full min-h-[400px] bg-[hsl(var(--surface-1))]/50 dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-4 focus:ring-blue-500/5 transition-all"
+                                className="w-full min-h-[400px] bg-[hsl(var(--surface-1))]/50 dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
                             />
                         </section>
                     )}
@@ -287,7 +287,7 @@ export default function TeacherWorkspace() {
                                                         disabled={gradingId === submission.id}
                                                         onClick={() => handleQuickGrade(submission, 'approve')}
                                                         className={clsx(
-                                                            'inline-flex items-center gap-2 px-3 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-emerald-500 text-white shadow-xl shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all',
+                                                            'inline-flex items-center gap-2 px-3 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--success))] text-white shadow-xl shadow-[hsl(var(--success))/0.2] hover:scale-105 active:scale-95 transition-all',
                                                             gradingId === submission.id && 'opacity-50 cursor-wait'
                                                         )}
                                                     >
@@ -297,7 +297,7 @@ export default function TeacherWorkspace() {
                                                         disabled={gradingId === submission.id}
                                                         onClick={() => handleQuickGrade(submission, 'review')}
                                                         className={clsx(
-                                                            'inline-flex items-center gap-2 px-3 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-rose-500 text-white shadow-xl shadow-rose-500/20 hover:scale-105 active:scale-95 transition-all',
+                                                            'inline-flex items-center gap-2 px-3 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--destructive))] text-white shadow-xl shadow-[hsl(var(--destructive))/0.2] hover:scale-105 active:scale-95 transition-all',
                                                             gradingId === submission.id && 'opacity-50 cursor-wait'
                                                         )}
                                                     >

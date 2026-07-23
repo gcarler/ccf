@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 
-const INPUT = "w-full bg-[hsl(var(--bg-muted))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all";
+const INPUT = "w-full bg-[hsl(var(--bg-muted))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-blue-500 transition-all";
 const LABEL = "block text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
 
 type Volunteer = {

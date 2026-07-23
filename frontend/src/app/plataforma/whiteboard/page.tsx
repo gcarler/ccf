@@ -100,7 +100,7 @@ export default function WhiteboardPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Buscar en tus lienzos..."
-              className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-3 pl-12 pr-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+              className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-3 pl-12 pr-4 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all"
             />
           </div>
 

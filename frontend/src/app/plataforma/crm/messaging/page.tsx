@@ -175,7 +175,7 @@ export default function MessagingCampaignCenter() {
                 </button>
             ) : undefined}
         >
-            <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/50 dark:bg-[#1e1f21] overflow-hidden font-display rounded-lg">
+            <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/50 dark:bg-[hsl(var(--surface-1))] overflow-hidden font-display rounded-lg">
                 {historyError && (
                     <div className="mx-4 mt-4 rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="min-w-0">
@@ -394,7 +394,7 @@ export default function MessagingCampaignCenter() {
                             value={wikiNotes}
                             onChange={(e) => setWikiNotes(e.target.value)}
                             placeholder="Documenta políticas por canal, horarios recomendados, segmentación y compliance..."
-                            className="w-full min-h-[320px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20"
+                            className="w-full min-h-[320px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                         />
                     </div>
                 )}
@@ -429,7 +429,7 @@ export default function MessagingCampaignCenter() {
                                             aria-describedby="campaignName-error"
                                             value={campaignName} onChange={(e) => setCampaignName(e.target.value)}
                                         placeholder="Ej: Invitación Asamblea de Personas"
-                                        className={`w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border rounded-lg py-2 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all ${campaignErrors.campaignName ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/5'}`}
+                                        className={`w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border rounded-lg py-2 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all ${campaignErrors.campaignName ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/5'}`}
                                     />
                                     {campaignErrors.campaignName && <p id="campaignName-error" className="text-red-500 text-xs mt-1">Campo requerido</p>}
                                 </div>
@@ -444,7 +444,7 @@ export default function MessagingCampaignCenter() {
                                             aria-describedby="message-error"
                                             value={message} onChange={(e) => setMessage(e.target.value)}
                                             placeholder="Hola {nombre}, te escribimos de CCF para..."
-                                            className={`w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border rounded-md p-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none ${campaignErrors.message ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/5'}`}
+                                            className={`w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border rounded-md p-4 text-sm font-medium outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all resize-none ${campaignErrors.message ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/5'}`}
                                         />
                                         <div className="absolute bottom-4 right-4 flex gap-2">
                                             <button disabled={!canEditCrm} aria-label="Generar con IA" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors shadow-sm disabled:opacity-50"><Bot size={18} /></button>

@@ -825,7 +825,7 @@ export default function SystemSettings() {
                 </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                <button className="w-full flex items-center justify-between px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-md border border-blue-500/20 rounded-lg text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-xs"><div className="flex items-center gap-3"><Settings size={16} /> Sistema Base</div> <ChevronRight size={14} /></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-md border border-[hsl(var(--primary)/0.2)] rounded-lg text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-xs"><div className="flex items-center gap-3"><Settings size={16} /> Sistema Base</div> <ChevronRight size={14} /></button>
                 <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))] font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Shield size={16} /> Permisos y Roles</div></button>
                 <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))] font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Database size={16} /> Respaldos</div></button>
                 <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))] font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Activity size={16} /> Monitor de Salud</div></button>
@@ -889,7 +889,7 @@ export default function SystemSettings() {
 
                     {/* Feature Flags Grid */}
                     <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 -mr-16 -mt-16 size-10 bg-blue-600/5 rounded-full blur-[100px]" />
+                        <div className="absolute top-0 right-0 -mr-16 -mt-16 size-10 bg-[hsl(var(--primary)/0.05)] rounded-full blur-[100px]" />
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-3">
                                 <Layers size={20} className="text-[hsl(var(--primary))]" />
@@ -989,17 +989,17 @@ export default function SystemSettings() {
                             <div className="flex items-center gap-3">
                                 <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Auditoría de Flags</h3>
                                 {auditAnomalies?.has_anomaly ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-600">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--destructive)/0.08)] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--destructive))]">
                                         <AlertTriangle size={12} /> Anomalía
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--success-muted))] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--success))]">
                                         <CheckCircle2 size={12} /> Normal
                                     </span>
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
-                                <button onClick={scanIncidents} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-white/10">
+                                <button onClick={scanIncidents} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--info-muted))] dark:hover:bg-white/10">
                                     {actionLoading === 'scan-incidents' ? 'Escaneando...' : 'Scan Incidents'}
                                 </button>
                                 <button onClick={() => downloadAudit('json')} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10">Export JSON</button>
@@ -1077,7 +1077,7 @@ export default function SystemSettings() {
                                         {auditAnomalies?.actor_spikes?.map((item: any) => (
                                             <div key={`${item.actor}-${item.count}`} className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.actor}</span>
-                                                <span className="font-semibold text-rose-600">{item.count}</span>
+                                                <span className="font-semibold text-[hsl(var(--destructive))]">{item.count}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -1092,7 +1092,7 @@ export default function SystemSettings() {
                                         {auditAnomalies?.action_spikes?.map((item: any) => (
                                             <div key={`${item.action}-${item.count}`} className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.action}</span>
-                                                <span className="font-semibold text-rose-600">{item.count}</span>
+                                                <span className="font-semibold text-[hsl(var(--destructive))]">{item.count}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -1136,7 +1136,7 @@ export default function SystemSettings() {
                                     <option value="weekly">weekly</option>
                                     <option value="monthly">monthly</option>
                                 </select>
-                                <button onClick={downloadComplianceSnapshot} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-white/10">Compliance Snapshot</button>
+                                <button onClick={downloadComplianceSnapshot} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--info-muted))] dark:hover:bg-white/10">Compliance Snapshot</button>
                                 <button onClick={() => downloadIncidents('json')} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10">Export Incidents JSON</button>
                                 <button onClick={() => downloadIncidents('csv')} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10">Export Incidents CSV</button>
                                 <button onClick={cleanupIncidents} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10">
@@ -1171,14 +1171,14 @@ export default function SystemSettings() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className={clsx(
                                 'rounded-lg border p-3 text-xs font-semibold uppercase tracking-wide',
-                                incidentsSummary?.breaches?.mtta ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                                incidentsSummary?.breaches?.mtta ? 'border-[hsl(var(--destructive)/0.2)] bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]' : 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]',
                             )}>
                                 MTTA SLA {incidentsSummary?.breaches?.mtta ? 'BREACH' : 'OK'}
                                 <span className="ml-2 font-bold">target {incidentsSummary?.targets?.mtta_minutes ?? slaTargets.mtta}m</span>
                             </div>
                             <div className={clsx(
                                 'rounded-lg border p-3 text-xs font-semibold uppercase tracking-wide',
-                                incidentsSummary?.breaches?.mttr ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                                incidentsSummary?.breaches?.mttr ? 'border-[hsl(var(--destructive)/0.2)] bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]' : 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]',
                             )}>
                                 MTTR SLA {incidentsSummary?.breaches?.mttr ? 'BREACH' : 'OK'}
                                 <span className="ml-2 font-bold">target {incidentsSummary?.targets?.mttr_minutes ?? slaTargets.mttr}m</span>
@@ -1205,7 +1205,7 @@ export default function SystemSettings() {
                                             <div key={row.date} className="grid grid-cols-4 gap-2 text-[11px]">
                                                 <span className="font-semibold text-[hsl(var(--text-secondary))]">{row.date}</span>
                                                 <span className="text-[hsl(var(--text-secondary))]">+{row.created}</span>
-                                                <span className="text-emerald-600">-{row.closed}</span>
+                                                <span className="text-[hsl(var(--success))]">-{row.closed}</span>
                                                 <span className="text-[hsl(var(--primary))]">ack {row.acknowledged}</span>
                                             </div>
                                         ))}
@@ -1252,7 +1252,7 @@ export default function SystemSettings() {
                                         <option key={`to-${item.snapshot_id}`} value={item.snapshot_id}>{item.snapshot_id}</option>
                                     ))}
                                 </select>
-                                <button onClick={runComplianceCompare} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-blue-50 dark:hover:bg-white/10">
+                                <button onClick={runComplianceCompare} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--info-muted))] dark:hover:bg-white/10">
                                     {actionLoading === 'compare-compliance' ? 'Comparando...' : 'Compare'}
                                 </button>
                             </div>
@@ -1268,10 +1268,10 @@ export default function SystemSettings() {
                                     <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">feature changes: {compareResult.diff.feature_changes_count ?? 0}</p>
                                     <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">drift severity: <span className={clsx(
                                         'font-semibold uppercase',
-                                        compareResult.diff?.drift?.severity === 'critical' && 'text-rose-700',
-                                        compareResult.diff?.drift?.severity === 'high' && 'text-orange-700',
-                                        compareResult.diff?.drift?.severity === 'medium' && 'text-amber-700',
-                                        (!compareResult.diff?.drift?.severity || compareResult.diff?.drift?.severity === 'low') && 'text-emerald-700',
+                                        compareResult.diff?.drift?.severity === 'critical' && 'text-[hsl(var(--destructive))]',
+                                        compareResult.diff?.drift?.severity === 'high' && 'text-[hsl(var(--warning))]',
+                                        compareResult.diff?.drift?.severity === 'medium' && 'text-[hsl(var(--warning))]',
+                                        (!compareResult.diff?.drift?.severity || compareResult.diff?.drift?.severity === 'low') && 'text-[hsl(var(--success))]',
                                     )}>{compareResult.diff?.drift?.severity || 'low'}</span></p>
                                     <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">risk score: {compareResult.diff?.drift?.risk_score ?? 0}</p>
                                     <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">critical flags changed: {compareResult.diff?.drift?.critical_feature_changes?.length ?? 0}</p>
@@ -1290,7 +1290,7 @@ export default function SystemSettings() {
                                     {Array.isArray(compareResult.diff?.drift?.mitigations) && compareResult.diff.drift.mitigations.length > 0 ? (
                                         <div className="pt-1 space-y-1">
                                             {compareResult.diff.drift.mitigations.slice(0, 3).map((item: string, idx: number) => (
-                                                <p key={`${item}-${idx}`} className="text-[11px] text-[hsl(var(--primary))] dark:text-blue-300">* {item}</p>
+                                                <p key={`${item}-${idx}`} className="text-[11px] text-[hsl(var(--primary))] dark:text-[hsl(var(--info-muted))]">* {item}</p>
                                             ))}
                                         </div>
                                     ) : null}
@@ -1326,9 +1326,9 @@ export default function SystemSettings() {
                                         <div key={row.week} className="grid grid-cols-5 gap-2 text-[10px]">
                                             <span className="font-semibold text-[hsl(var(--text-secondary))]">{row.week}</span>
                                             <span className="text-[hsl(var(--text-secondary))]">snap {row.snapshots}</span>
-                                            <span className="text-amber-600">anom {row.anomaly_snapshots}</span>
-                                            <span className="text-rose-600">driftC {row.critical_drift_alerts}</span>
-                                            <span className="text-orange-600">risk {row.max_risk_score}</span>
+                                            <span className="text-[hsl(var(--warning))]">anom {row.anomaly_snapshots}</span>
+                                            <span className="text-[hsl(var(--destructive))]">driftC {row.critical_drift_alerts}</span>
+                                            <span className="text-[hsl(var(--warning))]">risk {row.max_risk_score}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -1387,7 +1387,7 @@ export default function SystemSettings() {
                                         {compliancePolicy.resolved.suppressions.map((item: any) => (
                                             <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-white/70 dark:bg-black/30 px-2 py-1 text-[10px]">
                                                 <span className="font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.kind}:{item.value || '*'} (exp {item.expires_at ? new Date(item.expires_at).toLocaleString() : 'n/a'})</span>
-                                                <button onClick={() => deleteSuppression(String(item.id || ''))} className="font-semibold uppercase tracking-wide text-rose-600">del</button>
+                                                <button onClick={() => deleteSuppression(String(item.id || ''))} className="font-semibold uppercase tracking-wide text-[hsl(var(--destructive))]">del</button>
                                             </div>
                                         ))}
                                     </div>
@@ -1407,17 +1407,17 @@ export default function SystemSettings() {
                                             <div className="flex items-center gap-2">
                                                 <span className={clsx(
                                                     'rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide',
-                                                    incident.severity === 'critical' && 'bg-rose-100 text-rose-700',
-                                                    incident.severity === 'high' && 'bg-orange-100 text-orange-700',
-                                                    incident.severity === 'medium' && 'bg-amber-100 text-amber-700',
+                                                    incident.severity === 'critical' && 'bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))]',
+                                                    incident.severity === 'high' && 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]',
+                                                    incident.severity === 'medium' && 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]',
                                                     (!incident.severity || incident.severity === 'low') && 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]',
                                                 )}>{incident.severity || 'low'}</span>
                                                 <span className={clsx(
                                                     'rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-wide',
-                                                    incident.status === 'open' && 'bg-rose-50 text-rose-600',
-                                                    incident.status === 'acknowledged' && 'bg-amber-50 text-amber-600',
-                                                    incident.status === 'silenced' && 'bg-blue-50 text-[hsl(var(--primary))]',
-                                                    incident.status === 'closed' && 'bg-emerald-50 text-emerald-600',
+                                                    incident.status === 'open' && 'bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]',
+                                                    incident.status === 'acknowledged' && 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]',
+                                                    incident.status === 'silenced' && 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]',
+                                                    incident.status === 'closed' && 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]',
                                                 )}>{incident.status}</span>
                                             </div>
                                         </div>
@@ -1426,8 +1426,8 @@ export default function SystemSettings() {
                                         <div className="mt-3 flex flex-wrap gap-2">
                                             <button onClick={() => updateIncident(incident.id, 'acknowledge')} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acknowledge</button>
                                             <button onClick={() => updateIncident(incident.id, 'silence')} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Silence 3h</button>
-                                            <button onClick={() => updateIncident(incident.id, 'reopen')} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-amber-600">Reopen</button>
-                                            <button onClick={() => updateIncident(incident.id, 'close')} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">Close</button>
+                                            <button onClick={() => updateIncident(incident.id, 'reopen')} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Reopen</button>
+                                            <button onClick={() => updateIncident(incident.id, 'close')} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--success))]">Close</button>
                                             <button onClick={() => addIncidentNote(incident.id)} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Add note</button>
                                         </div>
                                         {Array.isArray(incident.history) && incident.history.length > 0 ? (
@@ -1454,7 +1454,7 @@ export default function SystemSettings() {
                 {/* Cyber Security Sidebar */}
                 <aside className="lg:col-span-4 space-y-3">
                     <section className="p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white shadow-2xl space-y-3 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-blue-600/20 rounded-full blur-3xl" />
+                        <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-[hsl(var(--primary)/0.2)] rounded-full blur-3xl" />
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-3">
                                 <Lock size={20} className="text-[hsl(var(--primary))]" />
@@ -1496,11 +1496,11 @@ function HealthCard({ label, value, status, icon: Icon }: any) {
     return (
         <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all">
             <div className="flex justify-between items-start">
-                <div className="size-7 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="size-7 rounded-lg bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.3)] text-[hsl(var(--primary))] flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Icon size={24} />
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg">
-                    <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] rounded-lg">
+                    <div className="size-1.5 rounded-full bg-[hsl(var(--success))] animate-pulse" />
                     <span className="text-[8px] font-semibold uppercase">{status}</span>
                 </div>
             </div>
@@ -1514,7 +1514,7 @@ function HealthCard({ label, value, status, icon: Icon }: any) {
 
 function FeatureToggle({ label, desc, active, onToggle, loading }: any) {
     return (
-        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-blue-500/20 transition-all">
+        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-[hsl(var(--primary)/0.2)] transition-all">
             <div className="flex-1 pr-4">
                 <h5 className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase mb-1">{label}</h5>
                 <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-tight">{desc}</p>
@@ -1544,7 +1544,7 @@ function AuditMetric({ label, value }: { label: string; value: string }) {
 function DeltaMetric({ label, value, inverse }: { label: string; value: number | null | undefined; inverse: boolean }) {
     const numeric = typeof value === 'number' ? value : null;
     const isGood = numeric == null ? null : inverse ? numeric <= 0 : numeric >= 0;
-    const tone = isGood == null ? 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] border-[hsl(var(--border))]' : isGood ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200';
+    const tone = isGood == null ? 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] border-[hsl(var(--border))]' : isGood ? 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)]' : 'text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.2)]';
 
     return (
         <div className={clsx('rounded-lg border p-4', tone)}>
@@ -1556,12 +1556,12 @@ function DeltaMetric({ label, value, inverse }: { label: string; value: number |
 
 function ProviderRow({ icon: Icon, name, status, color, detail }: any) {
     const colors: any = {
-        emerald: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20',
-        amber: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20',
-        blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20'
+        emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)]',
+        amber: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.2)]',
+        blue: 'text-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.2)]'
     };
     return (
-        <div className="flex items-center justify-between p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg group hover:border-blue-500/20 transition-all shadow-sm">
+        <div className="flex items-center justify-between p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg group hover:border-[hsl(var(--primary)/0.2)] transition-all shadow-sm">
             <div className="flex items-center gap-3">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", colors[color])}>
                     <Icon size={24} />
@@ -1581,8 +1581,8 @@ function ProviderRow({ icon: Icon, name, status, color, detail }: any) {
 function SecurityCheck({ label }: any) {
     return (
         <div className="flex items-center gap-3">
-            <div className="size-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" />
-            <span className="font-semibold text-blue-100/80 uppercase tracking-wider">{label}</span>
+            <div className="size-2.5 rounded-full bg-[hsl(var(--success))] shadow-[0_0_10px_hsl(var(--success))]" />
+            <span className="font-semibold text-[hsl(var(--primary)/0.8)] uppercase tracking-wider">{label}</span>
         </div>
     );
 }
@@ -1591,7 +1591,7 @@ function ClusterNode({ label, status, load }: any) {
     return (
         <div className="flex items-center justify-between p-2">
             <div className="flex items-center gap-3">
-                <div className={clsx("size-2 rounded-full", status === 'running' ? 'bg-emerald-500' : 'bg-[hsl(var(--surface-2))]')} />
+                <div className={clsx("size-2 rounded-full", status === 'running' ? 'bg-[hsl(var(--success-muted))]0' : 'bg-[hsl(var(--surface-2))]')} />
                 <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase">{label}</span>
             </div>
             <span className="font-semibold text-[hsl(var(--primary))] uppercase">{load}</span>
@@ -1615,7 +1615,7 @@ function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, on
         <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 space-y-4">
             <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
-                <span className="font-semibold bg-blue-100 dark:bg-blue-900/30 text-[hsl(var(--primary))] px-2 py-0.5 rounded-full uppercase">{featureId}</span>
+                <span className="font-semibold bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.3)] text-[hsl(var(--primary))] px-2 py-0.5 rounded-full uppercase">{featureId}</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -1636,7 +1636,7 @@ function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, on
                     <input
                         type="range" min={0} max={100} value={percent}
                         onChange={(e) => setPercent(Number(e.target.value))}
-                        className="w-full accent-blue-600"
+                        className="w-full accent-[hsl(var(--primary))]"
                     />
                 </div>
             </div>

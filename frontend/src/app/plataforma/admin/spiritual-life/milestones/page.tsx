@@ -161,7 +161,7 @@ export default function SpiritualMilestones() {
                     content: '';
                     position: absolute;
                     inset: -1px;
-                    background: linear-gradient(45deg, var(--aura-color, #3b82f610), transparent 60%);
+                    background: linear-gradient(45deg, var(--aura-color, hsl(var(--info)/0.1)), transparent 60%);
                     z-index: -1;
                     border-radius: inherit;
                     opacity: 0;
@@ -185,7 +185,7 @@ export default function SpiritualMilestones() {
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--info)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
  <div className="w-full space-y-3 relative z-10">
                     

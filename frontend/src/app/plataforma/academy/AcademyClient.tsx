@@ -82,7 +82,7 @@ export default function AcademyClient() {
 
     if (error && !dashboard) {
         return (
-            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] p-4">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] p-4">
                 <EmptyState
                     title="No pudimos cargar el dashboard"
                     description={error}
@@ -96,7 +96,7 @@ export default function AcademyClient() {
 
     if (!dashboard) {
         return (
-            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] p-4">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] p-4">
                 <EmptyState
                     title="Sin métricas disponibles"
                     description="Cuando haya cursos publicados verás aquí las estadísticas."
@@ -109,7 +109,7 @@ export default function AcademyClient() {
     }
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap },
@@ -150,7 +150,7 @@ export default function AcademyClient() {
                                 </div>
                             </div>
                             {dashboard.enrollment_trends?.length ? (
-                                <DSChart type="area" data={dashboard.enrollment_trends} color="#3b82f6" height={250} />
+                                <DSChart type="area" data={dashboard.enrollment_trends} color="hsl(var(--info))" height={250} />
                             ) : (
                                 <p className="py-12 text-center text-sm text-[hsl(var(--text-secondary))]">Aún no hay historial de inscripciones.</p>
                             )}

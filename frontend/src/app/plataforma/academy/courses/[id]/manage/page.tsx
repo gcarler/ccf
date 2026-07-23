@@ -93,10 +93,10 @@ export default function CourseManagementPage() {
 
     if (!isStaff) {
         return (
-            <div className="flex flex-col items-center justify-center h-full p-4 text-center space-y-3 bg-[#f8fafc] dark:bg-[#1E1F21]">
+            <div className="flex flex-col items-center justify-center h-full p-4 text-center space-y-3 bg-[hsl(var(--bg-primary))]">
                 <motion.div
                     initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                    className="size-10 bg-rose-500/10 rounded-lg flex items-center justify-center text-rose-500 shadow-inner"
+                    className="size-10 bg-[hsl(var(--destructive)/0.1)] rounded-lg flex items-center justify-center text-[hsl(var(--destructive))] shadow-inner"
                 >
                     <XCircle size={48} strokeWidth={2.5} />
                 </motion.div>
@@ -120,7 +120,7 @@ export default function CourseManagementPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden relative">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-48 bg-gradient-to-b from-blue-600/5 to-transparent pointer-events-none" />
 
             <WorkspaceToolbar
@@ -180,7 +180,7 @@ export default function CourseManagementPage() {
                     variants={containerVariants} initial="hidden" animate="show"
                     className="w-full space-y-4"
                 >
-                    <motion.section variants={itemVariants} className="bg-white/70 dark:bg-[#15171c]/70 backdrop-blur-3xl rounded-lg border border-white dark:border-white/5 p-4 lg:p-4 shadow-2xl shadow-black/10/50 dark:shadow-none flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden group">
+                    <motion.section variants={itemVariants} className="bg-white/70 dark:bg-[hsl(var(--bg-primary))]/70 backdrop-blur-3xl rounded-lg border border-white dark:border-white/5 p-4 lg:p-4 shadow-2xl shadow-black/10/50 dark:shadow-none flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden group">
                         <div className="absolute top-[-20%] right-[-5%] w-64 h-48 bg-blue-600/10 rounded-full blur-[80px] group-hover:bg-blue-600/20 transition-all duration-1000" />
 
                         <div className="space-y-3 relative z-10">
@@ -249,11 +249,11 @@ export default function CourseManagementPage() {
                                             placeholder="Filtrar por nombre, ID o correo..."
                                             value={search}
                                             onChange={(e) => setSearch(e.target.value)}
-                                            className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg pl-14 pr-6 py-1.5 text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
+                                            className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg pl-14 pr-6 py-1.5 text-sm font-bold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all shadow-sm"
                                         />
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <button className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
+                                        <button className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
                                             <FileText size={16} /> Exportar Acta
                                         </button>
                                     </div>
@@ -266,7 +266,7 @@ export default function CourseManagementPage() {
                                         ))
                                     ) : filteredStudents.length > 0 ? (
                                         filteredStudents.map(student => (
-                                            <div key={student.id} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 shadow-sm hover:shadow-2xl hover:shadow-black/10/50 dark:hover:shadow-none transition-all duration-500 group relative overflow-hidden">
+                                            <div key={student.id} className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 shadow-sm hover:shadow-2xl hover:shadow-black/10/50 dark:hover:shadow-none transition-all duration-500 group relative overflow-hidden">
                                                 <div className="absolute top-0 right-0 p-4 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
                                                     <Users size={80} />
                                                 </div>
@@ -278,7 +278,7 @@ export default function CourseManagementPage() {
                                                     <div className="flex flex-col items-end gap-2">
                                                         <span className={clsx(
                                                             "px-3 py-1 rounded-full text-[8px] font-semibold uppercase tracking-wide",
-                                                            student.status === 'active' ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
+                                                            student.status === 'active' ? "bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]" : "bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]"
                                                         )}>
                                                             {student.status}
                                                         </span>
@@ -303,7 +303,7 @@ export default function CourseManagementPage() {
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Nota Promedio</p>
-                                                        <p className={clsx("text-xl font-bold tracking-tighter", student.average_grade >= 70 ? "text-emerald-500" : "text-rose-500")}>
+                                                        <p className={clsx("text-xl font-bold tracking-tighter", student.average_grade >= 70 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]")}>
                                                             {student.average_grade.toFixed(1)}
                                                         </p>
                                                     </div>
@@ -330,7 +330,7 @@ export default function CourseManagementPage() {
                         {activeTab === 'attendance' && (
                             <motion.div
                                 key="attendance" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 lg:p-4 text-center space-y-4 shadow-2xl shadow-black/10/50 dark:shadow-none"
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 lg:p-4 text-center space-y-4 shadow-2xl shadow-black/10/50 dark:shadow-none"
                             >
                                 <div className="size-10 bg-blue-50 dark:bg-blue-500/10 rounded-lg flex items-center justify-center mx-auto text-[hsl(var(--primary))] shadow-inner">
                                     <Calendar size={56} strokeWidth={1.5} />
@@ -353,7 +353,7 @@ export default function CourseManagementPage() {
                         {activeTab === 'content' && (
                              <motion.div
                                 key="content" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 lg:p-4 text-center space-y-4"
+                                className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 lg:p-4 text-center space-y-4"
                             >
                                 <div className="size-10 bg-sky-50 dark:bg-sky-500/10 rounded-lg flex items-center justify-center mx-auto text-sky-600 shadow-inner">
                                     <BookOpen size={56} strokeWidth={1.5} />

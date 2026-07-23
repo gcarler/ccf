@@ -98,7 +98,7 @@ export default function InboxPage() {
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Buscar..."
-                        className="pl-8 pr-3 py-1.5 text-[11px] bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 w-48 transition-all"
+                        className="pl-8 pr-3 py-1.5 text-[11px] bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] w-48 transition-all"
                     />
                 </div>
 

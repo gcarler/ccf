@@ -33,14 +33,14 @@ export default function GroupsPage() {
     }, [token]);
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Grupos', icon: Home },
                     { label: 'Dashboard', icon: TrendingUp },
                 ]}
                 rightActions={
-                    <button className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:scale-105 transition-all flex items-center gap-2">
+                    <button className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:scale-105 transition-all flex items-center gap-2">
                         <Plus size={14} /> Nuevo Grupo
                     </button>
                 }

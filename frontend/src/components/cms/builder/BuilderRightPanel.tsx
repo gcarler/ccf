@@ -100,11 +100,11 @@ function JsonLdPreview({ pageTitle, slug, seoTitle, seoDescription, seoImage, ca
         <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
           Vista previa JSON-LD (Schema.org)
         </p>
-        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
+        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]">
           {faqItems.length > 0 ? "FAQPage" : hasArticle ? "Article" : "WebPage"}
         </span>
       </div>
-      <pre className="text-[10px] font-mono bg-[hsl(var(--bg-primary))] dark:bg-[#0d1117] border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-2 max-h-40 overflow-y-auto whitespace-pre-wrap break-all">
+      <pre className="text-[10px] font-mono bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-2 max-h-40 overflow-y-auto whitespace-pre-wrap break-all">
         <code>{jsonString}</code>
       </pre>
       <p className="text-[9px] text-[hsl(var(--text-secondary))]">
@@ -257,7 +257,7 @@ export default function BuilderRightPanel({
                     window.open(`/plataforma/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(activeSlug)}`, "_blank");
                   }}
                   disabled={!activeSlug}
-                  className="w-full rounded-lg border border-blue-200 text-[hsl(var(--primary))] px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
+                  className="w-full rounded-lg border border-[hsl(var(--info-muted))] text-[hsl(var(--info))] px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 disabled:opacity-50"
                 >
                   <Eye size={11} /> Vista previa borrador
                 </button>
@@ -276,7 +276,7 @@ export default function BuilderRightPanel({
                 <button
                   onClick={togglePageArchive}
                   disabled={!activePage || !canEdit}
-                  className={`w-full rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50 ${activePage?.status === "archived" ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}
+                  className={`w-full rounded-lg border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50 ${activePage?.status === "archived" ? "border-[hsl(var(--success)/0.3)] text-[hsl(var(--success))]" : "border-[hsl(var(--warning)/0.3)] text-[hsl(var(--warning))]"}`}
                 >
                   {activePage?.status === "archived" ? "Restaurar pagina" : "Archivar pagina"}
                 </button>
@@ -334,13 +334,13 @@ export default function BuilderRightPanel({
               <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Puntaje SEO</p>
-                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold text-white ${seoAnalysis.score >= 80 ? "bg-emerald-600" : seoAnalysis.score >= 50 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]"}`}>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold text-white ${seoAnalysis.score >= 80 ? "bg-[hsl(var(--success))]" : seoAnalysis.score >= 50 ? "bg-[hsl(var(--warning))]" : "bg-[hsl(var(--destructive))]"}`}>
                     {seoAnalysis.score}%
                   </span>
                 </div>
                 <div className="w-full bg-[hsl(var(--surface-3))] dark:bg-white/10 h-2.5 rounded-full overflow-hidden">
                   <div
-                    className={`h-full transition-all duration-500 ${seoAnalysis.score >= 80 ? "bg-emerald-500" : seoAnalysis.score >= 50 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]"}`}
+                    className={`h-full transition-all duration-500 ${seoAnalysis.score >= 80 ? "bg-[hsl(var(--success))]" : seoAnalysis.score >= 50 ? "bg-[hsl(var(--warning))]" : "bg-[hsl(var(--destructive))]"}`}
                     style={{ width: `${seoAnalysis.score}%` }}
                   />
                 </div>
@@ -357,7 +357,7 @@ export default function BuilderRightPanel({
               <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                 <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                   <span>Legibilidad de Lectura</span>
-                  <span className="text-emerald-500 font-bold">{readabilityScore.score}/100</span>
+                  <span className="text-[hsl(var(--success))] font-bold">{readabilityScore.score}/100</span>
                 </div>
                 <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{readabilityScore.label}</p>
                 <p className="text-[9px] text-[hsl(var(--text-secondary))]">Medido utilizando la densidad silábica y longitud de oraciones de las secciones activas.</p>
@@ -386,26 +386,26 @@ export default function BuilderRightPanel({
                 <div className={`rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] font-sans ${serpPreviewDevice === "mobile" ? "max-w-[280px]" : "w-full"}`}>
                   {serpPreviewDevice === "mobile" ? (
                     <div className="space-y-1">
-                      <div className="flex items-center gap-1.5 text-xs text-[#202124]">
+                      <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--text-secondary))]">
                         <span className="w-4 h-4 rounded-full bg-[hsl(var(--surface-3))] flex items-center justify-center text-[8px] font-bold">⛪</span>
                         <div className="truncate text-left">{SITE_URL || siteKey} &rsaquo; {activeSlug || "slug"}</div>
                       </div>
-                      <div className="text-base text-[#15c] hover:underline cursor-pointer font-medium leading-tight line-clamp-2 text-left">
+                      <div className="text-base text-[hsl(var(--info))] hover:underline cursor-pointer font-medium leading-tight line-clamp-2 text-left">
                         {seoTitleDraft || activePage?.title || "Sin título SEO"}
                       </div>
-                      <div className="text-xs text-[#3c4043] leading-relaxed line-clamp-3 text-left">
+                      <div className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed line-clamp-3 text-left">
                         {seoDescriptionDraft || "Define una descripción para ver la vista previa social..."}
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-1 text-left">
-                      <div className="text-[12px] text-[#202124] leading-none">
+                      <div className="text-[12px] text-[hsl(var(--text-secondary))] leading-none">
                         https://{SITE_URL || siteKey} &rsaquo; {activeSlug || "slug"}
                       </div>
-                      <div className="text-lg text-[#1a0dab] hover:underline cursor-pointer font-normal leading-normal line-clamp-1">
+                      <div className="text-lg text-[hsl(var(--info))] hover:underline cursor-pointer font-normal leading-normal line-clamp-1">
                         {seoTitleDraft || activePage?.title || "Sin título SEO"}
                       </div>
-                      <div className="text-[13px] text-[#4d5156] leading-relaxed line-clamp-2">
+                      <div className="text-[13px] text-[hsl(var(--text-secondary))] leading-relaxed line-clamp-2">
                         {seoDescriptionDraft || "Define una descripción para ver la vista previa social..."}
                       </div>
                     </div>
@@ -460,8 +460,8 @@ export default function BuilderRightPanel({
                 <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
                   {seoAnalysis.checks.map((check) => (
                     <div key={check.id} className="flex gap-2.5 items-start p-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/30 dark:bg-white/[0.01]">
-                      {check.type === "success" && <CheckCircle2 className="text-emerald-500 mt-0.5 shrink-0" size={14} />}
-                      {check.type === "warning" && <AlertTriangle className="text-amber-500 mt-0.5 shrink-0" size={14} />}
+                      {check.type === "success" && <CheckCircle2 className="text-[hsl(var(--success))] mt-0.5 shrink-0" size={14} />}
+                      {check.type === "warning" && <AlertTriangle className="text-[hsl(var(--warning))] mt-0.5 shrink-0" size={14} />}
                       {check.type === "error" && <XCircle className="text-[hsl(var(--destructive))] mt-0.5 shrink-0" size={14} />}
                       <div>
                         <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{check.label}</p>
@@ -546,7 +546,7 @@ export default function BuilderRightPanel({
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={handleInsertAiAsSection}
-                      className="rounded-lg bg-emerald-600 text-white px-2 py-1.5 text-[9px] font-semibold uppercase tracking-wide hover:bg-emerald-700 transition-all inline-flex items-center justify-center gap-1"
+                      className="rounded-lg bg-[hsl(var(--success))] text-white px-2 py-1.5 text-[9px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--success)/0.8)] transition-all inline-flex items-center justify-center gap-1"
                     >
                       Insertar final
                     </button>
@@ -599,7 +599,7 @@ export default function BuilderRightPanel({
                           setAiImageResult("");
                         }}
                         disabled={!activeSectionId}
-                        className="rounded-lg bg-emerald-600 text-white px-2 py-1 text-[9px] font-semibold uppercase tracking-wide hover:bg-emerald-700 disabled:opacity-40"
+                        className="rounded-lg bg-[hsl(var(--success))] text-white px-2 py-1 text-[9px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--success)/0.8)] disabled:opacity-40"
                       >
                         Usar en Sección
                       </button>
@@ -651,7 +651,7 @@ export default function BuilderRightPanel({
                   <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">
                     {analytics?.total_views?.toLocaleString() ?? "—"}
                   </p>
-                  <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">
+                  <span className="text-[9px] font-bold text-[hsl(var(--success))] inline-flex items-center gap-0.5 mt-1">
                     {analytics ? `${analytics.days}d` : "Sin datos"}
                   </span>
                 </div>
@@ -662,7 +662,7 @@ export default function BuilderRightPanel({
                       ? Math.round(analytics.total_views / analytics.daily_views.length).toLocaleString()
                       : "—"}
                   </p>
-                  <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">
+                  <span className="text-[9px] font-bold text-[hsl(var(--success))] inline-flex items-center gap-0.5 mt-1">
                     Promedio
                   </span>
                 </div>
@@ -673,7 +673,7 @@ export default function BuilderRightPanel({
                       ? Math.max(...analytics.daily_views.map(d => d.views)).toLocaleString()
                       : "—"}
                   </p>
-                  <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">
+                  <span className="text-[9px] font-bold text-[hsl(var(--success))] inline-flex items-center gap-0.5 mt-1">
                     {analytics?.daily_views?.length ? `en ${analytics.daily_views.length} días` : "Sin datos"}
                   </span>
                 </div>
@@ -682,7 +682,7 @@ export default function BuilderRightPanel({
                   <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">
                     {analytics?.daily_views?.filter(d => d.views > 0).length ?? "—"}
                   </p>
-                  <span className="text-[9px] font-bold text-emerald-600 inline-flex items-center gap-0.5 mt-1">
+                  <span className="text-[9px] font-bold text-[hsl(var(--success))] inline-flex items-center gap-0.5 mt-1">
                     de {analytics?.days ?? "—"} días
                   </span>
                 </div>
@@ -694,7 +694,7 @@ export default function BuilderRightPanel({
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] font-bold text-primary">Test A/B Integrado</p>
                   <button
                     onClick={() => setAbTestingActive(!abTestingActive)}
-                    className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase transition-all ${abTestingActive ? "bg-emerald-600 text-white animate-pulse" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"}`}
+                    className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase transition-all ${abTestingActive ? "bg-[hsl(var(--success))] text-white animate-pulse" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"}`}
                   >
                     {abTestingActive ? "Activo" : "Inactivo"}
                   </button>
@@ -727,11 +727,11 @@ export default function BuilderRightPanel({
                         <span>Conversión Variante A:</span>
                         <span className="font-mono">3.2%</span>
                       </div>
-                      <div className="flex justify-between text-emerald-500 font-bold">
+                      <div className="flex justify-between text-[hsl(var(--success))] font-bold">
                         <span>Conversión Variante B:</span>
                         <span className="font-mono">4.9% (▲ +53%)</span>
                       </div>
-                      <p className="text-[8px] text-[hsl(var(--text-secondary))] mt-1">Confianza estadística: <strong className="text-emerald-500 font-bold">97.4%</strong> (Resultado Significativo)</p>
+                      <p className="text-[8px] text-[hsl(var(--text-secondary))] mt-1">Confianza estadística: <strong className="text-[hsl(var(--success))] font-bold">97.4%</strong> (Resultado Significativo)</p>
                     </div>
                   </div>
                 ) : (

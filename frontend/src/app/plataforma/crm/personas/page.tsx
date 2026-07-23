@@ -331,7 +331,7 @@ export default function PersonasPage() {
                                     value={query}
                                     onChange={e => setQuery(e.target.value)}
                                     placeholder="Buscar por nombre, documento, teléfono, email o ministerio..."
-                                    className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
+                                    className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/50 focus:border-blue-500 transition-all shadow-sm"
                                 />
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
@@ -399,7 +399,7 @@ export default function PersonasPage() {
                                                 <select
                                                     value={idTypeFilter}
                                                     onChange={e => setIdTypeFilter(e.target.value)}
-                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                 >
                                                     <option value="">Todos</option>
                                                     <option value="Cédula De Ciudadanía">Cédula Ciudadanía</option>
@@ -419,7 +419,7 @@ export default function PersonasPage() {
                                                 <select
                                                     value={sexFilter}
                                                     onChange={e => setSexFilter(e.target.value)}
-                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                 >
                                                     <option value="">Todos</option>
                                                     <option value="M">Masculino</option>
@@ -435,7 +435,7 @@ export default function PersonasPage() {
                                                 <select
                                                     value={groupFilter}
                                                     onChange={e => setGroupFilter(e.target.value)}
-                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                 >
                                                     <option value="">Todos</option>
                                                     {uniqueGroups.map(g => (
@@ -452,7 +452,7 @@ export default function PersonasPage() {
                                                 <select
                                                     value={participationFilter}
                                                     onChange={e => setParticipationFilter(e.target.value)}
-                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                 >
                                                     <option value="">Todos</option>
                                                     <option value="Activo">Activo</option>
@@ -484,7 +484,7 @@ export default function PersonasPage() {
                                         setPage(1);
                                         setPageSize(Number(event.target.value));
                                     }}
-                                    className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-2 py-1 text-[11px] font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-2 py-1 text-[11px] font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                 >
                                     {PERSONAS_PAGE_SIZE_OPTIONS.map((option) => (
                                         <option key={option} value={option}>{option}</option>
@@ -620,13 +620,13 @@ export default function PersonasPage() {
                                 function renderPersonaCard(persona: any) {
                                     return (
                                         <motion.div key={persona.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
-                                            <div onClick={() => router.push(`/plataforma/crm/personas/${persona.id}`)} className="group p-3 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/5 rounded-md hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between">
+                                            <div onClick={() => router.push(`/plataforma/crm/personas/${persona.id}`)} className="group p-3 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 rounded-md hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all cursor-pointer flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                     <div className="relative">
                                                         <div className="size-9 rounded-lg bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--surface-2))] dark:from-white/5 dark:to-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold text-sm">
                                                             {(persona.nombre_completo?.charAt(0) || '')}
                                                         </div>
-                                                        <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[#1e1f21]", persona.spiritual_health > 0.7 ? "bg-emerald-500" : persona.spiritual_health > 0.4 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]")} />
+                                                        <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[hsl(var(--surface-1))]", persona.spiritual_health > 0.7 ? "bg-emerald-500" : persona.spiritual_health > 0.4 ? "bg-amber-500" : "bg-[hsl(var(--destructive))]")} />
                                                     </div>
                                                     <div>
                                                         <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase truncate max-w-[150px]">{persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}</h3>
@@ -810,14 +810,14 @@ export default function PersonasPage() {
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Departamento</label>
-                                <select value={newPersona.colombian_department_id ?? ''} onChange={e => setNewPersona(prev => ({ ...prev, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                <select value={newPersona.colombian_department_id ?? ''} onChange={e => setNewPersona(prev => ({ ...prev, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">Seleccionar departamento</option>
                                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ciudad</label>
-                                <select value={newPersona.city} onChange={e => setNewPersona(prev => ({ ...prev, city: e.target.value }))} disabled={!newPersona.colombian_department_id || loadingCities} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                <select value={newPersona.city} onChange={e => setNewPersona(prev => ({ ...prev, city: e.target.value }))} disabled={!newPersona.colombian_department_id || loadingCities} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">{loadingCities ? 'Cargando ciudades...' : 'Seleccionar ciudad'}</option>
                                     {cities.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                 </select>

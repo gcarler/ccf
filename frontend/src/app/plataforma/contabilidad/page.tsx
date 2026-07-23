@@ -76,10 +76,10 @@ export default function ContabilidadPage() {
   const pendingSign = useMemo(() => signRequests.filter((s) => s.status === "sent").length, [signRequests]);
 
   const metrics: MetricCard[] = [
-    { label: "Saldo Bancario", value: fmtCOP(totalBalance), icon: Building2, color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" },
-    { label: "Facturas Pendientes", value: String(pendingInvoices), icon: Receipt, color: "text-amber-600 bg-amber-50 dark:bg-amber-900/20" },
-    { label: "Gastos por Aprobar", value: String(pendingExpenses), icon: Wallet, color: "text-rose-600 bg-rose-50 dark:bg-rose-900/20" },
-    { label: "Firmas Pendientes", value: String(pendingSign), icon: PenTool, color: "text-blue-600 bg-blue-50 dark:bg-blue-900/20" },
+    { label: "Saldo Bancario", value: fmtCOP(totalBalance), icon: Building2, color: "text-[hsl(var(--success))] bg-[hsl(var(--success-muted))]" },
+    { label: "Facturas Pendientes", value: String(pendingInvoices), icon: Receipt, color: "text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))]" },
+    { label: "Gastos por Aprobar", value: String(pendingExpenses), icon: Wallet, color: "text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)]" },
+    { label: "Firmas Pendientes", value: String(pendingSign), icon: PenTool, color: "text-[hsl(var(--info))] bg-[hsl(var(--info-muted))]" },
   ];
 
   const modules = [
@@ -89,7 +89,7 @@ export default function ContabilidadPage() {
       icon: Calculator,
       href: "/plataforma/contabilidad",
       stats: `${bankAccounts.length} cuentas`,
-      color: "from-emerald-500 to-teal-600",
+      color: "from-[hsl(var(--success))] to-[hsl(var(--success))]",
     },
     {
       title: "Facturación",
@@ -97,7 +97,7 @@ export default function ContabilidadPage() {
       icon: Receipt,
       href: "/plataforma/facturacion",
       stats: `${invoices.length} facturas`,
-      color: "from-blue-500 to-blue-700",
+      color: "from-[hsl(var(--primary))] to-[hsl(var(--primary))]",
     },
     {
       title: "Gastos",
@@ -105,7 +105,7 @@ export default function ContabilidadPage() {
       icon: Wallet,
       href: "/plataforma/gastos",
       stats: `${expenseReports.length} reportes`,
-      color: "from-amber-500 to-orange-600",
+      color: "from-[hsl(var(--warning))] to-[hsl(var(--warning))]",
     },
     {
       title: "Documentos",
@@ -113,7 +113,7 @@ export default function ContabilidadPage() {
       icon: FileText,
       href: "/plataforma/documentos",
       stats: `${documents.length} documentos`,
-      color: "from-fuchsia-500 to-pink-600",
+      color: "from-[hsl(var(--primary))] to-[hsl(var(--primary))]",
     },
     {
       title: "Firma Digital",
@@ -121,13 +121,13 @@ export default function ContabilidadPage() {
       icon: PenTool,
       href: "/plataforma/firma",
       stats: `${signRequests.length} solicitudes`,
-      color: "from-rose-500 to-pink-600",
+      color: "from-[hsl(var(--destructive))] to-[hsl(var(--destructive))]",
     },
   ];
 
   return (
     <WorkspaceLayout sidebarTitle="Finanzas Pro" sidebarSections={SECTIONS}>
-      <div className="h-full overflow-y-auto bg-[#f8fafc] dark:bg-[#1E1F21] font-display scrollbar-thin">
+      <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] font-display scrollbar-thin">
         <div className="w-full px-4 py-3 space-y-3">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -209,7 +209,7 @@ export default function ContabilidadPage() {
                         <p className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-white">{tx.description}</p>
                         <p className="text-[10px] text-[hsl(var(--text-secondary))]">{tx.reference || "Sin referencia"}</p>
                       </div>
-                      <span className={clsx("text-sm font-bold", tx.transaction_type === "credit" ? "text-emerald-600" : "text-rose-500")}>
+                      <span className={clsx("text-sm font-bold", tx.transaction_type === "credit" ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]")}>
                         {tx.transaction_type === "credit" ? "+" : "-"}{fmtCOP(Number(tx.amount))}
                       </span>
                     </div>
@@ -236,9 +236,9 @@ export default function ContabilidadPage() {
                         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{fmtCOP(Number(inv.total))}</p>
                         <span className={clsx(
                           "text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full",
-                          inv.status === "paid" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" :
-                          inv.status === "overdue" ? "bg-rose-100 text-rose-600 dark:bg-rose-900/10 dark:text-rose-400" :
-                          "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+                          inv.status === "paid" ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" :
+                          inv.status === "overdue" ? "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" :
+                          "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]"
                         )}>{inv.status}</span>
                       </div>
                     </div>

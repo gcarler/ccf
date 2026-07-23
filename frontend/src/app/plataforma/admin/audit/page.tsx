@@ -82,7 +82,7 @@ export default function SecurityAuditPage() {
                 }
             `}</style>
 
-            <div className="flex flex-col h-full bg-[#0a0f16] rounded-lg overflow-hidden border border-emerald-900/30 shadow-2xl relative font-mono">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] rounded-lg overflow-hidden border border-emerald-900/30 shadow-2xl relative font-mono">
                 {/* Cyberpunk Header */}
                 <div className="p-4 border-b border-emerald-900/50 bg-black/40 flex justify-between items-center relative z-10 shrink-0">
                     <div className="flex items-center gap-3">
@@ -112,7 +112,7 @@ export default function SecurityAuditPage() {
                 {/* Main Console Area */}
                 <div className="flex-1 overflow-hidden relative cyber-grid">
                     <div className="scanline" />
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a0f16]/50 to-[#0a0f16] pointer-events-none z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[hsl(var(--bg-primary))]/50 to-[hsl(var(--bg-primary))] pointer-events-none z-10" />
                     
                     <div className="h-full overflow-y-auto p-4 relative z-20 scrollbar-thin scrollbar-thumb-emerald-900/50 scrollbar-track-transparent">
                         {loading ? (

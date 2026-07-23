@@ -144,7 +144,7 @@ export default function AnnouncementsAdmin() {
                             {ann.featured && <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase">Destacado</span>}
                             <span className={clsx(
                                 "px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase",
-                                ann.status === 'published' ? "bg-emerald-50 text-emerald-600" : ann.status === 'draft' ? "bg-amber-50 text-amber-600" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
+                                ann.status === 'published' ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : ann.status === 'draft' ? "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
                             )}>{STATUS_LABELS[ann.status]}</span>
                         </div>
                         <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{ann.title}</h3>
@@ -152,7 +152,7 @@ export default function AnnouncementsAdmin() {
                     </div>
                     <div className="self-start md:self-center flex items-center gap-2">
                         {ann.status !== 'published' && (
-                            <button onClick={() => handleStatusChange(ann, 'published')} className="p-3 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 rounded-md transition-all" title="Publicar">
+                            <button onClick={() => handleStatusChange(ann, 'published')} className="p-3 bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] rounded-md transition-all" title="Publicar">
                                 <CheckCircle2 size={16} />
                             </button>
                         )}
@@ -188,7 +188,7 @@ export default function AnnouncementsAdmin() {
                             <td className="px-3 py-1.5">
                                 <span className={clsx(
                                     "px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase",
-                                    ann.status === 'published' ? "bg-emerald-50 text-emerald-600" : ann.status === 'draft' ? "bg-amber-50 text-amber-600" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
+                                    ann.status === 'published' ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : ann.status === 'draft' ? "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
                                 )}>
                                     {STATUS_LABELS[ann.status]}
                                 </span>
@@ -234,7 +234,7 @@ export default function AnnouncementsAdmin() {
                     content: '';
                     position: absolute;
                     inset: -1px;
-                    background: linear-gradient(45deg, var(--aura-color, #3b82f610), transparent 60%);
+                    background: linear-gradient(45deg, var(--aura-color, hsl(var(--info)/0.1)), transparent 60%);
                     z-index: -1;
                     border-radius: inherit;
                     opacity: 0;
@@ -261,7 +261,7 @@ export default function AnnouncementsAdmin() {
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--info)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
  <div className="w-full space-y-3 relative z-10">
                     
@@ -370,7 +370,7 @@ export default function AnnouncementsAdmin() {
                                                     </div>
                                                     <div className="flex gap-2">
                                                         {ann.status !== 'published' && (
-                                                            <button onClick={() => handleStatusChange(ann, 'published')} className="p-3 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 rounded-md transition-all" title="Publicar">
+                                                            <button onClick={() => handleStatusChange(ann, 'published')} className="p-3 bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] rounded-md transition-all" title="Publicar">
                                                                 <CheckCircle2 size={16} />
                                                             </button>
                                                         )}

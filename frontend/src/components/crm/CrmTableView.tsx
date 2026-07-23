@@ -5,8 +5,8 @@ import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { themeQuartz, ColDef } from 'ag-grid-community';
 
-const lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: '#ffffff', foregroundColor: '#1e293b', borderColor: '#e2e8f0', oddRowBackgroundColor: '#f8fafc', headerBackgroundColor: '#f1f5f9', headerTextColor: '#475569', selectedRowBackgroundColor: '#eef2ff', accentColor: '#6366f1', cellHorizontalPaddingScale: 0.8 });
-const darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: 'rgb(15 23 42)', foregroundColor: '#e2e8f0', borderColor: 'rgba(255,255,255,0.08)', oddRowBackgroundColor: 'rgba(255,255,255,0.02)', headerBackgroundColor: 'rgba(255,255,255,0.04)', headerTextColor: '#94a3b8', selectedRowBackgroundColor: 'rgba(99,102,241,0.15)', accentColor: '#6366f1', cellHorizontalPaddingScale: 0.8 });
+const lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: 'hsl(var(--bg-primary))', foregroundColor: 'hsl(var(--text-primary))', borderColor: 'hsl(var(--border))', oddRowBackgroundColor: 'hsl(var(--surface-1))', headerBackgroundColor: 'hsl(var(--surface-2))', headerTextColor: 'hsl(var(--text-secondary))', selectedRowBackgroundColor: 'hsl(var(--primary)/0.1)', accentColor: 'hsl(var(--primary))', cellHorizontalPaddingScale: 0.8 });
+const darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: 'hsl(var(--admin-bg-secondary))', foregroundColor: 'hsl(var(--text-secondary))', borderColor: 'hsla(0,0%,100%,0.08)', oddRowBackgroundColor: 'hsla(0,0%,100%,0.02)', headerBackgroundColor: 'hsla(0,0%,100%,0.04)', headerTextColor: 'hsl(var(--text-secondary))', selectedRowBackgroundColor: 'hsla(var(--primary-hsl),0.15)', accentColor: 'hsl(var(--primary))', cellHorizontalPaddingScale: 0.8 });
 
 interface Props {
     personas: any[];
@@ -33,7 +33,7 @@ function AvatarNameRenderer({ data }: any) {
 function RoleRenderer({ value }: any) {
     const isLeader = String(value ?? '').toLowerCase().includes('líder') || String(value ?? '').toLowerCase().includes('lider');
     return (
-        <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isLeader ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/30'}`}>
+        <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isLeader ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.2)]' : 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.15)]'}`}>
             {value || 'Persona'}
         </span>
     );
@@ -59,13 +59,13 @@ export default function CrmTableView({ personas, search, onRowClick, isList = fa
     const colDefs = useMemo<ColDef[]>(() => {
         const cols: ColDef[] = [
             { headerName: 'Persona', flex: 2, cellRenderer: AvatarNameRenderer },
-            { field: 'email', headerName: 'Email', flex: 1, cellStyle: { fontSize: '12px', color: '#64748b' } },
-            { field: 'phone', headerName: 'Teléfono', width: 140, cellStyle: { fontSize: '12px', color: '#64748b' } },
+            { field: 'email', headerName: 'Email', flex: 1, cellStyle: { fontSize: '12px', color: 'hsl(var(--text-secondary))' } },
+            { field: 'phone', headerName: 'Teléfono', width: 140, cellStyle: { fontSize: '12px', color: 'hsl(var(--text-secondary))' } },
             { field: 'church_role', headerName: 'Rol', width: 140, cellRenderer: RoleRenderer },
         ];
         if (!isList) {
             cols.push(
-                { field: 'spiritual_status', headerName: 'Estado Espiritual', width: 160, cellStyle: { fontSize: '11px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' } },
+                { field: 'spiritual_status', headerName: 'Estado Espiritual', width: 160, cellStyle: { fontSize: '11px', fontWeight: '600', color: 'hsl(var(--text-secondary))', textTransform: 'uppercase', letterSpacing: '0.05em' } },
             );
         }
         return cols;

@@ -57,7 +57,7 @@ export default function AcademyTeachersPage() {
     }, [query, teachers]);
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0f1114]">
+        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))]">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Academia", icon: GraduationCap, href: "/plataforma/academy" },

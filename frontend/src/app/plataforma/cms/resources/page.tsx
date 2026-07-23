@@ -57,9 +57,9 @@ const FLOW_LABEL: Record<FlowType, string> = {
 };
 
 const FLOW_CLASS: Record<FlowType, string> = {
-  publish: "bg-blue-50 text-[hsl(var(--primary))] border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20",
-  capture: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20",
-  sync: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20",
+  publish: "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.2)] dark:bg-[hsl(var(--primary)/0.1)] dark:border-[hsl(var(--primary)/0.2)]",
+  capture: "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] border-[hsl(var(--success)/0.2)] dark:bg-[hsl(var(--success)/0.1)] dark:text-[hsl(var(--success))] dark:border-[hsl(var(--success)/0.2)]",
+  sync: "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)]",
   system: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border-[hsl(var(--border))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))] dark:border-white/10",
 };
 
@@ -376,7 +376,7 @@ export default function CmsResourcesPage() {
         <section className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[hsl(var(--admin-bg-primary))]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:border-blue-500/20 dark:bg-blue-500/10">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--primary)/0.2)] bg-[hsl(var(--info-muted))] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:border-[hsl(var(--primary)/0.2)] dark:bg-[hsl(var(--primary)/0.1)]">
                 <PackageOpen size={13} />
                 Biblioteca CMS
               </div>
@@ -413,7 +413,7 @@ export default function CmsResourcesPage() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Buscar recurso..."
-                className="h-9 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] pl-9 pr-3 text-sm outline-none transition-all focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                className="h-9 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] pl-9 pr-3 text-sm outline-none transition-all focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
               />
             </div>
 
@@ -425,7 +425,7 @@ export default function CmsResourcesPage() {
                   className={clsx(
                     "flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-xs font-bold transition-colors",
                     category === item
-                      ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10"
+                      ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.1)]"
                       : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] hover:text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5 dark:hover:text-white",
                   )}
                 >
@@ -437,7 +437,7 @@ export default function CmsResourcesPage() {
               ))}
             </div>
 
-            <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
+            <div className="mt-4 rounded-md border border-[hsl(var(--success)/0.2)] bg-[hsl(var(--success-muted))] p-3 text-xs text-[hsl(var(--success))] dark:border-[hsl(var(--success)/0.2)] dark:bg-[hsl(var(--success)/0.1)] dark:text-[hsl(var(--success))]">
               <div className="flex items-center gap-2 font-bold uppercase tracking-wide">
                 <CheckCircle2 size={14} />
                 Sin impacto publico
@@ -505,7 +505,7 @@ export default function CmsResourcesPage() {
                         <ul className="space-y-1.5">
                           {item.safeguards.map((guardrail) => (
                             <li key={guardrail} className="flex gap-2 text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-                              <CheckCircle2 size={12} className="mt-0.5 shrink-0 text-emerald-500" />
+                              <CheckCircle2 size={12} className="mt-0.5 shrink-0 text-[hsl(var(--success))]" />
                               {guardrail}
                             </li>
                           ))}

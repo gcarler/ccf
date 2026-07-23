@@ -145,7 +145,7 @@ export default function CmsMediaDetailPage() {
     if (!item) return <div className="p-4 text-center font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Recurso multimedia no encontrado.</div>;
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'CMS', icon: Layout, href: '/plataforma/cms' },

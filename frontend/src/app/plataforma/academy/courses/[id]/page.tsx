@@ -89,7 +89,7 @@ export default function CourseCoordinationPage() {
 
     if (!course) return (
         <div className="flex flex-col items-center justify-center h-full p-3 text-center space-y-4">
-            <h2 className="text-lg font-bold text-rose-500 uppercase">Programa no encontrado</h2>
+            <h2 className="text-lg font-bold text-[hsl(var(--destructive))] uppercase">Programa no encontrado</h2>
             <button onClick={() => router.back()} className="text-sm font-semibold text-[hsl(var(--primary))] uppercase tracking-wide flex items-center gap-2">
                 <ArrowLeft size={14} /> Volver a Coordinación
             </button>
@@ -97,7 +97,7 @@ export default function CourseCoordinationPage() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden">
             <h1 className="sr-only">{course.title}</h1>
             <WorkspaceToolbar
                 breadcrumbs={[

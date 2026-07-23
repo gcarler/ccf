@@ -155,7 +155,7 @@ export default function DonationConfig() {
                         <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{cat.name}</h3>
                         <p className="mt-1 text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{cat.description || 'Fondo ministerial'}</p>
                     </div>
-                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", cat.active ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{cat.active ? 'Activo' : 'Inactivo'}</span>
+                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", cat.active ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{cat.active ? 'Activo' : 'Inactivo'}</span>
                 </div>
             ))}
         </div>
@@ -176,7 +176,7 @@ export default function DonationConfig() {
                         <tr key={cat.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
                             <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{cat.name}</td>
                             <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{cat.description || '—'}</td>
-                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", cat.active ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{cat.active ? 'Activo' : 'Inactivo'}</span></td>
+                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", cat.active ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{cat.active ? 'Activo' : 'Inactivo'}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -226,7 +226,7 @@ export default function DonationConfig() {
 
                     inset: -1px;
 
-                    background: linear-gradient(45deg, var(--aura-color, #3b82f610), transparent 60%);
+                    background: linear-gradient(45deg, var(--aura-color, hsl(var(--info)/0.1)), transparent 60%);
 
                     z-index: -1;
 
@@ -271,7 +271,7 @@ export default function DonationConfig() {
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
 
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--info)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
 
 
@@ -452,11 +452,11 @@ export default function DonationConfig() {
 
                                                 <div className={clsx("size-4 rounded-full shadow-[0_0_12px_currentColor] transition-transform group-hover:scale-150 duration-500", 
 
-                                                    cat.color === 'emerald' ? 'text-emerald-500 bg-emerald-500' :
+                                                    cat.color === 'emerald' ? 'text-[hsl(var(--success))] bg-[hsl(var(--success))]' :
 
-                                                    cat.color === 'amber' ? 'text-amber-500 bg-amber-500' :
+                                                    cat.color === 'amber' ? 'text-[hsl(var(--warning))] bg-[hsl(var(--warning))]' :
 
-                                                    cat.color === 'rose' ? 'text-rose-500 bg-rose-500' : 'text-[hsl(var(--primary))] bg-[hsl(var(--primary))]'
+                                                    cat.color === 'rose' ? 'text-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]' : 'text-[hsl(var(--primary))] bg-[hsl(var(--primary))]'
 
                                                 )} />
 
@@ -584,7 +584,7 @@ function PaymentMethodItem({ icon: Icon, label, active }: any) {
 
                     <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-none mb-1">{label}</p>
 
-                    <p className={clsx("text-[10px] font-bold uppercase tracking-wide", active ? "text-emerald-500" : "text-[hsl(var(--text-secondary))]")}>{active ? 'Servicio Activo' : 'Offline'}</p>
+                    <p className={clsx("text-[10px] font-bold uppercase tracking-wide", active ? "text-[hsl(var(--success))]" : "text-[hsl(var(--text-secondary))]")}>{active ? 'Servicio Activo' : 'Offline'}</p>
 
                 </div>
 
@@ -594,7 +594,7 @@ function PaymentMethodItem({ icon: Icon, label, active }: any) {
 
                 "size-2.5 rounded-full transition-all duration-500",
 
-                active ? "bg-emerald-500 shadow-[0_0_12px_#10b981]" : "bg-[hsl(var(--surface-3))] dark:bg-white/10"
+                active ? "bg-[hsl(var(--success))] shadow-[0_0_12px_hsl(var(--success))]" : "bg-[hsl(var(--surface-3))] dark:bg-white/10"
 
             )} />
 

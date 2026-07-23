@@ -120,36 +120,36 @@ interface FullAnalytics {
 // ── Helpers ────────────────────────────────────────────────────────────
 
 const SEMAFORO_COLOR: Record<string, string> = {
-  ALTO: "text-emerald-600", MEDIO: "text-amber-500", CRITICO: "text-[hsl(var(--destructive))]",
-  SATURADO: "text-[hsl(var(--destructive))]", SALUDABLE: "text-emerald-600", BAJO: "text-amber-500",
-  OPTIMO: "text-emerald-600", INCONSTANTE: "text-amber-500", ABANDONO: "text-[hsl(var(--destructive))]",
-  EXCELENTE: "text-emerald-600", REGULAR: "text-amber-500", ALERTA_DESERCION: "text-[hsl(var(--destructive))]", INEFICIENTE: "text-[hsl(var(--destructive))]",
-  EXPONENCIAL: "text-emerald-600", ESTANCADO: "text-[hsl(var(--destructive))]",
-  EQUILIBRADO: "text-emerald-600", MODERADO: "text-amber-500", HOMOGENEO: "text-[hsl(var(--destructive))]",
+  ALTO: "text-[hsl(var(--success))]", MEDIO: "text-[hsl(var(--warning))]", CRITICO: "text-[hsl(var(--destructive))]",
+  SATURADO: "text-[hsl(var(--destructive))]", SALUDABLE: "text-[hsl(var(--success))]", BAJO: "text-[hsl(var(--warning))]",
+  OPTIMO: "text-[hsl(var(--success))]", INCONSTANTE: "text-[hsl(var(--warning))]", ABANDONO: "text-[hsl(var(--destructive))]",
+  EXCELENTE: "text-[hsl(var(--success))]", REGULAR: "text-[hsl(var(--warning))]", ALERTA_DESERCION: "text-[hsl(var(--destructive))]", INEFICIENTE: "text-[hsl(var(--destructive))]",
+  EXPONENCIAL: "text-[hsl(var(--success))]", ESTANCADO: "text-[hsl(var(--destructive))]",
+  EQUILIBRADO: "text-[hsl(var(--success))]", MODERADO: "text-[hsl(var(--warning))]", HOMOGENEO: "text-[hsl(var(--destructive))]",
 };
 
 const SEMAFORO_BG: Record<string, string> = {
-  ALTO: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800",
-  SALUDABLE: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800",
-  OPTIMO: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800",
-  EXCELENTE: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800",
-  EXPONENCIAL: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800",
-  EQUILIBRADO: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800",
-  MEDIO: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
-  INCONSTANTE: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
-  REGULAR: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
-  MODERADO: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
-  BAJO: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
-  CRITICO: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
-  SATURADO: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
-  ABANDONO: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
-  ALERTA_DESERCION: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
-  INEFICIENTE: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
-  ESTANCADO: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
-  HOMOGENEO: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
+  ALTO: "bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)]",
+  SALUDABLE: "bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)]",
+  OPTIMO: "bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)]",
+  EXCELENTE: "bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)]",
+  EXPONENCIAL: "bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)]",
+  EQUILIBRADO: "bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)]",
+  MEDIO: "bg-[hsl(var(--warning-muted))] border-[hsl(var(--warning)/0.3)]",
+  INCONSTANTE: "bg-[hsl(var(--warning-muted))] border-[hsl(var(--warning)/0.3)]",
+  REGULAR: "bg-[hsl(var(--warning-muted))] border-[hsl(var(--warning)/0.3)]",
+  MODERADO: "bg-[hsl(var(--warning-muted))] border-[hsl(var(--warning)/0.3)]",
+  BAJO: "bg-[hsl(var(--warning-muted))] border-[hsl(var(--warning)/0.3)]",
+  CRITICO: "bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.3)]",
+  SATURADO: "bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.3)]",
+  ABANDONO: "bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.3)]",
+  ALERTA_DESERCION: "bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.3)]",
+  INEFICIENTE: "bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.3)]",
+  ESTANCADO: "bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.3)]",
+  HOMOGENEO: "bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.3)]",
 };
 
-const PIE_COLORS = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444", "#06b6d4", "#a855f7", "#f97316"];
+const PIE_COLORS = ["hsl(var(--primary))", "hsl(var(--success))", "hsl(var(--warning))", "hsl(var(--destructive))", "hsl(var(--info))", "hsl(var(--primary))", "hsl(var(--warning))"];
 
 const sem = (s: string) => SEMAFORO_COLOR[s] || "text-[hsl(var(--text-primary))]";
 const semBg = (s: string) => SEMAFORO_BG[s] || "bg-[hsl(var(--bg-secondary))] border-[hsl(var(--border-primary))]";
@@ -289,7 +289,7 @@ export default function StrategyAnalyticsPage() {
   if (!data) return (
     <EvangelismShell breadcrumbs={breadcrumbs}>
       <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <AlertTriangle size={28} className="text-amber-500" />
+        <AlertTriangle size={28} className="text-[hsl(var(--warning))]" />
         <p className="text-sm text-[hsl(var(--text-secondary))]">No se pudieron cargar las métricas</p>
         <button onClick={fetchData} className="text-xs text-[hsl(var(--primary))] font-semibold">Reintentar</button>
       </div>
@@ -407,9 +407,9 @@ export default function StrategyAnalyticsPage() {
           <SectionHeader icon={Users} title="2. Capacidad y Población (TOF)" sub="Tasa de Ocupación Física por grupo" />
           <div className="grid md:grid-cols-3 gap-3 mb-4">
             {[
-              { label: "Saturados (>85%)", count: dim2_capacidad.saturados, color: "text-[hsl(var(--destructive))]", bg: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800" },
-              { label: "Saludables (60–85%)", count: dim2_capacidad.saludables, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800" },
-              { label: "Bajos (<60%)", count: dim2_capacidad.bajos, color: "text-amber-500", bg: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800" },
+              { label: "Saturados (>85%)", count: dim2_capacidad.saturados, color: "text-[hsl(var(--destructive))]", bg: "bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.3)]" },
+              { label: "Saludables (60–85%)", count: dim2_capacidad.saludables, color: "text-[hsl(var(--success))]", bg: "bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)]" },
+              { label: "Bajos (<60%)", count: dim2_capacidad.bajos, color: "text-[hsl(var(--warning))]", bg: "bg-[hsl(var(--warning-muted))] border-[hsl(var(--warning)/0.3)]" },
             ].map(s => (
               <div key={s.label} className={`rounded-lg border p-3 text-center ${s.bg}`}>
                 <p className={`text-3xl font-black ${s.color}`}>{s.count}</p>
@@ -429,7 +429,7 @@ export default function StrategyAnalyticsPage() {
                   <Tooltip formatter={(v) => [`${v}%`, "TOF"]} />
                   <Bar dataKey="tof_porcentaje" name="Ocupación %" radius={[0, 4, 4, 0]}>
                     {dim2_capacidad.grupos.map((g, i) => (
-                      <Cell key={i} fill={g.estado === "SATURADO" ? "#ef4444" : g.estado === "SALUDABLE" ? "#22c55e" : "#f59e0b"} />
+                      <Cell key={i} fill={g.estado === "SATURADO" ? "hsl(var(--destructive))" : g.estado === "SALUDABLE" ? "hsl(var(--success))" : "hsl(var(--warning))"} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -465,7 +465,7 @@ export default function StrategyAnalyticsPage() {
                       <span>TAN <strong className="text-[hsl(var(--text-primary))]">{g.tan_porcentaje}%</strong></span>
                     </div>
                     <div className="mt-2">
-                      <ProgressBar value={g.tan_porcentaje} color={g.tan_porcentaje > 20 ? "bg-emerald-500" : g.tan_porcentaje > 10 ? "bg-amber-400" : "bg-[hsl(var(--destructive))]"} />
+                      <ProgressBar value={g.tan_porcentaje} color={g.tan_porcentaje > 20 ? "bg-[hsl(var(--success))]" : g.tan_porcentaje > 10 ? "bg-[hsl(var(--warning))]" : "bg-[hsl(var(--destructive))]"} />
                     </div>
                   </div>
                 ))}
@@ -480,8 +480,8 @@ export default function StrategyAnalyticsPage() {
                     <XAxis dataKey="semana" tick={{ fontSize: 10 }} tickFormatter={v => v.slice(5)} />
                     <YAxis tick={{ fontSize: 10 }} />
                     <Tooltip />
-                    <Area type="monotone" dataKey="primera_vez" name="Primera vez" stroke="#22c55e" fill="#22c55e20" strokeWidth={2} />
-                    <Area type="monotone" dataKey="presentes" name="Presentes" stroke="#6366f1" fill="#6366f120" strokeWidth={2} />
+                    <Area type="monotone" dataKey="primera_vez" name="Primera vez" stroke="hsl(var(--success))" fill="hsl(var(--success)/0.125)" strokeWidth={2} />
+                    <Area type="monotone" dataKey="presentes" name="Presentes" stroke="hsl(var(--primary))" fill="hsl(var(--primary)/0.125)" strokeWidth={2} />
                   </AreaChart>
                 </ResponsiveContainer>
               </ChartBox>
@@ -496,8 +496,8 @@ export default function StrategyAnalyticsPage() {
           <div className="grid md:grid-cols-4 gap-3 mb-4">
             {[
               { label: "Casos totales", value: dim4_conversion_crm.total_casos_crm, color: "" },
-              { label: "Resueltos exitosos", value: dim4_conversion_crm.total_resueltos, color: "text-emerald-600" },
-              { label: "ICN global", value: `${dim4_conversion_crm.icn_global}%`, color: dim4_conversion_crm.icn_global >= 70 ? "text-emerald-600" : "text-amber-500" },
+              { label: "Resueltos exitosos", value: dim4_conversion_crm.total_resueltos, color: "text-[hsl(var(--success))]" },
+              { label: "ICN global", value: `${dim4_conversion_crm.icn_global}%`, color: dim4_conversion_crm.icn_global >= 70 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--warning))]" },
               { label: "Casos abiertos", value: dim4_conversion_crm.total_casos_crm - dim4_conversion_crm.total_resueltos, color: "text-[hsl(var(--primary))]" },
             ].map(s => (
               <div key={s.label} className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 text-center">
@@ -543,7 +543,7 @@ export default function StrategyAnalyticsPage() {
                 </div>
                 <div className="flex-1">
                   <ProgressBar value={dim5_fidelidad.ica_global_porcentaje}
-                    color={dim5_fidelidad.ica_global_porcentaje >= 70 ? "bg-emerald-500" : "bg-amber-400"} />
+                    color={dim5_fidelidad.ica_global_porcentaje >= 70 ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--warning))]"} />
                   <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-1">{dim5_fidelidad.total_personas_analizadas} personas analizadas</p>
                 </div>
               </div>
@@ -551,19 +551,19 @@ export default function StrategyAnalyticsPage() {
                 Alertas de enfriamiento ({dim5_fidelidad.total_alertas_enfriamiento})
               </p>
               {dim5_fidelidad.alertas_enfriamiento.length === 0 ? (
-                <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg">
-                  <CheckCircle2 size={14} className="text-emerald-600" />
-                  <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">Sin alertas activas</p>
+                <div className="flex items-center gap-2 p-3 bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.3)] rounded-lg">
+                  <CheckCircle2 size={14} className="text-[hsl(var(--success))]" />
+                  <p className="text-[11px] text-[hsl(var(--success))] font-medium">Sin alertas activas</p>
                 </div>
               ) : (
                 <div className="space-y-1.5">
                   {dim5_fidelidad.alertas_enfriamiento.slice(0, 8).map((a) => (
-                    <div key={`${a.nombre}-${a.grupo}`} className="flex items-center justify-between p-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <div key={`${a.nombre}-${a.grupo}`} className="flex items-center justify-between p-2 bg-[hsl(var(--destructive)/0.08)] border border-[hsl(var(--destructive)/0.3)] rounded-lg">
                       <div>
                         <p className="text-[11px] font-bold text-[hsl(var(--text-primary))]">{a.nombre}</p>
                         <p className="text-[10px] text-[hsl(var(--text-secondary))]">{a.grupo}</p>
                       </div>
-                      <span className="text-[10px] font-black text-[hsl(var(--destructive))] bg-red-100 dark:bg-red-900/40 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-black text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] px-2 py-0.5 rounded-full">
                         {a.ausencias_consecutivas}× FALTO
                       </span>
                     </div>
@@ -584,9 +584,9 @@ export default function StrategyAnalyticsPage() {
                           <p className="text-[11px] font-bold text-[hsl(var(--text-primary))]">{a.nombre}</p>
                           <p className="text-[10px] text-[hsl(var(--text-secondary))]">{a.grupo}</p>
                         </div>
-                        <span className="text-[11px] font-black text-emerald-600">{a.ica_porcentaje}%</span>
+                        <span className="text-[11px] font-black text-[hsl(var(--success))]">{a.ica_porcentaje}%</span>
                       </div>
-                      <ProgressBar value={a.ica_porcentaje} color="bg-emerald-500" />
+                      <ProgressBar value={a.ica_porcentaje} color="bg-[hsl(var(--success))]" />
                     </div>
                   ))}
                 </div>
@@ -604,8 +604,8 @@ export default function StrategyAnalyticsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
                 {[
                   { label: "Proyectadas", value: dim6_eficiencia.sesiones_proyectadas_total, color: "text-[hsl(var(--text-primary))]" },
-                  { label: "Realizadas", value: dim6_eficiencia.sesiones_realizadas_total, color: "text-emerald-600" },
-                  { label: "ICS global", value: `${dim6_eficiencia.ics_global_porcentaje}%`, color: dim6_eficiencia.ics_global_porcentaje >= 90 ? "text-emerald-600" : "text-amber-500" },
+                  { label: "Realizadas", value: dim6_eficiencia.sesiones_realizadas_total, color: "text-[hsl(var(--success))]" },
+                  { label: "ICS global", value: `${dim6_eficiencia.ics_global_porcentaje}%`, color: dim6_eficiencia.ics_global_porcentaje >= 90 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--warning))]" },
                 ].map(s => (
                   <div key={s.label} className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 text-center">
                     <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
@@ -625,9 +625,9 @@ export default function StrategyAnalyticsPage() {
                     </div>
                     <div className="flex gap-4 text-[11px] text-[hsl(var(--text-secondary))] mb-1.5">
                       <span>{g.sesiones_realizadas}/{g.sesiones_proyectadas} sesiones</span>
-                      {g.ofrenda_total > 0 && <span className="text-emerald-600 font-bold">${g.ofrenda_total.toLocaleString()}</span>}
+                      {g.ofrenda_total > 0 && <span className="text-[hsl(var(--success))] font-bold">${g.ofrenda_total.toLocaleString()}</span>}
                     </div>
-                    <ProgressBar value={g.ics_porcentaje} color={g.ics_porcentaje >= 90 ? "bg-emerald-500" : g.ics_porcentaje >= 70 ? "bg-amber-400" : "bg-[hsl(var(--destructive))]"} />
+                    <ProgressBar value={g.ics_porcentaje} color={g.ics_porcentaje >= 90 ? "bg-[hsl(var(--success))]" : g.ics_porcentaje >= 70 ? "bg-[hsl(var(--warning))]" : "bg-[hsl(var(--destructive))]"} />
                   </div>
                 ))}
               </div>
@@ -642,9 +642,9 @@ export default function StrategyAnalyticsPage() {
                     <YAxis tick={{ fontSize: 10 }} />
                     <Tooltip />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Line type="monotone" dataKey="presentes" name="Presentes" stroke="#6366f1" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="ausentes" name="Ausentes" stroke="#ef4444" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="tasa_asistencia" name="Tasa %" stroke="#22c55e" strokeWidth={2} strokeDasharray="4 2" dot={false} />
+                    <Line type="monotone" dataKey="presentes" name="Presentes" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="ausentes" name="Ausentes" stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="tasa_asistencia" name="Tasa %" stroke="hsl(var(--success))" strokeWidth={2} strokeDasharray="4 2" dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </ChartBox>
@@ -731,10 +731,10 @@ export default function StrategyAnalyticsPage() {
                   const maxDays = Math.max(...velocity.map(v => v.avg_days), 1);
                   const barWidth = (s.avg_days / maxDays) * 100;
                   const toneColor = s.avg_days < 30
-                    ? 'bg-emerald-500'
+                    ? 'bg-[hsl(var(--success))]'
                     : s.avg_days < 90
-                    ? 'bg-amber-500'
-                    : 'bg-red-500';
+                    ? 'bg-[hsl(var(--warning))]'
+                    : 'bg-[hsl(var(--destructive))]';
                   return (
                     <div key={`${s.role}-${i}`} className="flex items-center gap-2 shrink-0">
                       <div className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 min-w-[140px] flex flex-col gap-2 hover:shadow-md transition-shadow">
@@ -814,8 +814,8 @@ export default function StrategyAnalyticsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               {[
                 { label: "Líderes asignados", value: dim8_liderazgo.total_lideres_asignados, color: "text-[hsl(var(--primary))]" },
-                { label: "TDS (Deserción)", value: `${dim8_liderazgo.tds_porcentaje}%`, color: dim8_liderazgo.tds_porcentaje > 20 ? "text-[hsl(var(--destructive))]" : "text-emerald-600" },
-                { label: "Promovidos", value: dim8_liderazgo.promovidos_periodo, color: "text-emerald-600" },
+                { label: "TDS (Deserción)", value: `${dim8_liderazgo.tds_porcentaje}%`, color: dim8_liderazgo.tds_porcentaje > 20 ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--success))]" },
+                { label: "Promovidos", value: dim8_liderazgo.promovidos_periodo, color: "text-[hsl(var(--success))]" },
                 { label: "IRL", value: `${dim8_liderazgo.irl_porcentaje}%`, color: "text-[hsl(var(--text-primary))]" },
               ].map(s => (
                 <div key={s.label} className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 text-center">
@@ -828,7 +828,7 @@ export default function StrategyAnalyticsPage() {
               <div className="space-y-1.5">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--destructive))] mb-1">Alertas burnout</p>
                 {dim8_liderazgo.alertas_burnout.map((a) => (
-                  <div key={`${a.nombre}-${a.grupo}`} className="flex justify-between items-center p-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <div key={`${a.nombre}-${a.grupo}`} className="flex justify-between items-center p-2 bg-[hsl(var(--destructive)/0.08)] border border-[hsl(var(--destructive)/0.3)] rounded-lg">
                     <div>
                       <p className="text-[11px] font-bold text-[hsl(var(--text-primary))]">{a.nombre}</p>
                       <p className="text-[10px] text-[hsl(var(--text-secondary))]">{a.grupo}</p>
@@ -838,9 +838,9 @@ export default function StrategyAnalyticsPage() {
                 ))}
               </div>
             ) : (
-              <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg">
-                <CheckCircle2 size={14} className="text-emerald-600" />
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">Liderazgo sin alertas</p>
+              <div className="flex items-center gap-2 p-3 bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.3)] rounded-lg">
+                <CheckCircle2 size={14} className="text-[hsl(var(--success))]" />
+                <p className="text-[11px] text-[hsl(var(--success))] font-medium">Liderazgo sin alertas</p>
               </div>
             )}
           </div>
@@ -862,7 +862,7 @@ export default function StrategyAnalyticsPage() {
                 <p className="text-[11px] text-[hsl(var(--text-secondary))]">captados por campaña</p>
               </div>
               <div className="bg-[hsl(var(--bg-secondary))] rounded-lg p-4 text-center">
-                <p className="text-3xl font-black text-emerald-600">{dim9_campanas.retenidos_3_sesiones}</p>
+                <p className="text-3xl font-black text-[hsl(var(--success))]">{dim9_campanas.retenidos_3_sesiones}</p>
                 <p className="text-[11px] text-[hsl(var(--text-secondary))]">retenidos (≥3 sesiones)</p>
               </div>
             </div>
@@ -943,9 +943,9 @@ export default function StrategyAnalyticsPage() {
                   <PolarGrid />
                   <PolarAngleAxis dataKey="grupo" tick={{ fontSize: 11 }} />
                   <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
-                  <Radar name="Ocupación" dataKey="Ocupación" stroke="#6366f1" fill="#6366f1" fillOpacity={0.2} />
-                  <Radar name="Atracción" dataKey="Asistencia" stroke="#22c55e" fill="#22c55e" fillOpacity={0.2} />
-                  <Radar name="Cumplimiento" dataKey="Cumplimiento" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.2} />
+                  <Radar name="Ocupación" dataKey="Ocupación" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.2} />
+                  <Radar name="Atracción" dataKey="Asistencia" stroke="hsl(var(--success))" fill="hsl(var(--success))" fillOpacity={0.2} />
+                  <Radar name="Cumplimiento" dataKey="Cumplimiento" stroke="hsl(var(--warning))" fill="hsl(var(--warning))" fillOpacity={0.2} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   <Tooltip />
                 </RadarChart>

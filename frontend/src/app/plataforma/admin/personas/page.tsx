@@ -105,7 +105,7 @@ export default function AdminPersonasPage() {
                                             <tr key={persona.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="size-9 rounded-md bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] flex items-center justify-center font-bold text-xs">
+                                                        <div className="size-9 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center font-bold text-xs">
                                                             {(persona.first_name || "P").slice(0, 1)}
                                                             {(persona.last_name || "").slice(0, 1)}
                                                         </div>

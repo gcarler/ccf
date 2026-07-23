@@ -81,7 +81,7 @@ export default function AcademyForumPage() {
     };
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--surface-1))]/50 font-display dark:bg-[#1e1f21]">
+        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--surface-1))]/50 font-display dark:bg-[hsl(var(--surface-1))]">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Academia", icon: BookOpen },
@@ -145,7 +145,7 @@ export default function AcademyForumPage() {
                                     value={search}
                                     onChange={(event) => setSearch(event.target.value)}
                                     placeholder="Buscar temas..."
-                                    className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-1.5 text-sm font-bold outline-none transition-all focus:ring-4 focus:ring-blue-500/10 dark:border-white/10 dark:bg-white/5"
+                                    className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-1.5 text-sm font-bold outline-none transition-all focus:ring-4 focus:ring-[hsl(var(--primary))]/10 dark:border-white/10 dark:bg-white/5"
                                 />
                                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                             </div>
@@ -212,7 +212,7 @@ export default function AcademyForumPage() {
                             value={newThread.title}
                             onChange={(event) => setNewThread((prev) => ({ ...prev, title: event.target.value }))}
                             placeholder="Tema del debate"
-                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-white/5 dark:text-white"
                         />
                     </div>
                     <div className="space-y-2">
@@ -220,7 +220,7 @@ export default function AcademyForumPage() {
                         <select
                             value={newThread.category}
                             onChange={(event) => setNewThread((prev) => ({ ...prev, category: event.target.value }))}
-                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-white/5 dark:text-white"
                         >
                             {categories.filter((category) => category !== "Todos").map((category) => <option key={category} value={category}>{category}</option>)}
                         </select>

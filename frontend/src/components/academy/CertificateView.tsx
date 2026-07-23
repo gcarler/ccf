@@ -73,11 +73,11 @@ export default function CertificateView({ data }: CertificateProps) {
     const handleDownload = () => {
         // Genera un blob imprimible (HTML serializado) y lo descarga.
         const css = `
-        body { font-family: Georgia, serif; padding: 40px; background: #f8fafc; color: #001b48; text-align: center; }
-        .badge { display: inline-block; padding: 6px 16px; border-radius: 999px; background: #001b48; color: white; font-weight: bold; letter-spacing: 0.18em; font-size: 12px; }
+        body { font-family: Georgia, serif; padding: 40px; background: hsl(var(--bg-primary)); color: hsl(var(--primary)); text-align: center; }
+        .badge { display: inline-block; padding: 6px 16px; border-radius: 999px; background: hsl(var(--primary)); color: white; font-weight: bold; letter-spacing: 0.18em; font-size: 12px; }
         h1 { font-size: 24px; letter-spacing: 0.04em; text-transform: uppercase; }
-        h2 { font-size: 20px; color: #018abd; }
-        .code { font-family: monospace; padding: 4px 10px; border: 1px solid #cbd5f5; border-radius: 6px; background: white; }
+        h2 { font-size: 20px; color: hsl(var(--primary)); }
+        .code { font-family: monospace; padding: 4px 10px; border: 1px solid hsl(var(--border)); border-radius: 6px; background: white; }
         `;
         const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Certificado ${
             data.certificate_code
@@ -90,7 +90,7 @@ export default function CertificateView({ data }: CertificateProps) {
         <h2>${data.enrollment.course.title}</h2>
         <p>Emitido el ${issueDate}</p>
         <p>Código de validación: <span class="code">${data.certificate_code}</span></p>
-        <p style="color:#64748b;font-size:12px">Validar en: ${validationUrl}</p>
+        <p style="color:hsl(var(--text-secondary));font-size:12px">Validar en: ${validationUrl}</p>
         </body></html>`;
         const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
         const url = URL.createObjectURL(blob);

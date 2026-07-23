@@ -120,15 +120,15 @@ export default function GastosPage() {
 
   const statusConfig: Record<string, { label: string; color: string }> = {
     draft: { label: "Borrador", color: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]" },
-    submitted: { label: "Enviado", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400" },
-    approved: { label: "Aprobado", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" },
-    rejected: { label: "Rechazado", color: "bg-rose-100 text-rose-600 dark:bg-rose-900/10 dark:text-rose-400" },
-    reimbursed: { label: "Reembolsado", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400" },
+    submitted: { label: "Enviado", color: "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]" },
+    approved: { label: "Aprobado", color: "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" },
+    rejected: { label: "Rechazado", color: "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" },
+    reimbursed: { label: "Reembolsado", color: "bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]" },
   };
 
   return (
     <WorkspaceLayout sidebarTitle="Gastos" sidebarSections={SECTIONS}>
-      <div className="h-full overflow-y-auto bg-[#f8fafc] dark:bg-[#1E1F21] font-display scrollbar-thin">
+      <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] font-display scrollbar-thin">
         <div className="w-full px-4 py-3 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -147,7 +147,7 @@ export default function GastosPage() {
 
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar reportes..." className="pl-9 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[12px] w-full focus:ring-2 focus:ring-blue-500/20" />
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar reportes..." className="pl-9 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[12px] w-full focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]" />
           </div>
 
           {showCreate && (
@@ -161,7 +161,7 @@ export default function GastosPage() {
                     <input type="text" placeholder="Categoría" value={item.category} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, category: e.target.value } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
                     <input type="text" placeholder="Descripción" value={item.description} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, description: e.target.value } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
                     <input type="number" min={0} placeholder="Monto" value={item.amount} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, amount: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                    <button type="button" onClick={() => { if (window.confirm('Eliminar esta línea?')) { setForm({ ...form, items: form.items.filter((_, i) => i !== idx) }); } }} className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"><Trash2 size={14} /></button>
+                    <button type="button" onClick={() => { if (window.confirm('Eliminar esta línea?')) { setForm({ ...form, items: form.items.filter((_, i) => i !== idx) }); } }} className="p-2 text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-lg"><Trash2 size={14} /></button>
                   </div>
                 ))}
                 <button type="button" onClick={() => setForm({ ...form, items: [...form.items, { expense_date: "", category: "", description: "", amount: 0, vendor: "" }] })} className="text-[11px] font-semibold text-[hsl(var(--primary))] hover:underline">+ Agregar línea</button>
@@ -193,16 +193,16 @@ export default function GastosPage() {
                     <p className="text-[11px] text-[hsl(var(--text-secondary))] mb-2">{report.description || "Sin descripción"}</p>
                     <div className="flex flex-wrap gap-1">
                       {report.status === "draft" && (
-                        <button onClick={() => handleAction(report.id, "submit")} className="px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[9px] font-bold uppercase tracking-wide flex items-center gap-1"><Send size={10} /> Enviar</button>
+                        <button onClick={() => handleAction(report.id, "submit")} className="px-2 py-1 rounded-md bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] text-[9px] font-bold uppercase tracking-wide flex items-center gap-1"><Send size={10} /> Enviar</button>
                       )}
                       {report.status === "submitted" && (
                         <>
-                          <button onClick={() => handleAction(report.id, "approve")} className="px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[9px] font-bold uppercase tracking-wide flex items-center gap-1"><Check size={10} /> Aprobar</button>
-                          <button onClick={() => handleAction(report.id, "reject")} className="px-2 py-1 rounded-md bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-[9px] font-bold uppercase tracking-wide flex items-center gap-1"><XCircle size={10} /> Rechazar</button>
+                          <button onClick={() => handleAction(report.id, "approve")} className="px-2 py-1 rounded-md bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] text-[9px] font-bold uppercase tracking-wide flex items-center gap-1"><Check size={10} /> Aprobar</button>
+                          <button onClick={() => handleAction(report.id, "reject")} className="px-2 py-1 rounded-md bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] text-[9px] font-bold uppercase tracking-wide flex items-center gap-1"><XCircle size={10} /> Rechazar</button>
                         </>
                       )}
                       {report.status === "approved" && (
-                        <button onClick={() => handleAction(report.id, "reimburse")} className="px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-[9px] font-bold uppercase tracking-wide flex items-center gap-1"><DollarSign size={10} /> Reembolsar</button>
+                        <button onClick={() => handleAction(report.id, "reimburse")} className="px-2 py-1 rounded-md bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] text-[9px] font-bold uppercase tracking-wide flex items-center gap-1"><DollarSign size={10} /> Reembolsar</button>
                       )}
                     </div>
                     {report.items?.length > 0 && (

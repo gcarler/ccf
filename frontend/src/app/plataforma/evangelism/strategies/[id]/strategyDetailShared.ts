@@ -103,9 +103,9 @@ export interface AttendanceSaveResult {
 export type TabId = 'overview' | 'groups' | 'sessions' | 'attendance' | 'metrics';
 
 export const STATUS_COLORS = {
-  pending: '#F59E0B',
-  active: '#2563EB',
-  done: '#10B981',
+  pending: 'hsl(var(--warning))',
+  active: 'hsl(var(--primary))',
+  done: 'hsl(var(--success))',
 };
 
 export const STATUS_LABELS = {
@@ -115,11 +115,11 @@ export const STATUS_LABELS = {
 };
 
 export const TYPOLOGY_COLORS: Record<string, string> = {
-  relacional: '#3B82F6',
-  evento_masivo: '#F97316',
-  sectorial: '#8B5CF6',
-  reunion: '#10B981',
-  cells: '#6366F1',
+  relacional: 'hsl(var(--info))',
+  evento_masivo: 'hsl(var(--warning))',
+  sectorial: 'hsl(var(--primary))',
+  reunion: 'hsl(var(--success))',
+  cells: 'hsl(var(--primary))',
 };
 
 export const TYPOLOGY_LABELS: Record<string, string> = {
@@ -139,7 +139,7 @@ export const ROLE_COLORS: Record<string, string> = {
   lider: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
   colider: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
   persona: 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',
-  visitante: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  visitante: 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]',
   asistente: 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',
   personalizado: 'bg-blue-100 text-[hsl(var(--primary))] dark:bg-blue-900/30 dark:text-blue-300',
 };

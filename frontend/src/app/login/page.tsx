@@ -157,7 +157,7 @@ export default function LoginPage() {
                             <h1 className="font-bold tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
                                 EL <br /> CCF
                             </h1>
-                            <p className="text-ccf-blue-light text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
+                            <p className="text-[hsl(var(--primary))] text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
                                 Comunidad <br /> Cristiana
                             </p>
                         </>
@@ -205,7 +205,7 @@ export default function LoginPage() {
                         transition={{ delay: 0.3 }}
                         className="mb-4"
                     >
-                        <h2 className="text-[clamp(2rem,4vw,2.75rem)] font-extrabold text-ccf-blue-dark tracking-[-0.02em] leading-none m-0 mb-4">
+                        <h2 className="text-[clamp(2rem,4vw,2.75rem)] font-extrabold text-[hsl(var(--text-primary))] tracking-[-0.02em] leading-none m-0 mb-4">
                             Bienvenido
                         </h2>
                         <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-[10px] m-0">
@@ -230,8 +230,8 @@ export default function LoginPage() {
 
                                 {/* Icon */}
                                 <div className="relative z-10 flex items-start gap-4">
-                                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[hsl(var(--warning)/0.2)] flex items-center justify-center border border-[hsl(var(--warning)/0.3)]">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--warning))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                             <circle cx="12" cy="12" r="10"/>
                                             <line x1="12" y1="8" x2="12" y2="12"/>
                                             <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -294,7 +294,7 @@ export default function LoginPage() {
                                 <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
                                     Contraseña
                                 </label>
-                                <Link href="/auth/forgot" className="text-[9px] text-ccf-blue-light font-bold uppercase tracking-wider no-underline">
+                                <Link href="/auth/forgot" className="text-[9px] text-[hsl(var(--primary))] font-bold uppercase tracking-wider no-underline">
                                     ¿Olvidaste la clave?
                                 </Link>
                             </div>
@@ -328,7 +328,7 @@ export default function LoginPage() {
                                     initial={{ opacity: 0, scale: 0.96 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.96 }}
-                                    className="px-3 py-1.5 bg-rose-50 border-2 border-rose-200 rounded-lg text-rose-600 text-[11px] font-bold text-center uppercase tracking-wider"
+                                    className="px-3 py-1.5 bg-[hsl(var(--destructive)/0.08)] border-2 border-[hsl(var(--destructive)/0.2)] rounded-lg text-[hsl(var(--destructive))] text-[11px] font-bold text-center uppercase tracking-wider"
                                 >
                                     {error}
                                 </motion.div>
@@ -399,7 +399,7 @@ export default function LoginPage() {
                         </p>
                         <Link
                             href="/register"
-                            className="text-ccf-blue-light font-bold text-[10px] uppercase tracking-wider no-underline"
+                            className="text-[hsl(var(--primary))] font-bold text-[10px] uppercase tracking-wider no-underline"
                         >
                             Solicitar registro ahora
                         </Link>

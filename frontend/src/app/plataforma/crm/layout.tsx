@@ -14,7 +14,7 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
                     sidebarTitle="CRM Pastoral"
                     sidebarSections={CRM_SIDEBAR_SECTIONS}
                 >
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] h-full">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] h-full">
                         {children}
                     </div>
                 </WorkspaceLayout>

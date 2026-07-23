@@ -86,13 +86,13 @@ export default function GroupCreationDrawer({
     <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">{label}</label>
     <input value={groupForm[field]} onChange={e => setGroupForm(f => ({ ...f, [field]: e.target.value }))}
     placeholder={placeholder}
-    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]" />
+    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
     </div>
     ))}
     <div>
     <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Capacidad</label>
     <input type="number" value={groupForm.capacity} onChange={e => setGroupForm(f => ({ ...f, capacity: parseInt(e.target.value) || 15 }))}
-    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]" />
+    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
     </div>
     <div className="grid grid-cols-3 gap-2">
     <div>
@@ -144,7 +144,7 @@ export default function GroupCreationDrawer({
     }}
     onBlur={() => setTimeout(() => setRoleDropdown(null), 150)}
     onChange={e => setRoleSearch(s => ({ ...s, [field]: e.target.value }))}
-    className="w-full pl-8 pr-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]"
+    className="w-full pl-8 pr-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]"
     />
     {selectedId && (
     <button
@@ -157,7 +157,7 @@ export default function GroupCreationDrawer({
     )}
     </div>
     {roleDropdown === field && (
-    <div className="absolute z-50 mt-1 w-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl max-h-48 overflow-y-auto">
+    <div className="absolute z-50 mt-1 w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl max-h-48 overflow-y-auto">
     <button
     type="button"
     onMouseDown={() => { setGroupRoleAssignments(f => ({ ...f, [field]: null })); setRoleDropdown(null); }}

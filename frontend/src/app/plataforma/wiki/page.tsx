@@ -110,9 +110,9 @@ export default function WikiHomePage() {
 
     return (
         <WorkspaceLayout sidebarTitle="Wiki" sidebarSections={sidebarSections}>
-            <div className="flex flex-col h-full bg-[#F8F9FB] dark:bg-[#1E1F21]">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
             {/* TOOLBAR */}
-            <header className="h-8 border-b border-[hsl(var(--border))]/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21]">
+            <header className="h-8 border-b border-[hsl(var(--border))]/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
                 <div className="flex items-center gap-2 flex-1">
                     <BookOpen size={16} className="text-[hsl(var(--primary))]" />
                     <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
@@ -148,7 +148,7 @@ export default function WikiHomePage() {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-blue-50 dark:bg-blue-900/10 border-b-2 border-blue-300 dark:border-blue-500/30 overflow-hidden shrink-0"
+                        className="bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] border-b-2 border-[hsl(var(--info)/0.3)] dark:border-[hsl(var(--info)/0.3)] overflow-hidden shrink-0"
                     >
                         <form 
                             onSubmit={handleCreateDoc}
@@ -162,7 +162,7 @@ export default function WikiHomePage() {
                                 value={newTitle}
                                 onChange={(e) => setNewTitle(e.target.value)}
                                 placeholder="Nombre del documento (Enter para crear...)"
-                                className="flex-1 bg-transparent border-none text-sm font-bold text-blue-900 dark:text-blue-200 placeholder:text-[hsl(var(--primary))] focus:ring-0"
+                                className="flex-1 bg-transparent border-none text-sm font-bold text-[hsl(var(--info))] dark:text-[hsl(var(--info))] placeholder:text-[hsl(var(--info))] focus:ring-0"
                             />
                         </form>
                     </motion.div>
@@ -185,8 +185,8 @@ export default function WikiHomePage() {
                             </div>
                         ) : error ? (
                             <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
-                                <AlertCircle size={32} className="text-rose-500" />
-                                <p className="font-bold text-sm text-rose-500">{error}</p>
+                                <AlertCircle size={32} className="text-[hsl(var(--destructive))]" />
+                                <p className="font-bold text-sm text-[hsl(var(--destructive))]">{error}</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -198,7 +198,7 @@ export default function WikiHomePage() {
                                         transition={{ delay: index * 0.05 }}
                                         className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
                                     >
-                                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-blue-600 to-sky-600" />
+                                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]" />
                                         
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-start justify-between">

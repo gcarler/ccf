@@ -69,7 +69,7 @@ export default function GroupsHistoryPage() {
     }, [groups]);
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#1E1F21]">
+        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Grupos", icon: Home },
@@ -89,7 +89,7 @@ export default function GroupsHistoryPage() {
                     </article>
                     <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Con lider asignado</p>
-                        <p className="mt-2 text-xl font-bold text-emerald-600">{groups.filter((item) => !!item.leader_name).length}</p>
+                        <p className="mt-2 text-xl font-bold text-[hsl(var(--success))]">{groups.filter((item) => !!item.leader_name).length}</p>
                     </article>
                 </section>
 
@@ -100,12 +100,12 @@ export default function GroupsHistoryPage() {
                 )}
 
                 {!loading && error && (
-                    <div className="rounded-md border border-rose-200 bg-rose-50 p-4 dark:border-rose-500/20 dark:bg-rose-500/10">
-                        <p className="text-sm font-bold text-rose-600 dark:text-rose-300">{error}</p>
+                    <div className="rounded-md border border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.08)] p-4">
+                        <p className="text-sm font-bold text-[hsl(var(--destructive))]">{error}</p>
                         <button
                             type="button"
                             onClick={() => void loadGroups()}
-                            className="mt-4 inline-flex items-center gap-2 rounded-md border border-rose-300 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-rose-600 transition hover:bg-rose-100 dark:border-rose-400/30 dark:text-rose-200"
+                            className="mt-4 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--destructive)/0.3)] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition hover:bg-[hsl(var(--destructive)/0.08)]"
                         >
                             <RefreshCw size={12} /> Reintentar
                         </button>

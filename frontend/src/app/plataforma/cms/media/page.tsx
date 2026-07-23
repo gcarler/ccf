@@ -284,21 +284,21 @@ export default function CmsMediaLibrary() {
           {filtered.map(item => {
             const FileIcon = getFileTypeIcon(item.mime_type);
             return (
-              <tr key={item.id} onClick={() => setSelectedItem(item)} className={clsx("hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] cursor-pointer", item.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5")}>
+              <tr key={item.id} onClick={() => setSelectedItem(item)} className={clsx("hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] cursor-pointer", item.status === "archived" && "opacity-70 bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.05)]")}>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="size-9 rounded-md overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">
                       {isImage(item.mime_type) ? <OptimizedImage src={item.url} alt="" width={36} height={36} className="w-full h-full object-cover" /> : <FileIcon size={16} className="text-[hsl(var(--text-secondary))]" />}
                     </div>
                     <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate max-w-[260px]">{item.filename || "Archivo"}</span>
-                    {item.status === "archived" && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</span>}
+                    {item.status === "archived" && <span className="rounded-full bg-[hsl(var(--warning-muted))] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Archivado</span>}
                   </div>
                 </td>
                 <td className="px-4 py-3 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{item.mime_type || "—"}</td>
                 <td className="px-4 py-3 hidden lg:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{formatBytes(item.file_size)}</td>
                 <td className="px-4 py-3 hidden xl:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}</td>
                 <td className="px-4 py-3">
-                  <button onClick={e => { e.stopPropagation(); copyUrl(item); }} className="p-2 rounded-md hover:bg-blue-50 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]">
+                  <button onClick={e => { e.stopPropagation(); copyUrl(item); }} className="p-2 rounded-md hover:bg-[hsl(var(--info-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]">
                     {copiedId === item.id ? <Check size={14} /> : <Copy size={14} />}
                   </button>
                 </td>
@@ -322,13 +322,13 @@ export default function CmsMediaLibrary() {
             {group.items.map(item => {
               const FileIcon = getFileTypeIcon(item.mime_type);
               return (
-                <button key={item.id} onClick={() => setSelectedItem(item)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 hover:border-blue-400 transition-all flex items-center gap-3", item.status === "archived" && "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5")}>
+                <button key={item.id} onClick={() => setSelectedItem(item)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 hover:border-[hsl(var(--primary)/0.4)] transition-all flex items-center gap-3", item.status === "archived" && "opacity-70 border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.05)]")}>
                   <div className="size-10 rounded-md overflow-hidden bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center shrink-0">
                     {isImage(item.mime_type) ? <OptimizedImage src={item.url} alt="" width={36} height={36} className="w-full h-full object-cover" /> : <FileIcon size={18} className="text-[hsl(var(--text-secondary))]" />}
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{item.filename || "Archivo"}</p>
-                    {item.status === "archived" && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-600">Archivado</p>}
+                    {item.status === "archived" && <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Archivado</p>}
                     <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-1">{formatBytes(item.file_size)}</p>
                   </div>
                 </button>
@@ -352,7 +352,7 @@ export default function CmsMediaLibrary() {
         {isDraggingOver && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-blue-600/20 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none border-4 border-dashed border-blue-500 rounded-lg m-4"
+            className="fixed inset-0 z-50 bg-[hsl(var(--primary))/0.2] backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none border-4 border-dashed border-[hsl(var(--primary))] rounded-lg m-4"
           >
             <Upload size={64} className="text-[hsl(var(--primary))] mb-4" strokeWidth={1} />
             <p className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-semibold text-xl uppercase tracking-wide">
@@ -381,7 +381,7 @@ export default function CmsMediaLibrary() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar archivos..."
-            className="w-full pl-9 pr-4 py-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
+            className="w-full pl-9 pr-4 py-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 font-medium"
           />
         </div>
 
@@ -462,10 +462,10 @@ export default function CmsMediaLibrary() {
                     onClick={() => setSelectedItem(item)}
                     className={clsx(
                       "group relative aspect-square rounded-lg border overflow-hidden cursor-pointer transition-all",
-                      item.status === "archived" && "opacity-70 bg-amber-50/40 dark:bg-amber-500/5",
+                      item.status === "archived" && "opacity-70 bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.05)]",
                       selectedItem?.id === item.id
-                        ? "border-blue-500 ring-2 ring-blue-500/30"
-                        : "border-[hsl(var(--border))] dark:border-white/10 hover:border-blue-400 hover:shadow-lg"
+                        ? "border-[hsl(var(--primary))] ring-2 ring-[hsl(var(--primary))/0.3]"
+                        : "border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--primary)/0.4)] hover:shadow-lg"
                     )}
                   >
                     {isImage(item.mime_type) ? (
@@ -479,16 +479,16 @@ export default function CmsMediaLibrary() {
 
                     {/* Hover overlay */}
                     {item.status === "archived" && (
-                      <span className="absolute left-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">
+                      <span className="absolute left-2 top-2 rounded-full bg-[hsl(var(--warning-muted))] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">
                         Archivado
                       </span>
                     )}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2 p-2">
                       <button
                         onClick={e => { e.stopPropagation(); copyUrl(item); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--bg-primary))] rounded-lg text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] hover:bg-blue-50 transition-all w-full justify-center"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--bg-primary))] rounded-lg text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--info-muted))] transition-all w-full justify-center"
                       >
-                        {copiedId === item.id ? <Check size={10} className="text-emerald-600" /> : <Copy size={10} />}
+                        {copiedId === item.id ? <Check size={10} className="text-[hsl(var(--success))]" /> : <Copy size={10} />}
                         {copiedId === item.id ? "¡Copiado!" : "Copiar URL"}
                       </button>
                       {isImage(item.mime_type) && item.status !== "archived" && (
@@ -506,7 +506,7 @@ export default function CmsMediaLibrary() {
                         disabled={deletingId === item.id}
                         className={clsx(
                           "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60",
-                          item.status === "archived" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-amber-500 hover:bg-amber-600"
+                          item.status === "archived" ? "bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]" : "bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))]"
                         )}
                       >
                         {deletingId === item.id ? <Loader2 size={10} className="animate-spin" /> : item.status === "archived" ? <RotateCcw size={10} /> : <Archive size={10} />}
@@ -515,7 +515,7 @@ export default function CmsMediaLibrary() {
                       <button
                         onClick={e => { e.stopPropagation(); deleteItem(item); }}
                         disabled={deletingId === item.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))] rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
                       >
                         {deletingId === item.id ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
                         Eliminar
@@ -563,9 +563,9 @@ export default function CmsMediaLibrary() {
                     onClick={() => setSelectedItem(item)}
                     className={clsx(
                       "group flex items-center gap-4 p-3 rounded-lg border cursor-pointer transition-all",
-                      item.status === "archived" && "opacity-70 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5",
+                      item.status === "archived" && "opacity-70 border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.05)]",
                       selectedItem?.id === item.id
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
+                        ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.1)]"
                         : "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] hover:border-blue-300 dark:hover:border-blue-700"
                     )}
                   >
@@ -580,7 +580,7 @@ export default function CmsMediaLibrary() {
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{item.filename || "Archivo"}</p>
                         {item.status === "archived" && (
-                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</span>
+                          <span className="rounded-full bg-[hsl(var(--warning-muted))] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Archivado</span>
                         )}
                       </div>
                       <p className="text-[11px] text-[hsl(var(--text-secondary))] truncate">{item.mime_type || "Sin tipo"} · {formatBytes(item.file_size)}</p>
@@ -588,7 +588,7 @@ export default function CmsMediaLibrary() {
                     <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={e => { e.stopPropagation(); copyUrl(item); }}
-                        className="p-2 rounded-md hover:bg-blue-50 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
+                        className="p-2 rounded-md hover:bg-[hsl(var(--info-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
                         aria-label="Copiar URL"
                       >
                         {copiedId === item.id ? <Check size={14} /> : <Copy size={14} />}
@@ -597,7 +597,7 @@ export default function CmsMediaLibrary() {
                         <button
                           onClick={e => { e.stopPropagation(); optimizeItem(item); }}
                           disabled={optimizingId === item.id}
-                          className="p-2 rounded-md hover:bg-blue-50 text-[hsl(var(--text-secondary))] hover:text-blue-600 transition-colors disabled:opacity-60"
+                          className="p-2 rounded-md hover:bg-[hsl(var(--info-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors disabled:opacity-60"
                           aria-label="Optimizar"
                         >
                           {optimizingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
@@ -606,7 +606,7 @@ export default function CmsMediaLibrary() {
                       <button
                         onClick={e => { e.stopPropagation(); toggleArchiveItem(item); }}
                         disabled={deletingId === item.id}
-                        className="p-2 rounded-md hover:bg-amber-50 text-[hsl(var(--text-secondary))] hover:text-amber-600 transition-colors disabled:opacity-60"
+                        className="p-2 rounded-md hover:bg-[hsl(var(--warning-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--warning))] transition-colors disabled:opacity-60"
                         aria-label={item.status === "archived" ? "Restaurar" : "Archivar"}
                       >
                         {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : item.status === "archived" ? <RotateCcw size={14} /> : <Archive size={14} />}
@@ -614,7 +614,7 @@ export default function CmsMediaLibrary() {
                       <button
                         onClick={e => { e.stopPropagation(); deleteItem(item); }}
                         disabled={deletingId === item.id}
-                        className="p-2 rounded-md hover:bg-red-50 text-[hsl(var(--text-secondary))] hover:text-red-600 transition-colors disabled:opacity-60"
+                        className="p-2 rounded-md hover:bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] transition-colors disabled:opacity-60"
                         aria-label="Eliminar"
                       >
                         {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}

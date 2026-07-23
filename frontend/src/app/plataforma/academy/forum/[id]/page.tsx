@@ -94,7 +94,7 @@ export default function ForumThreadDetail() {
 
     if (loading) {
         return (
-            <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/50 dark:bg-[#1e1f21] overflow-hidden font-display">
+            <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/50 dark:bg-[hsl(var(--surface-1))] overflow-hidden font-display">
                 <WorkspaceToolbar
                     breadcrumbs={[
                         { label: 'Foro Academia', icon: MessageSquare },
@@ -119,7 +119,7 @@ export default function ForumThreadDetail() {
     if (!thread) return null;
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/50 dark:bg-[#1e1f21] overflow-hidden font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/50 dark:bg-[hsl(var(--surface-1))] overflow-hidden font-display">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Foro Academia', icon: MessageSquare },
@@ -279,7 +279,7 @@ export default function ForumThreadDetail() {
                 )}
             </main>
 
-            <footer className="fixed bottom-0 left-0 right-0 md:left-64 z-20 p-4 bg-white/80 dark:bg-[#1e1f21]/80 backdrop-blur-xl border-t border-[hsl(var(--border))] dark:border-white/5">
+            <footer className="fixed bottom-0 left-0 right-0 md:left-64 z-20 p-4 bg-white/80 dark:bg-[hsl(var(--surface-1))]/80 backdrop-blur-xl border-t border-[hsl(var(--border))] dark:border-white/5">
                 <div className="max-w-4xl mx-auto flex items-center gap-4 bg-[hsl(var(--surface-2))] dark:bg-black/20 rounded-md p-2 pl-6 pr-2 shadow-inner border border-[hsl(var(--border))] dark:border-white/10">
                     <input
                         value={inputText}

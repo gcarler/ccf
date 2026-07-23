@@ -333,7 +333,7 @@ export default function LeadDetail() {
                                         Cambiar etapa
                                     </button>
                                     {isStageOpen && (
-                                        <div className="absolute right-0 top-9 z-50 w-48 overflow-hidden rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-xl dark:border-white/10 dark:bg-[#1e1f21]">
+                                        <div className="absolute right-0 top-9 z-50 w-48 overflow-hidden rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-xl dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
                                             {STAGES.map(item => (
                                                 <button
                                                     key={item}
@@ -406,7 +406,7 @@ export default function LeadDetail() {
                                     onChange={event => setNoteText(event.target.value)}
                                     rows={3}
                                     placeholder="Registra observaciones, acuerdos o próximos pasos..."
-                                    className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none transition-all placeholder:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-[hsl(var(--text-secondary))]"
+                                    className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none transition-all placeholder:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10 dark:border-white/10 dark:bg-black/20 dark:text-[hsl(var(--text-secondary))]"
                                 />
                                 <div className="flex justify-end">
                                     <button
@@ -493,7 +493,7 @@ export default function LeadDetail() {
                         <select
                             value={callForm.outcome}
                             onChange={event => setCallForm({ ...callForm, outcome: event.target.value })}
-                            className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                            className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
                         >
                             {['Exitoso', 'Sin respuesta', 'Buzón de voz', 'Número equivocado', 'Reagendar', 'Nota'].map(option => (
                                 <option key={option} value={option}>{option}</option>
@@ -507,7 +507,7 @@ export default function LeadDetail() {
                             onChange={event => setCallForm({ ...callForm, notes: event.target.value })}
                             placeholder="Observaciones, acuerdos, próximos pasos..."
                             rows={4}
-                            className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                            className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
                         />
                     </div>
                     <div className="space-y-2">
@@ -517,7 +517,7 @@ export default function LeadDetail() {
                             onChange={event => setCallForm({ ...callForm, prayer_requests: event.target.value })}
                             placeholder="Opcional"
                             rows={2}
-                            className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-blue-500/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                            className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
                         />
                     </div>
                 </form>

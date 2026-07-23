@@ -248,7 +248,7 @@ export default function RolesPage() {
                             value={editingRole.name || ''}
                             onChange={e => setEditingRole({...editingRole, name: e.target.value})}
                             placeholder="Ej. Secretaria CRM"
-                            className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg outline-none focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-bold text-[hsl(var(--text-primary))] transition-all"
+                            className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg outline-none focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-blue-500 font-bold text-[hsl(var(--text-primary))] transition-all"
                         />
                     </div>
 

@@ -233,7 +233,7 @@ export default function MultiplicationPage() {
               id="umbral-select"
               value={umbral}
               onChange={(e) => setUmbral(Number(e.target.value))}
-              className="bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1 px-2 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+              className="bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1 px-2 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
             >
               {[10, 12, 15, 18, 20, 25].map((v) => (
                 <option key={v} value={v}>
@@ -446,7 +446,7 @@ export default function MultiplicationPage() {
               value={nuevoNombre}
               onChange={(e) => setNuevoNombre(e.target.value)}
               placeholder="Ej: Grupo Norte (Hijo)"
-              className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
             />
           </div>
 
@@ -460,7 +460,7 @@ export default function MultiplicationPage() {
               <select
                 value={nuevoLiderId}
                 onChange={(e) => setNuevoLiderId(e.target.value)}
-                className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+                className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
               >
                 <option value="">— Seleccionar líder —</option>
                 {personasOptions.map((p) => (
@@ -475,7 +475,7 @@ export default function MultiplicationPage() {
                 value={nuevoLiderId}
                 onChange={(e) => setNuevoLiderId(e.target.value)}
                 placeholder="UUID de la persona líder"
-                className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
               />
             )}
             <p className="text-[10px] text-[hsl(var(--text-secondary))]">

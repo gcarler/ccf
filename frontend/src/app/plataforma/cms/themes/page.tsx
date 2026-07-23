@@ -327,10 +327,10 @@ export default function CmsThemesPage() {
         <div
           className={`rounded-lg px-4 py-2.5 text-xs font-semibold flex items-center gap-2 animate-fade-in-up ${
             message.type === "success"
-              ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+              ? "bg-[hsl(var(--success)/0.1)] border border-[hsl(var(--success)/0.2)] text-[hsl(var(--success))]"
               : message.type === "error"
-              ? "bg-red-500/10 border border-red-500/20 text-red-400"
-              : "bg-amber-500/10 border border-amber-500/20 text-amber-400"
+              ? "bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))]"
+              : "bg-[hsl(var(--warning)/0.1)] border border-[hsl(var(--warning)/0.2)] text-[hsl(var(--warning))]"
           }`}
         >
           {message.type === "success" && <CheckCircle2 size={14} />}
@@ -619,12 +619,12 @@ export default function CmsThemesPage() {
                     <p className="text-sm font-bold flex items-center gap-2">
                       {theme.name}
                       {theme.is_active && (
-                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] border border-[hsl(var(--success)/0.2)]">
                           Activo
                         </span>
                       )}
                       {isArchived && (
-                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.2)]">
                           Archivado
                         </span>
                       )}
@@ -659,7 +659,7 @@ export default function CmsThemesPage() {
                     <button
                       onClick={() => activate(theme.id)}
                       disabled={!canPublish}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--success)/0.2)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] transition-colors disabled:opacity-40"
                     >
                       <CheckCircle2 size={11} />
                       Activar
@@ -669,7 +669,7 @@ export default function CmsThemesPage() {
                     <button
                       onClick={() => archive(theme.id)}
                       disabled={!canPublish}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-400 hover:bg-amber-500/10 transition-colors disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--warning)/0.2)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)] transition-colors disabled:opacity-40"
                     >
                       <Archive size={11} />
                       Archivar

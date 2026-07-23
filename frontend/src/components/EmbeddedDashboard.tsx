@@ -298,7 +298,7 @@ export default function EmbeddedDashboard({
     });
 
     const containerClass = compact
-        ? 'bg-[hsl(var(--bg-primary))] dark:bg-[#16171a] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3'
+        ? 'bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3'
         : 'space-y-4';
 
     // ── Render ──
@@ -357,7 +357,7 @@ export default function EmbeddedDashboard({
                             <label className="text-[9px] font-semibold uppercase text-[hsl(var(--text-secondary))]">{f.label}:</label>
                             <select value={filters[f.key] ?? f.default ?? ''}
                                 onChange={e => setFilters(prev => ({...prev, [f.key]: e.target.value}))}
-                                className="text-[10px] font-medium bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-1.5 py-0.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                                className="text-[10px] font-medium bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-1.5 py-0.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                 {(f.options || []).map((o: any) => (
                                     <option key={o.value} value={o.value}>{o.label}</option>
                                 ))}
@@ -378,7 +378,7 @@ export default function EmbeddedDashboard({
                 {error && !loading && (
                     <div className="flex items-center justify-center py-8">
                         <div className="text-center space-y-1">
-                            <AlertTriangle size={20} className="mx-auto text-amber-500" />
+                            <AlertTriangle size={20} className="mx-auto text-[hsl(var(--warning))]" />
                             <p className="text-[11px] text-[hsl(var(--text-secondary))]">{error}</p>
                             <button onClick={fetchData} className="text-[10px] font-semibold text-[hsl(var(--primary))] hover:underline">Reintentar</button>
                         </div>
@@ -420,43 +420,43 @@ export default function EmbeddedDashboard({
                                 {data.growth_chart && (
                                     <DSCard padding="sm">
                                         <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Crecimiento</div>
-                                        <DSChart type="area" data={data.growth_chart} height={140} color="#6366f1" />
+                                        <DSChart type="area" data={data.growth_chart} height={140} color="hsl(var(--primary))" />
                                     </DSCard>
                                 )}
                                 {data.asistencia_por_sesion && (
                                     <DSCard padding="sm">
                                         <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Asistencia x Sesión</div>
-                                        <DSChart type="bar" data={data.asistencia_por_sesion} height={140} color="#10b981" />
+                                        <DSChart type="bar" data={data.asistencia_por_sesion} height={140} color="hsl(var(--success))" />
                                     </DSCard>
                                 )}
                                 {data.income_by_category && (
                                     <DSCard padding="sm">
                                         <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Ingresos x Categoría</div>
-                                        <DSChart type="bar" data={data.income_by_category} height={140} color="#3b82f6" />
+                                        <DSChart type="bar" data={data.income_by_category} height={140} color="hsl(var(--info))" />
                                     </DSCard>
                                 )}
                                 {data.monthly_series && (
                                     <DSCard padding="sm">
                                         <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Tendencia Mensual</div>
-                                        <DSChart type="area" data={data.monthly_series} height={140} color="#10b981" />
+                                        <DSChart type="area" data={data.monthly_series} height={140} color="hsl(var(--success))" />
                                     </DSCard>
                                 )}
                                 {data.enrollment_trends && (
                                     <DSCard padding="sm">
                                         <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Matrículas</div>
-                                        <DSChart type="bar" data={data.enrollment_trends} height={140} color="#10b981" />
+                                        <DSChart type="bar" data={data.enrollment_trends} height={140} color="hsl(var(--success))" />
                                     </DSCard>
                                 )}
                                 {data.status_distribution && (
                                     <DSCard padding="sm">
                                         <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Tareas x Estado</div>
-                                        <DSChart type="bar" data={data.status_distribution} height={140} color="#6366f1" />
+                                        <DSChart type="bar" data={data.status_distribution} height={140} color="hsl(var(--primary))" />
                                     </DSCard>
                                 )}
                                 {data.usuarios_por_rol && (
                                     <DSCard padding="sm">
                                         <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Usuarios x Rol</div>
-                                        <DSChart type="bar" data={data.usuarios_por_rol} height={140} color="#64748b" />
+                                        <DSChart type="bar" data={data.usuarios_por_rol} height={140} color="hsl(var(--text-secondary))" />
                                     </DSCard>
                                 )}
                                 {data.grupos_por_ubicacion && data.grupos_por_ubicacion.length > 0 && (
@@ -480,7 +480,7 @@ export default function EmbeddedDashboard({
                         {data.ausentes_detalle?.length > 0 && (
                             <DSCard padding="sm">
                                 <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1 flex items-center gap-1">
-                                    <AlertTriangle size={10} className="text-amber-500" /> Ausentes - {data.ausentes_detalle.length} registros
+                                    <AlertTriangle size={10} className="text-[hsl(var(--warning))]" /> Ausentes - {data.ausentes_detalle.length} registros
                                 </div>
                                 <div className="max-h-32 overflow-y-auto text-[10px]">
                                     {// eslint-disable-next-line @typescript-eslint/no-unused-vars

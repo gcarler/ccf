@@ -15,17 +15,17 @@ import WorkspaceLayout from '@/components/WorkspaceLayout';
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d").then((mod) => mod.default), { ssr: false });
 
 const palette: Record<string, string> = {
-  course: "#2563eb",
-  person: "#059669",
-  donor: "#059669",
-  lead: "#7c3aed",
-  project: "#f59e0b",
-  task: "#f97316",
-  family: "#0ea5e9",
-  fund: "#8b5cf6",
-  asset: "#d97706",
-  maintenance_log: "#e11d48",
-  pastor: "#334155",
+  course: "hsl(var(--primary))",
+  person: "hsl(var(--success))",
+  donor: "hsl(var(--success))",
+  lead: "hsl(var(--primary))",
+  project: "hsl(var(--warning))",
+  task: "hsl(var(--warning))",
+  family: "hsl(var(--info))",
+  fund: "hsl(var(--primary))",
+  asset: "hsl(var(--warning))",
+  maintenance_log: "hsl(var(--destructive))",
+  pastor: "hsl(var(--text-secondary))",
 };
 
 export default function KnowledgeGraphPage() {
@@ -180,7 +180,7 @@ export default function KnowledgeGraphPage() {
                   onNodeClick={(node: any) => setSelectedNode(node as GraphNode)}
                   nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
                     const label = node.label as string;
-                    const color = palette[node.type] || "#475569";
+                    const color = palette[node.type] || "hsl(var(--text-secondary))";
                     const fontSize = Math.max(10, 14 / globalScale);
 
                     ctx.beginPath();
@@ -190,7 +190,7 @@ export default function KnowledgeGraphPage() {
 
                     if (globalScale < 1.8) return;
                     ctx.font = `${fontSize}px sans-serif`;
-                    ctx.fillStyle = "#0f172a";
+                    ctx.fillStyle = "hsl(var(--bg-primary))";
                     ctx.fillText(label, node.x + 7, node.y + 3);
                   }}
                 />

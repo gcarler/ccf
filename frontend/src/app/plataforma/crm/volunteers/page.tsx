@@ -214,7 +214,7 @@ export default function VolunteersPage() {
                                 onChange={e => setQuery(e.target.value)}
                                 placeholder="Buscar servidor, equipo o rol..."
                                 aria-label="Buscar servidores"
-                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all placeholder:text-[hsl(var(--text-secondary))]"
+                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] focus:border-blue-400 transition-all placeholder:text-[hsl(var(--text-secondary))]"
                             />
                         </div>
                         <button
@@ -258,24 +258,24 @@ export default function VolunteersPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-1.5">Nombre Completo *</label>
-                                        <input required aria-invalid={!!formErrors.name} aria-describedby="vol-name-error" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Nombre del servidor..." className={`w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-[hsl(var(--text-secondary))] ${formErrors.name ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/10'}`} />
+                                        <input required aria-invalid={!!formErrors.name} aria-describedby="vol-name-error" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Nombre del servidor..." className={`w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border rounded-md outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all placeholder:text-[hsl(var(--text-secondary))] ${formErrors.name ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/10'}`} />
                                         {formErrors.name && <p id="vol-name-error" className="text-red-500 text-xs mt-1">Campo requerido</p>}
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-1.5">Equipo</label>
-                                        <select required value={form.team} onChange={e => setForm(p => ({ ...p, team: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all">
+                                        <select required value={form.team} onChange={e => setForm(p => ({ ...p, team: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all">
                                             {TEAMS.map(t => <option key={t}>{t}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-1.5">Rol en el Equipo</label>
-                                        <select value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all">
+                                        <select value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))} className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all">
                                             {VOLUNTEER_ROLES.map(r => <option key={r}>{r}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-1.5">Notas (opcional)</label>
-                                        <input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Habilidades, disponibilidad..." className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-[hsl(var(--text-secondary))]" />
+                                        <input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Habilidades, disponibilidad..." className="w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all placeholder:text-[hsl(var(--text-secondary))]" />
                                     </div>
                                 </div>
                                 <div className="flex justify-end gap-3 mt-5">

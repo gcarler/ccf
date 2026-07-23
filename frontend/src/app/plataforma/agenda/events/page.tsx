@@ -191,7 +191,7 @@ export default function AgendaEventsPage() {
         >
             <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[#141517]">
                 <div className="mx-auto max-w-6xl space-y-3 p-3 p-4">
-                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
+                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
                         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                             <div>
                                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Agenda de iglesia</p>
@@ -218,7 +218,7 @@ export default function AgendaEventsPage() {
                     </section>
 
                     <section className="grid gap-3 lg:grid-cols-[380px,1fr]">
-                        <form onSubmit={handleCreate} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
+                        <form onSubmit={handleCreate} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
                             <div className="mb-5 flex items-center gap-3">
                                 <div className="flex size-6 items-center justify-center rounded-lg bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]">
                                     <Plus size={18} />
@@ -293,7 +293,7 @@ export default function AgendaEventsPage() {
                             </button>
                         </form>
 
-                        <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
+                        <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
                             <div className="mb-5 flex items-center justify-between gap-3">
                                 <div>
                                     <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Próximos eventos</h2>

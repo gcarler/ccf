@@ -249,7 +249,7 @@ export default function IntelligenceConsole() {
                                 <input 
                                     value={query} onChange={(e) => setQuery(e.target.value)}
                                     placeholder="¿Cuál es la tendencia de crecimiento en el curso de liderazgo?"
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-4 pr-16 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-[hsl(var(--text-secondary))]"
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-4 pr-16 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-[hsl(var(--primary))/0.2] focus:border-blue-500/50 transition-all placeholder:text-[hsl(var(--text-secondary))]"
                                 />
                                 <button 
                                     onClick={handleAskOptimus} disabled={isAsking}

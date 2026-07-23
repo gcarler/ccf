@@ -14,14 +14,14 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all text-[hsl(var(--text-primary))] dark:text-white";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all text-[hsl(var(--text-primary))] dark:text-white";
 const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]";
 
 const CONTENT_TYPE_META: Record<string, { label: string; icon: any; color: string; bg: string }> = {
-    video:    { label: 'Video',    icon: Video,     color: 'text-rose-600',   bg: 'bg-rose-50 dark:bg-rose-500/10' },
+    video:    { label: 'Video',    icon: Video,     color: 'text-[hsl(var(--destructive))]',   bg: 'bg-[hsl(var(--destructive)/0.08)]' },
     text:     { label: 'Texto',    icon: FileText,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-blue-50 dark:bg-blue-500/10' },
     document: { label: 'Documento',icon: FileText,  color: 'text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-[hsl(var(--primary))]/10' },
-    link:     { label: 'Enlace',   icon: LinkIcon,  color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
+    link:     { label: 'Enlace',   icon: LinkIcon,  color: 'text-[hsl(var(--success))]',bg: 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))/0.1]' },
 };
 
 interface Lesson {
@@ -130,7 +130,7 @@ export default function LessonsPage() {
     const sorted = [...lessons].sort((a, b) => a.order_index - b.order_index);
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap, href: '/plataforma/academy' },
@@ -231,7 +231,7 @@ export default function LessonsPage() {
                                                         {deleteId === lesson.id ? (
                                                             <div className="flex items-center gap-1">
                                                                 <button onClick={() => handleDelete(lesson.id)}
-                                                                    className="px-2 py-1 rounded-lg font-semibold bg-rose-100 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white transition-all">
+                                                                    className="px-2 py-1 rounded-lg font-semibold bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))] hover:text-white transition-all">
                                                                     Confirmar
                                                                 </button>
                                                                 <button onClick={() => setDeleteId(null)}
@@ -241,7 +241,7 @@ export default function LessonsPage() {
                                                             </div>
                                                         ) : (
                                                             <button onClick={() => setDeleteId(lesson.id)}
-                                                                className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-600 transition-all">
+                                                                className="p-2 hover:bg-[hsl(var(--destructive)/0.08)] rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] transition-all">
                                                                 <Trash2 size={14} />
                                                             </button>
                                                         )}
@@ -277,11 +277,11 @@ export default function LessonsPage() {
                                         </button>
                                         {deleteId === lesson.id ? (
                                             <div className="flex items-center gap-1">
-                                                <button onClick={() => handleDelete(lesson.id)} className="px-2 py-1 rounded-lg font-semibold bg-rose-100 dark:bg-rose-500/10 text-rose-600 hover:bg-rose-600 hover:text-white transition-all">Confirmar</button>
+                                                <button onClick={() => handleDelete(lesson.id)} className="px-2 py-1 rounded-lg font-semibold bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))] hover:text-white transition-all">Confirmar</button>
                                                 <button onClick={() => setDeleteId(null)} className="p-1.5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))]"><X size={12} /></button>
                                             </div>
                                         ) : (
-                                            <button onClick={() => setDeleteId(lesson.id)} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-rose-600 transition-all">
+                                            <button onClick={() => setDeleteId(lesson.id)} className="p-2 hover:bg-[hsl(var(--destructive)/0.08)] rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] transition-all">
                                                 <Trash2 size={14} />
                                             </button>
                                         )}

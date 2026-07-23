@@ -150,7 +150,7 @@ export default function CourseViewPage() {
                                         className={clsx(
                                             "w-full text-left px-4 py-1.5 rounded-lg transition-all group flex items-start gap-3.5",
                                             isActive
-                                                ? "bg-blue-600/10 dark:bg-blue-500/10 border border-blue-100/50 dark:border-white/5"
+                                                ? "bg-[hsl(var(--info-muted))] dark:bg-blue-500/10 border border-[hsl(var(--info)/0.15)] dark:border-white/5"
                                                 : "hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] border border-transparent"
                                         )}
                                     >
@@ -158,7 +158,7 @@ export default function CourseViewPage() {
                                             className={clsx(
                                                 "size-9 rounded-md flex items-center justify-center shrink-0 border transition-all",
                                                 isCompleted
-                                                    ? "bg-emerald-500 border-emerald-500 text-white"
+                                                    ? "bg-[hsl(var(--success))] border-[hsl(var(--success))] text-white"
                                                     : isActive
                                                         ? "bg-[hsl(var(--primary))] border-blue-600 text-white"
                                                         : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))]"
@@ -183,7 +183,7 @@ export default function CourseViewPage() {
 
     if (loading) {
         return (
-            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden">
                 <WorkspaceToolbar breadcrumbs={[{ label: 'Cargando curso...', icon: GraduationCap }]} />
                 <div className="flex-1 flex">
                     <aside className="w-80 lg:w-96 border-r border-[hsl(var(--border))] dark:border-white/5 p-4 space-y-4"><Skeleton className="h-4 w-1/2" /><Skeleton className="h-8 w-full rounded-lg" /><Skeleton className="h-8 w-full rounded-lg" /></aside>
@@ -196,7 +196,7 @@ export default function CourseViewPage() {
     if (!course) return <div className="p-3 text-center font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide">Curso no encontrado.</div>;
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden font-display no-scrollbar">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden font-display no-scrollbar">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Academia', icon: GraduationCap }, { label: course.title, icon: BookOpen }]}
                 viewType={viewType}
@@ -212,8 +212,8 @@ export default function CourseViewPage() {
                 }
             />
 
-            <main className="flex-1 overflow-y-auto scrollbar-thin bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] relative no-scrollbar">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f003_0%,_transparent_50%)] pointer-events-none" />
+            <main className="flex-1 overflow-y-auto scrollbar-thin bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] relative no-scrollbar">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--primary)/0.03)_0%,_transparent_50%)] pointer-events-none" />
 
                 {viewType === 'list' && (
  <section className="w-full p-4 lg:p-4 space-y-4">
@@ -394,7 +394,7 @@ export default function CourseViewPage() {
                                         className={clsx(
                                             "px-3 py-2 rounded-lg font-black text-[11px] uppercase tracking-wide transition-all active:scale-95 flex items-center gap-3 shadow-xl",
                                             activeLesson?.is_completed
-                                                ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 cursor-not-allowed"
+                                                ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] cursor-not-allowed"
                                                 : "bg-[hsl(var(--primary))] text-white shadow-blue-500/20 hover:scale-[1.02]"
                                         )}
                                     >
