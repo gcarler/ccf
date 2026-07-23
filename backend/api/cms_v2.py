@@ -43,6 +43,7 @@ from backend.core.seo import (
 from backend.models_shared import _utcnow
 from backend.schemas import cms as cms_schemas
 from backend.schemas._common import PaginatedResponse
+from backend.schemas.cms_v2_sections import validate_section_props
 
 logger = logging.getLogger(__name__)
 
@@ -744,7 +745,7 @@ def patch_menu_item(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     menu = _get_menu_or_404(db, site.id, menu_key)
-    item = crud.get_cms_menu_item(db, menu.id, item_id)
+    item = crud.get_cms_menu_item(db, menu.id, item_id, site_id=site.id)
     if not item:
         raise HTTPException(status_code=404, detail="menu item not found")
     return crud.update_cms_menu_item(db, item, payload)
@@ -762,7 +763,7 @@ def delete_menu_item(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     menu = _get_menu_or_404(db, site.id, menu_key)
-    item = crud.get_cms_menu_item(db, menu.id, item_id)
+    item = crud.get_cms_menu_item(db, menu.id, item_id, site_id=site.id)
     if not item:
         raise HTTPException(status_code=404, detail="menu item not found")
     crud.delete_cms_menu_item(db, item)
@@ -922,8 +923,6 @@ def create_section(
     if payload.type not in allowed_types:
         raise HTTPException(status_code=422, detail="unsupported section type")
     # Validate props against section type schema
-    from backend.schemas.cms_v2_sections import validate_section_props
-
     try:
         props = payload.props_json or {}
         validated_props = validate_section_props(payload.type, props)
@@ -963,9 +962,18 @@ def patch_section(
             raise HTTPException(status_code=422, detail="unsupported section status")
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
-    row = crud.get_cms_section(db, page.id, section_id)
+    row = crud.get_cms_section(db, page.id, section_id, site_id=site.id)
     if not row:
         raise HTTPException(status_code=404, detail="section not found")
+    # Validate + sanitise props_json after scope/row checks so we can use
+    # the real section type when the client omits ``type``. This guarantees
+    # PATCH cannot bypass XSS/whitelist rules by mutating the type first.
+    if payload.props_json is not None:
+        effective_type = (payload.type or row.type or "").strip().lower() or "rich_text"
+        try:
+            payload.props_json = validate_section_props(effective_type, payload.props_json)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
     return crud.update_cms_section(db, row, payload)
 
 
@@ -980,7 +988,7 @@ def delete_section(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
-    row = crud.get_cms_section(db, page.id, section_id)
+    row = crud.get_cms_section(db, page.id, section_id, site_id=site.id)
     if not row:
         raise HTTPException(status_code=404, detail="section not found")
     crud.archive_cms_section(db, row)
@@ -2244,8 +2252,6 @@ def create_global_block(
     allowed_types = get_allowed_section_types(db)
     if payload.type not in allowed_types:
         raise HTTPException(status_code=422, detail="unsupported section type")
-    from backend.schemas.cms_v2_sections import validate_section_props
-
     try:
         validated_props = validate_section_props(payload.type, payload.props_json or {})
         payload.props_json = validated_props
