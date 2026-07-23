@@ -530,3 +530,235 @@ class TestSectionPropsStructuralValidation:
         assert "<script>" not in body
         assert "<p>ok</p>" in body
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# F-06 — CmsCategory.parent_id cross-sede validation (Axioma 3)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestF06CategoryParentCrossSite:
+    """F-06: ``CmsCategory.parent_id`` debe pertenecer al mismo ``site_id``.
+
+    Cobertura:
+    - POST  create con parent de otro site  -> 422 (API) y ValueError (CRUD).
+    - PATCH update con parent de otro site  -> 422 (API) y ValueError (CRUD).
+    - POST  create con parent del mismo site -> 201.
+    - PATCH update con parent=None           -> 200 (limpiar parent es válido).
+    - POST  create con parent_id inexistente -> 422 (no dangling FK).
+    """
+
+    PASTOR_A_EMAIL = "cms-f06-pastor-a@example.com"
+    PASTOR_B_EMAIL = "cms-f06-pastor-b@example.com"
+
+    # ── helpers de seeding ──────────────────────────────────────────────
+
+    def _seed_two_pastors_and_sites(self, db_session):
+        from backend import models
+
+        sede_a = models.Sede(id=uuid.uuid4(), nombre="Sede F06-A", ciudad="Bogota", es_activa=True)
+        sede_b = models.Sede(id=uuid.uuid4(), nombre="Sede F06-B", ciudad="Medellin", es_activa=True)
+        db_session.add_all([sede_a, sede_b])
+        db_session.flush()
+
+        perms = {"cms:edit": "allow", "cms:read": "allow"}
+        seed_user_with_role(
+            db_session,
+            role_name="PASTOR",
+            email=self.PASTOR_A_EMAIL,
+            password="testpass123",
+            sede_id=sede_a.id,
+            permisos=perms,
+        )
+        seed_user_with_role(
+            db_session,
+            role_name="PASTOR",
+            email=self.PASTOR_B_EMAIL,
+            password="testpass123",
+            sede_id=sede_b.id,
+            permisos=perms,
+        )
+        db_session.commit()
+        return sede_a, sede_b
+
+    def _seed_site_with_parent_category(self, db_session, sede, key_suffix):
+        from backend import models
+
+        site = models.CmsSite(
+            id=uuid.uuid4(),
+            site_key=f"site-f06-{key_suffix}",
+            name=f"Site F06 {key_suffix}",
+            base_path=f"/f06-{key_suffix}",
+            is_active=True,
+            sede_id=sede.id,
+        )
+        db_session.add(site)
+        db_session.flush()
+        parent = models.CmsCategory(
+            id=uuid.uuid4(),
+            site_id=site.id,
+            slug="parent",
+            name="Parent",
+            is_active=True,
+        )
+        db_session.add(parent)
+        db_session.commit()
+        return site, parent
+
+    def _headers(self, client, email):
+        return auth_headers(client, email=email)
+
+    # ── tests API (HTTP) ────────────────────────────────────────────────
+
+    def test_create_with_cross_site_parent_returns_422(self, client, db_session):
+        sede_a, sede_b = self._seed_two_pastors_and_sites(db_session)
+        site_a, _ = self._seed_site_with_parent_category(db_session, sede_a, "a")
+        site_b, parent_b = self._seed_site_with_parent_category(db_session, sede_b, "b")
+
+        resp = client.post(
+            f"/api/cms/v2/sites/{site_a.site_key}/categories",
+            headers=self._headers(client, self.PASTOR_A_EMAIL),
+            json={"slug": "child", "name": "Child", "parent_id": str(parent_b.id)},
+        )
+        assert resp.status_code == 422, (
+            f"create con parent cross-site debe 422, got {resp.status_code}: {resp.text}"
+        )
+
+    def test_create_with_same_site_parent_returns_201(self, client, db_session):
+        sede_a, _ = self._seed_two_pastors_and_sites(db_session)
+        site_a, parent_a = self._seed_site_with_parent_category(db_session, sede_a, "same")
+
+        resp = client.post(
+            f"/api/cms/v2/sites/{site_a.site_key}/categories",
+            headers=self._headers(client, self.PASTOR_A_EMAIL),
+            json={"slug": "child", "name": "Child", "parent_id": str(parent_a.id)},
+        )
+        assert resp.status_code == 201, (
+            f"create con parent mismo site debe 201, got {resp.status_code}: {resp.text}"
+        )
+        assert resp.json()["parent_id"] == str(parent_a.id)
+
+    def test_patch_with_cross_site_parent_returns_422(self, client, db_session):
+        sede_a, sede_b = self._seed_two_pastors_and_sites(db_session)
+        site_a, _ = self._seed_site_with_parent_category(db_session, sede_a, "pa")
+        site_b, parent_b = self._seed_site_with_parent_category(db_session, sede_b, "pb")
+        # Crea child-legítimo en site_a (sin parent aún)
+        child_resp = client.post(
+            f"/api/cms/v2/sites/{site_a.site_key}/categories",
+            headers=self._headers(client, self.PASTOR_A_EMAIL),
+            json={"slug": "child", "name": "Child"},
+        )
+        assert child_resp.status_code == 201
+
+        resp = client.patch(
+            f"/api/cms/v2/sites/{site_a.site_key}/categories/child",
+            headers=self._headers(client, self.PASTOR_A_EMAIL),
+            json={"parent_id": str(parent_b.id)},
+        )
+        assert resp.status_code == 422, (
+            f"patch con parent cross-site debe 422, got {resp.status_code}: {resp.text}"
+        )
+
+    def test_patch_with_none_parent_clears_parent(self, client, db_session):
+        sede_a, _ = self._seed_two_pastors_and_sites(db_session)
+        site_a, parent_a = self._seed_site_with_parent_category(db_session, sede_a, "clr")
+        child_resp = client.post(
+            f"/api/cms/v2/sites/{site_a.site_key}/categories",
+            headers=self._headers(client, self.PASTOR_A_EMAIL),
+            json={"slug": "child", "name": "Child", "parent_id": str(parent_a.id)},
+        )
+        assert child_resp.status_code == 201
+
+        resp = client.patch(
+            f"/api/cms/v2/sites/{site_a.site_key}/categories/child",
+            headers=self._headers(client, self.PASTOR_A_EMAIL),
+            json={"parent_id": None},
+        )
+        assert resp.status_code == 200, (
+            f"patch con parent=None debe 200, got {resp.status_code}: {resp.text}"
+        )
+        assert resp.json()["parent_id"] is None
+
+    def test_create_with_nonexistent_parent_returns_422(self, client, db_session):
+        sede_a, _ = self._seed_two_pastors_and_sites(db_session)
+        site_a, _ = self._seed_site_with_parent_category(db_session, sede_a, "nx")
+
+        resp = client.post(
+            f"/api/cms/v2/sites/{site_a.site_key}/categories",
+            headers=self._headers(client, self.PASTOR_A_EMAIL),
+            json={"slug": "child", "name": "Child", "parent_id": str(uuid.uuid4())},
+        )
+        assert resp.status_code == 422, (
+            f"create con parent inexistente debe 422, got {resp.status_code}: {resp.text}"
+        )
+
+    # ── tests CRUD directo (defense-in-depth sin pasar por API) ─────────
+
+    def test_crud_create_cross_site_parent_raises_valueError(self, db_session):
+        from backend import crud, models, schemas
+
+        # Setup autónomo de dos sedes/sites y un parent en site_b
+        sede_a = models.Sede(id=uuid.uuid4(), nombre="Sede F06-crud-crt-A", ciudad="Bogota", es_activa=True)
+        sede_b = models.Sede(id=uuid.uuid4(), nombre="Sede F06-crud-crt-B", ciudad="Medellin", es_activa=True)
+        db_session.add_all([sede_a, sede_b])
+        db_session.flush()
+        site_a = models.CmsSite(
+            id=uuid.uuid4(), site_key="site-f06-crud-crt-a", name="A", base_path="/a",
+            is_active=True, sede_id=sede_a.id,
+        )
+        site_b = models.CmsSite(
+            id=uuid.uuid4(), site_key="site-f06-crud-crt-b", name="B", base_path="/b",
+            is_active=True, sede_id=sede_b.id,
+        )
+        db_session.add_all([site_a, site_b])
+        db_session.flush()
+        parent_b = models.CmsCategory(
+            id=uuid.uuid4(), site_id=site_b.id, slug="parent", name="Parent", is_active=True,
+        )
+        db_session.add(parent_b)
+        db_session.commit()
+
+        payload = schemas.CmsCategoryCreate(
+            slug="child-crud", name="Child CRUD", parent_id=parent_b.id
+        )
+        with pytest.raises(ValueError, match="same site"):
+            crud.create_cms_category(db_session, site_a.id, payload)
+
+    def test_crud_update_cross_site_parent_raises_valueError(self, db_session):
+        from backend import crud, models, schemas
+
+        sede_a = models.Sede(id=uuid.uuid4(), nombre="Sede F06-crud-upd-A", ciudad="Bogota", es_activa=True)
+        sede_b = models.Sede(id=uuid.uuid4(), nombre="Sede F06-crud-upd-B", ciudad="Medellin", es_activa=True)
+        db_session.add_all([sede_a, sede_b])
+        db_session.flush()
+        site_a = models.CmsSite(
+            id=uuid.uuid4(), site_key="site-f06-crud-upd-a", name="A", base_path="/a",
+            is_active=True, sede_id=sede_a.id,
+        )
+        site_b = models.CmsSite(
+            id=uuid.uuid4(), site_key="site-f06-crud-upd-b", name="B", base_path="/b",
+            is_active=True, sede_id=sede_b.id,
+        )
+        db_session.add_all([site_a, site_b])
+        db_session.flush()
+        parent_a = models.CmsCategory(
+            id=uuid.uuid4(), site_id=site_a.id, slug="parent-a", name="ParentA", is_active=True,
+        )
+        parent_b = models.CmsCategory(
+            id=uuid.uuid4(), site_id=site_b.id, slug="parent-b", name="ParentB", is_active=True,
+        )
+        row = models.CmsCategory(
+            id=uuid.uuid4(), site_id=site_a.id, slug="child-upd", name="Child Upd", is_active=True
+        )
+        db_session.add_all([parent_a, parent_b, row])
+        db_session.commit()
+
+        # cross-site -> ValueError
+        payload = schemas.CmsCategoryUpdate(parent_id=parent_b.id)
+        with pytest.raises(ValueError, match="same site"):
+            crud.update_cms_category(db_session, row, payload)
+
+        # same-site -> ok (sanity)
+        payload_ok = schemas.CmsCategoryUpdate(parent_id=parent_a.id)
+        updated = crud.update_cms_category(db_session, row, payload_ok)
+        assert updated.parent_id == parent_a.id
+

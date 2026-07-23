@@ -2410,7 +2410,10 @@ def create_category(
         raise HTTPException(status_code=422, detail="slug is required")
     if crud.get_cms_category(db, site.id, payload.slug):
         raise HTTPException(status_code=409, detail="category slug already exists")
-    return crud.create_cms_category(db, site.id, payload)
+    try:
+        return crud.create_cms_category(db, site.id, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
 
 
 @router.get("/sites/{site_key}/categories/{slug}", response_model=schemas.CmsCategoryRead)
@@ -2435,7 +2438,10 @@ def patch_category(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_category_or_404(db, site.id, slug)
-    return crud.update_cms_category(db, row, payload)
+    try:
+        return crud.update_cms_category(db, row, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
 
 
 @router.delete("/sites/{site_key}/categories/{slug}", status_code=204)
