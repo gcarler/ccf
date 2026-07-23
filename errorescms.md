@@ -531,16 +531,44 @@ respalda.
 
 ### MEDIOS / BAJOS / FUNCIONALIDADES
 
-M-01 y M-02 cerrados (validaciones Pydantic de longitud que evitan 500s).
-M-03..M-14, I-01..I-17, F-02..F-05/F-07/F-08/F-10 quedan pendientes.
-Priorización siguiente: M-03 (unificar soft-delete), M-13 (public_theme
-response manual), M-04..M-05 (use_alter, indices), y el resto como
-deuda técnica incremental.
+M-01, M-02 y M-13 cerrados. M-03 cerrado con alineación parcial (pages
+ahora usa `deleted_at` como sections). M-04..M-14, I-01..I-17,
+F-03..F-05/F-07/F-08/F-10 quedan pendientes. Priorización siguiente:
+M-04..M-05 (use_alter, indices), y el resto como deuda técnica
+incremental.
+
+### Contrato de Soft-Delete por Entidad CMS (documentado en M-03)
+
+| Entidad | Campo de soft-delete | Función delete | Patrón |
+|---|---|---|---|
+| CmsPage | `status` + `deleted_at` | `delete_cms_page` | `status="archived"` + `deleted_at=_utcnow()` (M-03, alineado con H-04) |
+| CmsSection | `status` + `deleted_at` | `delete_cms_section` → `archive_cms_section` | `status="archived"` + `deleted_at=_utcnow()` (H-04) |
+| CmsMediaItem | `status` | `delete_cms_media_item` | `status="archived"` |
+| CmsPost | `status` | `delete_cms_post` | `status="archived"` |
+| CmsCategory | `is_active` | `delete_cms_category` | `is_active=False` (sin `status` ni `deleted_at` en modelo) |
+| CmsTag | `is_active` | `delete_cms_tag` | `is_active=False` (sin `status` ni `deleted_at` en modelo) |
+| CmsMenu | `is_active` | `delete_cms_menu` | `is_active=False` (sin `status` ni `deleted_at` en modelo) |
+| CmsMenuItem | `visibility` | `delete_cms_menu_item` | `visibility="hidden"` (dominio de visibilidad pública, no de borrado) |
+| CmsSite | `is_active` | `archive_cms_site` | `is_active=False` (editorial global, no se borra) |
+| CmsTheme | `is_active` + `status` | `archive_cms_theme` | `is_active=False` + `status="archived"` |
+
+**Decisión M-03**: Unificar TODO a `status="archived" + deleted_at`
+requeriría añadir columnas `status`+`deleted_at` a 4 modelos
+(CmsCategory, CmsTag, CmsMenu, CmsSite), migración de DB en producción,
+y reescribir todas las queries que filtran por `is_active=True` a
+`status != "archived"`. Esto mezcla cambios funcionales con migraciones
+amplias (prohibido por REGLAS.md §"No mezclar cambios funcionales con
+wide migrations"). En su lugar, se alineó CmsPage con CmsSection
+(`deleted_at` añadido via migración `20260723_0003`) y se documentó
+el contrato por entidad. Las entidades con `is_active` (categories,
+tags, menus, sites) mantienen su patrón que es semanticamente distinto
+(activo/inactivo vs archivado/borrado).
 
 | ID | Estado | Cierre / Justificación | Commit |
 |---|---|---|---|
 | M-01 | ✅ CERRADO | `CmsSiteCreate.site_key` ahora `Field(min_length=1, max_length=80)`. Antes un site_key > 80 chars (String(80)) llegaba al INSERT y explotaba en IntegrityError 500. Ahora Pydantic responde 422 antes de tocar el motor (existence-leak safe). | `5ea3cfab` |
 | M-02 | ✅ CERRADO | `CmsPageCreate.slug` y `CmsPageUpdate.slug` ahora `Field(min_length=1, max_length=160)`. Antes un slug > 160 chars (String(160)) explotaba en 500 de DB; ahora 422. | `5ea3cfab` |
+| M-03 | ✅ CERRADO (alineación parcial) | `CmsPage` ahora tiene columna `deleted_at` (migración `20260723_0003`). `delete_cms_page` fija `deleted_at=_utcnow()` además de `status="archived"`, alineando pages con sections (H-04). Las queries existentes que filtran por `status != "archived"` no se afectan. Contrato de soft-delete por entidad documentado (tabla arriba). Unificación completa a `status+deleted_at` rechazada por requerir migración + rewrite de queries de `is_active` en 4 modelos (mezcla cambios funcionales con migraciones amplias, prohibido por REGLAS.md). 2 tests de regresión ampliados (CRUD-direct valida `status="archived"` + `deleted_at is not None`; suite completa 99+35=134 passed). | (pending commit) |
 | M-13 | ✅ CERRADO | `public_theme` (`api/cms_v2.py`) reemplaza dict manual de response por `CmsThemeRead.model_validate(row)`. El schema `CmsThemeRead` tiene los mismos 10 campos que el dict manual, así que el shape de respuesta es idéntico, pero ahora queda sincronizado automáticamente si el schema cambia. Tests theme 8 passed. | `9d503216` |
 | F-01 | ✅ FALSO POSITIVO | La funcionalidad `GET /cms/v2/sites/{site_key}/global-sections` (listar secciones `is_global=True` scopeando por sitio) YA existe como `GET /cms/v2/global-blocks?site_key=...` en `backend/api/cms_v2.py:2224-2251` (`list_global_blocks`). El endpoint filtra `CmsSection.is_global`, `is_visible`, `deleted_at IS NULL` y `CmsPage.site_id == site.id` (Axioma 3 OK vía `_get_scoped_site_or_404`). El nombre `global-blocks` (en vez de `global-sections`) y el uso de `site_key` como query-param (en vez de path-param) son una convención que difiere del literal del finding, pero la capability funcional que F-01 pide está resuelta y testeada en `TestGlobalBlocks::test_global_blocks_full_crud` (`test_cms_v2_coverage.py:357-392`). Cumplir el "letter" del audit (path-param `sites/{site_key}/global-sections`) sería duplicar superficie API sin ganancia funcional — el frontend no consume ninguna de las dos convenciones. Decisión documental siguiendo el patrón de C-03/C-05. | (decisión documental) |
 | F-02 | ✅ CERRADO | Endpoint `POST /cms/v2/sites/{site_key}/pages/{slug}/clone` creado en `api/cms_v2.py`. CRUD `clone_cms_page` en `crud/cms.py` duplica la página origen (status="draft", sin `published_version_id`, sin schedule) y todas sus secciones activas con nuevos IDs/section_keys. Schema `CmsPageClone` con `new_slug` (required, 1-160) + `new_title` (optional). Endpoint valida scope (`_get_scoped_site_or_404`), existencia de la página origen (`_get_page_or_404`), que `new_slug` difiera del source (422), unicidad del slug destino (409), y autorización (`CMS_EDITOR_ROLES`). 6 tests de regresión en `TestClonePageF02`: clone con secciones (verifica count==2), default title, slug duplicado -> 409, mismo slug -> 422, página inexistente -> 404, slug vacío -> 422. | `550a9c10` |
@@ -552,9 +580,9 @@ deuda técnica incremental.
 - Críticos: 6/6 cerrados (4 fix, 2 falso positivo)
 - Altos: 11/11 cerrados (H-05/H-11 fix, H-02/H-04/H-06/H-07 fix, H-01/H-03/H-08/H-09/H-10 falso positivo)
 - Funcionalidades: 4/10 cerradas (F-01 falso positivo, F-02, F-06, F-09)
-- Medios: 3/14 cerrados (M-01, M-02, M-13)
+- Medios: 4/14 cerrados (M-01, M-02, M-03, M-13)
 - Info: 0/17 cerrados
-- Pendientes: M-03..M-12/M-14 (11), I-01..I-17 (17), F-03..F-05/F-07/F-08/F-10 (6) = 34 findings
+- Pendientes: M-04..M-12/M-14 (10), I-01..I-17 (17), F-03..F-05/F-07/F-08/F-10 (6) = 33 findings
 
 ---
 

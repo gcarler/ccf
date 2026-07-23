@@ -198,12 +198,18 @@ class TestCMSPages:
         assert updated.title == "Updated Page"
 
     def test_delete_page(self, db_session):
-        from backend.crud.cms import create_cms_page, delete_cms_page
+        from backend.crud.cms import create_cms_page, delete_cms_page, get_cms_page
         from backend.schemas.cms import CmsPageCreate
         site = _site_id(db_session)
         page = create_cms_page(db_session, site, CmsPageCreate(slug="dp", title="DP", status="draft"), user_id=None)
         result = delete_cms_page(db_session, page)
         assert result is True
+        # M-03: delete_cms_page fija deleted_at ademas de status="archived"
+        # (alineado con archive_cms_section tras H-04)
+        refreshed = get_cms_page(db_session, site, "dp")
+        assert refreshed is not None
+        assert refreshed.status == "archived"
+        assert refreshed.deleted_at is not None
 
     def test_sections(self, db_session):
         from backend.crud.cms import create_cms_page, create_cms_section, list_cms_sections
