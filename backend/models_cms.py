@@ -7,6 +7,12 @@ class CmsMediaItem(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     url = Column(String(500), nullable=False)
     alt_text = Column(String(255), nullable=True)
+    # F-03 (errorescms.md): width/height como Integer separados para que
+    # las queries puedan filtrar/ordenar por dimensiones sin parsear el
+    # string ``dimensions``.  ``dimensions`` se mantiene como string humano
+    # ``"1920x1080"`` por compatibilidad hacia atrás (frontend, seeds, logs).
+    width = Column(Integer, nullable=True)
+    height = Column(Integer, nullable=True)
     dimensions = Column(String(50), nullable=True)
     filename = Column(String(255), nullable=True)
     mime_type = Column(String(120), nullable=True)

@@ -272,6 +272,9 @@ def create_cms_media_item(
     filename: str | None = None,
     mime_type: str | None = None,
     file_size: int | None = None,
+    width: int | None = None,
+    height: int | None = None,
+    dimensions: str | None = None,
     status: str = "active",
     actor_user_id: str | uuid.UUID,
 ):
@@ -302,6 +305,9 @@ def create_cms_media_item(
         filename=filename,
         mime_type=mime_type,
         file_size=file_size or 0,
+        width=width,
+        height=height,
+        dimensions=dimensions,
         status=(status or "active").strip().lower(),
     )
     db.add(row)
@@ -360,6 +366,9 @@ def update_cms_media_item(
     filename: str | None = None,
     mime_type: str | None = None,
     file_size: int | None = None,
+    width: int | None = None,
+    height: int | None = None,
+    dimensions: str | None = None,
     status: str | None = None,
     actor_user_id: str | uuid.UUID,
 ):
@@ -395,6 +404,12 @@ def update_cms_media_item(
         row.mime_type = mime_type
     if file_size is not None:
         row.file_size = file_size
+    if width is not None:
+        row.width = width
+    if height is not None:
+        row.height = height
+    if dimensions is not None:
+        row.dimensions = dimensions
     if status is not None:
         row.status = status.strip().lower()
     db.commit()

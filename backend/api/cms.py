@@ -348,6 +348,9 @@ def create_cms_media(
         filename=payload.filename,
         mime_type=payload.mime_type,
         file_size=payload.file_size,
+        width=payload.width,
+        height=payload.height,
+        dimensions=payload.dimensions,
         status=payload.status,
         actor_user_id=str(current_user.id),
     )
@@ -382,6 +385,9 @@ def patch_cms_media(
         filename=payload.filename,
         mime_type=payload.mime_type,
         file_size=payload.file_size,
+        width=payload.width,
+        height=payload.height,
+        dimensions=payload.dimensions,
         status=payload.status,
         actor_user_id=str(current_user.id),
     )
@@ -461,6 +467,9 @@ def optimize_cms_media(
         mime_type=f"image/{output_ext.lstrip('.')}",
         file_size=len(optimized_bytes),
         filename=optimized_name,
+        width=width,
+        height=height,
+        dimensions=f"{width}x{height}",
         actor_user_id=str(current_user.id),
     )
 
@@ -519,6 +528,9 @@ async def upload_cms_media(
 
     # 4) Image optimization (convert to WebP, resize, compress)
     mime_type = file.content_type
+    width: int | None = None
+    height: int | None = None
+    dimensions: str | None = None
     if optimize:
         try:
             optimizer = ImageOptimizer()
@@ -528,6 +540,8 @@ async def upload_cms_media(
                 original_name = os.path.splitext(original_name)[0] + output_ext
                 mime_type = f"image/{output_ext.lstrip('.')}"
             content = optimized_bytes
+            if width and height:
+                dimensions = f"{width}x{height}"
         except Exception as exc:
             logger.debug("Image optimization failed for %s, falling back to original: %s", original_name, exc)
 
@@ -543,6 +557,9 @@ async def upload_cms_media(
         filename=file.filename,
         mime_type=mime_type,
         file_size=len(content),
+        width=width,
+        height=height,
+        dimensions=dimensions,
         actor_user_id=str(current_user.id),
     )
 

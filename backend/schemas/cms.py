@@ -28,6 +28,9 @@ class CmsMediaCreate(BaseModel):
     filename: Optional[str] = None
     mime_type: Optional[str] = None
     file_size: Optional[int] = None
+    width: Optional[int] = Field(default=None, ge=1)
+    height: Optional[int] = Field(default=None, ge=1)
+    dimensions: Optional[str] = None
     status: str = "active"
 
 
@@ -39,6 +42,9 @@ class CmsMediaUpdate(BaseModel):
     filename: Optional[str] = None
     mime_type: Optional[str] = None
     file_size: Optional[int] = None
+    width: Optional[int] = Field(default=None, ge=1)
+    height: Optional[int] = Field(default=None, ge=1)
+    dimensions: Optional[str] = None
     status: Optional[str] = None
 
 
@@ -46,6 +52,8 @@ class CmsMediaRead(BaseModel):
     id: UUID
     url: str
     alt_text: Optional[str] = None
+    width: Optional[int] = None
+    height: Optional[int] = None
     dimensions: Optional[str] = None
     filename: Optional[str] = None
     mime_type: Optional[str] = None
