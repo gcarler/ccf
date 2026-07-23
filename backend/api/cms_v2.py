@@ -1175,6 +1175,48 @@ def seo_audit(
     )
 
 
+# ── F-07 (errorescms.md): historico de snapshots SEO por site ─────────
+# Antes solo existia el CRUD ``capture_daily_seo_snapshots`` (cron que
+# persiste rows por dia) y el aggregator ``get_seo_trend`` (devuelve series
+# agregadas en un dict, no listado paginado). Este endpoint expone el
+# listado paginado de rows crudos por site para que el frontend pueda
+# renderizar tablas de historico y comparar dias.
+
+@router.get(
+    "/sites/{site_key}/seo-snapshots",
+    response_model=PaginatedResponse[schemas.CmsSeoSnapshotRead],
+)
+def list_seo_snapshots_endpoint(
+    site_key: str,
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(90, ge=1, le=365),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """F-07: lista los snapshots SEO historicos de un site, ordenados
+    por ``captured_date DESC`` (mas reciente primero).
+
+    Scope Axioma 3: el ``site_key`` se resuelve via
+    ``_get_scoped_site_or_404`` que valida sede del actor (igual que
+    ``seo_audit``). Requiere rol editorial (``CMS_EDITOR_ROLES``).
+    """
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
+
+    rows, total = crud.list_seo_snapshots(
+        db,
+        site_id=site.id,
+        limit=limit,
+        offset=skip,
+    )
+    return PaginatedResponse[schemas.CmsSeoSnapshotRead](
+        items=[schemas.CmsSeoSnapshotRead.model_validate(r) for r in rows],
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
+
+
 def _cms_readiness_issue(
     *,
     code: str,

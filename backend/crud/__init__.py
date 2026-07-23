@@ -131,6 +131,7 @@ from backend.crud.cms import (
     get_posts_tags_batch,
     get_public_cms_page,
     get_seo_trend,
+    list_seo_snapshots,
     get_public_cms_posts,
     get_public_cms_post,
     get_testimonial,

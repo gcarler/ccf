@@ -1518,6 +1518,37 @@ def capture_daily_seo_snapshots(
     return counts
 
 
+def list_seo_snapshots(
+    db: Session,
+    *,
+    site_id: uuid.UUID,
+    limit: int = 90,
+    offset: int = 0,
+):
+    """F-07 (errorescms.md): lista los snapshots SEO historicos de un site,
+    ordenados por ``captured_date DESC`` (más reciente primero).
+
+    Scope Axioma 3: el caller (endpoint API) debe pasar el ``site_id``
+    previamente scopped via ``_get_scoped_site_or_404`` para garantizar
+    que el usuario solo acceda a snapshots de sites de su sede (cuando
+    aplique). Este helper no re-valida sede — lo hace el endpoint-API.
+
+    Retorna una tupla ``(rows, total)`` para que el endpoint pueda
+    construir una respuesta paginada.
+    """
+    q = db.query(models.CmsSeoSnapshot).filter(
+        models.CmsSeoSnapshot.site_id == site_id
+    )
+    total = q.count()
+    rows = (
+        q.order_by(models.CmsSeoSnapshot.captured_date.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    return rows, total
+
+
 def get_seo_trend(
     db: Session,
     *,
