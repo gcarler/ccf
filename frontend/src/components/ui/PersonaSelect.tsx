@@ -98,7 +98,7 @@ export default function PersonaSelect({
             </button>
 
             {open && (
-                <div className="absolute z-50 mt-1 w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-xl max-h-72 overflow-hidden">
+                <div className="absolute z-50 mt-1 w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-xl max-h-72 overflow-hidden">
                     <div className="p-2 border-b border-[hsl(var(--border))] dark:border-white/5">
                         <div className="flex items-center gap-2 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-1.5">
                             <Search size={12} className="text-[hsl(var(--text-secondary))] shrink-0" />

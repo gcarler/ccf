@@ -188,7 +188,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] overflow-hidden shadow-sm">
             
             {/* ─── Header de Controles ─── */}
             <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
@@ -238,7 +238,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                 >
                     <div className="min-w-max h-full flex flex-col">
                         {/* Days scale */}
-                        <div className="flex border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] sticky top-0 z-20">
+                        <div className="flex border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] sticky top-0 z-20">
                             {days.map((day, i) => (
                                 <div key={i} className={clsx(
                                     "w-[160px] p-3 flex flex-col gap-1 border-r border-[hsl(var(--border))] dark:border-white/5",

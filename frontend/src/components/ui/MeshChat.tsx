@@ -95,20 +95,20 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                         initial={{ opacity: 0, y: 100, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 100, scale: 0.95 }}
-                        className="fixed inset-x-0 bottom-[72px] top-10 sm:inset-x-auto sm:top-auto sm:bottom-6 sm:right-6 sm:w-full sm:max-w-[440px] sm:h-[600px] rounded-none sm:rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] shadow-2xl border-t sm:border border-[hsl(var(--border))] dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
+                        className="fixed inset-x-0 bottom-[72px] top-10 sm:inset-x-auto sm:top-auto sm:bottom-6 sm:right-6 sm:w-full sm:max-w-[440px] sm:h-[600px] rounded-none sm:rounded-lg bg-[hsl(var(--bg-primary))] shadow-2xl border-t sm:border border-[hsl(var(--border))] z-[1001] flex flex-col overflow-hidden"
                     >
                         {/* Header */}
-                        <header className="p-3 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--bg-primary))] dark:bg-white/5 shrink-0">
+                        <header className="p-3 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--bg-primary))] shrink-0">
                             <div className="flex items-center gap-4">
                                 <div className="size-7 rounded-lg bg-sky-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 relative">
                                     <Bot size={24} />
-                                    <div className="absolute -bottom-1 -right-1 size-4 bg-emerald-500 rounded-full border-2 border-white dark:border-[#15171c]" />
+                                    <div className="absolute -bottom-1 -right-1 size-4 bg-[hsl(var(--success))] rounded-full border-2 border-white" />
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] tracking-tight leading-none mb-1">Optimus Brain</h3>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[9px] font-semibold uppercase tracking-wide text-emerald-500">Neural Active</span>
-                                        <div className="size-1 rounded-full bg-emerald-500 animate-pulse" />
+                                        <span className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--success))]">Neural Active</span>
+                                        <div className="size-1 rounded-full bg-[hsl(var(--success))] animate-pulse" />
                                     </div>
                                 </div>
                             </div>
@@ -184,7 +184,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     placeholder="Preguntar a Optimus..."
-                                    className="w-full h-8 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg pl-6 pr-14 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-4 focus:ring-sky-500/10 focus:border-sky-500/50 transition-all shadow-inner"
+                                    className="w-full h-8 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-lg pl-6 pr-14 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--primary))]/50 transition-all shadow-inner"
                                 />
                                 <button 
                                     type="submit"

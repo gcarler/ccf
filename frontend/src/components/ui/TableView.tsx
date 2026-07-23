@@ -82,9 +82,9 @@ export interface TableViewProps<T = any> {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const CELL_COLORS: Record<string, string> = {
-  red:    "#ef4444", orange: "#f97316", yellow: "#eab308",
-  green:  "#22c55e", blue:   "#3b82f6", sky: "#0ea5e9",
-  pink:   "#ec4899", gray:   "#6b7280",
+  red:    "hsl(var(--danger))", orange: "hsl(var(--warning))", yellow: "hsl(38 92% 50%)",
+  green:  "hsl(var(--success))", blue:   "hsl(var(--primary))", sky: "hsl(197 98% 37%)",
+  pink:   "hsl(336 80% 58%)", gray:   "hsl(var(--text-secondary))",
 };
 
 function SelectRenderer({ value, colDef }: any) {

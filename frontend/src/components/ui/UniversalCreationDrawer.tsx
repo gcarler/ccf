@@ -43,7 +43,7 @@ const TABS: { id: CreationType; label: string; icon: React.ElementType; color?: 
 const STATUS_COLORS: Record<string, string> = {
     'PENDIENTE':   'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]',
     'EN CURSO':    'bg-[hsl(var(--primary))] text-white',
-    'COMPLETADO':  'bg-emerald-100 text-emerald-700',
+    'COMPLETADO':  'bg-[hsl(var(--success-muted))] text-[hsl(var(--success-text))]',
 };
 
 const DocAddBtn = ({ icon: Icon, label }: { icon: any; label: string }) => (

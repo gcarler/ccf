@@ -71,7 +71,7 @@ export const CustomSize: Story = {
   },
   render: (args) => (
     <div style={{ textAlign: 'center', maxWidth: '400px' }}>
-      <EmptyState {...args} className="w-full" />
+      <EmptyState {...args} />
     </div>
   ),
 };
