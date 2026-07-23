@@ -531,16 +531,21 @@ respalda.
 
 ### MEDIOS / BAJOS / FUNCIONALIDADES
 
-M-01..M-14, I-01..I-17, F-01..F-10 quedan pendientes, prioritizadas
-por: M-01..M-02 (validaciones Pydantic que evitan 500), M-04..M-05
-(`use_alter`, indices), F-06 (parent_id cross-sede Categories), y el
-resto como deuda técnica incremental.
+M-01..M-14, I-01..I-17, F-01..F-10 quedan pendientes (excepto
+F-06 cerrado esta sesión), prioritizadas por: M-01..M-02
+(validaciones Pydantic que evitan 500), M-04..M-05 (`use_alter`,
+indices), y el resto como deuda técnica incremental.
+
+| ID | Estado | Cierre / Justificación | Commit |
+|---|---|---|---|
+| F-06 | ✅ CERRADO | `crud/cms.py::_assert_parent_category_same_site` valida que `CmsCategory.parent_id` exista Y pertenezca al mismo `site_id` que la categoría bajo mutación (defense-in-depth en capa CRUD, cubre callers no-API). `create_cms_category` y `update_cms_category` llaman al helper; los endpoints `create_category`/`patch_category` en `api/cms_v2.py` traducen `ValueError` -> `HTTP 422`. 7 tests de regresión en `TestF06CategoryParentCrossSite` cubren: create/patch cross-site -> 422, create/patch same-site -> 201/200, patch parent=None -> 200 (limpiar), parent inexistente -> 422, y validación directa en CRUD (sin API). | `82d9ffdd` |
 
 ### Resumen de cierre al 2026-07-23
 
 - Críticos: 6/6 cerrados (4 fix, 2 falso positivo)
 - Altos: 2/11 cerrados (H-05, H-11)
-- Medios/Bajos/Funcionalidades: pendientes (T1.4, T1.5 en progreso)
+- Funcionalidades: 1/10 cerradas (F-06)
+- Medios/Info: pendientes (T1.4, T1.5 en progreso)
 
 ---
 
