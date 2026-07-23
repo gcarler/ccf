@@ -331,7 +331,7 @@ def _assert_site_sede_scope(
       - Superadministradores globales (detectados por rol, no por ausencia
         de sede) pueden acceder a cualquier site.
       - Un actor con sede solo puede interactuar con sites de su propia sede
-        o sites sin sede asignada (legacy/migración).
+        o sites sin sede asignada (migración histórica).
       - Un actor sin sede que NO sea admin global recibe 404 para evitar
         escalación de privilegios por inconsistencia de datos.
     """
