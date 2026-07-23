@@ -1915,6 +1915,31 @@ def list_pastoral_team(
 # ── CMS Posts & Taxonomías ─────────────────────────────────────────────────
 
 
+def _assert_parent_category_same_site(
+    db: Session, site_id: uuid.UUID, parent_id: uuid.UUID | None
+) -> None:
+    """Defensa Axioma 3 (multi-tenant) para ``CmsCategory.parent_id``.
+
+    Si ``parent_id`` no es ``None`` valida que el parent exista Y pertenezca
+    al mismo ``site_id`` que la categoría bajo mutación.  Un parent
+    cross-site sería una fuga de tenant (categorias del site A colgando de
+    categorías del site B).  Se ejecuta en la capa CRUD para cubrir también
+    callers no-API (workers async, seeding, tests directos).
+
+    Lanza ``ValueError`` cuando el parent no existe o es de otro site; el
+    caller API traduce esto a ``HTTP 422``.
+    """
+    if parent_id is None:
+        return
+    parent = (
+        db.query(models.CmsCategory)
+        .filter(models.CmsCategory.id == parent_id)
+        .first()
+    )
+    if parent is None or parent.site_id != site_id:
+        raise ValueError("parent_id must belong to the same site")
+
+
 def list_cms_categories(db: Session, site_id: uuid.UUID):
     return (
         db.query(models.CmsCategory)
@@ -1935,6 +1960,7 @@ def get_cms_category(db: Session, site_id: uuid.UUID, slug: str):
 def create_cms_category(
     db: Session, site_id: uuid.UUID, payload: schemas.CmsCategoryCreate
 ):
+    _assert_parent_category_same_site(db, site_id, payload.parent_id)
     row = models.CmsCategory(
         site_id=site_id,
         slug=payload.slug.strip().lower(),
@@ -1960,6 +1986,7 @@ def update_cms_category(
     if "description" in data:
         row.description = data["description"]
     if "parent_id" in data:
+        _assert_parent_category_same_site(db, row.site_id, data["parent_id"])
         row.parent_id = data["parent_id"]
     if "is_active" in data and data["is_active"] is not None:
         row.is_active = bool(data["is_active"])
