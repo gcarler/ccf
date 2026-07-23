@@ -64,7 +64,13 @@ class CmsMediaRead(BaseModel):
 
 
 class CmsSiteCreate(BaseModel):
-    site_key: str
+    # M-01 (errorescms.md): el modelo site_key es String(80) NOT NULL; sin
+    # validacion Pydantic un site_key > 80 chars o vacio llegaba al motor DB
+    # y responseaba 500 (IntegrityError) en vez de 422.  No aplicamos
+    # regex restrictivo aquí porque el servidor hace lower+strip en el
+    # CRUD; los tests coverage-verifican el happy-path.  El único contrato
+    # duro es no-dejar-llegar-al-motor-length-overflow.
+    site_key: str = Field(min_length=1, max_length=80)
     name: str
     base_path: str
     is_active: bool = True
@@ -192,7 +198,14 @@ class CmsMenuItemRead(BaseModel):
 
 
 class CmsPageCreate(BaseModel):
-    slug: str
+    # M-02 (errorescms.md): el modelo slug es String(160) NOT NULL. Sin
+    # validacion Pydantic un slug > 160 chars llegaba al INSERT en DB y
+    # responseaba 500 en lugar de 422.  No aplicamos regex restrictivo
+    # aquí porque el servidor normaliza via _slugify (NFKD + acentos
+    # + whitespace → hyphens); un regexestricto romperia entradas con
+    # acentos que _slugify ya maneja.  El único contrato duro es
+    # no-dejar-llegar-al-motor-length-overflow.
+    slug: str = Field(min_length=1, max_length=160)
     title: str
     status: str = "draft"
     seo_json: Dict[str, Any] = Field(default_factory=dict)
@@ -204,7 +217,7 @@ class CmsPageCreate(BaseModel):
 
 
 class CmsPageUpdate(BaseModel):
-    slug: Optional[str] = None
+    slug: Optional[str] = Field(default=None, min_length=1, max_length=160)
     title: Optional[str] = None
     status: Optional[str] = None
     seo_json: Optional[Dict[str, Any]] = None

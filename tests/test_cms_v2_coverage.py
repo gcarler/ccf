@@ -63,6 +63,62 @@ class TestSitesCRUD:
         assert _ok(c.delete(f"/api/cms/v2/sites/{site_key}", headers=h).status_code)
 
 
+class TestSitesValidationM01M02:
+    """M-01 / M-02 (errorescms.md): validaciones Pydantic de longitud en
+    CmsSiteCreate.site_key (String(80)) y CmsPageCreate.slug (String(160)).
+    Sin validacion los values > limit llegaban al INSERT y explotaban en
+    IntegrityError 500.  Con validation Pydantic responden antes 422."""
+
+    def test_create_site_with_too_long_site_key_returns_422(self, full):
+        c, h = full["c"], full["h"]
+        too_long_key = "a" * 81  # max DB col is 80
+        resp = c.post(
+            "/api/cms/v2/sites",
+            json={"site_key": too_long_key, "name": "X", "base_path": "/x"},
+            headers=h,
+        )
+        assert resp.status_code == 422, (
+            f"M-01 regression: site_key>80 deberia responder 422, "
+            f"got {resp.status_code} {resp.text[:200]}"
+        )
+        assert "80" in resp.text or "max_length" in resp.text, (
+            f"M-01 regression: el error no menciona length: {resp.text[:200]}"
+        )
+
+    def test_create_site_with_empty_site_key_returns_422(self, full):
+        c, h = full["c"], full["h"]
+        resp = c.post(
+            "/api/cms/v2/sites",
+            json={"site_key": "", "name": "X", "base_path": "/x"},
+            headers=h,
+        )
+        assert resp.status_code == 422, (
+            f"M-01 regression: empty site_key deberia responder 422, "
+            f"got {resp.status_code}"
+        )
+
+    def test_create_page_with_too_long_slug_returns_422(self, full):
+        c, h = full["c"], full["h"]
+        # Need a site to attach the page to.
+        site_key = f"m02-{uuid.uuid4().hex[:6]}"
+        site = c.post(
+            "/api/cms/v2/sites",
+            json={"site_key": site_key, "name": "M02 site", "base_path": "/m02"},
+            headers=h,
+        )
+        assert _ok(site.status_code), site.text[:200]
+        too_long_slug = "a" * 161  # max DB col is 160
+        resp = c.post(
+            f"/api/cms/v2/sites/{site_key}/pages",
+            json={"slug": too_long_slug, "title": "M02 page"},
+            headers=h,
+        )
+        assert resp.status_code == 422, (
+            f"M-02 regression: slug>160 deberia responder 422, "
+            f"got {resp.status_code} {resp.text[:200]}"
+        )
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # PAGES
 # ═══════════════════════════════════════════════════════════════════════════════
