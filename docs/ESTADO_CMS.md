@@ -238,8 +238,28 @@ Frontend test existente:
 ### Pendiente
 
 1. **Builder CMS no funcional** `[PEND-CMS-BUILDER-001]` — en `/plataforma/cms/builder` el editor reportado no funciona; owner probable: frontend CMS builder y contratos de sections/global blocks, con posible incidencia de estado de shell o datos del catálogo.
+2. **Backlog forense CMS-medio/bajo restante** – sesiones 2026-07-22 (error) cerraron todos los CRÍTICOS (C-01..06) + ALTOS (H-01..10)  y los medios M-01..M-02 (validaciones de length); quedan abiertos los hallazgos M-03..M-14 (inconsistencias de soft-delete y duplicidades), I-01..I-17 (info histórica, no roturas) y F-01..F-10 (funcionalidades faltantes para considerar).  Estado completo en `errorescms.md` seccion "Seguimiento de Cierre".  El front de seguridad F-06 (CmsCategory.parent_id cross-sede) es la prioridad restanteAxsiomática 3.
 
 ### Cerrado recientemente
+
+17. **Forense C-01 (ondelete RESTRICT)** `[DONE-CMS-FORENSE-C-01]` — cerrado el 2026-07-22 (commit `e8912c54`) antes del inicio de la sesión actual; ver `errorescms.md` § Seguimiento.
+18. **Forense C-02 (falso positivo TOCTOU verificado)** `[DONE-CMS-FORENSE-C-02]` — cerrado el 2026-07-22 (commit `bd28cfe4`); verificado que el vector TOCTOU mismo está cubierto por el defense-in-depth check #1 (current_row_sede == actor_sede) en `_crud_scope_re_check_cms_content_update`.  3 tests de regresion en `TestC02TOCTOUFalsePositive`.
+19. **Forense C-03 (falso positivo CmsSectionType global)** `[DONE-CMS-FORENSE-C-03]` — confirmado por `6a83dd87` y REGLAS.md §4.2.
+20. **Forense C-04 (pastors sede_id filter)** `[DONE-CMS-FORENSE-C-04]` — commit `6a83dd87`.
+21. **Forense C-05 (falso positivo seo_snapshots)** `[DONE-CMS-FORENSE-C-05]` — snapshot persiste sede_id propio (cms_v2.py:1388).
+22. **Forense C-06 + H-11 (24 schemas Pydantic)** `[DONE-CMS-FORENSE-C-06-H11]` — commit `5b0a6e7c`.
+23. **Forense H-01 (falso positivo default=dict)** `[DONE-CMS-FORENSE-H-01]` — pattern `default=dict` es idioma-clave SQLAlchemy y mas usado que `default={}` (10 vs 10 instances).  No es riesgo funcional.
+24. **Forense H-02 (captured_at default=_utcnow)** `[DONE-CMS-FORENSE-H-02]` — commit `b522c372`; lambda inline reemplazada por `_utcnow`.
+25. **Forense H-03 (falso positivo CmsSection.type shadow)** `[DONE-CMS-FORENSE-H-03]` — SQLAlchemy maneja correctamente; renombrar rompe introspection.
+26. **Forense H-04 (archive_cms_section deleted_at)** `[DONE-CMS-FORENSE-H-04]` — commit `b522c372`.
+27. **Forense H-05 (path traversal hardening)** `[DONE-CMS-FORENSE-H-05]` — commit `b347f787` + 3 regression tests en `TestDeleteCmsMediaPathTraversalHardening`.
+28. **Forense H-06 (AnnouncementUpdate.is_active)** `[DONE-CMS-FORENSE-H-06]` — commit `b522c372`.
+29. **Forense H-07 (CmsPostCreate/Update.locale)** `[DONE-CMS-FORENSE-H-07]` — commit `b522c372`.
+30. **Forense H-08 (falso positivo _get_page_or_404 is_active)** `[DONE-CMS-FORENSE-H-08]` — confirmado: `public_page` no usa `_get_page_or_404`; usa query directa con `status==published`; el helper solo aplica a admin endpoints autenticados que por contrato deben gestionar pages de sites inactivos.
+31. **Forense H-09 (falso positivo route overlap)** `[DONE-CMS-FORENSE-H-09]` — especulativo, no reproducido; FastAPI distingue `/public/` vs `/sites/`.
+32. **Forense H-10 (falso positivo ContactSubmission updated_at)** `[DONE-CMS-FORENSE-H-10]` — models_cms.py:625 ES `default=_utcnow, onupdate=_utcnow`; el audit leyo una version stale.
+33. **Forense M-01 (site_key max_length=80)** `[DONE-CMS-FORENSE-M-01]` — commit `5ea3cfab`; CmsSiteCreate.site_key = Field(min_length=1, max_length=80); 422 en lugar de 500.
+34. **Forense M-02 (slug max_length=160)** `[DONE-CMS-FORENSE-M-02]` — commit `5ea3cfab`; CmsPageCreate/Update.slug = Field(min_length=1, max_length=160); 422 en lugar de 500.
 
 1. **Plan de calidad canónico enlazado** `[DONE-PLAN-CMS-LINK-001]` — cerrado el 2026-07-16; `docs/PLAN_CMS_CALIDAD.md` queda como subplan oficial del módulo dentro de la matriz modular y este handover, con `docs/PLAN_CMS_100.md` preservado como referencia de auditoría profunda.
 2. **Matriz RBAC CMS** `[DONE-RBAC-CMS-001]` — cerrada el 2026-07-16 en `CMS_RBAC_MATRIX.md`; documenta v1, v2 y enterprise por separado, incluyendo la subprotección actual de CMS v1.
@@ -328,3 +348,12 @@ Estado de cierre:
 - builder sigue pendiente por la regresión reportada en `/plataforma/cms/builder`
 - la creación de pop-ups quedó expuesta de forma clara en el builder
 - branding quedó alineado con la guardia de edición y ya no expone guardado para roles de solo lectura
+
+**Actualización forense 2026-07-22 / 2026-07-23 (audit `errorescms.md`):**
+
+- 6 hallazgos críticos CERRADOS (C-01 fix, C-04 fix, C-06+H-11 fix; C-02, C-03, C-05 falsos positivos confirmados)
+- 11 hallazgos altos: 2 cerrados con fix (H-02, H-04, H-05, H-06, H-07; H-11 cubierto con C-06), 5 falsos positivos confirmados (H-01, H-03, H-08, H-09, H-10)
+- 2 hallazgos medios cerrados (M-01, M-02 — validaciones length de site_key/slug)
+- 12 medios restantes (M-03..M-14) + 17 bajos (I-01..I-17) + 10 funcionalidades faltantes (F-01..F-10) en backlog de calidad incremental — ver `errorescms.md` § Seguimiento de Cierre
+- Commits alcanzados: `e8912c54` (C-01), `6a83dd87` (C-04), `5b0a6e7c` (C-06/H-11), `b347f787` (H-05), `bd28cfe4` (C-02 verificación), `b522c372` (H-02/H-04/H-06/H-07 + 5 falsos positivos), `5ea3cfab` (M-01/M-02)
+- Cobertura de bytes: smoke base + deep coverage + security regression + upload hardening — todos en verde (155+ tests pasados)
