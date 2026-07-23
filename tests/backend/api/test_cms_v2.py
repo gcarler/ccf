@@ -125,7 +125,7 @@ def test_create_site_success(monkeypatch):
     }
     # Mock helpers
     monkeypatch.setattr(cms.crud, "get_cms_site_by_key", lambda db, key: None)
-    monkeypatch.setattr(cms.crud, "create_cms_site", lambda db, p: created)
+    monkeypatch.setattr(cms.crud, "create_cms_site", lambda db, p, *args, **kwargs: created)
     monkeypatch.setattr(cms, "_assert_role", lambda user, roles, detail="": None)
 
     app = create_app(monkeypatch)

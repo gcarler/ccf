@@ -31,27 +31,24 @@ def resolve_persona_id_for_user(db: Session, user_id: uuid.UUID | str | None):
     return persona_id
 
 
-def _commit_or_conflict(
-    db: Session,
-    *,
-    rollback: bool = True,
-) -> bool:
+def _commit_or_conflict(db: Session) -> bool:
     """Commit helper for create functions. Returns True on success.
 
-    When ``rollback=True`` (default), a **unique-key** ``IntegrityError``
-    is swallowed, the transaction is rolled back and the function returns
-    ``False``. Callers can then translate the conflict into a 409.
+    A **unique-key** ``IntegrityError`` is swallowed, the transaction is
+    rolled back and the function returns ``False``. Callers can then
+    translate the conflict into a 409.
 
     Other ``IntegrityError`` subclasses (NOT NULL, FK violations, check
-    constraints) are re-raised so they surface as real 500/validation errors
-    instead of being silently converted into 409s.
+    constraints) are re-raised after rollback so they surface as real
+    500/validation errors instead of being silently converted into 409s.
     """
     try:
         db.commit()
         return True
     except IntegrityError as exc:
-        if not rollback:
-            raise
+        # Always rollback: the SQLAlchemy session is unusable after a
+        # failed commit until rollback is issued.
+        db.rollback()
         # Only swallow unique-key violations (Postgres 23505 / SQLite
         # "UNIQUE constraint failed"). Everything else is a genuine bug
         # that should not be masked as a conflict.
@@ -62,13 +59,11 @@ def _commit_or_conflict(
             if pgcode == "23505":
                 is_unique_violation = True
             # SQLite exposes unique violations via IntegrityError message
-            if not is_unique_violation and "UNIQUE constraint failed" in str(orig):
+            elif "UNIQUE constraint failed" in str(orig):
                 is_unique_violation = True
         if not is_unique_violation:
-            db.rollback()
             raise
         _logger.debug("Swallowed concurrent create unique-key conflict: %s", exc)
-        db.rollback()
         return False
 
 
@@ -714,12 +709,29 @@ def create_cms_menu_item(
     return row
 
 
-def get_cms_menu_item(db: Session, menu_id: uuid.UUID, item_id: uuid.UUID):
-    return (
-        db.query(models.CmsMenuItem)
-        .filter(models.CmsMenuItem.menu_id == menu_id, models.CmsMenuItem.id == item_id)
-        .first()
+def get_cms_menu_item(
+    db: Session,
+    menu_id: uuid.UUID,
+    item_id: uuid.UUID,
+    *,
+    site_id: uuid.UUID | None = None,
+):
+    """Retrieve a CMS menu item by menu and item id.
+
+    When ``site_id`` is provided, an extra JOIN + WHERE guarantees that
+    the parent ``CmsMenu`` belongs to the requested site (Axioma 3
+    defense-in-depth). Existing callers that already scoped the menu
+    can omit the parameter and keep the previous behavior.
+    """
+    query = db.query(models.CmsMenuItem).filter(
+        models.CmsMenuItem.menu_id == menu_id,
+        models.CmsMenuItem.id == item_id,
     )
+    if site_id is not None:
+        query = query.join(
+            models.CmsMenu, models.CmsMenuItem.menu_id == models.CmsMenu.id
+        ).filter(models.CmsMenu.site_id == site_id)
+    return query.first()
 
 
 def update_cms_menu_item(
@@ -915,14 +927,29 @@ def create_cms_section(
     return row
 
 
-def get_cms_section(db: Session, page_id: uuid.UUID, section_id: uuid.UUID):
-    return (
-        db.query(models.CmsSection)
-        .filter(
-            models.CmsSection.page_id == page_id, models.CmsSection.id == section_id
-        )
-        .first()
+def get_cms_section(
+    db: Session,
+    page_id: uuid.UUID,
+    section_id: uuid.UUID,
+    *,
+    site_id: uuid.UUID | None = None,
+):
+    """Retrieve a CMS section by page and section id.
+
+    When ``site_id`` is provided, an extra JOIN + WHERE guarantees that
+    the parent ``CmsPage`` belongs to the requested site (Axioma 3
+    defense-in-depth). Existing callers that already scoped the page
+    can omit the parameter and keep the previous behavior.
+    """
+    query = db.query(models.CmsSection).filter(
+        models.CmsSection.page_id == page_id,
+        models.CmsSection.id == section_id,
     )
+    if site_id is not None:
+        query = query.join(
+            models.CmsPage, models.CmsSection.page_id == models.CmsPage.id
+        ).filter(models.CmsPage.site_id == site_id)
+    return query.first()
 
 
 def update_cms_section(
