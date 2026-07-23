@@ -71,6 +71,34 @@ class TestTenantIsolation:
         # No debe lanzar excepción
         _assert_site_sede_scope(site, actor_sede=None, current_user=user)
 
+    def test_actor_with_sede_cannot_access_orphan_site(self):
+        # C-01: un site huérfano (sede_id=None, por ondelete SET NULL
+        # histórico) NO debe ser accesible por un actor con sede —
+        # cierra el leak multi-tenant documentado en la auditoría.
+        from backend.api.cms_v2 import _assert_site_sede_scope
+
+        actor_sede = uuid.uuid4()
+        site = MagicMock()
+        site.sede_id = None
+        user = _FakeUser(role_name="pastor")
+
+        with pytest.raises(HTTPException) as exc:
+            _assert_site_sede_scope(site, actor_sede=actor_sede, current_user=user)
+        assert exc.value.status_code == 404
+
+    def test_global_admin_can_access_orphan_site(self):
+        # C-01: un admin global SÍ puede operar sites huérfanos para
+        # reasignarlos o limpiarlos — esa responsabilidad no puede caer
+        # en actores con sede.
+        from backend.api.cms_v2 import _assert_site_sede_scope
+
+        site = MagicMock()
+        site.sede_id = None
+        user = _FakeUser(role_name="admin")
+
+        # No debe lanzar excepción
+        _assert_site_sede_scope(site, actor_sede=None, current_user=user)
+
 
 class TestSanitizeHtml:
     """Cubre la sanitización XSS de campos HTML en props_json."""

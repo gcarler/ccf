@@ -43,7 +43,7 @@ class CmsSite(Base):
     # CMS v2 (pages, posts, categories, tags) tienen site_id FK; con
     # sede_id en el site, el scope por sede se resuelve vía JOIN sin
     # necesidad de agregar sede_id a cada tabla hija.
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="RESTRICT"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
