@@ -11,7 +11,7 @@ interface DataTableProps {
 }
 
 /**
- * @deprecated Use `DSTable` from `@/design` instead.
+ * @note Obsolete: use `DSTable` from `@/design` instead.
  * `DataTable` is now a thin wrapper kept for backwards compatibility.
  */
 export function DataTable({ data, columns, onRowClick }: DataTableProps) {
