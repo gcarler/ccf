@@ -47,7 +47,24 @@ from backend.schemas.cms_v2_sections import validate_section_props
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/cms/v2", tags=["cms_v2"])
+router = APIRouter(
+    prefix="/cms/v2",
+    tags=["cms_v2"],
+    # F-05 (errorescms.md): rate limiting default para todos los endpoints admin
+    # del router CMS v2. Los endpoints publicos (/public/sites/.../sitemap.xml,
+    # /robots.txt, /track, /images/resize, etc.) ya declaran su propio
+    # ``dependencies=[Depends(rate_limiter(limit=...))]`` con limites mas
+    # restrictivos; al aplicarlos a nivel endpoint estos SE APLICAN ADEMAS
+    # del router-level (FastAPI encadena deps de router+endpoint en orden).
+    # El contador Redis usa ``key = f"rate:{identifier}:{request.url.path}"``
+    # — dos paths distintos generan dos contadores distintos, asi que los
+    # endpoints con override propio no se falsean por la default router-level.
+    #
+    # 600 req/min/admin es generoso (escritorio humano-admin no llega ni a
+    # 100/min). Protege contra un script de un usuario autenticado abusivo
+    # (NO DoS anonimo — eso lo maneja slowapi+auth_v3 externamente).
+    dependencies=[Depends(rate_limiter(limit=600, window_seconds=60))],
+)
 PUBLIC_CMS_RATE_LIMIT = 240
 
 
